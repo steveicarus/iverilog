@@ -1,0 +1,195 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>The VHDL Code Generator (-tvhdl) &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The Verilog ‘95 Code Generator (-tvlog95)" href="tgt-vlog95.html" />
+    <link rel="prev" title="The null Code Generator (-tnull)" href="tgt-null.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="the-vhdl-code-generator-tvhdl">
+<h1>The VHDL Code Generator (-tvhdl)<a class="headerlink" href="#the-vhdl-code-generator-tvhdl" title="Permalink to this headline">¶</a></h1>
+<p>Icarus Verilog contains a code generator to emit VHDL from the Verilog
+netlist. This allows Icarus Verilog to function as a Verilog to VHDL
+translator.</p>
+<section id="invocation">
+<h2>Invocation<a class="headerlink" href="#invocation" title="Permalink to this headline">¶</a></h2>
+<p>To translate a Verilog program to VHDL, invoke “iverilog” with the -tvhdl
+flag:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% iverilog -t vhdl -o my_design.vhd my_design.v
+</pre></div>
+</div>
+<p>The generated VHDL will be placed in a single file (a.out by default), even if
+the Verilog is spread over multiple files.</p>
+</section>
+<section id="flags">
+<h2>Flags<a class="headerlink" href="#flags" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>-pdebug=1</p>
+<p>Print progress messages as the code generator visits each part of the
+design.</p>
+</li>
+<li><p>-pdepth=N</p>
+<p>Only output VHDL entities for modules found at depth &lt; N in the
+hierarchy. N=0, the default, outputs all entities. For example, -pdepth=1
+outputs only the top-level entity.</p>
+</li>
+</ul>
+</section>
+<section id="supported-constructs">
+<h2>Supported Constructs<a class="headerlink" href="#supported-constructs" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</section>
+<section id="limitations">
+<h2>Limitations<a class="headerlink" href="#limitations" title="Permalink to this headline">¶</a></h2>
+<section id="signal-values-and-resolution">
+<h3>Signal Values and Resolution<a class="headerlink" href="#signal-values-and-resolution" title="Permalink to this headline">¶</a></h3>
+<p>There are several cases where the behaviour of the translated VHDL deviates
+from the source Verilog:</p>
+<ul class="simple">
+<li><p>The result of division by zero is x in Verilog but raises an exception in
+VHDL.</p></li>
+<li><p>Similarly, the result of reading past the end of an array in Verilog is x,
+whereas VHDL raises an exception.</p></li>
+<li><p>Any signal that is driven by two or more processes will have the value
+‘U’. This is the result of the signal resolution function in the
+std_logic_1164 package.</p></li>
+</ul>
+</section>
+<section id="constructs-not-supported">
+<h3>Constructs Not Supported<a class="headerlink" href="#constructs-not-supported" title="Permalink to this headline">¶</a></h3>
+<p>The following Verilog constructs cannot be translated to VHDL:</p>
+<ul class="simple">
+<li><p>fork and join</p></li>
+<li><p>force and release</p></li>
+<li><p>disable</p></li>
+<li><p>real-valued variables</p></li>
+<li><p>switches</p></li>
+<li><p>hierarchical dereferencing</p></li>
+</ul>
+</section>
+<section id="other-limitations">
+<h3>Other Limitations<a class="headerlink" href="#other-limitations" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>The test expressions in case statements must be constant.</p></li>
+<li><p>Translation of a parameter to a corresponding VHDL generic
+declaration. Instead the default parameter value is used.</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">The Icarus Verilog Targets</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tgt-vvp.html">The vvp Code Generator (-tvvp)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-stub.html">The stub Code Generator (-tstub)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-null.html">The null Code Generator (-tnull)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">The VHDL Code Generator (-tvhdl)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-vlog95.html">The Verilog ‘95 Code Generator (-tvlog95)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-pcb.html">The PCB Code Generator (-tpcb)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-fpga.html">The FPGA Code Generator (-tfpga)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-pal.html">The PAL Code Generator (-tpal)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-sizer.html">The sizer Code Analyzer (-tvvp)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-verilog.html">The Verilog Code Generator (-tverilog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-blif.html">The BLIF Code Generator (-tblif)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">The Icarus Verilog Targets</a><ul>
+      <li>Previous: <a href="tgt-null.html" title="previous chapter">The null Code Generator (-tnull)</a></li>
+      <li>Next: <a href="tgt-vlog95.html" title="next chapter">The Verilog ‘95 Code Generator (-tvlog95)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/targets/tgt-vhdl.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Files With Version Information &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Developer Guide" href="guide/index.html" />
+    <link rel="prev" title="The Regression Test Suite" href="regression_tests.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="files-with-version-information">
+<h1>Files With Version Information<a class="headerlink" href="#files-with-version-information" title="Permalink to this headline">¶</a></h1>
+<p>These are the only files that have version information in them:</p>
+<ul class="simple">
+<li><p>version_base.h    – This should be the 1 source for version info.</p></li>
+<li><p>version_tag.h     – Generated automatically with git tag information.</p></li>
+<li><p>verilog.spec      – Used to stamp RPM packages</p></li>
+</ul>
+<p>When versions are changed, the above files need to be edited to account for
+the new version information. The following used to have verion information in
+them, but now their version information is generated:</p>
+<p>The version_tag.h file is generated from git tag information using
+the “make version” target, or automatically if the version_tag.h
+file doesn’t exist at all. This implies that a “make version” is
+something worth doing when you do a “git pull” or create commits.</p>
+<p>The files below are now edited by the makefile and the version.exe program:</p>
+<ul class="simple">
+<li><p>iverilog-vpi.man    – The .TH tag has a version string</p></li>
+<li><p>driver/iverilog.man – The .TH tag has a version string</p></li>
+<li><p>driver-vpi/res.rc   – Used to build Windows version stamp</p></li>
+<li><p>vvp/vvp.man         – The .TH tag has a version string</p></li>
+</ul>
+<p>This now includes version_base.h to get the version:</p>
+<ul class="simple">
+<li><p>vpi/vams_simparam.c – Hard coded result to simulatorVersion query</p></li>
+</ul>
+<p>This is actually a test file list that is specific to a major version.
+The regression test scripts query the version of the compiler to infer
+that it must include this list of tests. For example, for version 12.x
+of the compiler, the needs to be an ivltest/regress-v12.list file that
+lists the tests that are specific to that version.</p>
+<ul class="simple">
+<li><p>ivltests/regress-XXX.list – Version specific regression tests</p></li>
+</ul>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started as a Contributer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Files With Version Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide/index.html">Developer Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Developer Support</a><ul>
+      <li>Previous: <a href="regression_tests.html" title="previous chapter">The Regression Test Suite</a></li>
+      <li>Next: <a href="guide/index.html" title="next chapter">Developer Guide</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/developer/version_stamps.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

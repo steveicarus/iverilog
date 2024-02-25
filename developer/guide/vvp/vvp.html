@@ -1,0 +1,1217 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>VVP Simulation Engine &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Executable Instruction Opcodes" href="opcodes.html" />
+    <link rel="prev" title="VVP - Verilog Virtual Processor" href="index.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="vvp-simulation-engine">
+<h1>VVP Simulation Engine<a class="headerlink" href="#vvp-simulation-engine" title="Permalink to this headline">¶</a></h1>
+<p>The VVP simulator takes as input source code not unlike assembly
+language for a conventional processor. It is intended to be machine
+generated code emitted by other tools, including the Icarus Verilog
+compiler, so the syntax, though readable, is not necessarily
+convenient for humans.</p>
+<section id="general-format">
+<h2>General Format<a class="headerlink" href="#general-format" title="Permalink to this headline">¶</a></h2>
+<p>The source file is a collection of statements. Each statement may have
+a label, an opcode, and operands that depend on the opcode. For some
+opcodes, the label is optional (or meaningless) and for others it is
+required.</p>
+<p>Every statement is terminated by a semicolon. The semicolon is also
+the start of a comment line, so you can put comment text after the
+semicolon that terminates a statement. Like so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Label .functor and, 0x5a, x, y  ; This is a comment.
+</pre></div>
+</div>
+<p>The semicolon is required, whether the comment is there or not.</p>
+<p>Statements may span multiple lines, as long as there is no text (other
+then the first character of a label) in the first column of the
+continuation line.</p>
+</section>
+<section id="header-syntax">
+<h2>Header Syntax<a class="headerlink" href="#header-syntax" title="Permalink to this headline">¶</a></h2>
+<p>Before any other non-commentary code starts, the source may contain
+some header statements. These are used for passing parameters or
+global details from the compiler to the vvp run-time. In all cases,
+the header statement starts with a left-justified keyword.</p>
+<ul class="simple">
+<li><p>:module “name” ;</p></li>
+</ul>
+<p>This header statement names a vpi module that vvp should load before
+the rest of the program is compiled. The compiler looks in the
+standard VPI_MODULE_PATH for files named “name.vpi”, and tries to
+dynamic load them.</p>
+<ul class="simple">
+<li><p>:vpi_time_precision [+|-]&lt;value&gt;;</p></li>
+</ul>
+<p>This header statement specifies the time precision of a single tick of
+the simulation clock. This is mostly used for display (and VPI)
+purposes, because the engine itself does not care about units. The
+compiler scales time values ahead of time.</p>
+<p>The value is the size of a simulation tick in seconds, and is
+expressed as a power of 10. For example, +0 is 1 second, and -9 is 1
+nanosecond. If the record is left out, then the precision is taken to
+be +0.</p>
+</section>
+<section id="labels-and-symbols">
+<h2>Labels and Symbols<a class="headerlink" href="#labels-and-symbols" title="Permalink to this headline">¶</a></h2>
+<p>Labels and symbols consist of the characters:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>a-z
+A-Z
+0-9
+.$_&lt;&gt;
+</pre></div>
+</div>
+<p>Labels and symbols may not start with a digit or a ‘.’, so that they
+are easily distinguished from keywords and numbers. A Label is a
+symbol that starts a statement. If a label is present in a statement,
+it must start in the first text column. This is how the lexical
+analyzer distinguishes a label from a symbol. If a symbol is present
+in a statement, it is in the operand. Opcodes of statements must be a
+keyword.</p>
+<p>Symbols are references to labels. It is not necessary for a label to
+be declared before its use in a symbol, but it must be declared
+eventually. When symbols refer to functors, the symbol represents the
+vvp_ipoint_t pointer to the output. (Inputs cannot, and need not, be
+references symbolically.)</p>
+<p>If the functor is part of a vector, then the symbol is the
+vvp_ipoint_t for the first functor. The [] operator can then be used
+to reference a functor other than the first in the vector.</p>
+<p>There are some special symbols that in certain contexts have special
+meanings. As inputs to functors, the symbols “C&lt;0&gt;”, “C&lt;1&gt;”, “C&lt;x&gt;”
+and “C&lt;z&gt;” represent a constant driver of the given value.</p>
+</section>
+<section id="numbers">
+<h2>Numbers<a class="headerlink" href="#numbers" title="Permalink to this headline">¶</a></h2>
+<p>decimal number tokens are limited to 64bits, and are unsigned. Some
+contexts may constrain the number size further.</p>
+</section>
+<section id="scope-statements">
+<h2>Scope Statements<a class="headerlink" href="#scope-statements" title="Permalink to this headline">¶</a></h2>
+<p>The syntax of a scope statement is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .scope &lt;type&gt;, &lt;name&gt; &lt;type-name&gt; &lt;file&gt; &lt;lineno&gt; ;
+
+&lt;label&gt; .scope &lt;type&gt;, &lt;name&gt; &lt;type-name&gt; &lt;file&gt; &lt;lineno&gt;, \
+               &lt;def-file&gt; &lt;def-lineno&gt; &lt;is-cell&gt;, &lt;parent&gt; ;
+</pre></div>
+</div>
+<p>The &lt;type&gt; is the general type of the scope: module, autofunction,
+function, autotask, task, begin, fork, autobegin, autofork, or generate.</p>
+<p>The &lt;name&gt; is a string that is the base name of the instance. For
+modules, this is the instance name. For tasks and functions, this is
+the task or function name.</p>
+<p>The &lt;type-name&gt; is the name of the type. For most scope types, this is
+the name as the &lt;name&gt;, but for module and class scopes, this is the
+name of the definition, and not the instance.</p>
+<p>The &lt;file&gt; and &lt;lineno&gt; are the location of the instantiation of this
+scope. For a module, it is the location of the instance.</p>
+<p>The &lt;def-file&gt; and &lt;def-lineno&gt; is the source file and line number for
+the definition of the scope. For modules, this is where the module is
+defined instead of where it is instantiated.</p>
+<p>The &lt;is-cell&gt; flag is only useful for module instances. It is true
+(not zero) if the module is a celltype instead of a regular module.</p>
+<p>The short form of the scope statement is only used for root scopes.</p>
+</section>
+<section id="parameter-statements">
+<h2>Parameter Statements<a class="headerlink" href="#parameter-statements" title="Permalink to this headline">¶</a></h2>
+<p>Parameters are named constants within a scope. These parameters have a
+type and value, and also a label so that they can be referenced as VPI
+objects.</p>
+<p>The syntax of a parameter is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .param/str &lt;name&gt; &lt;local-flag&gt; &lt;file-idx&gt; &lt;lineno&gt;, &lt;value&gt;;
+&lt;label&gt; .param/l &lt;name&gt; &lt;local-flag&gt; &lt;file-idx&gt; &lt;lineno&gt;, &lt;value&gt;;
+&lt;label&gt; .param/r &lt;name&gt; &lt;local-flag&gt; &lt;file-idx&gt; &lt;lineno&gt;, &lt;value&gt;;
+</pre></div>
+</div>
+<p>The &lt;name&gt; is a string that names the parameter. The name is placed in
+the current scope as a vpiParameter object. The .param suffix
+specifies the parameter type:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>.param/str    -- The parameter has a string value
+.param/l      -- The parameter has a logic vector value
+.param/r      -- The parameter has a real value
+</pre></div>
+</div>
+<p>The value, then, is appropriate for the data type. For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>P_123 .param/str &quot;hello&quot;, &quot;Hello, World.&quot;;
+</pre></div>
+</div>
+<p>The boolean and logic values can also be signed or not. If signed, the
+value is preceded by a ‘+’ character. (Note that the value is 2s
+complement, so the ‘+’ says only that it is signed, not positive.)</p>
+</section>
+<section id="functor-statements">
+<h2>Functor Statements<a class="headerlink" href="#functor-statements" title="Permalink to this headline">¶</a></h2>
+<p>A functor statement is a statement that uses the <cite>.functor</cite>
+opcode. Functors are the basic structural units of a simulation, and
+include a type (in the form of a truth table) and up to four inputs. A
+label is required for functors.</p>
+<p>The general syntax of a functor is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .functor &lt;type&gt;, symbol_list ;
+&lt;label&gt; .functor &lt;type&gt; [&lt;drive0&gt; &lt;drive1&gt;], symbol_list ;
+</pre></div>
+</div>
+<p>The symbol list is 4 names of labels of other functors. These connect
+inputs of the functor of the statement to the output of other
+functors. If the input is unconnected, use a C&lt;?&gt; symbol instead. The
+type selects the truth lookup table to use for the functor
+implementation. Most of the core gate types have built in tables.</p>
+<p>The initial values of all the inputs and the output is x. Any other
+value is passed around as run-time behavior. If the inputs have C&lt;?&gt;
+symbols, then the inputs are initialized to the specified bit value,
+and if this causes the output to be something other than x, a
+propagation event is created to be executed at the start of run time.</p>
+<p>The strengths of inputs are ignored by functors, and the output has
+fixed drive0 and drive1 strengths. So strength information is
+typically lost as it passes through functors.</p>
+<p>Almost all of the structural aspects of a simulation can be
+represented by functors, which perform the very basic task of
+combining up to four inputs down to one output.</p>
+<ul class="simple">
+<li><p>MUXZ</p></li>
+</ul>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Q | A  B  S  n/a
+--+-------------
+A | *  *  0
+B | *  *  1
+</pre></div>
+</div>
+</section>
+<section id="dff-and-latch-statements">
+<h2>DFF and Latch Statements<a class="headerlink" href="#dff-and-latch-statements" title="Permalink to this headline">¶</a></h2>
+<p>The Verilog language itself does not have a DFF primitive, but post
+synthesis readily creates DFF devices that are best simulated with a
+common device. Thus, there is the DFF statement to create DFF devices:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .dff/p &lt;width&gt; &lt;d&gt;, &lt;clk&gt;, &lt;ce&gt;;
+&lt;label&gt; .dff/n &lt;width&gt; &lt;d&gt;, &lt;clk&gt;, &lt;ce&gt;;
+&lt;label&gt; .dff/p/aclr &lt;width&gt; &lt;d&gt;, &lt;clk&gt;, &lt;ce&gt;, &lt;async-input&gt;;
+&lt;label&gt; .dff/n/aclr &lt;width&gt; &lt;d&gt;, &lt;clk&gt;, &lt;ce&gt;, &lt;async-input&gt;;
+&lt;label&gt; .dff/p/aset &lt;width&gt; &lt;d&gt;, &lt;clk&gt;, &lt;ce&gt;, &lt;async-input&gt;[, &lt;set-value&gt;];
+&lt;label&gt; .dff/n/aset &lt;width&gt; &lt;d&gt;, &lt;clk&gt;, &lt;ce&gt;, &lt;async-input&gt;[, &lt;set-value&gt;];
+</pre></div>
+</div>
+<p>The /p variants simulate positive-edge triggered flip-flops and the
+/n variants simulate negative-edge triggered flip-flops. The generated
+functor is generally synchronous on the specified edge of &lt;clk&gt;, with
+the &lt;ce&gt; enable active high. The &lt;clk&gt; and &lt;ce&gt; are single bit vectors
+(or scalars) on ports 1 and 2. Port-0 is any type of datum at all. The
+device will transfer the input to the output when it is loaded by a
+clock. The &lt;async-input&gt; is a special asynchronous input that on the
+rising edge causes the device to clear/set, forces the output to
+propagate, and disables the clock until the aynchronous input is
+deasserted. Thus, they implement DFF with asynchronous clr or set.</p>
+<p>Similarly, synthesis creates D-type latches, so there is the LATCH
+statement to support this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .latch &lt;width&gt; &lt;d&gt;, &lt;en&gt;;
+</pre></div>
+</div>
+<p>The &lt;en&gt; is a single bit vector (or scalar) on port-1. Port-0 is any
+type of datum at all. The device will transfer the input to the output
+whenever &lt;en&gt; is a logic 1.</p>
+</section>
+<section id="udp-statements">
+<h2>UDP Statements<a class="headerlink" href="#udp-statements" title="Permalink to this headline">¶</a></h2>
+<p>A UDP statement either defines a User Defined Primitive, or
+instantiates a previously defined UDP by creating a UDP functor.  A
+UDP functor has as many inputs as the UDP definition requires.</p>
+<p>UDPs come in sequential and combinatorial flavors.  Sequential UDPs
+carry an output state and can respond to edges at the inputs.  The
+output of combinatorial UDPs is a function of its current inputs
+only.</p>
+<p>The function of a UDP is defined via a table.  The rows of the table
+are strings which describe input states or edges, and the new output
+state.  Combinatorial UDPs require one character for each input, and
+one character at the end for the output state.  Sequential UDPs need
+an additional char for the current state, which is the first char of
+the row.</p>
+<p>Any input transition or the new state must match at most one row (or
+all matches must provide the same output state).  If no row matches,
+the output becomes 1’bx.</p>
+<p>The output state can be specified as “0”, “1”, or “x”.  Sequential
+UDPs may also have “-”: no change.</p>
+<p>An input or current output state can be</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&quot;1&quot;: 1
+&quot;0&quot;: 0
+&quot;x&quot;: x
+&quot;b&quot;: 1, 0
+&quot;h&quot;: 1, x
+&quot;l&quot;: 0, x
+&quot;?&quot;: 1, 0, x
+</pre></div>
+</div>
+<p>For Sequential UDPs, at most one input state specification may be
+replaced by an edge specification.  Valid edges are:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&quot;*&quot;: (??)       &quot;_&quot;: (?0)       &quot;+&quot;: (?1)       &quot;%&quot;: (?x)
+&quot;P&quot;: (0?)                       &quot;r&quot;: (01)       &quot;Q&quot;: (0x)
+&quot;N&quot;: (1?)       &quot;f&quot;: (10)                       &quot;M&quot;: (1x)
+&quot;B&quot;: (x?)       &quot;F&quot;: (x0)       &quot;R&quot;: (x1)
+
+&quot;n&quot;: (1?) | (?0)
+&quot;p&quot;: (0?) | (?1)
+</pre></div>
+</div>
+<p>A combinatorial UDP is defined like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;type&gt; .udp/comb &quot;&lt;name&gt;&quot;, &lt;number&gt;, &quot;&lt;row0&gt;&quot;, &quot;&lt;row1&gt;&quot;, ... ;
+</pre></div>
+</div>
+<p>&lt;type&gt; is a label that identifies the UDP.  &lt;number&gt; is the number of
+inputs.  “&lt;name&gt;” is there for public identification.  Sequential UDPs
+need an additional initialization value:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;type&gt; .udp/sequ &quot;&lt;name&gt;&quot;, &lt;number&gt;, &lt;init&gt;, &quot;&lt;row0&gt;&quot;, &quot;&lt;row1&gt;&quot;, ... ;
+</pre></div>
+</div>
+<p>&lt;init&gt; is the initial value for all instances of the UDP.  We do not
+provide initial values for individual instances.  &lt;init&gt; must be a
+number 0, 1, or 2 (for 1’bx).</p>
+<p>A UDP functor instance is created so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .udp  &lt;type&gt;, &lt;symbol_list&gt; ;
+</pre></div>
+</div>
+<p>Where &lt;label&gt; identifies the functor, &lt;type&gt; is the label of a UDP
+defined earlier, and &lt;symbol_list&gt; is a list of symbols, one for each
+input of the UDP.</p>
+</section>
+<section id="variable-statements">
+<h2>Variable Statements<a class="headerlink" href="#variable-statements" title="Permalink to this headline">¶</a></h2>
+<p>A variable is a bit vector that can be written by behavioral code (so
+has no structural input) and propagates its output to a functor. The
+general syntax of a variable is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .var   &quot;name&quot;, &lt;msb&gt; &lt;lsb&gt;; Unsigned logic variable
+&lt;label&gt; .var/s &quot;name&quot;, &lt;msb&gt; &lt;lsb&gt;; Signed logic variable
+&lt;label&gt; .var/2u &quot;name&quot;, &lt;msb&gt; &lt;lsb&gt;; Unsigned bool/bit variable
+&lt;label&gt; .var/2s &quot;name&quot;, &lt;msb&gt; &lt;lsb&gt;; Signed bool/bit variable
+&lt;label&gt; .var/real &quot;name&quot;, &lt;msb&gt;, &lt;lsb&gt;; real variable
+&lt;label&gt; .var/i &quot;name&quot;, &lt;msb&gt;, &lt;lsb&gt;; vpiIntegerVar variable
+&lt;label&gt; .var/str &quot;name&quot;; vpiStringVar variable
+</pre></div>
+</div>
+<p>The “name” is the declared base name of the original variable, for the
+sake of VPI code that might access it. The variable is placed in the
+current scope. The variable also has a width, defined by the indices
+for the most significant and lest significant bits. If the indices are
+equal (normally 0) the vector has width of one. If the width is greater
+then one, a contiguous array of functors is created and the value of
+the label is the address of the least significant bit.</p>
+<p>A variable does not take inputs, since its value is set behaviorally
+by assignment events. It does have output, though, and its output is
+propagated into the net of functors in the usual way.</p>
+<p>A variable gets its value by assignments from procedural code: %set
+and %assign. These instructions write values to the port-0 input. From
+there, the value is held.</p>
+<p>Behavioral code can also invoke %cassign/v statements that work like
+%set/v, but instead write to port-1 of the variable node. Writes to
+port-1 of a variable activate continuous assign mode, where the values
+written to port-0 are ignored. The continuous assign mode remains
+active until a long(1) is written to port-3 (a command port).</p>
+<p>Behavioral code may also invoke %force/v statements that write to port-2
+to invoke force mode. This overrides continuous assign mode until a
+long(2) is written to port-3 to disable force mode.</p>
+</section>
+<section id="net-statements">
+<h2>Net Statements<a class="headerlink" href="#net-statements" title="Permalink to this headline">¶</a></h2>
+<p>A net is similar to a variable, except that a thread cannot write to
+it (unless it uses a force) and it is given a different VPI type
+code. The syntax of a .net statement is also similar to but not
+exactly the same as the .var statement:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .net      &quot;name&quot;, &lt;msb&gt;, &lt;lsb&gt;, &lt;symbol&gt;;
+&lt;label&gt; .net/s    &quot;name&quot;, &lt;msb&gt;, &lt;lsb&gt;, &lt;symbol&gt;;
+&lt;label&gt; .net8     &quot;name&quot;, &lt;msb&gt;, &lt;lsb&gt;, &lt;symbol&gt;;
+&lt;label&gt; .net8/s   &quot;name&quot;, &lt;msb&gt;, &lt;lsb&gt;, &lt;symbol&gt;;
+&lt;label&gt; .net/real &quot;name&quot;, &lt;msb&gt;, &lt;lsb&gt;, &lt;symbol&gt;;
+</pre></div>
+</div>
+<p>Like a .var statement, the .net statement creates a VPI object with
+the basename and dimensions given as parameters. The symbol is a
+functor that feeds into the vector of the net, and the vpiHandle
+holds references to that functor.</p>
+<p>The input of a .net is replicated to its output. In this sense, it
+acts like a diode. The purpose of this node is to hold various VPI
+and event trappings. The .net and .net8 nodes are vector types. They
+both may represent wires, but the .net8 nodes preserve strength values
+that arrive through them, while .net nodes reduce strength values to
+4-value logic. The .net8 nodes should only be used when strength
+information really is possible.</p>
+<p>The &lt;label&gt; is required and is used to locate the net object that it
+represents. This label does not map to a functor, so only references
+that know they want to access .nets are able to locate the symbol. In
+particular, this includes behavioral %load and %wait instructions. The
+references to net and reg objects are done through the .net label
+instead of a general functor symbol. The instruction stores the
+functor pointer, though.</p>
+<p>The .alias statements do not create new nodes, but instead create net
+names that are aliases of an existing node. This handles special cases
+where a net has different names, possibly in different scopes.</p>
+</section>
+<section id="cast-statements">
+<h2>Cast Statements<a class="headerlink" href="#cast-statements" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes nets need to be cast from a real valued net to a bit based
+net or from a bit based net to a real valued net. These statements
+are used to perform that operation:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .cast/int &lt;width&gt;, &lt;symbol&gt;;
+&lt;label&gt; .cast/2 &lt;width&gt;, &lt;symbol&gt;;
+&lt;label&gt; .cast/real &lt;symbol&gt;;
+&lt;label&gt; .cast/real.s &lt;symbol&gt;;
+</pre></div>
+</div>
+<p>For .cast/int the output &lt;label&gt; is a bit based net that is &lt;width&gt;
+bits wide. The input &lt;symbol&gt; is expected to put real values to
+this functor.</p>
+<p>For .cast/real the output &lt;label&gt; is a real valued net. The input
+&lt;symbol&gt; is expected to put bit based values and for .cast/real.s
+the bits will be interpreted as a signed value.</p>
+</section>
+<section id="delay-statements">
+<h2>Delay Statements<a class="headerlink" href="#delay-statements" title="Permalink to this headline">¶</a></h2>
+<p>Delay nodes are structural net delay nodes that carry and manage
+propagation delays. Delay nodes can have fixed delays or variable
+delays. Fixed delay nodes have only the input that is to be
+delayed. The delay amount is given on the node line. Variable delay
+nodes have three extra inputs to receive the rise, fall and decay
+times that are used for delay.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>.delay &lt;width&gt; ( &lt;rise&gt;, &lt;fall&gt;, &lt;decay&gt; ) &lt;input&gt; ;
+.delay &lt;width&gt; &lt;input&gt;, &lt;rise&gt;, &lt;fall&gt;, &lt;decay&gt; ;
+</pre></div>
+</div>
+<p>The first form above takes three constant (64bit) numbers as the
+initial delay, and takes a single input. The second form takes 4 net
+inputs, with the first being the value to delay, and the remaining to
+be the delay values to use. &lt;width&gt; specifies the bit width of the
+input net, with a width of 0 used to identify a real valued net.</p>
+</section>
+<section id="module-path-delay-statements">
+<h2>Module Path Delay Statements<a class="headerlink" href="#module-path-delay-statements" title="Permalink to this headline">¶</a></h2>
+<p>A module path delay takes data from its input, then a list of module
+path delays. The &lt;src&gt; for each possible delay set is a trigger that
+activates the delay.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>.modpath &lt;width&gt; &lt;input&gt; , [ &lt;src&gt; (&lt;delays&gt; [? &lt;condition&gt;]) ] ;
+</pre></div>
+</div>
+<p>&lt;width&gt; specifies the bit width of the input net.</p>
+</section>
+<section id="array-index-statements">
+<h2>Array Index Statements<a class="headerlink" href="#array-index-statements" title="Permalink to this headline">¶</a></h2>
+<p>Variables can be collected into arrays. The words of the array are
+declared separately, this statement collects them together:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .array &quot;name&quot;, &lt;last&gt; &lt;first&gt; ;
+</pre></div>
+</div>
+<p>the .var or .net statements after this array statement, that have the
+same “name” are collected, in order, as words.</p>
+<p>The syntax below is different, in that it creates an alias for an
+existing array. The dimensions and storage are taken from the .array
+at &lt;src&gt;.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .array &quot;name&quot;, &lt;src&gt; ;
+</pre></div>
+</div>
+</section>
+<section id="event-statements">
+<h2>Event Statements<a class="headerlink" href="#event-statements" title="Permalink to this headline">¶</a></h2>
+<p>Threads need to interact with the functors of a netlist synchronously,
+as well as asynchronously. There are cases where the web of functors
+needs to wake up a waiting thread. The web of functors signals threads
+through .event objects, that are declared like so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .event &lt;type&gt;, &lt;symbols_list&gt;;
+&lt;label&gt; .event &quot;name&quot;;
+</pre></div>
+</div>
+<p>This event statement declares an object that a %wait instruction
+can take as an operand. When a thread executes a %wait, it puts
+itself in the notification list of the event and suspends. The
+&lt;symbols_list&gt; is a set of inputs that can trigger the event.</p>
+<p>The &lt;type&gt; describes the conditions needed to trigger the event. It
+may be posedge, negedge, edge or anyedge. If the type is instead a
+“name” string, then this is a named event which receives events by
+the %set instruction instead of from the output of a functor.</p>
+<p>If the event has inputs (a requirement unless it is a named event)
+then it has up to 4 symbols that address functors. The event then
+detects the appropriate edge on any of the inputs and signals when the
+event is true. Normally (in Verilog) a posedge or negedge event only
+watches a single bit, so the generated code would only include a
+single symbol for the addressed bit. However, if there are several
+events of the same edge in an event OR expression, the compiler may
+combine up to 4 into a single event.</p>
+<p>If many more events need to be combined together (for example due to
+an event or expression in the Verilog) then this form can be used:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .event/or &lt;symbols_list&gt;;
+</pre></div>
+</div>
+<p>In this case, the symbols list all the events that are to be combined
+to trigger this event. Only one of the input events needs to trigger
+to make this one go.</p>
+</section>
+<section id="resolver-statements">
+<h2>Resolver Statements<a class="headerlink" href="#resolver-statements" title="Permalink to this headline">¶</a></h2>
+<p>Resolver statements are strength-aware functors with 4 inputs, but
+their job typically is to calculate a resolved output using strength
+resolution. The type of the functor is used to select a specific
+resolution function.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .resolv tri,  &lt;symbols_list&gt;;
+&lt;label&gt; .resolv tri0, &lt;symbols_list&gt;;
+&lt;label&gt; .resolv tri1, &lt;symbols_list&gt;;
+</pre></div>
+</div>
+<p>The output from the resolver is vvp_vector8_t value. That is, the
+result is a vector with strength included.</p>
+</section>
+<section id="part-select-statements">
+<h2>Part Select Statements<a class="headerlink" href="#part-select-statements" title="Permalink to this headline">¶</a></h2>
+<p>Part select statements are functors with three inputs. They take in at
+port-0 a vector, and output a selected (likely smaller) part of that
+vector. The other inputs specify what those parts are, as a canonical
+bit number, and a width. Normally, those bits are constant values.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .part &lt;symbol&gt;, &lt;base&gt;, &lt;wid&gt;;
+&lt;label&gt; .part/pv &lt;symbol&gt;, &lt;base&gt;, &lt;wid&gt;, &lt;vector_wid&gt;;
+&lt;label&gt; .part/v &lt;symbol&gt;, &lt;symbol&gt;, &lt;wid&gt;;
+&lt;label&gt; .part/v.s &lt;symbol&gt;, &lt;symbol&gt;, &lt;wid&gt;;
+</pre></div>
+</div>
+<p>The input is typically a .reg or .net, but can be any vector node in
+the netlist.</p>
+<p>The .part/pv variation is the inverse of the .part version, in that
+the output is actually written to a <em>part</em> of the output. The node
+uses special part-select-write functions to propagate a part of a
+network. The &lt;vector_wid&gt; is the total width of the destination net
+that part is written to. Destination nodes use this value to check
+further output widths.</p>
+<p>The .part/v variation takes a vector (or long) input on port-1 as the
+base of the part select. Thus, the part select can move around. The
+.part/v.s variation treats the vector as a signed value.</p>
+</section>
+<section id="part-concatenation-statements">
+<h2>Part Concatenation Statements<a class="headerlink" href="#part-concatenation-statements" title="Permalink to this headline">¶</a></h2>
+<p>The opposite of the part select statement is the part concatenation
+statement. The .concat statement is a functor node that takes at input
+vector values and produces a single vector output that is the
+concatenation of all the inputs.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .concat [W X Y Z], &lt;symbols_list&gt; ;
+</pre></div>
+</div>
+<p>The “[” and “]” tokens surround a set of 4 numbers that are the
+expected widths of all the inputs. These widths are needed to figure
+the positions of the input vectors in the generated output, and are
+listed in order LSB to MSB. The inputs themselves are also listed LSB
+to MSB, with the LSB vector input coming through port-0 of the real
+functor.</p>
+<p>The initial output value is (W+X+Y+Z) bits of ‘bx. As input values are
+propagated, the bits are placed in the correct place in the output
+vector value, and a new output value is propagated.</p>
+</section>
+<section id="repeat-vector-statements">
+<h2>Repeat Vector Statements<a class="headerlink" href="#repeat-vector-statements" title="Permalink to this headline">¶</a></h2>
+<p>The repeat vector statement is similar to the concatenation statement,
+expect that the input is repeated a constant number of times. The
+format of the repeat vector statement is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .repeat &lt;wid&gt;, &lt;rept count&gt;, &lt;symbol&gt; ;
+</pre></div>
+</div>
+<p>In this statement, the &lt;wid&gt; is a decimal number that is the width of
+the <em>output</em> vector. The &lt;rept count&gt; is the number of time the input
+vector value is repeated to make the output width. The input width is
+implicit from these numbers. The &lt;symbol&gt; is then the input source.</p>
+</section>
+<section id="substitution-statements">
+<h2>Substitution Statements<a class="headerlink" href="#substitution-statements" title="Permalink to this headline">¶</a></h2>
+<p>The substitution statement doesn’t have a direct analog in Verilog, it
+only turns up in synthesis. It is a shorthand for forms like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>foo = &lt;a&gt;;
+foo[n] = &lt;s&gt;;
+</pre></div>
+</div>
+<p>The format of the substitute statement is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .substitute &lt;wid&gt;, &lt;soff&gt; &lt;swid&gt;, &lt;symbol&gt;, &lt;symbol&gt; ;
+</pre></div>
+</div>
+<p>The first &lt;symbol&gt; must have the width &lt;wid&gt;, and is passed through,
+except for the bits within [&lt;soff&gt; +: &lt;swid&gt;]. The second &lt;symbol&gt;
+collects a vector that goes into that part.</p>
+</section>
+<section id="reduction-logic">
+<h2>Reduction Logic<a class="headerlink" href="#reduction-logic" title="Permalink to this headline">¶</a></h2>
+<p>The reduction logic statements take in a single vector, and propagate
+a single bit.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .reduce/and  &lt;symbol&gt; ;
+&lt;label&gt; .reduce/or   &lt;symbol&gt; ;
+&lt;label&gt; .reduce/xor  &lt;symbol&gt; ;
+&lt;label&gt; .reduce/nand &lt;symbol&gt; ;
+&lt;label&gt; .reduce/nor  &lt;symbol&gt; ;
+&lt;label&gt; .reduce/xnor &lt;symbol&gt; ;
+</pre></div>
+</div>
+<p>the device has a single input, which is a vector of any width. The
+device performs the logic on all the bits of the vector (a la Verilog)
+and produces and propagates a single bit width vector.</p>
+</section>
+<section id="expansion-logic">
+<h2>Expansion Logic<a class="headerlink" href="#expansion-logic" title="Permalink to this headline">¶</a></h2>
+<p>Sign extension nodes are the opposite of reduction logic, in that they
+take a narrow vector, or single bit, and pad it out to a wider
+vector.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .expand/s &lt;wid&gt;, &lt;symbol&gt; ;
+</pre></div>
+</div>
+<p>The .expand/s node takes an input symbol and sign-extends it to the
+given width.</p>
+</section>
+<section id="force-statements-old-method-remove-me">
+<h2>Force Statements (old method - remove me)<a class="headerlink" href="#force-statements-old-method-remove-me" title="Permalink to this headline">¶</a></h2>
+<p>A force statement creates functors that represent a Verilog force
+statement.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .force &lt;signal&gt;, &lt;symbol_list&gt;;
+</pre></div>
+</div>
+<p>The symbol &lt;signal&gt; represents the signal which is to be forced.  The
+&lt;symbol_list&gt; specifies the bits of the expression that is to be
+forced on the &lt;signal&gt;.  The &lt;label&gt; identifies the force functors.
+There will be as many force functors as there are symbols in the
+&lt;symbol_list&gt;.</p>
+<p>To activate and deactivate a force on a single bit, use:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%force  &lt;label&gt;, &lt;width&gt;;
+%release &lt;signal&gt;;
+</pre></div>
+</div>
+<p>&lt;label&gt;/&lt;width&gt; is the label/width of a vector of force functors.
+&lt;signal&gt; is the label of the functor that drives the signal that is
+being forced.</p>
+</section>
+<section id="force-statements-new-method-implement-me">
+<h2>Force Statements (new method - implement me)<a class="headerlink" href="#force-statements-new-method-implement-me" title="Permalink to this headline">¶</a></h2>
+<p>A %force instruction, as described in the .var section, forces a
+constant value onto a .var or .net, and the matching %release releases
+that value. However, there are times when the value of a functor
+(i.e. another .net) needs to be forced onto a .var or .net. For this
+task, the %force/link instruction exists:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%force/link &lt;dst&gt;, &lt;src&gt; ;
+%release/link &lt;dst&gt; ;
+</pre></div>
+</div>
+<p>This causes the output of the node &lt;src&gt; to be linked to the force
+input of the &lt;dst&gt; .var/.net node. When linked, the output functor
+will automatically drive values to the force port of the destination
+node. The matching %release/link instruction removes the link (a
+%release is still needed) to the destination. The %release/link
+releases the last %force/link, no matter where the link is from. A new
+%force/link will remove a previous link.</p>
+<p>The instructions:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%cassign/link &lt;dst&gt;, &lt;src&gt; ;
+%deassign/link &lt;dst&gt; ;
+</pre></div>
+</div>
+<p>are the same concept, but for the continuous assign port.</p>
+</section>
+<section id="structural-arithmetic-statements">
+<h2>Structural Arithmetic Statements<a class="headerlink" href="#structural-arithmetic-statements" title="Permalink to this headline">¶</a></h2>
+<p>The various Verilog arithmetic operators (<cite>+-*/%</cite>) are available to
+structural contexts as two-input functors that take in vectors. All of
+these operators take two inputs and generate a fixed width output. The
+input vectors will be padded if needed to get the desired output width.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .arith/sub  &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+&lt;label&gt; .arith/sum  &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+&lt;label&gt; .arith/mult &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+&lt;label&gt; .arith/div  &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+&lt;label&gt; .arith/mod  &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+</pre></div>
+</div>
+<p>In all cases, there are no width limits, so long as the width is
+fixed.</p>
+<p>NOTE: The .arith/mult inputs are not necessarily the width of the
+output. I have not decided how to handle this.</p>
+<p>These devices support .s and .r suffixes. The .s means the node is a
+signed vector device, the .r a real valued device.</p>
+</section>
+<section id="structural-compare-statements">
+<h2>Structural Compare Statements<a class="headerlink" href="#structural-compare-statements" title="Permalink to this headline">¶</a></h2>
+<p>The arithmetic statements handle various arithmetic operators that
+have wide outputs, but the comparators have single bit output, so they
+are implemented a bit differently. The syntax, however, is very
+similar:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .cmp/eeq &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+&lt;label&gt; .cmp/nee &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+&lt;label&gt; .cmp/eq  &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+&lt;label&gt; .cmp/ne  &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+&lt;label&gt; .cmp/ge  &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+&lt;label&gt; .cmp/gt  &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+&lt;label&gt; .cmp/ge.s &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+&lt;label&gt; .cmp/gt.s &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+&lt;label&gt; .cmp/weq &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+&lt;label&gt; .cmp/wne &lt;wid&gt;, &lt;A&gt;, &lt;B&gt;;
+</pre></div>
+</div>
+<p>Whereas the arithmetic statements generate an output the width of
+&lt;wid&gt;, the comparisons produce a single bit vector result. The plain
+versions do unsigned comparison, but the “.s” versions to signed
+comparisons. (Equality doesn’t need to care about sign.)</p>
+</section>
+<section id="structural-shifter-statements">
+<h2>Structural Shifter Statements<a class="headerlink" href="#structural-shifter-statements" title="Permalink to this headline">¶</a></h2>
+<p>Variable shifts in structural context are implemented with .shift
+statements:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .shift/l &lt;wid&gt;, &lt;data symbol&gt;, &lt;shift symbol&gt;;
+&lt;label&gt; .shift/r &lt;wid&gt;, &lt;data symbol&gt;, &lt;shift symbol&gt;;
+</pre></div>
+</div>
+<p>The shifter has a width that defines the vector width of the output, a
+&lt;data symbol&gt; that is the input data to be shifted and a &lt;shift-symbol&gt;
+that is the amount to shift. The vectors that come from port 0 are the
+data to be shifted and must have exactly the width of the output. The
+input to port 1 is the amount to shift.</p>
+</section>
+<section id="structural-function-calls">
+<h2>Structural Function Calls<a class="headerlink" href="#structural-function-calls" title="Permalink to this headline">¶</a></h2>
+<p>The .ufunc statements define a call to a user defined function.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .ufunc/real &lt;flabel&gt;, &lt;wid&gt;,
+    [&lt;isymbols&gt; ( &lt;psymbols&gt; )] &lt;ssymbol&gt;;
+
+&lt;label&gt; .ufunc/vec4 &lt;flabel&gt;, &lt;wid&gt;,
+    [&lt;isymbols&gt; ( &lt;psymbols&gt; )] &lt;ssymbol&gt;;
+
+&lt;label&gt; .ufunc/e &lt;flabel&gt;, &lt;wid&gt;, &lt;trigger&gt;,
+    &lt;isymbols&gt; ( &lt;psymbols&gt; ) &lt;ssymbol&gt;;
+</pre></div>
+</div>
+<p>The first variant is used for functions that only need to be called
+when one of their inputs changes value. The second variant is used
+for functions that also need to be called when a trigger event occurs.</p>
+<p>The &lt;flabel&gt; is the code label for the first instruction of the
+function implementation. This is code that the simulator will branch
+to.</p>
+<p>The &lt;wid&gt; is the width of the output vector in bits.</p>
+<p>The &lt;trigger&gt; is the label for the trigger event.</p>
+<p>The &lt;isymbols&gt; is a list of net symbols for each of the inputs to the
+function. These are points in the net, and the ufunc device watches
+these nets for input changes.</p>
+<p>The &lt;psymbols&gt; list is exactly the same size as the &lt;isymbols&gt;
+list. The &lt;psymbols&gt; are variables that represent the input ports for
+the function. The ufunc performs an assignment to these variables
+before calling the function.</p>
+<p>The &lt;ssymbol&gt; is the function scope name.</p>
+</section>
+<section id="thread-statements">
+<h2>Thread Statements<a class="headerlink" href="#thread-statements" title="Permalink to this headline">¶</a></h2>
+<p>Thread statements create the initial threads for a simulation. These
+represent the initial and always blocks, and possibly other causes to
+create threads at startup.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>.thread &lt;symbol&gt; [, &lt;flag&gt;]
+</pre></div>
+</div>
+<p>This statement creates a thread with a starting address at the
+instruction given by &lt;symbol&gt;. When the simulation starts, a thread is
+created for the .thread statement, and it starts at the &lt;symbol&gt;
+addressed instruction.</p>
+<p>The &lt;flag&gt; modifies the creation/execution behavior of the
+thread. Supported flags are:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$push -- Cause the thread to be pushed in the scheduler. This
+         only effects startup (time 0) by arranging for pushed
+         threads to be started before non-pushed threads. This
+         is useful for resolving time-0 races.
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Threads in general</p></li>
+</ul>
+<p>Thread statements create the initial threads of a design. These
+include the <cite>initial</cite> and <cite>always</cite> statements of the original
+Verilog, and possibly some other synthetic threads for various
+purposes. It is also possible to create transient threads from
+behavioral code. These are needed to support such constructs as
+fork/join, named blocks and task activation.</p>
+<p>A transient thread is created with a %fork instruction. When a
+transient thread is created this way, the operand to the %fork gives
+the starting address, and the new thread is said to be a child of the
+forking thread. The children of a thread are pushed onto a stack of
+children. A thread can have only one direct child.</p>
+<p>A transient thread is reaped with a %join instruction. %join waits for
+the top thread in the stack of children to complete, then
+continues. It is an error to %join when there are no children.</p>
+<p>As you can see, the transient thread in VVP is a cross between a
+conventional thread and a function call. In fact, there is no %call
+instruction in vvp, the job is accomplished with %fork/%join in the
+caller and %end in the callee. The %fork, then is simply a
+generalization of a function call, where the caller does not
+necessarily wait for the callee.</p>
+<p>For all the behavior of threads and thread parentage to work
+correctly, all %fork statements must have a corresponding %join in the
+parent, and %end in the child. Without this proper matching, the
+hierarchical relationships can get confused. The behavior of erroneous
+code is undefined.</p>
+<ul class="simple">
+<li><p>Thread Context</p></li>
+</ul>
+<p>The context of a thread is all the local data that only that thread
+can address. The local data is broken into two address spaces: bit
+memory and word memory.</p>
+<p>The bit memory is a region of 4-value bits (0,1,x,z) that can be
+addressed in strips of arbitrary length. For example, an 8-bit value
+can be in locations 8 through and including 15. The bits at address 0,
+1, 2 and 3 are special constant values. Reads from those locations
+make vectors of 0, 1, x or z values, so these can be used to
+manufacture complex values elsewhere.</p>
+<p>The word memory is a region of tagged words. The value in each word
+may be either a 64-bit unsigned integer (uint64_t), a 64-bit signed
+integer (int64_t), or a 64-bit floating point number (double). These
+words have a distinct address space from the bits.</p>
+<ul class="simple">
+<li><p>Threads and scopes</p></li>
+</ul>
+<p>The Verilog <cite>disable</cite> statement deserves some special mention
+because of how it interacts with threads. In particular, threads
+throughout the design can affect (end) other threads in the design
+using the disable statement.</p>
+<p>In Verilog, the operand to the disable statement is the name of a
+scope. The behavior of the disable is to cause all threads executing
+in the scope to end. Termination of a thread includes all the children
+of the thread. In vvp, all threads are in a scope, so this is how the
+disable gains access to the desired thread.</p>
+<p>It is obvious how initial/always thread join a scope. They become part
+of the scope simply by being declared after a .scope declaration. (See
+vvp.txt for .scope declarations.) The .thread statement placed in the
+assembly source after a .scope statement causes the thread to join the
+named scope.</p>
+<p>Transient threads join a scope that is the operand to the %fork
+instruction. The scope is referenced by name, and the thread created
+by the fork atomically joins that scope. Once the transient thread
+joins the scope, it stays there until it ends. Threads never change
+scopes, not even transient threads.</p>
+</section>
+<section id="vpi-task-function-calls">
+<h2>Vpi Task/Function Calls<a class="headerlink" href="#vpi-task-function-calls" title="Permalink to this headline">¶</a></h2>
+<p>Threads call vpi tasks with the %vpi_call or %vpi_func
+instructions. The formats are:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%vpi_call &lt;file-index&gt; &lt;lineno&gt; &lt;name&gt;, &lt;args&gt;... ;
+%vpi_call/w &lt;file-index&gt; &lt;lineno&gt; &lt;name&gt;, &lt;args&gt;... ;
+%vpi_call/i &lt;file-index&gt; &lt;lineno&gt; &lt;name&gt;, &lt;args&gt;... ;
+%vpi_func &lt;file-index&gt; &lt;lineno&gt; &lt;name&gt;, &lt;args&gt;... ;
+%vpi_func/r &lt;file-index&gt; &lt;lineno&gt; &lt;name&gt;, &lt;args&gt;... ;
+%vpi_func/s &lt;file-index&gt; &lt;lineno&gt; &lt;name&gt;, &lt;args&gt;... ;
+</pre></div>
+</div>
+<p>The &lt;file-index&gt; is an index into the string table. The indexed string
+is the source code file name where this call appears. The &lt;lineno&gt; is
+the line number from the source code where this task/function appears.</p>
+<p>The &lt;name&gt; is a string that is the name of the system
+task/function. For example, “$display”, $strobe”, etc. This name is
+looked up and compared with the registered system tasks/functions.</p>
+<p>The &lt;args&gt;… is a comma (“,”) separated list of arguments. These are
+made available to the VPI code as vpi handles.</p>
+<p>The plain %vpi_call will fail with an error message if a system function
+is called as a task. The /w suffix version will display a warning message
+if a system function is called as a task and will ignore any value that
+the function tries to return. The /i suffix version silently ignores any
+value returned by a system function called as a task.</p>
+<ul class="simple">
+<li><p>The &amp;A&lt;&gt; argument</p></li>
+</ul>
+<p>The &amp;A&lt;&gt; argument is a reference to the word of a variable array. The
+syntax is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&amp;A &#39;&lt;&#39; &lt;symbol&gt; , &lt;number&gt; &#39;&gt;&#39;
+&amp;A &#39;&lt;&#39; &lt;symbol&gt; , &lt;base_symbol&gt; &#39;&gt;&#39;
+&amp;A &#39;&lt;&#39; &lt;symbol&gt; , &lt;base&gt; &lt;width&gt; &lt;&quot;s&quot; or &quot;u&quot;&gt; &#39;&gt;&#39;
+</pre></div>
+</div>
+<p>The &lt;symbol&gt; is the label for a variable array, and the &lt;number&gt; is
+the canonical word index as an unsigned integer. The second form
+retrieves the &lt;base&gt; from the given signal or &amp;A&lt;&gt;/&amp;PV&lt;&gt; select.
+The third form retrieves the index from thread space (&lt;width&gt; bits
+starting at &lt;base&gt;). The base value may be signed or unsigned.</p>
+<ul class="simple">
+<li><p>The &amp;PV&lt;&gt; argument</p></li>
+</ul>
+<p>The &amp;PV&lt;&gt; argument is a reference to part of a signal. The syntax is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&amp;PV &#39;&lt;&#39; &lt;symbol&gt; , &lt;base&gt; , &lt;width&gt; &#39;&gt;&#39;
+&amp;PV &#39;&lt;&#39; &lt;symbol&gt; , &lt;base_symbol&gt; , &lt;width&gt; &#39;&gt;&#39;
+&amp;PV &#39;&lt;&#39; &lt;symbol&gt; , &lt;tbase&gt; &lt;twid&gt; &lt;&quot;s&quot; or &quot;u&quot;&gt; , &lt;width&gt; &#39;&gt;&#39;
+</pre></div>
+</div>
+<p>The &lt;symbol&gt; is the label for a signal, the &lt;base&gt; is the canonical
+starting bit of the part select and &lt;width&gt; is the number of bits in
+the select. The second form retrieves the &lt;base&gt; from the given signal
+or &amp;A&lt;&gt;/&amp;PV&lt;&gt; select. The third form retrieves the &lt;base&gt; from thread
+space using &lt;twid&gt; bits starting at &lt;tbase&gt;. The base value may be
+signed or unsigned.</p>
+</section>
+<section id="truth-tables">
+<h2>Truth Tables<a class="headerlink" href="#truth-tables" title="Permalink to this headline">¶</a></h2>
+<p>The logic that a functor represents is expressed as a truth table. The
+functor has four inputs and one output. Each input and output has one
+of four possible values (0, 1, x and z) so two bits are needed to
+represent them. So the input of the functor is 8 bits, and the output
+2 bits. A complete lookup table for generating the 2-bit output from
+an 8-bit input is 512 bits. That can be packed into 64 bytes. This is
+small enough that the table should take less space than the code to
+implement the logic.</p>
+<p>To implement the truth table, we need to assign 2-bit encodings for
+the 4-value signals. I choose, pseudo-randomly, the following
+encoding:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1&#39;b0  : 00
+1&#39;b1  : 01
+1&#39;bx  : 10
+1&#39;bz  : 11
+</pre></div>
+</div>
+<p>The table is an array of 64 bytes, each byte holding 4 2-bit
+outputs. Construct a 6-bit byte address with inputs 1, 2 and 3 like
+so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>332211
+</pre></div>
+</div>
+<p>The input 0 2-bits can then be used to select which of the 4 2-bit
+pairs in the 8-bit byte are the output:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>MSB -&gt; zzxx1100 &lt;- LSB
+</pre></div>
+</div>
+<p>A complete truth table, then is described as 64 8-bit bytes.</p>
+<p>The vvp engine includes truth tables for the primitive gate types, so
+none needs to be given by the programmer. It is sufficient to name the
+type to get that truth table.</p>
+</section>
+<section id="executable-instructions">
+<h2>Executable Instructions<a class="headerlink" href="#executable-instructions" title="Permalink to this headline">¶</a></h2>
+<p>Threads run executable code, much like a processor executes machine
+code. VVP has a variety of opcodes for executable instructions. All of
+those instructions start with ‘%’ and go into a single address
+space. Labels attached to executable instructions get assigned the
+address of the instruction, and can be the target of %jmp instructions
+and starting points for threads.</p>
+<p>The opcodes.txt file has a more detailed description of all the
+various instructions.</p>
+</section>
+<section id="the-relationship-between-functors-threads-and-events">
+<h2>The Relationship Between Functors, Threads And Events<a class="headerlink" href="#the-relationship-between-functors-threads-and-events" title="Permalink to this headline">¶</a></h2>
+<p>Given the above summary of the major components of vvp, some
+description of their relationship is warranted. Functors provide a
+structural description of the design (so far as it can be described
+structurally) and these functors run independently of the threads. In
+particular, when an input to a functor is set, it calculates a new
+output value; and if that output is different from the existing
+output, a propagation event is created. Functor output is calculated
+by truth table lookup, without the aid of threads.</p>
+<p>Propagation events are one of three kinds of events in vvp. They are
+scheduled to execute at some time, and they simply point to the functor
+that is to have its output propagated. When the event expires, the
+output of the referenced functor is propagated to all the inputs that
+it is connected to, and those functors in turn create new events if
+needed.</p>
+<p>Assignment events (the second of three types of events) are created
+by non-blocking assignments in behavioral code. When the <cite>&lt;=</cite> is
+executed (a %assign in vvp) an assign event is created, which includes
+the vvp_ipoint_t pointer to the functor input to receive the value,
+as well as the value. These are distinct from propagation events because:</p>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li><p>There is no functor that has as its output the value to be
+assigned (this is how values get into the functor net in
+the first place), and</p></li>
+<li><p>This allows for behavioral code to create waveforms of
+arbitrary length that feed into a variable. Verilog allows
+this of non-blocking assignments, but not of gate outputs.</p></li>
+</ol>
+</div></blockquote>
+<p>The last type of event is the thread schedule event. This event simply
+points to a thread to be executed. Threads are made up of a virtual
+processor with a program counter and some private storage. Threads
+can execute %assign instructions to create assignment events, and can
+execute %set instructions to do blocking assignments. Threads can also
+use %load to read the output of functors.</p>
+<p>The core event scheduler takes these three kinds of events and calls
+the right kind of code to cause things to happen in the design. If the
+event is a propagate or assignment event, the network of functors is
+tickled; if the event is a thread schedule, then a thread is run. The
+implementation of the event queue is not important, but currently is
+implemented as a <cite>skip list</cite>. That is, it is a sorted singly linked
+list with skip pointers that skip over delta-time events.</p>
+<p>The functor net and the threads are distinct. They communicate through
+thread instructions %set, %assign, %waitfor and %load. So far as a thread
+is concerned, the functor net is a blob of structure that it pokes and
+prods via certain functor access instructions.</p>
+</section>
+<section id="vvp-compilation-and-execution">
+<h2>VVP Compilation And Execution<a class="headerlink" href="#vvp-compilation-and-execution" title="Permalink to this headline">¶</a></h2>
+<p>The vvp program operates in a few steps:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><dl class="simple">
+<dt>Initialization</dt><dd><p>Data structures are cleared to empty, and tables are
+readied for compilation.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Compilation</dt><dd><p>The input file is read and compiled. Symbol tables are
+build up as needed, objects are allocated and linked
+together.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Cleanup</dt><dd><p>Symbol tables and other resources used only for
+compilation are released to reduce the memory
+footprint.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Simulation</dt><dd><p>Event simulation is run.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</div></blockquote>
+<p>The initialization step is performed by the compile_init() function in
+compile.cc. This function in turn calls all the *_init() functions in
+other parts of the source that need initialization for compile. All
+the various sub-init functions are called &lt;foo&gt;_init().</p>
+<p>Compilation is controlled by the parser, it parse.y. As the parser
+reads and parses input, the compilation proceeds in the rules by
+calling various compile_* functions. All these functions live in the
+compile.cc file. Compilation calls other sections of the code as
+needed.</p>
+<p>When the parser completes compilation, compile_cleanup() is called to
+finish the compilation process. Unresolved references are completed,
+then all the symbol tables and other compile-time-only resources are
+released. Once compile_cleanup() returns, there is no more use for the
+parser for the function in compile.cc.</p>
+<p>After cleanup, the simulation is started. This is done by executing
+the schedule_simulate() function. This does any final setup and starts
+the simulation running and the event queue running.</p>
+</section>
+<section id="how-to-get-from-there-to-here">
+<h2>How To Get From There To Here<a class="headerlink" href="#how-to-get-from-there-to-here" title="Permalink to this headline">¶</a></h2>
+<p>The vvp simulation engine is designed to be able to take as input a
+compiled form of Verilog. That implies that there is a compiler that
+compiles Verilog into a form that the vvp engine can read.</p>
+<ul class="simple">
+<li><p>Boolean logic gates</p></li>
+</ul>
+<p>Gates like AND, OR and NAND are implemented simply and obviously by
+functor statements. Any logic up to 4 inputs can be implemented with a
+single functor. For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>and gate (out, i1, i2, i3);
+</pre></div>
+</div>
+<p>becomes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>gate    .functor and, i1, i2, i3;
+</pre></div>
+</div>
+<p>Notice the first parameter of the .functor is the type. The type
+includes a truth table that describes the output with a given
+input. If the gate is wider than four inputs, then cascade
+functors. For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>and gate (out, i1, i2, i3, i4, i5, i6, i7, i8);
+</pre></div>
+</div>
+<p>becomes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>gate.0  .functor and, i1, i2, i3, i4;
+gate.1  .functor and, i5, i6, i7, i8;
+gate    .functor and, gate.0, gate.1;
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>reg and other variables</p></li>
+</ul>
+<p>Reg and integer are cases of what Verilog calls <cite>variables</cite>.
+Variables are, simply put, things that behavioral code can assign
+to. These are not the same as <cite>nets</cite>, which include wires and the
+like.</p>
+<p>Each bit of a variable is created by a <cite>.var</cite> statement. For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>reg a;
+</pre></div>
+</div>
+<p>becomes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>a       .var &quot;a&quot;, 0, 0;
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>named events</p></li>
+</ul>
+<p>Events in general are implemented as functors, but named events in
+particular have no inputs and only the event output. The way to
+generate code for these is like so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>a  .event &quot;name&quot;;
+</pre></div>
+</div>
+<p>This creates a functor and makes it into a mode-2 functor. Then the
+trigger statement, “-&gt; a”, cause a <cite>%set a, 0;</cite> statement be
+generated. This is sufficient to trigger the event.</p>
+</section>
+<section id="automatically-allocated-scopes">
+<h2>Automatically Allocated Scopes<a class="headerlink" href="#automatically-allocated-scopes" title="Permalink to this headline">¶</a></h2>
+<p>If a .scope statement has a &lt;type&gt; of autofunction or autotask, the
+scope is flagged as being an automatically allocated scope. The functor
+for each variable or event declared in that scope is added to a list
+of items that need to be automatically allocated for each dynamic
+instance of that scope.</p>
+<p>Before copying the input parameters of an automatic function or task
+into the scope variables, a new scope instance needs to be allocated.
+For function or task calls in procedural code, this is handled by the
+%alloc instruction. For structural function calls, this is handled
+by the phantom code generated by the .ufunc statement. In both cases,
+VVP attempts to use a previously freed scope instance - only if none
+are available is a new instance created.</p>
+<p>After copying the result of an automatic function or the output
+parameters of an automatic task, the scope instance can be freed.
+For function or task calls in procedural code, this is handled by the
+%free instruction. For structural function calls, this is handled
+by the phantom code generated by the .ufunc statement. In both cases,
+VVP adds the instance to a list of freed instances for that scope,
+which allows the storage to be reused the next time a new instance
+is required.</p>
+<p>For each automatically allocated scope instance, VVP creates an array
+of items, referred to as the scope context. Each item in this array is
+a pointer to the allocated storage for holding the state of one scope
+variable or event. The index into this array for any given variable
+or event, referred to as the context index, is stored in the functor
+associated with that variable or event.</p>
+<p>Each VVP thread keeps track of its current write context and current
+read context. For threads executing in a static scope, these are both
+initialized to null values. For threads executing in an automatically
+allocated scope, these are both initialized to refer to the context
+allocated to that scope.</p>
+<p>Before starting the copying of the input parameters of an automatic
+function or task, the current write context of the caller thread is
+set to the context allocated for that function/task call. After the
+thread that executed the function/task body has been rejoined and
+before starting the copying of the result or output parameters, the
+current write context is reset to its previous value and the current
+read context is set to the context allocated for the function/task
+call. After finishing the copying of the result or output parameters,
+the current read context is reset to its previous value.</p>
+<p>When reading or writing the state of an automatically allocated
+variable or event, the associated functor indirects through the
+current read or write context of the running thread, using its
+stored context index.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/*
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html">Getting Started as a Contributer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Developer Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Icarus Verilog Developer Support</a><ul>
+  <li><a href="../index.html">Developer Guide</a><ul>
+  <li><a href="index.html">VVP - Verilog Virtual Processor</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">VVP - Verilog Virtual Processor</a></li>
+      <li>Next: <a href="opcodes.html" title="next chapter">Executable Instruction Opcodes</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/developer/guide/vvp/vvp.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

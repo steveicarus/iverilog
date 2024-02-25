@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Xilinx Hint &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Glossary" href="../../glossary.html" />
+    <link rel="prev" title="Swift Model Support (Preliminary)" href="swift.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="xilinx-hint">
+<h1>Xilinx Hint<a class="headerlink" href="#xilinx-hint" title="Permalink to this headline">¶</a></h1>
+<p>For those of you who wish to use Icarus Verilog, in combination with
+the Xilinx back end (Foundation or Alliance), it can be done.  I have
+run some admittedly simple (2300 equivalent gates) designs through this
+setup, targeting a Spartan XCS10.</p>
+<section id="verilog">
+<h2>Verilog:<a class="headerlink" href="#verilog" title="Permalink to this headline">¶</a></h2>
+<p>Older versions of Icarus Verilog (like 19990814) couldn’t synthesize
+logic buried in procedural (flip-flop) assignment.  Newer versions
+(like 20000120) don’t have this limitation.</p>
+<p>Procedural assignments have to be given one at a time, to be
+“found” by xnfsyn.  Say</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>always @ (posedge Clk) Y = newY;
+always @ (posedge Clk) Z = newZ;
+</pre></div>
+</div>
+<p>rather than</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>always @ (posedge Clk) begin
+    Y = newY;
+    Z = newZ;
+end
+</pre></div>
+</div>
+<p>Steve’s xnf.txt covers most buffer and pin constructs, but I had reason
+to use a global clock net not connected to an input pin.  The standard
+Verilog for a buffer, combined with a declaration to turn that into a
+BUFG, is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>buf BUFG( your_output_here, your_input_here );
+$attribute(BUFG,&quot;XNF-LCA&quot;,&quot;BUFG:O,I&quot;)
+</pre></div>
+</div>
+<p>I use post-processing on my .xnf files to add “FAST” attributes to
+output pins.</p>
+</section>
+<section id="running-ivl">
+<h2>Running ivl:<a class="headerlink" href="#running-ivl" title="Permalink to this headline">¶</a></h2>
+<p>The -F switches are important.  The following order seems to robustly
+generate valid XNF files, and is used by “verilog -X”:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>-Fsynth -Fnodangle -Fxnfio
+</pre></div>
+</div>
+</section>
+<section id="generating-pcf-files">
+<h2>Generating .pcf files:<a class="headerlink" href="#generating-pcf-files" title="Permalink to this headline">¶</a></h2>
+<p>The ngdbuild step seems to lose pin placement information that ivl
+puts in the XNF file.  Use xnf2pcf to extract this information to
+a .pcf file, which the Xilinx place-and-route software _will_ pay
+attention to.  Steve says he now makes that information available
+in an NCF file, with -fncf=&lt;path&gt;, but I haven’t tested that.</p>
+<p>Running the Xilinx back end:</p>
+<p>You can presumably use the GUI, but that doesn’t fit in Makefiles :-).
+Here is the command sequence in pseudo-shell-script:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>ngdbuild -p $part $1.xnf $1.ngd
+map -p $part -o map.ncd $1.ngd
+xnf2pcf &lt;$1.xnf &gt;$1.pcf    # see above
+par -w -ol 2 -d 0 map.ncd $1.ncd $1.pcf
+bitgen_flags = -g ConfigRate:SLOW -g TdoPin:PULLNONE -g DonePin:PULLUP \
+               -g CRC:enable -g StartUpClk:CCLK -g SyncToDone:no \
+               -g DoneActive:C1 -g OutputsActive:C3 -g GSRInactive:C4 \
+               -g ReadClk:CCLK -g ReadCapture:enable -g ReadAbort:disable
+bitgen $1.ncd -l -w $bitgen_flags
+</pre></div>
+</div>
+<p>The Xilinx software has diarrhea of the temp files (14, not including
+.xnf, .pcf, .ngd, .ncd, and .bit), so this sequence is best done in a
+dedicated directory.  Note in particular that map.ncd is a generic name.</p>
+<p>I had reason to run this remotely (and transparently within a Makefile)
+via ssh.  I use the gmake rule:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%.bit : %.xnf
+    ssh -x -a -o &#39;BatchMode yes&#39; ${ALLIANCE_HOST} \
+           remote_alliance ${REMOTE_DIR} $(basename $@) 2&gt;&amp;1 &lt; $&lt;
+scp ${ALLIANCE_HOST}:${REMOTE_DIR}/$@ .
+</pre></div>
+</div>
+<p>and the remote_alliance script (on ${ALLIANCE_HOST}):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/bin/csh
+cd $1
+cat &gt;! $2.xnf
+xnf2pcf &lt;$2.xnf &gt;! $2.pcf
+./backend $2
+</pre></div>
+</div>
+<p>There is now a “Xilinx on Linux HOWTO” at <a class="reference external" href="http://www.polybus.com/xilinx_on_linux.html">http://www.polybus.com/xilinx_on_linux.html</a>
+I haven’t tried this yet, it looks interesting.</p>
+</section>
+<section id="downloading">
+<h2>Downloading:<a class="headerlink" href="#downloading" title="Permalink to this headline">¶</a></h2>
+<p>I use the XESS (<a class="reference external" href="http://www.xess.com/">http://www.xess.com/</a>) XSP-10 development board, which
+uses the PC parallel (printer) port for downloading and interaction
+with the host.  They made an old version of their download program
+public domain, posted it at <a class="reference external" href="http://www.xess.com/FPGA/xstools.zip">http://www.xess.com/FPGA/xstools.zip</a> ,
+and now there is a Linux port at <a class="reference external" href="ftp://ftp.microux.com/pub/pilotscope/xstools.tar.gz">ftp://ftp.microux.com/pub/pilotscope/xstools.tar.gz</a> .</p>
+<p>The above hints are based on my experience with Foundation 1.5 on NT
+(gack) and Alliance 2.1i on Solaris.  Your mileage may vary.  Good luck!</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt>Larry Doolittle   &lt;<a class="reference external" href="mailto:LRDoolittle&#37;&#52;&#48;lbl&#46;gov">LRDoolittle<span>&#64;</span>lbl<span>&#46;</span>gov</a>&gt;   August 19, 1999</dt><dd><p>updated February 1, 2000</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html">Getting Started as a Contributer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Developer Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Icarus Verilog Developer Support</a><ul>
+  <li><a href="../index.html">Developer Guide</a><ul>
+  <li><a href="index.html">Miscellaneous</a><ul>
+      <li>Previous: <a href="swift.html" title="previous chapter">Swift Model Support (Preliminary)</a></li>
+      <li>Next: <a href="../../glossary.html" title="next chapter">Glossary</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/developer/guide/misc/xilinx-hint.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

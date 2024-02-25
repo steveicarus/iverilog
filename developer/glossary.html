@@ -1,0 +1,152 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Glossary &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Xilinx Hint" href="guide/misc/xilinx-hint.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="glossary">
+<h1>Glossary<a class="headerlink" href="#glossary" title="Permalink to this headline">¶</a></h1>
+<p>Throughout Icarus Verilog descriptions and source code, I use a
+variety of terms and acronyms that might be specific to Icarus
+Verilog, have an Icarus Verilog specific meaning, or just aren’t
+widely known. So here I define these terms.</p>
+<dl class="simple">
+<dt>LRM     - Language Reference Manual</dt><dd><p>This is a generic acronym, but in the Verilog world we sometimes
+mean <em>the</em> language reference manual, the IEEE1364 standard.</p>
+</dd>
+<dt>PLI     - Programming Language Interface</dt><dd><p>This is a C API into Verilog simulators that is defined by the
+IEEE1364. There are two major interfaces, sometimes called PLI 1
+and PLI 2. PLI 2 is also often called VPI.</p>
+</dd>
+<dt>UDP     - User Defined Primitive</dt><dd><p>These are objects that Verilog programmers define with the
+“primitive” keyword. They are truth-table based devices. The
+syntax for defining them is described in the LRM.</p>
+</dd>
+<dt>VPI     - Verilog Procedural Interface</dt><dd><p>This is the C API that is defined by the Verilog standard, and
+that Icarus Verilog partially implements. See also PLI.</p>
+</dd>
+<dt>VVM     - Verilog Virtual Machine</dt><dd><p>This is the Icarus Verilog runtime that works with the code
+generator that generates C++.</p>
+</dd>
+<dt>VVP     - Verilog Virtual Processor</dt><dd><p>This is the Icarus Verilog runtime that reads in custom code in a
+form that I call “VVP Assembly”.</p>
+</dd>
+<dt>LPM     - Library of Parameterized Modules</dt><dd><p>LPM (Library of Parameterized Modules) is EIS-IS standard 103-A. It is
+a standard library of abstract devices that are designed to be close
+enough to the target hardware to be easily translated, yet abstract
+enough to support a variety of target technologies without excessive
+constraints. Icarus Verilog uses LPM internally to represent idealized
+hardware, especially when doing target neutral synthesis.</p>
+</dd>
+</dl>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started as a Contributer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide/index.html">Developer Guide</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Developer Support</a><ul>
+      <li>Previous: <a href="guide/misc/xilinx-hint.html" title="previous chapter">Xilinx Hint</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/developer/glossary.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

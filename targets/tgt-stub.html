@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>The stub Code Generator (-tstub) &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The null Code Generator (-tnull)" href="tgt-null.html" />
+    <link rel="prev" title="The vvp Code Generator (-tvvp)" href="tgt-vvp.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="the-stub-code-generator-tstub">
+<h1>The stub Code Generator (-tstub)<a class="headerlink" href="#the-stub-code-generator-tstub" title="Permalink to this headline">¶</a></h1>
+<p>The stub code generator is a debugging aid for the Icarus Verilog compiler
+itself. It outputs a text dump of the elaborated design as it is passed to
+code generators.</p>
+<p>Example command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% iverilog -o stub.txt -tstub -s top input.v
+</pre></div>
+</div>
+<p>With this example code:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span><span class="w"> </span><span class="n">top</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">initial</span><span class="w"> </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;Hello World!&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="k">endmodule</span><span class="w"></span>
+</pre></div>
+</div>
+<p>The resulting <cite>stub.txt</cite> will contain:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root module = top
+scope: top (0 parameters, 0 signals, 0 logic) module top time units = 1e0
+ time precision = 1e0
+end scope top
+# There are 0 constants detected
+initial
+    Call $display(1 parameters); /* hello_world.v:2 */
+        &lt;string=&quot;Hello World!&quot;, width=96, type=bool&gt;
+</pre></div>
+</div>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">The Icarus Verilog Targets</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tgt-vvp.html">The vvp Code Generator (-tvvp)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">The stub Code Generator (-tstub)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-null.html">The null Code Generator (-tnull)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-vhdl.html">The VHDL Code Generator (-tvhdl)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-vlog95.html">The Verilog ‘95 Code Generator (-tvlog95)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-pcb.html">The PCB Code Generator (-tpcb)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-fpga.html">The FPGA Code Generator (-tfpga)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-pal.html">The PAL Code Generator (-tpal)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-sizer.html">The sizer Code Analyzer (-tvvp)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-verilog.html">The Verilog Code Generator (-tverilog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-blif.html">The BLIF Code Generator (-tblif)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">The Icarus Verilog Targets</a><ul>
+      <li>Previous: <a href="tgt-vvp.html" title="previous chapter">The vvp Code Generator (-tvvp)</a></li>
+      <li>Next: <a href="tgt-null.html" title="next chapter">The null Code Generator (-tnull)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/targets/tgt-stub.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

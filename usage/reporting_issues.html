@@ -1,0 +1,193 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Reporting Issues &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The Icarus Verilog Targets" href="../targets/index.html" />
+    <link rel="prev" title="Icarus Verilog Quirks" href="icarus_verilog_quirks.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="reporting-issues">
+<h1>Reporting Issues<a class="headerlink" href="#reporting-issues" title="Permalink to this headline">¶</a></h1>
+<p>The developers of and contributers to Icarus Verilog use github to track
+issues and to create patches for the product. If you believe you have found a
+problem, use the Issues tracker at the
+<a class="reference external" href="https://github.com/steveicarus/iverilog">Icarus Verilog github page</a>.</p>
+<p>You may browse the bugs database for existing
+bugs that may be related to yours. You might find that your bug has
+already been fixed in a later release or snapshot. If that’s the case,
+then you are set.</p>
+<p>On the main page, you will find a row of selections near the top. Click the
+<a class="reference external" href="https://github.com/steveicarus/iverilog/issues">Issues</a> link to get to the
+list of issues, open and closed. You will find a friendly green button where
+you can create a new issue. You will be asked to create a title for your
+issue, and to write a detailed description of your issue. Please include
+enough information that anyone who sees your issue can understand and
+reproduce it.</p>
+<section id="good-issue-reporting">
+<h2>Good Issue Reporting<a class="headerlink" href="#good-issue-reporting" title="Permalink to this headline">¶</a></h2>
+<p>Before an error can be fixed, one needs to understand what the problem
+is. Try to explain what is wrong and why you think it is wrong. Please
+try to include sample code that demonstrates the problem.</p>
+<p>One key characteristic of a well reported issue is a small sample program that
+demonstrates the issue. The smaller the better. No developer wants to wade
+through hundreds of lines of working Verilog to find the few lines that cause
+trouble, so if you can get it down to a 10 line sample program, then your
+issue will be far more likely to be addressed.</p>
+<p>Also, include the command line you use to invoke the compiler. For
+example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>iverilog -o foo.out -tvvp foo.v
+iverilog foo.vl -s starthere
+</pre></div>
+</div>
+<p>Be prepared to have a conversation about your issue. More often then you would
+expect, the issue turns out to be a bug in your program, and the person
+looking into your issue may point out a bug in your code. You learn something,
+and we all win. We are not always correct, though, so if we are incorrect,
+help us see our error, if that’s appropriate. If we don’t understand what your
+issue is, we will label your issue with a “Need info” label, and if we never
+hear from you again, your issue may be closed summarily.</p>
+<p>If you can submit a complete, working program that we can use in the
+regression test suite, then that is the best. Check out the existing tests in
+the regression test suite to see how they are structured. If you have a
+complete test that can go into the test suite, then that saves everyone a lot
+of grief, and again you increase the odds that your issue will be addressed.</p>
+</section>
+<section id="how-to-create-a-pull-request">
+<h2>How To Create A Pull Request<a class="headerlink" href="#how-to-create-a-pull-request" title="Permalink to this headline">¶</a></h2>
+<p>Bug reports with patches/PRs are very welcome. Please also add a new test case in the regression test suite to prevent the bug from reappearing.</p>
+<p>If you are editing the source, you should be using the latest
+version from git. Please see the developer documentation for more
+detailed instructions – <a class="reference internal" href="getting_started.html"><span class="doc">Getting Started as a Contributer</span></a> .</p>
+<p>COPYRIGHT ISSUES</p>
+<p>Icarus Verilog is Copyright (c) 1998-2024 Stephen Williams except
+where otherwise noted. Minor patches are covered as derivative works
+(or editorial comment or whatever the appropriate legal term is) and
+folded into the rest of ivl. However, if a submission can reasonably
+be considered independently copyrightable, it’s yours and I encourage
+you to claim it with appropriate copyright notices. This submission
+then falls under the “otherwise noted” category.</p>
+<p>I must insist that any copyright material submitted for inclusion
+include the GPL license notice as shown in the rest of the source.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gtkwave.html">Waveforms With GTKWave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Usage</a><ul>
+      <li>Previous: <a href="icarus_verilog_quirks.html" title="previous chapter">Icarus Verilog Quirks</a></li>
+      <li>Next: <a href="../targets/index.html" title="next chapter">The Icarus Verilog Targets</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/reporting_issues.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

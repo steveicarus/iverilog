@@ -1,0 +1,183 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>vhdlpp Command Line Flags &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Waveforms With GTKWave" href="gtkwave.html" />
+    <link rel="prev" title="VVP as a library" href="vvp_library.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="vhdlpp-command-line-flags">
+<h1>vhdlpp Command Line Flags<a class="headerlink" href="#vhdlpp-command-line-flags" title="Permalink to this headline">¶</a></h1>
+<ul>
+<li><p>-D &lt;token&gt;</p>
+<p>Debug flags. The token can be:</p>
+<ul class="simple">
+<li><p>yydebug | no-yydebug</p></li>
+<li><p>entities=&lt;path&gt;</p></li>
+</ul>
+</li>
+<li><p>-L &lt;path&gt;</p>
+<p>Library path. Add the directory name to the front of the library
+search path. The library search path is initially empty.</p>
+</li>
+<li><p>-V</p>
+<p>Display version on stdout</p>
+</li>
+<li><p>-v</p>
+<p>Verbose: Display version on stderr, and enable verbose messages to
+stderr.</p>
+</li>
+<li><p>-w &lt;path&gt;</p>
+<p>Work path. This is the directory where the working directory is.</p>
+</li>
+</ul>
+<section id="library-format">
+<h2>Library Format<a class="headerlink" href="#library-format" title="Permalink to this headline">¶</a></h2>
+<p>The vhdlpp program stores libraries as directory that contain
+packages. The name of the directory (in lower case) is the name of the
+library as used on the “import” statement. Within that library, there
+are packages in files named &lt;foo&gt;.pkg. For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;directory&gt;/...
+   sample/...
+     test1.pkg
+     test2.pkg
+   bar/...
+     test3.pkg
+</pre></div>
+</div>
+<p>Use the “+vhdl-libdir+&lt;directory&gt;” record in a config file to tell
+Icarus Verilog that &lt;directory&gt; is a place to look for libraries. Then
+in your VHDL code, access packages like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>library sample;
+library bar;
+use sample.test1.all;
+use bar.test3.all;
+</pre></div>
+</div>
+<p>The *.pkg files are just VHDL code containing only the package with
+the same name. When Icarus Verilog encounters the “use &lt;lib&gt;.&lt;name&gt;.*;”
+statement, it looks for the &lt;name&gt;.pkg file in the &lt;lib&gt; library and
+parses that file to get the package header declared therein.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gtkwave.html">Waveforms With GTKWave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Usage</a><ul>
+      <li>Previous: <a href="vvp_library.html" title="previous chapter">VVP as a library</a></li>
+      <li>Next: <a href="gtkwave.html" title="next chapter">Waveforms With GTKWave</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/vhdlpp_flags.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

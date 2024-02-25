@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>What Is LPM &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Loadable Targets" href="t-dll.html" />
+    <link rel="prev" title="Loadable Target API (ivl_target)" href="ivl_target.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="what-is-lpm">
+<h1>What Is LPM<a class="headerlink" href="#what-is-lpm" title="Permalink to this headline">¶</a></h1>
+<p>LPM (Library of Parameterized Modules) is EIS-IS standard 103-A. It is
+a standard library of abstract devices that are designed to be close
+enough to the target hardware to be easily translated, yet abstract
+enough to support a variety of target technologies without excessive
+constraints. Icarus Verilog uses LPM internally to represent idealized
+hardware, especially when doing target neutral synthesis.</p>
+<p>In general, the user does not even see the LPM that Icarus Verilog
+generates, because the LPM devices are translated into technology
+specific devices by the final code generator or target specific
+optimizers.</p>
+<section id="internal-uses-of-lpm">
+<h2>Internal Uses Of LPM<a class="headerlink" href="#internal-uses-of-lpm" title="Permalink to this headline">¶</a></h2>
+<p>Internally, Icarus Verilog uses LPM devices to represent the design in
+abstract, especially when synthesizing such functions as addition,
+flip-flops, etc. The <cite>synth</cite> functor generates LPM modules when
+interpreting procedural constructs. The functor generates the LPM
+objects needed to replace a behavioral description, and uses
+attributes to tag the devices with LPM properties.</p>
+<p>Code generators need to understand the supported LPM devices so that
+they can translate the devices into technology specific devices.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html">Getting Started as a Contributer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Developer Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Icarus Verilog Developer Support</a><ul>
+  <li><a href="../index.html">Developer Guide</a><ul>
+  <li><a href="index.html">IVL - The Core Compiler</a><ul>
+      <li>Previous: <a href="ivl_target.html" title="previous chapter">Loadable Target API (ivl_target)</a></li>
+      <li>Next: <a href="t-dll.html" title="next chapter">Loadable Targets</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/developer/guide/ivl/lpm.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

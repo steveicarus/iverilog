@@ -1,0 +1,304 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Command File Format &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Verilog Attributes" href="verilog_attributes.html" />
+    <link rel="prev" title="iverilog Command Line Flags" href="command_line_flags.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="command-file-format">
+<h1>Command File Format<a class="headerlink" href="#command-file-format" title="Permalink to this headline">¶</a></h1>
+<p>The basic format of a command file is one source file or compiler argument per
+line. Command files may also have comments of various form, and options for
+controlling the compiler.</p>
+<section id="comments">
+<h2>Comments<a class="headerlink" href="#comments" title="Permalink to this headline">¶</a></h2>
+<p>Lines that start with a “#” character are comments. All text after the “#”
+character, is ignored.</p>
+<p>The “//” character sequence also starts a comment that continues to the end of
+the line.</p>
+<p>The “/*” and “*/” character sequences surround multi-line comments. All the
+text between the comment start and comment end sequences is ignored, even when
+that text spans multiple lines. This style of comment does not nest, so a “/*”
+sequence within a multi-line comment is probably an error.</p>
+</section>
+<section id="plus-args">
+<h2>Plus-args<a class="headerlink" href="#plus-args" title="Permalink to this headline">¶</a></h2>
+<p>Outside of comments, lines that start with a “+” character are compiler
+arguments. These are called plusargs but they are not the same as extended
+arguments passed to the “vvp” command. The supported plusargs are definitively
+listed in the iverilog manual page.</p>
+<p>The plusargs lines are generally “+&lt;name&gt;+…” where the name is the name of
+an switch, and the arguments are separated by “+” characters, as in:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>+libext+.v+.V+.ver
+</pre></div>
+</div>
+<p>With plusargs lines, the “+” character separates tokens, and not white space,
+so arguments, which may include file paths, may include spaces. A plusarg line
+is terminated by the line end.</p>
+<p>The line in the command file may also be a “-y” argument. This works exactly
+the same as the:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>-y &lt;path&gt;
+</pre></div>
+</div>
+<p>argument to the compiler; it declares a library directory. The “-y” syntax is
+also a shorthand for the “+libdir” plusarg, which is a more general form:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>+libdir+&lt;path&gt;...
+</pre></div>
+</div>
+</section>
+<section id="file-names">
+<h2>File Names<a class="headerlink" href="#file-names" title="Permalink to this headline">¶</a></h2>
+<p>Any lines that are not comments, compiler arguments or plusargs are taken by
+the compiler to be a source file. The path can contain any characters (other
+then comment sequences) including blanks, although leading and trailing white
+space characters are stripped. The restriction of one file name per line is in
+support of operating systems that can name files any which way. It is not
+appropriate to expect white spaces to separate file names.</p>
+</section>
+<section id="variable-substitution">
+<h2>Variable Substitution<a class="headerlink" href="#variable-substitution" title="Permalink to this headline">¶</a></h2>
+<p>The syntax “$(name)” is a variable reference, and may be used anywhere within
+filenames or directory names. The contents of the variable are read from the
+environment and substituted in place of the variable reference. In Windows,
+these environment variables are the very same variables that are set through
+the Control Panel-&gt;System dialog box, and in UNIX these variables are
+environment variables as exported by your shell.</p>
+<p>Variables are useful for giving command files some installation
+independence. For example, one can import a vendor library with the line:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>-y $(VENDOR)/verilog/library
+</pre></div>
+</div>
+<p>in the command file, and the next programmer will be able to use this command
+file without editing it to point to the location of VENDOR on his
+machine. Note the use of forward slashes as a directory separator. This works
+even under Windows, so always use forward slashes in file paths and Windows
+and UNIX users will be able to share command files.</p>
+</section>
+<section id="an-example">
+<h2>An Example<a class="headerlink" href="#an-example" title="Permalink to this headline">¶</a></h2>
+<p>This sample:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># This is a comment in a command file.
+# The -y statement declares a library
+# search directory
+-y $(PROJ_LIBRARY)/prims
+#
+# This plusarg tells the compiler that
+# files in libraries may have .v or .vl
+# extensions.
++libext+.v+.vl
+#
+main.v // This is a source file
+#
+# This is a file name with blanks.
+C:/Project Directory/file name.vl
+</pre></div>
+</div>
+<p>is a command file that demonstrates the major syntactic elements of command
+files. It demonstrates the use of comments, variables, plusargs and file
+names. It contains a lot of information about the hypothetical project, and
+suggests that command files can be used to describe the project as a whole
+fairly concisely.</p>
+<p>The syntax of command files is rich enough that they can be used to document
+and control the assembly and compilation of large Verilog programs. It is not
+unusual to have command files that are hundreds of lines long, although
+judicious use of libraries can lead to very short command files even for large
+designs. It is also practical to have different command files that pull
+together combinations of sources and compiler arguments to make different
+designs from the same Verilog source files.</p>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h2>
+<p>Given the above description of the command file format, the following is a
+list of the special records with their meaning.</p>
+<ul>
+<li><p>+libdir+*dir-path*</p>
+<p>Specify directories to be searched for library modules. The <em>dir-path</em> can
+have multiple directories, separated by “+” characters.</p>
+</li>
+<li><p>+libdir-nocase+dir-path</p>
+<p>This is the same as “+libdir+”, but when searching “nocase” libraries for
+module files, case will not be taken as significant. This is useful when the
+library is on a case insensitive file system.</p>
+</li>
+<li><p>+libext+*suffix-string*</p>
+<p>Declare the suffix strings to use when searching library directories for
+Verilog files. The compiler may test a list of suffix strings to support a
+variety of naming conventions.</p>
+</li>
+<li><p>-y dir-path</p>
+<p>This is like “+libdir+” but each line takes only one path. Like “+libdir+”
+there can be multiple “-y” records to declare multiple library
+directories. This is similar to the “-y” flag on the iverilog command line.</p>
+</li>
+<li><p>-v <em>file-name</em> or -l <em>file-name</em></p>
+<p>This declares a library file. A library file is just like any other Verilog
+source file, except that modules declared within it are not implicitly
+possible root modules.</p>
+<p>NOTE: The “-l” alias is new as of 2 October 2016. It will become available
+in releases and snapshots made after that date.</p>
+</li>
+<li><p>+incdir+*include-dir-path*</p>
+<p>Declare a directory or list of directories to search for files included by
+the “include” compiler directive. The directories are searched in
+order. This is similar to the “-I” flag on the iverilog command line.</p>
+</li>
+<li><p>+define+*name=value*</p>
+<p>Define the preprocessor symbol “name” to have the string value “value”. If
+the value (and the “=”) are omitted, then it is assumed to be the string
+“1”. This is similar to the “-D” on the iverilog command line.</p>
+</li>
+<li><p>+timescale+*units/precision*</p>
+<p>Define the default timescale. This is the timescale that is used if there is
+no other timescale directive in the Verilog source. The compiler default
+default is “+timescale+1s/1s”, which this command file setting can
+change. The format of the units/precision is the same as that for the
+timescale directive in the verilog source.</p>
+</li>
+<li><p>+toupper-filename</p>
+<p>This token causes file names after this in the command file to be translated
+to uppercase. this helps with situations where a directory has passed
+through a DOS machine (or a FAT file system) and in the process the file
+names become munged. This is not meant to be used in general, but only in
+emergencies.</p>
+</li>
+<li><p>+tolower-filename</p>
+<p>The is the lowercase version of “+toupper-filename”.</p>
+</li>
+<li><p>+parameter+*name=value*</p>
+<p>This token causes the compiler to override a parameter value for a top-level
+module. For example, if the module main has the parameter WIDTH, set the
+width like this “+parameter+main.WIDTH=5”. Note the use of the complete
+hierarchical name. This currently only works for parameters defined in root
+(top level) modules and a defparam may override the command file value.</p>
+</li>
+<li><p>+vhdl-work+*path*</p>
+<p>When compiling VHDL, this token allows control over the directory to use for
+holding working package declarations. For example, “+vhdl-work+workdir” will
+cause the directory “workdir” to be used as a directory for holding working
+working copies of package headers.</p>
+</li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gtkwave.html">Waveforms With GTKWave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Usage</a><ul>
+      <li>Previous: <a href="command_line_flags.html" title="previous chapter">iverilog Command Line Flags</a></li>
+      <li>Next: <a href="verilog_attributes.html" title="next chapter">Verilog Attributes</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/command_files.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

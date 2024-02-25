@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Waveforms With GTKWave &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Using VPI" href="vpi.html" />
+    <link rel="prev" title="vhdlpp Command Line Flags" href="vhdlpp_flags.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="waveforms-with-gtkwave">
+<h1>Waveforms With GTKWave<a class="headerlink" href="#waveforms-with-gtkwave" title="Permalink to this headline">¶</a></h1>
+<p>GTKWave is a VCD waveform viewer based on the GTK library. This viewer support
+VCD and LXT formats for signal dumps. GTKWAVE is available on github
+<a class="reference external" href="https://github.com/gtkwave/gtkwave">here</a>. Most Linux distributions already
+include gtkwave prepackaged.</p>
+<img alt="../_images/GTKWave_Example2.png" src="../_images/GTKWave_Example2.png" />
+<p>Generating VCD/FST files for GTKWAVE ————————————
+Waveform dumps are written by the Icarus Verilog runtime program vvp. The user
+uses $dumpfile and $dumpvars system tasks to enable waveform dumping, then the
+vvp runtime takes care of the rest. The output is written into the file
+specified by the $dumpfile system task. If the $dumpfile call is absent, the
+compiler will choose the file name dump.vcd or dump.lxt or dump.fst, depending
+on runtime flags. The example below dumps everything in and below the test
+module:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="c1">// Do this in your test bench</span>
+
+<span class="k">initial</span><span class="w"></span>
+<span class="k">begin</span><span class="w"></span>
+<span class="w">   </span><span class="n">$dumpfile</span><span class="p">(</span><span class="s">&quot;test.vcd&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">   </span><span class="n">$dumpvars</span><span class="p">(</span><span class="mh">0</span><span class="p">,</span><span class="n">test</span><span class="p">);</span><span class="w"></span>
+<span class="k">end</span><span class="w"></span>
+</pre></div>
+</div>
+<p>By default, the vvp runtime will generate VCD dump output. This is the default
+because it is the most portable. However, when using gtkwave, the FST output
+format is faster and most compact. Use the “-fst” extended argument to
+activate LXT output. For example, if your compiled output is written into the
+file “foo.vvp”, the command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">% </span>vvp foo.vvp -fst &lt;other-plusargs&gt;
+</pre></div>
+</div>
+<p>will cause the dumpfile output to be written in FST format. Absent any
+specific $dumpfile command, this file will be called dump.fst, which can be
+viewed with the command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">% </span>gtkwave dump.fst
+</pre></div>
+</div>
+<section id="a-working-example">
+<h2>A Working Example<a class="headerlink" href="#a-working-example" title="Permalink to this headline">¶</a></h2>
+<p>First, the design itself:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span><span class="w"> </span><span class="n">counter</span><span class="p">(</span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">parameter</span><span class="w"> </span><span class="n">WIDTH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">8</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">output</span><span class="w"> </span><span class="p">[</span><span class="n">WIDTH</span><span class="o">-</span><span class="mh">1</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">out</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">input</span><span class="w">            </span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="p">[</span><span class="n">WIDTH</span><span class="o">-</span><span class="mh">1</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mh">0</span><span class="p">]</span><span class="w">   </span><span class="n">out</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">wire</span><span class="w">            </span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">always</span><span class="w"> </span><span class="p">@(</span><span class="k">posedge</span><span class="w"> </span><span class="n">clk</span><span class="p">)</span><span class="w"></span>
+<span class="w">    </span><span class="n">out</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">out</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">1</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">always</span><span class="w"> </span><span class="p">@</span><span class="n">reset</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">reset</span><span class="p">)</span><span class="w"></span>
+<span class="w">      </span><span class="k">assign</span><span class="w"> </span><span class="n">out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">else</span><span class="w"></span>
+<span class="w">      </span><span class="k">deassign</span><span class="w"> </span><span class="n">out</span><span class="p">;</span><span class="w"></span>
+
+<span class="k">endmodule</span><span class="w"> </span><span class="c1">// counter</span>
+</pre></div>
+</div>
+<p>Then the simulation file:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span><span class="w"> </span><span class="n">test</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="cm">/* Make a reset that pulses once. */</span><span class="w"></span>
+<span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">initial</span><span class="w"> </span><span class="k">begin</span><span class="w"></span>
+<span class="w">     </span><span class="n">$dumpfile</span><span class="p">(</span><span class="s">&quot;test.vcd&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">     </span><span class="n">$dumpvars</span><span class="p">(</span><span class="mh">0</span><span class="p">,</span><span class="n">test</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">     </span><span class="p">#</span><span class="w"> </span><span class="mh">17</span><span class="w"> </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">1</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="p">#</span><span class="w"> </span><span class="mh">11</span><span class="w"> </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="p">#</span><span class="w"> </span><span class="mh">29</span><span class="w"> </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">1</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="p">#</span><span class="w"> </span><span class="mh">5</span><span class="w">  </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="mh">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="p">#</span><span class="w"> </span><span class="mh">513</span><span class="w"> </span><span class="nb">$finish</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">end</span><span class="w"></span>
+
+<span class="w">  </span><span class="cm">/* Make a regular pulsing clock. */</span><span class="w"></span>
+<span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="n">clk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">always</span><span class="w"> </span><span class="p">#</span><span class="mh">1</span><span class="w"> </span><span class="n">clk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">!</span><span class="n">clk</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">7</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">value</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">counter</span><span class="w"> </span><span class="n">c1</span><span class="w"> </span><span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">initial</span><span class="w"></span>
+<span class="w">     </span><span class="nb">$monitor</span><span class="p">(</span><span class="s">&quot;At time %t, value = %h (%0d)&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">              </span><span class="nb">$time</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">);</span><span class="w"></span>
+<span class="k">endmodule</span><span class="w"> </span><span class="c1">// test</span>
+</pre></div>
+</div>
+<p>Compile, run, and view waveforms with these commands:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">% </span>iverilog -o dsn counter_tb.v counter.v
+<span class="gp">% </span>vvp dsn
+<span class="gp">% </span>gtkwave test.vcd <span class="p">&amp;</span>
+</pre></div>
+</div>
+<p>Click on the ‘test’, then ‘c1’ in the top left box on GTKWAVE, then drag the
+signals to the Signals box. You will be able to add signals to display,
+scanning by scope.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Waveforms With GTKWave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Usage</a><ul>
+      <li>Previous: <a href="vhdlpp_flags.html" title="previous chapter">vhdlpp Command Line Flags</a></li>
+      <li>Next: <a href="vpi.html" title="next chapter">Using VPI</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/gtkwave.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

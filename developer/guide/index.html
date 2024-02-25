@@ -1,0 +1,301 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Developer Guide &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="IVL - The Core Compiler" href="ivl/index.html" />
+    <link rel="prev" title="Files With Version Information" href="../version_stamps.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="developer-guide">
+<h1>Developer Guide<a class="headerlink" href="#developer-guide" title="Permalink to this headline">¶</a></h1>
+<p>The developer guide is intended to give you a gross structure of the
+Icarus Verilog compiler source. This will help orient you to the
+source code itself, so that you can find the global parts where you
+can look for even better detail.</p>
+<p>The documentation for getting, building and installing Icarus Verilog
+is kept and maintained at <a class="reference internal" href="../getting_started.html"><span class="doc">Getting Started as a Contributer</span></a></p>
+<p>See the Installation Guide for getting the current source from the git
+repository (and how to use the git repository) and see the Developer Guide
+for instructions on participating in the Icarus Verilog development process.
+That information will not be repeated here.</p>
+<p>Scroll down to a listing with further readings.</p>
+<section id="compiler-components">
+<h2>Compiler Components<a class="headerlink" href="#compiler-components" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>The compiler driver (driver/)</p></li>
+</ul>
+<p>This is the binary that is installed as “iverilog”. This program takes
+the command line arguments and assembles invocations of all the other
+subcommands to perform the steps of compilation.</p>
+<ul class="simple">
+<li><p>The preprocessor (ivlpp/)</p></li>
+</ul>
+<p>This implements the Verilog pre-processor. In Icarus Verilog, the
+compiler directives `define, `include, `ifdef and etc. are implemented
+in an external program. The ivlpp/ directory contains the source for
+this program.</p>
+<ul class="simple">
+<li><p>The core compiler (root directory)</p></li>
+</ul>
+<p>The “ivl” program is the core that does all the Verilog compiler
+processing that is not handled elsewhere. This is the main core of the
+Icarus Verilog compiler, not the runtime. See below for more details
+on the core itself.</p>
+<ul class="simple">
+<li><p>The loadable code generators (tgt-*/)</p></li>
+</ul>
+<p>This core compiler, after it is finished with parsing and semantic
+analysis, uses loadable code generators to emit code for supported
+targets. The tgt-*/ directories contains the source for the target
+code generators that are bundled with Icarus Verilog. The tgt-vvp/
+directory in particular contains the code generator for the vvp
+runtime.</p>
+</section>
+<section id="runtime-components">
+<h2>Runtime Components<a class="headerlink" href="#runtime-components" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>The vvp runtime (vvp/)</p></li>
+</ul>
+<p>This program implements the runtime environment for Icarus
+Verilog. It implements the “vvp” command described in the user
+documentation. See the vvp/ subdirectory for further developer
+documentation.</p>
+<ul class="simple">
+<li><p>The system tasks implementations (vpi/)</p></li>
+</ul>
+<p>The standard Verilog system tasks are implemented using VPI (PLI-2)
+and the source is in this subdirectory.</p>
+<ul class="simple">
+<li><p>The PLI-1 compatibility library (libveriuser/)</p></li>
+</ul>
+<p>The Icarus Verilog support for the deprecated PLI-1 is in this
+subdirectory. The vvp runtime does not directly support the
+PLI-1. Instead, the libveriuser library emulates it using the builtin
+PLI-2 support.</p>
+<ul class="simple">
+<li><p>The Cadence PLI module compatibility module (cadpli/)</p></li>
+</ul>
+<p>It is possible in some specialized situations to load and execute
+PLI-1 code written for Verilog-XL. This directory contains the source
+for the module that provides the Cadence PLI interface.</p>
+</section>
+<section id="the-core-compiler">
+<h2>The Core Compiler<a class="headerlink" href="#the-core-compiler" title="Permalink to this headline">¶</a></h2>
+<p>The “ivl” binary is the core compiler that does the heavy lifting of
+compiling the Verilog source (including libraries) and generating the
+output. This is the most complex component of the Icarus Verilog
+compilation system.</p>
+<p>The process in the abstract starts with the Verilog lexical analysis
+and parsing to generate an internal “pform”. The pform is then
+translated by elaboration into the “netlist” form. The netlist is
+processed by some functors (which include some optimizations and
+optional synthesis) then is translated into the ivl_target internal
+form. And finally, the ivl_target form is passed via the ivl_target.h
+API to the code generators.</p>
+<ul class="simple">
+<li><p>Lexical Analysis</p></li>
+</ul>
+<p>Lexical analysis and parsing use the tools “flex”, “gperf”, and
+“bison”. The “flex” input file “lexor.lex” recognizes the tokens in
+the input stream. This is called “lexical analysis”. The lexical
+analyzer also does some processing of compiler directives that are not
+otherwise taken care of by the external preprocessor. The lexical
+analyzer uses a table of keywords that is generated using the “gperf”
+program and the input file “lexor_keywords.gperf”. This table allows
+the lexical analyzer to efficiently check input words with the rather
+large set of potential keywords.</p>
+<ul class="simple">
+<li><p>Parsing</p></li>
+</ul>
+<p>The parser input file “parse.y” is passed to the “bison” program to
+generate the parser. The parser uses the functions in parse*.h,
+parse*.cc, pform.h, and pform*.cc to generate the pform from the
+stream of input tokens. The pform is what compiler writers call a
+“decorated parse tree”.</p>
+<p>The pform itself is described by the classes in the header files
+“PScope.h”, “Module.h”, “PGenerate.h”, “Statement.h”, and
+“PExpr.h”. The implementations of the classes in those header files
+are in the similarly named C++ files.</p>
+<ul class="simple">
+<li><p>Elaboration</p></li>
+</ul>
+<p>Elaboration transforms the pform to the netlist form. Elaboration is
+conceptually divided into several major steps: Scope elaboration,
+parameter overrides and defparam propagation, signal elaboration, and
+statement and expression elaboration.</p>
+<p>The elaboration of scopes and parameter overrides and defparam
+propagation are conceptually separate, but are in practice
+intermingled. The elaboration of scopes scans the pform to find and
+instantiate all the scopes of the design. New scopes are created by
+instantiation of modules (starting with the root instances) by user
+defined tasks and functions, named blocks, and generate schemes. The
+elaborate_scope methods implement scope elaboration, and the
+elab_scope.cc source file has the implementations of those
+methods.</p>
+<p>The elaborate.cc source file contains the initial calls to the
+elaborate_scope for the root scopes to get the process started. In
+particular, see the “elaborate” function near the bottom of the
+elaborate.cc source file. The calls to Design::make_root_scope create
+the initial root scopes, and the creation and enqueue of the
+elaborate_root_scope_t work items primes the scope elaboration work
+list.</p>
+<p>Intermingled in the work list are defparms work items that call the
+Design::run_defparams and Design::evaluate_parameters methods that
+override and evaluate parameters. The override and evaluation of
+parameters must be intermingled with the elaboration of scopes because
+the exact values of parameters may impact the scopes created (imagine
+generate schemes and instance arrays) and the created scopes in turn
+create new parameters that need override and evaluation.</p>
+</section>
+<section id="further-reading">
+<h2>Further Reading<a class="headerlink" href="#further-reading" title="Permalink to this headline">¶</a></h2>
+<p>For further information on the individual parts of Icarus Verilog, see this listing:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ivl/index.html">IVL - The Core Compiler</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ivl/netlist.html">Netlist Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivl/attributes.html">Icarus Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivl/ivl_target.html">Loadable Target API (ivl_target)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivl/lpm.html">What Is LPM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivl/t-dll.html">Loadable Targets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vvp/index.html">VVP - Verilog Virtual Processor</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vvp/vvp.html">VVP Simulation Engine</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp/opcodes.html">Executable Instruction Opcodes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp/vpi.html">VPI Within VVP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp/vthread.html">Thread Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp/debug.html">Debug Aids For VVP</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tgt-vvp/tgt-vvp.html">The VVP Target</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tgt-vvp/tgt-vvp.html#symbol-name-conventions">Symbol Name Conventions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-vvp/tgt-vvp.html#general-functor-web-structure">General Functor Web Structure</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vpi/index.html">VPI in Icarus Verilog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vpi/vpi.html">VPI Modules in Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi/va_math.html">Verilog-A math library</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cadpli/cadpli.html">Cadence PLI1 Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="misc/index.html">Miscellaneous</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="misc/ieee1364-notes.html">IEEE1364 Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="misc/swift.html">Swift Model Support (Preliminary)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="misc/xilinx-hint.html">Xilinx Hint</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html">Getting Started as a Contributer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Developer Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Icarus Verilog Developer Support</a><ul>
+      <li>Previous: <a href="../version_stamps.html" title="previous chapter">Files With Version Information</a></li>
+      <li>Next: <a href="ivl/index.html" title="next chapter">IVL - The Core Compiler</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/developer/guide/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,216 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Verilog-A math library &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Cadence PLI1 Modules" href="../cadpli/cadpli.html" />
+    <link rel="prev" title="VPI Modules in Icarus Verilog" href="vpi.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="verilog-a-math-library">
+<h1>Verilog-A math library<a class="headerlink" href="#verilog-a-math-library" title="Permalink to this headline">¶</a></h1>
+<section id="license">
+<h2>License.<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>Verilog-A math library built for Icarus Verilog
+<a class="reference external" href="https://github.com/steveicarus/iverilog/">https://github.com/steveicarus/iverilog/</a></p>
+<p>Copyright (C) 2007-2024  Cary R. (<a class="reference external" href="mailto:cygcary&#37;&#52;&#48;yahoo&#46;com">cygcary<span>&#64;</span>yahoo<span>&#46;</span>com</a>)</p>
+<p>This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.</p>
+<p>This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.</p>
+<p>You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.</p>
+</div></blockquote>
+</section>
+<section id="standard-verilog-a-mathematical-functions">
+<h2>Standard Verilog-A Mathematical Functions.<a class="headerlink" href="#standard-verilog-a-mathematical-functions" title="Permalink to this headline">¶</a></h2>
+<p>The va_math VPI module implements all the standard math functions provided
+by Verilog-A as Verilog-D system functions. The names are the same except
+like all Verilog-D system functions the name must be prefixed with a ‘$’.
+For reference the functions are:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ln(x)       --  Natural logarithm
+$log10(x)    --  Decimal logarithm
+$exp(x)      --  Exponential
+$sqrt(x)     --  Square root
+$min(x,y)    --  Minimum
+$max(x,y)    --  Maximum
+$abs(x)      --  Absolute value
+$floor(x)    --  Floor
+$ceil(x)     --  Ceiling
+$pow(x,y)    --  Power (x**y)
+$sin(x)      --  Sine
+$cos(x)      --  Cosine
+$tan(x)      --  Tangent
+$asin(x)     --  Arc-sine
+$acos(x)     --  Arc-cosine
+$atan(x)     --  Arc-tangent
+$atan2(y,x)  --  Arc-tangent of y/x
+$hypot(x,y)  --  Hypotenuse (sqrt(x**2 + y**2))
+$sinh(x)     --  Hyperbolic sine
+$cosh(x)     --  Hyperbolic cosine
+$tanh(x)     --  Hyperbolic tangent
+$asinh(x)    --  Arc-hyperbolic sine
+$acosh(x)    --  Arc-hyperbolic cosine
+$atanh(x)    --  Arc-hyperbolic tangent
+</pre></div>
+</div>
+<p>The only limit placed on the x and y arguments by the library is that they
+must be numbers (not constant strings). The underlying C library controls
+any other limits placed on the arguments. Most libraries return +-Inf or
+NaN for results that cannot be represented with real numbers. All functions
+return a real result.</p>
+</section>
+<section id="standard-verilog-a-mathematical-constants">
+<h2>Standard Verilog-A Mathematical Constants.<a class="headerlink" href="#standard-verilog-a-mathematical-constants" title="Permalink to this headline">¶</a></h2>
+<p>The Verilog-A mathematical constants can be accessed by including the
+“constants.vams” header file. It is located in the standard include
+directory. Recent version of Icarus Verilog (0.9.devel) automatically
+add this directory to the end of the list used to find include files.
+For reference the mathematical constants are:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>`M_PI        --  Pi
+`M_TWO_PI    --  2*Pi
+`M_PI_2      --  Pi/2
+`M_PI_4      --  Pi/4
+`M_1_PI      --  1/Pi
+`M_2_PI      --  2/Pi
+`M_2_SQRTPI  --  2/sqrt(Pi)
+`M_E         --  e
+`M_LOG2E     --  log base 2 of e
+`M_LOG10E    --  log base 10 of e
+`M_LN2       --  log base e of 2
+`M_LN10      --  log base e of 10
+`M_SQRT2     --  sqrt(2)
+`M_SQRT1_2   --  1/sqrt(2)
+</pre></div>
+</div>
+</section>
+<section id="using-the-library">
+<h2>Using the Library.<a class="headerlink" href="#using-the-library" title="Permalink to this headline">¶</a></h2>
+<p>Just add “-m va_math” to your iverilog command line/command file and
+`include the “constants.vams” file as needed.</p>
+</section>
+<section id="thanks">
+<h2>Thanks<a class="headerlink" href="#thanks" title="Permalink to this headline">¶</a></h2>
+<p>I would like to thank Larry Doolittle for his suggestions and
+Stephen Williams for developing Icarus Verilog.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html">Getting Started as a Contributer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Developer Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Icarus Verilog Developer Support</a><ul>
+  <li><a href="../index.html">Developer Guide</a><ul>
+  <li><a href="index.html">VPI in Icarus Verilog</a><ul>
+      <li>Previous: <a href="vpi.html" title="previous chapter">VPI Modules in Icarus Verilog</a></li>
+      <li>Next: <a href="../cadpli/cadpli.html" title="next chapter">Cadence PLI1 Modules</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/developer/guide/vpi/va_math.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
