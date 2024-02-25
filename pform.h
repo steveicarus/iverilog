@@ -151,7 +151,7 @@ extern void pform_set_scope_timescale(const struct vlltype&loc);
    in an ansi style or non-ansi style declaration. In this case, we have
    everything needed to define the port, all in one place. */
 extern void pform_module_define_port(const struct vlltype&li,
-				     perm_string name,
+				     const pform_ident_t&name,
 				     NetNet::PortType,
 				     NetNet::Type type,
 				     data_type_t*vtype,
@@ -186,14 +186,14 @@ extern void pform_end_class_declaration(const struct vlltype&loc);
 extern bool pform_in_class();
 
 extern void pform_make_udp(const struct vlltype&loc, perm_string name,
-			   std::list<perm_string>*parms,
+			   std::list<pform_ident_t>*parms,
 			   std::vector<PWire*>*decl, std::list<std::string>*table,
 			   Statement*init);
 
 extern void pform_make_udp(const struct vlltype&loc, perm_string name,
-			   bool sync_flag, perm_string out_name,
+			   bool sync_flag, const pform_ident_t&out_name,
 			   PExpr*sync_init,
-			   std::list<perm_string>*parms,
+			   std::list<pform_ident_t>*parms,
 			   std::list<std::string>*table);
 /*
  * Package related functions.
@@ -230,10 +230,11 @@ extern void pform_add_modport_port(const struct vlltype&loc,
 extern PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&name);
 
 extern PTrigger* pform_new_trigger(const struct vlltype&loc, PPackage*pkg,
-				   const pform_name_t&name);
+				   const pform_name_t&name, unsigned lexical_pos);
 extern PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
 				        const std::list<PExpr*>*dly,
-				        const pform_name_t&name);
+				        const pform_name_t&name,
+				        unsigned lexical_pos);
 
 /*
  * Enter/exit name scopes. The push_scope function pushes the scope
@@ -272,7 +273,7 @@ extern verinum* pform_verinum_with_size(verinum*s, verinum*val,
  * This function takes the list of names as new genvars to declare in
  * the current module or generate scope.
  */
-extern void pform_genvars(const struct vlltype&li, std::list<perm_string>*names);
+extern void pform_genvars(const struct vlltype&li, std::list<pform_ident_t>*names);
 
 /*
  * This flag is set by the parser to indicate the current generate block
@@ -338,7 +339,8 @@ extern PForeach* pform_make_foreach(const struct vlltype&loc,
  * The makewire functions announce to the pform code new wires. These
  * go into a module that is currently opened.
  */
-extern PWire *pform_makewire(const struct vlltype&li, perm_string name,
+extern PWire *pform_makewire(const struct vlltype&li,
+                             const pform_ident_t&name,
 			     NetNet::Type type,
 			     std::list<pform_range_t> *indices);
 
@@ -360,7 +362,8 @@ extern void pform_make_var(const struct vlltype&loc,
 			   bool is_const = false);
 
 extern void pform_make_var_init(const struct vlltype&li,
-				perm_string name, PExpr*expr);
+				const pform_ident_t&name,
+				PExpr*expr);
 
 /* This function is used when we have an incomplete port definition in
    a non-ansi style declaration. Look up the names of the wires, and set
@@ -460,10 +463,10 @@ extern PProcess*  pform_make_behavior(ivl_process_type_t, Statement*,
 				      std::list<named_pexpr_t>*attr);
 extern void pform_mc_translate_on(bool flag);
 
-extern std::vector<PWire*>* pform_make_udp_input_ports(std::list<perm_string>*);
+extern std::vector<PWire*>* pform_make_udp_input_ports(std::list<pform_ident_t>*);
 
 extern void pform_make_events(const struct vlltype&loc,
-			      std::list<perm_string>*names);
+			      const std::list<pform_ident_t>*names);
 /*
  * The makegate function creates a new gate (which need not have a
  * name) and connects it to the specified wires.
@@ -537,7 +540,7 @@ extern void pform_discipline_potential(const struct vlltype&loc, const char*name
 extern void pform_discipline_flow(const struct vlltype&loc, const char*name);
 
 extern void pform_attach_discipline(const struct vlltype&loc,
-				    ivl_discipline_t discipline, std::list<perm_string>*names);
+				    ivl_discipline_t discipline, std::list<pform_ident_t>*names);
 
 extern void pform_dump(std::ostream&out, const ivl_nature_s*);
 extern void pform_dump(std::ostream&out, const ivl_discipline_s*);

@@ -44,13 +44,13 @@ endmodule
 
 module top;
 
+    reg a;
+    wire b;
+
     initial begin
         $sdf_annotate("ivltests/sdf_interconnect2.sdf", my_design_inst);
         $monitor("time=%0t a=%h b=%h", $realtime, a, b);
     end
-
-    reg a;
-    wire b;
 
     initial begin
         #5;
@@ -67,4 +67,3 @@ module top;
     );
 
 endmodule
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2024 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1553,6 +1553,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 void PEvent::elaborate_scope(Design*, NetScope*scope) const
 {
       NetEvent*ev = new NetEvent(name_);
+      ev->lexical_pos(lexical_pos_);
       ev->set_line(*this);
       scope->add_event(ev);
 }

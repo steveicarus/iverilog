@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2024 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -232,7 +232,7 @@ PExpr* pform_package_ident(const struct vlltype&loc,
 			   PPackage*pkg, pform_name_t*ident_name)
 {
       ivl_assert(loc, ident_name);
-      PEIdent*tmp = new PEIdent(pkg, *ident_name);
+      PEIdent*tmp = new PEIdent(pkg, *ident_name, loc.lexical_pos);
       FILE_NAME(tmp, loc);
       return tmp;
 }

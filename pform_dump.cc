@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -374,7 +374,7 @@ void struct_member_t::pform_dump(ostream&out, unsigned indent) const
       for (list<decl_assignment_t*>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++cur) {
 	    decl_assignment_t*curp = *cur;
-	    out << " " << curp->name;
+	    out << " " << curp->name.first;
       }
       out << ";" << endl;
 }

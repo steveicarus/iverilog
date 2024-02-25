@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,8 +21,8 @@
 
 # include  "PEvent.h"
 
-PEvent::PEvent(perm_string n)
-: name_(n)
+PEvent::PEvent(perm_string n, unsigned lexical_pos)
+: name_(n), lexical_pos_(lexical_pos)
 {
 }
 

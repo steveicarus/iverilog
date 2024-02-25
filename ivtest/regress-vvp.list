@@ -64,6 +64,12 @@ constfunc17			vvp_tests/constfunc17.json
 constfunc18			vvp_tests/constfunc18.json
 constfunc19			vvp_tests/constfunc19.json
 constfunc20			vvp_tests/constfunc20.json
+decl_before_use1		vvp_tests/decl_before_use1.json
+decl_before_use2		vvp_tests/decl_before_use2.json
+decl_before_use3		vvp_tests/decl_before_use3.json
+decl_before_use4		vvp_tests/decl_before_use4.json
+decl_before_use5		vvp_tests/decl_before_use5.json
+decl_before_use6		vvp_tests/decl_before_use6.json
 delayed_sfunc			vvp_tests/delayed_sfunc.json
 dffsynth			vvp_tests/dffsynth.json
 dffsynth-S			vvp_tests/dffsynth-S.json

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2024 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -280,6 +280,7 @@ void NetScope::set_parameter(perm_string key, bool is_annotatable,
       ref.local_flag = param.local_flag;
       ref.overridable = param.overridable;
       ref.type_flag = param.type_flag;
+      ref.lexical_pos = param.lexical_pos;
       ivl_assert(param, !ref.range);
       ref.range = range_list;
       ref.val = 0;
@@ -447,6 +448,17 @@ LineInfo NetScope::get_parameter_line_info(perm_string key) const
       assert(0);
 	// But return something to avoid a compiler warning.
       return LineInfo();
+}
+
+unsigned NetScope::get_parameter_lexical_pos(perm_string key) const
+{
+      map<perm_string,param_expr_t>::const_iterator idx;
+
+      idx = parameters.find(key);
+      if (idx != parameters.end()) return idx->second.lexical_pos;
+
+	// If we get here, assume an enumeration value.
+      return 0;
 }
 
 void NetScope::print_type(ostream&stream) const
@@ -879,4 +891,3 @@ void NetScope::add_tie_lo(Design*des)
 	    connect(sig->pin(0), tie_lo_->pin(0));
       }
 }
-

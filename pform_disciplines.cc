@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -189,12 +189,12 @@ void pform_end_discipline(const struct vlltype&loc)
  * in the current lexical scope.
  */
 void pform_attach_discipline(const struct vlltype&loc,
-			     ivl_discipline_t discipline, list<perm_string>*names)
+			     ivl_discipline_t discipline, list<pform_ident_t>*names)
 {
-      for (list<perm_string>::iterator cur = names->begin()
+      for (list<pform_ident_t>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
 
-	    PWire* cur_net = pform_get_wire_in_scope(*cur);
+	    PWire* cur_net = pform_get_wire_in_scope(cur->first);
 	    if (cur_net == 0) {
 		    /* Not declared yet, declare it now. */
 		  cur_net = pform_makewire(loc, *cur, NetNet::WIRE, 0);

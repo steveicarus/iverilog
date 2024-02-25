@@ -1106,6 +1106,8 @@ pr1903324		normal			ivltests
 pr1903343		normal			ivltests gold=pr1903343.gold
 pr1903520		normal			ivltests
 pr1907192		normal			ivltests
+pr1909940		CE			ivltests
+pr1909940b		CE			ivltests
 pr1912843		normal			ivltests
 pr1913918a		normal			ivltests
 pr1913918b		normal			ivltests

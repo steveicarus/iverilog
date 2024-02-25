@@ -1,7 +1,7 @@
 #ifndef IVL_PWire_H
 #define IVL_PWire_H
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -55,12 +55,15 @@ class PWire : public PNamedItem {
 
     public:
       PWire(perm_string name,
+	    unsigned lexical_pos,
 	    NetNet::Type t,
 	    NetNet::PortType pt,
 	    PWSRType rt = SR_NET);
 
 	// Return a hierarchical name.
       perm_string basename() const;
+
+      unsigned lexical_pos() const { return lexical_pos_; }
 
       NetNet::Type get_wire_type() const;
       bool set_wire_type(NetNet::Type);
@@ -99,6 +102,7 @@ class PWire : public PNamedItem {
 
     private:
       perm_string name_;
+      unsigned lexical_pos_;
       NetNet::Type type_;
       NetNet::PortType port_type_;
       bool signed_;

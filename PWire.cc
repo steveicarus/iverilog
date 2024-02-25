@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,10 +25,11 @@
 using namespace std;
 
 PWire::PWire(perm_string n,
+	     unsigned lp,
 	     NetNet::Type t,
 	     NetNet::PortType pt,
 	     PWSRType rt)
-: name_(n), type_(t), port_type_(pt), signed_(false),
+: name_(n), lexical_pos_(lp), type_(t), port_type_(pt), signed_(false),
   port_set_(false), net_set_(false), is_scalar_(false),
   error_cnt_(0), discipline_(0)
 {

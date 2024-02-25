@@ -286,10 +286,6 @@ sv_deferred_assume2	CE,-g2009		ivltests gold=sv_deferred_assume2.gold
 # Icarus deviations
 #------------------------------------------------------------------------------
 
-# Icarus still allows (implicit) declaration after use in some circumstances.
-pr1909940		normal			ivltests
-pr1909940b		normal			ivltests
-
 # Icarus allows hierarchical references to unnamed generate blocks.
 # We should add a warning about this, as it's not strictly allowed.
 unnamed_generate_block	normal			ivltests gold=unnamed_generate_block.gold

@@ -695,6 +695,9 @@ class NetNet  : public NetObj, public PortType {
       PortType port_type() const;
       void port_type(PortType t);
 
+      unsigned lexical_pos() const { return lexical_pos_; }
+      void lexical_pos(unsigned lp) { lexical_pos_ = lp; }
+
       // If this net net is a port (i.e. a *sub*port net of a module port)
       // its port index is number of the module it connects through
       int get_module_port_index() const;                // -1 Not connected to port...
@@ -819,6 +822,7 @@ class NetNet  : public NetObj, public PortType {
       PortType port_type_ : 3;
       bool coerced_to_uwire_: 1;
       bool local_flag_: 1;
+      unsigned lexical_pos_;
       ivl_type_t net_type_;
       netuarray_t *array_type_ = nullptr;
       ivl_discipline_t discipline_;
@@ -1239,6 +1243,8 @@ class NetScope : public Definitions, public Attrib {
 	    bool overridable = false;
 	    // Is it a type parameter
 	    bool type_flag = false;
+	    // The lexical position of the declaration
+	    unsigned lexical_pos = 0;
 	    // range constraints
 	    struct range_t*range;
 
@@ -1256,6 +1262,8 @@ class NetScope : public Definitions, public Attrib {
       typedef std::map<perm_string,param_expr_t>::iterator param_ref_t;
 
       LineInfo get_parameter_line_info(perm_string name) const;
+
+      unsigned get_parameter_lexical_pos(perm_string name) const;
 
 	/* Module instance arrays are collected here for access during
 	   the multiple elaboration passes. */
@@ -3421,6 +3429,9 @@ class NetEvent : public LineInfo {
 
       perm_string name() const;
 
+      unsigned lexical_pos() const { return lexical_pos_; }
+      void lexical_pos(unsigned lp) { lexical_pos_ = lp; }
+
       bool local_flag() const { return local_flag_; }
       void local_flag(bool f) { local_flag_ = f; }
 
@@ -3455,6 +3466,7 @@ class NetEvent : public LineInfo {
 
     private:
       perm_string name_;
+      unsigned lexical_pos_;
       bool local_flag_;
 
 	// The NetScope class uses these to list the events.

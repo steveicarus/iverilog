@@ -50,6 +50,12 @@ class netenum_t;
 typedef named<PExpr*> named_pexpr_t;
 
 /*
+ * The pform_ident_t holds the identifier name and its lexical position
+ * (the lexical_pos supplied by the scanner).
+ */
+typedef std::pair<perm_string, unsigned> pform_ident_t;
+
+/*
  * The pform_range_t holds variable dimensions for type
  * declarations. The two expressions are interpreted as the first and
  * last values of the range. For example:
@@ -89,11 +95,11 @@ struct lgate : public LineInfo {
  * declarations.
  */
 struct pform_port_t {
-      pform_port_t(perm_string n, std::list<pform_range_t>*ud, PExpr*e)
+      pform_port_t(pform_ident_t n, std::list<pform_range_t>*ud, PExpr*e)
 	: name(n), udims(ud), expr(e) { }
       ~pform_port_t() { }
 
-      perm_string name;
+      pform_ident_t name;
       std::list<pform_range_t>*udims;
       PExpr*expr;
 };
@@ -130,7 +136,7 @@ struct name_component_t {
 };
 
 struct decl_assignment_t {
-      perm_string name;
+      pform_ident_t name;
       std::list<pform_range_t>index;
       std::unique_ptr<PExpr> expr;
 };

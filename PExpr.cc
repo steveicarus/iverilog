@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2021 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2024 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -360,19 +360,19 @@ const verireal& PEFNumber::value() const
       return *value_;
 }
 
-PEIdent::PEIdent(const pform_name_t&that)
-: path_(that), no_implicit_sig_(false)
+PEIdent::PEIdent(const pform_name_t&that, unsigned lexical_pos)
+: path_(that), lexical_pos_(lexical_pos), no_implicit_sig_(false)
 {
 }
 
-PEIdent::PEIdent(perm_string s, bool no_implicit_sig)
-: no_implicit_sig_(no_implicit_sig)
+PEIdent::PEIdent(perm_string s, unsigned lexical_pos, bool no_implicit_sig)
+: lexical_pos_(lexical_pos), no_implicit_sig_(no_implicit_sig)
 {
       path_.name.push_back(name_component_t(s));
 }
 
-PEIdent::PEIdent(PPackage*pkg, const pform_name_t&that)
-: path_(pkg, that), no_implicit_sig_(true)
+PEIdent::PEIdent(PPackage*pkg, const pform_name_t&that, unsigned lexical_pos)
+: path_(pkg, that), lexical_pos_(lexical_pos), no_implicit_sig_(true)
 {
 }
 
@@ -426,7 +426,7 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 
                   ss = ss->parent_scope();
             }
-            PWire*net = new PWire(name, type, NetNet::NOT_A_PORT);
+            PWire*net = new PWire(name, lexical_pos_, type, NetNet::NOT_A_PORT);
             net->set_file(get_file());
             net->set_lineno(get_lineno());
             scope->wires[name] = net;
@@ -440,7 +440,7 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 bool PEIdent::has_aa_term(Design*des, NetScope*scope) const
 {
       symbol_search_results sr;
-      if (!symbol_search(this, des, scope, path_, &sr))
+      if (!symbol_search(this, des, scope, path_, lexical_pos_, &sr))
 	    return false;
 
       // Class properties are not considered automatic since a non-blocking
