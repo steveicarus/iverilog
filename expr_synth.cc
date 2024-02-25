@@ -1259,8 +1259,21 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 	// padding.) If this was for an actual part select that at
 	// this point the output vector_width is exactly right, and we
 	// are done.
-      if (sub->vector_width() == expr_width())
-	    return sub;
+      if (sub->vector_width() == expr_width()) {
+	    if (sub->get_signed() == has_sign())
+		  return sub;
+
+	      // If the signal and expression type don't match, we
+	      // need to add an intermediate signal to reflect that.
+
+	    auto tmp_vec = new netvector_t(sub->data_type(), sub->vector_width() - 1, 0);
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::IMPLICIT,
+				    tmp_vec);
+	    tmp->set_line(*this);
+	    tmp->local_flag(true);
+	    connect(sub->pin(0), tmp->pin(0));
+	    return tmp;
+      }
 
       netvector_t*net_vec = new netvector_t(expr_type(), expr_width()-1, 0);
       net_vec->set_signed(has_sign());
@@ -1423,8 +1436,21 @@ NetNet* NetESignal::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    return tmp;
       }
 
-      if (word_ == 0)
-	    return net_;
+      if (word_ == 0) {
+	    if (net_->get_signed() == has_sign())
+		  return net_;
+
+	      // If the signal has been cast to a different type, we
+	      // need to add an intermediate signal to reflect that.
+
+	    auto tmp_vec = new netvector_t(net_->data_type(), net_->vector_width() - 1, 0);
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::IMPLICIT,
+				    tmp_vec);
+	    tmp->set_line(*this);
+	    tmp->local_flag(true);
+	    connect(net_->pin(0), tmp->pin(0));
+	    return tmp;
+      }
 
       netvector_t*tmp_vec = new netvector_t(net_->data_type(),
 					    net_->vector_width()-1, 0);
