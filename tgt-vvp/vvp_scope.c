@@ -2515,6 +2515,15 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    }
       }
 
+	/* Draw the timing checks. */
+
+      for (idx = 0 ;  idx < ivl_scope_tchks(net) ;  idx += 1) {
+	    ivl_tchk_t tchk = ivl_scope_tchk(net, idx);
+
+	      // TODO check for tchk type
+	    draw_tchk_in_scope(tchk);
+      }
+
       for (idx = 0 ;  idx < ivl_scope_events(net) ;  idx += 1) {
 	    ivl_event_t event = ivl_scope_event(net, idx);
 	    draw_event_in_scope(event);
