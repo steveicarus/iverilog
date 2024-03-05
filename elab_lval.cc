@@ -907,6 +907,23 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 	    if (base_c->value().is_defined()) {
 		  long lsv = base_c->value().as_long();
 		  long rel_base = 0;
+
+		    // Check whether an unsigned base fits in a 32 bit int.
+		    // This ensures correct results for the vlog95 target, and
+		    // for the vvp target on LLP64 platforms (Microsoft Windows).
+		  if (!base_c->has_sign() && (int32_t)lsv < 0) {
+		          // The base is wrapped around.
+			delete base;
+			if (warn_ob_select) {
+			      cerr << get_fileline() << ": warning: " << lv->name();
+			      if (lv->word()) cerr << "[]";
+			      cerr << "[" << (unsigned long)lsv
+				   << (index_tail.sel == index_component_t::SEL_IDX_UP ? "+:" : "-:")
+				   << wid << "] is always outside vector." << endl;
+			}
+			return false;
+		  }
+
 		    // Get the signal range.
 		  const netranges_t&packed = reg->packed_dims();
 		  if (prefix_indices.size()+1 < reg->packed_dims().size()) {
