@@ -252,8 +252,10 @@ bool vvp_fun_part_var::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	  case 1:
 	      // INT_MIN is before the vector and is used to
 	      // represent a 'bx value on the select input.
-	    tmp = INT32_MIN;
-	    vector4_to_value(bit, tmp, is_signed_);
+	      // It is also used to guard against 32 bit
+	      // unsigned -> signed address overflow / wrap around.
+	    if (!vector4_to_value(bit, tmp, is_signed_) || (!is_signed_ && tmp < 0))
+		  tmp = INT32_MIN;
 	    if (static_cast<int>(tmp) == base) return false;
 	    base = tmp;
 	    break;
