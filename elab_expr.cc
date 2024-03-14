@@ -5958,6 +5958,23 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 	    if (base_c->value().is_defined()) {
 		  long lsv = base_c->value().as_long();
 		  long rel_base = 0;
+
+		    // Check whether an unsigned base fits in a 32 bit int,
+		    // which is what will be used for addressing later on.
+		  if (!base_c->has_sign() && (int32_t)lsv < 0) {
+			  // Return 'bx for a wrapped around base.
+			ex = new NetEConst(verinum(verinum::Vx, wid, true));
+			ex->set_line(*this);
+			delete base;
+			if (warn_ob_select) {
+			      cerr << get_fileline() << ": warning: " << net->name();
+			      if (net->word_index()) cerr << "[]";
+			      cerr << "[" << (unsigned long)lsv << "+:" << wid
+				   << "] is always outside vector." << endl;
+			}
+			return ex;
+		  }
+
 		    // Get the signal range.
 		  const netranges_t&packed = net->sig()->packed_dims();
 		  if (prefix_indices.size()+1 < net->sig()->packed_dims().size()) {
@@ -6107,6 +6124,23 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 	    if (base_c->value().is_defined()) {
 		  long lsv = base_c->value().as_long();
 		  long rel_base = 0;
+
+		    // Check whether an unsigned base fits in a 32 bit int,
+		    // which is what will be used for addressing later on.
+		  if (!base_c->has_sign() && (int32_t)lsv < 0) {
+			  // Return 'bx for a wrapped around base.
+			ex = new NetEConst(verinum(verinum::Vx, wid, true));
+			ex->set_line(*this);
+			delete base;
+			if (warn_ob_select) {
+			      cerr << get_fileline() << ": warning: " << net->name();
+			      if (net->word_index()) cerr << "[]";
+			      cerr << "[" << (unsigned long)lsv << "-:" << wid
+				   << "] is always outside vector." << endl;
+			}
+			return ex;
+		  }
+
 		    // Get the signal range.
 		  const netranges_t&packed = net->sig()->packed_dims();
 		  if (prefix_indices.size()+1 < net->sig()->packed_dims().size()) {
