@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -86,12 +86,12 @@ void pform_class_property(const struct vlltype&loc,
 		  FILE_NAME(use_type, loc);
 	    }
 
-	    pform_cur_class->type->properties[curp->name]
+	    pform_cur_class->type->properties[curp->name.first]
 		  = class_type_t::prop_info_t(property_qual,use_type);
-	    FILE_NAME(&pform_cur_class->type->properties[curp->name], loc);
+	    FILE_NAME(&pform_cur_class->type->properties[curp->name.first], loc);
 
 	    if (PExpr*rval = curp->expr.release()) {
-		  PExpr*lval = new PEIdent(curp->name);
+		  PExpr*lval = new PEIdent(curp->name.first, curp->name.second);
 		  FILE_NAME(lval, loc);
 		  PAssign*tmp = new PAssign(lval, rval);
 		  FILE_NAME(tmp, loc);
@@ -110,7 +110,7 @@ void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net)
 	    return;
 
       list<pform_port_t>*this_name = new list<pform_port_t>;
-      this_name->push_back(pform_port_t(perm_string::literal(THIS_TOKEN), 0, 0));
+      this_name->push_back(pform_port_t({ perm_string::literal(THIS_TOKEN), 0 }, 0, 0));
       vector<pform_tf_port_t>*this_port = pform_make_task_ports(loc,
 						       NetNet::PINPUT,
 						       pform_cur_class->type,

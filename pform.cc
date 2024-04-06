@@ -708,23 +708,24 @@ PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&name)
       if (gn_system_verilog())
 	    check_potential_imports(loc, name.front().name, false);
 
-      return new PEIdent(name);
+      return new PEIdent(name, loc.lexical_pos);
 }
 
 PTrigger* pform_new_trigger(const struct vlltype&loc, PPackage*pkg,
-			    const pform_name_t&name)
+			    const pform_name_t&name, unsigned lexical_pos)
 {
       if (gn_system_verilog())
 	    check_potential_imports(loc, name.front().name, false);
 
-      PTrigger*tmp = new PTrigger(pkg, name);
+      PTrigger*tmp = new PTrigger(pkg, name, lexical_pos);
       FILE_NAME(tmp, loc);
       return tmp;
 }
 
 PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
 			         const list<PExpr*>*dly,
-			         const pform_name_t&name)
+			         const pform_name_t&name,
+			         unsigned lexical_pos)
 {
       if (gn_system_verilog())
 	    check_potential_imports(loc, name.front().name, false);
@@ -735,7 +736,7 @@ PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
 	    tmp_dly = dly->front();
       }
 
-      PNBTrigger*tmp = new PNBTrigger(name, tmp_dly);
+      PNBTrigger*tmp = new PNBTrigger(name, lexical_pos, tmp_dly);
       FILE_NAME(tmp, loc);
       return tmp;
 }
@@ -969,7 +970,7 @@ void pform_make_foreach_declarations(const struct vlltype&loc,
 	    if (cur->nil())
 		  continue;
 	    decl_assignment_t*tmp_assign = new decl_assignment_t;
-	    tmp_assign->name = lex_strings.make(*cur);
+	    tmp_assign->name = { lex_strings.make(*cur), 0 };
 	    assign_list.push_back(tmp_assign);
       }
 
@@ -1376,7 +1377,7 @@ Module::port_t* pform_module_port_reference(const struct vlltype&loc,
 					    perm_string name)
 {
       Module::port_t*ptmp = new Module::port_t;
-      PEIdent*tmp = new PEIdent(name);
+      PEIdent*tmp = new PEIdent(name, loc.lexical_pos);
       FILE_NAME(tmp, loc);
       ptmp->name = name;
       ptmp->expr.push_back(tmp);
@@ -1478,19 +1479,19 @@ void pform_endmodule(const char*name, bool inside_celldefine,
       pform_pop_scope();
 }
 
-void pform_genvars(const struct vlltype&li, list<perm_string>*names)
+void pform_genvars(const struct vlltype&li, list<pform_ident_t>*names)
 {
-      list<perm_string>::const_iterator cur;
+      list<pform_ident_t>::const_iterator cur;
       for (cur = names->begin(); cur != names->end() ; *cur++) {
 	    PGenvar*genvar = new PGenvar();
 	    FILE_NAME(genvar, li);
 
 	    if (pform_cur_generate) {
-		  add_local_symbol(pform_cur_generate, *cur, genvar);
-		  pform_cur_generate->genvars[*cur] = genvar;
+		  add_local_symbol(pform_cur_generate, cur->first, genvar);
+		  pform_cur_generate->genvars[cur->first] = genvar;
 	    } else {
-		  add_local_symbol(pform_cur_module.front(), *cur, genvar);
-		  pform_cur_module.front()->genvars[*cur] = genvar;
+		  add_local_symbol(pform_cur_module.front(), cur->first, genvar);
+		  pform_cur_module.front()->genvars[cur->first] = genvar;
 	    }
       }
 
@@ -1855,7 +1856,7 @@ static void process_udp_table(PUdp*udp, list<string>*table,
 }
 
 void pform_make_udp(const struct vlltype&loc, perm_string name,
-		    list<perm_string>*parms, vector<PWire*>*decl,
+		    list<pform_ident_t>*parms, vector<PWire*>*decl,
 		    list<string>*table, Statement*init_expr)
 {
       unsigned local_errors = 0;
@@ -1896,13 +1897,13 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	   PWire* created by an input or output declaration. */
       std::vector<PWire*> pins(parms->size());
       std::vector<perm_string> pin_names(parms->size());
-      { list<perm_string>::iterator cur;
+      { list<pform_ident_t>::iterator cur;
         unsigned idx;
         for (cur = parms->begin(), idx = 0
 		   ; cur != parms->end()
 		   ; ++ idx, ++ cur) {
-	      pins[idx] = defs[*cur];
-	      pin_names[idx] = *cur;
+	      pins[idx] = defs[cur->first];
+	      pin_names[idx] = cur->first;
 	}
       }
 
@@ -2048,27 +2049,27 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 }
 
 void pform_make_udp(const struct vlltype&loc, perm_string name,
-		    bool synchronous_flag, perm_string out_name,
-		    PExpr*init_expr, list<perm_string>*parms,
+		    bool synchronous_flag, const pform_ident_t&out_name,
+		    PExpr*init_expr, list<pform_ident_t>*parms,
 		    list<string>*table)
 {
 
       std::vector<PWire*> pins(parms->size() + 1);
 
 	/* Make the PWire for the output port. */
-      pins[0] = new PWire(out_name,
+      pins[0] = new PWire(out_name.first, out_name.second,
 			  synchronous_flag? NetNet::REG : NetNet::WIRE,
 			  NetNet::POUTPUT);
       FILE_NAME(pins[0], loc);
 
 	/* Make the PWire objects for the input ports. */
-      { list<perm_string>::iterator cur;
+      { list<pform_ident_t>::iterator cur;
         unsigned idx;
         for (cur = parms->begin(), idx = 1
 		   ;  cur != parms->end()
 		   ;  idx += 1, ++ cur) {
 	      ivl_assert(loc, idx < pins.size());
-	      pins[idx] = new PWire(*cur, NetNet::WIRE,
+	      pins[idx] = new PWire(cur->first, cur->second, NetNet::WIRE,
 				    NetNet::PINPUT);
 	      FILE_NAME(pins[idx], loc);
 	}
@@ -2151,21 +2152,19 @@ static void pform_set_net_range(PWire *wire,
  * This is invoked to make a named event. This is the declaration of
  * the event, and not necessarily the use of it.
  */
-static void pform_make_event(const struct vlltype&loc, perm_string name)
+static void pform_make_event(const struct vlltype&loc, const pform_ident_t&name)
 {
-      PEvent*event = new PEvent(name);
+      PEvent*event = new PEvent(name.first, name.second);
       FILE_NAME(event, loc);
 
-      add_local_symbol(lexical_scope, name, event);
-      lexical_scope->events[name] = event;
+      add_local_symbol(lexical_scope, name.first, event);
+      lexical_scope->events[name.first] = event;
 }
 
-void pform_make_events(const struct vlltype&loc, list<perm_string>*names)
+void pform_make_events(const struct vlltype&loc, const list<pform_ident_t>*names)
 {
-      list<perm_string>::iterator cur;
-      for (cur = names->begin() ;  cur != names->end() ; ++ cur ) {
-	    perm_string txt = *cur;
-	    pform_make_event(loc, txt);
+      for (auto cur = names->begin() ;  cur != names->end() ; ++ cur ) {
+	    pform_make_event(loc, *cur);
       }
 
       delete names;
@@ -2476,8 +2475,8 @@ void pform_make_pgassign_list(const struct vlltype&loc,
  * This syntax is not part of the IEEE1364-1995 standard, but is
  * approved by OVI as enhancement BTF-B14.
  */
-void pform_make_var_init(const struct vlltype&li,
-			 perm_string name, PExpr*expr)
+void pform_make_var_init(const struct vlltype&li, const pform_ident_t&name,
+			 PExpr*expr)
 {
       if (! pform_at_module_level() && !gn_system_verilog()) {
 	    VLerror(li, "error: Variable declaration assignments are only "
@@ -2486,7 +2485,7 @@ void pform_make_var_init(const struct vlltype&li,
 	    return;
       }
 
-      PEIdent*lval = new PEIdent(name);
+      PEIdent*lval = new PEIdent(name.first, name.second);
       FILE_NAME(lval, li);
       PAssign*ass = new PAssign(lval, expr, !gn_system_verilog(), true);
       FILE_NAME(ass, li);
@@ -2514,8 +2513,10 @@ void pform_make_var_init(const struct vlltype&li,
  */
 
 
-static PWire* pform_get_or_make_wire(const struct vlltype&li, perm_string name,
-				     NetNet::Type type, NetNet::PortType ptype,
+static PWire* pform_get_or_make_wire(const struct vlltype&li,
+				     const pform_ident_t&name,
+				     NetNet::Type type,
+				     NetNet::PortType ptype,
 				     PWSRType rt)
 {
       PWire *cur = 0;
@@ -2523,7 +2524,7 @@ static PWire* pform_get_or_make_wire(const struct vlltype&li, perm_string name,
 	// If this is not a full declaration check if there is already a signal
 	// with the same name that can be extended.
       if (rt != SR_BOTH)
-	    cur = pform_get_wire_in_scope(name);
+	    cur = pform_get_wire_in_scope(name.first);
 
 	// If the wire already exists but isn't yet fully defined,
 	// carry on adding details.
@@ -2547,10 +2548,10 @@ static PWire* pform_get_or_make_wire(const struct vlltype&li, perm_string name,
 	// to the scope. Do not delete the old wire - it will
 	// remain in the local symbol map.
 
-      cur = new PWire(name, type, ptype, rt);
+      cur = new PWire(name.first, name.second, type, ptype, rt);
       FILE_NAME(cur, li);
 
-      pform_put_wire_in_scope(name, cur);
+      pform_put_wire_in_scope(name.first, cur);
 
       return cur;
 }
@@ -2567,7 +2568,7 @@ static PWire* pform_get_or_make_wire(const struct vlltype&li, perm_string name,
  * as is done for the old method.
  */
 void pform_module_define_port(const struct vlltype&li,
-			      perm_string name,
+			      const pform_ident_t&name,
 			      NetNet::PortType port_kind,
 			      NetNet::Type type,
 			      data_type_t*vtype,
@@ -2621,11 +2622,10 @@ void pform_module_define_port(const struct vlltype&li,
  * the variable/net. Other forms of pform_makewire ultimately call
  * this one to create the wire and stash it.
  */
-PWire *pform_makewire(const vlltype&li, perm_string name, NetNet::Type type,
-		      std::list<pform_range_t> *indices)
+PWire *pform_makewire(const vlltype&li, const pform_ident_t&name,
+		      NetNet::Type type, std::list<pform_range_t> *indices)
 {
-      PWire*cur = pform_get_or_make_wire(li, name, type, NetNet::NOT_A_PORT,
-				         SR_NET);
+      PWire*cur = pform_get_or_make_wire(li, name, type, NetNet::NOT_A_PORT, SR_NET);
       ivl_assert(li, cur);
 
       if (indices && !indices->empty())
@@ -2666,7 +2666,8 @@ void pform_makewire(const struct vlltype&li,
                   if (type == NetNet::REG || type == NetNet::IMPLICIT_REG) {
                         pform_make_var_init(li, first->name, expr);
                   } else {
-		        PEIdent*lval = new PEIdent(first->name);
+		        PEIdent*lval = new PEIdent(first->name.first,
+						   first->name.second);
 		        FILE_NAME(lval, li);
 		        PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);
 		        FILE_NAME(ass, li);
@@ -2735,10 +2736,8 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 
       for (list<pform_port_t>::iterator cur = ports->begin();
 	   cur != ports->end(); ++cur) {
-	    const perm_string &name = cur->name;
-
-	    PWire*curw = pform_get_or_make_wire(loc, name, NetNet::IMPLICIT_REG,
-						pt, rt);
+	    PWire*curw = pform_get_or_make_wire(loc, cur->name,
+						NetNet::IMPLICIT_REG, pt, rt);
 	    if (rt == SR_BOTH)
 		  curw->set_data_type(vtype);
 
@@ -2797,7 +2796,7 @@ PExpr* pform_genvar_inc_dec(const struct vlltype&loc, const char*name, bool inc_
 {
       pform_requires_sv(loc, "Increment/decrement operator");
 
-      PExpr*lval = new PEIdent(lex_strings.make(name));
+      PExpr*lval = new PEIdent(lex_strings.make(name), loc.lexical_pos);
       PExpr*rval = new PENumber(new verinum(1));
       FILE_NAME(lval, loc);
       FILE_NAME(rval, loc);
@@ -2813,7 +2812,7 @@ PExpr* pform_genvar_compressed(const struct vlltype &loc, const char *name,
 {
       pform_requires_sv(loc, "Compressed assignment operator");
 
-      PExpr *lval = new PEIdent(lex_strings.make(name));
+      PExpr *lval = new PEIdent(lex_strings.make(name), loc.lexical_pos);
       FILE_NAME(lval, loc);
 
       PExpr *expr;
@@ -2954,6 +2953,7 @@ void pform_set_parameter(const struct vlltype&loc,
       parm->local_flag = is_local;
       parm->overridable = overridable;
       parm->type_flag = is_type;
+      parm->lexical_pos = loc.lexical_pos;
 
       scope->parameters[name] = parm;
 
@@ -3170,8 +3170,7 @@ void pform_set_port_type(const struct vlltype&li,
 		 ; cur != ports->end() ; ++ cur ) {
 
 	    PWire *wire = pform_get_or_make_wire(li, cur->name,
-						 NetNet::IMPLICIT, pt,
-						 SR_PORT);
+						 NetNet::IMPLICIT, pt, SR_PORT);
 	    pform_set_net_range(wire, vt, SR_PORT, attr);
 
 	    if (cur->udims) {
@@ -3235,15 +3234,14 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
       delete wires;
 }
 
-vector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
+vector<PWire*>* pform_make_udp_input_ports(list<pform_ident_t>*names)
 {
       vector<PWire*>*out = new vector<PWire*>(names->size());
 
       unsigned idx = 0;
-      for (list<perm_string>::iterator cur = names->begin()
+      for (list<pform_ident_t>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
-	    perm_string txt = *cur;
-	    PWire*pp = new PWire(txt,
+	    PWire*pp = new PWire(cur->first, cur->second,
 				 NetNet::IMPLICIT,
 				 NetNet::PINPUT);
 	    (*out)[idx] = pp;

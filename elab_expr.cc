@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2024 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1731,7 +1731,7 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 
       // Search for the symbol. This should turn up a scope.
       symbol_search_results search_results;
-      bool search_flag = symbol_search(this, des, scope, path_, &search_results);
+      bool search_flag = symbol_search(this, des, scope, path_, UINT_MAX, &search_results);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PECallFunction::test_width: "
@@ -2843,7 +2843,7 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 
       // Search for the symbol. This should turn up a scope.
       symbol_search_results search_results;
-      bool search_flag = symbol_search(this, des, scope, path_, &search_results);
+      bool search_flag = symbol_search(this, des, scope, path_, UINT_MAX, &search_results);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
@@ -4334,7 +4334,7 @@ ivl_type_t PEIdent::resolve_type_(Design *des, const symbol_search_results &sr,
 unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
       symbol_search_results sr;
-      bool found_symbol = symbol_search(this, des, scope, path_, &sr);
+      bool found_symbol = symbol_search(this, des, scope, path_, lexical_pos_, &sr);
 
 	// If there is a part/bit select expression, then process it
 	// here. This constrains the results no matter what kind the
@@ -4490,11 +4490,16 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       bool need_const = NEED_CONST & flags;
 
       symbol_search_results sr;
-      symbol_search(this, des, scope, path_, &sr);
+      symbol_search(this, des, scope, path_, lexical_pos_, &sr);
 
       if (!sr.net) {
             cerr << get_fileline() << ": error: Unable to bind variable `"
 	         << path_ << "' in `" << scope_path(scope) << "'" << endl;
+	    if (sr.decl_after_use) {
+		  cerr << sr.decl_after_use->get_fileline() << ":      : "
+			  "A symbol with that name was declared here. "
+			  "Check for declaration after use." << endl;
+	    }
 	    des->errors++;
 	    return nullptr;
       }
@@ -4680,7 +4685,7 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 	// a net called "b" in the scope "main.a" and with a member
 	// named "c". symbol_search() handles this for us.
       symbol_search_results sr;
-      symbol_search(this, des, scope, path_, &sr);
+      symbol_search(this, des, scope, path_, lexical_pos_, &sr);
 
 	// If the identifier name is a parameter name, then return
 	// the parameter value.
@@ -5016,6 +5021,11 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
                        << "' is being used as a constant function, so may "
                           "only reference local variables." << endl;
             }
+	    if (sr.decl_after_use) {
+		  cerr << sr.decl_after_use->get_fileline() << ":      : "
+			  "A symbol with that name was declared here. "
+			  "Check for declaration after use." << endl;
+	    }
 	    des->errors += 1;
 	    return 0;
       }

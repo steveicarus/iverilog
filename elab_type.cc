@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -250,7 +250,7 @@ ivl_type_t struct_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 		  }
 
 		  netstruct_t::member_t memb;
-		  memb.name = namep->name;
+		  memb.name = namep->name.first;
 		  memb.net_type = elaborate_array_type(des, scope, *this,
 						       mem_vec, namep->index);
 		  res->append_member(des, memb);

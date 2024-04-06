@@ -503,7 +503,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       ivl_assert(*this, scope);
 
       symbol_search_results sr;
-      symbol_search(this, des, scope, path_.name, &sr);
+      symbol_search(this, des, scope, path_.name, lexical_pos_, &sr);
 
       if (sr.eve != 0) {
 	    cerr << get_fileline() << ": error: named events (" << path_
@@ -520,6 +520,11 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       if (sig == 0) {
 	    cerr << get_fileline() << ": error: Net " << path_
 		 << " is not defined in this context." << endl;
+	    if (sr.decl_after_use) {
+		  cerr << sr.decl_after_use->get_fileline() << ":      : "
+			  "A symbol with that name was declared here. "
+			  "Check for declaration after use." << endl;
+	    }
 	    des->errors += 1;
 	    return 0;
       }
@@ -1113,10 +1118,15 @@ NetNet* PEIdent::elaborate_subport(Design*des, NetScope*scope) const
 NetNet*PEIdent::elaborate_unpacked_net(Design*des, NetScope*scope) const
 {
       symbol_search_results sr;
-      symbol_search(this, des, scope, path_, &sr);
+      symbol_search(this, des, scope, path_, lexical_pos_, &sr);
       if (!sr.net) {
 	    cerr << get_fileline() << ": error: Net " << path_
 		 << " is not defined in this context." << endl;
+	    if (sr.decl_after_use) {
+		  cerr << sr.decl_after_use->get_fileline() << ":      : "
+			  "A symbol with that name was declared here. "
+			  "Check for declaration after use." << endl;
+	    }
 	    des->errors += 1;
 	    return nullptr;
       }
@@ -1138,7 +1148,7 @@ bool PEIdent::is_collapsible_net(Design*des, NetScope*scope,
       ivl_assert(*this, scope);
 
       symbol_search_results sr;
-      symbol_search(this, des, scope, path_.name, &sr);
+      symbol_search(this, des, scope, path_.name, lexical_pos_, &sr);
 
       if (sr.eve != 0)
             return false;

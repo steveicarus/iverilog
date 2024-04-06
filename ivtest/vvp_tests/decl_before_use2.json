@@ -1,0 +1,6 @@
+
+{
+    "type" : "CE",
+    "source" : "decl_before_use2.v",
+    "gold" : "decl_before_use2"
+}

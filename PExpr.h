@@ -336,9 +336,9 @@ class PEFNumber : public PExpr {
 class PEIdent : public PExpr {
 
     public:
-      explicit PEIdent(perm_string, bool no_implicit_sig=false);
-      explicit PEIdent(PPackage*pkg, const pform_name_t&name);
-      explicit PEIdent(const pform_name_t&);
+      explicit PEIdent(perm_string, unsigned lexical_pos, bool no_implicit_sig=false);
+      explicit PEIdent(PPackage*pkg, const pform_name_t&name, unsigned lexical_pos);
+      explicit PEIdent(const pform_name_t&, unsigned lexical_pos);
       ~PEIdent();
 
 	// Add another name to the string of hierarchy that is the
@@ -386,8 +386,11 @@ class PEIdent : public PExpr {
 
       const pform_scoped_name_t& path() const { return path_; }
 
+      unsigned lexical_pos() const { return lexical_pos_; }
+
     private:
       pform_scoped_name_t path_;
+      unsigned lexical_pos_;
       bool no_implicit_sig_;
 
     private:

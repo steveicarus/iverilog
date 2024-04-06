@@ -49,6 +49,7 @@ struct symbol_search_results {
 	    par_val = 0;
 	    type = 0;
 	    eve = 0;
+	    decl_after_use = 0;
       }
 
       inline bool is_scope() const {
@@ -78,6 +79,11 @@ struct symbol_search_results {
       ivl_type_t type;
 	// If this is a named event, ...
       NetEvent*eve;
+	// If a symbol was located but skipped because its lexical position
+	// is after the lexical position of the name being searched, it is
+	// stored here. If more than one such symbol is found, the first
+	// one is retained.
+      const LineInfo*decl_after_use;
 
         // Store bread crumbs of the search here. The path_tail is the parts
         // of the original path that were not found, or are after an object
@@ -106,11 +112,12 @@ static inline bool test_function_return_value(const symbol_search_results&search
 }
 
 extern bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
-			  pform_name_t path, struct symbol_search_results*res,
+			  pform_name_t path, unsigned lexical_pos,
+			  struct symbol_search_results*res,
 			  NetScope*start_scope = nullptr, bool prefix_scope = false);
 
 extern bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
-			  const pform_scoped_name_t &path,
+			  const pform_scoped_name_t &path, unsigned lexical_pos,
 			  struct symbol_search_results*res);
 
 /*

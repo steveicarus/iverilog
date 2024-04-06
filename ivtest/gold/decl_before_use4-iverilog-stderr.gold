@@ -1,0 +1,4 @@
+ivltests/decl_before_use4.v:4: error: Unable to bind wire/reg/memory `e' in `test'
+ivltests/decl_before_use4.v:8:      : A symbol with that name was declared here. Check for declaration after use.
+ivltests/decl_before_use4.v:4: error: Failed to evaluate event expression 'e'.
+2 error(s) during elaboration.

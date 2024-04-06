@@ -174,7 +174,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
       symbol_search_results sr;
-      symbol_search(this, des, scope, path_, &sr);
+      symbol_search(this, des, scope, path_, lexical_pos_, &sr);
 
       NetNet *reg = sr.net;
       pform_name_t &member_path = sr.path_tail;
@@ -193,6 +193,11 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 		  cerr << get_fileline() << ": error: Could not find variable ``"
 		       << path_ << "'' in ``" << scope_path(scope) <<
 			"''" << endl;
+		  if (sr.decl_after_use) {
+			cerr << sr.decl_after_use->get_fileline() << ":      : "
+				"A symbol with that name was declared here. "
+				"Check for declaration after use." << endl;
+		  }
 	    }
 	    des->errors += 1;
 	    return 0;

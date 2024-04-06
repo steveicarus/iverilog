@@ -557,7 +557,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	       const netranges_t&unpacked, ivl_type_t use_net_type)
 : NetObj(s, n, calculate_count(unpacked)),
     type_(t), port_type_(NOT_A_PORT), coerced_to_uwire_(false),
-    local_flag_(false), net_type_(use_net_type),
+    local_flag_(false), lexical_pos_(0), net_type_(use_net_type),
     discipline_(0), unpacked_dims_(unpacked),
     eref_count_(0), lref_count_(0)
 {
@@ -580,7 +580,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 NetNet::NetNet(NetScope*s, perm_string n, Type t, ivl_type_t type)
 : NetObj(s, n, 1),
     type_(t), port_type_(NOT_A_PORT), coerced_to_uwire_(false),
-    local_flag_(false), net_type_(type),
+    local_flag_(false), lexical_pos_(0), net_type_(type),
     discipline_(0),
     eref_count_(0), lref_count_(0)
 {
