@@ -25,6 +25,8 @@ br_gh383b			vvp_tests/br_gh383b.json
 br_gh383c			vvp_tests/br_gh383c.json
 br_gh383d			vvp_tests/br_gh383d.json
 br_gh440			vvp_tests/br_gh440.json
+br_gh483a			vvp_tests/br_gh483a.json
+br_gh483b			vvp_tests/br_gh483b.json
 br_gh552			vvp_tests/br_gh552.json
 br_gh687			vvp_tests/br_gh687.json
 br_gh703			vvp_tests/br_gh703.json
@@ -42,6 +44,7 @@ br_gh1087a2			vvp_tests/br_gh1087a2.json
 br_gh1087a3			vvp_tests/br_gh1087a3.json
 br_gh1087b			vvp_tests/br_gh1087b.json
 br_gh1087c			vvp_tests/br_gh1087c.json
+br_gh1097			vvp_tests/br_gh1097.json
 br_gh1099a			vvp_tests/br_gh1099a.json
 br_gh1099b			vvp_tests/br_gh1099b.json
 br_gh1099c			vvp_tests/br_gh1099c.json
@@ -84,6 +87,9 @@ dffsynth9			vvp_tests/dffsynth9.json
 dffsynth10			vvp_tests/dffsynth10.json
 dffsynth11			vvp_tests/dffsynth11.json
 dumpfile			vvp_tests/dumpfile.json
+early_sig_elab1			vvp_tests/early_sig_elab1.json
+early_sig_elab2			vvp_tests/early_sig_elab2.json
+early_sig_elab3			vvp_tests/early_sig_elab3.json
 eofmt_percent			vvp_tests/eofmt_percent.json
 eofmt_percent-vlog95		vvp_tests/eofmt_percent-vlog95.json
 fdisplay3			vvp_tests/fdisplay3.json

@@ -1,0 +1,5 @@
+{
+    "type"   : "CE",
+    "source" : "early_sig_elab3.v",
+    "gold"   : "early_sig_elab3"
+}

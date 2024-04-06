@@ -1,0 +1,2 @@
+ivltests/early_sig_elab3.v:8: error: Circular dependency detected in declaration of 'a'.
+1 error(s) during elaboration.
