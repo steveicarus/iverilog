@@ -34,7 +34,12 @@ jobs:
 
     - name: Test
       run: ./.github/test.sh
-
+    - name: Archive test logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-logs-macOS
+        path: ivtest/*log/*
 
   lin:
     strategy:
@@ -64,6 +69,13 @@ jobs:
 
     - name: Test
       run: ./.github/test.sh
+
+    - name: Archive test logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-logs-ubuntu-${{ matrix.os }}
+        path: ivtest/*log/*
 
     - name: Documentation
       run: |
@@ -117,6 +129,13 @@ jobs:
     - name: Test
       run: |
         ./.github/test.sh
+
+    - name: Archive test logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-logs-${{ matrix.msystem }}-${{ matrix.arch }}
+        path: ivtest/*log/*
 
     - uses: actions/upload-artifact@v3
       with:
