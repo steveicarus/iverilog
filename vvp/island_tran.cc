@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -47,6 +47,7 @@ struct vvp_island_branch_tran : public vvp_island_branch {
                              unsigned width__, unsigned part__,
                              unsigned offset__, bool resistive__);
       void run_test_enabled();
+      bool rerun_test_enabled();
       void run_resolution();
       void run_output();
 
@@ -91,6 +92,7 @@ void vvp_island_tran::run_island()
 	    tmp->run_test_enabled();
       }
 
+rerun:
 	// Now resolve all the branches in the island.
       for (vvp_island_branch*cur = branches_ ; cur ; cur = cur->next_branch) {
 	    vvp_island_branch_tran*tmp = dynamic_cast<vvp_island_branch_tran*>(cur);
@@ -104,6 +106,15 @@ void vvp_island_tran::run_island()
 	    assert(tmp);
 	    tmp->run_output();
       }
+
+	// Now check if the enable inputs have been affected by the resolution.
+      bool enable_changed = false;
+      for (vvp_island_branch*cur = branches_ ; cur ; cur = cur->next_branch) {
+	    vvp_island_branch_tran*tmp = dynamic_cast<vvp_island_branch_tran*>(cur);
+	    assert(tmp);
+	    enable_changed |= tmp->rerun_test_enabled();
+      }
+      if (enable_changed) goto rerun;
 }
 
 static void count_drivers_(vvp_branch_ptr_t cur, bool other_side_visited,
@@ -228,6 +239,38 @@ void vvp_island_branch_tran::run_test_enabled()
 	    state = tran_unknown;
 	    break;
       }
+}
+
+bool vvp_island_branch_tran::rerun_test_enabled()
+{
+      vvp_island_port*ep = en? dynamic_cast<vvp_island_port*> (en->fun) : NULL;
+
+      if (ep == 0)
+	    return false;
+
+	// We are only looking for changes resulting from running the island
+	// resolution. If the outvalue is nil, we know that the enable port
+	// is an .import, so won't be affected.
+      if (ep->outvalue.size() == 0)
+	    return false;
+
+      vvp_bit4_t enable_val = ep->outvalue.value(0).value();
+
+      tran_state_t old_state = state;
+
+      switch (enable_val) {
+	  case BIT4_0:
+	    state = active_high ? tran_disabled : tran_enabled;
+	    break;
+	  case BIT4_1:
+	    state = active_high ? tran_enabled : tran_disabled;
+	    break;
+	  default:
+	    state = tran_unknown;
+	    break;
+      }
+
+      return state != old_state;
 }
 
 // The IEEE standard does not specify the behaviour when a tranif control
