@@ -17,6 +17,7 @@ cscope.*
 
 # Object files and libraries
 *.[oa]
+*.so
 
 gmon*.out
 gmon*.txt
