@@ -87,10 +87,10 @@ int main(int argc, char*argv[])
 	    module_tab[module_cnt++] = optarg;
 	    break;
 	  case 'n':
-	    vvp_set_stop_is_finish(true);
+	    vvp_set_stop_is_finish(true, 0);
 	    break;
           case 'N':
-            vvp_set_stop_is_finish_exit_code(true);
+            vvp_set_stop_is_finish(true, 1);
             break;
 	  case 's':
 	    schedule_stop(0);

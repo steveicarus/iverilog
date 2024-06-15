@@ -13,18 +13,18 @@ extern "C" {
 
 #include <stdbool.h>
 
-/* The first three functions may be called at any time.
- * vvp_set_stop_is_finish(true) is equivalent to vvp's "-n" option.
+/* vvp_set_stop_is_finish(true, 0) is equivalent to vvp's "-n" option.
+ * vvp_set_stop_is_finish(true, 1) is equivalent to vvp's "-N" option.
+ *
+ * This function may be called at any time.
  */
 
-extern void vvp_set_stop_is_finish(bool flag);
+extern void vvp_set_stop_is_finish(bool flag, int exit_code);
 
-/* vvp_set_stop_is_finish_exit_code(true) is equivalent to vvp's "-N" option.
+/* vvp_set_verbose(true) is equivalent to vvp's "-v" option.
+ *
+ * This function may be called at any time.
  */
-
-extern void vvp_set_stop_is_finish_exit_code(bool flag);
-
-/* vvp_set_verbose(true) is equivalent to vvp's "-v" option. */
 
 extern void vvp_set_verbose_flag(bool flag);
 

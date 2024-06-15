@@ -59,18 +59,13 @@ bool verbose_flag = false;
 static int vvp_return_value = 0;
 static int vvp_used = 0;
 
-void vvp_set_stop_is_finish(bool flag)
+void vvp_set_stop_is_finish(bool flag, int exit_code)
 {
       extern bool stop_is_finish;
-
-      stop_is_finish = flag;
-}
-
-void vvp_set_stop_is_finish_exit_code(bool flag)
-{
       extern int  stop_is_finish_exit_code;
 
-      stop_is_finish_exit_code = flag;
+      stop_is_finish = flag;
+      stop_is_finish_exit_code = exit_code;
 }
 
 void vvp_set_verbose_flag(bool flag)
