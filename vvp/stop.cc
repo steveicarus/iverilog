@@ -441,6 +441,8 @@ static struct {
         "Synonym for push."},
       { "cont",   &cmd_cont,
         "Resume (continue) the simulation"},
+      { "exit", &cmd_finish,
+        "Synonym for finish."},
       { "finish", &cmd_finish,
         "Finish the simulation."},
       { "help",   &cmd_help,
