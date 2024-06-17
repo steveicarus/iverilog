@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -108,7 +108,7 @@ char *generic_get_str(int code, vpiHandle ref, const char *name, const char *ind
       if (code == vpiFullName) {
 	    bn = strdup(vpi_get_str(code,ref));
 	    size_t bn_len = strlen(bn);
-	    is_bn_a_pkg = bn[bn_len-1] == ':' && bn[bn_len-2] == ':';
+	    is_bn_a_pkg = (bn_len > 3) && (bn[bn_len-1] == ':') && (bn[bn_len-2] == ':');
 	    len += bn_len;
 	    if (! is_bn_a_pkg) len += 1; // include space for "." separator
       }
