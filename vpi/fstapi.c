@@ -347,8 +347,9 @@ return(NULL);
 
 static void *fstMmap2(size_t __len, int __fd, fst_off_t __off)
 {
+DWORD64 len64 = __len;  /* Must be 64-bit for shift below */
 HANDLE handle = CreateFileMapping((HANDLE)_get_osfhandle(__fd), NULL,
-				  PAGE_READWRITE, (DWORD)(__len >> 32),
+				  PAGE_READWRITE, (DWORD)(len64 >> 32),
 				  (DWORD)__len, NULL);
 if (!handle) { return NULL; }
 
@@ -1646,7 +1647,11 @@ if(1)
                                 {
                                 if(vm4ip[2] != prev_alias)
                                         {
-                                        fpos += fstWriterSVarint(f, (((int64_t)((int32_t)(prev_alias = vm4ip[2]))) << 1) | 1);
+					int32_t  t_i32 = ((int32_t)(prev_alias = vm4ip[2])); /* vm4ip is generic unsigned data */
+					int64_t  t_i64 = (int64_t)t_i32; /* convert to signed */
+					uint64_t t_u64 = (uint64_t)t_i64; /* sign extend through 64b */
+
+					fpos += fstWriterSVarint(f, (int64_t)((t_u64 << 1) | 1)); /* all in this block was: fpos += fstWriterSVarint(f, (((int64_t)((int32_t)(prev_alias = vm4ip[2]))) << 1) | 1); */
                                         }
                                         else
                                         {
