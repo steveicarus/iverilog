@@ -2366,6 +2366,19 @@ extern "C" ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx)
       return net->sigs_[idx];
 }
 
+extern "C" unsigned ivl_scope_tchks(ivl_scope_t net)
+{
+      assert(net);
+      return net->tchks_.size();
+}
+
+extern "C" ivl_tchk_t ivl_scope_tchk(ivl_scope_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->tchks_.size());
+      return net->tchks_[idx];
+}
+
 extern "C" unsigned ivl_scope_switches(ivl_scope_t net)
 {
       assert(net);

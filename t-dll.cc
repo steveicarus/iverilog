@@ -2790,6 +2790,19 @@ void dll_target::signal(const NetNet*net)
       if (debug_optimizer && obj->array_words > 1000) cerr << "debug: t-dll done with big nexus array" << endl;
 }
 
+void dll_target::tchk(const NetNet*net)
+{
+      ivl_tchk_t obj = new struct ivl_tchk_s;
+
+      obj->name_ = net->name();
+
+      obj->scope_ = find_scope(des_, net->scope());
+      assert(obj->scope_);
+      //TODO FILE_NAME(obj, net);
+
+      obj->scope_->tchks_.push_back(obj);
+}
+
 bool dll_target::signal_paths(const NetNet*net)
 {
 	/* Nothing to do if there are no paths for this signal. */

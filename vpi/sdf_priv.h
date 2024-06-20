@@ -54,6 +54,15 @@ struct port_with_edge_s {
       char*string_val;
 };
 
+// The reference and data signals of timing checks
+// can have logical condition expressions and edges
+// associated with them.
+struct port_tchk_s {
+  int   vpi_edge;
+  char* condition;
+  char* signal;
+};
+
 struct interconnect_port_s {
       char* name;
       bool has_index;
@@ -71,6 +80,10 @@ extern void sdf_interconnect_delays(struct interconnect_port_s port1,
                                     struct interconnect_port_s port2,
                                     const struct sdf_delval_list_s*delval_list,
                                     const int sdf_lineno);
+
+extern void sdf_tchk_width_limits(struct port_tchk_s ref_event,
+                                  struct sdf_delay_s limit,
+                                  const int sdf_lineno);
 
 #endif /* IVL_sdf_priv_h */
 

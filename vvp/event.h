@@ -166,11 +166,6 @@ class vvp_fun_edge : public vvp_net_fun_t, public waitable_hooks_s {
       edge_t edge_;
 };
 
-extern const vvp_fun_edge::edge_t vvp_edge_edge;
-extern const vvp_fun_edge::edge_t vvp_edge_posedge;
-extern const vvp_fun_edge::edge_t vvp_edge_negedge;
-extern const vvp_fun_edge::edge_t vvp_edge_none;
-
 /*
  * Statically allocated vvp_fun_edge.
  */
