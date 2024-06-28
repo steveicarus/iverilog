@@ -2964,11 +2964,33 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
             pfunc->elaborate(des, dscope);
       }
 
-      if (dscope->parent() != scope->parent() || !dscope->is_const_func()) {
+	// From IEEE 1800-2023 section 13.4.3:
+	// A constant function call is a function call of a constant function
+	// wherein the constant function's declaration is local to the calling
+	// design element or is in a package or $unit.
+      bool is_const_func_call = false;
+      if (dscope->is_const_func()) {
+	    NetScope*caller_scope = scope;
+	    while (caller_scope && caller_scope->type() != NetScope::MODULE
+				&& caller_scope->type() != NetScope::PACKAGE) {
+		  caller_scope = caller_scope->parent();
+	    }
+	    NetScope*callee_scope = dscope->parent();
+	    while (callee_scope && callee_scope->type() != NetScope::MODULE
+				&& callee_scope->type() != NetScope::PACKAGE) {
+		  callee_scope = callee_scope->parent();
+	    }
+	    ivl_assert(*this, caller_scope);
+	    ivl_assert(*this, callee_scope);
+	    is_const_func_call = (callee_scope == caller_scope) ||
+				 (callee_scope->type() == NetScope::PACKAGE);
+      }
+      if (!is_const_func_call) {
             if (scope->need_const_func()) {
 	          cerr << get_fileline() << ": error: A function invoked by "
                           "a constant function must be a constant function "
-                          "local to the current module." << endl;
+                          "local to the current module or provided by a "
+                          "package." << endl;
                   des->errors += 1;
             }
             scope->is_const_func(false);
