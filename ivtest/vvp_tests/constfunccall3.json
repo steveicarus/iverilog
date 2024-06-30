@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "constfunccall3.v",
+    "gold"          : "constfunccall3"
+}

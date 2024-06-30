@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "constfunccall2.v",
+    "iverilog-args" : [ "-g2009" ]
+}

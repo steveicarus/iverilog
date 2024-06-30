@@ -68,6 +68,9 @@ constfunc17			vvp_tests/constfunc17.json
 constfunc18			vvp_tests/constfunc18.json
 constfunc19			vvp_tests/constfunc19.json
 constfunc20			vvp_tests/constfunc20.json
+constfunccall1			vvp_tests/constfunccall1.json
+constfunccall2			vvp_tests/constfunccall2.json
+constfunccall3			vvp_tests/constfunccall3.json
 decl_before_use1		vvp_tests/decl_before_use1.json
 decl_before_use2		vvp_tests/decl_before_use2.json
 decl_before_use3		vvp_tests/decl_before_use3.json

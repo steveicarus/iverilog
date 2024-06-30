@@ -1,0 +1,3 @@
+ivltests/constfunccall3.v:21: error: A function invoked by a constant function must be a constant function local to the current module or provided by a package.
+ivltests/constfunccall3.v:26: error: `f2' is not a constant function.
+2 error(s) during elaboration.
