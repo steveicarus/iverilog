@@ -1,0 +1,181 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>The vvp Code Generator (-tvvp) &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The stub Code Generator (-tstub)" href="tgt-stub.html" />
+    <link rel="prev" title="The Icarus Verilog Targets" href="index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="the-vvp-code-generator-tvvp">
+<h1>The vvp Code Generator (-tvvp)<a class="headerlink" href="#the-vvp-code-generator-tvvp" title="Permalink to this headline">¶</a></h1>
+<p>The vvp target generates code for the “vvp” run time. This is the most
+commonly used target for Icarus Verilog, as it is the main simulation engine.</p>
+<p>Example command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%  iverilog -o top.vvp -s top hello_world.v
+</pre></div>
+</div>
+<p>Equivalent command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%  iverilog -o top.vvp -tvvp -s top hello_world.v
+</pre></div>
+</div>
+<p>With this example code in <cite>hello_world.v</cite>:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span><span class="w"> </span><span class="n">top</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">initial</span><span class="w"> </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;Hello World!&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="k">endmodule</span><span class="w"></span>
+</pre></div>
+</div>
+<p>The resulting <cite>top.vvp</cite> will contain something similar to:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#! /usr/local/bin/vvp
+:ivl_version &quot;13.0 (devel)&quot; &quot;(s20221226-119-g8cb2e1a05-dirty)&quot;;
+:ivl_delay_selection &quot;TYPICAL&quot;;
+:vpi_time_precision + 0;
+:vpi_module &quot;/usr/local/lib/ivl/system.vpi&quot;;
+:vpi_module &quot;/usr/local/lib/ivl/vhdl_sys.vpi&quot;;
+:vpi_module &quot;/usr/local/lib/ivl/vhdl_textio.vpi&quot;;
+:vpi_module &quot;/usr/local/lib/ivl/v2005_math.vpi&quot;;
+:vpi_module &quot;/usr/local/lib/ivl/va_math.vpi&quot;;
+S_0x563c3c5d1540 .scope module, &quot;top&quot; &quot;top&quot; 2 1;
+ .timescale 0 0;
+    .scope S_0x563c3c5d1540;
+T_0 ;
+    %vpi_call 2 2 &quot;$display&quot;, &quot;Hello World!&quot; {0 0 0};
+    %end;
+    .thread T_0;
+# The file index is used to find the file name in the following table.
+:file_names 3;
+    &quot;N/A&quot;;
+    &quot;&lt;interactive&gt;&quot;;
+    &quot;hello_world.v&quot;;
+</pre></div>
+</div>
+<p>The first line contains the shebang. If this file is executed, the shebang tells the shell to use vvp for the execution of this file.</p>
+<p>To run the simulation, execute:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%  ./top.vvp
+</pre></div>
+</div>
+<p>Or you can call vvp directly:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%  vvp top.vvp
+</pre></div>
+</div>
+<p>Next are some directives. The first one, <cite>:ivl_version</cite> specifies which version of iverilog this file was created with. Next is the delay selection with “min:typical:max” values and the time precision, which we did not set specifically, so the default value is used. The next lines tell vvp which VPI modules to load and in which order. The next lines tell vvp which VPI modules to load and in what order. Next, a new scope is created with the <cite>.scope</cite> directive and the timescale is set with <cite>.timescale</cite>. A thread <cite>T_0</cite> is created that contains two instructions: <cite>%vpi_call</cite> executes the VPI function <cite>$display</cite> with the specified arguments, and <cite>%end</cite> terminates the simulation.</p>
+<section id="opcodes">
+<h2>Opcodes<a class="headerlink" href="#opcodes" title="Permalink to this headline">¶</a></h2>
+<p>The various available opcodes can be seen in <a class="reference internal" href="../developer/guide/vvp/opcodes.html"><span class="doc">Opcodes</span></a></p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">The Icarus Verilog Targets</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">The vvp Code Generator (-tvvp)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-stub.html">The stub Code Generator (-tstub)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-null.html">The null Code Generator (-tnull)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-vhdl.html">The VHDL Code Generator (-tvhdl)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-vlog95.html">The Verilog ‘95 Code Generator (-tvlog95)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-pcb.html">The PCB Code Generator (-tpcb)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-fpga.html">The FPGA Code Generator (-tfpga)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-pal.html">The PAL Code Generator (-tpal)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-sizer.html">The sizer Code Analyzer (-tvvp)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-verilog.html">The Verilog Code Generator (-tverilog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-blif.html">The BLIF Code Generator (-tblif)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">The Icarus Verilog Targets</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">The Icarus Verilog Targets</a></li>
+      <li>Next: <a href="tgt-stub.html" title="next chapter">The stub Code Generator (-tstub)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/targets/tgt-vvp.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

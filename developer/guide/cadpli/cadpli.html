@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Cadence PLI1 Modules &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Miscellaneous" href="../misc/index.html" />
+    <link rel="prev" title="Verilog-A math library" href="../vpi/va_math.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="cadence-pli1-modules">
+<h1>Cadence PLI1 Modules<a class="headerlink" href="#cadence-pli1-modules" title="Permalink to this headline">¶</a></h1>
+<p>With the cadpli module, Icarus Verilog is able to load PLI1
+applications that were compiled and linked to be dynamic loaded by
+Verilog-XL or NC-Verilog. This allows Icarus Verilog users to run
+third-party modules that were compiled to interface with XL or
+NC. Obviously, this only works on the operating system that the PLI
+application was compiled to run on. For example, a Linux module can
+only be loaded and run under Linux.</p>
+<p>Icarus Verilog uses an interface module, the “cadpli” module, to
+connect the worlds. This module is installed with Icarus Verilog, and
+is invoked by the usual -m flag to iverilog or vvp. This module in
+turn scans the extended arguments, looking for +cadpli= arguments. The
+latter specify the share object and bootstrap function for running the
+module. For example, to run the module product.so, that has the
+bootstrap function “my_boot”:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>vvp -mcadpli a.out -cadpli=./product.so:my_boot
+</pre></div>
+</div>
+<p>The “-mcadpli” argument causes vvp to load the cadpli.vpl library
+module. This activates the -cadpli= argument interpreter. The
+-cadpli=&lt;module&gt;:&lt;boot_func&gt; argument, then, causes vvp, through the
+cadpli module, to load the loadable PLI application, invoke the
+my_boot function to get a veriusertfs table, and scan that table to
+register the system tasks and functions exported by that object. The
+format of the -cadpli= extended argument is essentially the same as
+the +loadpli1= argument to Verilog-XL.</p>
+<p>The integration from this point is seamless. The PLI application
+hardly knows that it is being invoked by Icarus Verilog instead of
+Verilog-XL, so operates as it would otherwise.</p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html">Getting Started as a Contributer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Developer Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Icarus Verilog Developer Support</a><ul>
+  <li><a href="../index.html">Developer Guide</a><ul>
+      <li>Previous: <a href="../vpi/va_math.html" title="previous chapter">Verilog-A math library</a></li>
+      <li>Next: <a href="../misc/index.html" title="next chapter">Miscellaneous</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/developer/guide/cadpli/cadpli.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

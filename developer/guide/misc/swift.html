@@ -1,0 +1,191 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Swift Model Support (Preliminary) &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Xilinx Hint" href="xilinx-hint.html" />
+    <link rel="prev" title="IEEE1364 Notes" href="ieee1364-notes.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="swift-model-support-preliminary">
+<h1>Swift Model Support (Preliminary)<a class="headerlink" href="#swift-model-support-preliminary" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><blockquote>
+<div><p>Copyright 2003-2024 Stephen Williams</p>
+</div></blockquote>
+<p>NOTE: SWIFT support does not work yet, these are provisional
+instructions, intended to show what’s supposed to happen when I get
+it working.</p>
+</div></blockquote>
+<p>Icarus Verilog support for SWIFT models is based on the LMTV interface
+module from Synopsys. This module is normally distributed along with
+the SWIFT models proper. This module can be linked with Icarus Verilog
+via the cadpli compatibility object. (See cadpli.txt.)</p>
+<ul class="simple">
+<li><p>Preliminaries</p></li>
+</ul>
+<p>First, you need the LMC_HOME environment variable set to point to the
+installed directory for your SWIFT software. This setup is documented
+in your SWIFT model documentation.</p>
+<ul class="simple">
+<li><p>Compilation</p></li>
+</ul>
+<p>When compiling your Verilog design to include a SWIFT model, you need
+to include wrappers for the model you intend to use. You may choose to
+use ncverilog or verilogxl compatible wrappers, they work the
+same. Locate your smartmodel directory, and include it in your command
+file like so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>+libdir+.../smartmodel/sol/wrappers/verilogxl
+</pre></div>
+</div>
+<p>The wrappers directory includes Verilog modules that wrap your SWIFT
+module, and with this +libdir+ statement in your command file, the
+Icarus Verilog compiler will be able to locate these wrappers. The
+wrappers in turn invoke the $lm_model system tasks that are the LMTV
+support for your model.</p>
+<blockquote>
+<div><p>NOTE: This example uses the solaris directory of VerilogXL support
+files as a source of wrappers. The files of interest, however, are
+written in Verilog and are identical for all supported platforms, so
+long as you choose the verilogxl or ncverilog files.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Execution</p></li>
+</ul>
+<p>After your simulation is compiled, run the simulation with the vvp
+command, like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% vvp -mcadpli a.out -cadpli=$LMC_HOME/lib/x86_linux.lib/swiftpli.so:swift_boot
+</pre></div>
+</div>
+<p>What this command line means is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>-mcadpli
+   Include the cadpli compatibility module
+
+a.out
+   This is your compiled vvp file
+
+-cadpli=$LMC_HOME/lib/x86_linux.lib/swiftpli.so:swift_boot
+   This tells the cadpli module to load the swiftpli.so
+   shared object, and boot it. This is code that comes with
+   your SWIFT modules, and provides the generic SWIFT
+   capabilities (lm_* system tasks) needed by the module
+   itself.
+</pre></div>
+</div>
+<p>Once you start the vvp command, the SWIFT infrastructure will be
+initialized as part of the simulation setup, and all should work
+normally from here.</p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html">Getting Started as a Contributer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Developer Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Icarus Verilog Developer Support</a><ul>
+  <li><a href="../index.html">Developer Guide</a><ul>
+  <li><a href="index.html">Miscellaneous</a><ul>
+      <li>Previous: <a href="ieee1364-notes.html" title="previous chapter">IEEE1364 Notes</a></li>
+      <li>Next: <a href="xilinx-hint.html" title="next chapter">Xilinx Hint</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/developer/guide/misc/swift.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

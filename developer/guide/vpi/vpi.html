@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>VPI Modules in Icarus Verilog &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Verilog-A math library" href="va_math.html" />
+    <link rel="prev" title="VPI in Icarus Verilog" href="index.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="vpi-modules-in-icarus-verilog">
+<h1>VPI Modules in Icarus Verilog<a class="headerlink" href="#vpi-modules-in-icarus-verilog" title="Permalink to this headline">¶</a></h1>
+<p>The VPI interface for Icarus Verilog works by creating from a
+collection of PLI applications a single vpi module. The vpi module
+includes compiled code for the applications linked together (with any
+other libraries that the applications need) into a module with two
+exported symbols, the vpip_set_callback function and the
+vlog_startup_routines array.</p>
+<p>The product that wishes to invoke the module (normally at run time) loads
+the module, locates and calls the vpip_set_callback function to pass the
+the module a jump table that allows the module to access the VPI routines
+implemented by the product, then locates the vlog_startup_routines table
+and calls all the startup routines contained in that table. It is possible
+for a product to link with many modules. In that case, all the modules are
+linked in and startup routines are called in order.</p>
+<p>The product that uses vpi modules uses the environment variable
+VPI_MODULE_PATH as a ‘:’ separated list of directories. This is the
+module search path. When a module is specified by name (using whatever
+means the product supports) the module search path is scanned until
+the module is located.</p>
+<p>The special module names “system.vpi”, “v2005_math.vpi”, “v2009.vpi”,
+and “va_math.vpi” are part of the core Icarus Verilog distribution and
+include implementations of the standard system tasks/functions. The
+additional special module names “vhdl_sys.vpi” and “vhdl_textio.vpi”
+include implementations of private functions used to support VHDL.</p>
+<section id="compiling-a-vpi-module">
+<h2>Compiling A VPI Module<a class="headerlink" href="#compiling-a-vpi-module" title="Permalink to this headline">¶</a></h2>
+<p>See the documentation under: <a class="reference internal" href="../../../usage/vpi.html"><span class="doc">Using VPI</span></a></p>
+</section>
+<section id="tracing-vpi-use">
+<h2>Tracing VPI Use<a class="headerlink" href="#tracing-vpi-use" title="Permalink to this headline">¶</a></h2>
+<p>The vvp command includes the ability to trace VPI calls. This is
+useful if you are trying to debug a problem with your code. To
+activate tracing simply set the VPI_TRACE environment variable, with
+the path to a file where trace text gets written. For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>setenv VPI_TRACE /tmp/foo.txt
+</pre></div>
+</div>
+<p>This tracing is pretty verbose, so you don’t want to run like this
+normally. Also, the format of the tracing messages will change
+according to my needs (and whim) so don’t expect to be able to parse
+it in software.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html">Getting Started as a Contributer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Developer Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Icarus Verilog Developer Support</a><ul>
+  <li><a href="../index.html">Developer Guide</a><ul>
+  <li><a href="index.html">VPI in Icarus Verilog</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">VPI in Icarus Verilog</a></li>
+      <li>Next: <a href="va_math.html" title="next chapter">Verilog-A math library</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/developer/guide/vpi/vpi.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

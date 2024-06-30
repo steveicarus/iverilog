@@ -1,0 +1,233 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>VVP Command Line Flags &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="VVP Interactive Mode" href="vvp_debug.html" />
+    <link rel="prev" title="IVLPP - IVL Preprocessor" href="ivlpp_flags.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="vvp-command-line-flags">
+<h1>VVP Command Line Flags<a class="headerlink" href="#vvp-command-line-flags" title="Permalink to this headline">¶</a></h1>
+<p>The vvp command is the simulation run-time engine. The command line for vvp
+execution is first the options and flags, then the vvp input file, and finally
+extended arguments. Typical usage looks like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% vvp &lt;flags&gt; foo.vvp &lt;extended arguments&gt;
+</pre></div>
+</div>
+<section id="options-flags">
+<h2>Options/Flags<a class="headerlink" href="#options-flags" title="Permalink to this headline">¶</a></h2>
+<p>These options/flags go before the path to the vvp-executable program. They
+effect behavior of the vvp runtime engine, including preparation for
+simulation.</p>
+<ul>
+<li><p>-l&lt;logfile&gt;</p>
+<p>This flag specifies a logfile where all MCI &lt;stdlog&gt; output goes. Specify
+logfile as ‘-’ to send log output to &lt;stderr&gt;. $display and friends send
+their output both to &lt;stdout&gt; and &lt;stdlog&gt;.</p>
+</li>
+<li><p>-M&lt;path&gt;</p>
+<p>Add the directory path to the (VPI) module search path. Multiple “-M” flags
+are allowed, and the directories are added in the order that they are given
+on the command line.</p>
+<p>The string “-M-” is special, in that it doesn’t add a directory to the
+path. It instead <em>removes</em> the compiled directory. This is generally used
+only for development of the vvp engine.</p>
+</li>
+<li><p>-m&lt;module&gt;</p>
+<p>Name a VPI module that should be loaded. The vvp engine looks for the named
+module in the module search path, which includes the compiled in default
+directory and directories given by “-M” flags.</p>
+<p>NOTE: Starting with v11.0, the VPI modules to be loaded can be specified
+when you compile your design. This allows the compiler to automatically
+determine the return types of user-defined system functions. If specified at
+compile-time, there is no need to specify them again here.</p>
+</li>
+<li><p>-s</p>
+<p>$stop right away, in the beginning of the simulation. This kicks the
+vvp program into interactive debug mode.</p>
+</li>
+<li><p>-v</p>
+<p>Show verbose progress while setting up or cleaning up the runtime
+engine. This also displays some performance information.</p>
+</li>
+</ul>
+</section>
+<section id="extended-arguments">
+<h2>Extended Arguments<a class="headerlink" href="#extended-arguments" title="Permalink to this headline">¶</a></h2>
+<p>The extended arguments are available to the simulation runtime, especially
+system tasks, system functions and any VPI/PLI code. Extended arguments that
+start with a “+” character are left for use by the user via the $plus$flag and
+$plus$value functions.</p>
+<section id="vcd-fst-lxt-arguments">
+<h3>VCD/FST/LXT Arguments<a class="headerlink" href="#vcd-fst-lxt-arguments" title="Permalink to this headline">¶</a></h3>
+<p>If not otherwise specified, the vvp engine will by default use VCD formats to
+support the $dumpvars system task. The flags described here can alter that
+behavior.</p>
+<ul>
+<li><p>-none/-vcd-none/-vcd-off/-fst-none</p>
+<p>Disable trace output. The trace output will be stubbed so that no trace file
+is created and the cost of dumping is avoided. All off these options are
+synonyms for turning of dumping.</p>
+</li>
+<li><p>-fst</p>
+<p>Generate FST format outputs instead of VCD format waveform dumps. This is
+the preferred output format if using GTKWave for viewing waveforms.</p>
+</li>
+<li><p>-lxt/-lxt2</p>
+<p>Generate LXT or LXT2format instead of VCD format waveform dumps. The LXT2
+format is more advanced.</p>
+</li>
+<li><p>-dumpfile=&lt;name&gt;</p>
+<p>Set the default dumpfile. If unspecified, the default is “dump”. This
+command line flag allows you do change it. If no suffix is specified,
+then the suffix will be chosen based on the dump type. In any case, the
+$dumpfile system task overrides this flag.</p>
+</li>
+</ul>
+</section>
+<section id="sdf-support">
+<h3>SDF Support<a class="headerlink" href="#sdf-support" title="Permalink to this headline">¶</a></h3>
+<p>The Icarus Verilog support for SDF back-annotation can take some extended
+arguments to control aspects of SDF support.</p>
+<ul>
+<li><p>-sdf-warn</p>
+<p>Print warnings during load of/annotation from an SDF file.</p>
+</li>
+<li><p>-sdf-info</p>
+<p>Print interesting information about an SDF file while parsing it.</p>
+</li>
+<li><p>-sdf-verbose</p>
+<p>Print warnings and info messages.</p>
+</li>
+</ul>
+</section>
+</section>
+<section id="environment-variables">
+<h2>Environment Variables<a class="headerlink" href="#environment-variables" title="Permalink to this headline">¶</a></h2>
+<p>The vvp program pays attention to certain environment variables.</p>
+<ul class="simple">
+<li><p>IVERILOG_DUMPER</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gtkwave.html">Waveforms With GTKWave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Usage</a><ul>
+      <li>Previous: <a href="ivlpp_flags.html" title="previous chapter">IVLPP - IVL Preprocessor</a></li>
+      <li>Next: <a href="vvp_debug.html" title="next chapter">VVP Interactive Mode</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/vvp_flags.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

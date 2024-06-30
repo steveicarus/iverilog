@@ -1,0 +1,512 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>iverilog Command Line Flags &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Command File Format" href="command_files.html" />
+    <link rel="prev" title="Simulation Using Icarus Verilog" href="simulation.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="iverilog-command-line-flags">
+<h1>iverilog Command Line Flags<a class="headerlink" href="#iverilog-command-line-flags" title="Permalink to this headline">¶</a></h1>
+<p>The iverilog command is the compiler/driver that takes the Verilog input and
+generates the output format, whether the simulation file or synthesis
+results. This information is at least summarized in the iverilog man page
+distributed in typical installations, but here we try to include more detail.</p>
+<section id="general">
+<h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
+<p>These flags affect the general behavior of the compiler.</p>
+<ul>
+<li><p>-c &lt;cmdfile&gt;</p>
+<p>This flag selects the command file to use. The command file is an
+alternative to writing a long command line with a lot of file names and
+compiler flags. See the Command File Format page for more information.</p>
+</li>
+<li><p>-d &lt;flag&gt;</p>
+<p>Enable compiler debug output. These are aids for debugging Icarus Verilog,
+and this flag is not commonly used.
+The flag is one of these debug classes:</p>
+<ul class="simple">
+<li><p>scope</p></li>
+<li><p>eval_tree</p></li>
+<li><p>elaborate</p></li>
+<li><p>synth2</p></li>
+</ul>
+</li>
+<li><p>-g &lt;generation flag&gt;
+the generation is the compiler language, and specifies the language and
+extensions to use during the compile. The language level can be selected
+by a major level selector, and by controlling various features. Various
+“-g” flags can be compined. For example, to get Verilog 2001 without
+specify supoprt, use “-g2001 -gno-specify”.</p>
+<p>The supported flags are:</p>
+<ul>
+<li><p>1995</p>
+<p>This flag enables the IEEE1364-1995 standard.</p>
+</li>
+<li><p>2001</p>
+<p>This flag enables the IEEE1364-2001 standard.</p>
+</li>
+<li><p>2001-noconfig</p>
+<p>This flag enables the IEEE1364-2001 standard with config file support
+disabled. This eliminates the config file keywords from the language and
+so helps some programs written to older 2001 support compile.</p>
+</li>
+<li><p>2005
+This flag enables the IEEE1364-2005 standard. This is default enabled
+after v0.9.</p></li>
+<li><p>2009
+This flag enables the IEEE1800-2009 standard, which includes
+SystemVerilog. The SystemVerilog support is not present in v0.9 and
+earlier. It is new to git master as of November 2009. Actual SystemVerilog
+support is ongoing.</p></li>
+<li><p>2012</p>
+<p>This flag enables the IEEE1800-2012 standard, which includes
+SystemVerilog.</p>
+</li>
+<li><p>verilog-ams</p>
+<p>This flag enables Verilog-AMS features that are supported by Icarus
+Verilog. (This is new as of 5 May 2008.)</p>
+</li>
+<li><p>assertions/supported-assertions/no-assertions</p>
+<p>Enable or disable SystemVerilog assertions. When enabled, assertion
+statements are elaborated. When disabled, assertion statements are parsed
+but ignored. The supported-assertions option only enables assertions that
+are currently supported by the compiler.</p>
+</li>
+<li><p>specify/no-specify</p>
+<p>Enable or disable support for specify block timing controls. When
+disabled, specify blocks are parsed but ignored. When enabled, specify
+blocks cause timing path and timing checks to be active.</p>
+</li>
+<li><p>std-include/no-std-include</p>
+<p>Enable or disable the search of a standard installation include directory
+after all other explicit include directories. This standard include
+directory is a convenient place to install standard header files that a
+Verilog program may include.</p>
+</li>
+<li><p>relative-include/no-relative-include</p>
+<p>Enable or disable adding the local files directory to the beginning of the
+include file search path. This allows files to be included relative to the
+current file.</p>
+</li>
+<li><p>xtypes/no-xtypes</p>
+<p>Enable or disable support for extended types. Enabling types allows for
+new types and type syntax that are Icarus Verilog extensions.</p>
+</li>
+<li><p>io-range-error/no-io-range-error</p>
+<p>When enabled the range for a port and any associated net declaration must
+match exactly. When disabled a scalar port is allowed to have a net
+declaration with a range (obsolete usage). A warning message will be
+printed for this combination. All other permutations are still considered
+an error.</p>
+</li>
+<li><p>strict-ca-eval/no-strict-ca-eval</p>
+<p>The standard requires that if any input to a continuous assignment
+expression changes value, the entire expression is re-evaluated. By
+default, parts of the expression that do not depend on the changed input
+value(s) are not re-evaluated. If an expression contains a call to a
+function that doesn’t depend solely on its input values or that has side
+effects, the resulting behavior will differ from that required by the
+standard. Enabling strict-ca-eval will force standard compliant behavior
+(with some loss in performance).</p>
+</li>
+<li><p>strict-expr-width/no-strict-expr-width</p>
+<p>Enable or disable strict compliance with the standard rules for
+determining expression bit lengths. When disabled, the RHS of a parameter
+assignment is evaluated as a lossless expression, as is any expression
+containing an unsized constant number, and unsized constant numbers are
+not truncated to integer width.</p>
+</li>
+<li><p>shared-loop-index/no-shared-loop-index</p>
+<p>Enable or disable the exclusion of for-loop control variables from
+implicit event_expression lists. When enabled, if a for-loop control
+variable (loop index) is only used inside the for-loop statement, the
+compiler will not include it in an implicit event_expression list it
+calculates for that statement or any enclosing statement. This allows the
+same control variable to be used in multiple processes without risk of
+entering an infinite loop caused by each process triggering all other
+processes that use the same variable. For strict compliance with the
+standards, this behaviour should be disabled.</p>
+</li>
+</ul>
+</li>
+<li><p>-i</p>
+<p>Ignore missing modules. Normally it is an error if a module instantiation
+refers to an undefined module. This option causes the compiler to skip over
+that instantiation. It will also stop the compiler returning an error if
+there are no top level modules. This allows the compiler to be used to check
+incomplete designs for errors.</p>
+<p>NOTE: The “-i” flag was added in v11.0.</p>
+</li>
+<li><p>-L &lt;path&gt;</p>
+<p>Add the specified directory to the path list used to locate VPI modules. The
+default path includes only the install directory for the system.vpi module,
+but this flag can add other directories. Multiple paths are allowed, and the
+paths will be searched in order.</p>
+<p>NOTE: The “-L” flag was added in v11.0.</p>
+</li>
+<li><p>-l &lt;path&gt;</p>
+<p>Add the specified file to the list of source files to be compiled, but mark
+it as a library file. All modules contained within that file will be treated
+as library modules, and only elaborated if they are instantiated by other
+modules in the design.</p>
+<p>NOTE: The “-l” flag is new as of 2 October 2016. It will become available in
+releases and snapshots made after that date.</p>
+</li>
+<li><p>-M&lt;mode&gt;=&lt;path&gt;</p>
+<p>Write into the file specified by path a list of files that contribute to the
+compilation of the design.</p>
+<p>If _mode_ is <em>all</em> or <em>prefix</em>, this includes files that are included by
+include directives and files that are automatically loaded by library
+support as well as the files explicitly specified by the user.</p>
+<p>If _mode_ is <em>include</em>, only files that are included by include directives
+are listed.</p>
+<p>If _mode_ is <em>module</em>, only files that are specified by the user or that are
+automatically loaded by library support are listed. The output is one file
+name per line, with no leading or trailing space.</p>
+<p>If _mode_ is <em>prefix</em>, files that are included by include directives are
+prefixed by “I ” and other files are prefixed by “M “.</p>
+</li>
+<li><p>-m&lt;module&gt;</p>
+<p>Add this module to the list of VPI modules to be loaded by the
+simulation. Many modules can be specified, and all will be loaded, in the
+order specified. The system module is implicit and always included (and
+loaded last).</p>
+<p>If the specified name includes at least one directory character, it is
+assumed to be prefixed by the path to the module, otherwise the module is
+searched for in the paths specified by preceding -L options, and if not
+found there, in the iverilog base directory.</p>
+<p>NOTE: The “-m” flag was added in v11.0.</p>
+</li>
+<li><p>-o &lt;path&gt;</p>
+<p>Specify the output file. The &lt;path&gt; is the name of the file to hold the
+output. The default is “a.out”.</p>
+</li>
+<li><p>-S</p>
+<p>Activate synthesis. This flag tells the compiler to do what synthesis it can
+do before calling the code generator. This flag is rarely used explicitly,
+and certain code generators will implicitly enable this flag.</p>
+</li>
+<li><p>-u</p>
+<p>Treat each source file as a separate compilation unit (as defined in
+SystemVerilog). If compiling for an IEEE1364 generation, this will just
+reset all compiler directives (including macro definitions) before each new
+file is processed.</p>
+<p>NOTE: The “-u” flag was added in v11.0.</p>
+</li>
+<li><p>-v</p>
+<p>Be verbose. Print copyright information, progress messages, and some timing
+information about various compilation phases.</p>
+<p>(New in snapshots after 2014-12-16) If the selected target is vvp, the -v
+switch is appended to the shebang line in the compiler output file, so
+directly executing the compiler output file will turn on verbose messages in
+vvp. This extra verbosity can be avoided by using the vvp command to
+indirectly execute the compiler output file.</p>
+</li>
+<li><p>-V</p>
+<p>Print the version information. This skips all compilation. Just print the
+version information, including version details for the various components of
+the compiler.</p>
+</li>
+<li><p>-R</p>
+<p>Print the runtime paths of the compiler. This can be useful to find, e.g.,
+the include path of vpi_user.h.</p>
+</li>
+<li><p>-W&lt;warning class&gt;</p>
+<p>Enable/disable warnings. All the warning types (other then “all”) can be
+prefixed with no- to disable that warning.</p>
+<ul>
+<li><p>all</p>
+<p>This enables almost all of the available warnings. More specifically, it
+enables these warnings:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>-Wanachronisms
+-Wimplicit
+-Wimplicit-dimensions
+-Wmacro-replacement
+-Wportbind
+-Wselect-range
+-Wtimescale
+-Wsensitivity-entire-array
+</pre></div>
+</div>
+</li>
+<li><p>anachronisms</p>
+<p>This enables warnings for use of features that have been deprecated or
+removed in the selected generation of the Verilog language.</p>
+</li>
+<li><p>implicit</p>
+<p>This enables warnings for creation of implicit declarations. For example,
+if a scalar wire X is used but not declared in the Verilog source, this
+will print a warning at its first use.</p>
+</li>
+<li><p>implicit-dimensions</p>
+<p>This enables warnings for the case where a port declaration or a var/net
+declaration for the same name is missing dimensions. Normally, Verilog
+allows you to do this (the undecorated declaration gets its dimensions
+form the decorated declaration) but this is no longer common, and some
+other tools (notable Xilix synthesizers) do not handle this correctly.</p>
+<p>This flag is supported in release 10.1 or master branch snapshots after
+2016-02-06.</p>
+</li>
+<li><p>macro-redefinition</p>
+<p>This enables warnings when a macro is redefined, even if the macro text
+remains the same.</p>
+<p>NOTE: The “macro-redefinition” flag was added in v11.0.</p>
+</li>
+<li><p>macro-replacement</p>
+<p>This enables warnings when a macro is redefined and the macro text
+changes. Use no-macro-redefinition to disable this,</p>
+<p>NOTE: The “macro-replacement” flag was added in v11.0.</p>
+</li>
+<li><p>portbind</p>
+<p>This enables warnings for ports of module instantiations that are not
+connected properly, but probably should be. Dangling input ports, for
+example, will generate a warning.</p>
+</li>
+<li><p>select-range</p>
+<p>This enables warnings for constant out-of-bound selects. This includes
+partial or fully out-of-bound select as well as a select containing a ‘bx
+or ‘bz in the index.</p>
+</li>
+<li><p>timescale</p>
+<p>This enables warnings for inconsistent use of the timescale directive. It
+detects if some modules have no timescale, or if modules inherit timescale
+from another file. Both probably mean that timescales are inconsistent,
+and simulation timing can be confusing and dependent on compilation order.</p>
+</li>
+<li><p>infloop</p>
+<p>This enables warnings for always statements that may have runtime infinite
+loops (i.e. has paths with zero or no delay). This class of warnings is
+not included in -Wall and hence does not have a no- variant. A fatal error
+message will always be printed when the compiler can determine that there
+will definitely be an infinite loop (all paths have no or zero delay).</p>
+<p>When you suspect an always statement is producing a runtine infinite loop,
+use this flag to find the always statements that need to have their logic
+verified. it is expected that many of the warnings will be false
+positives, since the code treats the value of all variables and signals as
+indeterninite.</p>
+</li>
+<li><p>sensitivity-entire-vector</p>
+<p>This enables warnings for when a part select with an “always &#64;*” statement
+results in the entire vector being added to the implicit sensitivity
+list. Although this behavior is prescribed by the IEEE standard, it is not
+what might be expected and can have performance implications if the vector
+is large.</p>
+</li>
+<li><p>sensitivity-entire-array</p>
+<p>This enables warnings for when a word select with an “always &#64;*” statement
+results in the entire array being added to the implicit sensitivity
+list. Although this behavior is prescribed by the IEEE standard, it is not
+what might be expected and can have performance implications if the array
+is large.</p>
+</li>
+<li><p>floating-nets</p>
+<p>This enables warnings for nets that are present but have no drivers.</p>
+<p>This flag was added in version 11.0 or later (and is in the master branch
+as of 2015-10-01).</p>
+</li>
+</ul>
+</li>
+<li><p>-y&lt;libdir&gt;</p>
+<p>Append the directory to the library module search path. When the compiler
+finds an undefined module, it looks in these directories for files with the
+right name.</p>
+</li>
+<li><p>-Y&lt;suf&gt;</p>
+<p>Appends suf to the list of file extensions that are used to resolve an
+undefined module to a file name. Should be specified before any -y flag. For
+example, this command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% iverilog -Y .sv -y sources src.v
+</pre></div>
+</div>
+<p>will try to resolve any undefined module m by looking into the directory
+sources and checking if there exist files named m.v or m.sv.</p>
+</li>
+</ul>
+</section>
+<section id="preprocessor-flags">
+<h2>Preprocessor Flags<a class="headerlink" href="#preprocessor-flags" title="Permalink to this headline">¶</a></h2>
+<p>These flags control the behavior of the preprocessor. They are similar to
+flags for the typical “C” compiler, so C programmers will find them familiar.</p>
+<ul>
+<li><p>-E</p>
+<p>This flag is special in that it tells the compiler to only run the
+preprocessor. This is useful for example as a way to resolve preprocessing
+for other tools. For example, this command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% iverilog -E -ofoo.v -DKEY=10 src1.v src2.v
+</pre></div>
+</div>
+<p>runs the preprocessor on the source files src1.v and src2.v and produces the
+single output file foo.v that has all the preprocessing (including header
+includes and ifdefs) processed.</p>
+</li>
+<li><p>-D&lt;macro&gt;</p>
+<p>Assign a value to the macro name. The format of this flag is one of:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>-Dkey=value
+-Dkey
+</pre></div>
+</div>
+<p>The key is defined to have the given value. If no value is given, then it is
+assumed to be “1”. The above examples are the same as these defines in
+Verilog source:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>`define key value
+`define key
+</pre></div>
+</div>
+</li>
+<li><p>-I&lt;path&gt;</p>
+<p>Append directory &lt;path&gt; to list of directories searched for Verilog include
+files. The -I switch may be used many times to specify several directories
+to search, the directories are searched in the order they appear on the
+command line.</p>
+</li>
+</ul>
+</section>
+<section id="elaboration-flags">
+<h2>Elaboration Flags<a class="headerlink" href="#elaboration-flags" title="Permalink to this headline">¶</a></h2>
+<p>These are flags that pass information to the elaboration steps.</p>
+<ul>
+<li><p>-P&lt;symbol&gt;=&lt;value&gt;</p>
+<p>Define a parameter using the defparam behavior to override a parameter
+values. This can only be used for parameters of root module instances.</p>
+</li>
+<li><p>-s &lt;topmodule&gt;</p>
+<p>Specify the top level module to elaborate. Icarus Verilog will by default
+choose modules that are not instantiated in any other modules, but sometimes
+that is not sufficient, or instantiates too many modules. If the user
+specifies one or more root modules with “-s” flags, then they will be used
+as root modules instead.</p>
+</li>
+<li><p>-Tmin, -Ttyp, -Tmax</p>
+<p>Select the timings to use. The Verilog language allows many timings to be
+specified as three numbers, min:typical:max, but for simulation you need to
+choose which set to use. The “-Tmin” flag tells the compiler to at
+elaboration time choose “min” times. The default is “-Ttyp”.</p>
+</li>
+</ul>
+</section>
+<section id="target-flags">
+<h2>Target Flags<a class="headerlink" href="#target-flags" title="Permalink to this headline">¶</a></h2>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gtkwave.html">Waveforms With GTKWave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Usage</a><ul>
+      <li>Previous: <a href="simulation.html" title="previous chapter">Simulation Using Icarus Verilog</a></li>
+      <li>Next: <a href="command_files.html" title="next chapter">Command File Format</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/command_line_flags.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

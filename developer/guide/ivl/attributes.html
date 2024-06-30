@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Icarus Verilog Attributes &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Loadable Target API (ivl_target)" href="ivl_target.html" />
+    <link rel="prev" title="Netlist Format" href="netlist.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="icarus-verilog-attributes">
+<h1>Icarus Verilog Attributes<a class="headerlink" href="#icarus-verilog-attributes" title="Permalink to this headline">¶</a></h1>
+<section id="attribute-naming-conventions">
+<h2>Attribute Naming Conventions<a class="headerlink" href="#attribute-naming-conventions" title="Permalink to this headline">¶</a></h2>
+<p>Attributes that are specific to Icarus Verilog, and are intended to be
+of use to programmers, start with the prefix “ivl_”.</p>
+<p>Attributes with the “_ivl_” prefix are set aside for internal
+use. They may be generated internally by the compiler. They need not
+be documented here.</p>
+</section>
+<section id="attributes-to-control-synthesis">
+<h2>Attributes To Control Synthesis<a class="headerlink" href="#attributes-to-control-synthesis" title="Permalink to this headline">¶</a></h2>
+<p>The following is a summary of Verilog attributes that Icarus Verilog
+understands within Verilog source files to control synthesis
+behavior. This section documents generic synthesis attributes. For
+target specific attributes, see target specific documentation.</p>
+<p>These attributes only effect the behavior of the synthesizer. For
+example, the ivl_combinational will not generate an error message
+if the Verilog is being compiled for simulation. (It may generate a
+warning.)</p>
+<ul class="simple">
+<li><p>Attributes for “always” and “initial” statements</p></li>
+</ul>
+<p>(* ivl_combinational *)</p>
+<blockquote>
+<div><p>This attribute tells the compiler that the statement models
+combinational logic. If the compiler finds that it cannot make
+combinational logic out of a marked always statement, it will
+report an error.</p>
+<p>This attribute can be used to prevent accidentally inferring
+latches or flip-flops where the user intended combinational
+logic.</p>
+</div></blockquote>
+<p>(* ivl_synthesis_on *)</p>
+<blockquote>
+<div><p>This attribute tells the compiler that the marked always statement
+is synthesizable. The compiler will attempt to synthesize the
+code in the marked “always” statement. If it cannot in any way
+synthesize it, then it will report an error.</p>
+</div></blockquote>
+<p>(* ivl_synthesis_off *)</p>
+<blockquote>
+<div><p>If this value is attached to an “always” statement, then the
+compiler will <em>not</em> synthesize the “always” statement. This can be
+used, for example, to mark embedded test bench code.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Attributes for modules</p></li>
+</ul>
+<p>(* ivl_synthesis_cell *)</p>
+<blockquote>
+<div><p>If this value is attached to a module during synthesis, that
+module will be considered a target architecture primitive, and
+its interior will not be synthesized further.  The module can
+therefore hold a model for simulation purposes.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Attributes for signals (wire/reg/integer/tri/etc.)</p></li>
+</ul>
+<p>(* PAD = “&lt;pad assignment list&gt;” *)</p>
+<blockquote>
+<div><p>If this attribute is attached to a signal that happens to be a
+root module port, then targets that support it will use the string
+value as a list of pin assignments for the port/signal. The format
+is a comma separated list of location tokens, with the format of
+the token itself defined by the back-end tools in use.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Other Attributes</p></li>
+</ul>
+<p>[ none defined yet ]</p>
+</section>
+<section id="misc">
+<h2>Misc<a class="headerlink" href="#misc" title="Permalink to this headline">¶</a></h2>
+<p>(* _ivl_schedule_push *)</p>
+<blockquote>
+<div><p>If this attribute is attached to a thread object (always or
+initial statement) then the vvp code generator will generate code
+that causes the scheduler to push this thread at compile time. The
+compiler may internally add this attribute to always statements if
+it detects that it is combinational. This helps resolve time-0
+races.</p>
+</div></blockquote>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html">Getting Started as a Contributer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Developer Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Icarus Verilog Developer Support</a><ul>
+  <li><a href="../index.html">Developer Guide</a><ul>
+  <li><a href="index.html">IVL - The Core Compiler</a><ul>
+      <li>Previous: <a href="netlist.html" title="previous chapter">Netlist Format</a></li>
+      <li>Next: <a href="ivl_target.html" title="next chapter">Loadable Target API (ivl_target)</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/developer/guide/ivl/attributes.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
