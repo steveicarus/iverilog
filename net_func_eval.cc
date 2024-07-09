@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -834,23 +834,25 @@ bool NetForLoop::evaluate_function(const LineInfo&loc,
       }
 
       while (flag && !disable) {
-	    // Evaluate the condition expression to try and get the
-	    // condition for the loop.
-	    NetExpr*cond = condition_->evaluate_function(loc, context_map);
-	    if (cond == nullptr) {
-		  flag = false;
-		  break;
+	    if (condition_) {
+		  // Evaluate the condition expression to try and get the
+		  // condition for the loop.
+		  NetExpr*cond = condition_->evaluate_function(loc, context_map);
+		  if (cond == nullptr) {
+			flag = false;
+			break;
+		  }
+
+		  NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
+		  ivl_assert(loc, cond_const);
+
+		  long val = cond_const->value().as_long();
+		  delete cond;
+
+		  // If the condition is false, then break;
+		  if (val == 0)
+			break;
 	    }
-
-	    NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
-	    ivl_assert(loc, cond_const);
-
-	    long val = cond_const->value().as_long();
-	    delete cond;
-
-	    // If the condition is false, then break;
-	    if (val == 0)
-		  break;
 
 	    bool tmp_flag = statement_->evaluate_function(loc, context_map);
 	    flag &= tmp_flag;
@@ -865,8 +867,10 @@ bool NetForLoop::evaluate_function(const LineInfo&loc,
 
 	    loop_continue = false;
 
-	    tmp_flag = step_statement_->evaluate_function(loc, context_map);
-	    flag &= tmp_flag;
+	    if (step_statement_) {
+		  tmp_flag = step_statement_->evaluate_function(loc, context_map);
+		  flag &= tmp_flag;
+	    }
       }
 
       if (debug_eval_tree) {
