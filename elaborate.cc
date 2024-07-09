@@ -5613,7 +5613,7 @@ NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
  *
  *  - index variable (name1_)  (optional)
  *  - initial value (expr1_)   (only if name1_ is present)
- *  - condition expression (cond_)
+ *  - condition expression (cond_) (optional)
  *  - step statement (step_)   (optional)
  *  - sub-statement (statement_)
  *
@@ -5693,12 +5693,15 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       // Elaborate the condition expression. Try to evaluate it too,
       // in case it is a constant. This is an interesting case
       // worthy of a warning.
-      NetExpr*ce = elab_and_eval(des, scope, cond_, -1);
-      if (!ce)
-	    error_flag = true;
-      if (dynamic_cast<NetEConst*>(ce)) {
-	    cerr << get_fileline() << ": warning: condition expression "
-		  "of for-loop is constant." << endl;
+      NetExpr*ce = nullptr;
+      if (cond_) {
+	    ce = elab_and_eval(des, scope, cond_, -1);
+	    if (!ce)
+		  error_flag = true;
+	    if (dynamic_cast<NetEConst*>(ce)) {
+		  cerr << get_fileline() << ": warning: condition expression "
+			"of for-loop is constant." << endl;
+	    }
       }
 
       // Error recovery - if we failed to elaborate any of the loop

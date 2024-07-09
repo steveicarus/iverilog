@@ -728,7 +728,7 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <spec_optional_args> timeskew_fullskew_opt_notifier timeskew_fullskew_opt_event_based_flag
 %type <spec_optional_args> timeskew_fullskew_opt_remain_active_flag
 
-%type <expr>  assignment_pattern expression expr_mintypmax
+%type <expr>  assignment_pattern expression expression_opt expr_mintypmax
 %type <expr>  expr_primary_or_typename expr_primary
 %type <expr>  class_new dynamic_array_new
 %type <expr>  var_decl_initializer_opt initializer_opt
@@ -1754,7 +1754,7 @@ lifetime_opt /* IEEE1800-2005: A.2.1.3 */
   /* Loop statements are kinds of statements. */
 
 loop_statement /* IEEE1800-2005: A.6.8 */
-  : K_for '(' lpvalue '=' expression ';' expression ';' for_step_opt ')'
+  : K_for '(' lpvalue '=' expression ';' expression_opt ';' for_step_opt ')'
     statement_or_null
       { PForStatement*tmp = new PForStatement($3, $5, $7, $9, $11);
 	FILE_NAME(tmp, @1);
@@ -1762,7 +1762,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
       }
 
       // The initialization statement is optional.
-  | K_for '(' ';' expression ';' for_step_opt ')'
+  | K_for '(' ';' expression_opt ';' for_step_opt ')'
     statement_or_null
       { PForStatement*tmp = new PForStatement(nullptr, nullptr, $4, $6, $8);
 	FILE_NAME(tmp, @1);
@@ -1773,7 +1773,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
       // statement in a synthetic named block. We can name the block
       // after the variable that we are creating, that identifier is
       // safe in the controlling scope.
-  | K_for '(' K_var_opt data_type IDENTIFIER '=' expression ';' expression ';' for_step_opt ')'
+  | K_for '(' K_var_opt data_type IDENTIFIER '=' expression ';' expression_opt ';' for_step_opt ')'
       { static unsigned for_counter = 0;
 	char for_block_name [64];
 	snprintf(for_block_name, sizeof for_block_name, "$ivl_for_loop%u", for_counter);
@@ -1858,7 +1858,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 
   /* Error forms for loop statements. */
 
-  | K_for '(' lpvalue '=' expression ';' expression ';' error ')'
+  | K_for '(' lpvalue '=' expression ';' expression_opt ';' error ')'
     statement_or_null
       { $$ = 0;
 	yyerror(@1, "error: Error in for loop step assignment.");
@@ -3680,6 +3680,11 @@ expression
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
+  ;
+
+expression_opt
+  : expression { $$ = $1; }
+  | { $$ = nullptr; }
   ;
 
 expr_mintypmax

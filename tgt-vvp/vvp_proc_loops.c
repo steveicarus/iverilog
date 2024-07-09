@@ -121,10 +121,12 @@ int show_stmt_forloop(ivl_statement_t net, ivl_scope_t scope)
 
       /* Top of the loop, draw the condition test. */
       fprintf(vvp_out, "T_%u.%u ; Top of for-loop\n", thread_count, top_label);
-      int use_flag = draw_eval_condition(ivl_stmt_cond_expr(net));
-      fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, %d;\n",
-	      thread_count, out_label, use_flag);
-      clr_flag(use_flag);
+      if (ivl_stmt_cond_expr(net)) {
+	    int use_flag = draw_eval_condition(ivl_stmt_cond_expr(net));
+	    fprintf(vvp_out, "	  %%jmp/0xz T_%u.%u, %d;\n",
+		    thread_count, out_label, use_flag);
+	    clr_flag(use_flag);
+      }
 
       /* Draw the body of the loop. */
       rc += show_statement(ivl_stmt_sub_stmt(net), scope);

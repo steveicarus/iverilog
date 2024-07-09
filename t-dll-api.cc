@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2024 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
@@ -2822,7 +2822,6 @@ extern "C" ivl_expr_t ivl_stmt_cond_expr(ivl_statement_t net)
 	    return net->u_.while_.cond_;
 
 	  case IVL_ST_FORLOOP:
-	    assert(net->u_.forloop_.condition); // XXXX
 	    return net->u_.forloop_.condition;
 
 	  default:
