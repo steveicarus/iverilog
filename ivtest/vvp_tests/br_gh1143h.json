@@ -1,0 +1,6 @@
+{
+    "type"   : "CE",
+    "source" : "br_gh1143d.v",
+    "iverilog-args" : [ "-g2009" ],
+    "gold" : "br_gh1143h"
+}

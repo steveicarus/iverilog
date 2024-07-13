@@ -54,6 +54,10 @@ br_gh1143a			vvp_tests/br_gh1143a.json
 br_gh1143b			vvp_tests/br_gh1143b.json
 br_gh1143c			vvp_tests/br_gh1143c.json
 br_gh1143d			vvp_tests/br_gh1143d.json
+br_gh1143e			vvp_tests/br_gh1143e.json
+br_gh1143f			vvp_tests/br_gh1143f.json
+br_gh1143g			vvp_tests/br_gh1143g.json
+br_gh1143h			vvp_tests/br_gh1143h.json
 ca_time_real`			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json
