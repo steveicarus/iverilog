@@ -298,6 +298,23 @@ static void check_end_label(const struct vlltype&loc, const char *type,
       delete[] end;
 }
 
+static void check_for_loop(const struct vlltype&loc, PExpr*init,
+			   PExpr*cond, Statement*step)
+{
+      if (generation_flag >= GN_VER2012)
+	    return;
+
+      if (!init)
+	    yyerror(loc, "error: null for-loop initialization requires "
+                         "SystemVerilog 2012 or later.");
+      if (!cond)
+	    yyerror(loc, "error: null for-loop termination requires "
+                         "SystemVerilog 2012 or later.");
+      if (!step)
+	    yyerror(loc, "error: null for-loop step requires "
+                         "SystemVerilog 2012 or later.");
+}
+
 static void current_task_set_statement(const YYLTYPE&loc, std::vector<Statement*>*s)
 {
       if (s == 0) {
@@ -1756,7 +1773,8 @@ lifetime_opt /* IEEE1800-2005: A.2.1.3 */
 loop_statement /* IEEE1800-2005: A.6.8 */
   : K_for '(' lpvalue '=' expression ';' expression_opt ';' for_step_opt ')'
     statement_or_null
-      { PForStatement*tmp = new PForStatement($3, $5, $7, $9, $11);
+      { check_for_loop(@1, $5, $7, $9);
+	PForStatement*tmp = new PForStatement($3, $5, $7, $9, $11);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
@@ -1764,7 +1782,8 @@ loop_statement /* IEEE1800-2005: A.6.8 */
       // The initialization statement is optional.
   | K_for '(' ';' expression_opt ';' for_step_opt ')'
     statement_or_null
-      { PForStatement*tmp = new PForStatement(nullptr, nullptr, $4, $6, $8);
+      { check_for_loop(@1, nullptr, $4, $6);
+	PForStatement*tmp = new PForStatement(nullptr, nullptr, $4, $6, $8);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
@@ -1794,6 +1813,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	PEIdent*tmp_ident = pform_new_ident(@5, tmp_hident);
 	FILE_NAME(tmp_ident, @5);
 
+	check_for_loop(@1, $7, $9, $11);
 	PForStatement*tmp_for = new PForStatement(tmp_ident, $7, $9, $11, $14);
 	FILE_NAME(tmp_for, @1);
 
