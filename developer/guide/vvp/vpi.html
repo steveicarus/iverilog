@@ -1,0 +1,267 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>VPI Within VVP &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Thread Details" href="vthread.html" />
+    <link rel="prev" title="Executable Instruction Opcodes" href="opcodes.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="vpi-within-vvp">
+<h1>VPI Within VVP<a class="headerlink" href="#vpi-within-vvp" title="Permalink to this headline">¶</a></h1>
+<p>System tasks and functions in Verilog are implemented in Icarus
+Verilog by C routines written with VPI. This implies that the vvp
+engine must provide at least a subset of the Verilog VPI
+interface. The minimalist concepts of vvp, however, make the method
+less than obvious.</p>
+<p>Within a Verilog design, there is a more or less fixed web of
+vpiHandles that is the design database as is available to VPI
+functions. The Verilog standard defines quite a lot of types, but the
+vvp only implements the ones it needs. The VPI web is added into the
+design using special pseudo-ops that create the needed objects.</p>
+<section id="loading-vpi-modules">
+<h2>Loading VPI Modules<a class="headerlink" href="#loading-vpi-modules" title="Permalink to this headline">¶</a></h2>
+<p>The vvp runtime loads VPI modules at runtime before the parser reads
+in the source files. This gives the modules a chance to register tasks
+and functions before the source is compiled. This allows the compiler
+to resolve references to system tasks and system functions to a
+vpiHandle at compile time. References to missing tasks/function can
+thus be caught before the simulation is run.</p>
+<blockquote>
+<div><p>NOTE: This also, miraculously, allows for some minimal support of
+the compiletf call. From the perspective of VPI code, compilation
+of the VVP source is not unlike compilation of the original
+Verilog.</p>
+</div></blockquote>
+<p>The handle that the vvp threads have to the VPI are the vpiHandles of
+the system tasks and functions. The %vpi_call instruction, once compiled,
+carries the vpiHandle of the system task.</p>
+</section>
+<section id="system-task-calls">
+<h2>System Task Calls<a class="headerlink" href="#system-task-calls" title="Permalink to this headline">¶</a></h2>
+<p>A system task call invokes a VPI routine, and makes available to that
+routine the arguments to the system task. The called routine gets
+access to the system task call by calling back the VPI requesting the
+handle. It uses the handle, in turn, to get hold of the operands for
+the task.</p>
+<p>All that vvp needs to know about a system task call is the handle of
+the system task definitions (created by the vpi_register_systf
+function) and the arguments of the actual call. The arguments are
+tricky because the list has no bound, even though each particular call
+in the Verilog source has a specific set of parameters.</p>
+<p>Since each call takes a fixed number of parameters, the input source
+can include in the statement the list of arguments. The argument list
+will not fit in a single generated instruction, but a vpiHandle that
+refers to a vpiSysTfCall does. Therefore, the compiler can take the
+long argument list and form a vpiSysTaskCall object. The generated
+instruction then only needs to be a %vpi_call with the single parameter
+that is the vpiHandle for the call.</p>
+</section>
+<section id="system-function-calls">
+<h2>System Function Calls<a class="headerlink" href="#system-function-calls" title="Permalink to this headline">¶</a></h2>
+<p>System function calls are similar to system tasks. The only
+differences are that all the arguments are input only, and there is a
+single magic output that is the return value. The same %vpi_call can
+even be used to call a function.</p>
+<p>System functions, like system tasks, can only be called from thread
+code. However, they can appear in expressions, even when that
+expression is entirely structural. The desired effect is achieved by
+writing a wrapper thread that calls the function when inputs change,
+and that writes the output into the containing expression.</p>
+</section>
+<section id="system-task-function-arguments">
+<h2>System Task/Function Arguments<a class="headerlink" href="#system-task-function-arguments" title="Permalink to this headline">¶</a></h2>
+<p>The arguments to each system task or call are not stored in the
+instruction op-code, but in the vpiSysTfCall object that the compiler
+creates and that the %vpi_call instruction ultimately refers to. All
+the arguments must be some sort of object that can be represented by a
+vpiHandle at compile time.</p>
+<p>Arguments are handled at compile time by the parser, which uses the
+argument_list rule to build a list of vpiHandle objects. Each argument
+in the argument_list invokes whatever function is appropriate for the
+token in order to make a vpiHandle object for the argument_list. When
+all this is done, an array of vpiHandles is passed to code to create a
+vpiSysTfCall object that has all that is needed to make the call.</p>
+</section>
+<section id="scopes">
+<h2>Scopes<a class="headerlink" href="#scopes" title="Permalink to this headline">¶</a></h2>
+<p>VPI can access scopes as objects of type vpiScope. Scopes have names
+and can also contain other sub-scopes, all of which the VPI function
+can access by the vpiInternalScope reference. Therefore, the run-time
+needs to form a tree of scopes into which other scoped VPI objects are
+placed.</p>
+<p>A scope is created with a .scope directive, like so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;label&gt; .scope &quot;name&quot; [, &lt;parent&gt;];
+        .timescale &lt;units&gt;;
+</pre></div>
+</div>
+<p>The scope takes a string name as the first parameter. If there is an
+additional parameter, it is a label of the directive for the parent
+scope. Scopes that have no parent are root scopes. It is an error to
+declare a scope with the same name more than once in a parent scope.</p>
+<p>The name string given when creating the scope is the basename for the
+scope. The vvp automatically constructs full names from the scope
+hierarchy, and runtime VPI code can access that full name with the
+vpiFullName reference.</p>
+<p>The .timescale directive changes the scope units from the simulation
+precision to the specified precision. The .timescale directive affects
+the current scope.</p>
+<p>Objects that place themselves in a scope place themselves in the
+current scope. The current scope is the one that was last mentioned by
+a .scope directive. If the wrong scope is current, the label on a
+scope directive can be used to resume a scope. The syntax works like
+this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>.scope &lt;symbol&gt;;
+</pre></div>
+</div>
+<p>In this case, the &lt;symbol&gt; is the label of a previous scope directive,
+and is used to identify the scope to be resumed. A scope resume
+directive cannot have a label.</p>
+</section>
+<section id="variables">
+<h2>Variables<a class="headerlink" href="#variables" title="Permalink to this headline">¶</a></h2>
+<p>Reg vectors (scalars are vectors of length 1) are created by .var
+statements in the source. The .var statement includes the declared
+name of the variable, and the indices of the MSB and LSB of the
+vector. The vpiHandle is then created with this information, and the
+vpi_ipoint_t pointer to the LSB functor of the variable. VPI programs
+access the vector through the vpiHandle and related functions. The VPI
+code gets access to the declared indices.</p>
+<p>The VPI interface to variable (vpiReg objects) uses the MSB and LSB
+values that the user defined to describe the dimensions of the
+object.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/*
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html">Getting Started as a Contributer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Developer Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Icarus Verilog Developer Support</a><ul>
+  <li><a href="../index.html">Developer Guide</a><ul>
+  <li><a href="index.html">VVP - Verilog Virtual Processor</a><ul>
+      <li>Previous: <a href="opcodes.html" title="previous chapter">Executable Instruction Opcodes</a></li>
+      <li>Next: <a href="vthread.html" title="next chapter">Thread Details</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/developer/guide/vvp/vpi.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

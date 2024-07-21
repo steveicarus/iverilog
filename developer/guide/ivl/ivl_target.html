@@ -1,0 +1,237 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Loadable Target API (ivl_target) &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="What Is LPM" href="lpm.html" />
+    <link rel="prev" title="Icarus Verilog Attributes" href="attributes.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="loadable-target-api-ivl-target">
+<h1>Loadable Target API (ivl_target)<a class="headerlink" href="#loadable-target-api-ivl-target" title="Permalink to this headline">¶</a></h1>
+<p>In addition to the standard VPI API, Icarus Verilog supports a non-standard
+loadable target module API. This API helps C programmers write modules that
+Icarus Verilog can use to generate code. These modules are used at compile
+time to write the elaborated design to the simulation or netlist files. For
+example, the vvp code generator is a loadable target module that writes vvp
+code into the specified file.</p>
+<p>Loadable target modules gain access to the ‘elaborated’ design. That means,
+the source files have been checked for syntax and correctness, any synthesis
+and general optimization steps have been performed, and what is left is a
+design that reflects but is not exactly the same as the input Verilog source
+code. This relieves the modules of the burden of supporting all the odd
+corners and complexities of the Verilog language.</p>
+<section id="the-target-module-api">
+<h2>The Target Module API<a class="headerlink" href="#the-target-module-api" title="Permalink to this headline">¶</a></h2>
+<p>The API is defined in the header file “ivl_target.h” which is installed with
+Icarus Verilog. The header defines the functions that the module writer can
+use to get at the elaborated design during the course of writing the output
+format.</p>
+<p>The target module API function “target_design” is special in that the API does
+not provide this function: The target module itself provides it. When the
+compiler loads the target module, it invokes the “target_design” function with
+a handle to the design. This is the point where the target module takes over
+to process the design.</p>
+</section>
+<section id="compiling-target-modules">
+<h2>Compiling Target Modules<a class="headerlink" href="#compiling-target-modules" title="Permalink to this headline">¶</a></h2>
+<p>Compiling loadable target modules is similar to compiling VPI modules, in that
+the module must be compiled with the “-fPIC” flag to gcc, and linked with the
+“-shared” flag. The module that you compile is then installed in a place where
+the “iverilog” command can find it, and configuration files are adjusted to
+account for the new module.</p>
+<p>This code:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># include  &lt;ivl_target.h&gt;
+
+int target_design(ivl_design_t des)
+{
+     return 0;
+}
+</pre></div>
+</div>
+<p>is an example module that we can write into the file “empty.c”; and let us
+compile it into the module file “empty.tgt” like so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% gcc -o empty.tgt -fpic -shared empty.c
+</pre></div>
+</div>
+<p>This makes the “empty.tgt” file an a dynamically loaded shared object.</p>
+</section>
+<section id="creating-the-target-config-file">
+<h2>Creating the Target Config File<a class="headerlink" href="#creating-the-target-config-file" title="Permalink to this headline">¶</a></h2>
+<p>The target config file tells the Icarus Verilog core how to process your new
+code generator. The ivl core expects two configuration files: the name.conf
+and the name-s.config files. The “-s” version is what is used if the user
+gives the “-S” (synthesis) flag on the command line.</p>
+<p>The stub target, included in most distributions, demonstrates the config
+files. The “stub.conf” file is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>functor:cprop
+functor:nodangle
+-t:dll
+flag:DLL=stub.tgt
+</pre></div>
+</div>
+<p>and the “stub-s.conf” file is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>functor:synth2
+functor:synth
+functor:syn-rules
+functor:cprop
+functor:nodangle
+-t:dll
+flag:DLL=stub.tgt
+</pre></div>
+</div>
+<p>Note that the “stub-s.conf” file contains more lines to invoke internal
+synthesis functions, whereas the “stub.conf” invokes only the basic
+optimization steps.</p>
+<p>In general, only the last line (The “flag:DLL=&lt;name&gt;.tgt” record) varies for
+each target. For your target, replace the &lt;name&gt; with the name of your target
+and you have a configuration file ready to install. Note that this is the name
+of your target module. This is in fact how the config file tells the compiler
+the name of your module.</p>
+<p>The rest of the config file is best taken as boiler plate and installed as is,
+with one difference. If your target is a synthesis target (for example a mosis
+code generator or a pld code generator) that expects synthesis to happen, then
+it makes the most sense to create both your config file like the “stub-s.conf”
+config file. This causes the compiler to do synthesis for your target whether
+the user gives the “-S” flag or not.</p>
+</section>
+<section id="installing-the-target-module">
+<h2>Installing the Target Module<a class="headerlink" href="#installing-the-target-module" title="Permalink to this headline">¶</a></h2>
+<p>Finally, the “empty.conf”, the “empty-s.conf” and the “empty.tgt” files need
+to be installed. Where they go depends on your system, but in Linux they are
+normally installed in “/usr/lib/ivl”.</p>
+</section>
+<section id="lpm-devices">
+<h2>LPM Devices<a class="headerlink" href="#lpm-devices" title="Permalink to this headline">¶</a></h2>
+<p>All LPM devices support a small set of common LPM functions, as
+described in the ivl_target header file. The ivl_lpm_t object has a
+type enumerated by ivl_lpm_type_t, and that type is accessible via the
+ivl_lpm_type function.</p>
+<p>The following are type specific aspects of LPM devices.</p>
+<ul class="simple">
+<li><p>IVL_LPM_UFUNC</p></li>
+</ul>
+<p>This LPM represents a user defined function. It is a way to connect
+behavioral code into a structural network. The UFUNC device has a
+vector output and a set of inputs. The ivl_lpm_define function returns
+the definition as an ivl_scope_t object.</p>
+<p>The output vector is accessible through the ivl_lpm_q, and the output
+has the width defined by ivl_lpm_width. This similar to most every
+other LPM device with outputs.</p>
+<p>There are ivl_lpm_size() input ports, each with the width
+ivl_lpm_data2_width(). The actual nexus is indexed by ivl_lpm_data2().</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html">Getting Started as a Contributer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Developer Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Icarus Verilog Developer Support</a><ul>
+  <li><a href="../index.html">Developer Guide</a><ul>
+  <li><a href="index.html">IVL - The Core Compiler</a><ul>
+      <li>Previous: <a href="attributes.html" title="previous chapter">Icarus Verilog Attributes</a></li>
+      <li>Next: <a href="lpm.html" title="next chapter">What Is LPM</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/developer/guide/ivl/ivl_target.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Icarus Verilog Quirks &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Reporting Issues" href="reporting_issues.html" />
+    <link rel="prev" title="Icarus Verilog Extensions" href="icarus_verilog_extensions.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="icarus-verilog-quirks">
+<h1>Icarus Verilog Quirks<a class="headerlink" href="#icarus-verilog-quirks" title="Permalink to this headline">¶</a></h1>
+<p>This is a list of known quirks that are presented by Icarus Verilog. The idea
+of this chapter is to call out ways that Icarus Verilog differs from the
+standard, or from other implementations.</p>
+<p>This is NOT AN EXHAUSTIVE LIST. If something is missing from this list, let us
+know and we can add documentation.</p>
+<section id="system-tasks-unique-to-icarus-verilog">
+<h2>System Tasks - Unique to Icarus Verilog<a class="headerlink" href="#system-tasks-unique-to-icarus-verilog" title="Permalink to this headline">¶</a></h2>
+<p>These are system tasks that are unique to Icarus Verilog. Don’t use any of
+these if you want to keep your code portable across other Verilog compilers.</p>
+<section id="readmempath">
+<h3>$readmempath<a class="headerlink" href="#readmempath" title="Permalink to this headline">¶</a></h3>
+<p>The “$readmemb” and “$readmemh” system tasks read text files that contain data
+values to populate memories. Normally, those files are found in a current work
+directory. The “$readmempath()” system task can be used to create a search
+path for those files. For example:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="kt">reg</span><span class="w"> </span><span class="p">[</span><span class="mh">7</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">mem</span><span class="w"> </span><span class="p">[</span><span class="mh">0</span><span class="o">:</span><span class="mh">7</span><span class="p">];</span><span class="w"></span>
+<span class="k">initial</span><span class="w"> </span><span class="k">begin</span><span class="w"></span>
+<span class="w">  </span><span class="nb">$readmemh</span><span class="p">(</span><span class="s">&quot;datafile.txt&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">mem</span><span class="p">);</span><span class="w"></span>
+<span class="k">end</span><span class="w"></span>
+</pre></div>
+</div>
+<p>This assumes that the “datafile.txt” is in the current working directory where
+the vvp command is running. But with the “$readmempath”, one can specify a
+search path:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="kt">reg</span><span class="w"> </span><span class="p">[</span><span class="mh">7</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">mem</span><span class="w"> </span><span class="p">[</span><span class="mh">0</span><span class="o">:</span><span class="mh">7</span><span class="p">];</span><span class="w"></span>
+<span class="k">initial</span><span class="w"> </span><span class="k">begin</span><span class="w"></span>
+<span class="w">  </span><span class="n">$readmempath</span><span class="p">(</span><span class="s">&quot;.:alternative:/global/defaults&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="nb">$readmemh</span><span class="p">(</span><span class="s">&quot;datafile.txt&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">mem</span><span class="p">);</span><span class="w"></span>
+<span class="k">end</span><span class="w"></span>
+</pre></div>
+</div>
+<p>In this example, the “datafile.txt” is searched for in each of the directories
+in the above list (separated by “:” characters). The first located instance
+is the one that is used. So for example, if “./datafile.txt” exists, then it
+is read instead of “/global/defaults/datafile.txt” even if the latter exists.</p>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gtkwave.html">Waveforms With GTKWave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Usage</a><ul>
+      <li>Previous: <a href="icarus_verilog_extensions.html" title="previous chapter">Icarus Verilog Extensions</a></li>
+      <li>Next: <a href="reporting_issues.html" title="next chapter">Reporting Issues</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/icarus_verilog_quirks.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
