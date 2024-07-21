@@ -185,7 +185,7 @@ sf_countones_fail		vvp_tests/sf_countones_fail.json
 sf_isunknown_fail		vvp_tests/sf_isunknown_fail.json
 sf_onehot_fail			vvp_tests/sf_onehot_fail.json
 sf_onehot0_fail			vvp_tests/sf_onehot0_fail.json
-single_element_array 		vvp_tests/single_element_array.json
+single_element_array		vvp_tests/single_element_array.json
 struct_enum_partsel		vvp_tests/struct_enum_partsel.json
 struct_field_left_right		vvp_tests/struct_field_left_right.json
 struct_nested1			vvp_tests/struct_nested1.json

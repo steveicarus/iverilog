@@ -1,5 +1,5 @@
 module test_mod ();
- 
+
     typedef enum logic [4:0] {ENUM_ELEM1, ENUM_ELEM2} test_enum_t;
 
     test_enum_t test_mem_addr_e;
@@ -15,4 +15,4 @@ module test_mod ();
         else
             $display("FAILED");
     end
-endmodule 
+endmodule

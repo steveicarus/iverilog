@@ -51,7 +51,7 @@ extern void vvp_init(const char *logfile_name, int argc, char*argv[]);
  * when it is complete. The argument is the path to a VVP file containing
  * compiled Verilog code.
  */
- 
+
 extern int vvp_run(const char *design_path);
 
 /* vpip_load_module(module_name) may be called after vvp_init() and before

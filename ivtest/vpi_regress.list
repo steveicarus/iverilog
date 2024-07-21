@@ -99,10 +99,10 @@ hello_tf		normal			hello_tf.c		hello_tf.log
 hello_vpi		normal			hello_vpi.c		hello.log
 hello_vpi2		normal			hello_vpi2.c		hello2.log		vpi/hello_vpi1.c
 listparams		normal			listparams.c		listparams.log
-nextsimtime_cb1 	normal			nextsimtime_cb1.c	nextsimtime_cb1.gold
-nextsimtime_cb2 	normal			nextsimtime_cb2.c	nextsimtime_cb2.gold
-nextsimtime_cb3 	normal			nextsimtime_cb3.c	nextsimtime_cb3.gold
-nextsimtime_cb4 	normal			nextsimtime_cb4.c	nextsimtime_cb4.gold
+nextsimtime_cb1		normal			nextsimtime_cb1.c	nextsimtime_cb1.gold
+nextsimtime_cb2		normal			nextsimtime_cb2.c	nextsimtime_cb2.gold
+nextsimtime_cb3		normal			nextsimtime_cb3.c	nextsimtime_cb3.gold
+nextsimtime_cb4		normal			nextsimtime_cb4.c	nextsimtime_cb4.gold
 memmon			normal,-g1995		memmon.c		memmon.log
 memwide			normal			memwide.cc		memwide.log
 mipname			normal			mipname.c		mipname.log

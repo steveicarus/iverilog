@@ -93,7 +93,7 @@ static PLI_INT32 monitor_calltf(char*xx)
     delay.real = 0.0;
 
     assert(argv);
-    
+
     handle = vpi_scan(argv);
     assert(handle && (vpi_get(vpiType, handle) == vpiConstant));
 #ifdef TEST_SCALED_TIME
