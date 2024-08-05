@@ -980,6 +980,7 @@ br_gh840a               CE,-g2012               ivltests
 br_gh840b               CE,-g2012               ivltests
 br_gh979                normal,-g2012           ivltests
 bitsel_real_idx		CE,-g2012		ivltests gold=bitsel_real_idx.gold
+partsel_outside		normal,-g2005-sv	ivltests
 partsel_real_idx	CE,-g2012		ivltests gold=partsel_real_idx.gold
 ipsdownsel_real_idx	CE,-g2012		ivltests gold=ipsdownsel_real_idx.gold
 ipsupsel_real_idx	CE,-g2012		ivltests gold=ipsupsel_real_idx.gold

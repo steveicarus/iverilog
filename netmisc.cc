@@ -327,72 +327,39 @@ static unsigned num_bits(long arg)
 NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
 				 unsigned long wid, bool is_up, long soff)
 {
-      long offset = lsb;
+      bool msb_lo = msb < lsb;
+      long offset = msb_lo ? soff + lsb : soff - lsb;
 
-      if (msb < lsb) {
-	      /* Correct the offset if needed. */
-	    if (is_up) offset -= wid - 1;
-	      /* Calculate the space needed for the offset. */
-	    unsigned min_wid = num_bits(offset);
-	    if (num_bits(soff) > min_wid)
-		  min_wid = num_bits(soff);
+	/* Correct the offset if needed. */
+      if (!msb_lo ^ is_up) offset -= wid - 1;
+
+	/* Calculate the space needed for the offset. */
+      unsigned off_wid = num_bits(offset);
+      unsigned off_max_wid = max(off_wid, num_bits(offset + wid - 1));
+	/* Save the width of the base expression. */
+      unsigned base_wid = base->expr_width();
+
+	/* Check for anything but zero offset bit selects. */
+      if (off_max_wid) {
 	      /* We need enough space for the larger of the offset or the
-	       * base expression. */
-	    if (min_wid < base->expr_width()) min_wid = base->expr_width();
-	      /* Now that we have the minimum needed width increase it by
-	       * one to make room for the normalization calculation. */
-	    min_wid += 2;
-	      /* Pad the base expression to the correct width. */
-	    base = pad_to_width(base, min_wid, *base);
-	      /* If the base expression is unsigned and either the lsb
-	       * is negative or it does not fill the width of the base
-	       * expression then we could generate negative normalized
-	       * values so cast the expression to signed to get the
-	       * math correct. */
-	    if ((lsb < 0 || num_bits(lsb+1) <= base->expr_width()) &&
-	        ! base->has_sign()) {
-		    /* We need this extra select to hide the signed
-		     * property from the padding above. It will be
-		     * removed automatically during code generation. */
-		  NetESelect *tmp = new NetESelect(base, 0 , min_wid);
-		  tmp->set_line(*base);
-		  tmp->cast_signed(true);
-                  base = tmp;
-	    }
-	      /* Normalize the expression. */
-	    base = make_sub_expr(offset+soff, base);
-      } else {
-	      /* Correct the offset if needed. */
-	    if (!is_up) offset += wid - 1;
-	      /* If the offset is zero then just return the base (index)
-	       * expression. */
-	    if ((soff-offset) == 0) return base;
-	      /* Calculate the space needed for the offset. */
-	    unsigned min_wid = num_bits(-offset);
-	    if (num_bits(soff) > min_wid)
-		  min_wid = num_bits(soff);
-	      /* We need enough space for the larger of the offset or the
-	       * base expression. */
-	    if (min_wid < base->expr_width()) min_wid = base->expr_width();
-	      /* Now that we have the minimum needed width increase it by
-	       * one to make room for the normalization calculation. */
-	    min_wid += 2;
-	      /* Pad the base expression to the correct width. */
-	    base = pad_to_width(base, min_wid, *base);
-	      /* If the offset is greater than zero then we need to do
-	       * signed math to get the location value correct. */
-	    if (offset > 0 && ! base->has_sign()) {
-		    /* We need this extra select to hide the signed
-		     * property from the padding above. It will be
-		     * removed automatically during code generation. */
-		  NetESelect *tmp = new NetESelect(base, 0 , min_wid);
-		  tmp->set_line(*base);
-		  tmp->cast_signed(true);
-                  base = tmp;
-	    }
-	      /* Normalize the expression. */
-	    base = make_add_expr(base, soff-offset);
+	       * base expression, plus an extra bit for arithmetic overflow. */
+	    unsigned sum_wid = 1 + max(off_max_wid, base_wid);
+	    base = pad_to_width(base, sum_wid, *base);
       }
+
+	/* There is no need to add a zero offset. */
+      if (!msb_lo && offset == 0) return base;
+
+	/* If the offset is negative or the result could otherwise be negative,
+	 * then we need to do signed math to get the location value correct. */
+      if ((offset < 0 || (msb_lo && off_wid <= base_wid)) && ! base->has_sign()) {
+	    unsigned signed_wid = 1 + base->expr_width();
+	    base = pad_to_width(base, signed_wid, *base);
+	    base->cast_signed(true);
+      }
+
+      /* Normalize the expression. */
+      base = msb_lo ? make_sub_expr(offset, base) : make_add_expr(base, offset);
 
       return base;
 }
