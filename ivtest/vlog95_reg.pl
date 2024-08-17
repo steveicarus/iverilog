@@ -4,7 +4,7 @@
 #
 # This script is based on code with the following Copyright.
 #
-# Copyright (c) 1999-2023 Guy Hutchison (ghutchis@pacbell.net)
+# Copyright (c) 1999-2024 Guy Hutchison (ghutchis@pacbell.net)
 #
 #    This source code is free software; you can redistribute it
 #    and/or modify it in source code form under the terms of the GNU
@@ -55,9 +55,10 @@ if ($#ARGV != -1) {
     &read_regression_list("regress-vhdl.list",   $ver, $force_sv, "");
     &read_regression_list("regress-synth.list",  $ver, $force_sv, "-S");
 }
-&execute_regression($suffix, $with_valg);
+my $failed = &execute_regression($suffix, $with_valg);
 &close_report_file;
 
+exit $failed;
 
 #
 #  execute_regression sequentially compiles and executes each test in
@@ -282,4 +283,6 @@ sub execute_regression {
     &print_rpt("=" x 76 . "\n");
     &print_rpt("Test results:\n  Total=$total, Passed=$passed, Failed=$failed,".
                " Not Implemented=$not_impl, Expected Fail=$expected_fail\n");
+
+    return $failed;
 }

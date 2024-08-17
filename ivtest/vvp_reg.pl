@@ -4,7 +4,7 @@
 #
 # This script is based on code with the following Copyright.
 #
-# Copyright (c) 1999-2023 Guy Hutchison (ghutchis@pacbell.net)
+# Copyright (c) 1999-2024 Guy Hutchison (ghutchis@pacbell.net)
 #
 #    This source code is free software; you can redistribute it
 #    and/or modify it in source code form under the terms of the GNU
@@ -58,7 +58,7 @@ if ($#ARGV != -1) {
         &read_regression_list("regress-synth.list", $ver, $force_sv, "-S");
     }
 }
-$failed = &execute_regression($suffix, $strict, $with_valg);
+my $failed = &execute_regression($suffix, $strict, $with_valg);
 &close_report_file;
 
 exit $failed;
@@ -254,5 +254,5 @@ sub execute_regression {
     # Remove remaining temporary files
     system("rm -f *.tmp ivltests/*.tmp");
 
-    return($failed)
+    return $failed;
 }

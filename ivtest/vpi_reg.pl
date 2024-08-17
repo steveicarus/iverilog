@@ -56,7 +56,9 @@ my $msg = $with_valg ? " (with valgrind)" : "";
 print ("Running VPI tests for Icarus Verilog version: $ver$msg.\n");
 print "-" x 76 . "\n";
 &read_regression_list;
-&execute_regression;
+my $failed = &execute_regression;
+
+exit $failed;
 
 #
 #  parses the regression list file
@@ -236,7 +238,8 @@ sub execute_regression {
     print "=" x 76 . "\n";
     print "Test results: Total=$total, Passed=$passed, Failed=$failed,".
           " Not Implemented=$not_impl\n";
-    exit $failed;
+
+    return $failed;
 }
 
 #
