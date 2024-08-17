@@ -240,8 +240,16 @@ case "${host}" in
 	CFLAGS="-mieee $CFLAGS"
 	;;
     *-*-mingw*)
-	CXXFLAGS="-D__USE_MINGW_ANSI_STDIO=1 $CXXFLAGS"
-	CFLAGS="-D__USE_MINGW_ANSI_STDIO=1 $CFLAGS"
+	# The MINGW64/32 environments link to MSVCRT which has stdio issues
+	# so use the slower, but functional mingw versions for this case.
+	case "${MSYSTEM}" in
+	    MINGW*)
+		CXXFLAGS="-D__USE_MINGW_ANSI_STDIO=1 $CXXFLAGS"
+		CFLAGS="-D__USE_MINGW_ANSI_STDIO=1 $CFLAGS"
+		AC_MSG_NOTICE([${MSYSTEM} needs -D__USE_MINGW_ANSI_STDIO=1])
+		;;
+
+	esac
 	;;
 esac
 
