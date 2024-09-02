@@ -266,6 +266,7 @@ vams_abs2			vvp_tests/vams_abs2.json
 vams_abs2-vlog95		vvp_tests/vams_abs2-vlog95.json
 vams_abs3			vvp_tests/vams_abs3.json
 vams_abs3-vlog95		vvp_tests/vams_abs3-vlog95.json
+vardly_undefined_vec		vvp_tests/vardly_undefined_vec.json
 va_math				vvp_tests/va_math.json
 warn_opt_sys_tf			vvp_tests/warn_opt_sys_tf.json
 wreal				vvp_tests/wreal.json
