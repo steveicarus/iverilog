@@ -226,12 +226,12 @@ void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		   reading index values directly from variables. In
 		   this case, try to use that special instruction. */
 	  case IVL_EX_SIGNAL: {
+		const char*type = ivl_expr_signed(expr) ? "/s" : "";
 		ivl_signal_t sig = ivl_expr_signal(expr);
 
 		unsigned word = 0;
 		if (ivl_signal_dimensions(sig) > 0) {
 		      ivl_expr_t ixe;
-		      const char*type = ivl_expr_signed(expr) ? "/s" : "";
 
 			/* Detect the special case that this is a
 			   variable array. In this case, the ix/getv
@@ -252,7 +252,6 @@ void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		            break;
 		      }
 		}
-		const char*type = ivl_signal_signed(sig) ? "/s" : "";
 		fprintf(vvp_out, "    %%ix/getv%s %u, v%p_%u;\n", type, ix,
 		                 sig, word);
 		break;
