@@ -317,14 +317,14 @@ static void assign_to_lvector(ivl_lval_t lval,
 		    // instruction to handle this case.
 		  int offset_index = allocate_word();
 		  int delay_index = allocate_word();
-		  fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n", offset_index, part_off);
 		  if (dexp) {
 			draw_eval_expr_into_integer(dexp,delay_index);
 		  } else {
 			fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
 				delay_index, low_d, hig_d);
-			fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  }
+		  fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n", offset_index, part_off);
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %s/vec4/off/d v%p_%lu, %d, %d;\n",
 			  assign_op, sig, use_word, offset_index, delay_index);
 		  clr_word(offset_index);
