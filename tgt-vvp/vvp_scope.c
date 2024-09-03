@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -696,14 +696,13 @@ static void draw_net_in_scope(ivl_signal_t sig)
 		       so the word count for the signal and the alias
 		       *must* match. */
 
-		  if (ivl_signal_dimensions(nex_data->net) > 0 &&
+		  if (iword == 0 && ivl_signal_dimensions(nex_data->net) > 0 &&
                       word_count == ivl_signal_array_count(nex_data->net)) {
-                    if (iword == 0) {
 		      fprintf(vvp_out, "v%p .array \"%s\", v%p; Alias to %s \n",
 			      sig, vvp_mangle_name(ivl_signal_basename(sig)),
 			      nex_data->net,
 			      ivl_signal_basename(nex_data->net));
-                    }
+		      break;
 		    /* An alias for an individual word. */
 		  } else {
 			if (iword == 0) {
