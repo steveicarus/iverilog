@@ -689,20 +689,22 @@ static void draw_net_in_scope(ivl_signal_t sig)
 		  nex_data->net_word = iword;
 
 	    } else if (dimensions > 0) {
+
 		    /* In this case, we have an alias to an existing
 		       signal array. this typically is an instance of
 		       port collapsing that the elaborator combined to
 		       discover that the entire array can be collapsed,
 		       so the word count for the signal and the alias
 		       *must* match. */
-
 		  if (iword == 0 && ivl_signal_dimensions(nex_data->net) > 0 &&
                       word_count == ivl_signal_array_count(nex_data->net)) {
-		      fprintf(vvp_out, "v%p .array \"%s\", v%p; Alias to %s \n",
-			      sig, vvp_mangle_name(ivl_signal_basename(sig)),
-			      nex_data->net,
-			      ivl_signal_basename(nex_data->net));
-		      break;
+
+			fprintf(vvp_out, "v%p .array \"%s\", v%p; Alias to %s \n",
+			        sig, vvp_mangle_name(ivl_signal_basename(sig)),
+			        nex_data->net,
+			        ivl_signal_basename(nex_data->net));
+			break;
+
 		    /* An alias for an individual word. */
 		  } else {
 			if (iword == 0) {
@@ -2538,4 +2540,3 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       ivl_scope_children(net, (ivl_scope_f*) draw_scope, net);
       return 0;
 }
-
