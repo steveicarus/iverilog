@@ -719,10 +719,11 @@ static void draw_net_in_scope(ivl_signal_t sig)
 			}
 
 			fprintf(vvp_out, "v%p_%u .net%s v%p %u, %d %d, "
-			        "v%p_%u; Alias to %s\n", sig, iword,
+			        "v%p_%u; Alias to %s[%u]\n", sig, iword,
 			        datatype_flag, sig, iword, msb, lsb,
 			        nex_data->net, nex_data->net_word,
-			        ivl_signal_basename(nex_data->net));
+			        ivl_signal_basename(nex_data->net),
+				nex_data->net_word);
 		  }
 	    } else {
 		    /* Finally, we may have an alias that is a word
