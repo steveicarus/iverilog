@@ -1437,10 +1437,10 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 		  expr->test_width(des, scope, arg_mode);
 	    }
 
-	    expr_type_   = IVL_VT_BOOL;
+	    expr_type_   = IVL_VT_LOGIC;
 	    expr_width_  = integer_width;
 	    min_width_   = integer_width;
-            signed_flag_ = false;
+            signed_flag_ = true;
 
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": " << __func__ << ": "
