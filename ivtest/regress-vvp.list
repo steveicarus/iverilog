@@ -141,6 +141,8 @@ partsel_invalid_idx3		vvp_tests/partsel_invalid_idx3.json
 partsel_invalid_idx4		vvp_tests/partsel_invalid_idx4.json
 partsel_invalid_idx5		vvp_tests/partsel_invalid_idx5.json
 partsel_invalid_idx6		vvp_tests/partsel_invalid_idx6.json
+partsel_outside_const		vvp_tests/partsel_outside_const.json
+partsel_outside_expr		vvp_tests/partsel_outside_expr.json
 partsel_reversed_idx1		vvp_tests/partsel_reversed_idx1.json
 partsel_reversed_idx2		vvp_tests/partsel_reversed_idx2.json
 partsel_reversed_idx3		vvp_tests/partsel_reversed_idx3.json
