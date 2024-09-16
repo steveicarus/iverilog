@@ -98,6 +98,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void scope(const NetScope*);
       void convert_module_ports(const NetScope*);
       void signal(const NetNet*);
+      void tchk(const NetNet*);
       bool signal_paths(const NetNet*);
       ivl_dll_t dll_;
 
@@ -693,6 +694,8 @@ struct ivl_scope_s {
 
       std::vector<ivl_signal_t> sigs_;
 
+      std::vector<ivl_tchk_t> tchks_;
+
       unsigned nlog_;
       ivl_net_logic_t*log_;
 
@@ -778,6 +781,13 @@ struct ivl_signal_s {
       unsigned nattr;
 };
 
+/*
+ * A timing check TODO
+ */
+struct ivl_tchk_s {
+      perm_string name_;
+      ivl_scope_t scope_;
+};
 
 /*
  * The ivl_statement_t represents any statement. The type of statement

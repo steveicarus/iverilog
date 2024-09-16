@@ -53,6 +53,7 @@ static struct __vpiModPath*modpath_dst = 0;
       char*text;
       char **table;
       uint64_t numb;
+      double real;
       bool flag;
 
       comp_operands_t opa;
@@ -108,10 +109,14 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_ivl_version K_ivl_delay_selection
 %token K_vpi_module K_vpi_time_precision K_file_names K_file_line
 %token K_PORT_INPUT K_PORT_OUTPUT K_PORT_INOUT K_PORT_MIXED K_PORT_NODIR
+%token K_TCHK_WIDTH
+%token K_POSEDGE "posedge"
+%token K_NEGEDGE "negedge"
 
 %token <text> T_INSTR
 %token <text> T_LABEL
 %token <numb> T_NUMBER
+%token <real> T_REAL
 %token <text> T_STRING
 %token <text> T_SYMBOL
 %token <vect> T_VECTOR
@@ -714,6 +719,11 @@ statement
 	|         K_SCOPE T_SYMBOL ';'
 		{ compile_scope_recall($2); }
 
+
+  /* Timing checks */
+
+	| K_TCHK_WIDTH T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_SYMBOL ',' T_REAL ',' T_NUMBER ',' T_SYMBOL ';'
+		{ compile_tchk_width($5, $7, $9, $11, $13, $15, $2, $3); }
 
   /* Port information for scopes... currently this is just meta-data for VPI queries */
 
