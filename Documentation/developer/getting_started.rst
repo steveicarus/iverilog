@@ -1,5 +1,5 @@
 
-Getting Started as a Contributer
+Getting Started as a Contributor
 ================================
 
 Icarus Verilog development is centered around the github repository at
@@ -218,7 +218,7 @@ first push the branch up to github:
 Then go to github.com to create your pull request. `Create your pull request
 against the "master" branch of the upstream repository
 <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork>`_,
-or the version branch that you are working on. Your pull reuqest will be run
+or the version branch that you are working on. Your pull request will be run
 through continuous integration, and reviewed by one of the main
 authors. Feedback may be offered to your PR, and once accepted, an approved
 individual will merge it for you. Then you are done.
