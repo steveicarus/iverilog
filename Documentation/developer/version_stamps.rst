@@ -9,7 +9,7 @@ These are the only files that have version information in them:
 * verilog.spec      -- Used to stamp RPM packages
 
 When versions are changed, the above files need to be edited to account for
-the new version information. The following used to have verion information in
+the new version information. The following used to have version information in
 them, but now their version information is generated:
 
 The version_tag.h file is generated from git tag information using
