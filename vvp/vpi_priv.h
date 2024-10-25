@@ -34,7 +34,10 @@
  * and "vvp_fun_modpath" classes definitions
  */
 #include  "delay.h"
-
+/*
+ * Added to use some "vvp_fun_tchk_width" definition
+ */
+#include  "tchk.h"
 
 class class_type;
 class vvp_darray;
@@ -609,6 +612,107 @@ struct __vpiInterModPath : public __vpiHandle {
  */
 
 extern struct __vpiInterModPath* vpip_make_intermodpath(vvp_net_t *net, vpiPortInfo* port1, vpiPortInfo* port2);
+
+/*
+ * The __vpiTchkTerm is the base class for
+ * __vpiTchkRefTerm and __vpiTchkDataTerm
+ */
+
+class __vpiTchkTerm : public __vpiHandle {
+  public:
+      __vpiTchkTerm(int edge, vpiHandle expr);
+      virtual ~__vpiTchkTerm();
+      virtual int get_type_code(void) const = 0;
+      int vpi_get(int code);
+      vpiHandle vpi_handle(int code);
+  private:
+      vpiHandle expr_;
+	/* The value returned by vpi_get(vpiEdge, ...); */
+      int edge_;
+};
+
+/*
+ * The __vpiTchkRefTerm represents the reference event of a timing check
+ */
+
+class __vpiTchkRefTerm : public __vpiTchkTerm {
+    public:
+      __vpiTchkRefTerm(int edge, vpiHandle expr);
+      ~__vpiTchkRefTerm();
+      int get_type_code(void) const override { return vpiTchkRefTerm; };
+};
+
+/*
+ * The __vpiTchkDataTerm represents the data event of a timing check
+ */
+
+class __vpiTchkDataTerm : public __vpiTchkTerm {
+    public:
+      __vpiTchkDataTerm(int edge, vpiHandle expr);
+      ~__vpiTchkDataTerm();
+      int get_type_code(void) const override { return vpiTchkDataTerm; };
+};
+
+/*
+ * The __vpiTchk is the base class for all timing check vpiHandles
+ */
+
+class __vpiTchk  : public __vpiHandle {
+    public:
+      __vpiTchk( __vpiScope *scope, unsigned file_idx, unsigned lineno);
+      ~__vpiTchk();
+
+      int get_type_code(void) const { return vpiTchk; }
+
+      virtual int vpi_get(int code) = 0;
+      virtual vpiHandle vpi_handle(int code) = 0;
+      virtual void vpi_get_delays(p_vpi_delay del) = 0;
+      virtual void vpi_put_delays(p_vpi_delay del) = 0;
+
+    protected:
+      __vpiScope *scope_;
+      unsigned file_idx_;
+      unsigned lineno_;
+
+};
+
+/*
+ *
+ * The vpiInterModPath vpiHandle will define
+ * a __vpiTchkWidth of record .tchk_width as defined
+ * in the IEEE 1364
+ *
+ */
+
+class __vpiTchkWidth  : public __vpiTchk {
+    public:
+      __vpiTchkWidth( __vpiScope *scope, unsigned file_idx, unsigned lineno, vvp_fun_tchk_width* fun );
+      ~__vpiTchkWidth();
+
+      int get_type_code(void) const { return vpiTchk; }
+
+      int vpi_get(int code) override;
+      vpiHandle vpi_handle(int code) override;
+      void vpi_get_delays(p_vpi_delay del) override;
+      void vpi_put_delays(p_vpi_delay del) override;
+
+      vpiHandle vpi_notifier_;
+      vpiHandle vpi_reference_;
+
+      vpiHandle vpi_tchk_ref_term_;
+
+    private:
+      vvp_fun_tchk_width* fun_;
+
+      friend vvp_fun_tchk_width;
+};
+
+/*
+ * The Function is used to create the vpiHandle
+ * for __vpiTchkWidth
+ */
+
+extern vpiHandle vpip_make_tchk_width(long file_idx, long lineno, vvp_fun_tchk_width* fun);
 
 /*
  * These methods support the vpi creation of events. The name string

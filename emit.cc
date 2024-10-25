@@ -489,6 +489,12 @@ void NetScope::emit_scope(struct target_t*tgt) const
 	    tgt->signal(cur->second);
       }
 
+      // TODO use for timing checks!
+      for (signals_map_iter_t cur = signals_map_.begin()
+		 ; cur != signals_map_.end() ; ++ cur ) {
+	    tgt->tchk(cur->second);
+      }
+
 	// Run the signals again, but this time to connect the
 	// delay paths. This is done as a second pass because
 	// the paths reference other signals that may be later
