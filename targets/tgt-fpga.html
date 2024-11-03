@@ -1,0 +1,303 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>The FPGA Code Generator (-tfpga) &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The PAL Code Generator (-tpal)" href="tgt-pal.html" />
+    <link rel="prev" title="The PCB Code Generator (-tpcb)" href="tgt-pcb.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="the-fpga-code-generator-tfpga">
+<h1>The FPGA Code Generator (-tfpga)<a class="headerlink" href="#the-fpga-code-generator-tfpga" title="Permalink to this headline">¶</a></h1>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This code generator is currently not included in Icarus Verilog.</p>
+</div>
+<p>The FPGA code generator supports a variety of FPGA devices, writing
+XNF or EDIF depending on the target. You can select the architecture
+of the device, and the detailed part name. The architecture is used to
+select library primitives, and the detailed part name is written into
+the generated file for the use of downstream tools.</p>
+<section id="invoking-the-fpga-target">
+<h2>INVOKING THE FPGA TARGET<a class="headerlink" href="#invoking-the-fpga-target" title="Permalink to this headline">¶</a></h2>
+<p>The code generator is invoked with the -tfpga flag to iverilog. It
+understands the part= and the arch= parameters, which can be set with
+the -p flag of iverilog:</p>
+<blockquote>
+<div><p>iverilog -parch=virtex -ppart=v50-pq240-6 -tfpga foo.vl</p>
+</div></blockquote>
+<p>This example selects the Virtex architecture, and give the detailed
+part number as v50-pq240-6. The output is written into a.out unless a
+different output file is specified with the -o flag.</p>
+<p>The following is a list of architecture types that this code generator
+supports.</p>
+<ul class="simple">
+<li><p>arch=lpm</p></li>
+</ul>
+<p>This is a device independent format, where the gates are device types
+as defined by the LPM 2 1 0 specification. Some backend tools may take
+this format, or users may write interface libraries to connect these
+netlists to the device in question.</p>
+<ul class="simple">
+<li><p>arch=generic-edif (obsolete)</p></li>
+</ul>
+<p>This is generic EDIF code. It doesn’t necessarily work because the
+external library is not available to the code generator. But, what it
+does is generate generic style gates that a portability library can
+map to target gates if desired.</p>
+<ul class="simple">
+<li><p>arch=generic-xnf (obsolete)</p></li>
+</ul>
+<p>If this is selected, then the output is formatted as an XNF file,
+suitable for most any type of device. The devices that it emits
+are generic devices from the unified library. Some devices are macros,
+you may need to further resolve the generated XNF to get working
+code for your part.</p>
+<ul class="simple">
+<li><p>arch=virtex</p></li>
+</ul>
+<p>If this is selected, then the output is formatted as an EDIF 200 file,
+suitable for Virtex class devices. This is supposed to know that you
+are targeting a Virtex part, so can generate primitives instead of
+using external macros. It includes the VIRTEX internal library, and
+should work properly for any Virtex part.</p>
+<ul class="simple">
+<li><p>arch=virtex2</p></li>
+</ul>
+<p>If this is selected, then the output is EDIF 2 0 0 suitable for
+Virtex-II and Virtex-II Pro devices. It uses the VIRTEX2 library, but
+is very similar to the Virtex target.</p>
+</section>
+<section id="xnf-root-ports">
+<h2>XNF ROOT PORTS<a class="headerlink" href="#xnf-root-ports" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>NOTE: As parts are moved over to EDIF format, XNF support will be
+phased out. Current Xilinx implementation tools will accept EDIF
+format files even for the older parts, and non-Xilinx implementation
+tools accept nothing else.</p>
+</div></blockquote>
+<p>When the output format is XNF, the code generator will generate “SIG”
+records for the signals that are ports of the root module. The name is
+declared as an external pin that this macro makes available.</p>
+<p>The name given to the macro pin is generated from the base name of the
+signal. If the signal is one bit wide, then the pin name is exactly
+the module port name. If the port is a vector, then the pin number is
+given as a vector. For example, the module:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module main(out, in);
+    output out;
+    input [2:0] in;
+    [...]
+endmodule
+</pre></div>
+</div>
+<p>leads to these SIG, records:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>SIG, main/out, PIN=out
+SIG, main/in&lt;2&gt;, PIN=in2
+SIG, main/in&lt;1&gt;, PIN=in1
+SIG, main/in&lt;0&gt;, PIN=in0
+</pre></div>
+</div>
+</section>
+<section id="edif-root-ports">
+<h2>EDIF ROOT PORTS<a class="headerlink" href="#edif-root-ports" title="Permalink to this headline">¶</a></h2>
+<p>The EDIF format is more explicit about the interface into an EDIF
+file. The code generator uses that control to generate an explicit
+interface definition into the design. (This is <em>not</em> the same as the
+PADS of a part.) The generated EDIF interface section contains port
+definitions, including the proper direction marks.</p>
+<p>With the (rename …) s-exp in EDIF, it is possible to assign
+arbitrary text to port names. The EDIF code generator therefore does
+not resort to the mangling that is needed for the XNF target. The base
+name of the signal that is an input or output is used as the name of
+the port, complete with the proper case.</p>
+<p>However, since the ports are single bit ports, the name of vectors
+includes the string “[0]” where the number is the bit number. For
+example, the module:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module main(out, in);
+    output out;
+    input [2:0] in;
+    [...]
+endmodule
+</pre></div>
+</div>
+<p>creates these ports:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>out   OUTPUT
+in[0] INPUT
+in[1] INPUT
+in[2] INPUT
+</pre></div>
+</div>
+<p>Target tools, including Xilinx Foundation tools, understand the []
+characters in the name and recollect the signals into a proper bus
+when presenting the vector to the user.</p>
+</section>
+<section id="pads-and-pin-assignment">
+<h2>PADS AND PIN ASSIGNMENT<a class="headerlink" href="#pads-and-pin-assignment" title="Permalink to this headline">¶</a></h2>
+<p>The ports of a root module may be assigned to specific pins, or to a
+generic pad. If a signal (that is a port) has a PAD attribute, then
+the value of that attribute is a list of locations, one for each bit
+of the signal, that specifies the pin for each bit of the signal. For
+example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module main( (* PAD = &quot;P10&quot; *)         output out,
+             (* PAD = &quot;P20,P21,P22&quot; *) input [2:0] in);
+    [...]
+endmodule
+</pre></div>
+</div>
+<p>In this example, port <cite>out</cite> is assigned to pin 10, and port <cite>in</cite>
+is assigned to pins 20-22. If the architecture supports it, a pin
+number of 0 means let the back end tools choose a pin. The format of
+the pin number depends on the architecture family being targeted, so
+for example Xilinx family devices take the name that is associated
+with the “LOC” attribute.</p>
+<p>NOTE: If a module port is assigned to a pin (and therefore attached to
+a PAD) then it is <em>not</em> connected to a port of the EDIF file. This is
+because the PAD (and possibly IBUF or OBUF) would become an extra
+driver to the port. An error.</p>
+</section>
+<section id="special-devices">
+<h2>SPECIAL DEVICES<a class="headerlink" href="#special-devices" title="Permalink to this headline">¶</a></h2>
+<p>The code generator supports the “cellref” attribute attached to logic
+devices to cause specific device types be generated, instead of the
+usual device that the code generator might generate. For example, to
+get a clock buffer out of a Verilog buf:</p>
+<blockquote>
+<div><p>buf my_gbuf(out, in);
+$attribute(my_buf, “cellref”, “GBUF:O,I”);</p>
+</div></blockquote>
+<p>The “cellref” attribute tells the code generator to use the given
+cell. The syntax of the value is:</p>
+<blockquote>
+<div><p>&lt;cell type&gt;:&lt;pin name&gt;,…</p>
+</div></blockquote>
+<p>The cell type is the name of the library part to use. The pin names
+are the names of the type in the library, in the order that the logic
+device pins are connected.</p>
+</section>
+<section id="compiling-with-xilinx-foundation">
+<h2>COMPILING WITH XILINX FOUNDATION<a class="headerlink" href="#compiling-with-xilinx-foundation" title="Permalink to this headline">¶</a></h2>
+<p>Compile a single-file design with command line tools like so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% iverilog -parch=virtex -o foo.edf foo.vl
+% edif2ngd foo.edf foo.ngo
+% ngdbuild -p v50-pq240 foo.ngo foo.ngd
+% map -o map.ncd foo.ngd
+% par -w map.ncd foo.ncd
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage/index.html">Icarus Verilog Usage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">The Icarus Verilog Targets</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tgt-vvp.html">The vvp Code Generator (-tvvp)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-stub.html">The stub Code Generator (-tstub)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-null.html">The null Code Generator (-tnull)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-vhdl.html">The VHDL Code Generator (-tvhdl)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-vlog95.html">The Verilog ‘95 Code Generator (-tvlog95)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-pcb.html">The PCB Code Generator (-tpcb)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">The FPGA Code Generator (-tfpga)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-pal.html">The PAL Code Generator (-tpal)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-sizer.html">The sizer Code Analyzer (-tvvp)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-verilog.html">The Verilog Code Generator (-tverilog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tgt-blif.html">The BLIF Code Generator (-tblif)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">The Icarus Verilog Targets</a><ul>
+      <li>Previous: <a href="tgt-pcb.html" title="previous chapter">The PCB Code Generator (-tpcb)</a></li>
+      <li>Next: <a href="tgt-pal.html" title="next chapter">The PAL Code Generator (-tpal)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/targets/tgt-fpga.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

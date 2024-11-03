@@ -1,0 +1,294 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Installation Guide &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Getting Started With Icarus Verilog" href="getting_started.html" />
+    <link rel="prev" title="Icarus Verilog Usage" href="index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="installation-guide">
+<h1>Installation Guide<a class="headerlink" href="#installation-guide" title="Permalink to this headline">¶</a></h1>
+<p>Icarus Verilog may be installed from source code, or from pre-packaged binary
+distributions. If you don’t have need for the very latest, and prepackaged
+binaries are available, that would be the best place to start.</p>
+<section id="installation-from-source">
+<h2>Installation From Source<a class="headerlink" href="#installation-from-source" title="Permalink to this headline">¶</a></h2>
+<p>Icarus is developed for Unix-like environments but can also be compiled on
+Windows systems using the Cygwin environment or MinGW compilers. The following
+instructions are the common steps for obtaining the Icarus Verilog source,
+compiling and installing. Note that there are precompiled and/or prepackaged
+versions for a variety of systems, so if you find an appropriate packaged
+version, then that is the easiest way to install.</p>
+<p>The source code for Icarus is stored under the git source code control
+system. You can use git to get the latest development head or the latest of a
+specific branch. Stable releases are placed on branches, and in particular v11
+stable releases are on the branch “v11-branch” To get the development version
+of the code follow these steps:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% git config --global user.name &quot;Your Name Goes Here&quot;
+% git config --global user.email you@yourpublicemail.example.com
+% git clone https://github.com/steveicarus/iverilog.git
+</pre></div>
+</div>
+<p>The first two lines are optional and are used to tell git who you are. This
+information is important if/when you submit a patch. We suggest that you add
+this information now so you don’t forget to do it later. The clone will create
+a directory, named iverilog, containing the source tree, and will populate
+that directory with the most current source from the HEAD of the repository.</p>
+<p>Change into this directory using:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% cd iverilog
+</pre></div>
+</div>
+<p>Normally, this is enough as you are now pointing at the most current
+development code, and you have implicitly created a branch “master” that
+tracks the development head. However, If you want to actually be working on
+the v11-branch (the branch where the latest v11 patches are) then you checkout
+that branch with the command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% git checkout --track -b v11-branch origin/v11-branch
+</pre></div>
+</div>
+<p>This creates a local branch that tracks the v11-branch in the repository, and
+switches you over to your new v11-branch. The tracking is important as it
+causes pulls from the repository to re-merge your local branch with the remote
+v11-branch. You always work on a local branch, then merge only when you
+push/pull from the remote repository.</p>
+<p>Now that you’ve cloned the repository and optionally selected the branch you
+want to work on, your local source tree may later be synced up with the
+development source by using the git command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% git pull
+</pre></div>
+</div>
+<p>The git system remembers the repository that it was cloned from, so you don’t
+need to re-enter it when you pull.</p>
+<p>Finally, configuration files are built by the extra step:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% sh autoconf.sh
+</pre></div>
+</div>
+<p>The source is then compiled as appropriate for your system. See the specific
+build instructions below for your operation system for what to do next.</p>
+<p>You will need autoconf and gperf installed in order for the script to work.
+If you get errors such as:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Autoconf in root...
+autoconf.sh: 10: autoconf: not found
+Precompiling lexor_keyword.gperf
+autoconf.sh: 13: gperf: not found.
+</pre></div>
+</div>
+<p>You will need to install download and install the autoconf and gperf tools.</p>
+</section>
+<section id="icarus-specific-configuration-options">
+<h2>Icarus Specific Configuration Options<a class="headerlink" href="#icarus-specific-configuration-options" title="Permalink to this headline">¶</a></h2>
+<p>Icarus takes many of the standard configuration options and those will not be
+described here. The following are specific to Icarus:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>--enable-suffix[=suffix]
+</pre></div>
+</div>
+<p>This option allows the user to build Icarus with a default suffix or when
+provided a user defined suffix. Older stable releases have this flag on by
+default e.g.(V0.8 by default will build with a “-0.8” suffix). All versions
+have an appropriate default suffix (“-&lt;base_version&gt;”).</p>
+<p>All programs or directories are tagged with this suffix. e.g.(iverilog-0.8,
+vvp-0.8, etc.). The output of iverilog will reference the correct run time
+files and directories. The run time will check that it is running a file with
+a compatible version e.g.(you can not run a V0.9 file with the V0.8 run
+time).</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>--with-valgrind
+</pre></div>
+</div>
+<p>This option adds extra memory cleanup code and pool management code to allow
+better memory leak checking when valgrind is available. This option is not
+need when checking for basic errors with valgrind.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>--enable-libvvp
+</pre></div>
+</div>
+<p>The vvp progam is built as a small stub linked to a shared library,
+libvvp.so, that may be linked with other programs so that they can host
+a vvp simulation.</p>
+</section>
+<section id="compiling-on-linux-unix">
+<h2>Compiling on Linux/Unix<a class="headerlink" href="#compiling-on-linux-unix" title="Permalink to this headline">¶</a></h2>
+<p>(Note: You will need to install bison, flex, g++ and gcc) This is probably the
+easiest case. Given that you have the source tree from the above instructions,
+the compile and install is generally as simple as:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% ./configure
+% make
+(su to root)
+# make install
+</pre></div>
+</div>
+<p>The “make install” typically needs to be done as root so that it can install
+in directories such as “/usr/local/bin” etc. You can change where you want to
+install by passing a prefix to the “configure” command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% ./configure --prefix=/my/special/directory
+</pre></div>
+</div>
+<p>This will configure the source for eventual installation in the directory that
+you specify. Note that “rpm” packages of binaries for Linux are typically
+configured with “–prefix=/usr” per the Linux File System Standard.</p>
+<p>Make sure you have the latest version of flex otherwise you will get an error
+when parsing lexor.lex.</p>
+</section>
+<section id="compiling-on-macintosh-os-x">
+<h2>Compiling on Macintosh OS X<a class="headerlink" href="#compiling-on-macintosh-os-x" title="Permalink to this headline">¶</a></h2>
+<p>Since Mac OS X is a BSD flavor of Unix, you can install Icarus Verilog from
+source using the procedure described above. You need to install the Xcode
+software, which includes the C and C++ compilers for Mac OS X. The package is
+available for free download from Apple’s developer site. Once Xcode is
+installed, you can build Icarus Verilog in a terminal window just like any
+other Unix install.</p>
+<p>For versions newer than 10.3 the GNU Bison tool (packaged with Xcode) needs to
+be updated to version 3.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>brew install bison
+echo &#39;export PATH=&quot;/usr/local/opt/bison/bin:$PATH&quot;&#39; &gt;&gt; ~/.bash_profile
+</pre></div>
+</div>
+<p>Icarus Verilog is also available through the Homebrew package manager: “brew
+install icarus-verilog”.</p>
+</section>
+<section id="compiling-for-windows">
+<h2>Compiling for Windows<a class="headerlink" href="#compiling-for-windows" title="Permalink to this headline">¶</a></h2>
+<p>These are instructions for building Icarus Verilog binaries for
+Windows using mingw cross compiler tools on Linux.</p>
+<p>To start with, you need the mingw64-cross-* packages for your linux
+distribution, which gives you the x86_64-w64-mingw32-* commands
+installed on your system. Installing the cross environment is outside
+the scope of this writeup.</p>
+<p>First, configure with this command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ ./configure --host=x86_64-w64-mingw32
+</pre></div>
+</div>
+<p>This generates the Makefiles needed to cross compile everything with
+the mingw32 compiler. The configure script will generate the command
+name paths, so long as commands line x86_64-w64-mingw32-gcc
+et. al. are in your path.</p>
+<p>Next, compile with the command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ make
+</pre></div>
+</div>
+<p>The configure generated the cross compiler flags, but there are a few
+bits that need to be compiled with the native compiler. (version.exe
+for example is used by the build process but is not installed.) The
+configure script should have gotten all that right.</p>
+<p>There is also a MSYS2 build recipe which you can find under <cite>msys2/</cite> in the repository.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gtkwave.html">Waveforms With GTKWave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Usage</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Icarus Verilog Usage</a></li>
+      <li>Next: <a href="getting_started.html" title="next chapter">Getting Started With Icarus Verilog</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/installation.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

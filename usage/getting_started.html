@@ -1,0 +1,281 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Getting Started With Icarus Verilog &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Simulation Using Icarus Verilog" href="simulation.html" />
+    <link rel="prev" title="Installation Guide" href="installation.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="getting-started-with-icarus-verilog">
+<h1>Getting Started With Icarus Verilog<a class="headerlink" href="#getting-started-with-icarus-verilog" title="Permalink to this headline">¶</a></h1>
+<p>Before getting started with actual examples, here are a few notes on
+conventions. First, command lines and sequences take the same arguments on all
+supported operating environments, including Linux, Windows and the various
+Unix systems. When an example command is shown in a figure, the generic prompt
+character “% ” takes the place of whatever prompt string is appropriate for
+your system. Under Windows, the commands are invoked in a command window.</p>
+<p>Second, when creating a file to hold Verilog code, it is common to use the
+“.v” or the “.vl” suffix. This is not a requirement imposed by Icarus Verilog,
+but a useful convention. Some people also use the suffixes “.ver” or even
+“.vlg”. Examples in this book will use the “.v” suffix.</p>
+<p>So let us start. Given that you are going to use Icarus Verilog as part of
+your design process, the first thing to do as a designer is learn how to
+compile and execute even the most trivial design. For the purposes of
+simulation, we use as our example the most trivial simulation, a simple Hello,
+World program.</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span><span class="w"> </span><span class="n">hello</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">initial</span><span class="w"></span>
+<span class="w">    </span><span class="k">begin</span><span class="w"></span>
+<span class="w">      </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;Hello, World&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="nb">$finish</span><span class="w"> </span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">end</span><span class="w"></span>
+<span class="k">endmodule</span><span class="w"></span>
+</pre></div>
+</div>
+<p>Use a text editor to place the program in a text file, hello.v, then compile
+this program with the command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% iverilog -o hello hello.v
+</pre></div>
+</div>
+<p>The results of this compile are placed into the file “hello”, because the “-o”
+flag tells the compiler where to place the compiled result. Next, execute the
+compiled program like so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% vvp hello
+Hello, World
+</pre></div>
+</div>
+<p>And there it is, the program has been executed. So what happened? The first
+step, the “iverilog” command, read and interpreted the source file, then
+generated a compiled result. The compiled form may be selected by command line
+switches, but the default is the “vvp” format, which is actually run later, as
+needed. The “vvp” command of the second step interpreted the “hello” file from
+the first step, causing the program to execute.</p>
+<p>The “iverilog” and “vvp” commands are the most important commands available to
+users of Icarus Verilog. The “iverilog” command is the compiler, and the “vvp”
+command is the simulation runtime engine. What sort of output the compiler
+actually creates is controlled by command line switches, but normally it
+produces output in the default vvp format, which is in turn executed by the
+vvp program.</p>
+<p>As designs get larger and more complex, they gain hierarchy in the form of
+modules that are instantiated within others, and it becomes convenient to
+organize them into multiple files. A common convention is to write one
+moderate sized module per file (or group related tiny modules into a single
+file) then combine the files of the design together during compilation. For
+example, the counter model in counter.v</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span><span class="w"> </span><span class="n">counter</span><span class="p">(</span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">parameter</span><span class="w"> </span><span class="n">WIDTH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">8</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">output</span><span class="w"> </span><span class="p">[</span><span class="n">WIDTH</span><span class="o">-</span><span class="mh">1</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">out</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">input</span><span class="w">              </span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="p">[</span><span class="n">WIDTH</span><span class="o">-</span><span class="mh">1</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mh">0</span><span class="p">]</span><span class="w">   </span><span class="n">out</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">wire</span><span class="w">               </span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">always</span><span class="w"> </span><span class="p">@(</span><span class="k">posedge</span><span class="w"> </span><span class="n">clk</span><span class="w"> </span><span class="k">or</span><span class="w"> </span><span class="k">posedge</span><span class="w"> </span><span class="n">reset</span><span class="p">)</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">reset</span><span class="p">)</span><span class="w"></span>
+<span class="w">      </span><span class="n">out</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">else</span><span class="w"></span>
+<span class="w">      </span><span class="n">out</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">out</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">1</span><span class="p">;</span><span class="w"></span>
+
+<span class="k">endmodule</span><span class="w"> </span><span class="c1">// counter</span>
+</pre></div>
+</div>
+<p>and the test bench in counter_tb.v</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span><span class="w"> </span><span class="n">test</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="cm">/* Make a reset that pulses once. */</span><span class="w"></span>
+<span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">initial</span><span class="w"> </span><span class="k">begin</span><span class="w"></span>
+<span class="w">     </span><span class="p">#</span><span class="w"> </span><span class="mh">17</span><span class="w"> </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">1</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="p">#</span><span class="w"> </span><span class="mh">11</span><span class="w"> </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="p">#</span><span class="w"> </span><span class="mh">29</span><span class="w"> </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">1</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="p">#</span><span class="w"> </span><span class="mh">11</span><span class="w"> </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">     </span><span class="p">#</span><span class="w"> </span><span class="mh">100</span><span class="w"> </span><span class="nb">$stop</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">end</span><span class="w"></span>
+
+<span class="w">  </span><span class="cm">/* Make a regular pulsing clock. */</span><span class="w"></span>
+<span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="n">clk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">always</span><span class="w"> </span><span class="p">#</span><span class="mh">5</span><span class="w"> </span><span class="n">clk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">!</span><span class="n">clk</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">7</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">value</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">counter</span><span class="w"> </span><span class="n">c1</span><span class="w"> </span><span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">initial</span><span class="w"></span>
+<span class="w">     </span><span class="nb">$monitor</span><span class="p">(</span><span class="s">&quot;At time %t, value = %h (%0d)&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">              </span><span class="nb">$time</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">);</span><span class="w"></span>
+<span class="k">endmodule</span><span class="w"> </span><span class="c1">// test</span>
+</pre></div>
+</div>
+<p>are written into different files.</p>
+<p>The “iverilog” command supports multi-file designs by two methods. The
+simplest is to list the files on the command line:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% iverilog -o my_design  counter_tb.v counter.v
+% vvp my_design
+</pre></div>
+</div>
+<p>This command compiles the design, which is spread across two input files, and
+generates the compiled result into the “my_design” file. This works for small
+to medium sized designs, but gets cumbersome when there are lots of files.</p>
+<p>Another technique is to use a commandfile, which lists the input files in a
+text file. For example, create a text file called “file_list.txt” with the
+files listed one per line:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>counter.v
+counter_tb.v
+</pre></div>
+</div>
+<p>Then compile and execute the design with a command like so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% iverilog -o my_design -c file_list.txt
+% vvp my_design
+</pre></div>
+</div>
+<p>The command file technique clearly supports much larger designs simply by
+saving you the trouble of listing all the source files on the command
+line. Name the files that are part of the design in the command file and use
+the “-c” flag to tell iverilog to read the command file as a list of Verilog
+input files.</p>
+<p>As designs get more complicated, they almost certainly contain many Verilog
+modules that represent the hierarchy of your design. Typically, there is one
+module that instantiates other modules but is not instantiated by any other
+modules. This is called a root module. Icarus Verilog chooses as roots (There
+can be more than one root) all the modules that are not instantiated by other
+modules. If there are no such modules, the compiler will not be able to choose
+any root, and the designer must use the “-sroot” switch to identify the root
+module, like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% iverilog -s main -o hello hello.v
+</pre></div>
+</div>
+<p>If there are multiple candidate roots, all of them will be elaborated. The
+compiler will do this even if there are many root modules that you do not
+intend to simulate, or that have no effect on the simulation. This can happen,
+for example, if you include a source file that has multiple modules, but are
+only really interested in some of them. The “-s” flag identifies a specific
+root module and also turns off the automatic search for other root
+modules. You can use this feature to prevent instantiation of unwanted roots.</p>
+<p>As designs get even larger, they become spread across many dozens or even
+hundreds of files. When designs are that complex, more advanced source code
+management techniques become necessary. These are described in later chapters,
+along with other advanced design management techniques supported by Icarus
+Verilog.</p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gtkwave.html">Waveforms With GTKWave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Usage</a><ul>
+      <li>Previous: <a href="installation.html" title="previous chapter">Installation Guide</a></li>
+      <li>Next: <a href="simulation.html" title="next chapter">Simulation Using Icarus Verilog</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/getting_started.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

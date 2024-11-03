@@ -1,0 +1,285 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>IVLPP - IVL Preprocessor &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="VVP Command Line Flags" href="vvp_flags.html" />
+    <link rel="prev" title="Verilog Attributes" href="verilog_attributes.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="ivlpp-ivl-preprocessor">
+<h1>IVLPP - IVL Preprocessor<a class="headerlink" href="#ivlpp-ivl-preprocessor" title="Permalink to this headline">¶</a></h1>
+<p>The ivlpp command is a Verilog preprocessor that handles file
+inclusion and macro substitution. The program runs separate from the
+actual compiler so as to ease the task of the compiler proper, and
+provides a means of preprocessing files off-line.</p>
+<p>USAGE:</p>
+<blockquote>
+<div><p>ivlpp [options] &lt;file&gt;</p>
+</div></blockquote>
+<p>The &lt;file&gt; parameter is the name of the file to be read and
+preprocessed. The resulting output is sent to standard output. The
+valid options include:</p>
+<ul>
+<li><p>-Dname[=value]</p>
+<blockquote>
+<div><p>Predefine the symbol <cite>name</cite> to have the specified
+value. If the value is not specified, then <cite>1</cite> is
+used. This is mostly of use for controlling conditional
+compilation.</p>
+<p>This option does <em>not</em> override existing `define
+directives in the source file.</p>
+</div></blockquote>
+</li>
+<li><dl class="option-list">
+<dt><kbd><span class="option">-F <var>&lt;path&gt;</var></span></kbd></dt>
+<dd><p>Read ivlpp options from a FLAGS FILE. This is not the same
+as a file list. This file contains flags, not source
+files. There may be multiple flags files.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="option-list">
+<dt><kbd><span class="option">-f <var>&lt;path&gt;</var></span></kbd></dt>
+<dd><p>Read ivlpp input files from a file list. There can be no
+more than one file list.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="option-list">
+<dt><kbd><span class="option">-I <var>&lt;dir&gt;</var></span></kbd></dt>
+<dd><p>Add a directory to the include path. Normally, only “.” is
+in the search path. The -I flag causes other directories
+to be searched for a named file. There may be as many -I
+flags as needed.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="option-list">
+<dt><kbd><span class="option">-L</span></kbd></dt>
+<dd><p>Generate `line directives. The ivl compiler understands
+these directives and uses them to keep track of the
+current line of the original source file. This makes error
+messages more meaningful.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="option-list">
+<dt><kbd><span class="option">-o <var>&lt;file&gt;</var></span></kbd></dt>
+<dd><p>Send the output to the named file, instead of to standard
+output.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="option-list">
+<dt><kbd><span class="option">-v</span></kbd></dt>
+<dd><p>Print version and copyright information before processing
+input files.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="option-list">
+<dt><kbd><span class="option">-V</span></kbd></dt>
+<dd><p>Print version and copyright information, then exit WITHOUT
+processing any input files.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<section id="flags-file">
+<h2>Flags File<a class="headerlink" href="#flags-file" title="Permalink to this headline">¶</a></h2>
+<p>A flags file contains flags for use by ivlpp. This is a convenient way
+for programs to pass complex sets of flags to the ivlpp program.</p>
+<p>Blank lines and lines that start with “#” are ignored. The latter can
+be used as comment lines. All other lines are flag lines. Leading and
+trailing white space are removed before the lines are interpreted.</p>
+<p>Other lines have the simple format:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;key&gt;:&lt;value&gt;
+</pre></div>
+</div>
+<p>The colon character separates a key from the value. The supported
+keys, with their corresponding values, are:</p>
+<ul>
+<li><p>D:name=&lt;value&gt;</p>
+<blockquote>
+<div><p>This is exactly the same as the “-Dname=&lt;value&gt;” described above.</p>
+</div></blockquote>
+</li>
+<li><p>I:&lt;dir&gt;</p>
+<blockquote>
+<div><p>This is exactly the same as “-I&lt;dir&gt;”.</p>
+</div></blockquote>
+</li>
+<li><p>relative include:&lt;flag&gt;</p>
+<blockquote>
+<div><p>The &lt;flag&gt; can be “true” or “false”. This enables “relative
+includes” nesting behavior.</p>
+</div></blockquote>
+</li>
+<li><p>vhdlpp:&lt;path&gt;</p>
+<blockquote>
+<div><p>Give the path to the vhdlpp program. This program is used to
+process VHDL input files.</p>
+</div></blockquote>
+</li>
+</ul>
+</section>
+<section id="locating-included-files">
+<h2>Locating Included Files<a class="headerlink" href="#locating-included-files" title="Permalink to this headline">¶</a></h2>
+<p>The ivlpp preprocessor implements the `include directives by
+substituting the contents of the included file in place of the line
+with the `include directive. The name that the programmer specifies is
+a file name. Normally, the preprocessor looks in the current working
+directory for the named file. However, the <cite>-I</cite> flags can be used to
+specify a path of directories to search for named include files. The
+current directory will be searched first, followed by all the include
+directories in the order that the -I flag appears.</p>
+<p>The exception to this process is include files that have a name that
+starts with the ‘/’ character. These file names are <cite>rooted names</cite>
+and must be in the rooted location specified.</p>
+</section>
+<section id="generated-line-directives">
+<h2>Generated Line Directives<a class="headerlink" href="#generated-line-directives" title="Permalink to this headline">¶</a></h2>
+<p>Compilers generally try to print along with their error messages the
+file and line number where the error occurred. Icarus Verilog is no
+exception. However, if a separate preprocessor is actually selecting
+and opening files, then the line numbers counted by the compiler
+proper will not reflect the actual line numbers in the source file.</p>
+<p>To handle this situation, the preprocessor can generate line
+directives. These directives are lines of the form:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>`line &lt;num&gt; &lt;name&gt; &lt;level&gt;
+</pre></div>
+</div>
+<p>where &lt;name&gt; is the file name in double-quotes and &lt;num&gt; is the line
+number in the file. The parser changes the filename and line number
+counters in such a way that the next line is line number &lt;num&gt; in
+the file named &lt;name&gt;. For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>`line 6 &quot;foo.vl&quot; 0
+// I am on line 6 in file foo.vl.
+</pre></div>
+</div>
+<p>The preprocessor generates a `line directive every time it switches
+files. That includes starting an included file (`line 1 “foo.vlh” 1) or
+returning to the including file.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gtkwave.html">Waveforms With GTKWave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Usage</a><ul>
+      <li>Previous: <a href="verilog_attributes.html" title="previous chapter">Verilog Attributes</a></li>
+      <li>Next: <a href="vvp_flags.html" title="next chapter">VVP Command Line Flags</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/ivlpp_flags.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
