@@ -250,6 +250,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 
 		  /* We have an undefined index and that is out of range. */
 		if (! tmp->value().is_defined()) {
+		      delete tmp_ex;
 		      if (warn_ob_select) {
 			    cerr << get_fileline() << ": warning: "
 			         << sig->name();
@@ -268,7 +269,24 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		}
 
 		long midx_val = tmp->value().as_long();
+
+		  // Check whether an unsigned base fits in a 32 bit int.
+		  // This ensures correct results for the vlog95 target, and
+		  // for the vvp target on LLP64 platforms (Microsoft Windows).
+		if (!tmp->has_sign() && (int32_t)midx_val < 0) {
+		        // The base is wrapped around.
+		      delete tmp_ex;
+		      if (warn_ob_select) {
+			    cerr << get_fileline() << ": warning: " << sig->name();
+			    cerr << "[" << (unsigned long)midx_val
+				 << (index_tail.sel == index_component_t::SEL_IDX_UP ? "+:" : "-:")
+				 << wid << "] is always outside vector." << endl;
+		      }
+		      return false;
+		}
+
 		delete tmp_ex;
+
 		if (prefix_indices.size()+1 < sig->packed_dims().size()) {
 			// Here we are selecting one or more sub-arrays.
 			// Make this work by finding the indexed sub-arrays and
