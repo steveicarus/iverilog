@@ -52,8 +52,10 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
       unsigned errors = 0;
 
       if (repeat_) {
-	    cerr << get_fileline() << ": sorry: I do not know how to"
-		  " elaborate repeat concatenation nets." << endl;
+	    cerr << repeat_->get_fileline() << ": error: "
+	         << "repeat concatenations are not allowed in net l-values."
+	         << endl;
+	    des->errors += 1;
 	    return 0;
       }
 

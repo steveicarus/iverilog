@@ -1,0 +1,4 @@
+./ivltests/br_gh1178a.v:12: error: repeat concatenations are not allowed in net l-values.
+./ivltests/br_gh1178a.v:12: error: Inout port expression must support continuous assignment.
+./ivltests/br_gh1178a.v:12:      : Port 2 (w) of net_connect is connected to {'sd2{bus}}
+2 error(s) during elaboration.

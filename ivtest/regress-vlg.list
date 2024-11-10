@@ -353,6 +353,9 @@ br_gh788		normal,-gno-io-range-error,-Wno-anachronisms	ivltests gold=br_gh788.go
 br_gh793		normal			ivltests
 br_gh827		normal			ivltests gold=br_gh827.gold
 br_gh889		normal,-gspecify	ivltests gold=br_gh889.gold
+br_gh1178a		CE			ivltests gold=br_gh1178a.gold
+br_gh1178b		normal			ivltests
+br_gh1178c		normal			ivltests
 br_ml20150315		normal			ivltests gold=br_ml_20150315.gold
 br_ml20150321		CE			ivltests
 br_mw20171108		normal			ivltests
