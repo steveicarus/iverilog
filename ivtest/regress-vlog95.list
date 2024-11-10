@@ -730,6 +730,7 @@ br_gh315		CE,-gspecify		ivltests
 br_gh316c		CE,-gspecify		ivltests
 br_gh356a		CE,-gspecify		ivltests
 br_gh356b		CE,-gspecify		ivltests
+br_gh1178b		CE			ivltests
 countdrivers3		CE			ivltests  # also uses a logic bufif1
 inout			TE			ivltests  # Duplicate names
 inout2			CE			ivltests
