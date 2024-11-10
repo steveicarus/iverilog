@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2024 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -161,21 +161,28 @@ static void emit_var_def(ivl_signal_t sig)
  * Keep a list of constants that drive nets and need to be emitted as
  * a continuous assignment.
 */
-static ivl_signal_t *net_consts = 0;
+typedef struct {
+            ivl_signal_t    sig;
+            ivl_nexus_ptr_t nex_ptr;
+        } net_const_t;
+
+static net_const_t *net_consts = 0;
 static unsigned num_net_consts = 0;
 
-static void add_net_const_to_list(ivl_signal_t net_const)
+static void add_net_const_to_list(ivl_signal_t sig, ivl_nexus_ptr_t nex_ptr)
 {
       num_net_consts += 1;
-      net_consts = realloc(net_consts, num_net_consts * sizeof(ivl_signal_t));
-      net_consts[num_net_consts-1] = net_const;
+      net_consts = realloc(net_consts, num_net_consts * sizeof(net_const_t));
+      net_consts[num_net_consts-1].sig = sig;
+      net_consts[num_net_consts-1].nex_ptr = nex_ptr;
 }
 
 static unsigned emit_and_free_net_const_list(ivl_scope_t scope)
 {
       unsigned idx;
       for (idx = 0; idx < num_net_consts; idx += 1) {
-	    emit_signal_net_const_as_ca(scope, net_consts[idx]);
+	    emit_signal_net_const_as_ca(scope, net_consts[idx].sig,
+                                        net_consts[idx].nex_ptr);
       }
       free(net_consts);
       net_consts = 0;
@@ -193,7 +200,7 @@ static void save_net_constants(const ivl_scope_t scope, ivl_signal_t sig)
 	    ivl_net_const_t net_const = ivl_nexus_ptr_con(nex_ptr);
 	    if (! net_const) continue;
 	    if (scope != ivl_const_scope(net_const)) continue;
-	    add_net_const_to_list(sig);
+	    add_net_const_to_list(sig, nex_ptr);
       }
 }
 

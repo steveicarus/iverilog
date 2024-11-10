@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2022 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2024 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -2275,46 +2275,28 @@ void emit_tran(ivl_scope_t scope, ivl_switch_t tran)
       fprintf(vlog_out, "\n");
 }
 
-void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig)
+void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig,
+                                 ivl_nexus_ptr_t nex_ptr)
 {
-      ivl_nexus_t nex = ivl_signal_nex(sig, 0);
-      unsigned idx, count = ivl_nexus_ptrs(nex);
-      unsigned long emitted = (uintptr_t) ivl_nexus_get_private(nex);
-      for (idx = 0; idx < count; idx += 1) {
-	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
-	    ivl_net_const_t net_const = ivl_nexus_ptr_con(nex_ptr);
-	    if (! net_const) continue;
-	    if (scope != ivl_const_scope(net_const)) continue;
-	      /* Found the constant so emit it if it has not been emitted. */
-	    if (emitted) {
-		  --emitted;
-		  continue;
-	    }
-	    fprintf(vlog_out, "%*cassign", indent, ' ');
-	    emit_strength(ivl_nexus_ptr_drive1(nex_ptr),
-	                  ivl_nexus_ptr_drive0(nex_ptr),
-	                  2, "assign",
-	                  ivl_signal_file(sig), ivl_signal_lineno(sig));
-	    emit_delay(scope,
-	               ivl_const_delay(net_const, 0),
-	               ivl_const_delay(net_const, 1),
-	               ivl_const_delay(net_const, 2),
-	               3);
-	    fprintf(vlog_out, " ");
-	    emit_id(ivl_signal_basename(sig));
-	    fprintf(vlog_out, " = ");
-	    emit_const_nexus(scope, net_const);
-	    fprintf(vlog_out, ";");
-	    emit_sig_file_line(sig);
-	    fprintf(vlog_out, "\n");
-	      /* Increment the emitted constant count by one. */
-	    ivl_nexus_set_private(nex,
-	          (void *) ((uintptr_t) ivl_nexus_get_private(nex) + 1U));
-	    return;
-      }
-	/* We must find the constant in the nexus. */
-      assert(0);
-
+      ivl_net_const_t net_const = ivl_nexus_ptr_con(nex_ptr);
+      assert(net_const);
+      fprintf(vlog_out, "%*cassign", indent, ' ');
+      emit_strength(ivl_nexus_ptr_drive1(nex_ptr),
+                    ivl_nexus_ptr_drive0(nex_ptr),
+                    2, "assign",
+                    ivl_signal_file(sig), ivl_signal_lineno(sig));
+      emit_delay(scope,
+                 ivl_const_delay(net_const, 0),
+                 ivl_const_delay(net_const, 1),
+                 ivl_const_delay(net_const, 2),
+                 3);
+      fprintf(vlog_out, " ");
+      emit_id(ivl_signal_basename(sig));
+      fprintf(vlog_out, " = ");
+      emit_const_nexus(scope, net_const);
+      fprintf(vlog_out, ";");
+      emit_sig_file_line(sig);
+      fprintf(vlog_out, "\n");
 }
 
 static void dump_drive(ivl_drive_t drive)

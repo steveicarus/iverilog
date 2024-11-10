@@ -1,7 +1,7 @@
 #ifndef IVL_vlog95_priv_H
 #define IVL_vlog95_priv_H
 /*
- * Copyright (C) 2010-2019 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2024 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -105,7 +105,8 @@ extern void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex,
                              unsigned allow_UD, unsigned sign_extend);
 extern void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex);
 extern void emit_const_nexus(ivl_scope_t scope, ivl_net_const_t const_net);
-extern void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig);
+extern void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig,
+                                        ivl_nexus_ptr_t nex_ptr);
 
 extern void add_udp_to_list(ivl_udp_t udp);
 extern void emit_udp_list(void);
