@@ -2917,6 +2917,14 @@ void pform_set_parameter(const struct vlltype&loc,
 	    }
       }
 
+      vector_type_t*vt = dynamic_cast<vector_type_t*>(data_type);
+      if (vt && vt->pdims && vt->pdims->size() > 1) {
+	    if (pform_requires_sv(loc, "packed array parameter")) {
+		  VLerror(loc, "sorry: packed array parameters are not supported yet.");
+	    }
+	    return;
+      }
+
       bool overridable = !is_local;
 
       if (scope == pform_cur_generate && !is_local) {
