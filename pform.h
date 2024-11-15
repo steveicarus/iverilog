@@ -1,7 +1,7 @@
 #ifndef IVL_pform_H
 #define IVL_pform_H
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -403,7 +403,7 @@ extern LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 extern void pform_set_parameter(const struct vlltype&loc,
 				perm_string name,
 				bool is_local, bool is_type,
-				data_type_t*data_type,
+				data_type_t*data_type, std::list<pform_range_t>*udims,
 				PExpr*expr, LexicalScope::range_t*value_range);
 extern void pform_set_specparam(const struct vlltype&loc,
 				 perm_string name,

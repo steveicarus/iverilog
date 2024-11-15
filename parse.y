@@ -5550,9 +5550,9 @@ parameter_assign_list
   ;
 
 parameter_assign
-  : IDENTIFIER initializer_opt parameter_value_ranges_opt
+  : IDENTIFIER dimensions_opt initializer_opt parameter_value_ranges_opt
       { pform_set_parameter(@1, lex_strings.make($1), param_is_local,
-			    param_is_type, param_data_type, $2, $3);
+			    param_is_type, param_data_type, $2, $3, $4);
 	delete[]$1;
       }
   ;

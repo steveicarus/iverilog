@@ -2896,8 +2896,8 @@ static void pform_set_type_parameter(const struct vlltype&loc, perm_string name,
 
 void pform_set_parameter(const struct vlltype&loc,
 			 perm_string name, bool is_local, bool is_type,
-			 data_type_t*data_type, PExpr*expr,
-			 LexicalScope::range_t*value_range)
+			 data_type_t*data_type, list<pform_range_t>*udims,
+			 PExpr*expr, LexicalScope::range_t*value_range)
 {
       LexicalScope*scope = lexical_scope;
       if (is_compilation_unit(scope) && !gn_system_verilog()) {
@@ -2921,6 +2921,13 @@ void pform_set_parameter(const struct vlltype&loc,
       if (vt && vt->pdims && vt->pdims->size() > 1) {
 	    if (pform_requires_sv(loc, "packed array parameter")) {
 		  VLerror(loc, "sorry: packed array parameters are not supported yet.");
+	    }
+	    return;
+      }
+
+      if (udims) {
+	    if (pform_requires_sv(loc, "unpacked array parameter")) {
+		  VLerror(loc, "sorry: unpacked array parameters are not supported yet.");
 	    }
 	    return;
       }
