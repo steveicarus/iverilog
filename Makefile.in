@@ -63,6 +63,7 @@ libdir = @libdir@
 # It is a little different from the generic includedir.
 includedir = @includedir@/iverilog$(suffix)
 mandir = @mandir@
+pdfdir = @docdir@
 
 dllib=@DLLIB@
 
@@ -308,11 +309,14 @@ version_tag.h version:
 ifeq (@MINGW32@,yes)
 ifeq ($(MAN),none)
 INSTALL_DOC = installman
+INSTALL_PDFDIR = $(prefix)
 else
 ifeq ($(PS2PDF),none)
 INSTALL_DOC = installman
+INSTALL_PDFDIR = $(prefix)
 else
 INSTALL_DOC = installpdf installman
+INSTALL_PDFDIR = $(pdfdir)
 all: dep iverilog-vpi.pdf
 endif
 endif
@@ -320,6 +324,7 @@ INSTALL_DOCDIR = $(mandir)/man1
 else
 INSTALL_DOC = installman
 INSTALL_DOCDIR = $(mandir)/man1
+INSTALL_PDFDIR = $(prefix)
 endif
 
 ifeq (@MINGW32@,yes)
@@ -350,7 +355,7 @@ installman: iverilog-vpi.man installdirs
 	$(INSTALL_DATA) iverilog-vpi.man "$(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1"
 
 installpdf: iverilog-vpi.pdf installdirs
-	$(INSTALL_DATA) iverilog-vpi.pdf "$(DESTDIR)$(prefix)/iverilog-vpi$(suffix).pdf"
+	$(INSTALL_DATA) iverilog-vpi.pdf "$(DESTDIR)$(pdfdir)/iverilog-vpi$(suffix).pdf"
 
 installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ "$(DESTDIR)$(libdir)/ivl$(suffix)/ivl@EXEEXT@"
@@ -368,8 +373,8 @@ installdirs: $(srcdir)/mkinstalldirs
 	    "$(DESTDIR)$(includedir)" \
 	    "$(DESTDIR)$(libdir)/ivl$(suffix)" \
 	    "$(DESTDIR)$(libdir)/ivl$(suffix)/include" \
-	    "$(DESTDIR)$(mandir)" \
-	    "$(DESTDIR)$(mandir)/man1"
+	    "$(DESTDIR)$(INSTALL_DOCDIR)" \
+	    "$(DESTDIR)$(INSTALL_PDFDIR)"
 
 uninstall:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
@@ -382,7 +387,8 @@ uninstall:
 	for f in ivl_target.h vpi_user.h _pli_types.h sv_vpi_user.h acc_user.h veriuser.h; \
 	    do rm -f "$(DESTDIR)$(includedir)/$$f"; done
 	-test X$(suffix) = X || rmdir "$(DESTDIR)$(includedir)"
-	rm -f "$(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1" "$(DESTDIR)$(prefix)/iverilog-vpi$(suffix).pdf"
+	rm -f "$(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1" \
+	      "$(DESTDIR)$(pdfdir)/iverilog-vpi$(suffix).pdf"
 
 
 -include $(patsubst %.o, dep/%.d, $O)
