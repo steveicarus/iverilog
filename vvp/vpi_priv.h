@@ -1,7 +1,7 @@
 #ifndef IVL_vpi_priv_H
 #define IVL_vpi_priv_H
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -968,9 +968,9 @@ struct __vpiBinaryConst : public __vpiHandle {
 
       vvp_vector4_t bits;
 	/* TRUE if this constant is signed. */
-      int signed_flag :1;
+      unsigned signed_flag :1;
 	/* TRUE if this constant has an explicit size (i.e. 19'h0 vs. 'h0) */
-      int sized_flag   :1;
+      unsigned sized_flag  :1;
 };
 
 vpiHandle vpip_make_binary_const(unsigned wid, const char*bits);

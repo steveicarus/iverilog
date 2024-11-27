@@ -326,7 +326,7 @@ static char* strdupnew(char const *str)
 
 %%
 
-int yywrap()
+int yywrap(void)
 {
       return -1;
 }

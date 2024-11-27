@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2021 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2024 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 static unsigned need_ivl_top_module = 0;
 
-void emit_icarus_generated_top_module()
+void emit_icarus_generated_top_module(void)
 {
       if (need_ivl_top_module) {
 	    fprintf(vlog_out,

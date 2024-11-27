@@ -1023,7 +1023,7 @@ static void add_scope_to_list(ivl_scope_t scope)
       scopes_emitted[num_scopes_emitted-1] = ivl_scope_tname(scope);
 }
 
-void free_emitted_scope_list()
+void free_emitted_scope_list(void)
 {
       free(scopes_emitted);
       scopes_emitted = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2024 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,7 +21,7 @@
 
 int acc_error_flag;
 
-int acc_initialize()
+int acc_initialize(void)
 {
       acc_error_flag = 0;
 

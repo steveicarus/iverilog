@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2024 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -246,7 +246,7 @@ void add_udp_to_list(ivl_udp_t udp)
       udps[num_udps-1] = udp;
 }
 
-void emit_udp_list()
+void emit_udp_list(void)
 {
       unsigned idx;
       for (idx = 0; idx < num_udps; idx += 1) {

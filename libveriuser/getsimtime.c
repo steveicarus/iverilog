@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2020 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2024 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -217,7 +217,7 @@ PLI_INT32 tf_igettimeprecision(void*obj)
 }
 
 
-PLI_INT32 tf_gettimeunit()
+PLI_INT32 tf_gettimeunit(void)
 {
       vpiHandle hand = vpi_handle(vpiScope, cur_instance);
       return vpi_get(vpiTimeUnit, hand);

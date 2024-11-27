@@ -1446,7 +1446,7 @@ static void process_ucdrive(const char*txt)
       uc_drive = ucd;
 }
 
-int yywrap()
+int yywrap(void)
 {
       return 1;
 }

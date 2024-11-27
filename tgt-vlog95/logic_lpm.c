@@ -1580,7 +1580,7 @@ static unsigned need_latch_prim = 0;
  * simulate a synthesized D-FF, etc., but we don't want them to take the
  * ideas behind the primitive(s) and claim them as their own.
  */
-void emit_icarus_generated_udps()
+void emit_icarus_generated_udps(void)
 {
 	/* Emit the copyright information and LGPL note and then emit any
 	 * needed primitives. */
