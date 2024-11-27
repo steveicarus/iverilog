@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -670,7 +670,7 @@ static void vthread_free_context(vvp_context_t context, __vpiScope*scope)
 }
 
 #ifdef CHECK_WITH_VALGRIND
-void contexts_delete(struct __vpiScope*scope)
+void contexts_delete(class __vpiScope*scope)
 {
       vvp_context_t context = scope->free_contexts;
 
@@ -751,7 +751,7 @@ static void child_delete(vthread_t base)
 }
 #endif
 
-void vthreads_delete(struct __vpiScope*scope)
+void vthreads_delete(class __vpiScope*scope)
 {
       for (std::set<vthread_t>::iterator cur = scope->threads.begin()
 		 ; cur != scope->threads.end() ; ++ cur ) {
