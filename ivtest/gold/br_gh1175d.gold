@@ -1,0 +1,4 @@
+./ivltests/br_gh1175d.v:3: syntax error
+./ivltests/br_gh1175d.v:3: errors in UDP table
+./ivltests/br_gh1175d.v:1: error: Invalid table for UDP primitive id_0.
+

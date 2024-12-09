@@ -1798,7 +1798,7 @@ static void process_udp_table(PUdp*udp, list<string>*table,
 	   placed in the PUdp object.
 
 	   The table strings are made up by the parser to be two or
-	   three substrings separated by ';', i.e.:
+	   three substrings separated by ':', i.e.:
 
 	   0101:1:1  (synchronous device entry)
 	   0101:0    (combinational device entry)
@@ -1814,40 +1814,36 @@ static void process_udp_table(PUdp*udp, list<string>*table,
       output.resize(table->size());
 
       { unsigned idx = 0;
-        for (list<string>::iterator cur = table->begin()
-		   ; cur != table->end() ; ++ cur , idx += 1) {
+        for (list<string>::iterator cur = table->begin() ;
+             cur != table->end() ; ++cur , idx += 1) {
 	      string tmp = *cur;
 
 		/* Pull the input values from the string. */
-	      assert(tmp.find(':') == (udp->ports.size() - 1));
+	      if (tmp.find(':') != (udp->ports.size()-1)) {
+		    cerr << loc << ": error: "
+		         << "The UDP input port count (" << (udp->ports.size()-1)
+		         << ") does not match the number of input table entries ("
+		         << tmp.find(':') << ") in primitive \""
+		         << udp->name_ << "\"." << endl;
+		    error_count += 1;
+		    break;
+	      }
 	      input[idx] = tmp.substr(0, udp->ports.size()-1);
 	      tmp = tmp.substr(udp->ports.size()-1);
 
-	      assert(tmp[0] == ':');
 
 		/* If this is a synchronous device, get the current
 		   output string. */
 	      if (synchronous_flag) {
-		    if (tmp.size() != 4) {
-			  cerr << loc << ": error: "
-			       << "Invalid table format for"
-			       << " sequential primitive." << endl;
-			  error_count += 1;
-			  break;
-		    }
+		    assert(tmp[0] == ':');
 		    assert(tmp.size() == 4);
 		    current[idx] = tmp[1];
 		    tmp = tmp.substr(2);
 
-	      } else if (tmp.size() != 2) {
-		  cerr << loc << ": error: "
-		       << "Invalid table format for"
-		       << " combinational primitive." << endl;
-		  error_count += 1;
-		  break;
 	      }
 
 		/* Finally, extract the desired output. */
+	      assert(tmp[0] == ':');
 	      assert(tmp.size() == 2);
 	      output[idx] = tmp[1];
 	}
@@ -2101,7 +2097,11 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 
 	// Put the primitive into the primitives table
       if (pform_primitives[name]) {
-	    VLerror("error: UDP primitive already exists.");
+	    ostringstream msg;
+	    msg << "error: Primitive " << name << " was already declared here: "
+		<< pform_primitives[name]->get_fileline() << endl;
+	      // Some compilers warn if there is just a single C string.
+	    VLerror(loc, msg.str().c_str(), "");
 
       } else {
 	    PUdp*udp = new PUdp(name, pins.size());
@@ -2115,11 +2115,18 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 		  udp->ports[idx] = pins[idx]->basename();
 
 	    ivl_assert(loc, udp);
-	    ivl_assert(loc, table);
-	    process_udp_table(udp, table, loc);
-	    udp->initial  = init;
+	    if (table) {
+		  process_udp_table(udp, table, loc);
+		  udp->initial  = init;
 
-	    pform_primitives[name] = udp;
+		  pform_primitives[name] = udp;
+	    } else {
+		  ostringstream msg;
+		  msg << "error: Invalid table for UDP primitive " << name
+		      << "." << endl;
+		    // Some compilers warn if there is just a single C string.
+		  VLerror(loc, msg.str().c_str(), "");
+	    }
       }
 
       delete parms;

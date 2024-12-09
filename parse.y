@@ -6703,7 +6703,8 @@ statement_item /* This is roughly statement_item in the LRM */
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
-      { if (!$2) {
+      {
+        if (!$2) {
 	      if ($4) {
 		    pform_requires_sv(@4, "Variable declaration in unnamed block");
 	      } else {
@@ -7133,7 +7134,7 @@ udp_body
       }
   | K_table error K_endtable
       { lex_end_table();
-	yyerror(@2, "Errors in UDP table");
+	yyerror(@2, "errors in UDP table");
 	yyerrok;
 	$$ = 0;
       }

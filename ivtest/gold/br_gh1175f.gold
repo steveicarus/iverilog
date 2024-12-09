@@ -1,0 +1,2 @@
+./ivltests/br_gh1175f.v:7: error: Primitive id_0 was already declared here: ./ivltests/br_gh1175f.v:1
+
