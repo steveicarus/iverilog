@@ -93,6 +93,10 @@ unusedFunction:vpi_modules.cc:90
 // vpi_sim_control()
 unusedFunction:vpi_modules.cc:110
 
+// CmdExec.c is shared by multiple executables, so each cppcheck target sees
+// some exported helpers that are used only by another target.
+unusedFunction:libmisc/CmdExec.c
+
 // These are the functions that the compiler exports to the targets.
 //ivl_branch_island()
 unusedFunction:t-dll-api.cc:39

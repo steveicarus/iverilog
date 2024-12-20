@@ -44,6 +44,7 @@
 # include  <cstdlib>
 # include  <cctype>
 
+# include  "CmdExec.h"
 # include  "ivl_assert.h"
 # include  "ivl_alloc.h"
 
@@ -3466,17 +3467,14 @@ int pform_parse(const char*path)
       if (strcmp(path, "-") == 0) {
 	    vl_input = stdin;
       } else if (ivlpp_string) {
-	    char*cmdline = static_cast<char*>(malloc(strlen(ivlpp_string) +
-	                                             strlen(path) + 4));
-	    strcpy(cmdline, ivlpp_string);
-	    strcat(cmdline, " \"");
-	    strcat(cmdline, path);
-	    strcat(cmdline, "\"");
+	    size_t cmdlen = strlen(ivlpp_string) + strlen(path) + 4;
+	    char*cmdline = static_cast<char*>(malloc(cmdlen));
+	    snprintf(cmdline, cmdlen, "%s \"%s\"", ivlpp_string, path);
 
 	    if (verbose_flag)
 		  cerr << "Executing: " << cmdline << endl<< flush;
 
-	    vl_input = popen(cmdline, "r");
+	    vl_input = ivl_run_cmd_pipe(cmdline);
 	    if (vl_input == 0) {
 		  cerr << "Unable to preprocess " << path << "." << endl;
 		  return 1;
@@ -3526,7 +3524,7 @@ int pform_parse(const char*path)
 
       if (vl_input != stdin) {
 	    if (ivlpp_string)
-		  pclose(vl_input);
+		  ivl_close_cmd_pipe(vl_input);
 	    else
 		  fclose(vl_input);
       }
