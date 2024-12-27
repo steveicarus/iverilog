@@ -123,11 +123,11 @@ case "${host}" in
         ;;
 
      *-*-darwin1.[0123])
-        shared="-bundle -undefined suppress"
+        shared="-bundle -undefined dynamic_lookup"
         ;;
 
      *-*-darwin*)
-        shared="-bundle -undefined suppress -flat_namespace"
+        shared="-bundle -undefined dynamic_lookup -flat_namespace"
         ;;
 
      *-*-solaris*)
