@@ -372,7 +372,7 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 	    if (op_) {
 		  for (unsigned idx = 0 ; idx < lpart.len() ; idx += 1) {
 			long ldx = base + idx;
-			if (ldx >= 0 && ldx < lval_v.len())
+			if (ldx >= 0 && (unsigned long)ldx < lval_v.len())
 			      lpart.set(idx, lval_v[ldx]);
 		  }
 		  eval_func_lval_op_(loc, lpart, rval_v);
@@ -381,7 +381,7 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 	    }
 	    for (unsigned idx = 0 ; idx < lpart.len() ; idx += 1) {
 		  long ldx = base + idx;
-		  if (ldx >= 0 && ldx < lval_v.len())
+		  if (ldx >= 0 && (unsigned long)ldx < lval_v.len())
 			lval_v.set(idx+base, lpart[idx]);
 	    }
 
@@ -1071,7 +1071,7 @@ NetExpr* NetESelect::evaluate_function(const LineInfo&loc,
       verinum res (verinum::Vx, expr_width());
       for (unsigned idx = 0 ; idx < res.len() ; idx += 1) {
 	    long sdx = base + idx;
-	    if (sdx >= 0 && sdx < sub.len())
+	    if (sdx >= 0 && (unsigned long)sdx < sub.len())
 		  res.set(idx, sub[sdx]);
       }
 

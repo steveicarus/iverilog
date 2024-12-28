@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2024 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -65,7 +65,8 @@ bool netenum_t::insert_name(size_t name_idx, perm_string name, const verinum&val
 {
       std::pair<std::map<perm_string,verinum>::iterator, bool> res;
 
-      assert(val.has_len() && val.len() == packed_width());
+      assert(val.has_len() && packed_width() >= 0 &&
+                              val.len() == (unsigned long)packed_width());
 
 	// Insert a map of the name to the value. This also gets a
 	// flag that returns true if the  name is unique, or false

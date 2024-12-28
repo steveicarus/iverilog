@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021 Martin Whitaker (icarus@martin-whitaker.me.uk)
+ * Copyright (c) 2019-2024 Martin Whitaker (icarus@martin-whitaker.me.uk)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -220,6 +220,7 @@ vpip_routines_s vpi_routines = {
     .chk_error                  = vpi_chk_error,
     .compare_objects            = vpi_compare_objects,
     .free_object                = vpi_free_object,
+    .release_handle             = vpi_release_handle,
     .get_vlog_info              = vpi_get_vlog_info,
     .vcontrol                   = vpi_vcontrol,
     .fopen                      = vpi_fopen,
