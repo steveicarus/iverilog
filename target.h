@@ -76,6 +76,9 @@ struct target_t {
       virtual void signal(const NetNet*) =0;
       virtual bool signal_paths(const NetNet*);
 
+  	/* Output a timing check (called for each timing check) */
+      virtual void tchk(const NetNet*) =0;
+
         /* Analog branches */
       virtual bool branch(const NetBranch*);
 
