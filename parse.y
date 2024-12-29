@@ -45,6 +45,7 @@ extern void lex_end_table();
 static data_type_t* param_data_type = 0;
 static bool param_is_local = false;
 static bool param_is_type = false;
+static bool in_gen_region = false;
 static std::list<pform_range_t>* specparam_active_range = 0;
 
 /* Port declaration lists use this structure for context. */
@@ -73,6 +74,15 @@ static stack<PBlock*> current_block_stack;
 /* The variable declaration rules need to know if a lifetime has been
    specified. */
 static LexicalScope::lifetime_t var_lifetime;
+
+static void check_in_gen_region(const struct vlltype &loc)
+{
+      if (in_gen_region) {
+	    cerr << loc << ": error: generate/endgenerate regions cannot nest." << endl;
+	    error_count += 1;
+      }
+      in_gen_region = true;
+}
 
 static pform_name_t* pform_create_this(void)
 {
@@ -5208,15 +5218,7 @@ module_item
      generate/endgenerate regions do not nest. Generate schemes nest,
      but generate regions do not. */
 
-  | K_generate generate_item_list_opt K_endgenerate
-     { // Test for bad nesting. I understand it, but it is illegal.
-       if (pform_parent_generate()) {
-	     cerr << @1 << ": error: Generate/endgenerate regions cannot nest." << endl;
-	     cerr << @1 << ":      : Try removing optional generate/endgenerate keywords," << endl;
-	     cerr << @1 << ":      : or move them to surround the parent generate scheme." << endl;
-	     error_count += 1;
-	}
-      }
+  | K_generate { check_in_gen_region(@1); } generate_item_list_opt K_endgenerate { in_gen_region = false; }
 
   | K_genvar list_of_identifiers ';'
       { pform_genvars(@1, $2); }
