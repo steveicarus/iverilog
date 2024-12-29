@@ -718,6 +718,7 @@ void PGate::dump_delays(ostream&out) const
 
 void PGate::dump_ranges(ostream&out) const
 {
+      if (ranges_ == 0) return;
       for (list<pform_range_t>::iterator cur = ranges_->begin()
 		 ; cur != ranges_->end() ; ++cur) {
 	    out << "[";
@@ -1681,7 +1682,7 @@ void Module::dump_specparams_(ostream&out, unsigned indent) const
 
 void Module::dump_timingchecks_(ostream&out, unsigned indent) const
 {
-      cout << "dump_timingchecks_" << endl;
+      out << "    PFORM DUMP TIMINGCHECKS" << endl;
 
       for (const auto cur : timing_checks) {
 		cur->dump(out, indent);
