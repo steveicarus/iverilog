@@ -3364,6 +3364,16 @@ bool pform_requires_sv(const struct vlltype&loc, const char *feature)
       return false;
 }
 
+void pform_block_decls_requires_sv(void)
+{
+      for (auto const& wire : lexical_scope->wires) {
+	    struct vlltype loc;
+	    loc.text = wire.second->get_file();
+	    loc.first_line = wire.second->get_lineno();
+	    pform_requires_sv(loc, "Variable declaration in unnamed block");
+      }
+}
+
 void pform_check_net_data_type(const struct vlltype&loc, NetNet::Type net_type,
 			       const data_type_t *data_type)
 {

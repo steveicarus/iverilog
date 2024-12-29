@@ -6708,7 +6708,7 @@ statement_item /* This is roughly statement_item in the LRM */
       {
         if (!$2) {
 	      if ($4) {
-		    pform_requires_sv(@4, "Variable declaration in unnamed block");
+		    pform_block_decls_requires_sv();
 	      } else {
 		    /* If there are no declarations in the scope then just delete it. */
 		    pform_pop_scope();

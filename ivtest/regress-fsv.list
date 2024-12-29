@@ -74,6 +74,7 @@ br1027e				normal			ivltests gold=br1027e-fsv.gold
 br_gh25a			normal			ivltests
 br_gh25b			normal			ivltests
 br_gh567			normal			ivltests
+br_gh1182			normal			ivltests
 check_constant_3		normal			ivltests
 function4			normal			ivltests
 module_inout_port_type		normal			ivltests
