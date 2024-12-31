@@ -14,6 +14,10 @@ These options/flags go before the path to the vvp-executable program. They
 effect behavior of the vvp runtime engine, including preparation for
 simulation.
 
+* -i
+
+  This flag causes all output to <stdout> to be unbuffered.
+
 * -l<logfile>
 
   This flag specifies a logfile where all MCI <stdlog> output goes. Specify
@@ -41,6 +45,16 @@ simulation.
   determine the return types of user-defined system functions. If specified at
   compile-time, there is no need to specify them again here.
 
+* -n
+  This flag makes $stop or a <Control\-C> a synonym for $finish. It can be
+  used to give the program a more meaningful interface when running in a
+  non-interactive environment.
+
+* -N
+  This flag does the same thing as "-n", but results in an exit code of 1
+  if the stimulation calls $stop.  It can be used to indicate a simulation
+  failure when running a testbench.
+
 * -q
 
   Enable quiet mode. This suppresses all output to <stdout> sent via MCD
@@ -57,6 +71,10 @@ simulation.
 
   Show verbose progress while setting up or cleaning up the runtime
   engine. This also displays some performance information.
+
+* -V
+
+  Print the version of the runtime, and exit.
 
 Extended Arguments
 ------------------
