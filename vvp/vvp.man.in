@@ -4,7 +4,7 @@ vvp - Icarus Verilog vvp runtime engine
 
 .SH SYNOPSIS
 .B vvp
-[\-inNsvV] [\-Mpath] [\-mmodule] [\-llogfile] inputfile [extended-args...]
+[\-inNqsvV] [\-Mpath] [\-mmodule] [\-llogfile] inputfile [extended-args...]
 
 .SH DESCRIPTION
 .PP
@@ -52,6 +52,12 @@ running in a non-interactive environment.
 This flag does the same thing as \-n, but results in an exit code
 of 1 if the stimulation calls $stop.  It can be used to indicate a
 simulation failure when running a testbench.
+.TP 8
+.B -q
+Enable quiet mode. This suppresses all output to <stdout> sent via MCD
+bit 0 (e.g. all output from $display and friends). It does not affect
+output to the log file, nor does it affect output to <stdout> sent via
+the STDOUT file descriptor.
 .TP 8
 .B -s
 Stop. This will cause the simulation to stop in the beginning, before

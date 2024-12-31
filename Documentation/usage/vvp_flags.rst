@@ -41,6 +41,13 @@ simulation.
   determine the return types of user-defined system functions. If specified at
   compile-time, there is no need to specify them again here.
 
+* -q
+
+  Enable quiet mode. This suppresses all output to <stdout> sent via MCD
+  bit 0 (e.g. all output from $display and friends). It does not affect
+  output to the log file, nor does it affect output to <stdout> sent via
+  the STDOUT file descriptor.
+
 * -s
 
   $stop right away, in the beginning of the simulation. This kicks the
@@ -113,4 +120,3 @@ Environment Variables
 The vvp program pays attention to certain environment variables.
 
 * IVERILOG_DUMPER
-
