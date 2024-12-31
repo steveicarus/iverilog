@@ -53,7 +53,7 @@ int main(int argc, char*argv[])
       unsigned flag_errors = 0;
       const char *logfile_name = 0x0;
 
-      while ((opt = getopt(argc, argv, "+hil:M:m:nNsvV")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "+hil:M:m:nNqsvV")) != EOF) switch (opt) {
          case 'h':
            fprintf(stderr,
                    "Usage: vvp [options] input-file [+plusargs...]\n"
@@ -66,6 +66,7 @@ int main(int argc, char*argv[])
                    " -m module      Load vpi module.\n"
 		   " -n             Non-interactive ($stop = $finish).\n"
                    " -N             Same as -n, but exit code is 1 instead of 0\n"
+		   " -q             Quiet mode (suppress output on MCD bit 0).\n"
 		   " -s             $stop right away.\n"
                    " -v             Verbose progress messages.\n"
                    " -V             Print the version information.\n" );
@@ -92,6 +93,9 @@ int main(int argc, char*argv[])
           case 'N':
             vvp_set_stop_is_finish(true, 1);
             break;
+	  case 'q':
+	    vvp_set_quiet_flag(true);
+	    break;
 	  case 's':
 	    schedule_stop(0);
 	    break;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2020 Stephen G. Tell <steve@telltronics.org>
+ * Copyright (c) 2000-2024 Stephen G. Tell <steve@telltronics.org>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,8 +34,8 @@ extern FILE* vpi_trace;
 /*
  * This table keeps track of the MCD files. Note that there may be
  * only 31 such files, and mcd bit0 (32'h00_00_00_01) is the special
- * standard output file, which may be replicated to a logfile
- * depending on flags to the command line.
+ * standard output file, which may be replicated to a logfile and/or
+ * suppressed depending on flags to the command line.
  */
 
 /*
@@ -54,6 +54,8 @@ static mcd_entry_s *fd_table = NULL;
 static unsigned fd_table_len = 0;
 
 static FILE* logfile;
+
+bool vpip_mcd0_disable = false;
 
 /* Initialize mcd portion of vpi.  Must be called before
  * any vpi_mcd routines can be used.
@@ -217,9 +219,12 @@ vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
       for(int i = 0; i < 31; i++) {
 	    if((mcd>>i) & 1) {
 		  if(mcd_table[i].fp) {
-			  // echo to logfile
-			if (i == 0 && logfile)
-			      fputs(buf_ptr, logfile);
+			if (i == 0) {
+			      if (logfile)
+				    fputs(buf_ptr, logfile);
+			      if (vpip_mcd0_disable)
+				    continue;
+			}
 			fputs(buf_ptr, mcd_table[i].fp);
 		  } else {
 			rc = EOF;
@@ -251,10 +256,13 @@ extern "C" void vpip_mcd_rawwrite(PLI_UINT32 mcd, const char*buf, size_t cnt)
 	    if (mcd_table[idx].fp == 0)
 		  continue;
 
+	    if (idx == 0) {
+		  if (logfile)
+			fwrite(buf, 1, cnt, logfile);
+		  if (vpip_mcd0_disable)
+			continue;
+	    }
 	    fwrite(buf, 1, cnt, mcd_table[idx].fp);
-	    if (idx == 0 && logfile)
-		  fwrite(buf, 1, cnt, logfile);
-
       }
 }
 
@@ -265,7 +273,12 @@ extern "C" PLI_INT32 vpi_mcd_flush(PLI_UINT32 mcd)
 	if (IS_MCD(mcd)) {
 		for(int i = 0; i < 31; i++) {
 			if((mcd>>i) & 1) {
-				if (i == 0 && logfile) fflush(logfile);
+				if (i == 0) {
+				      if (logfile)
+					    fflush(logfile);
+				      if (vpip_mcd0_disable)
+					    continue;
+				}
 				if (fflush(mcd_table[i].fp)) rc |= 1<<i;
 			}
 		}

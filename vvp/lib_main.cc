@@ -68,6 +68,11 @@ void vvp_set_stop_is_finish(bool flag, int exit_code)
       stop_is_finish_exit_code = exit_code;
 }
 
+void vvp_set_quiet_flag(bool flag)
+{
+      vpip_mcd0_disable = flag;
+}
+
 void vvp_set_verbose_flag(bool flag)
 {
       verbose_flag = flag;

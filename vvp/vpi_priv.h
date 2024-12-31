@@ -1154,4 +1154,7 @@ extern vpiHandle vpip_module(__vpiScope*scope);
 
 extern int vpip_delay_selection;
 
+/* A flag to disable output to MCD bit 0. */
+extern bool vpip_mcd0_disable;
+
 #endif /* IVL_vpi_priv_H */

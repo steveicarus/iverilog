@@ -21,6 +21,13 @@ extern "C" {
 
 extern void vvp_set_stop_is_finish(bool flag, int exit_code);
 
+/* vvp_set_quiet_flag(true) is equivalent to vvp's "-q" option.
+ *
+ * This function may be called at any time.
+ */
+
+extern void vvp_set_quiet_flag(bool flag);
+
 /* vvp_set_verbose(true) is equivalent to vvp's "-v" option.
  *
  * This function may be called at any time.
