@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2021 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2005-2024 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -664,7 +664,11 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	      /* If the current and new bit values match then no delay
 	       * is needed for this bit. */
 	    if (cur_vec4_.value(idx) == bit.value(idx)) continue;
-	    assert(tmp == use_delay);
+	    if (tmp != use_delay) {
+                  fprintf(stderr, "sorry: multi-bit module path delays are "
+                                  "currently not fully supported.\n");
+                  exit(2);
+            }
       }
 
       cur_vec4_ = bit;
