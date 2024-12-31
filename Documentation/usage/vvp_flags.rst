@@ -84,6 +84,9 @@ system tasks, system functions and any VPI/PLI code. Extended arguments that
 start with a "+" character are left for use by the user via the $plus$flag and
 $plus$value functions.
 
+NOTE: The extended arguments must appear *after* the input file name on the
+command line.
+
 VCD/FST/LXT Arguments
 ^^^^^^^^^^^^^^^^^^^^^
 
