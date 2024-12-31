@@ -46,11 +46,13 @@ simulation.
   compile-time, there is no need to specify them again here.
 
 * -n
+
   This flag makes $stop or a <Control\-C> a synonym for $finish. It can be
   used to give the program a more meaningful interface when running in a
   non-interactive environment.
 
 * -N
+
   This flag does the same thing as "-n", but results in an exit code of 1
   if the stimulation calls $stop.  It can be used to indicate a simulation
   failure when running a testbench.
