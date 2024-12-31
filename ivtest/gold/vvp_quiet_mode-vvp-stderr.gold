@@ -1,0 +1,3 @@
+This should be suppressed
+This should be suppressed
+ivltests/vvp_quiet_mode.v:7: $finish(1) called at 0 (1s)

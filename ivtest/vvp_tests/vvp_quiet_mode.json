@@ -1,0 +1,6 @@
+{
+    "type"          : "normal",
+    "source"        : "vvp_quiet_mode.v",
+    "gold"          : "vvp_quiet_mode",
+    "vvp-args" : [ "-ql-" ]
+}
