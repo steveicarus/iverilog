@@ -1,0 +1,6 @@
+{
+    "type" : "EF",
+    "source" : "br_gh1184.v",
+    "gold" : "br_gh1184",
+    "iverilog-args" : [ "-gspecify" ]
+}
