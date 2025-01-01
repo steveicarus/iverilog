@@ -2,9 +2,9 @@
 ./ivltests/always_ff_warn.v:21: warning: An event (int1) cannot be synthesized in an always_ff process.
 ./ivltests/always_ff_warn.v:22: warning: A non-integral variable (intrl) cannot be synthesized in an always_ff process.
 ./ivltests/always_ff_warn.v:24: warning: An event trigger statement cannot be synthesized in an always_ff process.
-./ivltests/always_ff_warn.v:25: warning: Assinging to a non-integral variable (rl) cannot be synthesized in an always_ff process.
-./ivltests/always_ff_warn.v:26: warning: Assinging to a non-integral variable (rl) cannot be synthesized in an always_ff process.
-./ivltests/always_ff_warn.v:27: warning: Assinging to a non-integral variable (ar) cannot be synthesized in an always_ff process.
+./ivltests/always_ff_warn.v:25: warning: Assigning to a non-integral variable (rl) cannot be synthesized in an always_ff process.
+./ivltests/always_ff_warn.v:26: warning: Assigning to a non-integral variable (rl) cannot be synthesized in an always_ff process.
+./ivltests/always_ff_warn.v:27: warning: Assigning to a non-integral variable (ar) cannot be synthesized in an always_ff process.
 ./ivltests/always_ff_warn.v:28: warning: A for statement must have a constant initial value to be synthesized in an always_ff process.
 ./ivltests/always_ff_warn.v:28: warning: A for statement must compare against a constant value to be synthesized in an always_ff process.
 ./ivltests/always_ff_warn.v:28: warning: A for statement must have a constant step value to be synthesized in an always_ff process.
