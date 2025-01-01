@@ -3075,7 +3075,7 @@ static void check_if_logic_l_value(const NetAssignBase *base,
 
       if ((sig->data_type() != IVL_VT_BOOL) &&
           (sig->data_type() != IVL_VT_LOGIC)) {
-	    cerr << base->get_fileline() << ": warning: Assinging to a "
+	    cerr << base->get_fileline() << ": warning: Assigning to a "
 	            "non-integral variable ("<< sig->name()
 	         << ") cannot be synthesized "
 	         << get_process_type_as_string(pr_type) << endl;
