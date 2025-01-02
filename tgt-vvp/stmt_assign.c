@@ -541,13 +541,77 @@ static unsigned int draw_array_pattern(ivl_signal_t var, ivl_expr_t rval,
       return array_idx;
 }
 
+static void draw_stmt_assign_vector_opcode(unsigned char opcode, bool is_signed)
+{
+      int idx_reg;
+
+      switch (opcode) {
+	  case 0:
+	    break;
+
+	  case '+':
+	    fprintf(vvp_out, "    %%add;\n");
+	    break;
+
+	  case '-':
+	    fprintf(vvp_out, "    %%sub;\n");
+	    break;
+
+	  case '*':
+	    fprintf(vvp_out, "    %%mul;\n");
+	    break;
+
+	  case '/':
+	    fprintf(vvp_out, "    %%div%s;\n", is_signed ? "/s":"");
+	    break;
+
+	  case '%':
+	    fprintf(vvp_out, "    %%mod%s;\n", is_signed ? "/s":"");
+	    break;
+
+	  case '&':
+	    fprintf(vvp_out, "    %%and;\n");
+	    break;
+
+	  case '|':
+	    fprintf(vvp_out, "    %%or;\n");
+	    break;
+
+	  case '^':
+	    fprintf(vvp_out, "    %%xor;\n");
+	    break;
+
+	  case 'l': /* lval <<= expr */
+	    idx_reg = allocate_word();
+	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", idx_reg);
+	    fprintf(vvp_out, "    %%shiftl %d;\n", idx_reg);
+	    clr_word(idx_reg);
+	    break;
+
+	  case 'r': /* lval >>= expr */
+	    idx_reg = allocate_word();
+	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", idx_reg);
+	    fprintf(vvp_out, "    %%shiftr %d;\n", idx_reg);
+	    clr_word(idx_reg);
+	    break;
+
+	  case 'R': /* lval >>>= expr */
+	    idx_reg = allocate_word();
+	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", idx_reg);
+	    fprintf(vvp_out, "    %%shiftr/s %d;\n", idx_reg);
+	    clr_word(idx_reg);
+	    break;
+
+	  default:
+	    fprintf(vvp_out, "; UNSUPPORTED ASSIGNMENT OPCODE: %c\n", opcode);
+	    assert(0);
+	    break;
+      }
+}
+
 static int show_stmt_assign_vector(ivl_statement_t net)
 {
       ivl_expr_t rval = ivl_stmt_rval(net);
-	//struct vector_info res;
-	//struct vector_info lres = {0, 0};
-      struct vec_slice_info*slices = 0;
-      int idx_reg;
 
       if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
 	    ivl_lval_t lval = ivl_stmt_lval(net, 0);
@@ -556,95 +620,29 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    return 0;
       }
 
+      unsigned wid = ivl_stmt_lwidth(net);
+
 	/* If this is a compressed assignment, then get the contents
 	   of the l-value. We need these values as part of the r-value
 	   calculation. */
       if (ivl_stmt_opcode(net) != 0) {
+	    struct vec_slice_info *slices;
+
+	    slices = calloc(ivl_stmt_lvals(net), sizeof(struct vec_slice_info));
+
 	    fprintf(vvp_out, "    ; show_stmt_assign_vector: Get l-value for compressed %c= operand\n", ivl_stmt_opcode(net));
-            slices = calloc(ivl_stmt_lvals(net), sizeof(struct vec_slice_info));
 	    get_vec_from_lval(net, slices);
-      }
-
-      unsigned wid = ivl_stmt_lwidth(net);
-      draw_eval_vec4(rval);
-      resize_vec4_wid(rval, wid);
-
-      switch (ivl_stmt_opcode(net)) {
-	  case 0:
+	    draw_eval_vec4(rval);
+	    resize_vec4_wid(rval, wid);
+	    draw_stmt_assign_vector_opcode(ivl_stmt_opcode(net),
+					   ivl_expr_signed(rval));
+	    put_vec_to_lval(net, slices);
+	    free(slices);
+      } else {
+	    draw_eval_vec4(rval);
+	    resize_vec4_wid(rval, wid);
 	    store_vec4_to_lval(net);
-	    break;
-
-	  case '+':
-	    fprintf(vvp_out, "    %%add;\n");
-	    put_vec_to_lval(net, slices);
-	    break;
-
-	  case '-':
-	    fprintf(vvp_out, "    %%sub;\n");
-	    put_vec_to_lval(net, slices);
-	    break;
-
-	  case '*':
-	    fprintf(vvp_out, "    %%mul;\n");
-	    put_vec_to_lval(net, slices);
-	    break;
-
-	  case '/':
-	    fprintf(vvp_out, "    %%div%s;\n", ivl_expr_signed(rval)? "/s":"");
-	    put_vec_to_lval(net, slices);
-	    break;
-
-	  case '%':
-	    fprintf(vvp_out, "    %%mod%s;\n", ivl_expr_signed(rval)? "/s":"");
-	    put_vec_to_lval(net, slices);
-	    break;
-
-	  case '&':
-	    fprintf(vvp_out, "    %%and;\n");
-	    put_vec_to_lval(net, slices);
-	    break;
-
-	  case '|':
-	    fprintf(vvp_out, "    %%or;\n");
-	    put_vec_to_lval(net, slices);
-	    break;
-
-	  case '^':
-	    fprintf(vvp_out, "    %%xor;\n");
-	    put_vec_to_lval(net, slices);
-	    break;
-
-	  case 'l': /* lval <<= expr */
-	    idx_reg = allocate_word();
-	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", idx_reg);
-	    fprintf(vvp_out, "    %%shiftl %d;\n", idx_reg);
-	    clr_word(idx_reg);
-	    put_vec_to_lval(net, slices);
-	    break;
-
-	  case 'r': /* lval >>= expr */
-	    idx_reg = allocate_word();
-	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", idx_reg);
-	    fprintf(vvp_out, "    %%shiftr %d;\n", idx_reg);
-	    clr_word(idx_reg);
-	    put_vec_to_lval(net, slices);
-	    break;
-
-	  case 'R': /* lval >>>= expr */
-	    idx_reg = allocate_word();
-	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", idx_reg);
-	    fprintf(vvp_out, "    %%shiftr/s %d;\n", idx_reg);
-	    clr_word(idx_reg);
-	    put_vec_to_lval(net, slices);
-	    break;
-
-	  default:
-	    fprintf(vvp_out, "; UNSUPPORTED ASSIGNMENT OPCODE: %c\n", ivl_stmt_opcode(net));
-	    assert(0);
-	    break;
       }
-
-      if (slices) free(slices);
 
       return 0;
 }
@@ -817,42 +815,11 @@ static void store_real_to_lval(ivl_lval_t lval)
       clr_word(word_ix);
 }
 
-/*
- * This function assigns a value to a real variable. This is destined
- * for /dev/null when typed ivl_signal_t takes over all the real
- * variable support.
- */
-static int show_stmt_assign_sig_real(ivl_statement_t net)
+static void draw_stmt_assign_real_opcode(unsigned char opcode)
 {
-      struct real_lval_info*slice = 0;
-      ivl_lval_t lval;
-
-      assert(ivl_stmt_lvals(net) == 1);
-      lval = ivl_stmt_lval(net, 0);
-
-      ivl_expr_t rval = ivl_stmt_rval(net);
-      if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
-	    ivl_signal_t sig = ivl_lval_sig(lval);
-	    draw_array_pattern(sig, rval, 0);
-	    return 0;
-      }
-
-	/* If this is a compressed assignment, then get the contents
-	   of the l-value. We need this value as part of the r-value
-	   calculation. */
-      if (ivl_stmt_opcode(net) != 0) {
-	    fprintf(vvp_out, "    ; show_stmt_assign_real: Get l-value for compressed %c= operand\n", ivl_stmt_opcode(net));
-            slice = calloc(1, sizeof(struct real_lval_info));
-	    get_real_from_lval(lval, slice);
-      }
-
-      draw_eval_real(rval);
-
-      switch (ivl_stmt_opcode(net)) {
+      switch (opcode) {
 	  case 0:
-	    store_real_to_lval(lval);
-	    if (slice) free(slice);
-	    return 0;
+	    break;
 
 	  case '+':
 	    fprintf(vvp_out, "    %%add/wr;\n");
@@ -875,13 +842,47 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
 	    break;
 
 	  default:
-	    fprintf(vvp_out, "; UNSUPPORTED ASSIGNMENT OPCODE: %c\n", ivl_stmt_opcode(net));
+	    fprintf(vvp_out, "; UNSUPPORTED ASSIGNMENT OPCODE: %c\n", opcode);
 	    assert(0);
 	    break;
       }
+}
 
-      put_real_to_lval(lval, slice);
-      free(slice);
+/*
+ * This function assigns a value to a real variable. This is destined
+ * for /dev/null when typed ivl_signal_t takes over all the real
+ * variable support.
+ */
+static int show_stmt_assign_sig_real(ivl_statement_t net)
+{
+      ivl_lval_t lval;
+
+      assert(ivl_stmt_lvals(net) == 1);
+      lval = ivl_stmt_lval(net, 0);
+
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
+	    ivl_signal_t sig = ivl_lval_sig(lval);
+	    draw_array_pattern(sig, rval, 0);
+	    return 0;
+      }
+
+	/* If this is a compressed assignment, then get the contents
+	   of the l-value. We need this value as part of the r-value
+	   calculation. */
+      if (ivl_stmt_opcode(net) != 0) {
+	    struct real_lval_info slice;
+
+	    fprintf(vvp_out, "    ; show_stmt_assign_real: Get l-value for compressed %c= operand\n", ivl_stmt_opcode(net));
+	    get_real_from_lval(lval, &slice);
+	    draw_eval_real(rval);
+	    draw_stmt_assign_real_opcode(ivl_stmt_opcode(net));
+	    put_real_to_lval(lval, &slice);
+      } else {
+	    draw_eval_real(rval);
+	    store_real_to_lval(lval);
+      }
+
       return 0;
 }
 
@@ -1260,39 +1261,43 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 	    ivl_type_t sig_type = ivl_signal_net_type(sig);
 	    ivl_type_t prop_type = ivl_type_prop_type(sig_type, prop_idx);
 
-	    if (ivl_type_base(prop_type) == IVL_VT_BOOL) {
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+
+	    if (ivl_type_base(prop_type) == IVL_VT_BOOL ||
+	        ivl_type_base(prop_type) == IVL_VT_LOGIC) {
 		  assert(ivl_type_packed_dimensions(prop_type) == 0 ||
 		         (ivl_type_packed_dimensions(prop_type) == 1 &&
 		          ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0)));
 
+		  if (ivl_stmt_opcode(net) != 0) {
+			fprintf(vvp_out, "    %%prop/v %d;\n", prop_idx);
+		  }
+
 		  draw_eval_vec4(rval);
-		  if (ivl_expr_value(rval)!=IVL_VT_BOOL)
+		  if (ivl_type_base(prop_type) == IVL_VT_BOOL &&
+		      ivl_expr_value(rval) != IVL_VT_BOOL)
 			fprintf(vvp_out, "    %%cast2;\n");
 
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
-		  fprintf(vvp_out, "    %%store/prop/v %d, %u; Store in bool property %s\n",
-			  prop_idx, lwid, ivl_type_prop_name(sig_type, prop_idx));
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  draw_stmt_assign_vector_opcode(ivl_stmt_opcode(net),
+					         ivl_expr_signed(rval));
 
-	    } else if (ivl_type_base(prop_type) == IVL_VT_LOGIC) {
-		  assert(ivl_type_packed_dimensions(prop_type) == 0 ||
-		         (ivl_type_packed_dimensions(prop_type) == 1 &&
-		          ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0)));
-
-		  draw_eval_vec4(rval);
-
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  fprintf(vvp_out, "    %%store/prop/v %d, %u; Store in logic property %s\n",
 			  prop_idx, lwid, ivl_type_prop_name(sig_type, prop_idx));
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_REAL) {
 
+		  if (ivl_stmt_opcode(net) != 0) {
+			fprintf(vvp_out, "    %%prop/r %d;\n", prop_idx);
+		  }
+
 		    /* Calculate the real value into the real value
 		       stack. The %store/prop/r will pop the stack
 		       value. */
 		  draw_eval_real(rval);
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+
+		  draw_stmt_assign_real_opcode(ivl_stmt_opcode(net));
+
 		  fprintf(vvp_out, "    %%store/prop/r %d;\n", prop_idx);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
@@ -1302,7 +1307,6 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		       stack. The %store/prop/r will pop the stack
 		       value. */
 		  draw_eval_string(rval);
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  fprintf(vvp_out, "    %%store/prop/str %d;\n", prop_idx);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
@@ -1313,7 +1317,6 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		    /* The property is a darray, and there is no mux
 		       expression to the assignment is of an entire
 		       array object. */
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  errors += draw_eval_object(rval);
 		  fprintf(vvp_out, "    %%store/prop/obj %d, %d; IVL_VT_DARRAY\n", prop_idx, idx);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
@@ -1327,7 +1330,6 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  }
 
 		    /* The property is a class object. */
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  errors += draw_eval_object(rval);
 		  if (idx_expr) draw_eval_expr_into_integer(idx_expr, idx);
 		  fprintf(vvp_out, "    %%store/prop/obj %d, %d; IVL_VT_CLASS\n", prop_idx, idx);
