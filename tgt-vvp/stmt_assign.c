@@ -1066,6 +1066,7 @@ static void show_stmt_assign_sig_darray_queue_mux(ivl_statement_t net)
 	  case IVL_VT_STRING:
 	    assert(ivl_stmt_opcode(net) == 0);
 	    draw_eval_string(rval);
+	    draw_eval_expr_into_integer(mux, 3);
 	    break;
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:

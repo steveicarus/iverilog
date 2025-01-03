@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_queue_assign_op.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
