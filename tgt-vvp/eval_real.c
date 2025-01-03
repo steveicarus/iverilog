@@ -552,18 +552,10 @@ void draw_eval_real(ivl_expr_t expr)
 	    break;
 
 	  default:
-	    if (ivl_expr_value(expr) == IVL_VT_VECTOR) {
-		  draw_eval_vec4(expr);
-		  const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
-		  fprintf(vvp_out, "    %%cvt/rv%s;\n", sign_flag);
-
-	    } else {
-		  fprintf(stderr, "vvp.tgt error: XXXX Evaluate real expression (%d)\n",
+		fprintf(stderr, "vvp.tgt error: XXXX Evaluate real expression (%d)\n",
 			  ivl_expr_type(expr));
-		  fprintf(vvp_out, " ; XXXX Evaluate real expression (%d)\n",
+		fprintf(vvp_out, " ; XXXX Evaluate real expression (%d)\n",
 			  ivl_expr_type(expr));
-		  return;
-	    }
 	    break;
       }
 
