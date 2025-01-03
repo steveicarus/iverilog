@@ -1356,6 +1356,9 @@ void draw_eval_vec4(ivl_expr_t expr)
 		    ivl_expr_type(expr));
       }
 
+      assert(ivl_expr_value(expr) == IVL_VT_BOOL ||
+	     ivl_expr_value(expr) == IVL_VT_VECTOR);
+
       switch (ivl_expr_type(expr)) {
 	  case IVL_EX_BINARY:
 	    draw_binary_vec4(expr);

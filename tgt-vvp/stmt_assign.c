@@ -565,28 +565,9 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    get_vec_from_lval(net, slices);
       }
 
-	/* Handle the special case that the expression is a real
-	   value. Evaluate the real expression, then convert the
-	   result to a vector. Then store that vector into the
-	   l-value. */
-      if (ivl_expr_value(rval) == IVL_VT_REAL) {
-            draw_eval_real(rval);
-	      /* This is the accumulated with of the l-value of the
-		 assignment. */
-	    unsigned wid = ivl_stmt_lwidth(net);
-
-	      /* Convert a calculated real value to a vec4 value of
-		 the given width. We need to include the width of the
-		 result because real values to not have any inherit
-		 width. The real value will be popped, and a vec4
-		 value pushed. */
-	    fprintf(vvp_out, "    %%cvt/vr %u;\n", wid);
-
-      } else {
-	    unsigned wid = ivl_stmt_lwidth(net);
-	    draw_eval_vec4(rval);
-	    resize_vec4_wid(rval, wid);
-      }
+      unsigned wid = ivl_stmt_lwidth(net);
+      draw_eval_vec4(rval);
+      resize_vec4_wid(rval, wid);
 
       switch (ivl_stmt_opcode(net)) {
 	  case 0:

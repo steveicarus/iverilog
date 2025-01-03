@@ -546,27 +546,10 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       { unsigned wid;
 	unsigned lidx;
 	unsigned cur_rbit = 0;
-	  /* Handle the special case that the expression is a real
-	     value. Evaluate the real expression, then convert the
-	     result to a vector. */
-	if (ivl_expr_value(rval) == IVL_VT_REAL) {
-	      draw_eval_real(rval);
-	        /* This is the accumulated with of the l-value of the
-		   assignment. */
-	      wid = ivl_stmt_lwidth(net);
 
-	      fprintf(vvp_out, "    %%cvt/vr %u;\n", wid);
-
-	} else {
-	      wid = ivl_stmt_lwidth(net);
-	      draw_eval_vec4(rval);
-	      if (ivl_expr_width(rval) != wid) {
-		    if (ivl_expr_signed(rval))
-			  fprintf(vvp_out, "    %%pad/s %u;\n", wid);
-		    else
-			  fprintf(vvp_out, "    %%pad/u %u;\n", wid);
-	      }
-	}
+	wid = ivl_stmt_lwidth(net);
+	draw_eval_vec4(rval);
+	resize_vec4_wid(rval, wid);
 
 	  /* Spread the r-value vector over the bits of the l-value. */
 	for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
