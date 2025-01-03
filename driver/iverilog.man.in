@@ -1,4 +1,4 @@
-.TH iverilog 1 "Jan 20th, 2024" "" "Version %M.%n%E"
+.TH iverilog 1 "Jan 3rd, 2025" "" "Version %M.%n%E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -47,7 +47,9 @@ Defines macro \fImacro\fP as \fIdefn\fP.
 Override (i.e. defparam) a parameter in a root module. This allows the
 user to override at compile time (defparam) a parameter in a root
 module instance. For example, \fB\-Pmain.foo=2\fP overrides the
-parameter foo in the root instance main with the value 2.
+parameter foo in the root instance main with the value 2 and
+\fB\-Pmain.foos='"New string value"'\fP will override the parameter
+foos in the root instance main with the value "New string value".
 .TP 8
 .B -d\fIname\fP
 Activate a class of compiler debugging messages. The \fB\-d\fP switch may
