@@ -225,6 +225,11 @@ sv_chained_constructor5		vvp_tests/sv_chained_constructor5.json
 sv_class_prop_assign_op1	vvp_tests/sv_class_prop_assign_op1.json
 sv_class_prop_assign_op2	vvp_tests/sv_class_prop_assign_op2.json
 sv_class_prop_logic		vvp_tests/sv_class_prop_logic.json
+sv_class_prop_nest_darray1	vvp_tests/sv_class_prop_nest_darray1.json
+sv_class_prop_nest_obj1		vvp_tests/sv_class_prop_nest_obj1.json
+sv_class_prop_nest_real1	vvp_tests/sv_class_prop_nest_str1.json
+sv_class_prop_nest_str1		vvp_tests/sv_class_prop_nest_real1.json
+sv_class_prop_nest_vec1		vvp_tests/sv_class_prop_nest_vec1.json
 sv_const1			vvp_tests/sv_const1.json
 sv_const2			vvp_tests/sv_const2.json
 sv_const3			vvp_tests/sv_const3.json
