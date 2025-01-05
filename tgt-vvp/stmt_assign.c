@@ -371,25 +371,27 @@ static ivl_type_t draw_lval_expr(ivl_lval_t lval)
 {
       ivl_lval_t lval_nest = ivl_lval_nest(lval);
       ivl_signal_t lval_sig = ivl_lval_sig(lval);
-      ivl_type_t sub_type;
 
-      if (lval_nest) {
-	    sub_type = draw_lval_expr(lval_nest);
-      } else {
-	    assert(lval_sig);
-	    sub_type = ivl_signal_net_type(lval_sig);
-	    assert(ivl_type_base(sub_type) == IVL_VT_CLASS);
+      if (lval_sig) {
 	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", lval_sig);
+	    return ivl_signal_net_type(lval_sig);
       }
 
+      assert (lval_nest);
+      ivl_type_t sub_type = draw_lval_expr(lval_nest);
       assert(ivl_type_base(sub_type) == IVL_VT_CLASS);
-      if (ivl_lval_idx(lval)) {
+
+      if (ivl_lval_idx(lval_nest)) {
 	    fprintf(vvp_out, " ; XXXX Don't know how to handle ivl_lval_idx values here.\n");
       }
 
-      fprintf(vvp_out, "    %%prop/obj %d, 0; draw_lval_expr\n", ivl_lval_property_idx(lval));
+      int prop_idx = ivl_lval_property_idx(lval_nest);
+
+      fprintf(vvp_out, "    %%prop/obj %d, 0; Load property %s\n", prop_idx,
+	      ivl_type_prop_name(sub_type, prop_idx));
       fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
-      return ivl_type_prop_type(sub_type, ivl_lval_property_idx(lval));
+
+      return ivl_type_prop_type(sub_type, prop_idx);
 }
 
 /*
@@ -407,7 +409,6 @@ static void store_vec4_to_lval(ivl_statement_t net)
       for (unsigned lidx = 0 ; lidx < ivl_stmt_lvals(net) ; lidx += 1) {
 	    ivl_lval_t lval = ivl_stmt_lval(net,lidx);
 	    ivl_signal_t lsig = ivl_lval_sig(lval);
-	    ivl_lval_t nest = ivl_lval_nest(lval);
 	    unsigned lwid = ivl_lval_width(lval);
 
 
@@ -460,19 +461,6 @@ static void store_vec4_to_lval(ivl_statement_t net)
 				lsig, offset_index, lwid);
 		  }
 		  clr_word(offset_index);
-
-	    } else if (nest) {
-		    /* No offset expression, but the l-value is
-		       nested, which probably means that it is a class
-		       member. We will use a property assign
-		       function. */
-		  assert(!lsig);
-
-		  ivl_type_t sub_type = draw_lval_expr(nest);
-		  assert(ivl_type_base(sub_type) == IVL_VT_CLASS);
-		  fprintf(vvp_out, "    %%store/prop/v %d, %u;\n",
-			  ivl_lval_property_idx(lval), lwid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
 	    } else {
 		    /* No offset expression, so use simpler store function. */
@@ -1321,16 +1309,13 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
       int errors = 0;
       ivl_lval_t lval = ivl_stmt_lval(net, 0);
       ivl_expr_t rval = ivl_stmt_rval(net);
-      ivl_signal_t sig= ivl_lval_sig(lval);
       unsigned lwid = ivl_lval_width(lval);
-
       int prop_idx = ivl_lval_property_idx(lval);
 
-      if (prop_idx >= 0) {
-	    ivl_type_t sig_type = ivl_signal_net_type(sig);
-	    ivl_type_t prop_type = ivl_type_prop_type(sig_type, prop_idx);
 
-	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+      if (prop_idx >= 0) {
+	    ivl_type_t sig_type = draw_lval_expr(lval);
+	    ivl_type_t prop_type = ivl_type_prop_type(sig_type, prop_idx);
 
 	    if (ivl_type_base(prop_type) == IVL_VT_BOOL ||
 	        ivl_type_base(prop_type) == IVL_VT_LOGIC) {
@@ -1413,6 +1398,9 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 	    }
 
       } else {
+	    ivl_signal_t sig = ivl_lval_sig(lval);
+	    assert(!ivl_lval_nest(lval));
+
 	    if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
 		  draw_array_pattern(sig, rval, 0);
 		  return 0;
@@ -1466,7 +1454,8 @@ int show_stmt_assign(ivl_statement_t net)
 	    return show_stmt_assign_sig_queue(net);
       }
 
-      if (sig && (ivl_signal_data_type(sig) == IVL_VT_CLASS)) {
+      if ((sig && (ivl_signal_data_type(sig) == IVL_VT_CLASS)) ||
+          ivl_lval_nest(lval)) {
 	    return show_stmt_assign_sig_cobject(net);
       }
 
