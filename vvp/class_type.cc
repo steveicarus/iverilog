@@ -175,7 +175,7 @@ class property_logic : public class_property_t {
 
     public:
       void construct(char*buf) const
-      { new (buf+offset_) vvp_vector4_t (0, wid_); }
+      { new (buf+offset_) vvp_vector4_t (wid_); }
 
       void destruct(char*buf) const
       { vvp_vector4_t*tmp = reinterpret_cast<vvp_vector4_t*>(buf+offset_);

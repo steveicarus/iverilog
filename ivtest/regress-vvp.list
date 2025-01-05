@@ -222,6 +222,7 @@ sv_chained_constructor2		vvp_tests/sv_chained_constructor2.json
 sv_chained_constructor3		vvp_tests/sv_chained_constructor3.json
 sv_chained_constructor4		vvp_tests/sv_chained_constructor4.json
 sv_chained_constructor5		vvp_tests/sv_chained_constructor5.json
+sv_class_prop_logic		vvp_tests/sv_class_prop_logic.json
 sv_const1			vvp_tests/sv_const1.json
 sv_const2			vvp_tests/sv_const2.json
 sv_const3			vvp_tests/sv_const3.json
