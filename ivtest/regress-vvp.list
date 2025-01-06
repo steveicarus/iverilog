@@ -222,6 +222,8 @@ sv_chained_constructor2		vvp_tests/sv_chained_constructor2.json
 sv_chained_constructor3		vvp_tests/sv_chained_constructor3.json
 sv_chained_constructor4		vvp_tests/sv_chained_constructor4.json
 sv_chained_constructor5		vvp_tests/sv_chained_constructor5.json
+sv_class_prop_assign_op1	vvp_tests/sv_class_prop_assign_op1.json
+sv_class_prop_assign_op2	vvp_tests/sv_class_prop_assign_op2.json
 sv_class_prop_logic		vvp_tests/sv_class_prop_logic.json
 sv_const1			vvp_tests/sv_const1.json
 sv_const2			vvp_tests/sv_const2.json
@@ -237,6 +239,7 @@ sv_const_fail6			vvp_tests/sv_const_fail6.json
 sv_const_fail7			vvp_tests/sv_const_fail7.json
 sv_const_fail8			vvp_tests/sv_const_fail8.json
 sv_const_fail9			vvp_tests/sv_const_fail9.json
+sv_darray_assign_op		vvp_tests/sv_darray_assign_op.json
 sv_default_port_value1		vvp_tests/sv_default_port_value1.json
 sv_default_port_value2		vvp_tests/sv_default_port_value2.json
 sv_default_port_value3		vvp_tests/sv_default_port_value3.json
@@ -255,6 +258,7 @@ sv_module_port2			vvp_tests/sv_module_port2.json
 sv_module_port3			vvp_tests/sv_module_port3.json
 sv_module_port4			vvp_tests/sv_module_port4.json
 sv_parameter_type		vvp_tests/sv_parameter_type.json
+sv_queue_assign_op		vvp_tests/sv_queue_assign_op.json
 sv_wildcard_import8		vvp_tests/sv_wildcard_import8.json
 sdf_header			vvp_tests/sdf_header.json
 task_return1			vvp_tests/task_return1.json

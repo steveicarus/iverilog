@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_class_prop_assign_op1.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
