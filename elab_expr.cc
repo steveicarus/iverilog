@@ -3706,7 +3706,20 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
 
       NetExpr*tmp = 0;
       if (dynamic_cast<const netreal_t*>(target_type_)) {
-	    return cast_to_real(sub);
+	    switch (sub->expr_type()) {
+		case IVL_VT_REAL:
+		  return sub;
+		case IVL_VT_LOGIC:
+		case IVL_VT_BOOL:
+		  return cast_to_real(sub);
+	        default:
+		  break;
+	    }
+	    cerr << get_fileline() << " error: Expression of type `"
+		 << sub->expr_type() << "` can not be cast to target type `real`."
+		 << endl;
+	    des->errors++;
+	    return nullptr;
       } else if (dynamic_cast<const netstring_t*>(target_type_)) {
 	    if (base_->expr_type() == IVL_VT_STRING)
 		  return sub; // no conversion
