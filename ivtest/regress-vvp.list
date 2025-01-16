@@ -72,6 +72,10 @@ case3				vvp_tests/case3.json
 casex_synth			vvp_tests/casex_synth.json
 cast_int_ams			vvp_tests/cast_int_ams.json
 cast_int_ams-vlog95		vvp_tests/cast_int_ams-vlog95.json
+cast_real_invalid1		vvp_tests/cast_real_invalid1.json
+cast_real_invalid2		vvp_tests/cast_real_invalid2.json
+cast_real_invalid3		vvp_tests/cast_real_invalid3.json
+cast_real_invalid4		vvp_tests/cast_real_invalid4.json
 comment1			vvp_tests/comment1.json
 constfunc4_ams			vvp_tests/constfunc4_ams.json
 constfunc4_ams-vlog95		vvp_tests/constfunc4_ams-vlog95.json
