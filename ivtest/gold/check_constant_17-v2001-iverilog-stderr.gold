@@ -1,0 +1,8 @@
+ivltests/check_constant_17.v:9: error: A reference to a net or variable (`N') is not allowed in a constant expression.
+ivltests/check_constant_17.v:14: error: A reference to a net or variable (`N') is not allowed in a constant expression.
+ivltests/check_constant_17.v:14: error: Part select expressions must be constant integral values.
+ivltests/check_constant_17.v:14:      : The lsb expression violates that rule: N
+ivltests/check_constant_17.v:14: error: A reference to a net or variable (`N') is not allowed in a constant expression.
+ivltests/check_constant_17.v:14: error: Part select expressions must be constant integral values.
+ivltests/check_constant_17.v:14:      : The lsb expression violates that rule: N
+5 error(s) during elaboration.

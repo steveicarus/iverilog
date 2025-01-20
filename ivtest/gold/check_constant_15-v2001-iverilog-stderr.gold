@@ -1,0 +1,4 @@
+ivltests/check_constant_15.v:10: error: A reference to a net or variable (`N') is not allowed in a constant expression.
+ivltests/check_constant_15.v:10: error: Part select expressions must be constant integral values.
+ivltests/check_constant_15.v:10:      : The msb expression violates that rule: N
+2 error(s) during elaboration.

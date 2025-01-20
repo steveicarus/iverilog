@@ -1,0 +1,3 @@
+ivltests/function4.v:29: error: Function test has no ports.
+ivltests/function4.v:29:      : Functions must have at least one input port.
+1 error(s) during elaboration.

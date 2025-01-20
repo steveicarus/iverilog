@@ -1,0 +1,2 @@
+ivltests/check_constant_11.v:9: error: A reference to a net or variable (`N') is not allowed in a constant expression.
+1 error(s) during elaboration.
