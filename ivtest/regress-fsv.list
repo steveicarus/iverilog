@@ -68,16 +68,6 @@
 #
 
 # Some constructs/usage are not errors in SystemVerilog
-br1027a				normal			ivltests gold=br1027a-fsv.gold
-br1027c				normal			ivltests gold=br1027c-fsv.gold
-br1027e				normal			ivltests gold=br1027e-fsv.gold
-br_gh25a			normal			ivltests
-br_gh25b			normal			ivltests
-br_gh567			normal			ivltests
-br_gh1182			normal			ivltests
-check_constant_3		normal			ivltests
-function4			normal			ivltests
-module_inout_port_type		normal			ivltests
 module_input_port_list_def	normal			ivltests
 module_input_port_type		normal			ivltests
 parameter_in_generate1		normal			ivltests
@@ -107,11 +97,6 @@ pr2590274b			normal			ivltests gold=pr2590274-fsv.gold
 pr2590274c			normal,-gspecify	ivltests gold=pr2590274-fsv.gold
 
 # These are not supported in Icarus, but are valid SystemVerilog
-array_lval_select3a		NI			ivltests
-br605a				NI			ivltests
-br605b				NI			ivltests
-br971				NI			ivltests
-br1005				NI			ivltests
 br1015a				NI			ivltests
 br1015b				NI			ivltests
 br_ml20150315b			NI			ivltests

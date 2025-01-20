@@ -1,0 +1,5 @@
+ivltests/check_constant_8.v:7: error: A reference to a net or variable (`N') is not allowed in a constant expression.
+ivltests/check_constant_8.v:7: error: Dimensions must be constant.
+ivltests/check_constant_8.v:7       : This MSB expression violates the rule: N
+ivltests/check_constant_8.v:10: warning: Part select Array[][7:1] is out of range.
+2 error(s) during elaboration.

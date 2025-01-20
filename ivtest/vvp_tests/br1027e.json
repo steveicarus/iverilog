@@ -1,0 +1,6 @@
+{
+    "type"   : "normal",
+    "source" : "br1027e.v",
+    "iverilog-args" : [ "-g2009" ],
+    "gold"   : "br1027e"
+}
