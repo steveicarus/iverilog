@@ -104,7 +104,15 @@ AS_IF( [test "x$with_m32" = xyes],
     [])
 
 CFLAGS="$CTARGETFLAGS $CFLAGS"
-CXXFLAGS="$CTARGETFLAGS $CXXFLAGS -std=c++11"
+# Cygwin does not declare strdup() for C++ 11 by default so use gnu++11
+# to expose the declaration.
+decl_cxx_std="-std=c++11"
+case "${host}" in
+  *-*-cygwin*)
+    decl_cxx_std="-std=gnu++11"
+    ;;
+esac
+CXXFLAGS="$CTARGETFLAGS $CXXFLAGS $decl_cxx_std"
 LDFLAGS="$CTARGETFLAGS $LDFLAGS"
 
 # Check that we are using either the GNU compilers or the Sun compilers
