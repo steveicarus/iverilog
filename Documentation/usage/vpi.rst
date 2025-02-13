@@ -42,7 +42,7 @@ module, is a null terminated table of function pointers. The simulator calls
 each of the functions in the table in order. The following simple C definition
 defines a sample table::
 
-  void (*vlog_startup_routines[])() = {
+  void (*vlog_startup_routines[])(void) = {
      hello_register,
      0
   };
@@ -89,16 +89,18 @@ file hello.c::
 
   static int hello_compiletf(char*user_data)
   {
+        (void)user_data; // Avoid a warning since user_data is not used.
         return 0;
   }
 
   static int hello_calltf(char*user_data)
   {
+        (void)user_data; // Avoid a warning since user_data is not used.
         vpi_printf("Hello, World!\n");
         return 0;
   }
 
-  void hello_register()
+  void hello_register(void)
   {
         s_vpi_systf_data tf_data;
 
@@ -111,7 +113,7 @@ file hello.c::
         vpi_register_systf(&tf_data);
   }
 
-  void (*vlog_startup_routines[])() = {
+  void (*vlog_startup_routines[])(void) = {
       hello_register,
       0
   };
