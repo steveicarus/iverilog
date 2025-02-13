@@ -12,9 +12,9 @@ Usage:
 '''
 
 import sys
-# It appears that docopt doesn't work on msys2 installations, so
-# skip it completely on win32 platforms.
-if sys.platform != 'win32':
+# The docopt library is not available on msys2 or cygwin installations, so
+# skip it completely on win32/cygwin platforms.
+if sys.platform != 'win32' and sys.platform != 'cygwin':
     from docopt import docopt
 import test_lists
 import json
@@ -77,7 +77,7 @@ def process_test(item: list) -> str:
 
 if __name__ == "__main__":
     print("Running tests on platform: {platform}".format(platform=sys.platform))
-    if sys.platform == 'win32':
+    if sys.platform == 'win32' or sys.platform == 'cygwin':
         args = { "<list-paths>" : [] }
     else:
         args = docopt(__doc__)
