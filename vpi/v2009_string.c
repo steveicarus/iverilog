@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -151,7 +151,7 @@ static PLI_INT32 atoi_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpi_get_value(arg, &value);
       const char*bufp = value.value.str;
       while (bufp && *bufp) {
-	    if (isdigit(*bufp)) {
+	    if (isdigit((int)*bufp)) {
 		  res = (res * 10) + (*bufp - '0');
 		  bufp += 1;
 	    } else if (*bufp == '_') {

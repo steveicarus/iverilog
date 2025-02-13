@@ -1,7 +1,7 @@
 %option prefix="yy"
 %{
 /*
- * Copyright (c) 1999-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1080,17 +1080,17 @@ static void def_add_arg(void)
 	 to us to chop it up to name and value. */
     if ( (val=strchr(arg,'=')) ) {
 	  *val++ = 0;
-	  while (*val && isspace(*val)) val += 1;
+	  while (*val && isspace((int)*val)) val += 1;
 
 	  val_length = strlen(val);
-	  while (val_length>0 && isspace(val[val_length-1])) {
+	  while (val_length>0 && isspace((int)val[val_length-1])) {
 		val_length -= 1;
 		val[val_length] = 0;
 	  }
 
 	    /* Strip white space from between arg and "=". */
 	  length = strlen(arg);
-	  while (length>0 && isspace(arg[length-1])) {
+	  while (length>0 && isspace((int)arg[length-1])) {
 		length -= 1;
 		arg[length] = 0;
 	  }
