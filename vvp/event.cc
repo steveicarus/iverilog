@@ -178,42 +178,6 @@ void schedule_evctl(vvp_array_t memory, unsigned index,
       ep->last = &((*(ep->last))->next);
 }
 
-inline vvp_fun_edge::edge_t VVP_EDGE(vvp_bit4_t from, vvp_bit4_t to)
-{
-      return 1 << ((from << 2) | to);
-}
-
-const vvp_fun_edge::edge_t vvp_edge_posedge
-      = VVP_EDGE(BIT4_0,BIT4_1)
-      | VVP_EDGE(BIT4_0,BIT4_X)
-      | VVP_EDGE(BIT4_0,BIT4_Z)
-      | VVP_EDGE(BIT4_X,BIT4_1)
-      | VVP_EDGE(BIT4_Z,BIT4_1)
-      ;
-
-const vvp_fun_edge::edge_t vvp_edge_negedge
-      = VVP_EDGE(BIT4_1,BIT4_0)
-      | VVP_EDGE(BIT4_1,BIT4_X)
-      | VVP_EDGE(BIT4_1,BIT4_Z)
-      | VVP_EDGE(BIT4_X,BIT4_0)
-      | VVP_EDGE(BIT4_Z,BIT4_0)
-      ;
-
-const vvp_fun_edge::edge_t vvp_edge_edge
-      = VVP_EDGE(BIT4_0,BIT4_1)
-      | VVP_EDGE(BIT4_1,BIT4_0)
-      | VVP_EDGE(BIT4_0,BIT4_X)
-      | VVP_EDGE(BIT4_X,BIT4_0)
-      | VVP_EDGE(BIT4_0,BIT4_Z)
-      | VVP_EDGE(BIT4_Z,BIT4_0)
-      | VVP_EDGE(BIT4_X,BIT4_1)
-      | VVP_EDGE(BIT4_1,BIT4_X)
-      | VVP_EDGE(BIT4_Z,BIT4_1)
-      | VVP_EDGE(BIT4_1,BIT4_Z)
-      ;
-
-const vvp_fun_edge::edge_t vvp_edge_none    = 0;
-
 struct vvp_fun_edge_state_s : public waitable_state_s {
       vvp_fun_edge_state_s()
       {

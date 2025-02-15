@@ -119,6 +119,13 @@ extern void draw_modpath(ivl_signal_t path_sig, char*drive_label, unsigned drive
 extern void cleanup_modpath(void);
 
 /*
+ * timing check symbols
+ * TODO
+ */
+
+extern void draw_tchk_in_scope(ivl_tchk_t tchk);
+
+/*
  * This function draws the execution of a vpi_call statement, along
  * with the tricky handling of arguments. If this is called with a
  * statement handle, it will generate a %vpi_call
