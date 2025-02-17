@@ -240,7 +240,7 @@ static PLI_INT32 atohex_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		case 'd': case 'D':
 		case 'e': case 'E':
 		case 'f': case 'F':
-		  res = (res * 16) + (toupper(*bufp) - 'A' + 10);
+		  res = (res * 16) + (toupper((int)*bufp) - 'A' + 10);
 		  bufp += 1;
 		  break;
 		case '_':

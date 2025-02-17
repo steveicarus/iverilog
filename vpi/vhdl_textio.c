@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 CERN
+ * Copyright (c) 2015-2025 CERN
  * @author Maciej Suminski <maciej.suminski@cern.ch>
  *
  *    This source code is free software; you can redistribute it
@@ -914,7 +914,7 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
                     /* VHDL stores X/Z values uppercase, so follow the rule */
                     for(size_t i = 0; i< strlen(val.value.str); ++i)
-                        val.value.str[i] = toupper(val.value.str[i]);
+                        val.value.str[i] = toupper((int)val.value.str[i]);
 
                     res = snprintf(buf, STRING_BUF_SIZE, "%s%s", string, val.value.str);
                     break;
