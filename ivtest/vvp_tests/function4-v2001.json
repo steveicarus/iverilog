@@ -1,0 +1,6 @@
+{
+    "type"   : "CE",
+    "source" : "function4.v",
+    "iverilog-args" : [ "-g2001" ],
+    "gold"   : "function4-v2001"
+}
