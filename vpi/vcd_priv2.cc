@@ -21,11 +21,13 @@
 # include  <map>
 # include  <set>
 # include  <string>
-# include  <pthread.h>
 # include  <cstdlib>
 # include  <cstdint>
 # include  <cstring>
 # include  <cassert>
+# include  <thread>
+# include  <mutex>
+# include  <condition_variable>
 
 /*
    Nexus Id cache
@@ -84,7 +86,7 @@ extern "C" void vcd_scope_names_delete(void)
       vcd_scope_names_set.clear();
 }
 
-static pthread_t work_thread;
+static std::thread work_thread;
 
 static const unsigned WORK_QUEUE_SIZE = 128*1024;
 static const unsigned WORK_QUEUE_BATCH_MIN = 4*1024;
@@ -94,10 +96,10 @@ static struct vcd_work_item_s work_queue[WORK_QUEUE_SIZE];
 static volatile unsigned work_queue_next = 0;
 static volatile unsigned work_queue_fill = 0;
 
-static pthread_mutex_t work_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t  work_queue_is_empty_sig = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t  work_queue_notempty_sig = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t  work_queue_minfree_sig = PTHREAD_COND_INITIALIZER;
+static std::mutex work_queue_mutex;
+static std::condition_variable work_queue_is_empty_sig;
+static std::condition_variable work_queue_notempty_sig;
+static std::condition_variable work_queue_minfree_sig;
 
 
 extern "C" struct vcd_work_item_s* vcd_work_thread_peek(void)
@@ -108,10 +110,8 @@ extern "C" struct vcd_work_item_s* vcd_work_thread_peek(void)
 	// one item that I can peek at. I only need to lock if I must
 	// wait for the work_queue_fill to become non-zero.
       if (work_queue_fill == 0) {
-	    pthread_mutex_lock(&work_queue_mutex);
-	    while (work_queue_fill == 0)
-		  pthread_cond_wait(&work_queue_notempty_sig, &work_queue_mutex);
-	    pthread_mutex_unlock(&work_queue_mutex);
+            std::unique_lock<std::mutex> lock(work_queue_mutex);
+            work_queue_notempty_sig.wait(lock, []{ return work_queue_fill != 0; });
       }
 
       return work_queue + work_queue_next;
@@ -119,7 +119,7 @@ extern "C" struct vcd_work_item_s* vcd_work_thread_peek(void)
 
 extern "C" void vcd_work_thread_pop(void)
 {
-      pthread_mutex_lock(&work_queue_mutex);
+      std::lock_guard<std::mutex> lock(work_queue_mutex);
 
       unsigned use_fill = work_queue_fill - 1;
       work_queue_fill = use_fill;
@@ -137,11 +137,10 @@ extern "C" void vcd_work_thread_pop(void)
       work_queue_next = use_next;
 
       if (use_fill == WORK_QUEUE_SIZE-WORK_QUEUE_BATCH_MIN)
-	    pthread_cond_signal(&work_queue_minfree_sig);
+            work_queue_minfree_sig.notify_one();
       else if (use_fill == 0)
-	    pthread_cond_signal(&work_queue_is_empty_sig);
+            work_queue_is_empty_sig.notify_one();
 
-      pthread_mutex_unlock(&work_queue_mutex);
 }
 
 /*
@@ -158,33 +157,34 @@ static unsigned current_batch_base = 0;
 
 extern "C" void vcd_work_start( void* (*fun) (void*), void*arg )
 {
-      pthread_create(&work_thread, 0, fun, arg);
+      work_thread = std::thread(fun, arg);
 }
 
 static struct vcd_work_item_s* grab_item(void)
 {
       if (current_batch_alloc == 0) {
-	     pthread_mutex_lock(&work_queue_mutex);
-	     while ((WORK_QUEUE_SIZE-work_queue_fill) < WORK_QUEUE_BATCH_MIN)
-		  pthread_cond_wait(&work_queue_minfree_sig, &work_queue_mutex);
+            {
+                  std::unique_lock<std::mutex> lock(work_queue_mutex);
+                  work_queue_minfree_sig.wait(lock, [] {
+                        return (WORK_QUEUE_SIZE - work_queue_fill) >= WORK_QUEUE_BATCH_MIN;
+                  });
 
-	     current_batch_base = work_queue_next + work_queue_fill;
-	     current_batch_alloc = WORK_QUEUE_SIZE - work_queue_fill;
+                  current_batch_base = work_queue_next + work_queue_fill;
+                  current_batch_alloc = WORK_QUEUE_SIZE - work_queue_fill;
+            }
 
-	     pthread_mutex_unlock(&work_queue_mutex);
-
-	     if (current_batch_base >= WORK_QUEUE_SIZE)
-		   current_batch_base -= WORK_QUEUE_SIZE;
-	     if (current_batch_alloc > WORK_QUEUE_BATCH_MAX)
-		   current_batch_alloc = WORK_QUEUE_BATCH_MAX;
-	     current_batch_cnt = 0;
+            if (current_batch_base >= WORK_QUEUE_SIZE)
+                  current_batch_base -= WORK_QUEUE_SIZE;
+            if (current_batch_alloc > WORK_QUEUE_BATCH_MAX)
+                  current_batch_alloc = WORK_QUEUE_BATCH_MAX;
+            current_batch_cnt = 0;
       }
 
       assert(current_batch_cnt < current_batch_alloc);
 
       unsigned cur = current_batch_base + current_batch_cnt;
       if (cur >= WORK_QUEUE_SIZE)
-	    cur -= WORK_QUEUE_SIZE;
+            cur -= WORK_QUEUE_SIZE;
 
 	// Write the new timestamp into the work item.
       struct vcd_work_item_s*cell = work_queue + cur;
@@ -194,7 +194,7 @@ static struct vcd_work_item_s* grab_item(void)
 
 static void end_batch(void)
 {
-      pthread_mutex_lock(&work_queue_mutex);
+      std::lock_guard<std::mutex> lock(work_queue_mutex);
 
       unsigned use_fill = work_queue_fill;
       bool was_empty_flag = (use_fill==0) && (current_batch_cnt > 0);
@@ -206,9 +206,8 @@ static void end_batch(void)
       current_batch_cnt = 0;
 
       if (was_empty_flag)
-	    pthread_cond_signal(&work_queue_notempty_sig);
+            work_queue_notempty_sig.notify_one();
 
-      pthread_mutex_unlock(&work_queue_mutex);
 }
 
 static inline void unlock_item(bool flush_batch =false)
@@ -224,10 +223,8 @@ extern "C" void vcd_work_sync(void)
 	    end_batch();
 
       if (work_queue_fill > 0) {
-	    pthread_mutex_lock(&work_queue_mutex);
-	    while (work_queue_fill > 0)
-		  pthread_cond_wait(&work_queue_is_empty_sig, &work_queue_mutex);
-	    pthread_mutex_unlock(&work_queue_mutex);
+            std::unique_lock<std::mutex> lock(work_queue_mutex);
+            work_queue_is_empty_sig.wait(lock, []{ return !(work_queue_fill > 0); });
       }
 }
 
@@ -282,5 +279,5 @@ extern "C" void vcd_work_terminate(void)
       struct vcd_work_item_s*cell = grab_item();
       cell->type = WT_TERMINATE;
       unlock_item(true);
-      pthread_join(work_thread, 0);
+      work_thread.join();
 }
