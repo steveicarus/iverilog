@@ -23,6 +23,7 @@
 # include  <string>
 # include  <pthread.h>
 # include  <cstdlib>
+# include  <cstdint>
 # include  <cstring>
 # include  <cassert>
 
