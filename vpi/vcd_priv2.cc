@@ -224,7 +224,7 @@ extern "C" void vcd_work_sync(void)
 
       if (work_queue_fill > 0) {
             std::unique_lock<std::mutex> lock(work_queue_mutex);
-            work_queue_is_empty_sig.wait(lock, []{ return !(work_queue_fill > 0); });
+            work_queue_is_empty_sig.wait(lock, []{ return work_queue_fill == 0; });
       }
 }
 
