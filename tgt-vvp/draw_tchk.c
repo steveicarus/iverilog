@@ -1,7 +1,6 @@
-#ifndef IVL_sdf_parse_priv_h
-#define IVL_sdf_parse_priv_h
 /*
- * Copyright (c) 2007-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2023 Leo Moser (leo.moser@pm.me)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,15 +18,21 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+# include  "vvp_priv.h"
+# include  <stdlib.h>
+# include  <math.h>
+# include  <string.h>
+# include  <inttypes.h>
+# include  <limits.h>
+# include  <assert.h>
+# include  "ivl_alloc.h"
+
 /*
- * This file is only included by sdf_parse.y and sdf_lexor.lex. It is
- * used to share declarations between the parse and the lexor.
+ * This function draws a timing check
  */
+void draw_tchk_in_scope(ivl_tchk_t tchk)
+{
+      // TODO use nexus???
 
-  /* Path to source for error messages. */
-extern const char*sdf_parse_path;
-
-/* Hierarchy separator character to use. */
-extern char sdf_use_hchar;
-
-#endif /* IVL_sdf_parse_priv_h */
+      fprintf(vvp_out, "    .tchk_width ;\n");
+}
