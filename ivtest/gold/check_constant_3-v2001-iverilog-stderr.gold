@@ -1,0 +1,2 @@
+ivltests/check_constant_3.v:5: error: A reference to a net or variable (`Value1') is not allowed in a constant expression.
+Elaboration failed

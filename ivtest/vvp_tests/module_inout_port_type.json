@@ -1,0 +1,5 @@
+{
+    "type"   : "normal",
+    "source" : "module_inout_port_type.v",
+    "iverilog-args" : [ "-g2009" ]
+}

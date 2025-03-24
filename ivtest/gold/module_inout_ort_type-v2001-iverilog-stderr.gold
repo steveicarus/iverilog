@@ -1,0 +1,2 @@
+ivltests/module_inout_port_type.v:6: error: Net data type requires SystemVerilog.
+ivltests/module_inout_port_type.v:7: error: Net data type requires SystemVerilog.
