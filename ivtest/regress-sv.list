@@ -71,8 +71,8 @@ always_comb		normal,-g2005-sv	ivltests
 always_comb_fail	CE,-g2005-sv		ivltests
 always_comb_fail3	CE,-g2005-sv		ivltests
 always_comb_fail4	CE,-g2005-sv		ivltests
-always_comb_no_sens	nornal,-g2005-sv	ivltests gold=always_comb_no_sens.gold
-always_comb_rfunc	nornal,-g2005-sv	ivltests
+always_comb_no_sens	normal,-g2005-sv	ivltests gold=always_comb_no_sens.gold
+always_comb_rfunc	normal,-g2005-sv	ivltests
 always_comb_trig	normal,-g2005-sv	ivltests
 always_comb_void_func	normal,-g2005-sv	ivltests
 always_comb_warn	normal,-g2005-sv	ivltests gold=always_comb_warn.gold
