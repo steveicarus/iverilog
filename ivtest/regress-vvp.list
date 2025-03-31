@@ -64,7 +64,7 @@ br_gh1180a			vvp_tests/br_gh1180a.json
 br_gh1180b			vvp_tests/br_gh1180b.json
 br_gh1181			vvp_tests/br_gh1181.json
 br_gh1184			vvp_tests/br_gh1184.json
-ca_time_real`			vvp_tests/ca_time_real.json
+ca_time_real			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json
 case2-S				vvp_tests/case2-S.json
