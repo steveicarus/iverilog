@@ -1,0 +1,5 @@
+{
+    "type"   : "normal",
+    "source" : "check_constant_3.v",
+    "iverilog-args" : [ "-g2009" ]
+}

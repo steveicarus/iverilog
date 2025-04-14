@@ -204,8 +204,6 @@ bitwidth2		normal			ivltests
 blankport		normal			ivltests main # PR 204 Stephan Boettcher -
 block_only_with_var_def normal			ivltests
 bnot			normal			ivltests # test triggered an overzealous assert in vvm
-br605a			normal			ivltests
-br605b			normal			ivltests
 br916a			normal			ivltests gold=br916a.gold
 br916b			normal			ivltests gold=br916b.gold
 br918a			normal			ivltests
@@ -231,7 +229,6 @@ br961a			CE			ivltests
 br965			normal			ivltests
 br967			normal			ivltests
 br968			normal			ivltests
-br971			normal			ivltests
 br972			normal			ivltests
 br977			normal			ivltests
 br982			CE			ivltests
@@ -248,10 +245,6 @@ br1007			normal,-Wselect-range	ivltests gold=br1007.gold
 br1008			normal			ivltests gold=br1008.gold
 br1015a			CE			ivltests
 br1019			normal			ivltests
-br1027			normal			ivltests
-br1027a			CE			ivltests gold=br1027a.gold
-br1027c			CE			ivltests gold=br1027c.gold
-br1027e			CE			ivltests gold=br1027e.gold
 br1029a			normal			ivltests gold=br1029a.gold
 br1029b			normal			ivltests gold=br1029a.gold
 br1029c			CE			ivltests gold=br1029c.gold
@@ -269,8 +262,6 @@ br_gh19			normal			ivltests
 br_gh19a		normal			ivltests
 br_gh19b		normal			ivltests
 br_gh22			normal			ivltests
-br_gh25a		CE			ivltests
-br_gh25b		CE			ivltests
 br_gh26			CE			ivltests
 br_gh28			normal			ivltests
 br_gh30			normal			ivltests
@@ -338,7 +329,6 @@ br_gh508b		normal			ivltests
 br_gh515		normal			ivltests
 br_gh531		normal			ivltests gold=br_gh531.gold
 br_gh533		CE			ivltests
-br_gh567		normal,-g2001		ivltests gold=br_gh567.gold
 br_gh621		normal			ivltests
 br_gh632		normal			ivltests
 br_gh632b		normal,-S		ivltests
@@ -363,7 +353,6 @@ br_gh1175f		CE			ivltests gold=br_gh1175f.gold
 br_gh1178a		CE			ivltests gold=br_gh1178a.gold
 br_gh1178b		normal			ivltests
 br_gh1178c		normal			ivltests
-br_gh1182		CE			ivltests gold=br_gh1182.gold
 br_ml20150315		normal			ivltests gold=br_ml_20150315.gold
 br_ml20150321		CE			ivltests
 br_mw20171108		normal			ivltests
@@ -394,26 +383,6 @@ casez3.10C		normal			ivltests
 casez3.10D		normal			ivltests
 casez3.10E		normal			ivltests # Use ? and z in label
 cast_int		normal			ivltests
-check_constant_1	CE			ivltests
-check_constant_2	CE			ivltests
-check_constant_3	CE,-g1995		ivltests
-check_constant_4	CE			ivltests
-check_constant_5	CE			ivltests
-check_constant_6	CE			ivltests
-check_constant_7	CE			ivltests
-check_constant_8	CE			ivltests
-check_constant_9	CE			ivltests
-check_constant_10	CE			ivltests
-check_constant_11	CE			ivltests
-check_constant_12	CE			ivltests
-check_constant_13	CE			ivltests
-check_constant_14	CE			ivltests
-check_constant_15	CE			ivltests
-check_constant_16	CE			ivltests
-check_constant_17	CE			ivltests
-check_constant_18	CE			ivltests
-check_constant_19	CE			ivltests
-check_constant_20	CE			ivltests
 cmos			normal			ivltests gold=cmos.gold
 comp1000		normal			ivltests gold=comp1000.gold
 comp1001		normal			ivltests gold=comp1001.gold
@@ -561,7 +530,6 @@ function3.11B		normal			ivltests
 function3.11C		normal			ivltests
 function3.11D		normal			ivltests
 function3.11F		normal			ivltests
-function4		CE			ivltests # Functions must have at least one argument
 function5		CO			ivltests # PR 184
 function6		normal			ivltests
 function7		normal			ivltests
@@ -667,7 +635,6 @@ modparam		normal			ivltests top # Override parameter via passed down value
 module3.12A		normal			ivltests main
 module3.12B		normal			ivltests
 module_inout_port_list_def CE			ivltests # inout ports do not support default values
-module_inout_port_type	CE			ivltests
 module_input_port_list_def CE			ivltests # input ports only support default values in SV
 module_input_port_type	CE			ivltests
 module_nonansi_fail1	CE			ivltests
