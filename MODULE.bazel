@@ -1,0 +1,15 @@
+module(
+    name = "iverilog",
+    version = "12.0.0",
+)
+
+bazel_dep(name = "gperf", version = "3.1")
+bazel_dep(name = "bzip2", version = "1.0.8.bcr.2")
+bazel_dep(name = "rules_flex", version = "0.4")
+bazel_dep(name = "rules_bison", version = "0.4")
+bazel_dep(name = "sed", version = "4.9.bcr.1")
+bazel_dep(name = "rules_m4", version = "0.3")
+bazel_dep(name = "readline", version = "8.2.bcr.1")
+bazel_dep(name = "zlib", version = "1.3.1.bcr.5")
+bazel_dep(name = "rules_cc", version = "0.1.1")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
