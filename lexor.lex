@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -184,8 +184,8 @@ TU [munpf]
      "always" statements. */
 
 "// Icarus preprocessor had ("[0-9]+") errors."\n { pre_process_failed(yytext); }
-"//"{W}*"synthesis"{W}+"translate_on"{W}*\n { pform_mc_translate_on(true); }
-"//"{W}*"synthesis"{W}+"translate_off"{W}*\n { pform_mc_translate_on(false); }
+"//"{W}*"synthesis"{W}+"translate_on"{W}*\n { pform_mc_translate_on(true); yylloc.first_line += 1; }
+"//"{W}*"synthesis"{W}+"translate_off"{W}*\n { pform_mc_translate_on(false); yylloc.first_line += 1; }
 "//" { comment_enter = YY_START; BEGIN(LCOMMENT); }
 <LCOMMENT>.    { yymore(); }
 <LCOMMENT>\n   { yylloc.first_line += 1; BEGIN(comment_enter); }
