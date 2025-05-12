@@ -1,0 +1,5 @@
+{
+    "type"   : "normal",
+    "source" : "function4.v",
+    "iverilog-args" : [ "-g2009" ]
+}

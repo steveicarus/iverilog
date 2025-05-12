@@ -1,0 +1,8 @@
+ivltests/check_constant_6.v:3: error: A reference to a net or variable (`N') is not allowed in a constant expression.
+ivltests/check_constant_6.v:3: error: Dimensions must be constant.
+ivltests/check_constant_6.v:3       : This MSB expression violates the rule: N
+ivltests/check_constant_6.v:9: error: can not select part of scalar: In
+ivltests/check_constant_6.v:9: error: Unable to elaborate r-value: In['sd0]
+ivltests/check_constant_6.v:10: error: can not select part of scalar: In
+ivltests/check_constant_6.v:10: error: Unable to elaborate r-value: In['sd7:'sd1]
+6 error(s) during elaboration.

@@ -1,3 +1,0 @@
-./ivltests/br_gh1182.v:3: error: Variable declaration in unnamed block requires SystemVerilog.
-./ivltests/br_gh1182.v:4: error: Variable declaration in unnamed block requires SystemVerilog.
-./ivltests/br_gh1182.v:8: error: Variable declaration in unnamed block requires SystemVerilog.

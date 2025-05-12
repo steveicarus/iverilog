@@ -1,0 +1,6 @@
+{
+    "type"   : "CE",
+    "source" : "check_constant_13.v",
+    "iverilog-args" : [ "-g2001" ],
+    "gold"   : "check_constant_13-v2001"
+}

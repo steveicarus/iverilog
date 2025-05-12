@@ -1,7 +1,0 @@
-./ivltests/br_gh567.v:7: warning: A negative value (-1) has been assigned to genvar 'i'.
-./ivltests/br_gh567.v:7:        : This is illegal in Verilog-2001. Use at least -g2005 to remove this warning.
-  3
-  2
-  1
-  0
-PASSED

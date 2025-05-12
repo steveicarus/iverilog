@@ -1,0 +1,6 @@
+{
+    "type"   : "CE",
+    "source" : "module_inout_port_type.v",
+    "iverilog-args" : [ "-g2001" ],
+    "gold"   : "module_inout_ort_type-v2001"
+}

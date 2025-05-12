@@ -1,0 +1,5 @@
+{
+    "type"   : "NI",
+    "source" : "br971.v",
+    "iverilog-args" : [ "-g2009" ]
+}

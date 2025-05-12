@@ -193,7 +193,6 @@ sf_onehot0		RE,-g2005-sv		ivltests
 # IEEE 1364-1995 only supports register arrays.
 array_lval_select1	normal,-DVLOG95		ivltests
 array_lval_select2	normal,-DVLOG95		ivltests
-array_lval_select3a	TE,-DVLOG95		ivltests
 array_lval_select3b	CE,-DVLOG95		ivltests
 array_lval_select3c	normal,-DVLOG95		ivltests
 array_select		CE,-pallowsigned=1	ivltests
@@ -625,7 +624,6 @@ analog2			CE,-gverilog-ams	ivltests
 br955			CE			ivltests
 br988			CE			ivltests
 br_gh345		CE			ivltests
-br_gh567		CE,-g2001,-pallowsigned=1	ivltests
 br_gh568		CE,-g2009,-pallowsigned=1	ivltests
 br_gh621		CE			ivltests # Also automatic tasks
 complex_lidx		CE			ivltests
