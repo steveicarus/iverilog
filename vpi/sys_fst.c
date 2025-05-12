@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,7 +33,7 @@
 # include  "ivl_alloc.h"
 
 static int dump_no_date = 0;
-static struct fstContext *dump_file = NULL;
+static fstWriterContext *dump_file = NULL;
 
 static struct t_vpi_time zero_delay = { vpiSimTime, 0, 0, 0.0 };
 
