@@ -467,7 +467,6 @@ static PLI_INT32 sys_dumpall_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 static void *close_dumpfile(void)
 {
-      vcd_work_terminate();
       lxt2_wr_close(dump_file);
       dump_file = NULL;
       return NULL;
