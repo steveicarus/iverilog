@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1482,7 +1482,7 @@ void pform_endmodule(const char*name, bool inside_celldefine,
 void pform_genvars(const struct vlltype&li, list<pform_ident_t>*names)
 {
       list<pform_ident_t>::const_iterator cur;
-      for (cur = names->begin(); cur != names->end() ; *cur++) {
+      for (cur = names->begin(); cur != names->end() ; ++cur) {
 	    PGenvar*genvar = new PGenvar();
 	    FILE_NAME(genvar, li);
 

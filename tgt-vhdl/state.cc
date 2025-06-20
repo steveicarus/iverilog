@@ -1,7 +1,7 @@
 /*
  *  Managing global state for the VHDL code generator.
  *
- *  Copyright (C) 2009  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2009-2025  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -256,7 +256,7 @@ static bool same_scope_type_name(ivl_scope_t a, ivl_scope_t b)
    if (nparams_a != nparams_b)
       return false;
 
-   for (unsigned i = 0; i < nparams_a; i++) {
+   for (unsigned i = 0; i < nparams_a; ++i) {
       ivl_parameter_t param_a = ivl_scope_param(a, i);
       ivl_parameter_t param_b = ivl_scope_param(b, i);
 
@@ -304,7 +304,7 @@ static bool same_scope_type_name(ivl_scope_t a, ivl_scope_t b)
  */
 bool seen_this_scope_type(ivl_scope_t s)
 {
-   for (auto cur = g_default_scopes.begin() ; cur != g_default_scopes.end() ; cur++) {
+   for (auto cur = g_default_scopes.begin() ; cur != g_default_scopes.end() ; ++cur) {
      if (same_scope_type_name(s, *cur))
        return true;
    }
