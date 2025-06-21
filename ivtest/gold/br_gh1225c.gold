@@ -1,0 +1,10 @@
+./ivltests/br_gh1225c.v:3: error: The generate "loop" is not incrementing. The previous and next genvar values are (-1).
+./ivltests/br_gh1225c.v:6: error: Trying to create a duplicate generate scope named "$gen2[0]".
+./ivltests/br_gh1225c.v:9: error: Generate "loop" initialization expression cannot have undefined bits. given (1'bx).
+./ivltests/br_gh1225c.v:12: error: Generate "loop" increment expression cannot have undefined bits, given ((gv4)+(1'bx)).
+./ivltests/br_gh1225c.v:15: error: Generate "loop" conditional expression cannot have undefined bits. given (1'bx).
+./ivltests/br_gh1225c.v:18: error: Unable to bind parameter `gv6' in `test'
+./ivltests/br_gh1225c.v:18: error: Cannot evaluate generate "loop" initialization expression: (gv6)+('sd1)
+./ivltests/br_gh1225c.v:21: error: Probable infinite loop detected in generate "loop". It has run for 500001 iterations.
+./ivltests/br_gh1225c.v:24: error: Probable infinite loop detected in generate "loop". It has run for 500001 iterations.
+9 error(s) during elaboration.

@@ -1,0 +1,4 @@
+./ivltests/br_gh1225b.v:5: error: 'named' has already been declared in this scope.
+./ivltests/br_gh1225b.v:3:      : It was declared here as a variable.
+./ivltests/br_gh1225b.v:9: error: 'match' has already been declared in this scope.
+./ivltests/br_gh1225b.v:8:      : It was declared here as a generate block.

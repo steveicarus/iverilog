@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -942,7 +942,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    while (cscope && !cscope->find_genvar(loop_index)) {
 		  if (cscope->symbol_exists(loop_index)) {
 			cerr << get_fileline() << ": error: "
-			     << "generate loop variable '" << loop_index
+			     << "generate \"loop\" variable '" << loop_index
 			     << "' is not a genvar in this scope." << endl;
 			des->errors += 1;
 			return false;
@@ -967,8 +967,16 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
       NetExpr*init_ex = elab_and_eval(des, container, loop_init, -1, true);
       NetEConst*init = dynamic_cast<NetEConst*> (init_ex);
       if (init == 0) {
-	    cerr << get_fileline() << ": error: Cannot evaluate genvar"
-		 << " init expression: " << *loop_init << endl;
+	    cerr << get_fileline() << ": error: "
+	            "Cannot evaluate generate \"loop\" initialization "
+		    "expression: " << *loop_init << endl;
+	    des->errors += 1;
+	    return false;
+      }
+      if (! init->value().is_defined()) {
+	    cerr << get_fileline() << ": error: "
+	         << "Generate \"loop\" initialization expression cannot have "
+		    "undefined bits. given (" << *loop_init << ")." << endl;
 	    des->errors += 1;
 	    return false;
       }
@@ -979,16 +987,25 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 
       if (debug_scopes)
 	    cerr << get_fileline() << ": debug: genvar init = " << genvar << endl;
+
       container->genvar_tmp = loop_index;
       container->genvar_tmp_val = genvar;
       NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1, true);
       NetEConst*test = dynamic_cast<NetEConst*>(test_ex);
       if (test == 0) {
-	    cerr << get_fileline() << ": error: Cannot evaluate genvar"
-		 << " conditional expression: " << *loop_test << endl;
+	    cerr << get_fileline() << ": error: Cannot evaluate generate \"loop\" "
+		    "conditional expression: " << *loop_test << endl;
 	    des->errors += 1;
 	    return false;
       }
+      if (! test->value().is_defined()) {
+	    cerr << get_fileline() << ": error: "
+		    "Generate \"loop\" conditional expression cannot have "
+	            "undefined bits. given (" << *loop_test << ")." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+      unsigned long loop_count = 1;
       while (test->value().as_long()) {
 
 	      // The actual name of the scope includes the genvar so
@@ -996,10 +1013,17 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	      // container. The format of using [] is part of the
 	      // Verilog standard.
 	    hname_t use_name (scope_name, genvar);
+	    if (container->child(use_name)) {
+		  cerr << get_fileline() << ": error: "
+		          "Trying to create a duplicate generate scope named \""
+		       << use_name << "\"." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
 
 	    if (debug_scopes)
 		  cerr << get_fileline() << ": debug: "
-		       << "Create generated scope " << use_name << endl;
+		          "Create generated scope " << use_name << endl;
 
 	    NetScope*scope = new NetScope(container, use_name,
 					  NetScope::GENBLOCK);
@@ -1025,7 +1049,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 		  scope->set_parameter(loop_index, gp, *this);
 		  if (debug_scopes)
 			cerr << get_fileline() << ": debug: "
-			     << "Create implicit localparam "
+			        "Create implicit localparam "
 			     << loop_index << " = " << genvar_verinum << endl;
 	    }
 
@@ -1035,8 +1059,8 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    NetExpr*step_ex = elab_and_eval(des, container, loop_step, -1, true);
 	    NetEConst*step = dynamic_cast<NetEConst*>(step_ex);
 	    if (step == 0) {
-		  cerr << get_fileline() << ": error: Cannot evaluate genvar"
-		       << " step expression: " << *loop_step << endl;
+		  cerr << get_fileline() << ": error: Cannot evaluate generate "
+		          "\"loop\" increment expression: " << *loop_step << endl;
 		  des->errors += 1;
 		  return false;
 	    }
@@ -1044,7 +1068,24 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 		  cerr << get_fileline() << ": debug: genvar step from "
 		       << genvar << " to " << step->value().as_long() << endl;
 
-	    genvar = step->value().as_long();
+	    if (! step->value().is_defined()) {
+		  cerr << get_fileline() << ": error: "
+		          "Generate \"loop\" increment expression cannot have "
+		          "undefined bits, given (" << *loop_step << ")." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+	    long next_genvar;
+	    next_genvar = step->value().as_long();
+	    if (next_genvar == genvar) {
+		  cerr << get_fileline() << ": error: "
+		       << "The generate \"loop\" is not incrementing. The "
+		          "previous and next genvar values are ("
+		       << genvar << ")." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+	    genvar = next_genvar;
 	    check_for_valid_genvar_value_(genvar);
 	    container->genvar_tmp_val = genvar;
 	    delete step;
@@ -1052,6 +1093,24 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    test_ex = elab_and_eval(des, container, loop_test, -1, true);
 	    test = dynamic_cast<NetEConst*>(test_ex);
 	    ivl_assert(*this, test);
+	    if (! test->value().is_defined()) {
+		  cerr << get_fileline() << ": error: "
+		          "The generate \"loop\" conditional expression cannot have "
+		          "undefined bits. given (" << *loop_test << ")." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+
+	    // If there are half a million iterations this is likely an infinite loop!
+	    if (loop_count > 500000) {
+		  cerr << get_fileline() << ": error: "
+		       << "Probable infinite loop detected in generate \"loop\". "
+		          "It has run for " << loop_count
+		       << " iterations." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+	    ++loop_count;
       }
 
 	// Clear the genvar_tmp field in the scope to reflect that the

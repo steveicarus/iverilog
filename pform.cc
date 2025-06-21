@@ -1537,6 +1537,14 @@ void pform_start_generate_for(const struct vlltype&li,
       pform_cur_generate->loop_test = test;
       pform_cur_generate->loop_step = next;
 
+      if (strcmp(ident1, ident2)) {
+	    cerr << li << ": error: "
+	         << "A generate \"loop\" requires the initialization genvar ("
+	         << ident1 << ") to match the iteration genvar ("
+	         << ident2 << ")." << endl;
+	    error_count += 1;
+      }
+
       delete[]ident1;
       delete[]ident2;
 }
