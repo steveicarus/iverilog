@@ -1,7 +1,7 @@
 #ifndef IVL_logic_H
 #define IVL_logic_H
 /*
- * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,6 +36,8 @@ class vvp_fun_boolean_ : public vvp_net_fun_t, protected vvp_gen_event_s {
                      vvp_context_t);
       void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
 			unsigned base, unsigned vwid, vvp_context_t);
+      void recv_real(vvp_net_ptr_t p, double real,
+                     vvp_context_t);
 
     protected:
       vvp_vector4_t input_[4];
@@ -74,28 +76,40 @@ class vvp_fun_impl : public vvp_fun_boolean_ {
 };
 
 /*
- * The buffer functor is a very primitive functor that takes the input
- * from port-0 (and only port-0) and retransmits it as a vvp_vector4_t.
- * The retransmitted vector has all Z values changed to X, just like
- * the buf(Q,D) gate in Verilog.
+ * vvp_fun_buf_not_ is just a common hook for holding operands.
  */
-class vvp_fun_buf: public vvp_net_fun_t, private vvp_gen_event_s {
+class vvp_fun_buf_not_ : public vvp_net_fun_t, protected vvp_gen_event_s {
 
     public:
-      explicit vvp_fun_buf(unsigned wid);
-      virtual ~vvp_fun_buf();
+      explicit vvp_fun_buf_not_(unsigned wid);
+      ~vvp_fun_buf_not_();
 
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit,
                      vvp_context_t);
       void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
 			unsigned base, unsigned vwid, vvp_context_t);
+      void recv_real(vvp_net_ptr_t p, double real,
+                     vvp_context_t ctx);
+
+    protected:
+      vvp_vector4_t input_;
+      vvp_net_t*net_;
+};
+
+/*
+ * The buffer functor is a very primitive functor that takes the input
+ * from port-0 (and only port-0) and retransmits it as a vvp_vector4_t.
+ * The retransmitted vector has all Z values changed to X, just like
+ * the buf(Q,D) gate in Verilog.
+ */
+class vvp_fun_buf: public vvp_fun_buf_not_ {
+
+    public:
+      explicit vvp_fun_buf(unsigned wid);
+      virtual ~vvp_fun_buf();
 
     private:
       void run_run();
-
-    private:
-      vvp_vector4_t input_;
-      vvp_net_t*net_;
 };
 
 /*
@@ -186,23 +200,14 @@ class vvp_fun_muxr : public vvp_net_fun_t, private vvp_gen_event_s {
       sel_type select_;
 };
 
-class vvp_fun_not: public vvp_net_fun_t, private vvp_gen_event_s {
+class vvp_fun_not: public vvp_fun_buf_not_ {
 
     public:
       explicit vvp_fun_not(unsigned wid);
       virtual ~vvp_fun_not();
 
-      void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit,
-                     vvp_context_t);
-      void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t);
-
     private:
       void run_run();
-
-    private:
-      vvp_vector4_t input_;
-      vvp_net_t*net_;
 };
 
 class vvp_fun_or  : public vvp_fun_boolean_ {

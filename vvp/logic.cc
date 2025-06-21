@@ -44,8 +44,7 @@ void vvp_fun_boolean_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
                                  vvp_context_t)
 {
       unsigned port = ptr.port();
-      if (input_[port] .eeq( bit ))
-	    return;
+      if (input_[port] .eeq( bit )) return;
 
       input_[port] = bit;
       if (net_ == 0) {
@@ -70,6 +69,12 @@ void vvp_fun_boolean_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 	    net_ = ptr.ptr();
 	    schedule_functor(this);
       }
+}
+
+void vvp_fun_boolean_::recv_real(vvp_net_ptr_t ptr, double real,
+                                 vvp_context_t ctx)
+{
+      recv_vec4(ptr, double_to_vector4_LSB(real), ctx);
 }
 
 vvp_fun_and::vvp_fun_and(unsigned wid, bool invert)
@@ -156,10 +161,58 @@ void vvp_fun_impl::run_run()
       ptr->send_vec4(result, 0);
 }
 
-vvp_fun_buf::vvp_fun_buf(unsigned wid)
+vvp_fun_buf_not_::vvp_fun_buf_not_(unsigned wid)
 : input_(wid, BIT4_Z)
 {
       net_ = 0;
+}
+
+vvp_fun_buf_not_::~vvp_fun_buf_not_()
+{
+}
+
+void vvp_fun_buf_not_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                                 vvp_context_t)
+{
+      if (ptr.port() != 0) return;
+
+      if (input_ .eeq( bit )) return;
+
+      input_ = bit;
+      if (net_ == 0) {
+	    net_ = ptr.ptr();
+	    schedule_functor(this);
+      }
+}
+
+void vvp_fun_buf_not_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                                    unsigned base, unsigned vwid, vvp_context_t)
+{
+      if (ptr.port() != 0) return;
+
+      assert(base + bit.size() <= vwid);
+
+	// Set the input part. If nothing changes, then break.
+      bool flag = input_.set_vec(base, bit);
+      if (flag == false) return;
+
+      if (net_ == 0) {
+	    net_ = ptr.ptr();
+	    schedule_functor(this);
+      }
+}
+
+void vvp_fun_buf_not_::recv_real(vvp_net_ptr_t ptr, double real,
+                                 vvp_context_t ctx)
+{
+      if (ptr.port() != 0) return;
+
+      recv_vec4(ptr, double_to_vector4_LSB(real), ctx);
+}
+
+vvp_fun_buf::vvp_fun_buf(unsigned wid)
+: vvp_fun_buf_not_(wid)
+{
       count_functors_logic += 1;
 }
 
@@ -171,42 +224,6 @@ vvp_fun_buf::~vvp_fun_buf()
  * The buf functor is very simple--change the z bits to x bits in the
  * vector it passes, and propagate the result.
  */
-void vvp_fun_buf::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-                            vvp_context_t)
-{
-      if (ptr.port() != 0)
-	    return;
-
-      if (input_ .eeq( bit ))
-	    return;
-
-      input_ = bit;
-
-      if (net_ == 0) {
-	    net_ = ptr.ptr();
-	    schedule_functor(this);
-      }
-}
-
-void vvp_fun_buf::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-                               unsigned base, unsigned vwid, vvp_context_t)
-{
-      if (ptr.port() != 0)
-	    return;
-
-      assert(base + bit.size() <= vwid);
-
-	// Set the input part. If nothing changes, then break.
-      bool flag = input_.set_vec(base, bit);
-      if (flag == false)
-	    return;
-
-      if (net_ == 0) {
-	    net_ = ptr.ptr();
-	    schedule_functor(this);
-      }
-}
-
 void vvp_fun_buf::run_run()
 {
       vvp_net_t*ptr = net_;
@@ -479,9 +496,8 @@ void vvp_fun_muxz::run_run()
 }
 
 vvp_fun_not::vvp_fun_not(unsigned wid)
-: input_(wid, BIT4_Z)
+: vvp_fun_buf_not_(wid)
 {
-      net_ = 0;
       count_functors_logic += 1;
 }
 
@@ -493,41 +509,6 @@ vvp_fun_not::~vvp_fun_not()
  * The not functor is very simple--change the z bits to x bits in the
  * vector it passes, and propagate the inverted result.
  */
-void vvp_fun_not::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-                            vvp_context_t)
-{
-      if (ptr.port() != 0)
-	    return;
-
-      if (input_ .eeq( bit ))
-	    return;
-
-      input_ = bit;
-      if (net_ == 0) {
-	    net_ = ptr.ptr();
-	    schedule_functor(this);
-      }
-}
-
-void vvp_fun_not::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-                               unsigned base, unsigned vwid, vvp_context_t)
-{
-      if (ptr.port() != 0)
-	    return;
-
-      assert(base + bit.size() <= vwid);
-
-	// Set the part value. If nothing changes, then break.
-      bool flag = input_.set_vec(base, bit);
-      if (flag == false)
-	    return;
-
-      if (net_ == 0) {
-	    net_ = ptr.ptr();
-	    schedule_functor(this);
-      }
-}
-
 void vvp_fun_not::run_run()
 {
       vvp_net_t*ptr = net_;

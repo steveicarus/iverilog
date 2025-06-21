@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_net_H
 #define IVL_vvp_net_H
 /*
- * Copyright (c) 2004-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -572,6 +572,15 @@ extern bool vector2_to_value(const vvp_vector2_t&a, int32_t&val, bool is_signed)
 
 extern vvp_vector4_t vector4_from_text(const char*bits, unsigned wid);
 
+inline vvp_vector4_t double_to_vector4_LSB(double real)
+{
+      // Convert the double to a bit vector and then use the LSB.
+      // You can use very large real values and break the 64-bit
+      // size, but that's really horrible code so don't do that!
+      vvp_vector4_t bit = vvp_vector4_t(64, real);
+      bit.resize(1);
+      return bit;
+}
 
 /*
  * vvp_vector4array_t

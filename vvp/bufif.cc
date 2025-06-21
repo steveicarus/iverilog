@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -86,4 +86,10 @@ void vvp_fun_bufif::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 			         unsigned base, unsigned vwid, vvp_context_t ctx)
 {
       recv_vec4_pv_(ptr, bit, base, vwid, ctx);
+}
+
+void vvp_fun_bufif::recv_real(vvp_net_ptr_t ptr, double real,
+                              vvp_context_t ctx)
+{
+      recv_vec4(ptr, double_to_vector4_LSB(real), ctx);
 }

@@ -1,7 +1,7 @@
 #ifndef IVL_bufif_H
 #define IVL_bufif_H
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,9 +39,10 @@ class vvp_fun_bufif  : public vvp_net_fun_t {
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t);
-
       void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 			unsigned base, unsigned vwid, vvp_context_t ctx);
+      void recv_real(vvp_net_ptr_t port, double real,
+                     vvp_context_t ctx);
 
     private:
       vvp_vector4_t bit_;

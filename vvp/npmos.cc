@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -54,6 +54,12 @@ void vvp_fun_pmos_::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
 			         unsigned base, unsigned vwid)
 {
       recv_vec8_pv_(ptr, bit, base, vwid);
+}
+
+void vvp_fun_pmos_::recv_real(vvp_net_ptr_t ptr, double real,
+                              vvp_context_t ctx)
+{
+      recv_vec4(ptr, double_to_vector4_LSB(real), ctx);
 }
 
 void vvp_fun_pmos_::generate_output_(vvp_net_ptr_t ptr)
@@ -177,6 +183,12 @@ void vvp_fun_cmos_::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
 			         unsigned base, unsigned vwid)
 {
       recv_vec8_pv_(ptr, bit, base, vwid);
+}
+
+void vvp_fun_cmos_::recv_real(vvp_net_ptr_t ptr, double real,
+                              vvp_context_t ctx)
+{
+      recv_vec4(ptr, double_to_vector4_LSB(real), ctx);
 }
 
 void vvp_fun_cmos_::generate_output_(vvp_net_ptr_t ptr)
