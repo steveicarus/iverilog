@@ -3,7 +3,7 @@ module test;
   for (genvar gv1 = -1; gv1 <= 2; gv1 = -1);
 
   // genvar duplicates.
-  for (genvar gv2 = 0; gv2 >= 0; gv2 = gv2 + 64'h80000000);
+  for (genvar gv2 = 0; gv2 >= 0; gv2 = gv2 === 1 ? gv2 - 1 : gv2 + 1);
 
   // undefined value in initialization
   for (genvar gv3 = 1'bx; gv3 <= 1; gv3 = gv3 + 1);
