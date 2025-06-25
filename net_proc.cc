@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -154,7 +154,8 @@ void NetCase::prune()
       }
 
 	// Prune the case expression
-      expr_ = pad_to_width(unpadded_expr->dup_expr(), prune_width, *expr_);
+      expr_ = pad_to_width(unpadded_expr->dup_expr(), prune_width,
+                           padded_expr->has_sign(), *expr_);
       delete padded_expr;
 
 	// Prune the case item expressions

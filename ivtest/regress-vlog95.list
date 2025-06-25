@@ -862,6 +862,7 @@ br_gh793		normal,-pallowsigned=1	ivltests
 br_gh1223a		normal,-g2009,-pallowsigned=1   ivltests
 br_gh1223b		normal,-g2009,-pallowsigned=1   ivltests
 br_gh1223c		normal,-g2009,-pallowsigned=1   ivltests
+br_gh1237		normal,-pallowsigned=1  ivltests
 ca_mult			normal,-pallowsigned=1	ivltests gold=ca_mult.gold
 cast_int		normal,-pallowsigned=1	ivltests
 cfunc_assign_op_vec	normal,-g2009,-pallowsigned=1	ivltests
