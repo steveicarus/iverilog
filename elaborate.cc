@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -265,6 +265,7 @@ NetNet *elaborate_unpacked_array(Design *des, NetScope *scope, const LineInfo &l
 		  return nullptr;
 	    } else if (dynamic_cast<PEAssignPattern*> (expr)) {
 		  auto net_expr = elaborate_rval_expr(des, scope, lval->array_type(), expr);
+		  if (! net_expr) return nullptr;
 		  expr_net = net_expr->synthesize(des, scope, net_expr);
 	    } else {
 		  cout << loc.get_fileline() << ": error: Can not assign"
