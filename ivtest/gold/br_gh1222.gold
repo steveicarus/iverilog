@@ -1,0 +1,7 @@
+./ivltests/br_gh1222.v:6: error: variable rout_ca1; cannot be driven by a primitive or continuous assignment with non-default strength.
+./ivltests/br_gh1222.v:6: error: variable rout_ca2; cannot be driven by a primitive or continuous assignment with non-default strength.
+./ivltests/br_gh1222.v:7: error: variable lout_ca1; cannot be driven by a primitive or continuous assignment with non-default strength.
+./ivltests/br_gh1222.v:7: error: variable lout_ca2; cannot be driven by a primitive or continuous assignment with non-default strength.
+./ivltests/br_gh1222.v:12: error: variable rout_gt; cannot be driven by a primitive or continuous assignment with non-default strength.
+./ivltests/br_gh1222.v:13: error: variable lout_gt; cannot be driven by a primitive or continuous assignment with non-default strength.
+10 error(s) during elaboration.

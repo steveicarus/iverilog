@@ -1,4 +1,4 @@
-// Copyright (c) 2015 CERN
+// Copyright (c) 2015-2025 CERN
 // @author Maciej Suminski <maciej.suminski@cern.ch>
 //
 // This source code is free software; you can redistribute it
@@ -20,7 +20,8 @@
 // Test for port inout mode.
 
 module vhdl_inout_test;
-logic a, b, c;
+wire a; // An inout port cannot connect to a variable, so make it a wire.
+logic b, c;
 vhdl_inout dut(a, b, c);
 
 initial begin
