@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -43,7 +43,8 @@ using namespace std;
  * make the l-value connections.
  */
 NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
-					 bool bidirectional_flag) const
+					 bool bidirectional_flag,
+					 bool var_allowed_in_sv) const
 {
       ivl_assert(*this, scope);
 
@@ -76,9 +77,9 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    }
 
 	    if (bidirectional_flag) {
-		  nets[idx] = parms_[idx]->elaborate_bi_net(des, scope);
+		  nets[idx] = parms_[idx]->elaborate_bi_net(des, scope, var_allowed_in_sv);
 	    } else {
-		  nets[idx] = parms_[idx]->elaborate_lnet(des, scope);
+		  nets[idx] = parms_[idx]->elaborate_lnet(des, scope, var_allowed_in_sv);
 	    }
 
 	    if (nets[idx] == 0) {
@@ -163,14 +164,16 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
       return osig;
 }
 
-NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope) const
+NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
+                                 bool var_allowed_in_sv) const
 {
-      return elaborate_lnet_common_(des, scope, false);
+      return elaborate_lnet_common_(des, scope, false, var_allowed_in_sv);
 }
 
-NetNet* PEConcat::elaborate_bi_net(Design*des, NetScope*scope) const
+NetNet* PEConcat::elaborate_bi_net(Design*des, NetScope*scope,
+                                   bool var_allowed_in_sv) const
 {
-      return elaborate_lnet_common_(des, scope, true);
+      return elaborate_lnet_common_(des, scope, true, var_allowed_in_sv);
 }
 
 bool PEConcat::is_collapsible_net(Design*des, NetScope*scope,
@@ -518,7 +521,8 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
  * so most of the work for both is done here.
  */
 NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
-					bool bidirectional_flag) const
+					bool bidirectional_flag,
+					bool var_allowed_in_sv) const
 {
       ivl_assert(*this, scope);
 
@@ -569,7 +573,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       // If this is SystemVerilog and the variable is not yet
       // assigned by anything, then convert it to an unresolved
       // wire.
-      if (gn_var_can_be_uwire()
+      if (gn_var_can_be_uwire() && var_allowed_in_sv
 	  && (sig->type() == NetNet::REG)
 	  && (sig->peek_lref() == 0) ) {
 	    sig->type(NetNet::UNRESOLVED_WIRE);
@@ -577,11 +581,14 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
       // Don't allow registers as assign l-values.
       if (sig->type() == NetNet::REG) {
-	    cerr << get_fileline() << ": error: reg " << sig->name()
-		 << "; cannot be driven by primitives"
-		 << " or continuous assignment." << endl;
+	    cerr << get_fileline() << ": error: variable " << sig->name()
+	         << "; cannot be driven by a primitive or continuous assignment";
+	    if(gn_var_can_be_uwire()) {
+		  cerr << " with non-default strength";
+	    }
+	    cerr << "." << endl;
 	    des->errors += 1;
-	    return 0;
+	    return nullptr;
       }
 
       // Some parts below need the tail component. This is a convenient
@@ -758,6 +765,8 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": error: Array " << path()
 		       << " needs " << sig->unpacked_dimensions() << " indices,"
 		       << " but got only " << path_tail.index.size() << ". (net)" << endl;
+		  cerr << get_fileline() << ":      : Assignment to a whole array requires SystemVerilog."
+		       << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -982,14 +991,16 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
  * Identifiers in continuous assignment l-values are limited to wires
  * and that ilk. Detect registers and memories here and report errors.
  */
-NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope) const
+NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
+                                bool var_allowed_in_sv) const
 {
-      return elaborate_lnet_common_(des, scope, false);
+      return elaborate_lnet_common_(des, scope, false, var_allowed_in_sv);
 }
 
-NetNet* PEIdent::elaborate_bi_net(Design*des, NetScope*scope) const
+NetNet* PEIdent::elaborate_bi_net(Design*des, NetScope*scope,
+                                  bool var_allowed_in_sv) const
 {
-      return elaborate_lnet_common_(des, scope, true);
+      return elaborate_lnet_common_(des, scope, true, var_allowed_in_sv);
 }
 
 /*

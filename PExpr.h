@@ -1,7 +1,7 @@
 #ifndef IVL_PExpr_H
 #define IVL_PExpr_H
 /*
- * Copyright (c) 1998-2024 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2025 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -156,13 +156,15 @@ class PExpr : public LineInfo {
 
 	// This method elaborates the expression as gates, but
 	// restricted for use as l-values of continuous assignments.
-      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
+      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope,
+                                     bool var_allowed_in_sv) const;
 
 	// This is similar to elaborate_lnet, except that the
 	// expression is evaluated to be bi-directional. This is
 	// useful for arguments to inout ports of module instances and
 	// ports of tran primitives.
-      virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
+      virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope,
+                                       bool var_allowed_in_sv) const;
 
 	// Expressions that can be in the l-value of procedural
 	// assignments can be elaborated with this method. If the
@@ -251,8 +253,10 @@ class PEConcat : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
 
-      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
-      virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
+      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope,
+                                     bool var_allowed_in_sv) const;
+      virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope,
+                                       bool var_allowed_in_sv) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     ivl_type_t type, unsigned flags) const;
@@ -269,7 +273,8 @@ class PEConcat : public PExpr {
                                       NetNet::PortType port_type) const;
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
-				     bool bidirectional_flag) const;
+				     bool bidirectional_flag,
+				     bool var_allowed_in_sv) const;
     private:
       std::vector<PExpr*>parms_;
       std::valarray<width_mode_t>width_modes_;
@@ -355,9 +360,9 @@ class PEIdent : public PExpr {
 				  width_mode_t&mode);
 
 	// Identifiers are allowed (with restrictions) is assign l-values.
-      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
+      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope, bool var_allowed_in_sv) const;
 
-      virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
+      virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope, bool var_allowed_in_sv) const;
 
 	// Identifiers are also allowed as procedural assignment l-values.
       virtual NetAssign_* elaborate_lval(Design*des,
@@ -545,7 +550,8 @@ class PEIdent : public PExpr {
 
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
-				     bool bidirectional_flag) const;
+				     bool bidirectional_flag,
+				     bool var_allowed_in_sv) const;
 
 
       bool eval_part_select_(Design*des, NetScope*scope, NetNet*sig,

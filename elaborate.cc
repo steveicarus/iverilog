@@ -124,7 +124,10 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       ivl_assert(*this, pin(1));
 
 	/* Elaborate the l-value. */
-      NetNet*lval = pin(0)->elaborate_lnet(des, scope);
+        // A continuous assignment can drive a variable if the default strength is used.
+      bool var_allowed_in_sv = (drive0 == IVL_DR_STRONG &&
+                                drive1 == IVL_DR_STRONG) ? true : false;
+      NetNet*lval = pin(0)->elaborate_lnet(des, scope, var_allowed_in_sv);
       if (lval == 0) {
 	    return;
       }
@@ -771,10 +774,11 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  return;
 	    }
+	      // Gates can never have variable output ports.
             if (lval_count > gate_count)
-	          lval_sigs[idx] = pin(idx)->elaborate_bi_net(des, scope);
+	          lval_sigs[idx] = pin(idx)->elaborate_bi_net(des, scope, false);
             else
-	          lval_sigs[idx] = pin(idx)->elaborate_lnet(des, scope);
+	          lval_sigs[idx] = pin(idx)->elaborate_lnet(des, scope, false);
 
 	      // The only way this should return zero is if an error
 	      // happened, so for that case just return.
@@ -1677,7 +1681,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		       Use the elaborate_bi_net method to handle all
 		       the possible cases. */
 
-		  sig = pins[idx]->elaborate_bi_net(des, scope);
+		    // A module inout port cannot drive a variable.
+		  sig = pins[idx]->elaborate_bi_net(des, scope, false);
 		  if (sig == 0) {
 			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "Inout port expression must support "
@@ -1739,7 +1744,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		       assignment, as the port will continuous assign
 		       into the port. */
 
-		  sig = pins[idx]->elaborate_lnet(des, scope);
+		    // A module output port can drive a variable.
+		  sig = pins[idx]->elaborate_lnet(des, scope, true);
 		  if (sig == 0) {
 			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "Output port expression must support "
@@ -2196,7 +2202,8 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 		 << endl;
 
       } else {
-	    NetNet*sig = pins[0]->elaborate_lnet(des, scope);
+	      // A UDP can drive a variable.
+	    NetNet*sig = pins[0]->elaborate_lnet(des, scope, true);
 	    if (sig == 0) {
 		  cerr << get_fileline() << ": error: "
 		       << "Output port expression is not valid." << endl;

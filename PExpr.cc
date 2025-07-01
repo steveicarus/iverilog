@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2024 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2025 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -54,7 +54,7 @@ bool PExpr::has_aa_term(Design*, NetScope*) const
       return false;
 }
 
-NetNet* PExpr::elaborate_lnet(Design*, NetScope*) const
+NetNet* PExpr::elaborate_lnet(Design*, NetScope*, bool) const
 {
       cerr << get_fileline() << ": error: "
            << "expression not valid in assign l-value: "
@@ -62,7 +62,7 @@ NetNet* PExpr::elaborate_lnet(Design*, NetScope*) const
       return 0;
 }
 
-NetNet* PExpr::elaborate_bi_net(Design*, NetScope*) const
+NetNet* PExpr::elaborate_bi_net(Design*, NetScope*, bool) const
 {
       cerr << get_fileline() << ": error: "
            << "expression not valid as argument to inout port: "
