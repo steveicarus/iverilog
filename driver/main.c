@@ -321,6 +321,60 @@ static const char*my_tempfile(const char*str, FILE**fout)
       return pathbuf;
 }
 
+#ifdef __MINGW32__
+/* system() on Windows is a bit special. It removes quotes at the begining and
+ * the end. Even if the quoted part is just part of the command.
+ * E.g. `"cmd" "arg"` would be executed as `cmd" "arg`. This prevents us from
+ * properly handling paths with spaces in it.
+ */
+static int run_cmd(const char *cmd)
+{
+      DWORD exit_code;
+      char *cmd2;
+      size_t len;
+      int rc;
+
+      len = strlen(cmd) + 13;
+      cmd2 = malloc(len);
+      rc = snprintf(cmd2, len, "cmd /S /C \"%s\"", cmd);
+      if (rc < 0) {
+	    free(cmd2);
+	    return rc;
+      }
+
+      if (verbose_flag)
+	    fprintf(stderr, "Executing: %s", cmd2);
+
+      STARTUPINFO si;
+      PROCESS_INFORMATION pi;
+
+      memset(&si, 0x00, sizeof(si));
+      si.cb = sizeof(si);
+      memset(&pi, 0x00, sizeof(pi));
+
+      if (!CreateProcess(NULL, cmd2, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+	    fprintf(stderr, "CreateProcess failed (%lu).\n", GetLastError());
+	    free(cmd2);
+	    return -1;
+      }
+
+      WaitForSingleObject(pi.hProcess, INFINITE);
+      GetExitCodeProcess(pi.hProcess, &exit_code);
+
+      CloseHandle(pi.hProcess);
+      CloseHandle(pi.hThread);
+
+      free(cmd2);
+
+      return exit_code;
+}
+#else
+static int run_cmd(const char *cmd)
+{
+      return system(cmd);
+}
+#endif
+
 static int t_version_only(void)
 {
       int rc;
@@ -328,16 +382,16 @@ static int t_version_only(void)
       free(source_path);
 
       fflush(0);
-      snprintf(tmp, sizeof tmp, "%s%civlpp -V", ivlpp_dir, sep);
-      rc = system(tmp);
+      snprintf(tmp, sizeof tmp, "\"%s%civlpp\" -V", ivlpp_dir, sep);
+      rc = run_cmd(tmp);
       if (rc != 0) {
 	    fprintf(stderr, "Unable to get version from \"%s\"\n", tmp);
       }
 
       fflush(0);
-      snprintf(tmp, sizeof tmp, "%s%civl -V -C\"%s\" -C\"%s\"", base, sep,
+      snprintf(tmp, sizeof tmp, "\"%s%civl\" -V -C\"%s\" -C\"%s\"", base, sep,
 	       iconfig_path, iconfig_common_path);
-      rc = system(tmp);
+      rc = run_cmd(tmp);
       if (rc != 0) {
 	    fprintf(stderr, "Unable to get version from \"%s\"\n", tmp);
       }
@@ -356,7 +410,7 @@ static int t_version_only(void)
 
 static void build_preprocess_command(int e_flag)
 {
-      snprintf(tmp, sizeof tmp, "%s%civlpp%s%s%s -F\"%s\" -f\"%s\" -p\"%s\"%s",
+      snprintf(tmp, sizeof tmp, "\"%s%civlpp\"%s%s%s -F\"%s\" -f\"%s\" -p\"%s\"%s",
 	       ivlpp_dir, sep,
                verbose_flag ? " -v" : "",
 	       e_flag ? "" : " -L",
@@ -388,7 +442,7 @@ static int t_preprocess_only(void)
       if (verbose_flag)
 	    printf("preprocess: %s\n", cmd);
 
-      rc = system(cmd);
+      rc = run_cmd(cmd);
       remove(source_path);
       free(source_path);
 
@@ -442,7 +496,7 @@ static int t_compile(void)
 #endif
 
 	/* Build the ivl command. */
-      snprintf(tmp, sizeof tmp, "%s%civl", base, sep);
+      snprintf(tmp, sizeof tmp, "\"%s%civl\"", base, sep);
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
       strcpy(cmd+ncmd, tmp);
@@ -489,7 +543,7 @@ static int t_compile(void)
 	    printf("translate: %s\n", cmd);
 
 
-      rc = system(cmd);
+      rc = run_cmd(cmd);
       if ( ! getenv("IVERILOG_ICONFIG")) {
 	    remove(source_path);
 	    free(source_path);
@@ -1420,7 +1474,7 @@ int main(int argc, char **argv)
 
       if (vhdlpp_work == 0)
 	    vhdlpp_work = "ivl_vhdl_work";
-      fprintf(defines_file, "vhdlpp:%s%cvhdlpp\n", vhdlpp_dir, sep);
+      fprintf(defines_file, "vhdlpp:\"%s%cvhdlpp\"\n", vhdlpp_dir, sep);
       fprintf(defines_file, "vhdlpp-work:%s\n", vhdlpp_work);
       for (unsigned idx = 0 ; idx < vhdlpp_libdir_cnt ; idx += 1)
 	    fprintf(defines_file, "vhdlpp-libdir:%s\n", vhdlpp_libdir[idx]);
@@ -1483,7 +1537,7 @@ int main(int argc, char **argv)
 	/* Write the preprocessor command needed to preprocess a
 	   single file. This may be used to preprocess library
 	   files. */
-      fprintf(iconfig_file, "ivlpp:%s%civlpp %s -L -F\"%s\" -P\"%s\"\n",
+      fprintf(iconfig_file, "ivlpp:\"%s%civlpp\" %s -L -F\"%s\" -P\"%s\"\n",
 	      ivlpp_dir, sep,
               strchr(warning_flags, 'r') ? "-Wredef-all" :
               strchr(warning_flags, 'R') ? "-Wredef-chg" : "",
