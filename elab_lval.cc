@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1445,14 +1445,18 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 		    // possibly iterate through more of the member_path.
 
 		  ivl_assert(*this, array->packed());
-		  ivl_assert(*this, !member_comp.index.empty());
+
+		  if (member_comp.index.empty()) {
+			struct_type = 0;
+			continue;
+		  }
 
 		    // These are the dimensions defined by the type
 		  const netranges_t&mem_packed_dims = array->static_dimensions();
 
-		  if (member_comp.index.size() != mem_packed_dims.size()) {
+		  if (member_comp.index.size() > mem_packed_dims.size()) {
 			cerr << get_fileline() << ": error: "
-			     << "Incorrect number of index expressions for member "
+			     << "Too many index expressions for member "
 			     << member_name << "." << endl;
 			des->errors += 1;
 			return false;
@@ -1502,11 +1506,9 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 
 		    // The width and offset calculated from the
 		    // indices is actually in elements, and not
-		    // bits. In fact, in this context, the lwid should
-		    // come down to 1 (one element).
+		    // bits.
 		  off += loff * element_width;
-		  ivl_assert(*this, lwid==1);
-		  use_width = element_width;
+		  use_width = lwid * element_width;
 
 		    // To move on to the next component in the member
 		    // path, get the element type. For example, for
