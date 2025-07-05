@@ -1,0 +1,6 @@
+{
+    "type"   : "normal",
+    "source" : "br_gh1258.v",
+    "iverilog-args" : [ "-gno-specify" ],
+    "gold" : "br_gh1258a"
+}
