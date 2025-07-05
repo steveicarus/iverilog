@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -6003,7 +6003,9 @@ specify_item
   | K_Sfullskew '(' spec_reference_event ',' spec_reference_event
     ',' delay_value ',' delay_value fullskew_opt_args ')' ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
@@ -6018,7 +6020,9 @@ specify_item
   | K_Shold '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
@@ -6027,7 +6031,9 @@ specify_item
   | K_Snochange '(' spec_reference_event ',' spec_reference_event
 	  ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
@@ -6037,7 +6043,9 @@ specify_item
   | K_Speriod '(' spec_reference_event ',' delay_value
     spec_notifier_opt ')' ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $3; // spec_reference_event
 	delete $5; // delay_value
 	delete $6; // spec_notifier_opt
@@ -6045,7 +6053,9 @@ specify_item
   | K_Srecovery '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
@@ -6054,15 +6064,13 @@ specify_item
   | K_Srecrem '(' spec_reference_event ',' spec_reference_event
     ',' expr_mintypmax ',' expr_mintypmax recrem_opt_args ')' ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported. ";
-	if ($10->delayed_reference != nullptr || $10->delayed_data != nullptr)
-	{
-		cerr << "Delayed reference and data signals become copies of the"
-		<< " original reference and data signals." << endl;
-	}
-	else
-	{
-		cerr << endl;
+	if (gn_specify_blocks_flag) {
+	      cerr << @3 << ": warning: Timing checks are not supported. ";
+	      if ($10->delayed_reference != nullptr || $10->delayed_data != nullptr) {
+		    cerr << "Delayed reference and data signals become copies of the"
+			 << " original reference and data signals.";
+	      }
+	      cerr << endl;
 	}
 
 	PRecRem*recrem = pform_make_recrem(@1, $3, $5, $7, $9, $10);
@@ -6073,7 +6081,9 @@ specify_item
   | K_Sremoval '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
@@ -6082,7 +6092,9 @@ specify_item
   | K_Ssetup '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
@@ -6091,15 +6103,13 @@ specify_item
   | K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
     ',' expr_mintypmax ',' expr_mintypmax setuphold_opt_args ')' ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported. ";
-	if ($10->delayed_reference != nullptr || $10->delayed_data != nullptr)
-	{
-		cerr << "Delayed reference and data signals become copies of the"
-		<< " original reference and data signals." << endl;
-	}
-	else
-	{
-		cerr << endl;
+	if (gn_specify_blocks_flag) {
+	      cerr << @3 << ": warning: Timing checks are not supported. ";
+	      if ($10->delayed_reference != nullptr || $10->delayed_data != nullptr) {
+		    cerr << "Delayed reference and data signals become copies of the"
+			 << " original reference and data signals.";
+	      }
+	      cerr << endl;
 	}
 
 	PSetupHold*setuphold = pform_make_setuphold(@1, $3, $5, $7, $9, $10);
@@ -6110,7 +6120,9 @@ specify_item
   | K_Sskew '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
@@ -6119,7 +6131,9 @@ specify_item
   | K_Stimeskew '(' spec_reference_event ',' spec_reference_event
     ',' delay_value timeskew_opt_args ')' ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $3; // spec_reference_event
 	delete $5; // spec_reference_event
 	delete $7; // delay_value
@@ -6133,7 +6147,9 @@ specify_item
   | K_Swidth '(' spec_reference_event ',' delay_value ',' expression
     spec_notifier_opt ')' ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $3; // spec_reference_event
 	delete $5; // delay_value
 	delete $7; // expression
@@ -6141,28 +6157,38 @@ specify_item
       }
   | K_Swidth '(' spec_reference_event ',' delay_value ')' ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $3; // spec_reference_event
 	delete $5; // delay_value
       }
   | K_pulsestyle_onevent specify_path_identifiers ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $2; // specify_path_identifiers
       }
   | K_pulsestyle_ondetect specify_path_identifiers ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $2; // specify_path_identifiers
       }
   | K_showcancelled specify_path_identifiers ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $2; // specify_path_identifiers
       }
   | K_noshowcancelled specify_path_identifiers ';'
       {
-	cerr << @3 << ": warning: Timing checks are not supported." << endl;
+	if (gn_specify_blocks_flag) {
+	      yywarn(@3, "warning: Timing checks are not supported.");
+	}
 	delete $2; // specify_path_identifiers
       }
   ;
