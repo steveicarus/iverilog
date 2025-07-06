@@ -105,7 +105,7 @@ behavior.
 * -fst
 
   Generate FST format outputs instead of VCD format waveform dumps. This is
-  the preferred output format if using GTKWave for viewing waveforms.
+  the preferred output format if using GTKWave or Surfer for viewing waveforms.
 
 * -lxt/-lxt2
 
