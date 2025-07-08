@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2025 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2023 Leo Moser (leo.moser@pm.me)
  *
  *    This source code is free software; you can redistribute it
@@ -1877,43 +1877,46 @@ extern "C" PLI_INT32 vpi_flush(void)
 }
 
 
-extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
+extern "C" PLI_INT32 vpi_sim_vcontrol(int operation, va_list ap)
 {
       long diag_msg;
 
       switch (operation) {
 	  case vpiFinish:
 	  case __ivl_legacy_vpiFinish:
-            diag_msg = va_arg(ap, long);
+            diag_msg = va_arg(ap, PLI_INT32);
 	    schedule_finish(diag_msg);
 	    break;
 
 	  case vpiStop:
 	  case __ivl_legacy_vpiStop:
-            diag_msg = va_arg(ap, long);
+            diag_msg = va_arg(ap, PLI_INT32);
 	    schedule_stop(diag_msg);
 	    break;
 
 	  default:
-	    fprintf(stderr, "Unsupported operation %d.\n", operation);
-	    assert(0);
+	    fprintf(stderr, "Unsupported VPI control operation %d.\n", operation);
+	    return 0;
       }
+      return 1;
 }
 
-extern "C" void vpi_sim_control(PLI_INT32 operation, ...)
+extern "C" PLI_INT32 vpi_sim_control(PLI_INT32 operation, ...)
 {
       va_list ap;
       va_start(ap, operation);
-      vpi_sim_vcontrol(operation, ap);
+      int r = vpi_sim_vcontrol(operation, ap);
       va_end(ap);
+      return r;
 }
 
-extern "C" void vpi_control(PLI_INT32 operation, ...)
+extern "C" PLI_INT32 vpi_control(PLI_INT32 operation, ...)
 {
       va_list ap;
       va_start(ap, operation);
-      vpi_sim_vcontrol(operation, ap);
+      int r = vpi_sim_vcontrol(operation, ap);
       va_end(ap);
+      return r;
 }
 
 /*

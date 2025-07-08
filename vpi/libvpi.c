@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Martin Whitaker (icarus@martin-whitaker.me.uk)
+ * Copyright (c) 2019-2025 Martin Whitaker (icarus@martin-whitaker.me.uk)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -232,21 +232,23 @@ PLI_INT32 vpi_get_vlog_info(p_vpi_vlog_info info)
 
 // control routines
 
-void vpi_control(PLI_INT32 operation, ...)
+PLI_INT32 vpi_control(PLI_INT32 operation, ...)
 {
       va_list ap;
       va_start(ap, operation);
       assert(vpip_routines);
-      vpip_routines->vcontrol(operation, ap);
+      PLI_INT32 r = vpip_routines->vcontrol(operation, ap);
       va_end(ap);
+      return r;
 }
-void vpi_sim_control(PLI_INT32 operation, ...)
+PLI_INT32 vpi_sim_control(PLI_INT32 operation, ...)
 {
       va_list ap;
       va_start(ap, operation);
       assert(vpip_routines);
-      vpip_routines->vcontrol(operation, ap);
+      PLI_INT32 r = vpip_routines->vcontrol(operation, ap);
       va_end(ap);
+      return r;
 }
 
 // proposed standard extensions

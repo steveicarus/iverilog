@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2024 Martin Whitaker (icarus@martin-whitaker.me.uk)
+ * Copyright (c) 2019-2025 Martin Whitaker (icarus@martin-whitaker.me.uk)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -108,8 +108,8 @@ PLI_INT32   vpi_get_vlog_info(p_vpi_vlog_info info)
 
 // control routines
 
-void        vpi_control(PLI_INT32, ...) { }
-void        vpi_sim_control(PLI_INT32, ...) { }
+PLI_INT32   vpi_control(PLI_INT32, ...) { return 0; }
+PLI_INT32   vpi_sim_control(PLI_INT32, ...) { return 0; }
 
 // proposed standard extensions
 
@@ -128,7 +128,7 @@ void        vpip_format_strength(char*, s_vpi_value*, unsigned) { }
 void        vpip_make_systf_system_defined(vpiHandle) { }
 void        vpip_mcd_rawwrite(PLI_UINT32, const char*, size_t) { }
 void        vpip_set_return_value(int) { }
-void        vpi_vcontrol(PLI_INT32, va_list) { }
+PLI_INT32   vpi_vcontrol(PLI_INT32, va_list) { return 0; }
 
 
 /* When a module registers a system function, extract and save the return

@@ -1,7 +1,7 @@
 #ifndef VPI_USER_H
 #define VPI_USER_H
 /*
- * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -520,7 +520,7 @@ extern PLI_INT32 vpi_remove_cb(vpiHandle ref);
  * vpiReset -
  * vpiSetInteractiveScope -
  */
-extern void vpi_control(PLI_INT32 operation, ...);
+extern PLI_INT32 vpi_control(PLI_INT32 operation, ...);
 /************* vpi_control() constants (added with 1364-2000) *************/
 #define vpiStop                66  /* execute simulator's $stop */
 #define vpiFinish              67  /* execute simulator's $finish */
@@ -529,8 +529,10 @@ extern void vpi_control(PLI_INT32 operation, ...);
 #define __ivl_legacy_vpiStop 1
 #define __ivl_legacy_vpiFinish 2
 
-/* vpi_sim_control is the incorrect name for vpi_control. */
-extern void vpi_sim_control(PLI_INT32 operation, ...);
+/* Verilog-AMS still uses the original name of vpi_sim_control. It defines
+   the return type to be bool, but to avoid polluting the namespace, we
+   return a PLI_INT32. */
+extern PLI_INT32 vpi_sim_control(PLI_INT32 operation, ...);
 
 extern vpiHandle  vpi_handle(PLI_INT32 type, vpiHandle ref);
 extern vpiHandle  vpi_iterate(PLI_INT32 type, vpiHandle ref);
@@ -727,7 +729,7 @@ typedef struct {
     PLI_INT32   (*free_object)(vpiHandle);
     PLI_INT32   (*release_handle)(vpiHandle);
     PLI_INT32   (*get_vlog_info)(p_vpi_vlog_info info) ;
-    void        (*vcontrol)(PLI_INT32, va_list);
+    PLI_INT32   (*vcontrol)(PLI_INT32, va_list);
     PLI_INT32   (*fopen)(const char*, const char*);
     FILE*       (*get_file)(PLI_INT32);
     s_vpi_vecval(*calc_clog2)(vpiHandle);
