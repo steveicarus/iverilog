@@ -32,11 +32,14 @@
 # include  "parse_misc.h"
 # include  "statistics.h"
 # include  "schedule.h"
+# include  "event.h"
 # include  <iostream>
 # include  <list>
 # include  <cstdlib>
 # include  <cstring>
 # include  <cassert>
+# include  "vvp_net_sig.h"
+# include  "tchk.h"
 
 #ifdef __MINGW32__
 #include <windows.h>
@@ -2074,4 +2077,42 @@ void compile_island(char*label, char*type)
 	    assert(0);
 
       free(type);
+}
+
+void compile_tchk_width(char* edge, struct symb_s ref, char* condition, double limit, double threshold, char* notifier, long file_idx, long lineno )
+{
+      if (strcmp(condition, "v0x000000000000_0") != 0) {
+	    fprintf(stderr, "sorry: Conditions not implemented for timing checks\n");
+      }
+      free(condition);
+
+      edge_t tchk_edge;
+
+      if (strcmp(edge, "posedge") == 0) {
+	    tchk_edge = vvp_edge_posedge;
+      } else if (strcmp(edge, "negedge") == 0) {
+	    tchk_edge = vvp_edge_negedge;
+      } else {
+	    yyerror("invalid edge");
+	    return;
+      }
+
+      __vpiScope* scope = vpip_peek_current_scope();
+
+	// Create new net and functor
+      vvp_net_t* my_tchk_width = new vvp_net_t;
+      vvp_fun_tchk_width* obj_tchk_width = new vvp_fun_tchk_width(tchk_edge,
+                                                                  vpip_scaled_real_to_time64(limit, scope),
+                                                                  vpip_scaled_real_to_time64(threshold, scope));
+      my_tchk_width->fun = obj_tchk_width;
+
+	// Connect reference signal to port 0 and create VPI object
+      input_connect(my_tchk_width, 0, strdup(ref.text));
+      __vpiTchkWidth* obj = (__vpiTchkWidth*)vpip_make_tchk_width(file_idx, lineno, obj_tchk_width);
+
+      // Add vpiHandles to object for later lookup
+      if (notifier) compile_vpi_lookup(&(obj->vpi_notifier_), notifier);
+      if (ref.text) compile_vpi_lookup(&(obj->vpi_reference_), ref.text);
+
+      vpip_attach_to_current_scope(obj);
 }
