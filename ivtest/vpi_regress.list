@@ -141,6 +141,7 @@ value_change_cb1	normal,-g2009		value_change_cb1.c	value_change_cb1.gold
 value_change_cb2	normal,-g2009		value_change_cb2.c	value_change_cb2.gold
 value_change_cb3	normal,-g2009		value_change_cb3.c	value_change_cb3.gold
 value_change_cb4	normal,-g2009		value_change_cb4.c	value_change_cb4.gold
+vpi_control		normal			vpi_control.c		vpi_control.log
 
 # Add new tests in alphabetic/numeric order. If the test needs
 # a compile option or a different log file to run with an older
