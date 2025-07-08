@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <vpi_user.h>
 
 static PLI_INT32 test_control(PLI_BYTE8 *xx)
@@ -8,10 +9,12 @@ static PLI_INT32 test_control(PLI_BYTE8 *xx)
     (void)xx;  /* Parameter is not used. */
 
     ret_val = vpi_control(9999);
+    fflush(stderr);
     //vpi_printf("vpi_control(9999) returned %i\n", ret_val);
     if (ret_val != 0) failed = 1;
 
     ret_val = vpi_sim_control(9999);
+    fflush(stderr);
     //vpi_printf("vpi_sim_control(9999) returned %i\n", ret_val);
     if (ret_val != 0) failed = 1;
 
