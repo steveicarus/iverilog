@@ -31,13 +31,13 @@
 ./ivltests/pr1833024.v:32: error: can not select part of scalar: wsuptr
 ./ivltests/pr1833024.v:33: error: can not select part of scalar: wsdotr
 ./ivltests/pr1833024.v:35: error: can not select part of scalar: wsbstr
-./ivltests/pr1833024.v:35: error: Failed to elaborate port expression.
+./ivltests/pr1833024.v:35: error: Failed to elaborate input port 'arg1' expression (wsbstr['sd0]) in instance top.s1 of module: submod1.
 ./ivltests/pr1833024.v:35: error: can not select part of scalar: wspstr
-./ivltests/pr1833024.v:35: error: Failed to elaborate port expression.
+./ivltests/pr1833024.v:35: error: Failed to elaborate input port 'arg2' expression (wspstr['sd0:'sd0]) in instance top.s1 of module: submod1.
 ./ivltests/pr1833024.v:35: error: can not select part of scalar: wsuptr
-./ivltests/pr1833024.v:35: error: Failed to elaborate port expression.
+./ivltests/pr1833024.v:35: error: Failed to elaborate input port 'arg3' expression (wsuptr['sd0+:'sd1]) in instance top.s1 of module: submod1.
 ./ivltests/pr1833024.v:35: error: can not select part of scalar: wsdotr
-./ivltests/pr1833024.v:35: error: Failed to elaborate port expression.
+./ivltests/pr1833024.v:35: error: Failed to elaborate input port 'arg4' expression (wsdotr['sd0-:'sd1]) in instance top.s1 of module: submod1.
 ./ivltests/pr1833024.v:36: error: can not select part of scalar: wsbstr
 ./ivltests/pr1833024.v:36: error: Output port expression must support continuous assignment.
 ./ivltests/pr1833024.v:36:      : Port 1 (arg1) of submod2 is connected to wsbstr['sd0]

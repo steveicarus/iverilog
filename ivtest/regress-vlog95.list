@@ -261,6 +261,7 @@ concat4			EF			ivltests
 
 # SystemVerilog final blocks are not supported.
 br_gh443		CE,-g2009		ivltests
+br_gh1230		CE,-g2009		ivltests
 final			CE,-g2009		ivltests
 final2			CE,-g2009		ivltests
 program_hello		CE,-g2009		ivltests

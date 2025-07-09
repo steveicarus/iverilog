@@ -1482,10 +1482,17 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // Count the internal vector bits of the port.
 	    unsigned prts_vector_width = 0;
 
+
+	      // The input expression is normally elaborated in the calling
+	      // scope, except when the defult expression is used which is
+	      // elaborated in the instance scope.
+	    vector<NetScope*> elab_scope_inst(instance.size());
 	    for (unsigned inst = 0 ;  inst < instance.size() ;  inst += 1) {
+		  elab_scope_inst[inst] = scope;
 		    // Scan the instances from MSB to LSB. The port
 		    // will be assembled in that order as well.
 		  NetScope*inst_scope = instance[instance.size()-inst-1];
+		  if (using_default) elab_scope_inst[inst] = inst_scope;
 
 		  unsigned int prt_vector_width = 0;
 		  PortType::Enum ptype = PortType::PIMPLICIT;
@@ -1583,12 +1590,36 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			if (literal->value().is_single())
 			      context_width = prts_vector_width;
 		  }
-		  NetExpr*tmp_expr = elab_and_eval(des, scope, pins[idx], context_width, using_default);
+		    // FIXME: The default value is getting the wrong value for
+		    //        an array instance since only one scope is used
+		    //        and the value can be different for each scope.
+		    //        Need to rework the code to support this.
+		  NetScope* elab_scope = scope;
+		  if (using_default) {
+//if (instance.size() > 1) {
+//      for (unsigned inst = 0 ;  inst < instance.size() ;  inst += 1) {
+//	    cerr << get_fileline() << ": FIXME: Instance " << inst
+//	         << " has scope: " << elab_scope_inst[inst]->fullname() << endl;
+//      }
+//}
+			if (instance.size() > 1) {
+			      cerr << get_fileline() << ": sorry: An input port "
+			           << "default value is not currently supported "
+			           << "for a module instance array." << endl;
+			      des->errors += 1;
+			      continue;
+			}
+			elab_scope = elab_scope_inst[0];
+		  }
+		  NetExpr*tmp_expr = elab_and_eval(des, elab_scope, pins[idx], context_width, using_default);
 		  if (tmp_expr == 0) {
 			cerr << pins[idx]->get_fileline()
-			     << ": error: Failed to elaborate port "
-			     << (using_default ? "default value." : "expression.")
-			     << endl;
+			     << ": error: Failed to elaborate input port '"
+			     << port_name << "' "
+			     << (using_default ? "default value" : "expression")
+			     << " (" << *pins[idx] << ") in instance "
+			     << scope->fullname() << "." << get_name()
+			     << " of module: " << rmod->mod_name() << "." << endl;
 			des->errors += 1;
 			continue;
 		  }
