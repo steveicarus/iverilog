@@ -6,7 +6,7 @@ module DFF (output reg Q, input CLK, D);
                 (posedge CLK => (Q : D)) = (480, 660);
                 $setup(D, posedge CLK, 576);
         endspecify
-                
+
         always @(posedge CLK)
                 Q <= D;
 endmodule
