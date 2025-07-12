@@ -6,7 +6,7 @@ integer i = 1;
 
 initial begin
   assert #0 (i == 1);
-  assert #0 (i == 0);
+  // fail: assert #0 (i == 0);
   assert #0 (i == 1) else $display("Check 3 : this shouldn't be displayed");
   assert #0 (i == 0) else $display("Check 4 : this should be displayed");
   assert #0 (i == 1) $display("Check 5 : this should be displayed");

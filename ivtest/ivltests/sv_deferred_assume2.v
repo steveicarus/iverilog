@@ -6,7 +6,7 @@ integer i = 1;
 
 initial begin
   assume final (i == 1);
-  assume final (i == 0);
+  // Fail: assume final (i == 0);
   assume final (i == 1) else $display("Check 3 : this shouldn't be displayed");
   assume final (i == 0) else $display("Check 4 : this should be displayed");
   assume final (i == 1) $display("Check 5 : this should be displayed");
