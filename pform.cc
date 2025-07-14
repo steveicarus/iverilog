@@ -790,8 +790,8 @@ bool pform_in_interface()
 
 static bool pform_at_module_level()
 {
-      return (lexical_scope == pform_cur_module.front())
-          || (lexical_scope == pform_cur_generate);
+      return (!pform_cur_module.empty() && (lexical_scope == pform_cur_module.front())) ||
+             (lexical_scope == pform_cur_generate);
 }
 
 PWire*pform_get_wire_in_scope(perm_string name)
