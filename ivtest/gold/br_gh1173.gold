@@ -1,0 +1,3 @@
+./ivltests/br_gh1173.v:9: error: Variable id_3 does not have a field named: id_2.
+./ivltests/br_gh1173.v:9: error: Unable to elaborate r-value: id_3.id_2
+2 error(s) during elaboration.

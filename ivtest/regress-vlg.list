@@ -356,6 +356,7 @@ br_gh889		normal,-gspecify	ivltests gold=br_gh889.gold
 br_gh956a		CE			ivltests gold=br_gh956a.gold
 br_gh956b		CE			ivltests gold=br_gh956b.gold
 br_gh1117		CE			ivltests gold=br_gh1117.gold
+br_gh1173		CE			ivltests gold=br_gh1173.gold
 br_gh1175a		CE			ivltests gold=br_gh1175a.gold
 br_gh1175b		CE			ivltests gold=br_gh1175b.gold
 br_gh1175c		CE			ivltests gold=br_gh1175c.gold

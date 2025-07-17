@@ -4979,7 +4979,15 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 						expr, {});
 	    }
 
-	    ivl_assert(*this, sr.path_tail.empty());
+	    if (! sr.path_tail.empty()) {
+		  cerr << get_fileline() << ": error: Variable "
+		       << sr.path_head
+		       << " does not have a field named: "
+		       << sr.path_tail << "." << endl;
+	          des->errors += 1;
+		  return 0;
+	    }
+
 	    NetExpr*tmp = elaborate_expr_net(des, scope, sr.net, sr.scope,
                                              expr_wid, flags);
 
