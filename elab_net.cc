@@ -581,12 +581,20 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
       // Don't allow registers as assign l-values.
       if (sig->type() == NetNet::REG) {
-	    cerr << get_fileline() << ": error: variable " << sig->name()
-	         << "; cannot be driven by a primitive or continuous assignment";
-	    if(gn_var_can_be_uwire()) {
-		  cerr << " with non-default strength";
+	    cerr << get_fileline() << ": error: Variable '" << sig->name()
+	         << "' cannot be driven by a ";
+	    if (var_allowed_in_sv) cerr << "continuous assignment/module";
+	    else cerr << "primitive";
+	    if (gn_var_can_be_uwire()) {
+		  cerr << " or continuous assignment with non-default strength." << endl;
+	    } else {
+		  cerr << "." << endl;
+		  if (var_allowed_in_sv) {
+			cerr << get_fileline() << ":      : "
+			     << "This is allowed when SystemVerilog is enabled."
+			     << endl;
+		  }
 	    }
-	    cerr << "." << endl;
 	    des->errors += 1;
 	    return nullptr;
       }

@@ -1,0 +1,9 @@
+./ivltests/br_gh956a.v:7: error: Variable 'x' cannot be driven by a continuous assignment/module.
+./ivltests/br_gh956a.v:7:      : This is allowed when SystemVerilog is enabled.
+./ivltests/br_gh956a.v:7: error: Output port expression must support a continuous assignment.
+./ivltests/br_gh956a.v:7:      : Port 1 (o) of ssub is connected to top.i1.x
+./ivltests/br_gh956a.v:7: error: Variable 'x' cannot be driven by a continuous assignment/module.
+./ivltests/br_gh956a.v:7:      : This is allowed when SystemVerilog is enabled.
+./ivltests/br_gh956a.v:7: error: Output port expression must support a continuous assignment.
+./ivltests/br_gh956a.v:7:      : Port 1 (o) of ssub is connected to top.i2.x
+4 error(s) during elaboration.

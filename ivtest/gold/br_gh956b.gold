@@ -1,0 +1,9 @@
+./ivltests/br_gh956b.v:3: error: Variable 'y' cannot be driven by a primitive.
+./ivltests/br_gh956b.v:3: error: Failed to elaborate primitive output expression top.i1.y.
+./ivltests/br_gh956b.v:4: error: Variable 'z' cannot be driven by a primitive.
+./ivltests/br_gh956b.v:4: error: Failed to elaborate primitive output expression top.i1.z.
+./ivltests/br_gh956b.v:3: error: Variable 'y' cannot be driven by a primitive.
+./ivltests/br_gh956b.v:3: error: Failed to elaborate primitive output expression top.i2.y.
+./ivltests/br_gh956b.v:4: error: Variable 'z' cannot be driven by a primitive.
+./ivltests/br_gh956b.v:4: error: Failed to elaborate primitive output expression top.i2.z.
+8 error(s) during elaboration.

@@ -782,7 +782,13 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
 	      // The only way this should return zero is if an error
 	      // happened, so for that case just return.
-	    if (lval_sigs[idx] == 0) return;
+	    if (lval_sigs[idx] == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Failed to elaborate primitive output expression "
+		       << scope_path(scope) << "." << *pin(idx) << "." << endl;
+		  des->errors += 1;
+		  return;
+	    }
 
 	      // For now, assume all the outputs are the same width.
 	    ivl_assert(*this, idx == 0 || lval_sigs[idx]->vector_width() == lval_sigs[0]->vector_width());
@@ -1779,12 +1785,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  sig = pins[idx]->elaborate_lnet(des, scope, true);
 		  if (sig == 0) {
 			cerr << pins[idx]->get_fileline() << ": error: "
-			     << "Output port expression must support "
+			     << "Output port expression must support a "
 			     << "continuous assignment." << endl;
 			cerr << pins[idx]->get_fileline() << ":      : Port "
 			     << (idx+1) << " (" << port_name << ") of "
 			     << rmod->mod_name() << " is connected to "
-			     << *pins[idx] << endl;
+			     << scope_path(scope) << "." << *pins[idx] << endl;
 			des->errors += 1;
 			continue;
 		  }
@@ -1916,9 +1922,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  }
 
 		  cerr << get_fileline() << ": warning: Port " << (idx+1)
-		       << " (" << port_name << ") of "
+		       << " (" << port_name << ") of module "
 		       << type_ << " expects " << prts_vector_width <<
-			" bits, got " << sig->vector_width() << "." << endl;
+			" bit(s), given " << sig->vector_width() << "." << endl;
 
 		    // Delete this when inout ports pad correctly.
 		  if (ptype == NetNet::PINOUT) {
