@@ -1,0 +1,4 @@
+./ivltests/br_gh1174a.v:14: error: generate else is missing matching if.
+./ivltests/br_gh1174a.v:20: syntax error
+./ivltests/br_gh1174a.v:20: error: Invalid module instantiation
+./ivltests/br_gh1174a.v:15: error: generate else is missing matching if.

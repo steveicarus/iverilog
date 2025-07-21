@@ -1,0 +1,3 @@
+./ivltests/br_gh1174b.v:10: error: Net id_8 is not defined in this context.
+./ivltests/br_gh1174b.v:1:      : Found a parameter with this name here.
+1 error(s) during elaboration.

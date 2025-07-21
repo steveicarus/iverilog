@@ -5241,6 +5241,8 @@ module_item
     generate_block %prec less_than_K_else
       { pform_endgenerate(true); }
 
+  | K_else generate_block { yyerror(@1, "error: generate else is missing matching if."); }
+
   | K_case '(' expression ')'
       { pform_start_generate_case(@1, $3); }
     generate_case_items

@@ -1,7 +1,7 @@
 #ifndef IVL_netmisc_H
 #define IVL_netmisc_H
 /*
- * Copyright (c) 1999-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -66,6 +66,14 @@ struct symbol_search_results {
 	    if (par_val) return true;
 	    if (scope) return true;
 	    return false;
+      }
+
+      inline const char *result_type() const {
+	    if (net)     return "net";
+	    if (eve)     return "named event";
+	    if (par_val) return "parameter";
+	    if (scope)   return "scope";
+	    return "nothing found";
       }
 
 	// Scope where symbol was located. This is set in all cases,
