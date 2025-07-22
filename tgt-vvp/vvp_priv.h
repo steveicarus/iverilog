@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_priv_H
 #define IVL_vvp_priv_H
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -65,17 +65,6 @@ extern const char *vvp_mangle_id(const char *);
 extern const char *vvp_mangle_name(const char *);
 
 extern char* draw_Cr_to_string(double value);
-
-/*
- * This generates a string from a signal that uniquely identifies
- * that signal with letters that can be used in a label.
- *
- * NOTE: vvp_signal_label should be removed. All it does is a %p of
- * the pointer, and return a pointer to a static. The code that wants
- * to reference a signal needs to use the format V_%p, so the presence
- * of this function is just plain inconsistent.
- */
-extern const char* vvp_signal_label(ivl_signal_t sig);
 
 extern unsigned width_of_nexus(ivl_nexus_t nex);
 extern ivl_variable_type_t data_type_of_nexus(ivl_nexus_t nex);

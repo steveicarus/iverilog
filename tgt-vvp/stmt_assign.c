@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1038,7 +1038,7 @@ static void show_stmt_assign_sig_darray_queue_mux(ivl_statement_t net)
 
 		  draw_eval_expr_into_integer(mux, 3);
 		  fprintf(vvp_out, "    %%ix/mov %d, 3;\n", mux_word);
-		  fprintf(vvp_out, "    %%flag_mov %u, 4;\n", flag);
+		  fprintf(vvp_out, "    %%flag_mov %d, 4;\n", flag);
 		  fprintf(vvp_out, "    %%load/dar/r v%p_0;\n", var);
 		  draw_eval_real(rval);
 		  draw_stmt_assign_real_opcode(ivl_stmt_opcode(net));
@@ -1064,7 +1064,7 @@ static void show_stmt_assign_sig_darray_queue_mux(ivl_statement_t net)
 
 		  draw_eval_expr_into_integer(mux, 3);
 		  fprintf(vvp_out, "    %%ix/mov %d, 3;\n", mux_word);
-		  fprintf(vvp_out, "    %%flag_mov %u, 4;\n", flag);
+		  fprintf(vvp_out, "    %%flag_mov %d, 4;\n", flag);
 		  fprintf(vvp_out, "    %%load/dar/vec4 v%p_0;\n", var);
 		  draw_eval_vec4(rval);
 		  resize_vec4_wid(rval, ivl_stmt_lwidth(net));

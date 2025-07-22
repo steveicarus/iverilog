@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -119,19 +119,6 @@ const char *vvp_mangle_name(const char *id)
 
       strcpy(out+iout, inp);
       return out;
-}
-
-/* REMOVE ME: vvp_signal_label should not be used. DEAD CODE
- * Given a signal, generate a string name that is suitable for use as
- * a label. The only rule is that the same signal will always have the
- * same label. The result is stored in static memory, so remember to
- * copy it out.
- */
-const char* vvp_signal_label(ivl_signal_t sig)
-{
-      static char buf[32];
-      sprintf(buf, "%p", sig);
-      return buf;
 }
 
 static ivl_signal_t signal_of_nexus(ivl_nexus_t nex, unsigned*word)
