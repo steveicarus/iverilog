@@ -1,7 +1,7 @@
 #ifndef IVL_ufunc_H
 #define IVL_ufunc_H
 /*
- * Copyright (c) 2002-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -66,15 +66,15 @@ class ufunc_core : public vvp_wide_fun_core {
       virtual void finish_thread() =0;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
     protected:
       void finish_thread_real_();
       void finish_thread_vec4_();
 
     private:
-      void recv_vec4_from_inputs(unsigned port);
-      void recv_real_from_inputs(unsigned port);
+      void recv_vec4_from_inputs(unsigned port) override;
+      void recv_real_from_inputs(unsigned port) override;
 
       void invoke_thread_(void);
 

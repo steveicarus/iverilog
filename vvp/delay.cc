@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2024 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2005-2025 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -542,7 +542,7 @@ void vvp_fun_modpath::add_modpath_src(vvp_fun_modpath_src*that, bool ifnone)
 }
 
 static vvp_time64_t delay_from_edge(vvp_bit4_t a, vvp_bit4_t b,
-                                           vvp_time64_t array[12])
+                                           vvp_time64_t const array[12])
 {
       typedef delay_edge_t bit4_table4[4];
       static const bit4_table4 edge_table[4] = {
@@ -680,7 +680,7 @@ void vvp_fun_modpath::run_run()
       net_->send_vec4(cur_vec4_, 0);
 }
 
-vvp_fun_modpath_src::vvp_fun_modpath_src(vvp_time64_t del[12])
+vvp_fun_modpath_src::vvp_fun_modpath_src(vvp_time64_t const del[12])
 {
       for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
 	    delay_[idx] = del[idx];

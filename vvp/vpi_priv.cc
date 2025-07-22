@@ -1048,7 +1048,7 @@ struct vpip_put_value_event : vvp_gen_event_s {
       vpiHandle handle;
       s_vpi_value value;
       int flags;
-      virtual void run_run();
+      virtual void run_run() override;
       ~vpip_put_value_event() { }
 };
 

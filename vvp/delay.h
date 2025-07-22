@@ -1,7 +1,7 @@
 #ifndef IVL_delay_H
 #define IVL_delay_H
 /*
- * Copyright 2005-2016 Stephen Williams
+ * Copyright 2005-2025 Stephen Williams
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -93,18 +93,18 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
       ~vvp_fun_delay();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t);
-      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
+                     vvp_context_t) override;
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit) override;
       void recv_real(vvp_net_ptr_t port, double bit,
-                     vvp_context_t);
+                     vvp_context_t) override;
 
       void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t ctx);
+			unsigned base, unsigned vwid, vvp_context_t ctx) override;
       void recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
-			unsigned base, unsigned vwid);
+			unsigned base, unsigned vwid) override;
 
     private:
-      virtual void run_run();
+      virtual void run_run() override;
 
 
       void run_run_vec4_(struct vvp_fun_delay::event_*cur);
@@ -172,10 +172,10 @@ class vvp_fun_modpath  : public vvp_net_fun_t, private vvp_gen_event_s {
       void add_modpath_src(vvp_fun_modpath_src*that, bool ifnone);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t);
+                     vvp_context_t) override;
 
     private:
-      virtual void run_run();
+      virtual void run_run() override;
 
     private:
       vvp_net_t*net_;
@@ -195,13 +195,13 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
       friend class vvp_fun_modpath;
 
     public:
-      explicit vvp_fun_modpath_src(vvp_time64_t d[12]);
+      explicit vvp_fun_modpath_src(vvp_time64_t const del[12]);
     protected:
       ~vvp_fun_modpath_src();
 
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t);
+                     vvp_context_t) override;
       virtual bool test_vec4(const vvp_vector4_t&bit);
 
       void get_delay12(vvp_time64_t out[12]) const;
@@ -226,7 +226,7 @@ class vvp_fun_modpath_edge  : public vvp_fun_modpath_src {
     public:
       vvp_fun_modpath_edge(vvp_time64_t del[12], bool pos, bool neg);
 
-      bool test_vec4(const vvp_vector4_t&bit);
+      bool test_vec4(const vvp_vector4_t&bit) override;
 
     private:
       vvp_bit4_t old_value_;
@@ -246,13 +246,13 @@ class vvp_fun_intermodpath  : public vvp_net_fun_t, private vvp_gen_event_s {
       ~vvp_fun_intermodpath();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t);
+                     vvp_context_t) override;
 
       void get_delay12(vvp_time64_t out[12]) const;
       void put_delay12(const vvp_time64_t in[12]);
 
     private:
-      virtual void run_run();
+      void run_run() override;
 
     private:
       vvp_net_t*net_;

@@ -1,7 +1,7 @@
 #ifndef IVL_part_H
 #define IVL_part_H
 /*
- * Copyright (c) 2005-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -53,13 +53,13 @@ class vvp_fun_part_sa  : public vvp_fun_part, public vvp_gen_event_s {
 
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t);
+                     vvp_context_t) override;
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t) override;
 
     private:
-      void run_run();
+      void run_run() override;
 
     private:
       vvp_vector4_t val_;
@@ -76,17 +76,17 @@ class vvp_fun_part_aa  : public vvp_fun_part, public automatic_hooks_s {
       ~vvp_fun_part_aa();
 
     public:
-      void alloc_instance(vvp_context_t context);
-      void reset_instance(vvp_context_t context);
+      void alloc_instance(vvp_context_t context) override;
+      void reset_instance(vvp_context_t context) override;
 #ifdef CHECK_WITH_VALGRIND
-      void free_instance(vvp_context_t context);
+      void free_instance(vvp_context_t context) override;
 #endif
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t context);
+			unsigned base, unsigned vwid, vvp_context_t context) override;
 
     private:
       __vpiScope*context_scope_;
@@ -108,12 +108,12 @@ class vvp_fun_part_pv  : public vvp_net_fun_t {
 
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                        unsigned base, unsigned vwid, vvp_context_t);
+                        unsigned base, unsigned vwid, vvp_context_t) override;
 
-      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit) override;
 
     private:
       unsigned base_;
@@ -152,10 +152,10 @@ class vvp_fun_part_var_sa  : public vvp_fun_part_var {
 
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t);
+                     vvp_context_t) override;
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t) override;
 
     private:
       int base_;
@@ -174,17 +174,17 @@ class vvp_fun_part_var_aa  : public vvp_fun_part_var, public automatic_hooks_s {
       ~vvp_fun_part_var_aa();
 
     public:
-      void alloc_instance(vvp_context_t context);
-      void reset_instance(vvp_context_t context);
+      void alloc_instance(vvp_context_t context) override;
+      void reset_instance(vvp_context_t context) override;
 #ifdef CHECK_WITH_VALGRIND
-      void free_instance(vvp_context_t context);
+      void free_instance(vvp_context_t context) override;
 #endif
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t context);
+			unsigned base, unsigned vwid, vvp_context_t context) override;
 
     private:
       __vpiScope*context_scope_;

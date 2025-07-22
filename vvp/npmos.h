@@ -48,14 +48,14 @@ class vvp_fun_pmos_ : public vvp_net_fun_t {
     public:
       explicit vvp_fun_pmos_(bool enable_invert, bool resistive);
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t);
-      void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t ctx);
-      void recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
-			unsigned base, unsigned vwid);
-      void recv_real(vvp_net_ptr_t port, double real,
-                     vvp_context_t ctx);
+      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                             vvp_context_t) override;
+      virtual void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+		                unsigned base, unsigned vwid, vvp_context_t ctx) override;
+      virtual void recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
+		                unsigned base, unsigned vwid) override;
+      virtual void recv_real(vvp_net_ptr_t port, double real,
+                             vvp_context_t ctx) override;
 
     protected:
       void generate_output_(vvp_net_ptr_t port);
@@ -70,7 +70,7 @@ class vvp_fun_pmos  : public vvp_fun_pmos_ {
     public:
       explicit vvp_fun_pmos(bool enable_invert);
 
-      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
+      virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit) override;
 };
 
 /*
@@ -83,7 +83,7 @@ class vvp_fun_rpmos  : public vvp_fun_pmos_ {
     public:
       explicit vvp_fun_rpmos(bool enable_invert);
 
-      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
+      virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit) override;
 };
 
 /*
@@ -111,14 +111,14 @@ class vvp_fun_cmos_ : public vvp_net_fun_t {
     public:
       explicit vvp_fun_cmos_(bool resistive);
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t);
-      void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t ctx);
-      void recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
-			unsigned base, unsigned vwid);
-      void recv_real(vvp_net_ptr_t port, double real,
-                     vvp_context_t);
+      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                             vvp_context_t) override;
+      virtual void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                                unsigned base, unsigned vwid, vvp_context_t ctx) override;
+      virtual void recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
+                              unsigned base, unsigned vwid) override;
+      virtual void recv_real(vvp_net_ptr_t port, double real,
+                             vvp_context_t) override;
 
     protected:
       void generate_output_(vvp_net_ptr_t port);
@@ -133,14 +133,14 @@ class vvp_fun_cmos : public vvp_fun_cmos_ {
     public:
       explicit vvp_fun_cmos();
 
-      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
+      virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit) override;
 };
 
 class vvp_fun_rcmos : public vvp_fun_cmos_ {
     public:
       explicit vvp_fun_rcmos();
 
-      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
+      virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit) override;
 };
 
 #endif /* IVL_npmos_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1069,42 +1069,42 @@ vpiHandle __vpiSignal::vpi_index(int idx)
 
 struct signal_reg : public __vpiSignal {
       inline signal_reg() { }
-      int get_type_code(void) const { return vpiReg; }
+      int get_type_code(void) const override { return vpiReg; }
 };
 
 struct signal_integer : public __vpiSignal {
       inline signal_integer() { }
-      int get_type_code(void) const { return vpiIntegerVar; }
+      int get_type_code(void) const override { return vpiIntegerVar; }
 };
 
 struct signal_net : public __vpiSignal {
       inline signal_net() { }
-      int get_type_code(void) const { return vpiNet; }
+      int get_type_code(void) const override { return vpiNet; }
 };
 
 struct signal_byte : public __vpiSignal {
       inline signal_byte() { }
-      int get_type_code(void) const { return vpiByteVar; }
+      int get_type_code(void) const override { return vpiByteVar; }
 };
 
 struct signal_bitvar : public __vpiSignal {
       inline signal_bitvar() { }
-      int get_type_code(void) const { return vpiBitVar; }
+      int get_type_code(void) const override { return vpiBitVar; }
 };
 
 struct signal_shortint : public __vpiSignal {
       inline signal_shortint() { }
-      int get_type_code(void) const { return vpiShortIntVar; }
+      int get_type_code(void) const override { return vpiShortIntVar; }
 };
 
 struct signal_int : public __vpiSignal {
       inline signal_int() { }
-      int get_type_code(void) const { return vpiIntVar; }
+      int get_type_code(void) const override { return vpiIntVar; }
 };
 
 struct signal_longint : public __vpiSignal {
       inline signal_longint() { }
-      int get_type_code(void) const { return vpiLongIntVar; }
+      int get_type_code(void) const override { return vpiLongIntVar; }
 };
 
 

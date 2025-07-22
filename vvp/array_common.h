@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2014-2025 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2014 CERN
  * @author Maciej Suminski <maciej.suminski@cern.ch>
  *
@@ -25,23 +25,23 @@
 #include "vpi_priv.h"
 
 struct __vpiArrayIterator : public __vpiHandle {
-      int get_type_code(void) const
+      int get_type_code(void) const override
       { return vpiIterator; }
 
-      vpiHandle vpi_index(int idx);
-      free_object_fun_t free_object_fun(void);
+      vpiHandle vpi_index(int idx) override;
+      free_object_fun_t free_object_fun(void) override;
 
       struct __vpiArrayBase*array;
       unsigned next;
 };
 
 struct __vpiArrayIndex : public __vpiHandle {
-      int get_type_code(void) const
+      int get_type_code(void) const override
       { return vpiIterator; }
 
-      vpiHandle vpi_iterate(int code);
-      vpiHandle vpi_index(int idx);
-      free_object_fun_t free_object_fun(void);
+      vpiHandle vpi_iterate(int code) override;
+      vpiHandle vpi_index(int idx) override;
+      free_object_fun_t free_object_fun(void) override;
 
       __vpiDecConst *index;
       unsigned done;

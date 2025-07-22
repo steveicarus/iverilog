@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -38,9 +38,9 @@ class vvp_reduce_base : public vvp_net_fun_t {
       virtual ~vvp_reduce_base();
 
       void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
       void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t context);
+			unsigned base, unsigned vwid, vvp_context_t context) override;
 
       virtual vvp_bit4_t calculate_result() const =0;
 
@@ -84,7 +84,7 @@ class vvp_reduce_and  : public vvp_reduce_base {
     public:
       vvp_reduce_and();
       ~vvp_reduce_and();
-      vvp_bit4_t calculate_result() const;
+      vvp_bit4_t calculate_result() const override;
 };
 
 vvp_reduce_and::vvp_reduce_and()
@@ -110,7 +110,7 @@ class vvp_reduce_or  : public vvp_reduce_base {
     public:
       vvp_reduce_or();
       ~vvp_reduce_or();
-      vvp_bit4_t calculate_result() const;
+      vvp_bit4_t calculate_result() const override;
 };
 
 vvp_reduce_or::vvp_reduce_or()
@@ -136,7 +136,7 @@ class vvp_reduce_xor  : public vvp_reduce_base {
     public:
       vvp_reduce_xor();
       ~vvp_reduce_xor();
-      vvp_bit4_t calculate_result() const;
+      vvp_bit4_t calculate_result() const override;
 };
 
 vvp_reduce_xor::vvp_reduce_xor()
@@ -162,7 +162,7 @@ class vvp_reduce_nand  : public vvp_reduce_base {
     public:
       vvp_reduce_nand();
       ~vvp_reduce_nand();
-      vvp_bit4_t calculate_result() const;
+      vvp_bit4_t calculate_result() const override;
 };
 
 vvp_reduce_nand::vvp_reduce_nand()
@@ -188,7 +188,7 @@ class vvp_reduce_nor  : public vvp_reduce_base {
     public:
       vvp_reduce_nor();
       ~vvp_reduce_nor();
-      vvp_bit4_t calculate_result() const;
+      vvp_bit4_t calculate_result() const override;
 };
 
 vvp_reduce_nor::vvp_reduce_nor()
@@ -214,7 +214,7 @@ class vvp_reduce_xnor  : public vvp_reduce_base {
     public:
       vvp_reduce_xnor();
       ~vvp_reduce_xnor();
-      vvp_bit4_t calculate_result() const;
+      vvp_bit4_t calculate_result() const override;
 };
 
 vvp_reduce_xnor::vvp_reduce_xnor()

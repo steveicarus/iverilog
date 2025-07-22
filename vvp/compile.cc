@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -508,7 +508,7 @@ struct vvp_net_resolv_list_s: public resolv_list_s {
       explicit vvp_net_resolv_list_s(char*l) : resolv_list_s(l) { }
 	// port to be driven by the located node.
       vvp_net_ptr_t port;
-      virtual bool resolve(bool mes);
+      virtual bool resolve(bool mes) override;
 };
 
 bool vvp_net_resolv_list_s::resolve(bool mes)
@@ -546,7 +546,7 @@ struct functor_gen_resolv_list_s: public resolv_list_s {
 	    ref = 0;
       }
       vvp_net_t**ref;
-      virtual bool resolve(bool mes);
+      virtual bool resolve(bool mes) override;
 };
 
 bool functor_gen_resolv_list_s::resolve(bool mes)
@@ -582,7 +582,7 @@ struct vpi_handle_resolv_list_s: public resolv_list_s {
       explicit vpi_handle_resolv_list_s(char*lab) : resolv_list_s(lab) {
 	    handle = NULL;
       }
-      virtual bool resolve(bool mes);
+      virtual bool resolve(bool mes) override;
       vpiHandle *handle;
 };
 
@@ -690,7 +690,7 @@ struct code_label_resolv_list_s: public resolv_list_s {
       }
       struct vvp_code_s *code;
       bool cptr2_flag;
-      virtual bool resolve(bool mes);
+      virtual bool resolve(bool mes) override;
 };
 
 bool code_label_resolv_list_s::resolve(bool mes)
@@ -725,7 +725,7 @@ struct code_array_resolv_list_s: public resolv_list_s {
 	    code = NULL;
       }
       struct vvp_code_s *code;
-      virtual bool resolve(bool mes);
+      virtual bool resolve(bool mes) override;
 };
 
 bool code_array_resolv_list_s::resolve(bool mes)

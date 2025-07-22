@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -116,8 +116,8 @@ void vvp_gen_event_s::single_step_display(void)
  */
 struct vthread_event_s : public event_s {
       vthread_t thr;
-      void run_run(void);
-      void single_step_display(void);
+      void run_run(void) override;
+      void single_step_display(void) override;
 
       static void* operator new(size_t);
       static void operator delete(void*);
@@ -153,8 +153,8 @@ void vthread_event_s::operator delete(void*dptr)
 
 struct del_thr_event_s : public event_s {
       vthread_t thr;
-      void run_run(void);
-      void single_step_display(void);
+      void run_run(void) override;
+      void single_step_display(void) override;
 };
 
 void del_thr_event_s::run_run(void)
@@ -184,8 +184,8 @@ struct assign_vector4_event_s  : public event_s {
       unsigned base;
 	/* Width of the destination vector. */
       unsigned vwid;
-      void run_run(void);
-      void single_step_display(void);
+      void run_run(void) override;
+      void single_step_display(void) override;
 
       static void* operator new(size_t);
       static void operator delete(void*);
@@ -225,8 +225,8 @@ unsigned long count_assign4_pool(void) { return assign4_heap.pool; }
 struct assign_vector8_event_s  : public event_s {
       vvp_net_ptr_t ptr;
       vvp_vector8_t val;
-      void run_run(void);
-      void single_step_display(void);
+      void run_run(void) override;
+      void single_step_display(void) override;
 
       static void* operator new(size_t);
       static void operator delete(void*);
@@ -262,8 +262,8 @@ unsigned long count_assign8_pool() { return assign8_heap.pool; }
 struct assign_real_event_s  : public event_s {
       vvp_net_ptr_t ptr;
       double val;
-      void run_run(void);
-      void single_step_display(void);
+      void run_run(void) override;
+      void single_step_display(void) override;
 
       static void* operator new(size_t);
       static void operator delete(void*);
@@ -301,7 +301,7 @@ struct assign_array_word_s  : public event_s {
       unsigned adr;
       vvp_vector4_t val;
       unsigned off;
-      void run_run(void);
+      void run_run(void) override;
 
       static void* operator new(size_t);
       static void operator delete(void*);
@@ -345,8 +345,8 @@ struct force_vector4_event_s  : public event_s {
 	/* Width of the destination vector. */
       unsigned vwid;
 
-      void run_run(void);
-      void single_step_display(void);
+      void run_run(void) override;
+      void single_step_display(void) override;
 
       static void* operator new(size_t);
       static void operator delete(void*);
@@ -421,8 +421,8 @@ struct propagate_vector4_event_s : public event_s {
 	/* value to propagate */
       vvp_vector4_t val;
 	/* Action */
-      void run_run(void);
-      void single_step_display(void);
+      void run_run(void) override;
+      void single_step_display(void) override;
 };
 
 void propagate_vector4_event_s::run_run(void)
@@ -445,8 +445,8 @@ struct propagate_real_event_s : public event_s {
 	/* value to propagate */
       double val;
 	/* Action */
-      void run_run(void);
-      void single_step_display(void);
+      void run_run(void) override;
+      void single_step_display(void) override;
 };
 
 void propagate_real_event_s::run_run(void)
@@ -463,7 +463,7 @@ struct assign_array_r_word_s  : public event_s {
       vvp_array_t mem;
       unsigned adr;
       double val;
-      void run_run(void);
+      void run_run(void) override;
 
       static void* operator new(size_t);
       static void operator delete(void*);
@@ -493,8 +493,8 @@ unsigned long count_assign_arword_pool(void) { return array_r_w_heap.pool; }
 struct generic_event_s : public event_s {
       vvp_gen_event_t obj;
       bool delete_obj_when_done;
-      void run_run(void);
-      void single_step_display(void);
+      void run_run(void) override;
+      void single_step_display(void) override;
 
       static void* operator new(size_t);
       static void operator delete(void*);

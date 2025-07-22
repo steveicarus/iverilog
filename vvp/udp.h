@@ -1,7 +1,7 @@
 #ifndef IVL_udp_H
 #define IVL_udp_H
 /*
- * Copyright (c) 2005-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2025 Stephen Williams (steve@icarus.com)
  *
  * (This is a rewrite of code that was ...
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
@@ -124,7 +124,7 @@ class vvp_udp_comb_s : public vvp_udp_s {
 
       vvp_bit4_t calculate_output(const udp_levels_table&cur,
 				  const udp_levels_table&prev,
-				  vvp_bit4_t cur_out);
+				  vvp_bit4_t cur_out) override;
 
     private:
 	// Level sensitive rows of the device.
@@ -187,7 +187,7 @@ class vvp_udp_seq_s : public vvp_udp_s {
 
       vvp_bit4_t calculate_output(const udp_levels_table&cur,
 				  const udp_levels_table&prev,
-				  vvp_bit4_t cur_out);
+				  vvp_bit4_t cur_out) override;
 
     private:
       vvp_bit4_t test_levels_(const udp_levels_table&cur);
@@ -228,10 +228,10 @@ class vvp_udp_fun_core  : public vvp_wide_fun_core, private vvp_gen_event_s {
       vvp_udp_fun_core(vvp_net_t*net, vvp_udp_s*def);
       ~vvp_udp_fun_core();
 
-      void recv_vec4_from_inputs(unsigned);
+      void recv_vec4_from_inputs(unsigned) override;
 
     private:
-      void run_run();
+      void run_run() override;
 
       vvp_udp_s*def_;
       vvp_bit4_t cur_out_;

@@ -8,7 +8,7 @@ unusedFunction:vpi_priv.cc:193
 // vpi_compare_objects()
 unusedFunction:vpi_priv.cc:209
 // vpi_control()
-unusedFunction:vpi_priv.cc:1628
+unusedFunction:vpi_priv.cc:1913
 // vpi_flush()
 unusedFunction:vpi_priv.cc:1519
 // vpi_fopen()
@@ -42,6 +42,18 @@ unusedFunction:vpi_tasks.cc:990
 // vpi_remove_cb()
 unusedFunction:vpi_callback.cc:601
 // vpi_sim_control()
-unusedFunction:vpi_priv.cc:1620
+unusedFunction:vpi_priv.cc:1904
 // vpi_vprintf()
 unusedFunction:vpi_priv.cc:1505
+
+// The following are used in the embedded version of iverilog.
+// vvp_init()
+unusedFunction:lib_main.cc:275
+// vvp_run()
+unusedFunction:lib_main.cc:339
+// vvp_set_quiet_flag()
+unusedFunction:lib_main.cc:71
+// vvp_set_stop_is_finish()
+unusedFunction:lib_main.cc:62
+// vvp_set_verbose_flag()
+unusedFunction:lib_main.cc:76

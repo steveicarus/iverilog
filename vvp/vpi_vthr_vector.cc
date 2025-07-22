@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -55,9 +55,9 @@ extern const char oct_digits[64];
 class __vpiVThrWord : public __vpiHandle {
     public:
       explicit __vpiVThrWord(unsigned base);
-      int get_type_code(void) const;
-      int vpi_get(int code);
-      void vpi_get_value(p_vpi_value val);
+      int get_type_code(void) const override;
+      int vpi_get(int code) override;
+      void vpi_get_value(p_vpi_value val) override;
 
       int get_subtype() const { return subtype; };
       unsigned get_index() const { return index; };
@@ -226,9 +226,9 @@ static void thread_word_delete_real(vpiHandle item)
 class __vpiVThrStrStack : public __vpiHandle {
     public:
       explicit __vpiVThrStrStack(unsigned depth);
-      int get_type_code(void) const;
-      int vpi_get(int code);
-      void vpi_get_value(p_vpi_value val);
+      int get_type_code(void) const override;
+      int vpi_get(int code) override;
+      void vpi_get_value(p_vpi_value val) override;
     private:
       unsigned depth_;
 };
@@ -288,11 +288,11 @@ void __vpiVThrStrStack::vpi_get_value(p_vpi_value vp)
 class __vpiVThrVec4Stack : public __vpiHandle {
     public:
       __vpiVThrVec4Stack(unsigned depth, bool signed_flag, unsigned wid);
-      int get_type_code(void) const;
-      int vpi_get(int code);
-      char*vpi_get_str(int code);
-      void vpi_get_value(p_vpi_value val);
-      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      int get_type_code(void) const override;
+      int vpi_get(int code) override;
+      char*vpi_get_str(int code) override;
+      void vpi_get_value(p_vpi_value val) override;
+      vpiHandle vpi_put_value(p_vpi_value val, int flags) override;
     private:
       void vpi_get_value_string_(p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_binstr_(p_vpi_value vp, const vvp_vector4_t&val);

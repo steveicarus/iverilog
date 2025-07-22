@@ -1,7 +1,7 @@
 #ifndef IVL_class_type_H
 #define IVL_class_type_H
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -72,7 +72,7 @@ class class_type : public __vpiHandle {
       void copy_property(inst_t dst, size_t idx, inst_t src) const;
 
     public: // VPI related methods
-      int get_type_code(void) const;
+      int get_type_code(void) const override;
 
     private:
       std::string class_name_;

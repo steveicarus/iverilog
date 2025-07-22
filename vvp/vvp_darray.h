@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_darray_H
 #define IVL_vvp_darray_H
 /*
- * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -54,12 +54,12 @@ template <class TYPE> class vvp_darray_atom : public vvp_darray {
       explicit inline vvp_darray_atom(size_t siz) : array_(siz) { }
       ~vvp_darray_atom();
 
-      size_t get_size(void) const;
-      void set_word(unsigned adr, const vvp_vector4_t&value);
-      void get_word(unsigned adr, vvp_vector4_t&value);
-      void shallow_copy(const vvp_object*obj);
-      vvp_object* duplicate(void) const;
-      vvp_vector4_t get_bitstream(bool as_vec4);
+      size_t get_size(void) const override;
+      void set_word(unsigned adr, const vvp_vector4_t&value) override;
+      void get_word(unsigned adr, vvp_vector4_t&value) override;
+      void shallow_copy(const vvp_object*obj) override;
+      vvp_object* duplicate(void) const override;
+      vvp_vector4_t get_bitstream(bool as_vec4) override;
 
     private:
       std::vector<TYPE> array_;
@@ -72,12 +72,12 @@ class vvp_darray_vec4 : public vvp_darray {
                              array_(siz), word_wid_(word_wid) { }
       ~vvp_darray_vec4();
 
-      size_t get_size(void) const;
-      void set_word(unsigned adr, const vvp_vector4_t&value);
-      void get_word(unsigned adr, vvp_vector4_t&value);
-      void shallow_copy(const vvp_object*obj);
-      vvp_object* duplicate(void) const;
-      vvp_vector4_t get_bitstream(bool as_vec4);
+      size_t get_size(void) const override;
+      void set_word(unsigned adr, const vvp_vector4_t&value) override;
+      void get_word(unsigned adr, vvp_vector4_t&value) override;
+      void shallow_copy(const vvp_object*obj) override;
+      vvp_object* duplicate(void) const override;
+      vvp_vector4_t get_bitstream(bool as_vec4) override;
 
     private:
       std::vector<vvp_vector4_t> array_;
@@ -91,11 +91,11 @@ class vvp_darray_vec2 : public vvp_darray {
                              array_(siz), word_wid_(word_wid) { }
       ~vvp_darray_vec2();
 
-      size_t get_size(void) const;
-      void set_word(unsigned adr, const vvp_vector4_t&value);
-      void get_word(unsigned adr, vvp_vector4_t&value);
-      void shallow_copy(const vvp_object*obj);
-      vvp_vector4_t get_bitstream(bool as_vec4);
+      size_t get_size(void) const override;
+      void set_word(unsigned adr, const vvp_vector4_t&value) override;
+      void get_word(unsigned adr, vvp_vector4_t&value) override;
+      void shallow_copy(const vvp_object*obj) override;
+      vvp_vector4_t get_bitstream(bool as_vec4) override;
 
     private:
       std::vector<vvp_vector2_t> array_;
@@ -108,12 +108,12 @@ class vvp_darray_real : public vvp_darray {
       explicit inline vvp_darray_real(size_t siz) : array_(siz) { }
       ~vvp_darray_real();
 
-      size_t get_size(void) const;
-      void set_word(unsigned adr, double value);
-      void get_word(unsigned adr, double&value);
-      void shallow_copy(const vvp_object*obj);
-      vvp_object* duplicate(void) const;
-      vvp_vector4_t get_bitstream(bool as_vec4);
+      size_t get_size(void) const override;
+      void set_word(unsigned adr, double value) override;
+      void get_word(unsigned adr, double&value) override;
+      void shallow_copy(const vvp_object*obj) override;
+      vvp_object* duplicate(void) const override;
+      vvp_vector4_t get_bitstream(bool as_vec4) override;
 
     private:
       std::vector<double> array_;
@@ -125,11 +125,11 @@ class vvp_darray_string : public vvp_darray {
       explicit inline vvp_darray_string(size_t siz) : array_(siz) { }
       ~vvp_darray_string();
 
-      size_t get_size(void) const;
-      void set_word(unsigned adr, const std::string&value);
-      void get_word(unsigned adr, std::string&value);
-      void shallow_copy(const vvp_object*obj);
-      vvp_object* duplicate(void) const;
+      size_t get_size(void) const override;
+      void set_word(unsigned adr, const std::string&value) override;
+      void get_word(unsigned adr, std::string&value) override;
+      void shallow_copy(const vvp_object*obj) override;
+      vvp_object* duplicate(void) const override;
 
     private:
       std::vector<std::string> array_;
@@ -141,10 +141,10 @@ class vvp_darray_object : public vvp_darray {
       explicit inline vvp_darray_object(size_t siz) : array_(siz) { }
       ~vvp_darray_object();
 
-      size_t get_size(void) const;
-      void set_word(unsigned adr, const vvp_object_t&value);
-      void get_word(unsigned adr, vvp_object_t&value);
-      void shallow_copy(const vvp_object*obj);
+      size_t get_size(void) const override;
+      void set_word(unsigned adr, const vvp_object_t&value) override;
+      void get_word(unsigned adr, vvp_object_t&value) override;
+      void shallow_copy(const vvp_object*obj) override;
       //virtual vvp_object* duplicate(void) const;
 
     private:
@@ -157,7 +157,7 @@ class vvp_queue : public vvp_darray {
       inline vvp_queue(void) { }
       ~vvp_queue();
 
-      virtual size_t get_size(void) const =0;
+      virtual size_t get_size(void) const override =0;
       virtual void copy_elems(vvp_object_t src, unsigned max_size);
 
       virtual void set_word_max(unsigned adr, const vvp_vector4_t&value, unsigned max_size);
@@ -186,18 +186,18 @@ class vvp_queue_real : public vvp_queue {
     public:
       ~vvp_queue_real();
 
-      size_t get_size(void) const { return queue.size(); };
-      void copy_elems(vvp_object_t src, unsigned max_size);
-      void set_word_max(unsigned adr, double value, unsigned max_size);
-      void set_word(unsigned adr, double value);
-      void get_word(unsigned adr, double&value);
-      void insert(unsigned idx, double value, unsigned max_size);
-      void push_back(double value, unsigned max_size);
-      void push_front(double value, unsigned max_size);
-      void pop_back(void) { queue.pop_back(); };
-      void pop_front(void) { queue.pop_front(); };
-      void erase(unsigned idx);
-      void erase_tail(unsigned idx);
+      size_t get_size(void) const override { return queue.size(); };
+      void copy_elems(vvp_object_t src, unsigned max_size) override;
+      void set_word_max(unsigned adr, double value, unsigned max_size) override;
+      void set_word(unsigned adr, double value) override;
+      void get_word(unsigned adr, double&value) override;
+      void insert(unsigned idx, double value, unsigned max_size) override;
+      void push_back(double value, unsigned max_size) override;
+      void push_front(double value, unsigned max_size) override;
+      void pop_back(void) override { queue.pop_back(); };
+      void pop_front(void) override { queue.pop_front(); };
+      void erase(unsigned idx) override;
+      void erase_tail(unsigned idx) override;
 
     private:
       std::deque<double> queue;
@@ -208,18 +208,18 @@ class vvp_queue_string : public vvp_queue {
     public:
       ~vvp_queue_string();
 
-      size_t get_size(void) const { return queue.size(); };
-      void copy_elems(vvp_object_t src, unsigned max_size);
-      void set_word_max(unsigned adr, const std::string&value, unsigned max_size);
-      void set_word(unsigned adr, const std::string&value);
-      void get_word(unsigned adr, std::string&value);
-      void insert(unsigned idx, const std::string&value, unsigned max_size);
-      void push_back(const std::string&value, unsigned max_size);
-      void push_front(const std::string&value, unsigned max_size);
-      void pop_back(void) { queue.pop_back(); };
-      void pop_front(void) { queue.pop_front(); };
-      void erase(unsigned idx);
-      void erase_tail(unsigned idx);
+      size_t get_size(void) const override { return queue.size(); };
+      void copy_elems(vvp_object_t src, unsigned max_size) override;
+      void set_word_max(unsigned adr, const std::string&value, unsigned max_size) override;
+      void set_word(unsigned adr, const std::string&value) override;
+      void get_word(unsigned adr, std::string&value) override;
+      void insert(unsigned idx, const std::string&value, unsigned max_size) override;
+      void push_back(const std::string&value, unsigned max_size) override;
+      void push_front(const std::string&value, unsigned max_size) override;
+      void pop_back(void) override { queue.pop_back(); };
+      void pop_front(void) override { queue.pop_front(); };
+      void erase(unsigned idx) override;
+      void erase_tail(unsigned idx) override;
 
     private:
       std::deque<std::string> queue;
@@ -230,18 +230,18 @@ class vvp_queue_vec4 : public vvp_queue {
     public:
       ~vvp_queue_vec4();
 
-      size_t get_size(void) const { return queue.size(); };
-      void copy_elems(vvp_object_t src, unsigned max_size);
-      void set_word_max(unsigned adr, const vvp_vector4_t&value, unsigned max_size);
-      void set_word(unsigned adr, const vvp_vector4_t&value);
-      void get_word(unsigned adr, vvp_vector4_t&value);
-      void insert(unsigned idx, const vvp_vector4_t&value, unsigned max_size);
-      void push_back(const vvp_vector4_t&value, unsigned max_size);
-      void push_front(const vvp_vector4_t&value, unsigned max_size);
-      void pop_back(void) { queue.pop_back(); };
-      void pop_front(void) { queue.pop_front(); };
-      void erase(unsigned idx);
-      void erase_tail(unsigned idx);
+      size_t get_size(void) const override { return queue.size(); };
+      void copy_elems(vvp_object_t src, unsigned max_size) override;
+      void set_word_max(unsigned adr, const vvp_vector4_t&value, unsigned max_size) override;
+      void set_word(unsigned adr, const vvp_vector4_t&value) override;
+      void get_word(unsigned adr, vvp_vector4_t&value) override;
+      void insert(unsigned idx, const vvp_vector4_t&value, unsigned max_size) override;
+      void push_back(const vvp_vector4_t&value, unsigned max_size) override;
+      void push_front(const vvp_vector4_t&value, unsigned max_size) override;
+      void pop_back(void) override { queue.pop_back(); };
+      void pop_front(void) override { queue.pop_front(); };
+      void erase(unsigned idx) override;
+      void erase_tail(unsigned idx) override;
 
     private:
       std::deque<vvp_vector4_t> queue;

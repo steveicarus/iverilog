@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -372,11 +372,11 @@ class anyedge_vec4_value : public anyedge_value {
       anyedge_vec4_value() {};
       virtual ~anyedge_vec4_value() {};
 
-      void reset() { old_bits.set_to_x(); }
+      void reset() override { old_bits.set_to_x(); }
 
       void set(const vvp_vector4_t&bit) { old_bits = bit; };
 
-      void duplicate(anyedge_value*&dup);
+      void duplicate(anyedge_value*&dup) override;
 
       bool recv_vec4(const vvp_vector4_t&bit);
 
@@ -404,11 +404,11 @@ class anyedge_real_value : public anyedge_value {
       anyedge_real_value() : old_bits(0.0) {};
       virtual ~anyedge_real_value() {};
 
-      void reset() { old_bits = 0.0; }
+      void reset() override { old_bits = 0.0; }
 
       void set(double bit) { old_bits = bit; };
 
-      void duplicate(anyedge_value*&dup);
+      void duplicate(anyedge_value*&dup) override;
 
       bool recv_real(double bit);
 
@@ -433,11 +433,11 @@ class anyedge_string_value : public anyedge_value {
       anyedge_string_value() {};
       virtual ~anyedge_string_value() {};
 
-      void reset() { old_bits.clear(); }
+      void reset() override { old_bits.clear(); }
 
       void set(const std::string&bit) { old_bits = bit; };
 
-      void duplicate(anyedge_value*&dup);
+      void duplicate(anyedge_value*&dup) override;
 
       bool recv_string(const std::string&bit);
 

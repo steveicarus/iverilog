@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -176,7 +176,7 @@ struct sync_cb  : public vvp_gen_event_s {
 
       ~sync_cb () { }
 
-      virtual void run_run();
+      virtual void run_run() override;
 };
 
 inline __vpiCallback::__vpiCallback()
@@ -233,7 +233,7 @@ class value_part_callback : public value_callback {
       explicit value_part_callback(p_cb_data data);
       ~value_part_callback();
 
-      bool test_value_callback_ready(void);
+      bool test_value_callback_ready(void) override;
 
     private:
       char*value_bits_;

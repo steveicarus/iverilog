@@ -1,7 +1,7 @@
 #ifndef IVL_resolv_H
 #define IVL_resolv_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,18 +37,18 @@ class resolv_core : public vvp_net_fun_t {
       virtual ~resolv_core();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t)
+                     vvp_context_t) override
             { recv_vec4_(port.port(), bit); }
 
-      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit) override
             { recv_vec8_(port.port(), bit); }
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t)
+			unsigned base, unsigned vwid, vvp_context_t) override
             { recv_vec4_pv_(port.port(), bit, base, vwid); }
 
       void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
-			unsigned base, unsigned vwid)
+			unsigned base, unsigned vwid) override
             { recv_vec8_pv_(port.port(), bit, base, vwid); }
 
       virtual void count_drivers(unsigned bit_idx, unsigned counts[3]) =0;
@@ -75,19 +75,19 @@ class resolv_extend : public vvp_net_fun_t {
       ~resolv_extend();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t)
+                     vvp_context_t) override
             { core_->recv_vec4_(port_base_ + port.port(), bit); }
 
-      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit) override
             { core_->recv_vec8_(port_base_ + port.port(), bit); }
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t)
+			unsigned base, unsigned vwid, vvp_context_t) override
             { core_->recv_vec4_pv_(port_base_ + port.port(), bit,
                                    base, vwid); }
 
       void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
-			unsigned base, unsigned vwid)
+			unsigned base, unsigned vwid) override
             { core_->recv_vec8_pv_(port_base_ + port.port(), bit,
                                    base, vwid); }
 
@@ -115,11 +115,11 @@ class resolv_tri : public resolv_core {
                           vvp_scalar_t hiz_value);
       ~resolv_tri();
 
-      void count_drivers(unsigned bit_idx, unsigned counts[3]);
+      void count_drivers(unsigned bit_idx, unsigned counts[3]) override;
 
     private:
-      void recv_vec4_(unsigned port, const vvp_vector4_t&bit);
-      void recv_vec8_(unsigned port, const vvp_vector8_t&bit);
+      void recv_vec4_(unsigned port, const vvp_vector4_t&bit) override;
+      void recv_vec8_(unsigned port, const vvp_vector8_t&bit) override;
 
     private:
         // The puller value to be used when a bit is not driven.
@@ -143,14 +143,14 @@ class resolv_wired_logic : public resolv_core {
       explicit resolv_wired_logic(unsigned nports, vvp_net_t*net);
       virtual ~resolv_wired_logic();
 
-      void count_drivers(unsigned bit_idx, unsigned counts[3]);
+      void count_drivers(unsigned bit_idx, unsigned counts[3]) override;
 
     protected:
       virtual vvp_vector4_t wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b) =0;
 
     private:
-      void recv_vec4_(unsigned port, const vvp_vector4_t&bit);
-      void recv_vec8_(unsigned port, const vvp_vector8_t&bit);
+      void recv_vec4_(unsigned port, const vvp_vector4_t&bit) override;
+      void recv_vec8_(unsigned port, const vvp_vector8_t&bit) override;
 
     private:
         // The array of input values.
@@ -164,7 +164,7 @@ class resolv_triand : public resolv_wired_logic {
       ~resolv_triand();
 
     private:
-      virtual vvp_vector4_t wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b);
+      virtual vvp_vector4_t wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b) override;
 };
 
 class resolv_trior : public resolv_wired_logic {
@@ -174,7 +174,7 @@ class resolv_trior : public resolv_wired_logic {
       ~resolv_trior();
 
     private:
-      virtual vvp_vector4_t wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b);
+      virtual vvp_vector4_t wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b) override;
 };
 
 #endif /* IVL_resolv_H */

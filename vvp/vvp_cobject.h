@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_cobject_H
 #define IVL_vvp_cobject_H
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -44,7 +44,7 @@ class vvp_cobject : public vvp_object {
       void set_object(size_t pid, const vvp_object_t&val, size_t idx);
       void get_object(size_t pid, vvp_object_t&val, size_t idx);
 
-      void shallow_copy(const vvp_object*that);
+      void shallow_copy(const vvp_object*that) override;
 
     private:
       const class_type* defn_;

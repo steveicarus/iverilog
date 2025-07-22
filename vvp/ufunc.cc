@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -47,7 +47,7 @@ class ufunc_real : public ufunc_core {
 		 char*scope_label);
       ~ufunc_real();
 
-      void finish_thread();
+      void finish_thread() override;
 };
 
 class ufunc_vec4 : public ufunc_core {
@@ -59,7 +59,7 @@ class ufunc_vec4 : public ufunc_core {
 		 char*scope_label);
       ~ufunc_vec4();
 
-      void finish_thread();
+      void finish_thread() override;
 };
 
 ufunc_core::ufunc_core(unsigned owid, vvp_net_t*ptr,

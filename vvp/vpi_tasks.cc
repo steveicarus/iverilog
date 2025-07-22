@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -144,21 +144,21 @@ static vpiHandle systask_iter(int, vpiHandle ref)
 
 struct systask_def : public __vpiSysTaskCall {
       virtual ~systask_def() {};
-      virtual int get_type_code(void) const { return vpiSysTaskCall; }
-      virtual int vpi_get(int code)         { return systask_get(code, this); }
-      virtual char*vpi_get_str(int code)    { return systask_get_str(code, this); }
-      virtual vpiHandle vpi_handle(int code) { return systask_handle(code, this); }
-      virtual vpiHandle vpi_iterate(int code){ return systask_iter(code, this); }
+      virtual int get_type_code(void) const   override { return vpiSysTaskCall; }
+      virtual int vpi_get(int code)           override { return systask_get(code, this); }
+      virtual char*vpi_get_str(int code)      override { return systask_get_str(code, this); }
+      virtual vpiHandle vpi_handle(int code)  override { return systask_handle(code, this); }
+      virtual vpiHandle vpi_iterate(int code) override { return systask_iter(code, this); }
 };
 
 struct sysfunc_def : public systask_def {
       virtual ~sysfunc_def() {};
-      virtual int get_type_code(void) const { return vpiSysFuncCall; }
-      virtual int vpi_get(int code)         { return sysfunc_get(code, this); }
+      virtual int get_type_code(void) const override { return vpiSysFuncCall; }
+      virtual int vpi_get(int code) override { return sysfunc_get(code, this); }
 };
 
 struct sysfunc_real : public sysfunc_def {
-      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags) override;
       inline double return_value() const { return return_value_; }
 
     private:
@@ -183,8 +183,8 @@ vpiHandle sysfunc_real::vpi_put_value(p_vpi_value vp, int)
 }
 
 struct sysfunc_str : public sysfunc_def {
-      int vpi_get(int code);
-      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      int vpi_get(int code) override;
+      vpiHandle vpi_put_value(p_vpi_value val, int flags) override;
       inline const std::string& return_value() const { return return_value_; };
 
     private:
@@ -227,8 +227,8 @@ vpiHandle sysfunc_str::vpi_put_value(p_vpi_value vp, int)
 class sysfunc_vec4 : public sysfunc_def {
     public:
       explicit inline sysfunc_vec4(unsigned wid): return_value_(wid, BIT4_X) { }
-      int vpi_get(int code);
-      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      int vpi_get(int code) override;
+      vpiHandle vpi_put_value(p_vpi_value val, int flags) override;
       inline const vvp_vector4_t& return_value() const { return return_value_; }
 
     private:
@@ -395,8 +395,8 @@ vpiHandle sysfunc_vec4::vpi_put_value(p_vpi_value vp, int)
 
 struct sysfunc_4net : public sysfunc_def {
       explicit inline sysfunc_4net(unsigned wid) : vwid_(wid) { }
-      int vpi_get(int code);
-      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      int vpi_get(int code) override;
+      vpiHandle vpi_put_value(p_vpi_value val, int flags) override;
 
     private:
       unsigned vwid_;
@@ -521,7 +521,7 @@ vpiHandle sysfunc_4net::vpi_put_value(p_vpi_value vp, int)
 }
 
 struct sysfunc_rnet : public sysfunc_def {
-      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags) override;
 };
 
 vpiHandle sysfunc_rnet::vpi_put_value(p_vpi_value vp, int)
@@ -547,7 +547,7 @@ vpiHandle sysfunc_rnet::vpi_put_value(p_vpi_value vp, int)
 }
 
 struct sysfunc_no : public sysfunc_def {
-      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags) override;
 };
 
 vpiHandle sysfunc_no::vpi_put_value(p_vpi_value, int)
@@ -604,9 +604,9 @@ void def_table_delete(void)
 class __vpiSystfIterator : public __vpiHandle {
     public:
       explicit __vpiSystfIterator(unsigned idx);
-      int get_type_code(void) const;
-      vpiHandle vpi_index(int idx);
-      free_object_fun_t free_object_fun(void);
+      int get_type_code(void) const override;
+      vpiHandle vpi_index(int idx) override;
+      free_object_fun_t free_object_fun(void) override;
 
       unsigned next;
 };

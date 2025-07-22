@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_island_H
 #define IVL_vvp_island_H
 /*
- * Copyright (c) 2008-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -98,7 +98,7 @@ class vvp_island  : private vvp_gen_event_s {
       void compile_cleanup(void);
 
     private:
-      void run_run();
+      void run_run() override;
       bool flagged_;
 
     private:
@@ -127,19 +127,19 @@ class vvp_island_port  : public vvp_net_fun_t {
 
     public: // Implement vvp_net_fun_t methods
       virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                             vvp_context_t);
+                             vvp_context_t) override;
       virtual void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-				unsigned base, unsigned vwid, vvp_context_t);
-      virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
+				unsigned base, unsigned vwid, vvp_context_t) override;
+      virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit) override;
       virtual void recv_vec8_pv(vvp_net_ptr_t p, const vvp_vector8_t&bit,
-				unsigned base, unsigned vwid);
+				unsigned base, unsigned vwid) override;
 
 	// This is painful, but necessary. If the island is connected
 	// to a forced net, we need to rerun the calculations whenever
 	// a force/release happens to the net. If run_now is true, we
 	// rerun immediately, otherwise we schedule it for the end of
 	// the current time slot.
-      virtual void force_flag(bool run_now);
+      virtual void force_flag(bool run_now) override;
 
     public:
       vvp_vector8_t invalue;

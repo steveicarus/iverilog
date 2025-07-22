@@ -1,7 +1,7 @@
 #ifndef IVL_sfunc_H
 #define IVL_sfunc_H
 /*
- * Copyright (c) 2006-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,13 +28,13 @@ class sfunc_core : public vvp_wide_fun_core, protected vvp_gen_event_s {
       ~sfunc_core();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
     private:
-      void recv_vec4_from_inputs(unsigned port);
-      void recv_real_from_inputs(unsigned port);
+      void recv_vec4_from_inputs(unsigned port) override;
+      void recv_real_from_inputs(unsigned port) override;
 
-      void run_run();
+      void run_run() override;
 
 
     private:

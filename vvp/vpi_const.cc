@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,9 +33,9 @@ class __vpiStringConst : public __vpiHandle {
     public:
       explicit __vpiStringConst(char*val);
       ~__vpiStringConst();
-      int get_type_code(void) const;
-      int vpi_get(int code);
-      void vpi_get_value(p_vpi_value val);
+      int get_type_code(void) const override;
+      int vpi_get(int code) override;
+      void vpi_get_value(p_vpi_value val) override;
 
     private:
       void process_string_();
@@ -272,10 +272,10 @@ class __vpiStringParam  : public __vpiStringConst {
     public:
       __vpiStringParam(char*txt, char*name);
       ~__vpiStringParam();
-      int get_type_code(void) const;
-      int vpi_get(int code);
-      char*vpi_get_str(int code);
-      vpiHandle vpi_handle(int code);
+      int get_type_code(void) const override;
+      int vpi_get(int code) override;
+      char*vpi_get_str(int code) override;
+      vpiHandle vpi_handle(int code) override;
 
       __vpiScope* scope;
       bool     local_flag;
@@ -466,10 +466,10 @@ vvp_vector4_t vector4_from_text(const char*bits, unsigned wid)
 struct __vpiBinaryParam  : public __vpiBinaryConst {
       __vpiBinaryParam(const vvp_vector4_t&b, char*name);
       ~__vpiBinaryParam();
-      int get_type_code(void) const;
-      int vpi_get(int code);
-      char*vpi_get_str(int code);
-      vpiHandle vpi_handle(int code);
+      int get_type_code(void) const override;
+      int vpi_get(int code) override;
+      char*vpi_get_str(int code) override;
+      vpiHandle vpi_handle(int code) override;
 
       __vpiScope*scope;
       unsigned file_idx;
@@ -693,10 +693,10 @@ vpiHandle vpip_make_real_const(double value)
 struct __vpiRealParam  : public __vpiRealConst {
       __vpiRealParam(double val, char*name);
       ~__vpiRealParam();
-      int get_type_code(void) const;
-      int vpi_get(int code);
-      char*vpi_get_str(int code);
-      vpiHandle vpi_handle(int code);
+      int get_type_code(void) const override;
+      int vpi_get(int code) override;
+      char*vpi_get_str(int code) override;
+      vpiHandle vpi_handle(int code) override;
 
       __vpiScope* scope;
       bool local_flag;

@@ -1,7 +1,7 @@
 #ifndef IVL_event_H
 #define IVL_event_H
 /*
- * Copyright (c) 2004-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -43,7 +43,7 @@ class evctl_real : public evctl {
       explicit evctl_real(class __vpiHandle*handle, double value,
                           unsigned long ecount);
       virtual ~evctl_real() {}
-      void run_run();
+      void run_run() override;
 
     private:
       class __vpiHandle*handle_;
@@ -56,7 +56,7 @@ class evctl_vector : public evctl {
       explicit evctl_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
                             unsigned off, unsigned wid, unsigned long ecount);
       virtual ~evctl_vector() {}
-      void run_run();
+      void run_run() override;
 
     private:
       vvp_net_ptr_t ptr_;
@@ -72,7 +72,7 @@ class evctl_array : public evctl {
                            const vvp_vector4_t&value, unsigned off,
                            unsigned long ecount);
       virtual ~evctl_array() {}
-      virtual void run_run();
+      virtual void run_run() override;
 
     private:
       vvp_array_t mem_;
@@ -87,7 +87,7 @@ class evctl_array_r : public evctl {
       explicit evctl_array_r(vvp_array_t memory, unsigned index,
                            double value, unsigned long ecount);
       virtual ~evctl_array_r() {}
-      virtual void run_run();
+      virtual void run_run() override;
 
     private:
       vvp_array_t mem_;
@@ -180,12 +180,12 @@ class vvp_fun_edge_sa : public vvp_fun_edge {
       explicit vvp_fun_edge_sa(edge_t e);
       virtual ~vvp_fun_edge_sa();
 
-      vthread_t add_waiting_thread(vthread_t thread);
+      vthread_t add_waiting_thread(vthread_t thread) override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t context);
+			unsigned base, unsigned vwid, vvp_context_t context) override;
 
     private:
       vthread_t threads_;
@@ -200,16 +200,16 @@ class vvp_fun_edge_aa : public vvp_fun_edge, public automatic_hooks_s {
       explicit vvp_fun_edge_aa(edge_t e);
       virtual ~vvp_fun_edge_aa();
 
-      void alloc_instance(vvp_context_t context);
-      void reset_instance(vvp_context_t context);
+      void alloc_instance(vvp_context_t context) override;
+      void reset_instance(vvp_context_t context) override;
 #ifdef CHECK_WITH_VALGRIND
-      void free_instance(vvp_context_t context);
+      void free_instance(vvp_context_t context) override;
 #endif
 
-      vthread_t add_waiting_thread(vthread_t thread);
+      vthread_t add_waiting_thread(vthread_t thread) override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
     private:
       __vpiScope*context_scope_;
@@ -251,20 +251,20 @@ class vvp_fun_anyedge_sa : public vvp_fun_anyedge {
       explicit vvp_fun_anyedge_sa();
       virtual ~vvp_fun_anyedge_sa();
 
-      vthread_t add_waiting_thread(vthread_t thread);
+      vthread_t add_waiting_thread(vthread_t thread) override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t context);
+			unsigned base, unsigned vwid, vvp_context_t context) override;
 
       void recv_real(vvp_net_ptr_t port, double bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
       void recv_string(vvp_net_ptr_t port, const std::string&bit,
-		       vvp_context_t context);
+		       vvp_context_t context) override;
       void recv_object(vvp_net_ptr_t port, vvp_object_t bit,
-		       vvp_context_t context);
+		       vvp_context_t context) override;
 
     private:
       vthread_t threads_;
@@ -279,22 +279,22 @@ class vvp_fun_anyedge_aa : public vvp_fun_anyedge, public automatic_hooks_s {
       explicit vvp_fun_anyedge_aa();
       virtual ~vvp_fun_anyedge_aa();
 
-      void alloc_instance(vvp_context_t context);
-      void reset_instance(vvp_context_t context);
+      void alloc_instance(vvp_context_t context) override;
+      void reset_instance(vvp_context_t context) override;
 #ifdef CHECK_WITH_VALGRIND
-      void free_instance(vvp_context_t context);
+      void free_instance(vvp_context_t context) override;
 #endif
 
-      vthread_t add_waiting_thread(vthread_t thread);
+      vthread_t add_waiting_thread(vthread_t thread) override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
       void recv_real(vvp_net_ptr_t port, double bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
       void recv_string(vvp_net_ptr_t port, const std::string&bit,
-		       vvp_context_t context);
+		       vvp_context_t context) override;
 
     private:
       __vpiScope*context_scope_;
@@ -326,10 +326,10 @@ class vvp_fun_event_or_sa : public vvp_fun_event_or {
       explicit vvp_fun_event_or_sa(vvp_net_t*base_net);
       ~vvp_fun_event_or_sa();
 
-      vthread_t add_waiting_thread(vthread_t thread);
+      vthread_t add_waiting_thread(vthread_t thread) override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
     private:
       vthread_t threads_;
@@ -344,16 +344,16 @@ class vvp_fun_event_or_aa : public vvp_fun_event_or, public automatic_hooks_s {
       explicit vvp_fun_event_or_aa(vvp_net_t*base_net);
       ~vvp_fun_event_or_aa();
 
-      void alloc_instance(vvp_context_t context);
-      void reset_instance(vvp_context_t context);
+      void alloc_instance(vvp_context_t context) override;
+      void reset_instance(vvp_context_t context) override;
 #ifdef CHECK_WITH_VALGRIND
-      void free_instance(vvp_context_t context);
+      void free_instance(vvp_context_t context) override;
 #endif
 
-      vthread_t add_waiting_thread(vthread_t thread);
+      vthread_t add_waiting_thread(vthread_t thread) override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
     private:
       __vpiScope*context_scope_;
@@ -384,10 +384,10 @@ class vvp_named_event_sa : public vvp_named_event {
       explicit vvp_named_event_sa(class __vpiHandle*eh);
       ~vvp_named_event_sa();
 
-      vthread_t add_waiting_thread(vthread_t thread);
+      vthread_t add_waiting_thread(vthread_t thread) override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t);
+                     vvp_context_t) override;
 
     private:
       vthread_t threads_;
@@ -402,16 +402,16 @@ class vvp_named_event_aa : public vvp_named_event, public automatic_hooks_s {
       explicit vvp_named_event_aa(class __vpiHandle*eh);
       ~vvp_named_event_aa();
 
-      void alloc_instance(vvp_context_t context);
-      void reset_instance(vvp_context_t context);
+      void alloc_instance(vvp_context_t context) override;
+      void reset_instance(vvp_context_t context) override;
 #ifdef CHECK_WITH_VALGRIND
-      void free_instance(vvp_context_t context);
+      void free_instance(vvp_context_t context) override;
 #endif
 
-      vthread_t add_waiting_thread(vthread_t thread);
+      vthread_t add_waiting_thread(vthread_t thread) override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
     private:
       unsigned context_idx_;

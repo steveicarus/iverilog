@@ -629,8 +629,8 @@ class vvp_vector4array_sa : public vvp_vector4array_t {
       vvp_vector4array_sa(unsigned width, unsigned words);
       ~vvp_vector4array_sa();
 
-      vvp_vector4_t get_word(unsigned idx) const;
-      void set_word(unsigned idx, const vvp_vector4_t&that);
+      vvp_vector4_t get_word(unsigned idx) const override;
+      void set_word(unsigned idx, const vvp_vector4_t&that) override;
 
     private:
       v4cell* array_;
@@ -645,14 +645,14 @@ class vvp_vector4array_aa : public vvp_vector4array_t, public automatic_hooks_s 
       vvp_vector4array_aa(unsigned width, unsigned words);
       ~vvp_vector4array_aa();
 
-      void alloc_instance(vvp_context_t context);
-      void reset_instance(vvp_context_t context);
+      void alloc_instance(vvp_context_t context) override;
+      void reset_instance(vvp_context_t context) override;
 #ifdef CHECK_WITH_VALGRIND
-      void free_instance(vvp_context_t context);
+      void free_instance(vvp_context_t context) override;
 #endif
 
-      vvp_vector4_t get_word(unsigned idx) const;
-      void set_word(unsigned idx, const vvp_vector4_t&that);
+      vvp_vector4_t get_word(unsigned idx) const override;
+      void set_word(unsigned idx, const vvp_vector4_t&that) override;
 
     private:
       unsigned context_idx_;
@@ -1391,8 +1391,8 @@ class vvp_fun_force : public vvp_net_fun_t {
       ~vvp_fun_force();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-		     vvp_context_t context);
-      void recv_real(vvp_net_ptr_t port, double bit, vvp_context_t);
+		     vvp_context_t context) override;
+      void recv_real(vvp_net_ptr_t port, double bit, vvp_context_t) override;
 };
 
 /* vvp_fun_drive
@@ -1413,10 +1413,10 @@ class vvp_fun_drive  : public vvp_net_fun_t {
       ~vvp_fun_drive();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t) override;
     private:
       unsigned char drive0_;
       unsigned char drive1_;
@@ -1435,10 +1435,10 @@ class vvp_fun_extend_signed  : public vvp_net_fun_t {
       ~vvp_fun_extend_signed();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t);
+			unsigned base, unsigned vwid, vvp_context_t) override;
     private:
       unsigned width_;
 };
@@ -1516,12 +1516,12 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
       ~vvp_wide_fun_t();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
       void recv_real(vvp_net_ptr_t port, double bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
       void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t context);
+			unsigned base, unsigned vwid, vvp_context_t context) override;
 
     private:
       vvp_wide_fun_core*core_;

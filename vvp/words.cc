@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -297,7 +297,7 @@ class __compile_net_resolv : public base_net_resolv {
 
       ~__compile_net_resolv() { }
 
-      bool resolve(bool message_flag);
+      bool resolve(bool message_flag) override;
 
     private:
       int msb_, lsb_;
@@ -459,7 +459,7 @@ class __compile_real_net_resolv : public base_net_resolv {
 
       ~__compile_real_net_resolv() { }
 
-      bool resolve(bool message_flag);
+      bool resolve(bool message_flag) override;
 
     private:
 };

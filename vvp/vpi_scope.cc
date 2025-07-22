@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -399,63 +399,63 @@ class vpiScopeModule  : public __vpiScope {
     public:
       inline vpiScopeModule(const char*nam, const char*tnam)
       : __vpiScope(nam,tnam,false) { }
-      int get_type_code(void) const { return vpiModule; }
+      int get_type_code(void) const override { return vpiModule; }
 };
 
 struct vpiScopePackage  : public __vpiScope {
       inline vpiScopePackage(const char*nam, const char*tnam)
       : __vpiScope(nam,tnam) { }
-      int get_type_code(void) const { return vpiPackage; }
+      int get_type_code(void) const override { return vpiPackage; }
 };
 
 struct vpiScopeTask  : public __vpiScope {
       inline vpiScopeTask(const char*nam, const char*tnam)
       : __vpiScope(nam,tnam) { }
-      int get_type_code(void) const { return vpiTask; }
+      int get_type_code(void) const override { return vpiTask; }
 };
 
 struct vpiScopeTaskAuto  : public __vpiScope {
       inline vpiScopeTaskAuto(const char*nam, const char*tnam)
       : __vpiScope(nam,tnam,true) {  }
-      int get_type_code(void) const { return vpiTask; }
+      int get_type_code(void) const override { return vpiTask; }
 };
 
 struct vpiScopeBegin  : public __vpiScope {
       inline vpiScopeBegin(const char*nam, const char*tnam)
       : __vpiScope(nam,tnam,false) { }
-      int get_type_code(void) const { return vpiNamedBegin; }
+      int get_type_code(void) const override { return vpiNamedBegin; }
 };
 
 class vpiScopeBeginAuto  : public __vpiScope {
     public:
       inline vpiScopeBeginAuto(const char*nam, const char*tnam)
       : __vpiScope(nam,tnam,true) {  }
-      int get_type_code(void) const { return vpiNamedBegin; }
+      int get_type_code(void) const override { return vpiNamedBegin; }
 };
 
 struct vpiScopeGenerate  : public __vpiScope {
       inline vpiScopeGenerate(const char*nam, const char*tnam)
       : __vpiScope(nam,tnam) { }
-      int get_type_code(void) const { return vpiGenScope; }
+      int get_type_code(void) const override { return vpiGenScope; }
 };
 
 struct vpiScopeFork  : public __vpiScope {
       inline vpiScopeFork(const char*nam, const char*tnam)
       : __vpiScope(nam,tnam,false) { }
-      int get_type_code(void) const { return vpiNamedFork; }
+      int get_type_code(void) const override { return vpiNamedFork; }
 };
 
 class vpiScopeForkAuto  : public __vpiScope {
     public:
       inline vpiScopeForkAuto(const char*nam, const char*tnam)
       : __vpiScope(nam,tnam,true) {  }
-      int get_type_code(void) const { return vpiNamedFork; }
+      int get_type_code(void) const override { return vpiNamedFork; }
 };
 
 struct vpiScopeClass  : public __vpiScope {
       inline vpiScopeClass(const char*nam, const char*tnam)
       : __vpiScope(nam,tnam) { }
-      int get_type_code(void) const { return vpiClassTypespec; }
+      int get_type_code(void) const override { return vpiClassTypespec; }
 };
 
 /*

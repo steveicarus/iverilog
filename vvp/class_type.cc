@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -127,18 +127,18 @@ template <class T> class property_atom : public class_property_t {
       inline explicit property_atom(void) { }
       ~property_atom() { }
 
-      size_t instance_size() const { return sizeof(T); }
+      size_t instance_size() const override { return sizeof(T); }
 
     public:
-      void construct(char*buf) const
+      void construct(char*buf) const override
       { T*tmp = reinterpret_cast<T*> (buf+offset_);
 	*tmp = 0;
       }
 
-      void set_vec4(char*buf, const vvp_vector4_t&val);
-      void get_vec4(char*buf, vvp_vector4_t&val);
+      void set_vec4(char*buf, const vvp_vector4_t&val) override;
+      void get_vec4(char*buf, vvp_vector4_t&val) override;
 
-      void copy(char*dst, char*src);
+      void copy(char*dst, char*src) override;
 };
 
 class property_bit : public class_property_t {
@@ -146,21 +146,21 @@ class property_bit : public class_property_t {
       explicit inline property_bit(size_t wid): wid_(wid) { }
       ~property_bit() { }
 
-      size_t instance_size() const { return sizeof(vvp_vector2_t); }
+      size_t instance_size() const override { return sizeof(vvp_vector2_t); }
 
     public:
-      void construct(char*buf) const
+      void construct(char*buf) const override
       { new (buf+offset_) vvp_vector2_t (0, wid_); }
 
-      void destruct(char*buf) const
+      void destruct(char*buf) const override
       { vvp_vector2_t*tmp = reinterpret_cast<vvp_vector2_t*>(buf+offset_);
 	tmp->~vvp_vector2_t();
       }
 
-      void set_vec4(char*buf, const vvp_vector4_t&val);
-      void get_vec4(char*buf, vvp_vector4_t&val);
+      void set_vec4(char*buf, const vvp_vector4_t&val) override;
+      void get_vec4(char*buf, vvp_vector4_t&val) override;
 
-      void copy(char*dst, char*src);
+      void copy(char*dst, char*src) override;
 
     private:
       size_t wid_;
@@ -171,21 +171,21 @@ class property_logic : public class_property_t {
       explicit inline property_logic(size_t wid): wid_(wid) { }
       ~property_logic() { }
 
-      size_t instance_size() const { return sizeof(vvp_vector4_t); }
+      size_t instance_size() const override { return sizeof(vvp_vector4_t); }
 
     public:
-      void construct(char*buf) const
+      void construct(char*buf) const override
       { new (buf+offset_) vvp_vector4_t (wid_); }
 
-      void destruct(char*buf) const
+      void destruct(char*buf) const override
       { vvp_vector4_t*tmp = reinterpret_cast<vvp_vector4_t*>(buf+offset_);
 	tmp->~vvp_vector4_t();
       }
 
-      void set_vec4(char*buf, const vvp_vector4_t&val);
-      void get_vec4(char*buf, vvp_vector4_t&val);
+      void set_vec4(char*buf, const vvp_vector4_t&val) override;
+      void get_vec4(char*buf, vvp_vector4_t&val) override;
 
-      void copy(char*dst, char*src);
+      void copy(char*dst, char*src) override;
 
     private:
       size_t wid_;
@@ -196,18 +196,18 @@ template <class T> class property_real : public class_property_t {
       inline explicit property_real(void) { }
       ~property_real() { }
 
-      size_t instance_size() const { return sizeof(T); }
+      size_t instance_size() const override { return sizeof(T); }
 
     public:
-      void construct(char*buf) const
+      void construct(char*buf) const override
       { T*tmp = reinterpret_cast<T*> (buf+offset_);
 	*tmp = 0.0;
       }
 
-      void set_real(char*buf, double val);
-      double get_real(char*buf);
+      void set_real(char*buf, double val) override;
+      double get_real(char*buf) override;
 
-      void copy(char*dst, char*src);
+      void copy(char*dst, char*src) override;
 };
 
 class property_string : public class_property_t {
@@ -215,21 +215,21 @@ class property_string : public class_property_t {
       inline explicit property_string(void) { }
       ~property_string() { }
 
-      size_t instance_size() const { return sizeof(std::string); }
+      size_t instance_size() const override { return sizeof(std::string); }
 
     public:
-      void construct(char*buf) const
+      void construct(char*buf) const override
       { /* string*tmp = */ new (buf+offset_) string; }
 
-      void destruct(char*buf) const
+      void destruct(char*buf) const override
       { string*tmp = reinterpret_cast<string*> (buf+offset_);
 	tmp->~string();
       }
 
-      void set_string(char*buf, const string&);
-      string get_string(char*buf);
+      void set_string(char*buf, const string&) override;
+      string get_string(char*buf) override;
 
-      void copy(char*dst, char*src);
+      void copy(char*dst, char*src) override;
 };
 
 class property_object : public class_property_t {
@@ -237,17 +237,17 @@ class property_object : public class_property_t {
       inline explicit property_object(uint64_t as): array_size_(as==0? 1 : as) { }
       ~property_object() { }
 
-      size_t instance_size() const { return array_size_ * sizeof(vvp_object_t); }
+      size_t instance_size() const override { return array_size_ * sizeof(vvp_object_t); }
 
     public:
-      void construct(char*buf) const;
+      void construct(char*buf) const override;
 
-      void destruct(char*buf) const;
+      void destruct(char*buf) const override;
 
-      void set_object(char*buf, const vvp_object_t&, uint64_t);
-      void get_object(char*buf, vvp_object_t&, uint64_t);
+      void set_object(char*buf, const vvp_object_t&, uint64_t) override;
+      void get_object(char*buf, vvp_object_t&, uint64_t) override;
 
-      void copy(char*dst, char*src);
+      void copy(char*dst, char*src) override;
 
     private:
       size_t array_size_;

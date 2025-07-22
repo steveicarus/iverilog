@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -29,10 +29,10 @@ using namespace std;
 
 struct enumconst_s : public __vpiHandle {
       enumconst_s();
-      int get_type_code(void) const;
-      int vpi_get(int code);
-      char* vpi_get_str(int code);
-      void vpi_get_value(p_vpi_value val);
+      int get_type_code(void) const override;
+      int vpi_get(int code) override;
+      char* vpi_get_str(int code) override;
+      void vpi_get_value(p_vpi_value val) override;
 
       const char*name;
       vvp_vector2_t val2;
@@ -41,9 +41,9 @@ struct enumconst_s : public __vpiHandle {
 
 struct __vpiEnumTypespec : public __vpiHandle {
       __vpiEnumTypespec();
-      int get_type_code(void) const;
-      int vpi_get(int code);
-      vpiHandle vpi_iterate(int code);
+      int get_type_code(void) const override;
+      int vpi_get(int code) override;
+      vpiHandle vpi_iterate(int code) override;
 
       std::vector<enumconst_s> names;
       int base_type_code;

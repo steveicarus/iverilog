@@ -1,7 +1,7 @@
 #ifndef IVL_dff_H
 #define IVL_dff_H
 /*
- * Copyright (c) 2005-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -42,10 +42,10 @@ class vvp_dff : public vvp_net_fun_t {
       ~vvp_dff();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t);
+                     vvp_context_t) override;
 
       void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t ctx);
+			unsigned base, unsigned vwid, vvp_context_t ctx) override;
 
     private:
       virtual void recv_async(vvp_net_ptr_t port);
@@ -68,7 +68,7 @@ class vvp_dff_aclr : public vvp_dff {
       explicit vvp_dff_aclr(unsigned width, bool negedge);
 
     private:
-      void recv_async(vvp_net_ptr_t port);
+      void recv_async(vvp_net_ptr_t port) override;
 };
 
 /*
@@ -80,7 +80,7 @@ class vvp_dff_aset : public vvp_dff {
       explicit vvp_dff_aset(unsigned width, bool negedge);
 
     private:
-      void recv_async(vvp_net_ptr_t port);
+      void recv_async(vvp_net_ptr_t port) override;
 };
 
 /*
@@ -93,7 +93,7 @@ class vvp_dff_asc : public vvp_dff {
       explicit vvp_dff_asc(unsigned width, bool negedge, char*asc_value);
 
     private:
-      void recv_async(vvp_net_ptr_t port);
+      void recv_async(vvp_net_ptr_t port) override;
 
       vvp_vector4_t asc_value_;
 };

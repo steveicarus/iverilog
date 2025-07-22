@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,9 +30,9 @@ using namespace std;
 class vvp_island_tran : public vvp_island {
 
     public:
-      void run_island();
+      void run_island() override;
       void count_drivers(vvp_island_port*port, unsigned bit_idx,
-                         unsigned counts[3]);
+                         unsigned counts[3]) override;
 };
 
 enum tran_state_t {

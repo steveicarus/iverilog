@@ -1,7 +1,7 @@
 #ifndef IVL_latch_H
 #define IVL_latch_H
 /*
- * Copyright (c) 2016 Martin Whitaker (icarus@martin-whitaker.me.uk)
+ * Copyright (c) 2016-2025 Martin Whitaker (icarus@martin-whitaker.me.uk)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,10 +35,10 @@ class vvp_latch : public vvp_net_fun_t {
       ~vvp_latch();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t);
+                     vvp_context_t) override;
 
       void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-			unsigned base, unsigned vwid, vvp_context_t ctx);
+			unsigned base, unsigned vwid, vvp_context_t ctx) override;
 
     private:
       vvp_bit4_t en_;

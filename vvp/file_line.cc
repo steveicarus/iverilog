@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2021 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2025 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,9 +22,9 @@
 class __vpiFileLine : public __vpiHandle {
     public:
       explicit __vpiFileLine(const char*desc_, long file_idx_, long lineno_);
-      int get_type_code(void) const;
-      int vpi_get(int code);
-      char* vpi_get_str(int code);
+      int get_type_code(void) const override;
+      int vpi_get(int code) override;
+      char* vpi_get_str(int code) override;
 
       const char* get_description() const { return description; };
       unsigned get_file_idx() const { return file_idx; };

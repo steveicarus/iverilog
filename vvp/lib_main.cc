@@ -341,6 +341,7 @@ int vvp_run(const char *design_path)
       struct rusage cycles[3];
       int ret_cd;
 
+      (void) COPYRIGHT;
       if (vvp_used++ != 1) {
           if (vvp_used == 1)
               fprintf(stderr, "vvp_init() has not been called\n");

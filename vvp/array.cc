@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -60,12 +60,12 @@ vvp_array_t array_find(const char*label)
 }
 
 struct __vpiArrayVthrA : public __vpiHandle {
-      int get_type_code(void) const { return vpiMemoryWord; }
-      int vpi_get(int code);
-      char* vpi_get_str(int code);
-      void vpi_get_value(p_vpi_value val);
-      vpiHandle vpi_put_value(p_vpi_value val, int flags);
-      vpiHandle vpi_handle(int code);
+      int get_type_code(void) const override { return vpiMemoryWord; }
+      int vpi_get(int code) override;
+      char* vpi_get_str(int code) override;
+      void vpi_get_value(p_vpi_value val) override;
+      vpiHandle vpi_put_value(p_vpi_value val, int flags) override;
+      vpiHandle vpi_handle(int code) override;
 
       struct __vpiArray*array;
 	// If this is set, then use it to get the index value.
@@ -97,11 +97,11 @@ struct __vpiArrayVthrA : public __vpiHandle {
 
 
 struct __vpiArrayVthrAPV : public __vpiHandle {
-      int get_type_code(void) const { return vpiPartSelect; }
-      int vpi_get(int code);
-      char* vpi_get_str(int code);
-      void vpi_get_value(p_vpi_value val);
-      vpiHandle vpi_handle(int code);
+      int get_type_code(void) const override { return vpiPartSelect; }
+      int vpi_get(int code) override;
+      char* vpi_get_str(int code) override;
+      void vpi_get_value(p_vpi_value val) override;
+      vpiHandle vpi_handle(int code) override;
 
       struct __vpiArray*array;
       unsigned word_sel;
@@ -1065,10 +1065,10 @@ class vvp_fun_arrayport_sa  : public vvp_fun_arrayport {
       explicit vvp_fun_arrayport_sa(vvp_array_t mem, vvp_net_t*net, long addr);
       ~vvp_fun_arrayport_sa();
 
-      void check_word_change(unsigned long addr);
+      void check_word_change(unsigned long addr) override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t);
+                     vvp_context_t) override;
 
     private:
 };
@@ -1129,16 +1129,16 @@ class vvp_fun_arrayport_aa  : public vvp_fun_arrayport, public automatic_hooks_s
       explicit vvp_fun_arrayport_aa(__vpiScope*context_scope, vvp_array_t mem, vvp_net_t*net, long addr);
       ~vvp_fun_arrayport_aa();
 
-      void alloc_instance(vvp_context_t context);
-      void reset_instance(vvp_context_t context);
+      void alloc_instance(vvp_context_t context) override;
+      void reset_instance(vvp_context_t context) override;
 #ifdef CHECK_WITH_VALGRIND
-      void free_instance(vvp_context_t context);
+      void free_instance(vvp_context_t context) override;
 #endif
 
-      void check_word_change(unsigned long addr);
+      void check_word_change(unsigned long addr) override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
+                     vvp_context_t context) override;
 
     private:
       void check_word_change_(unsigned long addr, vvp_context_t context);
@@ -1373,7 +1373,7 @@ class array_resolv_list_t : public resolv_list_s {
       }
 
       vvp_array_t*array;
-      bool resolve(bool mes);
+      bool resolve(bool mes) override;
 
     private:
 };
@@ -1398,7 +1398,7 @@ class array_port_resolv_list_t : public resolv_list_s {
       vvp_net_t*ptr;
       bool use_addr;
       long addr;
-      bool resolve(bool mes);
+      bool resolve(bool mes) override;
 
     private:
 };
@@ -1445,7 +1445,7 @@ class array_word_part_callback : public array_word_value_callback {
       explicit array_word_part_callback(p_cb_data data);
       ~array_word_part_callback();
 
-      bool test_value_callback_ready(void);
+      bool test_value_callback_ready(void) override;
 
     private:
       char*value_bits_;
