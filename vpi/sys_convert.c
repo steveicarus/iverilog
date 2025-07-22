@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Michael Ruff (mruff  at chiaro.com)
+ * Copyright (c) 2003-2025 Michael Ruff (mruff  at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,7 +22,7 @@
 # include  <string.h>
 # include  <math.h>
 
-static double bits2double(PLI_UINT32 bits[2])
+static double bits2double(PLI_UINT32 const bits[2])
 {
       union conv {
 	    double rval;

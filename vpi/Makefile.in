@@ -105,10 +105,14 @@ distclean: clean
 cppcheck: $(O:.o=.c) $(OPP:.o=.cc) $(M:.o=.c) $(V:.o=.c)
 	cppcheck --enable=all --std=c99 --std=c++11 -f \
 	         --suppressions-list=$(srcdir)/cppcheck.sup \
-	         -UYY_USER_INIT \
+	         -UYY_USER_INIT -UYY_LOCATION_PRINT -Uyyset_out -Uyyset_lineno \
+		 -Uyyset_in -Uyyset_extra -Uyyset_debug -Uyylex_destroy \
+		 -Uyyget_text -Uyyget_out -Uyyget_lineno -Uyyget_leng \
+		 -Uyyget_in -Uyyget_extra -Uyyget_debug \
 	         -UYYPARSE_PARAM -UYYPRINT -Ushort -Uyyoverflow \
 	         -UYYTYPE_INT8 -UYYTYPE_INT16 -UYYTYPE_UINT8 -UYYTYPE_UINT16 \
 	         -UYYLTYPE -UYYSTYPE -U__SIZE_TYPE__ -Umalloc -Usize_t -Ufree  \
+		 -U__PTRDIFF_TYPE__ -UMAP_FAILED \
 	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
