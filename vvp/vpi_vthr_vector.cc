@@ -96,6 +96,14 @@ static double vlg_round(double rval)
       }
 }
 
+static uint64_t vlg_round_to_u64(double rval)
+{
+      // Directly casting a negative double to an unsigned integer types is
+      // undefined behavior and behaves differently on different architectures.
+      // Cast to signed integer first to get the behavior we want.
+      return static_cast<uint64_t>(static_cast<int64_t>(vlg_round(rval)));
+}
+
 static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(ref);
@@ -141,17 +149,17 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiOctStrVal:
-	    snprintf(rbuf, RBUF_USE_SIZE, "%" PRIo64, (uint64_t)vlg_round(val));
+	    snprintf(rbuf, RBUF_USE_SIZE, "%" PRIo64, vlg_round_to_u64(val));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    snprintf(rbuf, RBUF_USE_SIZE, "%" PRIx64, (uint64_t)vlg_round(val));
+	    snprintf(rbuf, RBUF_USE_SIZE, "%" PRIx64, vlg_round_to_u64(val));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiBinStrVal: {
-		uint64_t vali = (uint64_t)vlg_round(val);
+		uint64_t vali = vlg_round_to_u64(val);
 		unsigned len = 0;
 
 		while (vali > 0) {
@@ -159,7 +167,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 		      vali /= 2;
 		}
 
-		vali = (uint64_t)vlg_round(val);
+		vali = vlg_round_to_u64(val);
 		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
 		      rbuf[len-idx-1] = (vali & 1)? '1' : '0';
 		      vali /= 2;

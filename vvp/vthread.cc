@@ -2374,17 +2374,30 @@ bool of_CVT_SR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+static double vlg_round(double rval)
+{
+      if (rval >= 0.0) {
+            return floor(rval + 0.5);
+      } else {
+            return ceil(rval - 0.5);
+      }
+}
+
+static uint64_t vlg_round_to_u64(double rval)
+{
+      // Directly casting a negative double to an unsigned integer types is
+      // undefined behavior and behaves differently on different architectures.
+      // Cast to signed integer first to get the behavior we want.
+      return static_cast<uint64_t>(static_cast<int64_t>(vlg_round(rval)));
+}
+
 /*
  * %cvt/ur <idx>
  */
 bool of_CVT_UR(vthread_t thr, vvp_code_t cp)
 {
       double r = thr->pop_real();
-      if (r >= 0.0)
-	    thr->words[cp->bit_idx[0]].w_uint = (uint64_t)floor(r+0.5);
-      else
-	    thr->words[cp->bit_idx[0]].w_uint = (uint64_t)ceil(r-0.5);
-
+      thr->words[cp->bit_idx[0]].w_uint = vlg_round_to_u64(r);
       return true;
 }
 
