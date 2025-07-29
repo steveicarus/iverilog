@@ -24,6 +24,7 @@
 # include  "ufunc.h"
 # include  "event.h"
 # include  "vpi_priv.h"
+# include  "vpi_utils.h"
 # include  "vvp_net_sig.h"
 # include  "vvp_cobject.h"
 # include  "vvp_darray.h"
@@ -2372,23 +2373,6 @@ bool of_CVT_SR(vthread_t thr, vvp_code_t cp)
       thr->words[cp->bit_idx[0]].w_int = i64round(r);
 
       return true;
-}
-
-static double vlg_round(double rval)
-{
-      if (rval >= 0.0) {
-            return floor(rval + 0.5);
-      } else {
-            return ceil(rval - 0.5);
-      }
-}
-
-static uint64_t vlg_round_to_u64(double rval)
-{
-      // Directly casting a negative double to an unsigned integer types is
-      // undefined behavior and behaves differently on different architectures.
-      // Cast to signed integer first to get the behavior we want.
-      return static_cast<uint64_t>(static_cast<int64_t>(vlg_round(rval)));
 }
 
 /*

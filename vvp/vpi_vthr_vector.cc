@@ -24,6 +24,7 @@
  */
 
 # include  "vpi_priv.h"
+# include  "vpi_utils.h"
 # include  "vthread.h"
 # include  "config.h"
 #ifdef CHECK_WITH_VALGRIND
@@ -87,23 +88,6 @@ static int vthr_word_get(int code, vpiHandle ref)
       }
 }
 
-static double vlg_round(double rval)
-{
-      if (rval >= 0.0) {
-            return floor(rval + 0.5);
-      } else {
-            return ceil(rval - 0.5);
-      }
-}
-
-static uint64_t vlg_round_to_u64(double rval)
-{
-      // Directly casting a negative double to an unsigned integer types is
-      // undefined behavior and behaves differently on different architectures.
-      // Cast to signed integer first to get the behavior we want.
-      return static_cast<uint64_t>(static_cast<int64_t>(vlg_round(rval)));
-}
-
 static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(ref);
@@ -135,7 +119,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    if (val != val || (val && (val == 0.5*val))) {
 		  val = 0.0;
 	    } else {
-		  val = vlg_round(val);
+		  val = std::round(val);
 	    }
 	    vp->value.integer = (PLI_INT32)val;
 	    break;
@@ -144,7 +128,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    if (std::isnan(val))
 		  snprintf(rbuf, RBUF_USE_SIZE, "%s", "nan");
 	    else
-		  snprintf(rbuf, RBUF_USE_SIZE, "%0.0f", vlg_round(val));
+		  snprintf(rbuf, RBUF_USE_SIZE, "%0.0f", std::round(val));
 	    vp->value.str = rbuf;
 	    break;
 
