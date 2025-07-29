@@ -987,28 +987,26 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 	    break;
 
 	  case vpiBinStrVal: {
-		uint64_t val = vlg_round_to_u64(rval);
-		unsigned len = 0;
+        const uint64_t val = vlg_round_to_u64(rval);
+        unsigned len = 0;
 
-		while (val > 0) {
-		      len += 1;
-		      val /= 2;
-		}
+        // Compute bit‑width; For val==0, this yields len==1
+        uint64_t tmp = val;
+        do {
+            len += 1;
+            tmp /= 2;
+        } while (tmp > 0);
 
-		val = vlg_round_to_u64(rval);
-		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
-		      rbuf[len-idx-1] = (val & 1)? '1' : '0';
-		      val /= 2;
-		}
+        tmp = val;
+        for (unsigned idx = 0; idx < len; idx += 1) {
+            rbuf[len - idx - 1] = (tmp & 1) ? '1' : '0';
+            tmp /= 2;
+        }
 
-		rbuf[len] = 0;
-		if (len == 0) {
-		      rbuf[0] = '0';
-		      rbuf[1] = 0;
-		}
-		vp->value.str = rbuf;
-		break;
-	  }
+        rbuf[len] = '\0';
+        vp->value.str = rbuf;
+        break;
+      }
 
 	  case vpiSuppressVal:
 	    break;

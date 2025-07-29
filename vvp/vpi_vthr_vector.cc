@@ -143,28 +143,25 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiBinStrVal: {
-		uint64_t vali = vlg_round_to_u64(val);
-		unsigned len = 0;
+        const uint64_t vali = vlg_round_to_u64(val);
+        unsigned len = 0;
 
-		while (vali > 0) {
-		      len += 1;
-		      vali /= 2;
-		}
+        uint64_t tmp = vali;
+        do {
+            len += 1;
+            tmp /= 2;
+        } while (tmp > 0);
 
-		vali = vlg_round_to_u64(val);
-		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
-		      rbuf[len-idx-1] = (vali & 1)? '1' : '0';
-		      vali /= 2;
-		}
+        tmp = vali;
+        for (unsigned idx = 0; idx < len; idx += 1) {
+            rbuf[len - idx - 1] = (tmp & 1) ? '1' : '0';
+            tmp /= 2;
+        }
 
-		rbuf[len] = 0;
-		if (len == 0) {
-		      rbuf[0] = '0';
-		      rbuf[1] = 0;
-		}
-		vp->value.str = rbuf;
-		break;
-	  }
+        rbuf[len] = '\0';
+        vp->value.str = rbuf;
+        break;
+      }
 
 	  default:
 	    fprintf(stderr, "vvp error: get %d not supported "
