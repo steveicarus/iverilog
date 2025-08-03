@@ -7,14 +7,51 @@ standard. Some of these are picked from extended variants of the
 language, such as SystemVerilog, and some are expressions of internal
 behavior of Icarus Verilog, made available as a tool debugging aid.
 
-Built-in System Functions
--------------------------
+Don't use any of these extensions if you want to keep your code portable
+across other Verilog compilers.
+
+System Functions
+----------------
+
+``$is_signed(<expr>)``
+^^^^^^^^^^^^^^^^^^^^^^
+
+This function returns 1 if the expression contained is signed, or 0 otherwise.
+This is mostly of use for compiler regression tests.
+
+``$bits(<expr>)``, ``$sizeof(<expr>)``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``$bits`` system function returns the size in bits of the expression that
+is its argument. The result of this function is undefined if the argument
+doesn't have a self-determined size.
+
+The ``$sizeof`` system function is deprecated in favour of ``$bits``, which is
+the same thing, but included in the SystemVerilog definition.
+
+``$simtime()``
+^^^^^^^^^^^^^^
+
+This returns as a 64bit value the simulation time, unscaled by the time units
+of the local scope. This is different from the ``$time`` and ``$stime``
+functions which return the scaled times. This function is added for regression
+testing of the compiler and run time, but can be used by applications who
+really want the simulation time.
+
+Note that the simulation time can be confusing if there are lots of different
+```timescales`` within a design. It is not in general possible to predict
+what the simulation precision will turn out to be.
+
+``$mti_random()``, ``$mti_dist_uniform``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+These functions are similar to the IEEE 1364 standard ``$random`` functions,
+but they use the Mersenne Twister (MT19937) algorithm. This is considered an
+excellent random number generator, but does not generate the same sequence as
+the standardized ``$random``.
 
 System Tasks
 ------------
-
-These are system tasks that are unique to Icarus Verilog. Don't use any of
-these if you want to keep your code portable across other Verilog compilers.
 
 ``$readmempath``
 ^^^^^^^^^^^^^^^^

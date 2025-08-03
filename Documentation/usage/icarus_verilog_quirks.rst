@@ -352,6 +352,25 @@ will produce the following output:
  This is g and f:      0.123,      0.123.
  This is more g and f:       1.23,      1.235.
 
+``%t`` Time Format Specifier Can Specify Width
+----------------------------------------------
+
+Standard Verilog does not allow width fields in the ``%t`` formats of display
+strings. For example, this is illegal:
+
+.. code-block:: verilog
+
+  $display("Time is %0t", $time);
+
+Standard Verilog instead relies on the ``$timeformat`` to completely specify
+the format.
+
+Icarus Verilog allows the programmer to specify the field width. The ``%t``
+format in Icarus Verilog works exactly as it does in standard Verilog.
+However, if the programmer chooses to specify a minimum width (i.e., ``%5t``),
+then for that display Icarus Verilog will override the ``$timeformat`` minimum
+width and use the explicit minimum width.
+
 ``%v`` Format Specifier Can Display Vectors
 -------------------------------------------
 
@@ -379,3 +398,41 @@ a repeat event control should do. In Icarus Verilog the ``repeat`` statement
 is consistent with the repeat event control definition. If the argument is
 signed and is a negative value this will be treated the same as an argument
 value of 0.
+
+Built-in System Functions May Be Evaluated at Compile Time
+----------------------------------------------------------
+
+Certain of the system functions have well-defined meanings, so can
+theoretically be evaluated at compile-time, instead of using runtime VPI
+code. Doing so means that VPI cannot override the definitions of functions
+handled in this manner. On the other hand, this makes them synthesizable,
+and also allows for more aggressive constant propagation. The functions
+handled in this manner are:
+
+- ``$bits``
+- ``$signed``
+- ``$sizeof``
+- ``$unsigned``
+
+Implementations of these system functions in VPI modules will be ignored.
+
+``vpiScope`` Iterator on ``vpiScope`` Objects
+---------------------------------------------
+
+In the VPI, the normal way to iterate over ``vpiScope`` objects contained
+within a ``vpiScope`` object, is the ``vpiInternalScope`` iterator. Icarus
+Verilog adds support for the ``vpiScope`` iterator of a ``vpiScope`` object,
+that iterates over *everything* that is contained in the current scope. This
+is useful in cases where one wants to iterate over all the objects in a scope
+without iterating over all the contained types explicitly.
+
+Time 0 Race Resolution
+----------------------
+
+Combinational logic is routinely modelled using always blocks. However, this
+can lead to race conditions if the inputs to the combinational block are
+initialized in initial statements. Icarus Verilog slightly modifies time 0
+scheduling by arranging for always statements with ANYEDGE sensitivity lists
+to be scheduled before any other threads. This causes combinational always
+blocks to be triggered when the values in the sensitivity list are initialized
+by initial threads.
