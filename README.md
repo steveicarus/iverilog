@@ -1,6 +1,6 @@
 # The ICARUS Verilog Compilation System
 
-Copyright 2000-2019 Stephen Williams
+Copyright 2000-2025 Stephen Williams
 
 <details>
 <summary><h2>Table of Contents</h2></summary>
@@ -35,10 +35,11 @@ Copyright 2000-2019 Stephen Williams
 ## What is ICARUS Verilog?
 
 Icarus Verilog is intended to compile ALL of the Verilog HDL, as
-described in the IEEE-1364 standard. Of course, it's not quite there
-yet. It does currently handle a mix of structural and behavioural
-constructs. For a view of the current state of Icarus Verilog, see its
-home page at https://steveicarus.github.io/iverilog/.
+described in the IEEE 1364 standard. Of course, it's not quite there
+yet. It also compiles a (slowly growing) subset of the SystemVerilog
+language, as described in the IEEE 1800 standard. For a view of the
+current state of Icarus Verilog, see its home page at
+https://steveicarus.github.io/iverilog/.
 
 Icarus Verilog is not aimed at being a simulator in the traditional
 sense, but a compiler that generates code employed by back-end
@@ -54,8 +55,6 @@ as simple as practical. Someone basically familiar with the target
 system and C/C++ compilation should be able to build the source
 distribution with little effort. Some actual programming skills are
 not required, but helpful in case of problems.
-
-> If you are building on Windows, see the mingw.txt file.
 
 ### Compile Time Prerequisites
 
@@ -83,7 +82,7 @@ on a UNIX-like system:
   OSX note: bison 2.3 shipped with MacOS including Catalina generates
   broken code, but bison 3+ works. We recommend using the Fink
   project version of bison and flex (finkproject.org), brew version
-  works fine either.
+  works fine too.
 
 - gperf 3.0 or later
   The lexical analyzer doesn't recognize keywords directly,
@@ -392,15 +391,11 @@ Verilog web page for the current state of support for Verilog, and in
 particular, browse the bug report database for reported unsupported
 constructs.
 
-  - System functions are supported, but the return value is a little
-    tricky. See SYSTEM FUNCTION TABLE FILES in the iverilog man page.
-
-  - Specify blocks are parsed but ignored in general.
+  - Specify blocks are parsed but ignored by default. When enabled
+    by the `-gspecify` compiler option, a subset of specify block
+    constructs are supported.
 
   - `trireg` is not supported. `tri0` and `tri1` are supported.
-
-  - tran primitives, i.e. `tran`, `tranif1`, `tranif0`, `rtran`, `rtranif1`,
-    and `rtranif0` are not supported.
 
   - Net delays, of the form `wire #N foo;` do not work. Delays in
     every other context do work properly, including the V2001 form
@@ -409,8 +404,8 @@ constructs.
   - Event controls inside non-blocking assignments are not supported.
     i.e.: `a <= @(posedge clk) b;`
 
-  - Macro arguments are not supported. `` `define `` macros are supported,
-    but they cannot take arguments.
+The list of unsupported SystemVerilog constructs is too large to
+enumerate here.
 
 ## Nonstandard Constructs or Behaviors
 
@@ -544,8 +539,9 @@ are new keywords. Typical syntax is:
 	reg logic bar, bat;
 ```
 ... and so forth. The syntax can be turned off by using the
-`-g2` flag to iverilog, and turned on explicitly with the `-g2x`
-flag to iverilog.
+`-gxtypes` flag to iverilog, and turned on explicitly with the
+`-gno-xtypes flag to iverilog. Note that this applies to standard
+Verilog; SystemVerilog allows similar syntax.
 
 
 ## Credits
