@@ -2114,7 +2114,7 @@ static void open_input_file(struct include_stack_t*isp)
 	    return;
       }
 
-      size_t cmdlen = strlen(vhdlpp_path);
+      size_t cmdlen = strlen(vhdlpp_path) + 12;
       cmdlen += strlen(isp->path);
       cmdlen += 8+strlen(vhdlpp_work);
 
@@ -2130,7 +2130,11 @@ static void open_input_file(struct include_stack_t*isp)
       cmdlen += liblen;
 
       char*cmd = malloc(cmdlen);
+#ifdef __MINGW32__
+      snprintf(cmd, cmdlen, "cmd /S /C \"%s -w\"%s\"%s %s\"", vhdlpp_path, vhdlpp_work, libs, isp->path);
+#else
       snprintf(cmd, cmdlen, "%s -w\"%s\"%s %s", vhdlpp_path, vhdlpp_work, libs, isp->path);
+#endif
 
       if (verbose_flag) fprintf(stderr, "Invoke vhdlpp: %s\n", cmd);
 

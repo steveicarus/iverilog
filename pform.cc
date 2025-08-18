@@ -3428,12 +3428,13 @@ int pform_parse(const char*path)
       if (strcmp(path, "-") == 0) {
 	    vl_input = stdin;
       } else if (ivlpp_string) {
-	    char*cmdline = (char*)malloc(strlen(ivlpp_string) +
-					        strlen(path) + 4);
-	    strcpy(cmdline, ivlpp_string);
-	    strcat(cmdline, " \"");
-	    strcat(cmdline, path);
-	    strcat(cmdline, "\"");
+	    size_t cmdlen = strlen(ivlpp_string) + strlen(path) + 16;
+	    char*cmdline = (char*)malloc(cmdlen);
+#ifdef __MINGW32__
+	    snprintf(cmdline, cmdlen, "cmd /S /C \"%s \"%s\"\"", ivlpp_string, path);
+#else
+	    snprintf(cmdline, cmdlen, "%s \"%s\"", ivlpp_string, path);
+#endif
 
 	    if (verbose_flag)
 		  cerr << "Executing: " << cmdline << endl<< flush;
