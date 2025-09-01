@@ -10,13 +10,17 @@ reg a;
 reg b;
 
 initial begin
-   $monitor("b = %b", b);
+    $monitor("b = %b", b);
     #1;
     a = 1;
     #2;
     a = 0;
     #2;
     a = 1;
+`ifdef VERILATOR
+    #3;
+    $finish;  // Always @* in Verilator isn't input-sensitive, loops forever
+`endif
 end
 
 /* This generated the error:
