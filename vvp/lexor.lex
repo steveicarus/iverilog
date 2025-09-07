@@ -66,7 +66,37 @@ static char* strdupnew(char const *str)
      contents of the string without the enclosing quotes. */
 \"([^\"\\]|\\.)*\" {
       yytext[strlen(yytext)-1] = 0;
-      yylval.text = strdupnew(yytext+1);
+      char* raw_str = yytext+1;
+      
+      // Unescape backslashes in the string
+      char* unescaped = new char[strlen(raw_str) + 1];
+      char* dst = unescaped;
+      char* src = raw_str;
+      
+      while (*src) {
+          if (*src == '\\' && *(src+1)) {
+              // Handle escape sequences
+              src++; // skip the backslash
+              switch (*src) {
+                  case '\\': *dst++ = '\\'; break;  // \\ -> \
+                  case '"': *dst++ = '"'; break;   // \" -> "
+                  case 'n': *dst++ = '\n'; break;  // \n -> newline
+                  case 't': *dst++ = '\t'; break;  // \t -> tab
+                  case 'r': *dst++ = '\r'; break;  // \r -> carriage return
+                  default: 
+                      // For any other escaped character, include both backslash and character
+                      *dst++ = '\\';
+                      *dst++ = *src;
+                      break;
+              }
+              src++;
+          } else {
+              *dst++ = *src++;
+          }
+      }
+      *dst = '\0';
+      
+      yylval.text = unescaped;
       assert(yylval.text);
       return T_STRING; }
 

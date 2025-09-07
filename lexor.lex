@@ -431,10 +431,17 @@ TU [munpf]
   }
 
 
-\\[^ \t\b\f\r\n]+         {
+a\\[^ \t\b\f\r\n]+[ \t\b\f\r\n] {
       assert(yylloc.lexical_pos != UINT_MAX);
       yylloc.lexical_pos += 1;
-      yylval.text = strdupnew(yytext+1);
+      // Extract identifier name from escaped identifier according to IEEE Std 1800-2023
+      // Format: \ {any_printable_ASCII_character_except_white_space} white_space
+      // The identifier name excludes both the leading \ and trailing whitespace
+      size_t len = strlen(yytext);
+      char* escaped_name = new char[len - 1];  // len-2 chars + null terminator
+      strncpy(escaped_name, yytext + 1, len - 2);  // Skip leading \ and trailing whitespace
+      escaped_name[len - 2] = '\0';
+      yylval.text = escaped_name;
       if (gn_system_verilog()) {
 	    if (PPackage*pkg = pform_test_package_identifier(yylval.text)) {
 		  delete[]yylval.text;
