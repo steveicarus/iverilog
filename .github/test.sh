@@ -8,6 +8,7 @@ cd ivtest
 status=0
 
 perl vvp_reg.pl || status=1
+mv log vvp_log
 
 perl vpi_reg.pl || status=1
 
