@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -220,6 +220,9 @@ static PLI_INT32 sys_fclose_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 	/* Get the file/MC descriptor and verify that it is valid. */
       if (get_fd_mcd_from_arg(&fd_mcd, fd, callh, name)) return 0;
+
+        /* Cancel any active $fmonitor()'s for this FD/MCD. */
+      sys_monitor_fclose(fd_mcd);
 
 	/* We need to cancel any active $fstrobe()'s for this FD/MCD.
 	 * For now we check in the strobe callback and skip the output

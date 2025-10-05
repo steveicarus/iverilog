@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2021  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2025  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -91,26 +91,6 @@ void sys_special_register(void)
       tf_data.calltf      = 0;
       tf_data.sizetf      = 0;
       tf_data.compiletf   = task_not_implemented_compiletf;
-
-      tf_data.tfname      = "$fmonitor";
-      tf_data.user_data   = "$fmonitor";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$fmonitorb";
-      tf_data.user_data   = "$fmonitorb";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$fmonitoro";
-      tf_data.user_data   = "$fmonitoro";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$fmonitorh";
-      tf_data.user_data   = "$fmonitorh";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$async$and$array";
       tf_data.user_data   = "$async$and$array";

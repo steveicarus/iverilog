@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -167,7 +167,7 @@ static int get_default_format(const char *name)
     int default_format;
 
     switch(name[ strlen(name)-1 ]){
-	/*  writE/strobE or monitoR or displaY/fdisplaY or sformaT/sformatF */
+	/*  (f)writE/(f)strobE or (f)monitoR or (f)displaY or sformaT/sformatF */
     case 'e':
     case 'r':
     case 't':
@@ -1429,55 +1429,86 @@ static PLI_INT32 sys_strobe_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 }
 
 /*
- * The $monitor system task works by managing these static variables,
- * and the cbValueChange callbacks associated with registers and
- * nets. Note that it is proper to keep the state in static variables
- * because there can only be one monitor at a time pending (even
- * though that monitor may be watching many variables).
+ * The monitor_info array records info for all the active monitor tasks.
+ * monitor_info[0] points to the info for the most recently called $monitor
+ * task (any preceding call to $monitor gets cancelled by that call) and is
+ * allocated before we register the VPI tasks. Further entries in monitor_info
+ * are allocated on demand by calls to $fmonitor.
  */
 
-static struct strobe_cb_info monitor_info = { 0, 0, 0, 0, 0, 0, 0, 0 };
-static vpiHandle *monitor_callbacks = 0;
-static int monitor_scheduled = 0;
-static int monitor_enabled = 1;
+struct monitor_cb_info {
+      struct strobe_cb_info strobe;
+      vpiHandle *callbacks;
+      vpiHandle scheduled;
+      int disabled;
+};
+
+static struct monitor_cb_info**monitor_info = 0;
+static unsigned monitor_info_len = 0;
+
+static struct monitor_cb_info*allocate_monitor_info(void)
+{
+      unsigned idx;
+      for (idx = 0; idx < monitor_info_len; idx += 1) {
+	    if (monitor_info[idx] == 0)
+		  goto found_empty_slot;
+      }
+      monitor_info = realloc(monitor_info, ++monitor_info_len * sizeof(struct monitor_cb_info*));
+found_empty_slot:
+      monitor_info[idx] = calloc(1, sizeof(struct monitor_cb_info));
+      return monitor_info[idx];
+}
+
+static void cancel_monitor(struct monitor_cb_info*monitor)
+{
+      unsigned idx;
+
+      if (monitor == 0) return;
+
+      if (monitor->scheduled) {
+	    vpi_remove_cb(monitor->scheduled);
+	    monitor->scheduled = 0;
+      }
+      for (idx = 0; idx < monitor->strobe.nitems; idx += 1) {
+	    if (monitor->callbacks[idx])
+		  vpi_remove_cb(monitor->callbacks[idx]);
+      }
+      free(monitor->callbacks);
+      monitor->callbacks = 0;
+      free(monitor->strobe.filename);
+      free(monitor->strobe.items);
+      monitor->strobe.items = 0;
+      monitor->strobe.nitems = 0;
+      monitor->strobe.name = 0;
+}
+
+static void cancel_fmonitor(unsigned idx)
+{
+      cancel_monitor(monitor_info[idx]);
+      free(monitor_info[idx]);
+      monitor_info[idx] = 0;
+}
 
 static PLI_INT32 monitor_cb_2(p_cb_data cb)
 {
+      struct monitor_cb_info*monitor = (struct monitor_cb_info*)cb->user_data;
       char* result;
       unsigned int size;
-
-      (void)cb; /* Parameter is not used. */
-
 	/* Because %u and %z may put embedded NULL characters into the
 	 * returned string strlen() may not match the real size! */
-      result = get_display(&size, &monitor_info);
-      my_mcd_rawwrite(monitor_info.fd_mcd, result, size);
-      my_mcd_rawwrite(monitor_info.fd_mcd, "\n", 1);
-      monitor_scheduled = 0;
+      result = get_display(&size, &(monitor->strobe));
+      my_mcd_rawwrite(monitor->strobe.fd_mcd, result, size);
+      my_mcd_rawwrite(monitor->strobe.fd_mcd, "\n", 1);
+      monitor->scheduled = 0;
       free(result);
       return 0;
 }
 
-/*
- * The monitor_cb_1 callback is called when an event occurs somewhere
- * in the simulation. All this function does is schedule the actual
- * display to occur in a ReadOnlySync callback. The monitor_scheduled
- * flag is used to allow only one monitor strobe to be scheduled.
- */
-static PLI_INT32 monitor_cb_1(p_cb_data cause)
+static void schedule_monitor_display(struct monitor_cb_info*monitor)
 {
       struct t_cb_data cb;
       struct t_vpi_time timerec;
 
-      (void)cause; /* Parameter is not used. */
-
-      if (monitor_enabled == 0) return 0;
-      if (monitor_scheduled) return 0;
-
-	/* This this action caused the first trigger, then schedule
-	   the monitor to happen at the end of the time slice and mark
-	   it as scheduled. */
-      monitor_scheduled += 1;
       timerec.type = vpiSimTime;
       timerec.low = 0;
       timerec.high = 0;
@@ -1487,81 +1518,95 @@ static PLI_INT32 monitor_cb_1(p_cb_data cause)
       cb.time = &timerec;
       cb.obj = 0;
       cb.value = 0;
-      vpi_register_cb(&cb);
+      cb.user_data = (char*)monitor;
+      monitor->scheduled = vpi_register_cb(&cb);
+}
+
+/*
+ * The monitor_cb_1 callback is called when a monitored value changes.
+ * All this function does is schedule the actual display to occur in a
+ * ReadOnlySync callback. The scheduled event handle in the monitor info
+ * is used to ensure only one display is scheduled in each time slot,
+ * and can also be used to cancel the display event if the monitor gets
+ * cancelled.
+ */
+static PLI_INT32 monitor_cb_1(p_cb_data cb)
+{
+      struct monitor_cb_info*monitor = (struct monitor_cb_info*)cb->user_data;
+
+      if (monitor->disabled) return 0;
+      if (monitor->scheduled) return 0;
+
+      schedule_monitor_display(monitor);
 
       return 0;
 }
 
+/* Check both the $monitor and $fmonitor based tasks. */
 static PLI_INT32 sys_monitor_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-
-      int rtn = sys_check_args(callh, argv, name, 1, 1);
-      if (rtn) {
-	    if (rtn == 1) vpip_set_return_value(1);
-	    vpi_control(vpiFinish, 1);
-      }
-      return 0;
+	/* These tasks can not have automatic variables and are monitor. */
+      return sys_common_compiletf(name, 1, 1);
 }
 
+/* This implements both the $monitor and $fmonitor based tasks. */
 static PLI_INT32 sys_monitor_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh, argv, scope;
-      unsigned idx;
+      struct monitor_cb_info*monitor;
       struct t_cb_data cb;
       struct t_vpi_time timerec;
-
-      (void)name; /* Parameter is not used. */
+      PLI_UINT32 fd_mcd;
+      unsigned idx;
 
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
 
-	/* If there was a previous $monitor, then remove the callbacks
-	   related to it. */
-      if (monitor_callbacks) {
-	    for (idx = 0 ;  idx < monitor_info.nitems ;  idx += 1)
-		  if (monitor_callbacks[idx])
-			vpi_remove_cb(monitor_callbacks[idx]);
-
-	    free(monitor_callbacks);
-	    monitor_callbacks = 0;
-
-	    free(monitor_info.filename);
-	    free(monitor_info.items);
-	    monitor_info.items = 0;
-	    monitor_info.nitems = 0;
-	    monitor_info.name = 0;
+      if (name[1] == 'f') {
+	    vpiHandle fd = vpi_scan(argv);
+	    if (get_fd_mcd_from_arg(&fd_mcd, fd, callh, name)) {
+		  vpi_free_object(argv);
+		  return 0;
+	    }
+	    monitor = allocate_monitor_info();
+      } else {
+	    fd_mcd = 1;
+	    assert(monitor_info);
+	    monitor = monitor_info[0];
+	      /* If there was a previous $monitor, cancel it. */
+	    if (monitor->strobe.name)
+		  cancel_monitor(monitor);
       }
 
       scope = vpi_handle(vpiScope, callh);
       assert(scope);
 	/* Make an array of handles from the argument list. */
-      array_from_iterator(&monitor_info, argv);
-      monitor_info.name = name;
-      monitor_info.filename = strdup(vpi_get_str(vpiFile, callh));
-      monitor_info.lineno = (int)vpi_get(vpiLineNo, callh);
-      monitor_info.default_format = get_default_format(name);
-      monitor_info.scope = scope;
-      monitor_info.fd_mcd = 1;
+      array_from_iterator(&(monitor->strobe), argv);
+      monitor->strobe.name = name;
+      monitor->strobe.filename = strdup(vpi_get_str(vpiFile, callh));
+      monitor->strobe.lineno = (int)vpi_get(vpiLineNo, callh);
+      monitor->strobe.default_format = get_default_format(name);
+      monitor->strobe.scope = scope;
+      monitor->strobe.fd_mcd = fd_mcd;
 
 	/* Attach callbacks to all the parameters that might change. */
-      monitor_callbacks = calloc(monitor_info.nitems, sizeof(vpiHandle));
+      monitor->callbacks = calloc(monitor->strobe.nitems, sizeof(vpiHandle));
 
       timerec.type = vpiSuppressTime;
       cb.reason = cbValueChange;
       cb.cb_rtn = monitor_cb_1;
       cb.time = &timerec;
       cb.value = NULL;
-      for (idx = 0 ;  idx < monitor_info.nitems ;  idx += 1) {
+      cb.user_data = (char*)monitor;
+      for (idx = 0 ;  idx < monitor->strobe.nitems ;  idx += 1) {
 
-	    switch (vpi_get(vpiType, monitor_info.items[idx])) {
+	    switch (vpi_get(vpiType, monitor->strobe.items[idx])) {
 		case vpiMemoryWord:
 		  /*
 		   * We only support constant selections. Make this
 		   * better when we add a real compiletf routine.
 		   */
-		  assert(vpi_get(vpiConstantSelect, monitor_info.items[idx]));
+		  assert(vpi_get(vpiConstantSelect, monitor->strobe.items[idx]));
 		case vpiNet:
 		case vpiReg:
 		case vpiIntegerVar:
@@ -1573,20 +1618,17 @@ static PLI_INT32 sys_monitor_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		case vpiRealVar:
 		case vpiPartSelect:
 		    /* Monitoring reg and net values involves setting
-		       a callback for value changes. Pass the storage
-		       pointer for the callback itself as user_data so
-		       that the callback can refresh itself. */
-		  cb.user_data = (char*)(monitor_callbacks+idx);
-		  cb.obj = monitor_info.items[idx];
-		  monitor_callbacks[idx] = vpi_register_cb(&cb);
+		       a callback for value changes. */
+		  cb.obj = monitor->strobe.items[idx];
+		  monitor->callbacks[idx] = vpi_register_cb(&cb);
 		  break;
 
 	    }
       }
 
-	/* When the $monitor is called, it schedules a first display
+	/* When the monitor task is called, it schedules a first display
 	   for the end of the current time, like a $strobe. */
-      monitor_cb_1(0);
+      schedule_monitor_display(monitor);
 
       return 0;
 }
@@ -1594,16 +1636,42 @@ static PLI_INT32 sys_monitor_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 static PLI_INT32 sys_monitoron_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       (void)name; /* Parameter is not used. */
-      monitor_enabled = 1;
-      monitor_cb_1(0);
+      assert(monitor_info);
+      monitor_info[0]->disabled = 0;
+      schedule_monitor_display(monitor_info[0]);
       return 0;
 }
 
 static PLI_INT32 sys_monitoroff_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       (void)name; /* Parameter is not used. */
-      monitor_enabled = 0;
+      assert(monitor_info);
+      monitor_info[0]->disabled = 1;
       return 0;
+}
+
+void sys_monitor_fclose(PLI_UINT32 fd_mcd)
+{
+      unsigned idx;
+
+      if (IS_MCD(fd_mcd)) {
+	      // The LRM doesn't specify the exact behaviour in this case,
+	      // but we want to cancel any active fmonitors where there is
+	      // an intersection between the MCD being closed and the MCD
+	      // being monitored. Otherwise a subsequent call to $fopen could
+	      // reuse the bit(s) in the MCD and cause the monitor output to
+	      // be written to the newly opened file(s).
+	    for (idx = 1; idx < monitor_info_len; idx += 1) {
+		  if (monitor_info[idx] && (monitor_info[idx]->strobe.fd_mcd & fd_mcd))
+			cancel_fmonitor(idx);
+	    }
+      } else {
+	      // Cancel any active fmonitors with a matching FD.
+	    for (idx = 1; idx < monitor_info_len; idx += 1) {
+		  if (monitor_info[idx] && (monitor_info[idx]->strobe.fd_mcd == fd_mcd))
+			cancel_fmonitor(idx);
+	    }
+      }
 }
 
 static PLI_INT32 sys_swrite_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
@@ -2181,14 +2249,18 @@ static PLI_INT32 sys_severity_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 static PLI_INT32 sys_end_of_simulation(p_cb_data cb_data)
 {
+      unsigned idx;
+
       (void)cb_data; /* Parameter is not used. */
-      free(monitor_callbacks);
-      monitor_callbacks = 0;
-      free(monitor_info.filename);
-      free(monitor_info.items);
-      monitor_info.items = 0;
-      monitor_info.nitems = 0;
-      monitor_info.name = 0;
+
+      assert(monitor_info);
+      for (idx = 0; idx < monitor_info_len; idx +=1) {
+	    cancel_monitor(monitor_info[idx]);
+	    free(monitor_info[idx]);
+      }
+      free(monitor_info);
+      monitor_info_len = 0;
+      monitor_info = 0;
 
       free(timeformat_info.suff);
       timeformat_info.suff = 0;
@@ -2200,6 +2272,10 @@ void sys_display_register(void)
       s_cb_data cb_data;
       s_vpi_systf_data tf_data;
       vpiHandle res;
+
+        // Allocate the first entry in monitor_info for use by $monitor
+        // based tasks.
+      (void)allocate_monitor_info();
 
       check_command_line_args();
 
@@ -2403,6 +2479,43 @@ void sys_display_register(void)
       tf_data.compiletf = sys_no_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$monitoroff";
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      /*============================== fmonitor */
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fmonitor";
+      tf_data.calltf    = sys_monitor_calltf;
+      tf_data.compiletf = sys_monitor_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fmonitor";
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fmonitorh";
+      tf_data.calltf    = sys_monitor_calltf;
+      tf_data.compiletf = sys_monitor_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fmonitorh";
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fmonitoro";
+      tf_data.calltf    = sys_monitor_calltf;
+      tf_data.compiletf = sys_monitor_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fmonitoro";
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fmonitorb";
+      tf_data.calltf    = sys_monitor_calltf;
+      tf_data.compiletf = sys_monitor_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fmonitorb";
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 

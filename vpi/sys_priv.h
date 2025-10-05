@@ -1,7 +1,7 @@
 #ifndef IVL_sys_priv_H
 #define IVL_sys_priv_H
 /*
- * Copyright (c) 2002-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -66,6 +66,8 @@ extern unsigned get_fd_mcd_from_arg(PLI_UINT32 *fd_mcd, vpiHandle arg,
                                     vpiHandle callh, const char *name);
 
 extern vpiHandle sys_func_module(vpiHandle obj);
+
+extern void sys_monitor_fclose(PLI_UINT32 fd_mcd);
 
 /*
  * The standard compiletf routines.
