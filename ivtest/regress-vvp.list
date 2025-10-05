@@ -121,6 +121,8 @@ eofmt_percent			vvp_tests/eofmt_percent.json
 eofmt_percent-vlog95		vvp_tests/eofmt_percent-vlog95.json
 fdisplay3			vvp_tests/fdisplay3.json
 final3				vvp_tests/final3.json
+fmonitor1			vvp_tests/fmonitor1.json
+fmonitor2			vvp_tests/fmonitor2.json
 fread-error			vvp_tests/fread-error.json
 line_directive			vvp_tests/line_directive.json
 localparam_type			vvp_tests/localparam_type.json
@@ -147,6 +149,7 @@ module_ordered_list1		vvp_tests/module_ordered_list1.json
 module_ordered_list2		vvp_tests/module_ordered_list2.json
 module_port_array1		vvp_tests/module_port_array1.json
 module_port_array_init1		vvp_tests/module_port_array_init1.json
+monitor4			vvp_tests/monitor4.json
 non-polymorphic-abs		vvp_tests/non-polymorphic-abs.json
 partsel_invalid_idx1		vvp_tests/partsel_invalid_idx1.json
 partsel_invalid_idx2		vvp_tests/partsel_invalid_idx2.json
