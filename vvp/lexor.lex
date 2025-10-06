@@ -46,6 +46,11 @@ static char* strdupnew(char const *str)
 
 %}
 
+digit [0-9]
+integer {digit}+
+real ({digit}+[.]{digit}*)|({digit}*[.]{digit}+)
+exp ({integer}|{real})[eE]-?{integer}
+
 %%
 
   /* These are some special header/footer keywords. */
@@ -228,6 +233,7 @@ static char* strdupnew(char const *str)
 ".udp"         { return K_UDP; }
 ".udp/c"(omb)? { return K_UDP_C; }
 ".udp/s"(equ)? { return K_UDP_S; }
+".tchk_width" { return K_TCHK_WIDTH; }
 "-debug" { return K_DEBUG; }
 
   /* instructions start with a % character. The compiler decides what
@@ -260,6 +266,8 @@ static char* strdupnew(char const *str)
 "0x"[0-9a-fA-F]+ {
       yylval.numb = strtouint64(yytext, 0, 0);
       return T_NUMBER; }
+
+({real}|{exp}) { yylval.real = atof(yytext); return T_REAL; }
 
   /* Handle some specialized constant/literals as symbols. */
 
