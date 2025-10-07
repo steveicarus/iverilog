@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,12 +31,38 @@
 
 # define YY_NO_INPUT
 
-static char* strdupnew(char const *str)
+/*
+ * For literal strings, the compiler replaces all non-printable characters
+ * with 3 digit octal escapes. But it can include null characters in the
+ * string, so we cannot process those escapes yet. For identifiers, the
+ * compiler only escapes the " and \ characters. So these are the only
+ * escape sequences we need to handle here.
+ */
+static char*strdup_and_demangle(char const *src)
 {
-      return str ? strcpy(new char [strlen(str)+1], str) : 0;
+      char*dst = new char [strlen(src)+1];
+      char*dup = dst;
+
+      while (*src) {
+	    char next_char = *src++;
+	    if (next_char == '\\') {
+		  switch (*src) {
+		      case '\"':
+		      case '\\':
+			next_char = *src++;
+			break;
+		      default:
+			break;
+		  }
+	    }
+	    *dst++ = next_char;
+      }
+      *dst = 0;
+
+      return dup;
 }
 
- inline uint64_t strtouint64(const char*str, char**endptr, int base)
+inline uint64_t strtouint64(const char*str, char**endptr, int base)
 {
       if (sizeof(unsigned long) >= sizeof(uint64_t))
 	    return strtoul(str, endptr, base);
@@ -66,7 +92,7 @@ static char* strdupnew(char const *str)
      contents of the string without the enclosing quotes. */
 \"([^\"\\]|\\.)*\" {
       yytext[strlen(yytext)-1] = 0;
-      yylval.text = strdupnew(yytext+1);
+      yylval.text = strdup_and_demangle(yytext+1);
       assert(yylval.text);
       return T_STRING; }
 
