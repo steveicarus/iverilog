@@ -45,7 +45,7 @@ Icarus Verilog is not aimed at being a simulator in the traditional
 sense, but a compiler that generates code employed by back-end
 tools.
 
-> For instructions on how to run Icarus Verilog, see the `iverilog` man page.
+> For instructions on how to run Icarus Verilog, see the `iverilog` main page.
 
 
 ## Building/Installing Icarus Verilog from Source
