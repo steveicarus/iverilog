@@ -109,6 +109,7 @@ mipname			normal			mipname.c		mipname.log
 myscope			normal			myscope.c		myscope.gold
 myscope2		normal			myscope2.c		myscope2.gold
 nulls1			normal			nulls1.c		nulls1.log
+poke_escaped		normal			poke_escaped.c		poke_escaped.gold
 pokevent		normal			pokevent.cc		pokevent.log
 pokereg			normal			pokereg.cc		pokereg.log
 ports_params		normal			ports_params.c		ports_params.gold
