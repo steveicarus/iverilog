@@ -102,7 +102,7 @@ else
 endif
 
 clean:
-	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc libvvp.so
+	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc libvvp$(suffix).*
 	rm -rf dep vvp@EXEEXT@ parse.output vvp.man vvp.ps vvp.pdf vvp.exp
 
 distclean: clean
@@ -125,18 +125,28 @@ Makefile: $(srcdir)/Makefile.in
 dep:
 	mkdir dep
 
-ifeq (@WIN32@,yes)
 ifeq (@LIBVVP@,yes)
 
 CPPFLAGS+= -fpic
-SLEXT=DLL
 
-vvp@EXEEXT@: main.o $(srcdir)/vvp.def libvvp.DLL
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o -L. $(LDFLAGS) -lvvp $(LIBS)
-
-libvvp.DLL: $O
-	$(CXX) -shared $(LDFLAGS) -o libvvp.DLL $O $(LIBS) $(dllib)
+ifeq (@WIN32@,yes)
+SLDIR=$(bindir)
+SLEXT=dll
 else
+SLDIR=$(libdir)
+SLEXT=so
+endif
+
+# To avoid setting LD_LIBRARY_PATH when running vvp from the build tree,
+# add option -Wl,-rpath=`pwd` to the CXX command below.
+
+vvp@EXEEXT@: main.o $(srcdir)/vvp.def libvvp$(suffix).$(SLEXT)
+	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o -L. $(LDFLAGS) -lvvp$(suffix) $(LIBS)
+
+libvvp$(suffix).$(SLEXT): $O
+	$(CXX) -shared $(LDFLAGS) -o libvvp$(suffix).$(SLEXT) $O $(LIBS) $(dllib)
+else
+ifeq (@WIN32@,yes)
 # To support cocotb, we export the VPI functions directly. This allows
 # cocotb to build VPI modules without using our vpi_user.h and libvpi.a.
 # This requires making the vvp.exe in two steps. The first step makes
@@ -152,22 +162,10 @@ vvp@EXEEXT@: main.o $O $(srcdir)/vvp.def
 		--output-exp vvp.exp
 	rm -f vvp$(suffix)@EXEEXT@
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) main.o $O $(dllib) $(LIBS)
-endif
-else ifeq (@LIBVVP@,yes)
-
-CPPFLAGS+= -fpic
-SLEXT=so
-
-# To avoid setting LD_LIBRARY_PATH when running vvp from the build tree,
-# add option -Wl,-rpath=`pwd` to the CXX command below.
-vvp@EXEEXT@: main.o libvvp.so
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o -L. -lvvp $(LIBS)
-
-libvvp.so: $O
-	$(CXX) -shared $(LDFLAGS) -o libvvp.so $O $(LIBS) $(dllib)
 else
 vvp@EXEEXT@: $O main.o
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o $O $(LIBS) $(dllib)
+endif
 endif
 
 %.o: %.cc config.h
@@ -245,7 +243,7 @@ installpdf: vvp.pdf installdirs
 installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
 ifeq (@LIBVVP@,yes)
-	$(INSTALL_PROGRAM) ./libvvp.$(SLEXT) "$(DESTDIR)$(libdir)/libvvp$(suffix).$(SLEXT)"
+	$(INSTALL_PROGRAM) ./libvvp$(suffix).$(SLEXT) "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT)"
 	$(INSTALL_DATA) $(srcdir)/libvvp.h "$(DESTDIR)$(includedir)/libvvp.h"
 endif
 
@@ -260,7 +258,7 @@ uninstall: $(UNINSTALL32)
 	rm -f "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
 	rm -f "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1" "$(DESTDIR)$(pdfdir)/vvp$(suffix).pdf"
 ifeq (@LIBVVP@,yes)
-	rm -f "$(DESTDIR)$(libdir)/libvvp$(suffix).$(SLEXT)"
+	rm -f "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT)"
 	rm -f "$(DESTDIR)$(includedir)/libvvp.h"
 endif
 
