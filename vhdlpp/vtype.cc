@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,6 +23,7 @@
 # include  <map>
 # include  <typeinfo>
 # include  <cassert>
+# include  <cstdlib>
 # include  <algorithm>
 
 using namespace std;
@@ -217,7 +218,7 @@ int VTypeArray::get_width(ScopeBase*scope) const
           if(!dim.lsb()->evaluate(scope, lsb_val))
               return -1;
 
-          size *= 1 + labs(msb_val - lsb_val);
+          size *= 1 + abs(msb_val - lsb_val);
       }
 
       return element_type()->get_width(scope) * size;

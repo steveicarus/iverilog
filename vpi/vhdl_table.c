@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,7 @@
 # include  "vpi_config.h"
 # include  "vpi_user.h"
 # include  <assert.h>
+# include  <stdint.h>
 # include  "ivl_alloc.h"
 # include  "sys_priv.h"
 
@@ -93,7 +94,7 @@ static PLI_INT32 monitor_events(struct t_cb_data*cb)
 
 static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*data)
 {
-      event_type_t type = (event_type_t) data;
+      event_type_t type = (event_type_t)(uintptr_t)data;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
       vpiHandle arg;
@@ -153,7 +154,7 @@ static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*data)
 
 static PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*data)
 {
-      event_type_t type = (event_type_t) data;
+      event_type_t type = (event_type_t)(uintptr_t)data;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       struct t_vpi_value rval;
       struct monitor_data*mon;
@@ -198,7 +199,7 @@ static PLI_INT32 ivlh_attribute_event_sizetf(ICARUS_VPI_CONST PLI_BYTE8*type)
 
 static PLI_INT32 ivlh_shift_calltf(ICARUS_VPI_CONST PLI_BYTE8*data)
 {
-      shift_type_t shift_type = (shift_type_t) data;
+      shift_type_t shift_type = (shift_type_t)(uintptr_t)data;
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       vpiHandle argh  = vpi_scan(argv);

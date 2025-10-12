@@ -270,7 +270,7 @@ static PLI_INT32 atohex_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
  */
 static void value_to_text_base(char*text, long val, long base)
 {
-      static const char digit_map[16] = "0123456789abcdef";
+      static const char digit_map[16] __attribute__ ((nonstring)) = "0123456789abcdef";
       char* ptr;
 
       assert(base <= 16);

@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2025  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -127,10 +127,7 @@ void* vhdl_element::operator new(size_t size)
 // to NULL (since it's safe to delete a NULL pointer).
 void vhdl_element::operator delete(void* ptr)
 {
-   // Let the default delete handle the deallocation
-   ::operator delete(ptr);
-
-   // Remember that we've already deleted this pointer so we don't
+   // Remember that we've deleted this pointer so we don't
    // delete it again in the call to free_all_objects
    vector<vhdl_element*>::iterator it =
       find(allocated_.begin(), allocated_.end(), static_cast<vhdl_element*>(ptr));
@@ -144,6 +141,9 @@ void vhdl_element::operator delete(void* ptr)
       cerr << "??? vhdl_element::operator delete called on an object not "
            << "allocated by vhdl_element::operator new" << endl;
    }
+
+   // Let the default delete handle the deallocation
+   ::operator delete(ptr);
 }
 
 // Return the total number of bytes our custom operator new has seen.

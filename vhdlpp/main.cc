@@ -1,6 +1,6 @@
 
 const char COPYRIGHT[] =
-      "Copyright (c) 2011-2024 Stephen Williams (steve@icarus.com)\n"
+      "Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)\n"
       "Copyright CERN 2012 / Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
@@ -21,8 +21,6 @@ const char COPYRIGHT[] =
 # include  "vhdlpp_config.h"
 # include  "version_base.h"
 # include  "version_tag.h"
-
-using namespace std;
 
 /*
  * Usage:  vhdlpp [flags] sourcefile...
@@ -99,6 +97,8 @@ const char NOTICE[] =
 # include <io.h>
 # define mkdir(path, mode) mkdir(path)
 #endif
+
+using namespace std;
 
 
 bool verbose_flag = false;
