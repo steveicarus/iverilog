@@ -521,7 +521,7 @@ static PLI_INT32 ivlh_readline_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
         return 0;
     }
 
-    int len = strlen(buf);
+    size_t len = strlen(buf);
 
     if(len == 0) {
         show_error_line(callh);
