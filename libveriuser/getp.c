@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2020 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2025 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,6 +19,7 @@
 
 # include  <assert.h>
 # include  <ctype.h>
+# include  <stdint.h>
 # include  <veriuser.h>
 # include  <vpi_user.h>
 # include  "priv.h"
@@ -52,7 +53,7 @@ PLI_INT32 tf_igetp(PLI_INT32 n, void *obj)
 	    vpi_get_value(arg_h, &value);
 	    /* The following may generate a compilation warning, but this
 	     * functionality is required by some versions of the standard. */
-	    rtn = (int) value.value.str;	/* Oh my */
+	    rtn = (int)(intptr_t)value.value.str;	/* Oh my */
       } else {
 	    value.format = vpiIntVal;
 	    vpi_get_value(arg_h, &value);
