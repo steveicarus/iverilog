@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright CERN 2016
  * @author Maciej Suminski <maciej.suminski@cern.ch>
@@ -114,7 +114,7 @@ static void import_ieee(void);
 static void import_ieee_use(const YYLTYPE&loc, ActiveScope*res, perm_string package, perm_string name);
 static void import_std_use(const YYLTYPE&loc, ActiveScope*res, perm_string package, perm_string name);
 
-static void dump_library_package(ostream&file, perm_string lname, perm_string pname, Package*pack)
+static void dump_library_package(ostream&file, perm_string lname, perm_string pname, const Package*pack)
 {
       file << "package " << lname << "." << pname << endl;
       if (pack) {

@@ -86,6 +86,8 @@ distclean: clean
 
 cppcheck: $(O:.o=.cc)
 	cppcheck --enable=all --std=c99 --std=c++11 -f \
+	         --check-level=exhaustive \
+	         --suppressions-list=$(srcdir)/../cppcheck-global.sup \
 	         -UYY_USER_INIT \
 	         -UYYPARSE_PARAM -UYYPRINT -Ushort -Usize_t -Uyyoverflow \
 	         -UYYTYPE_INT8 -UYYTYPE_INT16 -UYYTYPE_UINT8 -UYYTYPE_UINT16 \

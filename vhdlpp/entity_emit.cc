@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -72,7 +72,7 @@ int Entity::emit(ostream&out)
 		       ; cur != ports_.end() ; ++cur) {
 		  InterfacePort*port = *cur;
 
-		  VType::decl_t&decl = declarations_[port->name];
+		  const VType::decl_t&decl = declarations_[port->name];
 
 		  if (sep) out << sep << endl;
 		  else sep = ", ";

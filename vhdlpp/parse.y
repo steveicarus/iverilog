@@ -6,7 +6,7 @@
 %parse-param {perm_string parse_library_name}
 %{
 /*
- * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2016 / Stephen Williams (steve@icarus.com),
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
@@ -68,7 +68,7 @@ inline void FILE_NAME(LineInfo*tmp, const struct yyltype&where)
   (Current).first_line   = (Rhs)[1].first_line;      \
   (Current).text         = file_path; /*(Rhs)[1].text;*/   } while (0)
 
-static void yyerror(YYLTYPE*yyllocp,yyscan_t yyscanner,const char*file_path,bool, const char*msg);
+static void yyerror(const YYLTYPE*yyllocp,yyscan_t yyscanner,const char*file_path,bool, const char*msg);
 
 int parse_errors = 0;
 int parse_sorrys = 0;
@@ -758,7 +758,7 @@ component_specification
 composite_type_definition
   /* constrained_array_definition */
   : K_array index_constraint K_of subtype_indication
-      { VTypeArray*tmp = new VTypeArray($4, $2);
+      { const VTypeArray*tmp = new VTypeArray($4, $2);
 	delete $2;
 	$$ = tmp;
       }
@@ -770,7 +770,7 @@ composite_type_definition
 	ExpRange*tmp = new ExpRange(NULL, NULL, ExpRange::DOWNTO);
 	r.push_back(tmp);
 	FILE_NAME(tmp, @1);
-	VTypeArray*arr = new VTypeArray($6, &r);
+	const VTypeArray*arr = new VTypeArray($6, &r);
 	$$ = arr;
       }
 
@@ -2218,7 +2218,7 @@ range_list
 
 record_type_definition
   : K_record element_declaration_list K_end K_record
-      { VTypeRecord*tmp = new VTypeRecord($2);
+      { const VTypeRecord*tmp = new VTypeRecord($2);
 	$$ = tmp;
       }
   ;
@@ -2787,7 +2787,7 @@ type_declaration
 
 type_definition
   : '(' enumeration_literal_list ')'
-      { VTypeEnum*tmp = new VTypeEnum($2);
+      { const VTypeEnum*tmp = new VTypeEnum($2);
 	active_scope->use_enum(tmp);
 	delete $2;
 	$$ = tmp;
@@ -2935,7 +2935,7 @@ K_postponed_opt    : K_postponed    | ;
 K_shared_opt       : K_shared       | ;
 %%
 
-static void yyerror(YYLTYPE*loc, yyscan_t, const char*, bool, const char*msg)
+static void yyerror(const YYLTYPE*loc, yyscan_t, const char*, bool, const char*msg)
 {
       fprintf(stderr, "%s:%u: %s\n", loc->text, loc->first_line, msg);
       parse_errors += 1;

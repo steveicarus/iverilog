@@ -220,7 +220,7 @@ static vhdl_expr *translate_numeric(vhdl_expr *lhs, vhdl_expr *rhs,
    else if (rhs->get_type()->get_name() == VHDL_TYPE_BOOLEAN)
       lhs = lhs->cast(&boolean);
 
-   vhdl_type *rtype;
+   const vhdl_type *rtype;
    if (op == VHDL_BINOP_MULT)
       rtype = new vhdl_type(lhs->get_type()->get_name(),
                             (lhs->get_type()->get_width()*2) - 1, 0);
@@ -257,7 +257,7 @@ static vhdl_expr *translate_shift(vhdl_expr *lhs, vhdl_expr *rhs,
    vhdl_type integer(VHDL_TYPE_INTEGER);
    vhdl_expr *r_cast = rhs->cast(&integer);
 
-   vhdl_type *rtype = new vhdl_type(*lhs->get_type());
+   const vhdl_type *rtype = new vhdl_type(*lhs->get_type());
 
    // The sra operator is not defined on numeric_std types until
    // VHDL-2006 which is not well supported. Instead we can use
@@ -297,7 +297,7 @@ static vhdl_expr *translate_power(ivl_expr_t e, vhdl_expr *lhs, vhdl_expr *rhs)
 
    int width = ivl_expr_width(e);
    const char *func = ivl_expr_signed(e) ? "To_Signed" : "To_Unsigned";
-   vhdl_type *type = ivl_expr_signed(e)
+   const vhdl_type *type = ivl_expr_signed(e)
       ? vhdl_type::nsigned(width) : vhdl_type::nunsigned(width);
 
    vhdl_fcall *conv = new vhdl_fcall(func, type);
@@ -554,7 +554,7 @@ static vhdl_expr *translate_ufunc(ivl_expr_t e)
 
    const char *funcname = ivl_scope_tname(defscope);
 
-   vhdl_type *rettype =
+   const vhdl_type *rettype =
       vhdl_type::type_for(ivl_expr_width(e), ivl_expr_signed(e) != 0);
    vhdl_fcall *fcall = new vhdl_fcall(funcname, rettype);
 
@@ -615,7 +615,7 @@ static vhdl_expr *translate_ternary(ivl_expr_t e)
 
 static vhdl_expr *translate_concat(ivl_expr_t e)
 {
-   vhdl_type *rtype =
+   const vhdl_type *rtype =
       vhdl_type::type_for(ivl_expr_width(e), ivl_expr_signed(e) != 0);
    vhdl_binop_expr *concat = new vhdl_binop_expr(VHDL_BINOP_CONCAT, rtype);
 

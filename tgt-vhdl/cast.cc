@@ -1,7 +1,7 @@
 /*
  *  Generate code to convert between VHDL types.
  *
- *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2025  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -90,8 +90,8 @@ vhdl_expr *vhdl_expr::to_vector(vhdl_type_name_t name, int w)
       // We have to cast the expression before resizing or the
       // wrong sign bit may be extended (i.e. when casting between
       // signed/unsigned *and* resizing)
-      vhdl_type *t = new vhdl_type(name, w - 1, 0);
-      vhdl_fcall *conv = new vhdl_fcall(t->get_string().c_str(), t);
+      const vhdl_type *t = new vhdl_type(name, w - 1, 0);
+      vhdl_fcall *conv = new vhdl_fcall(t->get_string(), t);
       conv->add_expr(this);
 
       if (w != type_->get_width())
@@ -229,7 +229,7 @@ vhdl_expr *vhdl_expr::to_std_ulogic()
  */
 vhdl_expr *vhdl_expr::resize(int newwidth)
 {
-   vhdl_type *rtype;
+   const vhdl_type *rtype;
    assert(type_);
    if (type_->get_name() == VHDL_TYPE_SIGNED)
       rtype = vhdl_type::nsigned(newwidth);

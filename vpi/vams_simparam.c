@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2021  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2025  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -217,7 +217,7 @@ static PLI_INT32 simparam_str_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name_ext)
 	    retval = strdup("N/A"); /* Nothing for now. */
       } else if (strcmp(param, "cwd") == 0) {
 	    char path [MAX_STRING_RESULT];
-	    char *ptr = getcwd(path, MAX_STRING_RESULT);
+	    const char *ptr = getcwd(path, MAX_STRING_RESULT);
 	    if (ptr == NULL) {
 		  strcpy(path, "<error getting the cwd, is it too long?>");
 	    }

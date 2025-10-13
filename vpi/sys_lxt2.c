@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -61,7 +61,7 @@ struct vcd_info_chunk {
 
 struct vcd_info_chunk*info_chunk_list = 0;
 
-struct vcd_info*new_vcd_info(void)
+static struct vcd_info*new_vcd_info(void)
 {
       struct vcd_info_chunk*cur_chunk = info_chunk_list;
       if (cur_chunk == 0 || cur_chunk->chunk_fill == 0xffff) {
@@ -77,7 +77,7 @@ struct vcd_info*new_vcd_info(void)
       return ptr;
 }
 
-void functor_all_vcd_info( void (*fun) (struct vcd_info*info) )
+static void functor_all_vcd_info( void (*fun) (struct vcd_info*info) )
 {
       struct vcd_info_chunk*cur;
       for (cur = info_chunk_list ; cur ; cur = cur->chunk_next) {
@@ -88,7 +88,7 @@ void functor_all_vcd_info( void (*fun) (struct vcd_info*info) )
       }
 }
 
-void delete_all_vcd_info(void)
+static void delete_all_vcd_info(void)
 {
       while (info_chunk_list) {
 	    struct vcd_info_chunk*tmp = info_chunk_list->chunk_next;

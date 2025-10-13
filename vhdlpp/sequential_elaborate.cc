@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -187,7 +187,7 @@ int ProcedureCall::elaborate(Entity*ent, ScopeBase*scope)
       if(param_list_) {
             for(list<named_expr_t*>::iterator it = param_list_->begin();
                     it != param_list_->end(); ++it) {
-                named_expr_t* e = *it;
+                const named_expr_t* e = *it;
                 arg_types.push_back(e->expr()->probe_type(ent, scope));
             }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -196,7 +196,7 @@ uint64_t get_number_immediate64(ivl_expr_t expr)
       return imm;
 }
 
-void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
+static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 {
       switch (ivl_expr_type(expr)) {
 

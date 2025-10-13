@@ -104,6 +104,8 @@ distclean: clean
 # an explicit value (i.e. the define is expected to be real code).
 cppcheck: $(O:.o=.c) $(OPP:.o=.cc) $(M:.o=.c) $(V:.o=.c)
 	cppcheck --enable=all --std=c99 --std=c++11 -f \
+	         --check-level=exhaustive \
+	         --suppressions-list=$(srcdir)/../cppcheck-global.sup \
 	         --suppressions-list=$(srcdir)/cppcheck.sup \
 	         -UYY_USER_INIT -UYY_LOCATION_PRINT -Uyyset_out -Uyyset_lineno \
 		 -Uyyset_in -Uyyset_extra -Uyyset_debug -Uyylex_destroy \

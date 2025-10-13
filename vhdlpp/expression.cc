@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2015 / Stephen Williams (steve@icarus.com),
  * Copyright CERN 2016
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -276,7 +276,7 @@ ExpAggregate::choice_t::choice_t(ExpRange*rang)
 
 ExpAggregate::choice_t::choice_t(const choice_t&other)
 {
-    if(Expression*e = other.expr_.get())
+    if(const Expression*e = other.expr_.get())
         expr_.reset(e->clone());
 
     if(other.range_.get())

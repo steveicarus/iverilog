@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -146,7 +146,7 @@ static const char*edge_str(int vpi_edge)
       return "edge.. ";
 }
 
-vpiHandle get_port_handle(char* port_name, const int sdf_lineno)
+static vpiHandle get_port_handle(char* port_name, const int sdf_lineno)
 {
       vpiHandle scope = sdf_cur_cell;
 
@@ -176,7 +176,7 @@ vpiHandle get_port_handle(char* port_name, const int sdf_lineno)
       vpiHandle port_handle = NULL;
 
       while ((port=vpi_scan(port_i)) != NULL) {
-	    char *port_name_ = vpi_get_str(vpiName, port) ;
+	    const char *port_name_ = vpi_get_str(vpiName, port) ;
 
 	    if (strcmp(port_name_, token) == 0) {
 		  if (port_handle != NULL) {

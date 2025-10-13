@@ -239,7 +239,7 @@ extern void draw_immediate_vec4(ivl_expr_t expr, const char*opcode);
 /*
  * Draw a delay statement.
  */
-extern void draw_delay(void*ptr, unsigned wid, const char*input,
+extern void draw_delay(const void*ptr, unsigned wid, const char*input,
 		       ivl_expr_t rise_exp, ivl_expr_t fall_exp,
 		       ivl_expr_t decay_exp);
 

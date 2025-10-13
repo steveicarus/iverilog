@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for LPM devices.
  *
- *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2025  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ static vhdl_expr *part_select_base(vhdl_scope *scope, ivl_lpm_t lpm)
 static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t op)
 {
    unsigned out_width = ivl_lpm_width(lpm);
-   vhdl_type *result_type =
+   const vhdl_type *result_type =
       vhdl_type::type_for(out_width, ivl_lpm_signed(lpm) != 0);
    vhdl_binop_expr *expr = new vhdl_binop_expr(op, result_type);
 
@@ -219,7 +219,7 @@ static vhdl_expr *shift_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm,
    vhdl_type integer(VHDL_TYPE_INTEGER);
    vhdl_expr *r_cast = rhs->cast(&integer);
 
-   vhdl_type *rtype = new vhdl_type(*lhs->get_type());
+   const vhdl_type *rtype = new vhdl_type(*lhs->get_type());
    return new vhdl_binop_expr(lhs, shift_op, r_cast, rtype);
 }
 

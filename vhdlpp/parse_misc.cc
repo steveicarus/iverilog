@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -58,7 +58,7 @@ void bind_architecture_to_entity(const char*ename, Architecture*arch)
 
       /* FIXME: entities can have multiple architectures attached to them
       This is to be configured by VHDL's configurations (not yet implemented) */
-      Architecture*old_arch = idx->second->add_architecture(arch);
+      const Architecture*old_arch = idx->second->add_architecture(arch);
       if (old_arch != arch) {
 	    cerr << arch->get_fileline() << ": warning: "
 		 << "Architecture " << arch->get_name()

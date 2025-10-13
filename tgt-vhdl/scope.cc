@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for scopes.
  *
- *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2025  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ struct nexus_private_t {
 /*
  * Returns the scope_nexus_t of this nexus visible within scope.
  */
-static scope_nexus_t *visible_nexus(nexus_private_t *priv, vhdl_scope *scope)
+static scope_nexus_t *visible_nexus(nexus_private_t *priv, const vhdl_scope *scope)
 {
    list<scope_nexus_t>::iterator it;
    for (it = priv->signals.begin(); it != priv->signals.end(); ++it) {
@@ -109,7 +109,7 @@ static void link_scope_to_nexus_tmp(nexus_private_t *priv, vhdl_scope *scope,
 /*
  * Finds the name of the nexus signal within this scope.
  */
-static string visible_nexus_signal_name(nexus_private_t *priv, vhdl_scope *scope,
+static string visible_nexus_signal_name(nexus_private_t *priv, const vhdl_scope *scope,
                                         unsigned *pin)
 {
    scope_nexus_t *sn = visible_nexus(priv, scope);
@@ -201,7 +201,7 @@ void draw_nexus(ivl_nexus_t nexus)
          }
          else {
             // Create a temporary signal to connect it to the nexus
-            vhdl_type *type =
+            const vhdl_type *type =
                vhdl_type::type_for(ivl_logic_width(log), false);
 
             ostringstream ss;
@@ -238,8 +238,8 @@ void draw_nexus(ivl_nexus_t nexus)
             else
                lpm_temp_width = ivl_lpm_width(lpm);
 
-            vhdl_type *type = vhdl_type::type_for(lpm_temp_width,
-                                                  ivl_lpm_signed(lpm) != 0);
+            const vhdl_type *type = vhdl_type::type_for(lpm_temp_width,
+                                                        ivl_lpm_signed(lpm) != 0);
             ostringstream ss;
             ss << "LPM";
             if (nexus == ivl_lpm_q(lpm))
@@ -352,8 +352,8 @@ vhdl_var_ref *nexus_to_var_ref(vhdl_scope *scope, ivl_nexus_t nexus)
    vhdl_decl *decl = scope->get_decl(renamed);
    assert(decl);
 
-   vhdl_type *type = new vhdl_type(*(decl->get_type()));
-   vhdl_var_ref *ref = new vhdl_var_ref(renamed.c_str(), type);
+   const vhdl_type *type = new vhdl_type(*(decl->get_type()));
+   vhdl_var_ref *ref = new vhdl_var_ref(renamed, type);
 
    if (decl->get_type()->get_name() == VHDL_TYPE_ARRAY)
       ref->set_slice(new vhdl_const_int(pin), 0);
@@ -478,7 +478,7 @@ string make_safe_name(ivl_signal_t sig)
 
 // Check if `name' differs from an existing name only in case and
 // make it unique if it does.
-static void avoid_name_collision(string& name, vhdl_scope* scope)
+static void avoid_name_collision(string& name, const vhdl_scope* scope)
 {
    if (scope->name_collides(name)) {
       name += "_";
@@ -542,7 +542,7 @@ static void declare_one_signal(vhdl_entity *ent, ivl_signal_t sig,
 
    rename_signal(sig, name);
 
-   vhdl_type *sig_type;
+   const vhdl_type *sig_type;
    unsigned dimensions = ivl_signal_dimensions(sig);
    if (dimensions > 0) {
       // Arrays are implemented by generating a separate type
@@ -561,7 +561,7 @@ static void declare_one_signal(vhdl_entity *ent, ivl_signal_t sig,
       int lsb = ivl_signal_array_base(sig);
       int msb = lsb + ivl_signal_array_count(sig) - 1;
 
-      vhdl_type *array_type =
+      const vhdl_type *array_type =
          vhdl_type::array_of(base_type, type_name, msb, lsb);
       vhdl_decl *array_decl = new vhdl_type_decl(type_name, array_type);
       ent->get_arch()->get_scope()->add_decl(array_decl);
@@ -590,7 +590,7 @@ static void declare_one_signal(vhdl_entity *ent, ivl_signal_t sig,
             ss << "Declared at " << ivl_signal_file(sig) << ":"
                << ivl_signal_lineno(sig);
          }
-         decl->set_comment(ss.str().c_str());
+         decl->set_comment(ss.str());
 
          ent->get_arch()->get_scope()->add_decl(decl);
       }
@@ -616,7 +616,7 @@ static void declare_one_signal(vhdl_entity *ent, ivl_signal_t sig,
          newname += "_Reg";
          rename_signal(sig, newname);
 
-         vhdl_type *reg_type = new vhdl_type(*sig_type);
+         const vhdl_type *reg_type = new vhdl_type(*sig_type);
          ent->get_arch()->get_scope()->add_decl
             (new vhdl_signal_decl(newname, reg_type));
 
@@ -624,8 +624,8 @@ static void declare_one_signal(vhdl_entity *ent, ivl_signal_t sig,
          // connect the register to the output
          ent->get_arch()->add_stmt
             (new vhdl_cassign_stmt
-             (new vhdl_var_ref(name.c_str(), NULL),
-              new vhdl_var_ref(newname.c_str(), NULL)));
+             (new vhdl_var_ref(name, NULL),
+              new vhdl_var_ref(newname, NULL)));
          }
       break;
    case IVL_SIP_INOUT:
@@ -678,7 +678,7 @@ static void declare_lpm(vhdl_arch *arch, ivl_scope_t scope)
  * Map two signals together in an instantiation.
  * The signals are joined by a nexus.
  */
-static void map_signal(ivl_signal_t to, vhdl_entity *parent,
+static void map_signal(ivl_signal_t to, const vhdl_entity *parent,
                        vhdl_comp_inst *inst)
 {
    // TODO: Work for multiple words
@@ -704,7 +704,7 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
       // However, Verilog allows the signal to be read in the parent.
       // The solution used here is to create an intermediate signal
       // and connect it to both ports.
-      vhdl_decl* from_decl =
+      const vhdl_decl* from_decl =
          parent->get_arch()->get_scope()->get_decl(ref->get_name());
       if (!from_decl->is_readable()
           && !arch_scope->have_declared(name + "_Readable")) {
@@ -738,7 +738,7 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
 /*
  * Find all the port mappings of a module instantiation.
  */
-static void port_map(ivl_scope_t scope, vhdl_entity *parent,
+static void port_map(ivl_scope_t scope, const vhdl_entity *parent,
                      vhdl_comp_inst *inst)
 {
    // Find all the port mappings
@@ -796,7 +796,7 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
    for (int i = 0; i < nports; i++) {
       ivl_signal_t sig = ivl_scope_port(scope, i);
 
-      vhdl_type *sigtype =
+      const vhdl_type *sigtype =
          vhdl_type::type_for(ivl_signal_width(sig),
                              ivl_signal_signed(sig) != 0);
 
@@ -828,7 +828,7 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
       ivl_signal_t sig = ivl_scope_sig(scope, i);
 
       if (ivl_signal_port(sig) == IVL_SIP_NONE) {
-         vhdl_type *sigtype =
+         const vhdl_type *sigtype =
             vhdl_type::type_for(
                ivl_signal_width(sig),
                ivl_signal_signed(sig) != 0);
@@ -859,7 +859,7 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
    ostringstream ss;
    ss << "Generated from function " << funcname << " at "
       << ivl_scope_def_file(scope) << ":" << ivl_scope_def_lineno(scope);
-   func->set_comment(ss.str().c_str());
+   func->set_comment(ss.str());
 
    ent->get_arch()->get_scope()->add_decl(func);
    return 0;
@@ -882,7 +882,7 @@ static int draw_task(ivl_scope_t scope, ivl_scope_t parent)
    int nsigs = ivl_scope_sigs(scope);
    for (int i = 0; i < nsigs; i++) {
       ivl_signal_t sig = ivl_scope_sig(scope, i);
-      vhdl_type *sigtype =
+      const vhdl_type *sigtype =
          vhdl_type::type_for(ivl_signal_width(sig),
                              ivl_signal_signed(sig) != 0);
 
@@ -899,7 +899,7 @@ static int draw_task(ivl_scope_t scope, ivl_scope_t parent)
       ostringstream ss;
       ss << "Declared at " << ivl_signal_file(sig) << ":"
          << ivl_signal_lineno(sig) << " (in task " << taskname << ")";
-      decl->set_comment(ss.str().c_str());
+      decl->set_comment(ss.str());
 
       ent->get_arch()->get_scope()->add_decl(decl);
 
@@ -1110,10 +1110,10 @@ extern "C" int draw_constant_drivers(ivl_scope_t scope, void *)
                for (list<ivl_signal_t>::const_iterator it = sn->connect.begin();
                     it != sn->connect.end();
                     ++it) {
-                  vhdl_type* rtype =
+                  const vhdl_type* rtype =
                      vhdl_type::type_for(ivl_signal_width(sn->sig),
                                          ivl_signal_signed(sn->sig));
-                  vhdl_type* ltype =
+                  const vhdl_type* ltype =
                      vhdl_type::type_for(ivl_signal_width(*it),
                                          ivl_signal_signed(*it));
 
@@ -1179,7 +1179,7 @@ extern "C" int draw_hierarchy(ivl_scope_t scope, void *_parent)
       assert(parent_arch != NULL);
 
       // Create a forward declaration for it
-      vhdl_scope *parent_scope = parent_arch->get_scope();
+      const vhdl_scope *parent_scope = parent_arch->get_scope();
       if (!parent_scope->have_declared(ent->get_name())) {
          vhdl_decl *comp_decl = vhdl_component_decl::component_decl_for(ent);
          parent_arch->get_scope()->add_decl(comp_decl);
@@ -1227,7 +1227,7 @@ extern "C" int draw_hierarchy(ivl_scope_t scope, void *_parent)
       ostringstream ss;
       ss << "Generated from instantiation at "
          << ivl_scope_file(scope) << ":" << ivl_scope_lineno(scope);
-      inst->set_comment(ss.str().c_str());
+      inst->set_comment(ss.str());
 
       parent_arch->add_stmt(inst);
    }

@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for logic devices.
  *
- *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2025  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -118,7 +118,7 @@ static void comb_udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
    ostringstream ss;
    ss << ivl_logic_basename(log) << "_Tmp";
    int msb = ivl_udp_nin(udp) - 1;
-   vhdl_type *tmp_type = vhdl_type::std_logic_vector(msb, 0);
+   const vhdl_type *tmp_type = vhdl_type::std_logic_vector(msb, 0);
    vhdl_signal_decl *tmp_decl = new vhdl_signal_decl(ss.str(), tmp_type);
    arch->get_scope()->add_decl(tmp_decl);
 
@@ -184,11 +184,11 @@ static void seq_udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
 
    ostringstream ss;
    ss << "Generated from UDP " << ivl_udp_name(udp);
-   proc->set_comment(ss.str().c_str());
+   proc->set_comment(ss.str());
 
    // Create a variable to hold the concatenation of the inputs
    int msb = ivl_udp_nin(udp) - 1;
-   vhdl_type *tmp_type = vhdl_type::std_logic_vector(msb, 0);
+   const vhdl_type *tmp_type = vhdl_type::std_logic_vector(msb, 0);
    proc->get_scope()->add_decl(new vhdl_var_decl("UDP_Inputs", tmp_type));
 
    // Concatenate the inputs into a single expression that can be

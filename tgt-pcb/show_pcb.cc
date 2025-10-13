@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,7 +30,7 @@ static void show_pcb_header(FILE*fpcb)
       fprintf(fpcb, "Grid[100.0 0 0 1]\n");
 }
 
-static void show_pcb_element(FILE*fpcb, const string&refdes, element_data_t*elem);
+static void show_pcb_element(FILE*fpcb, const string&refdes, const element_data_t*elem);
 
 void show_pcb(const char*pcb_path)
 {
@@ -53,7 +53,7 @@ void show_pcb(const char*pcb_path)
       fclose(fpcb);
 }
 
-static void show_pcb_element(FILE*fpcb, const string&refdes, element_data_t*elem)
+static void show_pcb_element(FILE*fpcb, const string&refdes, const element_data_t*elem)
 {
       string descr  = elem->description;
       const string&value  = elem->value;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -126,7 +126,7 @@ static char *create_full_name(const char *name)
       char *n, *n2;
       int len = 0;
       int is_esc_id = is_escaped_id(name);
-      struct lxt_scope *t = lxt_scope_head;
+      const struct lxt_scope *t = lxt_scope_head;
 
 	/* Figure out how long the combined string will be. */
       while(t) {

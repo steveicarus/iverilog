@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008-2013  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2025  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -203,12 +203,12 @@ void vhdl_arch::emit(std::ostream &of, int level) const
    blank_line(of, level);  // Extra blank line after architectures;
 }
 
-void vhdl_procedural::add_blocking_target(vhdl_var_ref* ref)
+void vhdl_procedural::add_blocking_target(const vhdl_var_ref* ref)
 {
    blocking_targets_.insert(ref->get_name());
 }
 
-bool vhdl_procedural::is_blocking_target(vhdl_var_ref* ref) const
+bool vhdl_procedural::is_blocking_target(const vhdl_var_ref* ref) const
 {
    return blocking_targets_.find(ref->get_name()) != blocking_targets_.end();
 }

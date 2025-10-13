@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,7 +51,7 @@ int is_escaped_id(const char *name)
       return 1;
 }
 
-int vcd_instance_contains_dumpable_items(int dumpable_types[], vpiHandle item)
+int vcd_instance_contains_dumpable_items(const int dumpable_types[], vpiHandle item)
 {
       int i;
       for (i = 0; dumpable_types[i] > 0; i++) {
@@ -101,7 +101,7 @@ static int vcd_names_compare(const void *s1, const void *s2)
       return strcmp(v1, v2);
 }
 
-const char *vcd_names_search(struct vcd_names_list_s*tab, const char *key)
+const char *vcd_names_search(const struct vcd_names_list_s*tab, const char *key)
 {
       const char **v;
 

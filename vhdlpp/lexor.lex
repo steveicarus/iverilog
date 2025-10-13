@@ -6,7 +6,7 @@
 
 %{
 /*
- * Copyright (c) 2011-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -53,10 +53,10 @@ extern int lexor_keyword_code (const char*str, unsigned len);
 #define yylloc (*yyllocp)
 #define yylval (*yylvalp)
 
-static bool are_underscores_correct(char* text);
-static bool is_based_correct(char* text);
-static char* escape_quot_and_dup(char* text);
-static char* escape_apostrophe_and_dup(char* text);
+static bool are_underscores_correct(const char* text);
+static bool is_based_correct(const char* text);
+static char* escape_quot_and_dup(const char* text);
+static char* escape_apostrophe_and_dup(const char* text);
 
 static double make_double_from_based(char* text);
 static int64_t make_long_from_based(char* text);
@@ -220,7 +220,7 @@ extern void yyparse_set_filepath(const char*path);
 * \return true is returned if underscores are placed
 * correctly according to specification
 */
-static bool are_underscores_correct(char* text)
+static bool are_underscores_correct(const char* text)
 {
 	unsigned char underscore_allowed = 0;
 	const char* cp;
@@ -253,12 +253,12 @@ static bool is_char_ok(char c, int base)
 * \return true is returned if a based number
 * is formed well according to specification
 */
-static bool is_based_correct(char* text)
+static bool is_based_correct(const char* text)
 {
-    char* ptr;
+    const char* ptr;
     //BASE examination
     char clean_base[4] = {0,};
-    char* clean_base_end = clean_base + sizeof(clean_base);
+    const char* clean_base_end = clean_base + sizeof(clean_base);
     char* clean_base_ptr = clean_base;
     for(ptr = text; ptr != strchr(text, '#'); ++ptr)
     {
@@ -336,7 +336,7 @@ static bool is_based_correct(char* text)
 *
 * \return pointer to the new string is returned
 */
-static char* escape_quot_and_dup(char* text)
+static char* escape_quot_and_dup(const char* text)
 {
     char* newstr = new char[strlen(text)+1];
 
@@ -377,7 +377,7 @@ static char* escape_quot_and_dup(char* text)
 *
 * \return pointer to the new string is returned
 */
-static char* escape_apostrophe_and_dup(char* text)
+static char* escape_apostrophe_and_dup(const char* text)
 {
     char* newstr = new char[2];
     newstr[0] = text[1];
@@ -629,7 +629,7 @@ static double make_double_from_based(char* text)
 {
     char* first_hash_ptr = strchr(text, '#');
     char* second_hash_ptr = strrchr(text, '#');
-    char* last_char_ptr = strchr(text, '\0') - 1;
+    const char* last_char_ptr = strchr(text, '\0') - 1;
     //put null byte in lieu of hashes
     *first_hash_ptr = '\0';
     *second_hash_ptr = '\0';
@@ -638,7 +638,7 @@ static double make_double_from_based(char* text)
     unsigned base = (unsigned)strtol(text, 0, 10) ;
 
     double mantissa = 0.0;
-    char*ptr = first_hash_ptr + 1;
+    const char*ptr = first_hash_ptr + 1;
     for( ; ptr != second_hash_ptr ; ++ptr)
     {
         if(*ptr == '.')
@@ -699,12 +699,12 @@ static unsigned short short_from_hex_char(char ch)
 static int64_t make_long_from_based(char* text) {
     char* first_hash_ptr = strchr(text, '#');
     char* second_hash_ptr = strrchr(text, '#');
-    char* end_ptr = strrchr(text, '\0');
+    const char* end_ptr = strrchr(text, '\0');
     //now lets deduce the base
     *first_hash_ptr = '\0';
     unsigned base = (unsigned)strtol(text, 0, 10) ;
 
-    char *ptr = first_hash_ptr + 1;
+    const char *ptr = first_hash_ptr + 1;
     int64_t mantissa = 0;
     for( ; ptr != second_hash_ptr ; ++ptr)
     {

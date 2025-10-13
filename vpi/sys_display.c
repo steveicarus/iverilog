@@ -573,7 +573,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
       if (width == -1) width = 0;
 
       {
-        char *cp = vpi_get_str(vpiFullName, info->scope);
+        const char *cp = vpi_get_str(vpiFullName, info->scope);
         /* If the default buffer is too small, make it big enough. */
         size = strlen(cp) + 1;
         if ((signed)size < (width+1)) size = width+1;

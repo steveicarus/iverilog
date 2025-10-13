@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -104,7 +104,7 @@ int Entity::elaborate_ports_(void)
       for (std::vector<InterfacePort*>::const_iterator cur = ports_.begin()
 		 ; cur != ports_.end() ; ++cur) {
 
-	    InterfacePort*cur_port = *cur;
+	    const InterfacePort*cur_port = *cur;
 
 	    const VType*type = cur_port->type;
 	    if (type == 0) {

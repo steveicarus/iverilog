@@ -1,7 +1,7 @@
 #ifndef IVL_expression_H
 #define IVL_expression_H
 /*
- * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2015 / Stephen Williams (steve@icarus.com),
  * Copyright CERN 2016
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -724,7 +724,7 @@ class ExpName : public Expression {
     public: // Base methods
       Expression*clone() const;
       int elaborate_lval(Entity*ent, ScopeBase*scope, bool);
-      int elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*);
+      int elaborate_rval(const Entity*ent, const ScopeBase*scope, const InterfacePort*);
       const VType* probe_type(Entity*ent, ScopeBase*scope) const;
       const VType* fit_type(Entity*ent, ScopeBase*scope, const VTypeArray*host) const;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype);
@@ -841,7 +841,7 @@ class ExpScopedName : public Expression {
         int elaborate_lval(Entity*ent, ScopeBase*scope, bool is_sequ)
         { return name_->elaborate_lval(ent, get_scope(scope), is_sequ); }
 
-        int elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*lval)
+        int elaborate_rval(const Entity*ent, const ScopeBase*scope, const InterfacePort*lval)
         { return name_->elaborate_rval(ent, get_scope(scope), lval); }
 
         const VType* probe_type(Entity*ent, ScopeBase*scope) const

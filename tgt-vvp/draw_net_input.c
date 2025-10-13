@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -334,7 +334,7 @@ static char* draw_net_input_drive(const ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	    char *result = 0;
 	    ivl_expr_t d_rise, d_fall, d_decay;
             unsigned dly_width = 0;
-	    char *dly;
+	    const char *dly;
 
 	      /* Constants should have exactly 1 pin, with a literal value. */
 	    assert(nptr_pin == 0);

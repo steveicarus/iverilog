@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright CERN 2015
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -290,13 +290,13 @@ struct check_return_type : public SeqStmtVisitor {
 
     void operator() (SequentialStmt*s)
     {
-        ReturnStmt*ret;
+        const ReturnStmt*ret;
         if((ret = dynamic_cast<ReturnStmt*>(s))) {
             const Expression*expr = ret->peek_expr();
             const VType*t = NULL;
 
             if(const ExpName*n = dynamic_cast<const ExpName*>(expr)) {
-                if(Variable*v = subp_->find_variable(n->peek_name()))
+                if(const Variable*v = subp_->find_variable(n->peek_name()))
                     t = v->peek_type();
             } else {
                 t = expr->peek_type();

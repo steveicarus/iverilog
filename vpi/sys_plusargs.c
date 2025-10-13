@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -230,7 +230,8 @@ static PLI_INT32 sys_value_plusargs_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 	/* Look for a +arg that matches the prefix supplied. */
       for (idx = 0 ;  idx < info.argc ;  idx += 1) {
-	    char*sp, *tp, *end;
+	    char*sp, *end;
+	    const char*tp;
             size_t sp_len;
 
 	      /* Skip arguments that are not +args. */

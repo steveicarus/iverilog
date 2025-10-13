@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2022 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2025 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -844,7 +844,7 @@ void emit_scope_call_path(ivl_scope_t scope, ivl_scope_t call_scope)
 
       if (mod_scope != call_mod_scope) {
 	    emit_scope_piece(mod_scope, call_mod_scope);
-      } else if (scope != call_scope) {
+      } else {
 	    ivl_scope_t parent;
 	      /* We only emit a scope path if the scope is a parent of the
 	       * call scope. */

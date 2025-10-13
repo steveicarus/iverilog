@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2016-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,7 +26,7 @@
 /*
  * This function draws a BUFT to drive a constant delay value.
  */
-static char* draw_const_net(void*ptr, char*suffix, uint64_t value)
+static char* draw_const_net(const void*ptr, const char*suffix, uint64_t value)
 {
       char tmp[64];
       char c4_value[69];
@@ -52,7 +52,7 @@ static char* draw_const_net(void*ptr, char*suffix, uint64_t value)
 /*
  * Draw the appropriate delay statement.
  */
-void draw_delay(void*ptr, unsigned wid, const char*input, ivl_expr_t rise_exp,
+void draw_delay(const void*ptr, unsigned wid, const char*input, ivl_expr_t rise_exp,
 		ivl_expr_t fall_exp, ivl_expr_t decay_exp)
 {
       char tmp[64];

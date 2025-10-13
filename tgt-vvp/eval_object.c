@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,7 +24,7 @@
 void darray_new(ivl_type_t element_type, unsigned size_reg)
 {
       int wid;
-      char*signed_char;
+      const char*signed_char;
       ivl_variable_type_t type = ivl_type_base(element_type);
 
       if ((type == IVL_VT_BOOL) || (type == IVL_VT_LOGIC)) {

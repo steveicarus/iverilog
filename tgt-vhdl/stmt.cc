@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for statements.
  *
- *  Copyright (C) 2008-2023  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2025  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -212,8 +212,8 @@ static int draw_block(vhdl_procedural *proc, stmt_container *container,
          ivl_signal_t sig = ivl_scope_sig(block_scope, i);
          remember_signal(sig, proc->get_scope());
 
-         vhdl_type* type = vhdl_type::type_for(ivl_signal_width(sig),
-                                               ivl_signal_signed(sig));
+         const vhdl_type* type = vhdl_type::type_for(ivl_signal_width(sig),
+                                                     ivl_signal_signed(sig));
          proc->get_scope()->add_decl
             (new vhdl_var_decl(make_safe_name(sig), type));
       }
@@ -284,7 +284,7 @@ static vhdl_var_ref *make_assign_lhs(ivl_lval_t lval, vhdl_scope *scope)
       decl = shadow_decl;
    }
 
-   vhdl_type *ltype = new vhdl_type(*decl->get_type());
+   const vhdl_type *ltype = new vhdl_type(*decl->get_type());
    vhdl_var_ref *lval_ref = new vhdl_var_ref(decl->get_name(), ltype);
    if (base) {
       if (decl->get_type()->get_name() == VHDL_TYPE_ARRAY)
@@ -384,7 +384,7 @@ static void emit_wait_for_0(vhdl_procedural *proc,
          need_wait_for_0 = true;
    }
 
-   stmt_container::stmt_list_t &stmts = container->get_stmts();
+   const stmt_container::stmt_list_t &stmts = container->get_stmts();
    bool last_was_wait =
       !stmts.empty() && dynamic_cast<vhdl_wait_stmt*>(stmts.back());
 
@@ -577,7 +577,7 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
          // Find the declaration of the LHS so we know what type
          // of assignment statement to generate (is it a signal,
          // a variable, etc?)
-         vhdl_decl *decl = proc->get_scope()->get_decl((*it)->get_name());
+         const vhdl_decl *decl = proc->get_scope()->get_decl((*it)->get_name());
          assign_type = decl->assignment_type();
 
          if (!check_valid_assignment(decl->assignment_type(), proc, stmt))
@@ -1060,7 +1060,7 @@ static vhdl_var_ref *draw_case_test(vhdl_procedural *proc, stmt_container *conta
    // variable to hold the result of the expression evaluation
    if (typeid(*test) != typeid(vhdl_var_ref)) {
       const char *tmp_name = "Verilog_Case_Ex";
-      vhdl_type *test_type = new vhdl_type(*test->get_type());
+      const vhdl_type *test_type = new vhdl_type(*test->get_type());
 
       if (!proc->get_scope()->have_declared(tmp_name)) {
          proc->get_scope()->add_decl
@@ -1199,7 +1199,7 @@ static long get_number_as_long(ivl_expr_t expr)
  * Build a check against a constant 'x'. This is for an out of range
  * or undefined select.
  */
-static void check_against_x(vhdl_binop_expr *all, vhdl_var_ref *test,
+static void check_against_x(vhdl_binop_expr *all, const vhdl_var_ref *test,
                             ivl_expr_t expr, unsigned width, unsigned base,
                             bool is_casez)
 {
@@ -1208,7 +1208,7 @@ static void check_against_x(vhdl_binop_expr *all, vhdl_var_ref *test,
       for (unsigned i = 0; i < ivl_expr_width(expr); i++) {
          vhdl_binop_expr *sub_expr =
             new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
-         vhdl_type *type;
+         const vhdl_type *type;
          vhdl_var_ref *ref;
 
          // Check if the test bit is 'z'.
@@ -1241,7 +1241,7 @@ static void check_against_x(vhdl_binop_expr *all, vhdl_var_ref *test,
 /*
  * Build the test signal to constant bits check.
  */
-static void process_number(vhdl_binop_expr *all, vhdl_var_ref *test,
+static void process_number(vhdl_binop_expr *all, const vhdl_var_ref *test,
                            ivl_expr_t expr, unsigned width, unsigned base,
                            bool is_casez)
 {
@@ -1260,7 +1260,7 @@ static void process_number(vhdl_binop_expr *all, vhdl_var_ref *test,
 
       vhdl_binop_expr *sub_expr =
          new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
-      vhdl_type *type;
+      const vhdl_type *type;
       vhdl_var_ref *ref;
 
       // Check if the test bit is 'z'.
@@ -1306,7 +1306,7 @@ static void process_number(vhdl_binop_expr *all, vhdl_var_ref *test,
 /*
  * Build the test signal to label signal check.
  */
-static bool process_signal(vhdl_binop_expr *all, vhdl_var_ref *test,
+static bool process_signal(vhdl_binop_expr *all, const vhdl_var_ref *test,
                            ivl_expr_t expr, unsigned width, unsigned base,
                            bool is_casez, unsigned swid, long sbase)
 {
@@ -1331,7 +1331,7 @@ static bool process_signal(vhdl_binop_expr *all, vhdl_var_ref *test,
    for (unsigned i = 0; i < swid; i++) {
       // Generate a comparison for this bit position
       vhdl_binop_expr *cmp;
-      vhdl_type *type;
+      const vhdl_type *type;
       vhdl_var_ref *ref;
 
       // Check if this is an out of bounds access. If this is a casez

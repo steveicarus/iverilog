@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2025  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -141,7 +141,7 @@ enum vhdl_unaryop_t {
 class vhdl_unaryop_expr : public vhdl_expr {
 public:
    vhdl_unaryop_expr(vhdl_unaryop_t op, vhdl_expr *operand,
-                     vhdl_type *type)
+                     const vhdl_type *type)
       : vhdl_expr(type), op_(op), operand_(operand) {}
    ~vhdl_unaryop_expr();
 
@@ -158,7 +158,7 @@ private:
  */
 class vhdl_bit_spec_expr : public vhdl_expr {
 public:
-   vhdl_bit_spec_expr(vhdl_type *type, vhdl_expr *others)
+   vhdl_bit_spec_expr(const vhdl_type *type, vhdl_expr *others)
       : vhdl_expr(type), others_(others) {}
    ~vhdl_bit_spec_expr();
 
@@ -608,7 +608,7 @@ public:
 
    const std::string &get_name() const { return name_; }
    const vhdl_type *get_type() const;
-   void set_type(vhdl_type *t) { type_ = t; }
+   void set_type(const vhdl_type *t) { type_ = t; }
    void set_initial(vhdl_expr *initial);
    bool has_initial() const { return has_initial_; }
 
@@ -699,7 +699,7 @@ public:
  */
 class vhdl_param_decl : public vhdl_decl {
 public:
-   vhdl_param_decl(const char *name, vhdl_type *type)
+   vhdl_param_decl(const char *name, const vhdl_type *type)
       : vhdl_decl(name, type) {}
    void emit(std::ostream &of, int level) const;
    assign_type_t assignment_type() const { return ASSIGN_CONST; }
@@ -719,7 +719,7 @@ enum vhdl_port_mode_t {
  */
 class vhdl_port_decl : public vhdl_decl {
 public:
-   vhdl_port_decl(const char *name, vhdl_type *type,
+   vhdl_port_decl(const char *name, const vhdl_type *type,
                   vhdl_port_mode_t mode)
       : vhdl_decl(name, type), mode_(mode) {}
 
@@ -817,8 +817,8 @@ public:
    bool contains_wait_stmt() const { return contains_wait_stmt_; }
 
    // Managing set of blocking assignment targets in this block
-   void add_blocking_target(vhdl_var_ref* ref);
-   bool is_blocking_target(vhdl_var_ref* ref) const;
+   void add_blocking_target(const vhdl_var_ref* ref);
+   bool is_blocking_target(const vhdl_var_ref* ref) const;
 
 protected:
    stmt_container stmts_;

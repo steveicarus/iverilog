@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2015 / Stephen Williams (steve@icarus.com)
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
@@ -828,7 +828,7 @@ bool ExpName::check_const_record_workaround_(const VTypeRecord*rec,
 
     for(vector<VTypeRecord::element_t*>::const_reverse_iterator it = elements.rbegin();
             it != elements.rend(); ++it) {
-        VTypeRecord::element_t* el = (*it);
+        const VTypeRecord::element_t* el = (*it);
 
         if(el->peek_name() == name_) {
             const VType*type = el->peek_type();

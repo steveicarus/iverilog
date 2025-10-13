@@ -46,7 +46,7 @@ const char *vvp_mangle_id(const char *id)
 
       const char nosym[] = "!\"#%&'()*+,-/:;<=>?@[\\]^`{|}~";
 
-      char *se = strpbrk(inp, nosym);
+      const char *se = strpbrk(inp, nosym);
       if (!se)
 	    return id;
 
@@ -95,7 +95,7 @@ const char *vvp_mangle_name(const char *id)
 
       const char nosym[] = "\"\\";
 
-      char *se = strpbrk(inp, nosym);
+      const char *se = strpbrk(inp, nosym);
       if (!se)
 	    return id;
 
@@ -1792,7 +1792,7 @@ static void draw_lpm_ff(ivl_lpm_t net)
       assert(ivl_lpm_sync_set(net) == 0);
 
       unsigned width = ivl_lpm_width(net);
-      char*edge = ivl_lpm_negedge(net) ? "n" : "p";
+      const char*edge = ivl_lpm_negedge(net) ? "n" : "p";
 
       nex = ivl_lpm_clk(net);
       assert(nex);

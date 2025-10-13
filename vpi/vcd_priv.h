@@ -1,7 +1,7 @@
 #ifndef IVL_vcd_priv_H
 #define IVL_vcd_priv_H
 /*
- * Copyright (c) 2003-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -29,7 +29,7 @@
 
 EXTERN int is_escaped_id(const char *name);
 
-EXTERN int vcd_instance_contains_dumpable_items(int dumpable_types[], vpiHandle item);
+EXTERN int vcd_instance_contains_dumpable_items(const int dumpable_types[], vpiHandle item);
 
 struct vcd_names_s;
 EXTERN struct stringheap_s name_heap;
@@ -42,7 +42,7 @@ struct vcd_names_list_s {
 
 EXTERN void vcd_names_add(struct vcd_names_list_s*tab, const char *name);
 
-EXTERN const char *vcd_names_search(struct vcd_names_list_s*tab,
+EXTERN const char *vcd_names_search(const struct vcd_names_list_s*tab,
 				    const char *key);
 
 EXTERN void vcd_names_sort(struct vcd_names_list_s*tab);

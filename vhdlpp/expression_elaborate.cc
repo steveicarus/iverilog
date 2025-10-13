@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  * Copyright CERN 2016
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -275,7 +275,7 @@ int ExpName::elaborate_lval(Entity*ent, ScopeBase*scope, bool is_sequ)
       return errors;
 }
 
-int ExpName::elaborate_rval(Entity*ent, ScopeBase*scope, const InterfacePort*lval)
+int ExpName::elaborate_rval(const Entity*ent, const ScopeBase*scope, const InterfacePort*lval)
 {
       int errors = 0;
 
@@ -466,7 +466,7 @@ int ExpAggregate::elaborate_expr_array_(Entity*ent, ScopeBase*scope, const VType
 	// each parsed element may be bound to multiple choices, so
 	// account for that.
       for (size_t edx = 0 ; edx < elements_.size() ; edx += 1) {
-	    element_t*ecur = elements_[edx];
+	    const element_t*ecur = elements_[edx];
 	    if (ecur->count_choices() == 0)
 		  choice_count += 1;
 	    else
@@ -867,7 +867,7 @@ int ExpFunc::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*)
 	// SystemVerilog functions work only with defined size data types, therefore
 	// if header does not specify argument or return type size, create a function
 	// instance that work with this particular size.
-      if(def_ && !def_->is_std() && def_->unbounded()) {
+      if(!def_->is_std() && def_->unbounded()) {
             def_ = def_->make_instance(argv_, scope);
             name_ = def_->name();   // TODO necessary?
       }
@@ -1013,10 +1013,10 @@ const VType* ExpName::probe_type(Entity*ent, ScopeBase*scope) const
       }
 
       if(scope) {
-        if (Signal*sig = scope->find_signal(name_))
+        if (const Signal*sig = scope->find_signal(name_))
             return sig->peek_type();
 
-        if (Variable*var = scope->find_variable(name_))
+        if (const Variable*var = scope->find_variable(name_))
             return var->peek_type();
 
         const VType*type = 0;

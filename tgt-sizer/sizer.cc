@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2014-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -56,7 +56,7 @@ FILE*sizer_out = 0;
 
 static int process_scan_fun(ivl_process_t net, void*raw);
 static void emit_sizer_scope(ivl_design_t des, ivl_scope_t model, struct sizer_statistics&stats);
-static void show_stats(struct sizer_statistics&stats);
+static void show_stats(const struct sizer_statistics&stats);
 
 /*
  * This is called by the ivl core to get version information from the
@@ -149,7 +149,7 @@ static void emit_sizer_scope(ivl_design_t des, ivl_scope_t scope, struct sizer_s
       }
 }
 
-static void show_stats(struct sizer_statistics&stats)
+static void show_stats(const struct sizer_statistics&stats)
 {
       fprintf(sizer_out, "     Flip-Flops   : %u\n", stats.flop_count);
       fprintf(sizer_out, "     Logic Gates  : %u\n", stats.gate_count);
