@@ -1,7 +1,7 @@
 #ifndef IVL_PWire_H
 #define IVL_PWire_H
 /*
- * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -93,7 +93,7 @@ class PWire : public PNamedItem {
 
       NetNet* elaborate_sig(Design*, NetScope*scope);
 
-      SymbolType symbol_type() const;
+      SymbolType symbol_type() const override;
 
       bool is_net() const { return net_set_; };
       bool is_port() const { return port_set_; };

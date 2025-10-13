@@ -1,7 +1,7 @@
 #ifndef IVL_t_dll_H
 #define IVL_t_dll_H
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -53,52 +53,52 @@ struct dll_target  : public target_t, public expr_scan_t {
 	// version of a loadable target code generator.
       void test_version(const char*target_name);
 
-      bool start_design(const Design*);
-      int  end_design(const Design*);
+      bool start_design(const Design*) override;
+      int  end_design(const Design*) override;
 
-      bool bufz(const NetBUFZ*);
-      bool branch(const NetBranch*);
-      bool class_type(const NetScope*, netclass_t*);
-      bool enumeration(const NetScope*, netenum_t*);
-      void event(const NetEvent*);
-      void logic(const NetLogic*);
-      bool tran(const NetTran*);
-      bool ureduce(const NetUReduce*);
-      void net_case_cmp(const NetCaseCmp*);
-      void udp(const NetUDP*);
-      void lpm_abs(const NetAbs*);
-      void lpm_add_sub(const NetAddSub*);
-      bool lpm_array_dq(const NetArrayDq*);
-      bool lpm_cast_int2(const NetCastInt2*);
-      bool lpm_cast_int4(const NetCastInt4*);
-      bool lpm_cast_real(const NetCastReal*);
-      void lpm_clshift(const NetCLShift*);
-      void lpm_compare(const NetCompare*);
-      void lpm_divide(const NetDivide*);
-      void lpm_ff(const NetFF*);
-      void lpm_latch(const NetLatch*);
-      void lpm_modulo(const NetModulo*);
-      void lpm_mult(const NetMult*);
-      void lpm_mux(const NetMux*);
-      void lpm_pow(const NetPow*);
-      bool concat(const NetConcat*);
-      bool part_select(const NetPartSelect*);
-      bool replicate(const NetReplicate*);
+      bool bufz(const NetBUFZ*) override;
+      bool branch(const NetBranch*) override;
+      bool class_type(const NetScope*, netclass_t*) override;
+      bool enumeration(const NetScope*, netenum_t*) override;
+      void event(const NetEvent*) override;
+      void logic(const NetLogic*) override;
+      bool tran(const NetTran*) override;
+      bool ureduce(const NetUReduce*) override;
+      void net_case_cmp(const NetCaseCmp*) override;
+      void udp(const NetUDP*) override;
+      void lpm_abs(const NetAbs*) override;
+      void lpm_add_sub(const NetAddSub*) override;
+      bool lpm_array_dq(const NetArrayDq*) override;
+      bool lpm_cast_int2(const NetCastInt2*) override;
+      bool lpm_cast_int4(const NetCastInt4*) override;
+      bool lpm_cast_real(const NetCastReal*) override;
+      void lpm_clshift(const NetCLShift*) override;
+      void lpm_compare(const NetCompare*) override;
+      void lpm_divide(const NetDivide*) override;
+      void lpm_ff(const NetFF*) override;
+      void lpm_latch(const NetLatch*) override;
+      void lpm_modulo(const NetModulo*) override;
+      void lpm_mult(const NetMult*) override;
+      void lpm_mux(const NetMux*) override;
+      void lpm_pow(const NetPow*) override;
+      bool concat(const NetConcat*) override;
+      bool part_select(const NetPartSelect*) override;
+      bool replicate(const NetReplicate*) override;
       void net_assign(const NetAssign_*) const;
-      bool net_sysfunction(const NetSysFunc*);
-      bool net_function(const NetUserFunc*);
-      bool net_const(const NetConst*);
-      bool net_literal(const NetLiteral*);
-      void net_probe(const NetEvProbe*);
-      bool sign_extend(const NetSignExtend*);
-      bool substitute(const NetSubstitute*);
+      bool net_sysfunction(const NetSysFunc*) override;
+      bool net_function(const NetUserFunc*) override;
+      bool net_const(const NetConst*) override;
+      bool net_literal(const NetLiteral*) override;
+      void net_probe(const NetEvProbe*) override;
+      bool sign_extend(const NetSignExtend*) override;
+      bool substitute(const NetSubstitute*) override;
 
-      bool process(const NetProcTop*);
-      bool process(const NetAnalogTop*);
-      void scope(const NetScope*);
-      void convert_module_ports(const NetScope*);
-      void signal(const NetNet*);
-      bool signal_paths(const NetNet*);
+      bool process(const NetProcTop*) override;
+      bool process(const NetAnalogTop*) override;
+      void scope(const NetScope*) override;
+      void convert_module_ports(const NetScope*) override;
+      void signal(const NetNet*) override;
+      bool signal_paths(const NetNet*) override;
       ivl_dll_t dll_;
 
       ivl_design_s des_;
@@ -109,59 +109,59 @@ struct dll_target  : public target_t, public expr_scan_t {
 	/* These methods and members are used for forming the
 	   statements of a thread. */
       struct ivl_statement_s*stmt_cur_;
-      void proc_alloc(const NetAlloc*);
-      bool proc_assign(const NetAssign*);
-      void proc_assign_nb(const NetAssignNB*);
-      bool proc_block(const NetBlock*);
-      bool proc_break(const NetBreak*);
-      void proc_case(const NetCase*);
-      bool proc_cassign(const NetCAssign*);
-      bool proc_condit(const NetCondit*);
-      bool proc_continue(const NetContinue*);
-      bool proc_contribution(const NetContribution*);
-      bool proc_deassign(const NetDeassign*);
-      bool proc_delay(const NetPDelay*);
-      bool proc_disable(const NetDisable*);
-      void proc_do_while(const NetDoWhile*);
-      bool proc_force(const NetForce*);
-      void proc_forever(const NetForever*);
-      bool proc_forloop(const NetForLoop*);
-      void proc_free(const NetFree*);
-      bool proc_release(const NetRelease*);
-      void proc_repeat(const NetRepeat*);
-      void proc_stask(const NetSTask*);
-      bool proc_trigger(const NetEvTrig*);
-      bool proc_nb_trigger(const NetEvNBTrig*);
-      void proc_utask(const NetUTask*);
-      bool proc_wait(const NetEvWait*);
-      void proc_while(const NetWhile*);
+      void proc_alloc(const NetAlloc*) override;
+      bool proc_assign(const NetAssign*) override;
+      void proc_assign_nb(const NetAssignNB*) override;
+      bool proc_block(const NetBlock*) override;
+      bool proc_break(const NetBreak*) override;
+      void proc_case(const NetCase*) override;
+      bool proc_cassign(const NetCAssign*) override;
+      bool proc_condit(const NetCondit*) override;
+      bool proc_continue(const NetContinue*) override;
+      bool proc_contribution(const NetContribution*) override;
+      bool proc_deassign(const NetDeassign*) override;
+      bool proc_delay(const NetPDelay*) override;
+      bool proc_disable(const NetDisable*) override;
+      void proc_do_while(const NetDoWhile*) override;
+      bool proc_force(const NetForce*) override;
+      void proc_forever(const NetForever*) override;
+      bool proc_forloop(const NetForLoop*) override;
+      void proc_free(const NetFree*) override;
+      bool proc_release(const NetRelease*) override;
+      void proc_repeat(const NetRepeat*) override;
+      void proc_stask(const NetSTask*) override;
+      bool proc_trigger(const NetEvTrig*) override;
+      bool proc_nb_trigger(const NetEvNBTrig*) override;
+      void proc_utask(const NetUTask*) override;
+      bool proc_wait(const NetEvWait*) override;
+      void proc_while(const NetWhile*) override;
 
-      bool func_def(const NetScope*);
-      void task_def(const NetScope*);
+      bool func_def(const NetScope*) override;
+      void task_def(const NetScope*) override;
 
       struct ivl_expr_s*expr_;
-      void expr_access_func(const NetEAccess*);
-      void expr_array_pattern(const NetEArrayPattern*);
-      void expr_binary(const NetEBinary*);
-      void expr_concat(const NetEConcat*);
-      void expr_const(const NetEConst*);
-      void expr_creal(const NetECReal*);
-      void expr_last(const NetELast*);
-      void expr_new(const NetENew*);
-      void expr_null(const NetENull*);
-      void expr_param(const NetEConstParam*);
-      void expr_property(const NetEProperty*);
-      void expr_rparam(const NetECRealParam*);
-      void expr_event(const NetEEvent*);
-      void expr_scope(const NetEScope*);
-      void expr_scopy(const NetEShallowCopy*);
-      void expr_netenum(const NetENetenum*);
-      void expr_select(const NetESelect*);
-      void expr_sfunc(const NetESFunc*);
-      void expr_ternary(const NetETernary*);
-      void expr_ufunc(const NetEUFunc*);
-      void expr_unary(const NetEUnary*);
-      void expr_signal(const NetESignal*);
+      void expr_access_func(const NetEAccess*) override;
+      void expr_array_pattern(const NetEArrayPattern*) override;
+      void expr_binary(const NetEBinary*) override;
+      void expr_concat(const NetEConcat*) override;
+      void expr_const(const NetEConst*) override;
+      void expr_creal(const NetECReal*) override;
+      void expr_last(const NetELast*) override;
+      void expr_new(const NetENew*) override;
+      void expr_null(const NetENull*) override;
+      void expr_param(const NetEConstParam*) override;
+      void expr_property(const NetEProperty*) override;
+      void expr_rparam(const NetECRealParam*) override;
+      void expr_event(const NetEEvent*) override;
+      void expr_scope(const NetEScope*) override;
+      void expr_scopy(const NetEShallowCopy*) override;
+      void expr_netenum(const NetENetenum*) override;
+      void expr_select(const NetESelect*) override;
+      void expr_sfunc(const NetESFunc*) override;
+      void expr_ternary(const NetETernary*) override;
+      void expr_ufunc(const NetEUFunc*) override;
+      void expr_unary(const NetEUnary*) override;
+      void expr_signal(const NetESignal*) override;
 
       ivl_scope_t lookup_scope_(const NetScope*scope);
 

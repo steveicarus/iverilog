@@ -1,7 +1,7 @@
 #ifndef IVL_PGate_H
 #define IVL_PGate_H
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,7 +57,7 @@ class PGate : public PNamedItem {
 
       explicit PGate(perm_string name, std::list<PExpr*>*pins);
 
-      virtual ~PGate();
+      virtual ~PGate() override;
 
       void set_ranges(std::list<pform_range_t>*ranges);
       bool is_array() const { return ranges_ != 0; }
@@ -90,7 +90,7 @@ class PGate : public PNamedItem {
       virtual void elaborate_scope(Design*des, NetScope*sc) const;
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
-      SymbolType symbol_type() const;
+      SymbolType symbol_type() const override;
 
     protected:
       const std::vector<PExpr*>& get_pins() const { return pins_; }
@@ -127,11 +127,11 @@ class PGAssign  : public PGate {
     public:
       explicit PGAssign(std::list<PExpr*>*pins);
       explicit PGAssign(std::list<PExpr*>*pins, std::list<PExpr*>*dels);
-      ~PGAssign();
+      ~PGAssign() override;
 
-      void dump(std::ostream&out, unsigned ind =4) const;
-      virtual void elaborate(Design*des, NetScope*scope) const;
-      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
+      void dump(std::ostream&out, unsigned ind =4) const override;
+      virtual void elaborate(Design*des, NetScope*scope) const override;
+      virtual bool elaborate_sig(Design*des, NetScope*scope) const override;
 
     private:
       void elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval) const;
@@ -163,14 +163,14 @@ class PGBuiltin  : public PGate {
       explicit PGBuiltin(Type t, perm_string name,
 			 std::list<PExpr*>*pins,
 			 PExpr*del);
-      ~PGBuiltin();
+      ~PGBuiltin() override;
 
       Type type() const { return type_; }
       const char * gate_name() const;
 
-      virtual void dump(std::ostream&out, unsigned ind =4) const;
-      virtual void elaborate(Design*, NetScope*scope) const;
-      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
+      virtual void dump(std::ostream&out, unsigned ind =4) const override;
+      virtual void elaborate(Design*, NetScope*scope) const override;
+      virtual bool elaborate_sig(Design*des, NetScope*scope) const override;
 
     private:
       void calculate_gate_and_lval_count_(unsigned&gate_count,
@@ -210,7 +210,7 @@ class PGModule  : public PGate {
 	// constructor.
       explicit PGModule(Module*type, perm_string name);
 
-      ~PGModule();
+      ~PGModule() override;
 
 	// Parameter overrides can come as an ordered list, or a set
 	// of named expressions.
@@ -219,10 +219,10 @@ class PGModule  : public PGate {
 
       std::map<perm_string,PExpr*> attributes;
 
-      virtual void dump(std::ostream&out, unsigned ind =4) const;
-      virtual void elaborate(Design*, NetScope*scope) const;
-      virtual void elaborate_scope(Design*des, NetScope*sc) const;
-      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
+      virtual void dump(std::ostream&out, unsigned ind =4) const override;
+      virtual void elaborate(Design*, NetScope*scope) const override;
+      virtual void elaborate_scope(Design*des, NetScope*sc) const override;
+      virtual bool elaborate_sig(Design*des, NetScope*scope) const override;
 
 	// This returns the module name of this module. It is a
 	// permallocated string.

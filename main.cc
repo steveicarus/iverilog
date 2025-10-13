@@ -95,7 +95,10 @@ static void signals_handler(int sig)
 unsigned flag_errors = 0;
 static unsigned long pre_process_fail_count = 0;
 
-const char*basedir = strdup(".");
+// We have to wrap the strdup() so that the define expands correctly.
+static char* init_basedir(void)
+{ return strdup("."); }
+const char*basedir = init_basedir();
 
 /*
  * These are the language support control flags. These support which
@@ -130,10 +133,10 @@ void add_vpi_module(const char*name)
 	    vpi_module_list = strdup(name);
 
       } else {
-	    char*tmp = (char*)realloc(vpi_module_list,
-				      strlen(vpi_module_list)
-				      + strlen(name)
-				      + 2);
+	    char*tmp = static_cast<char*>(realloc(vpi_module_list,
+	                                  strlen(vpi_module_list)
+	                                  + strlen(name)
+	                                  + 2));
 	    strcat(tmp, ",");
 	    strcat(tmp, name);
 	    vpi_module_list = tmp;
@@ -647,7 +650,7 @@ static void read_iconfig_file(const char*ipath)
 	    }
 
 	    if (strcmp(buf, "basedir") == 0) {
-		  free((void *)basedir);
+		  free(static_cast<void*>(const_cast<char *>(basedir)));
 		  basedir = strdup(cp);
 
 	    } else if (strcmp(buf, "debug") == 0) {
@@ -715,7 +718,7 @@ static void read_iconfig_file(const char*ipath)
 		  add_vpi_module(cp);
 
 	    } else if (strcmp(buf, "out") == 0) {
-		  free((void *)flags["-o"]);
+		  free(reinterpret_cast<void*>(const_cast<char*>(flags["-o"])));
 		  flags["-o"] = strdup(cp);
 
 	    } else if (strcmp(buf, "sys_func") == 0) {
@@ -861,7 +864,7 @@ static void read_sources_file(const char*path)
 extern Design* elaborate(list <perm_string> root);
 
 #if defined(HAVE_TIMES)
-static double cycles_diff(struct tms *a, struct tms *b)
+static double cycles_diff(const struct tms *a, const struct tms *b)
 {
       clock_t aa = a->tms_utime
 	    +      a->tms_stime
@@ -892,13 +895,13 @@ static void EOC_cleanup(void)
       }
       library_suff.clear();
 
-      free((void *) basedir);
+      free(reinterpret_cast<void*>(const_cast<char*>(basedir)));
       free(ivlpp_string);
       free(depfile_name);
 
       for (map<string, const char*>::iterator flg = flags.begin() ;
            flg != flags.end() ; ++ flg ) {
-	    free((void *)flg->second);
+	    free(reinterpret_cast<void*>(const_cast<char*>(flg->second)));
       }
       flags.clear();
 
@@ -1397,7 +1400,7 @@ static void find_module_mention(map<perm_string,bool>&check_map, Module*mod)
       list<PGate*> gates = mod->get_gates();
       list<PGate*>::const_iterator gate;
       for (gate = gates.begin(); gate != gates.end(); ++ gate ) {
-	    PGModule*tmp = dynamic_cast<PGModule*>(*gate);
+	    const PGModule*tmp = dynamic_cast<PGModule*>(*gate);
 	    if (tmp) {
 		    // Note that this module has been instantiated
 		  check_map[tmp->get_type()] = true;
@@ -1415,7 +1418,7 @@ static void find_module_mention(map<perm_string,bool>&check_map, PGenerate*schm)
 {
       list<PGate*>::const_iterator gate;
       for (gate = schm->gates.begin(); gate != schm->gates.end(); ++ gate ) {
-	    PGModule*tmp = dynamic_cast<PGModule*>(*gate);
+	    const PGModule*tmp = dynamic_cast<PGModule*>(*gate);
 	    if (tmp) {
 		    // Note that this module has been instantiated
 		  check_map[tmp->get_type()] = true;

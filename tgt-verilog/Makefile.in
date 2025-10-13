@@ -56,6 +56,8 @@ distclean: clean
 
 cppcheck: $(O:.o=.c)
 	cppcheck --enable=all --std=c99 --std=c++11 -f \
+	         --check-level=exhaustive \
+	         --suppressions-list=$(srcdir)/../cppcheck-global.sup \
 	         --suppressions-list=$(srcdir)/cppcheck.sup \
 	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 

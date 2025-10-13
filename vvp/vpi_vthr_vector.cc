@@ -70,7 +70,7 @@ class __vpiVThrWord : public __vpiHandle {
 
 static int vthr_word_get(int code, vpiHandle ref)
 {
-      __vpiVThrWord*rfp = dynamic_cast<__vpiVThrWord*>(ref);
+      const __vpiVThrWord*rfp = dynamic_cast<__vpiVThrWord*>(ref);
 
       switch (code) {
 
@@ -98,9 +98,9 @@ static double vlg_round(double rval)
 
 static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 {
-      __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(ref);
+      const __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(ref);
       static const size_t RBUF_USE_SIZE = 66;
-      char *rbuf = (char *) need_result_buf(RBUF_USE_SIZE, RBUF_VAL);
+      char *rbuf = static_cast<char *>(need_result_buf(RBUF_USE_SIZE, RBUF_VAL));
 
       double val = 0.0;
 
@@ -271,7 +271,7 @@ void __vpiVThrStrStack::vpi_get_value(p_vpi_value vp)
 	    vp->format = vpiStringVal;
 	    // fallthrough
 	  case vpiStringVal:
-	    rbuf = (char *) need_result_buf(val.size()+1, RBUF_VAL);
+	    rbuf = static_cast<char *>(need_result_buf(val.size()+1, RBUF_VAL));
 	    strcpy(rbuf, val.c_str());
 	    vp->value.str = rbuf;
 	    break;
@@ -404,7 +404,7 @@ void __vpiVThrVec4Stack::vpi_get_value(p_vpi_value vp)
 void __vpiVThrVec4Stack::vpi_get_value_binstr_(p_vpi_value vp, const vvp_vector4_t&val)
 {
       unsigned wid = val.size();
-      char*rbuf = (char*) need_result_buf(wid+1, RBUF_VAL);
+      char*rbuf = static_cast<char*>(need_result_buf(wid+1, RBUF_VAL));
       for (unsigned idx = 0 ; idx < wid ; idx += 1) {
 	    rbuf[wid-idx-1] = vvp_bit4_to_ascii(val.value(idx));
       }
@@ -416,7 +416,7 @@ void __vpiVThrVec4Stack::vpi_get_value_decstr_(p_vpi_value vp, const vvp_vector4
 {
       unsigned wid = val.size();
       int nbuf = (wid+2)/3 + 1;
-      char *rbuf = (char*) need_result_buf(nbuf, RBUF_VAL);
+      char *rbuf = static_cast<char*>(need_result_buf(nbuf, RBUF_VAL));
 
       vpip_vec4_to_dec_str(val, rbuf, nbuf, signed_flag_);
       vp->value.str = rbuf;
@@ -426,7 +426,7 @@ void __vpiVThrVec4Stack::vpi_get_value_octstr_(p_vpi_value vp, const vvp_vector4
 {
       unsigned wid = val.size();
       unsigned owid = (wid + 2) / 3;
-      char*rbuf = (char*) need_result_buf(owid+1, RBUF_VAL);
+      char*rbuf = static_cast<char*>(need_result_buf(owid+1, RBUF_VAL));
       rbuf[owid] = 0;
 
       unsigned oval = 0;
@@ -467,7 +467,7 @@ void __vpiVThrVec4Stack::vpi_get_value_hexstr_(p_vpi_value vp, const vvp_vector4
 {
       unsigned wid = val.size();
       unsigned hwid = (wid + 3) /4;
-      char*rbuf = (char*) need_result_buf(hwid+1, RBUF_VAL);
+      char*rbuf = static_cast<char*>(need_result_buf(hwid+1, RBUF_VAL));
       rbuf[hwid] = 0;
 
       unsigned hval = 0;
@@ -524,7 +524,7 @@ void __vpiVThrVec4Stack::vpi_get_value_real_(p_vpi_value vp, const vvp_vector4_t
 
 void __vpiVThrVec4Stack::vpi_get_value_string_(p_vpi_value vp, const vvp_vector4_t&val)
 {
-      char*rbuf = (char*) need_result_buf((val.size() / 8) + 1, RBUF_VAL);
+      char*rbuf = static_cast<char*>(need_result_buf((val.size() / 8) + 1, RBUF_VAL));
       char*cp = rbuf;
 
       char tmp = 0;
@@ -557,8 +557,8 @@ void __vpiVThrVec4Stack::vpi_get_value_vector_(p_vpi_value vp, const vvp_vector4
 {
       unsigned wid = val.size();
 
-      vp->value.vector = (s_vpi_vecval*)
-	    need_result_buf((wid+31)/32*sizeof(s_vpi_vecval), RBUF_VAL);
+      vp->value.vector = static_cast<s_vpi_vecval*>
+                         (need_result_buf((wid+31)/32*sizeof(s_vpi_vecval), RBUF_VAL));
       assert(vp->value.vector);
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -588,8 +588,9 @@ void __vpiVThrVec4Stack::vpi_get_value_vector_(p_vpi_value vp, const vvp_vector4
 
 void __vpiVThrVec4Stack::vpi_get_value_strength_(p_vpi_value vp, const vvp_vector4_t&val)
 {
-      s_vpi_strengthval*op = (s_vpi_strengthval*)
-	    need_result_buf(val.size() * sizeof(s_vpi_strengthval), RBUF_VAL);
+      s_vpi_strengthval*op = static_cast<s_vpi_strengthval*>
+                             (need_result_buf(val.size() * sizeof(s_vpi_strengthval),
+                                              RBUF_VAL));
 
       for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
 	    switch (val.value(idx)) {

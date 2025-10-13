@@ -1,0 +1,7 @@
+// We use guarded memory allocation routines, but cppcheck is not
+// noticing this so it is complaining we could return a NULL value.
+nullPointerOutOfMemory:cadpli.c:53
+nullPointerOutOfMemory:cadpli.c:54
+
+// Unused function
+unusedFunction:ivl_dlfcn.h:73

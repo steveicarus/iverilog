@@ -73,7 +73,7 @@ unsigned vhdlpp_libdir_cnt = 0;
 static char**source_list = 0;
 static unsigned source_cnt = 0;
 
-void add_source_file(const char*name)
+static void add_source_file(const char*name)
 {
       if (source_list == 0) {
 	    source_list = calloc(2, sizeof(char*));

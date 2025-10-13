@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2008-2025 Stephen Williams <steve@icarus.com>
  * Copyright (c) 2002 Larry Doolittle (larry@doolittle.boa.org)
  *
  *    This source code is free software; you can redistribute it
@@ -150,7 +150,8 @@ unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
 #define ALLOC_MARGIN 4
       if (!valv || vlen > vlen_alloc) {
 	    if (valv) free(valv);
-	    valv = (unsigned long*) calloc(vlen+ALLOC_MARGIN, sizeof (*valv));
+	    valv = static_cast<unsigned long*>
+	           (calloc(vlen+ALLOC_MARGIN, sizeof (*valv)));
 	    vlen_alloc=vlen+ALLOC_MARGIN;
       } else {
 	    memset(valv,0,vlen*sizeof(valv[0]));

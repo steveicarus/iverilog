@@ -1,7 +1,7 @@
 #ifndef IVL_PGenerate_H
 #define IVL_PGenerate_H
 /*
- * Copyright (c) 2006-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -54,7 +54,7 @@ class PGenerate : public PNamedItem, public LexicalScope {
 
     public:
       explicit PGenerate(LexicalScope*parent, unsigned id_number);
-      ~PGenerate();
+      ~PGenerate() override;
 
 	// Generate schemes have an ID number, for when the scope is
 	// implicit.
@@ -112,7 +112,7 @@ class PGenerate : public PNamedItem, public LexicalScope {
 
       void dump(std::ostream&out, unsigned indent) const;
 
-      SymbolType symbol_type() const;
+      SymbolType symbol_type() const override;
 
     private:
       void check_for_valid_genvar_value_(long value);

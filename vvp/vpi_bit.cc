@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2020-2025 Cary R. (cygcary@yahoo.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -32,15 +32,15 @@ static const __vpiBit*bit_from_handle(const __vpiHandle*ref)
       if (ref == NULL) return NULL;
       const __vpiBit::as_bit_t*ptr = dynamic_cast<const __vpiBit::as_bit_t*> (ref);
       if (ptr == NULL) return NULL;
-      return (const struct __vpiBit*) ref;
+      return reinterpret_cast<const struct __vpiBit*>(ref);
 }
 
 static __vpiBit*bit_from_handle(__vpiHandle*ref)
 {
       if (ref == NULL) return NULL;
-      __vpiBit::as_bit_t*ptr = dynamic_cast<__vpiBit::as_bit_t*> (ref);
+      const __vpiBit::as_bit_t*ptr = dynamic_cast<__vpiBit::as_bit_t*> (ref);
       if (ptr == NULL) return NULL;
-      return (struct __vpiBit*) ref;
+      return reinterpret_cast<struct __vpiBit*>(ref);
 }
 
 static int bit_get_type(const __vpiBit*rfp)
@@ -118,7 +118,8 @@ static char* bit_get_str(int code, vpiHandle ref)
       struct __vpiSignal*parent = rfp->get_parent();
       assert(parent);
 
-      char *nm, *ixs;
+      char *nm;
+      const char *ixs;
       nm = strdup(vpi_get_str(vpiName, parent));
       s_vpi_value vp;
       vp.format = vpiDecStrVal;

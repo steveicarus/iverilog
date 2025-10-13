@@ -174,7 +174,7 @@ struct sync_cb  : public vvp_gen_event_s {
       sync_callback*handle;
       bool sync_flag;
 
-      ~sync_cb () { }
+      ~sync_cb () override { }
 
       virtual void run_run() override;
 };
@@ -231,7 +231,7 @@ static void vpip_real_value_change(value_callback*cbh, vpiHandle ref)
 class value_part_callback : public value_callback {
     public:
       explicit value_part_callback(p_cb_data data);
-      ~value_part_callback();
+      ~value_part_callback() override;
 
       bool test_value_callback_ready(void) override;
 
@@ -398,7 +398,7 @@ static value_callback* make_value_change(p_cb_data data)
 class sync_callback : public __vpiCallback {
     public:
       explicit sync_callback(p_cb_data data);
-      ~sync_callback();
+      ~sync_callback() override;
 
     public:
 	// scheduled event
@@ -969,7 +969,7 @@ static uint64_t vlg_round_to_u64(double rval)
 static void real_signal_value(struct t_vpi_value*vp, double rval)
 {
       static const size_t RBUF_SIZE = 64 + 1;
-      char*rbuf = (char *) need_result_buf(RBUF_SIZE, RBUF_VAL);
+      char*rbuf = static_cast<char *>(need_result_buf(RBUF_SIZE, RBUF_VAL));
 
       switch (vp->format) {
 	  case vpiObjTypeVal:

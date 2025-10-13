@@ -409,7 +409,7 @@ unsigned vvp_fun_signal4_aa::value_size() const
 
 vvp_bit4_t vvp_fun_signal4_aa::value(unsigned idx) const
 {
-      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+      const vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
             (vthread_get_rd_context_item(context_idx_));
 
       return bits4->value(idx);
@@ -417,7 +417,7 @@ vvp_bit4_t vvp_fun_signal4_aa::value(unsigned idx) const
 
 vvp_scalar_t vvp_fun_signal4_aa::scalar_value(unsigned idx) const
 {
-      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+      const vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
             (vthread_get_rd_context_item(context_idx_));
 
       return vvp_scalar_t(bits4->value(idx), 6, 6);
@@ -425,7 +425,7 @@ vvp_scalar_t vvp_fun_signal4_aa::scalar_value(unsigned idx) const
 
 void vvp_fun_signal4_aa::vec4_value(vvp_vector4_t&val) const
 {
-      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+      const vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
             (vthread_get_rd_context_item(context_idx_));
 
       val = *bits4;
@@ -433,7 +433,7 @@ void vvp_fun_signal4_aa::vec4_value(vvp_vector4_t&val) const
 
 const vvp_vector4_t&vvp_fun_signal4_aa::vec4_unfiltered_value() const
 {
-      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+      const vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
             (vthread_get_rd_context_item(context_idx_));
 
       return *bits4;
@@ -528,7 +528,7 @@ void vvp_fun_signal_real_aa::free_instance(vvp_context_t context)
 
 double vvp_fun_signal_real_aa::real_unfiltered_value() const
 {
-      double*bits = static_cast<double*>
+      const double*bits = static_cast<double*>
             (vthread_get_rd_context_item(context_idx_));
 
       return *bits;
@@ -688,7 +688,7 @@ double vvp_fun_signal_string_aa::real_value() const
 
 const std::string& vvp_fun_signal_string_aa::get_string() const
 {
-      string*bits = static_cast<std::string*>
+      const string*bits = static_cast<std::string*>
             (vthread_get_rd_context_item(context_idx_));
 
       return *bits;
@@ -765,7 +765,7 @@ void vvp_fun_signal_object_aa::reset_instance(vvp_context_t context)
 
 vvp_object_t vvp_fun_signal_object_aa::get_object() const
 {
-      vvp_object_t*bits = static_cast<vvp_object_t*>
+      const vvp_object_t*bits = static_cast<vvp_object_t*>
 	    (vthread_get_rd_context_item(context_idx_));
       return *bits;
 }

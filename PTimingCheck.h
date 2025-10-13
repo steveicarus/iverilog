@@ -1,7 +1,7 @@
 #ifndef IVL_PTimingCheck_H
 #define IVL_PTimingCheck_H
 /*
- * Copyright (c) 2006-2023 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2006-2025 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -52,7 +52,7 @@ class PTimingCheck  : public LineInfo {
       };
 
       PTimingCheck() { }
-      virtual ~PTimingCheck() { }
+      virtual ~PTimingCheck() override { }
 
       virtual void elaborate(class Design*des, class NetScope*scope) const = 0;
 
@@ -76,7 +76,7 @@ class PRecRem : public PTimingCheck {
                     pform_name_t* delayed_reference,
                     pform_name_t* delayed_data);
 
-      ~PRecRem();
+      ~PRecRem() override;
 
       void elaborate(class Design*des, class NetScope*scope) const override;
 
@@ -114,7 +114,7 @@ class PSetupHold : public PTimingCheck {
                     pform_name_t* delayed_reference,
                     pform_name_t* delayed_data);
 
-      ~PSetupHold();
+      ~PSetupHold() override;
 
       void elaborate(class Design*des, class NetScope*scope) const override;
 

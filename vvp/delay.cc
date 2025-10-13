@@ -166,7 +166,7 @@ vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, unsigned width, const vvp_delay_t&d)
       initial_ = true;
 	// Calculate the values used when converting variable delays
 	// to simulation time units.
-      __vpiScope*scope = vpip_peek_current_scope();
+      const __vpiScope*scope = vpip_peek_current_scope();
 
       int powr = scope->time_units - scope->time_precision;
       round_ = 1;
@@ -820,12 +820,12 @@ static vpiHandle modpath_src_iterate(int code, vpiHandle ref)
 	// ever one input path term and one output path term.
       switch (code) {
 	  case vpiModPathIn: {
-	    vpiHandle*args = (vpiHandle*)calloc(1, sizeof(vpiHandle*));
+	    vpiHandle*args = static_cast<vpiHandle*>(calloc(1, sizeof(vpiHandle*)));
 	    args[0] = &rfp->path_term_in;
 	    return vpip_make_iterator(1, args, true);
 	  }
 	  case vpiModPathOut: {
-	    vpiHandle*args = (vpiHandle*)calloc(1, sizeof(vpiHandle*));
+	    vpiHandle*args = static_cast<vpiHandle*>(calloc(1, sizeof(vpiHandle*)));
 	    args[0] = &rfp->dest->path_term_out;
 	    return vpip_make_iterator(1, args, true);
 	  }
@@ -1081,8 +1081,9 @@ struct __vpiModPath* vpip_make_modpath(vvp_net_t *net)
 
 #ifdef CHECK_WITH_VALGRIND
       mp_count += 1;
-      mp_list = (struct __vpiModPath **) realloc(mp_list,
-                mp_count*sizeof(struct __vpiModPath **));
+      mp_list = static_cast<struct __vpiModPath **>
+                (realloc(static_cast<void*>(mp_list),
+                 mp_count*sizeof(struct __vpiModPath **)));
       mp_list[mp_count-1] = obj;
 #endif
       return obj;
@@ -1247,7 +1248,7 @@ static vpiHandle intermodpath_iterate(int code, vpiHandle ref)
 	// For now intermodpaths only support exactly two ports
       switch (code) {
 	  case vpiPort: {
-	    vpiHandle*args = (vpiHandle*)calloc(2, sizeof(vpiHandle*));
+	    vpiHandle*args = static_cast<vpiHandle*>(calloc(2, sizeof(vpiHandle*)));
 	    args[0] = rfp->port1;
 	    args[1] = rfp->port2;
 	    return vpip_make_iterator(2, args, true);
@@ -1449,8 +1450,9 @@ struct __vpiInterModPath* vpip_make_intermodpath(vvp_net_t *net, vpiPortInfo* po
 
 #ifdef CHECK_WITH_VALGRIND
       imp_count += 1;
-      imp_list = (struct __vpiInterModPath **) realloc(imp_list,
-                imp_count*sizeof(struct __vpiInterModPath **));
+      imp_list = static_cast<struct __vpiInterModPath **>
+                 (realloc(static_cast<void>(imp_list),
+                  imp_count*sizeof(struct __vpiInterModPath **)));
       imp_list[imp_count-1] = obj;
 #endif
       return obj;

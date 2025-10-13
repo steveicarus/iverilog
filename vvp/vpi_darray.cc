@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -42,12 +42,12 @@ __vpiDarrayVar::__vpiDarrayVar(__vpiScope*sc, const char*na, vvp_net_t*ne)
 
 unsigned __vpiDarrayVar::get_size() const
 {
-      vvp_fun_signal_object*fun = dynamic_cast<vvp_fun_signal_object*> (get_net()->fun);
+      const vvp_fun_signal_object*fun = dynamic_cast<vvp_fun_signal_object*> (get_net()->fun);
       if(!fun)
         return 0;
 
       vvp_object_t val = fun->get_object();
-      vvp_darray*aval = val.peek<vvp_darray>();
+      const vvp_darray*aval = val.peek<vvp_darray>();
 
       if(!aval)
         return 0;
@@ -307,7 +307,7 @@ int __vpiQueueVar::vpi_get(int code)
       vvp_fun_signal_object*fun = dynamic_cast<vvp_fun_signal_object*> (get_net()->fun);
       assert(fun);
       vvp_object_t val = fun->get_object();
-      vvp_queue*aval = val.peek<vvp_queue>();
+      const vvp_queue*aval = val.peek<vvp_queue>();
 
       switch (code) {
 	  case vpiArrayType:

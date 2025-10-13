@@ -1,3 +1,32 @@
+// We use guarded memory allocation routines, but cppcheck is not
+// noticing this so it is complaining we could return a NULL value.
+nullPointerOutOfMemory:delay.cc:829          // calloc @  828
+nullPointerOutOfMemory:delay.cc:1252         // calloc @ 1251
+nullPointerOutOfMemory:delay.cc:1253         // calloc @ 1251
+nullPointerOutOfMemory:vpi_scope.cc:760      // calloc @  757
+nullPointerOutOfMemory:vpi_mcd.cc:68         // malloc @   66
+nullPointerOutOfMemory:vpi_mcd.cc:69         // malloc @   66
+nullPointerOutOfMemory:vpi_mcd.cc:75         // malloc @   66
+nullPointerOutOfMemory:vpi_mcd.cc:76         // malloc @   66
+nullPointerOutOfMemory:vpi_mcd.cc:77         // malloc @   66
+nullPointerOutOfMemory:vpi_mcd.cc:78         // malloc @   66
+nullPointerOutOfMemory:vpi_mcd.cc:79         // malloc @   66
+nullPointerOutOfMemory:vpi_mcd.cc:80         // malloc @   66
+nullPointerOutOfMemory:vpi_priv.cc:1090      // malloc @ 1089
+nullPointerOutOfMemory:vpi_priv.cc:1102      // malloc @ 1101
+nullPointerOutOfMemory:vpi_priv.cc:1112      // malloc @ 1111
+nullPointerOutOfMemory:vpi_signal.cc:105     // strdup @  623
+nullPointerOutOfMemory:vpi_signal.cc:110     // strdup @  109
+nullPointerOutOfMemory:vpi_signal.cc:1380    // malloc @ 1379
+nullPointerOutOfMemory:vpi_tasks.cc:577      // malloc @  574
+nullPointerOutOfMemory:vpi_tasks.cc:580      // malloc @  574
+ctunullpointerOutOfMemory:compile.cc:651     // strdup @  1599 (vpi_signal.cc)
+ctunullpointerOutOfMemory:stop.cc:489        // strdup @  543
+ctunullpointerOutOfMemory:vpi_signal.cc:105  // strdup @  122 (vpi_bit.cc)
+memleakOnRealloc:vpi_modules.cc:254
+memleakOnRealloc:vpi_mcd.cc:316
+memleakOnRealloc:vpi_signal.cc:1205
+
 // The new() operator is always used to allocate space for this class and
 // pool is defined there.
 uninitMemberVar:vvp_net.cc:192
@@ -57,3 +86,32 @@ unusedFunction:lib_main.cc:71
 unusedFunction:lib_main.cc:62
 // vvp_set_verbose_flag()
 unusedFunction:lib_main.cc:76
+
+// The following are just unused.
+// alias_word()
+unusedFunction:array.cc:848
+// intermodpath_delete()
+unusedFunction:delay.cc:1462
+// count_force4_pool()
+unusedFunction:schedule.cc:402
+// call_scope()
+unusedFunction:ufunc.h:62
+// get_bit()
+unusedFunction:vpi_priv.h:477
+// copy_bits()
+unusedFunction:vvp_net.cc:615
+// mov()
+unusedFunction:vvp_net.cc:1546
+// eq_xz()
+unusedFunction:vvp_net.cc:1751
+// as_string()
+unusedFunction:vvp_net.cc:1854
+// fully_featured_resolv_()
+unusedFunction:vvp_net.cc:3582
+// words()
+unusedFunction:vvp_net.h:595
+// force_vec8()
+unusedFunction:vvp_net_sig.cc:128
+
+// Unused functions from the lexor
+unusedFunction:lexor.cc

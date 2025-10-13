@@ -32,7 +32,7 @@
 class __vpiStringConst : public __vpiHandle {
     public:
       explicit __vpiStringConst(char*val);
-      ~__vpiStringConst();
+      ~__vpiStringConst() override;
       int get_type_code(void) const override;
       int vpi_get(int code) override;
       void vpi_get_value(p_vpi_value val) override;
@@ -132,7 +132,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 	    // fallthrough
 	  case vpiStringVal:
 	    cp = value_;
-	    rbuf = (char *) need_result_buf(size + 1, RBUF_VAL);
+	    rbuf = static_cast<char *>(need_result_buf(size + 1, RBUF_VAL));
 	    vp->value.str = rbuf;
 
 	    for (unsigned int i = 0; i < size; i++) {
@@ -163,7 +163,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 			  "at first 4 bytes!\n");
 	    }
 	    static const size_t RBUF_USE_SIZE = 12;
-	    rbuf = (char *) need_result_buf(RBUF_USE_SIZE, RBUF_VAL);
+	    rbuf = static_cast<char *>(need_result_buf(RBUF_USE_SIZE, RBUF_VAL));
 	    uint_value = 0;
 	    for(unsigned i=0; i<size; i += 1){
 		  uint_value <<=8;
@@ -174,7 +174,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 	    break;
 
           case vpiBinStrVal:
-	      rbuf = (char *) need_result_buf(8 * size + 1, RBUF_VAL);
+	      rbuf = static_cast<char *>(need_result_buf(8 * size + 1, RBUF_VAL));
 	      cp = rbuf;
 	      for(unsigned i=0; i<size; i += 1){
 		  for(int bit=7; bit>=0; bit -= 1){
@@ -186,7 +186,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 	      break;
 
           case vpiHexStrVal:
-	      rbuf = (char *) need_result_buf(2 * size + 1, RBUF_VAL);
+	      rbuf = static_cast<char *>(need_result_buf(2 * size + 1, RBUF_VAL));
 	      cp = rbuf;
 	      for(unsigned i=0; i<size; i += 1){
 		  for(int nibble=1; nibble>=0; nibble -= 1){
@@ -213,10 +213,10 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 	      break;
 
           case vpiVectorVal:
-              vp->value.vector = (p_vpi_vecval)
-                                 need_result_buf((size+3)/4*
-                                                  sizeof(s_vpi_vecval),
-                                                 RBUF_VAL);
+              vp->value.vector = static_cast<p_vpi_vecval>
+                                 (need_result_buf((size+3)/4*
+                                                   sizeof(s_vpi_vecval),
+                                                  RBUF_VAL));
               uint_value = 0;
               vecp = vp->value.vector;
               vecp->aval = vecp->bval = 0;
@@ -271,7 +271,7 @@ vpiHandle vpip_make_string_const(char*text, bool persistent_flag)
 class __vpiStringParam  : public __vpiStringConst {
     public:
       __vpiStringParam(char*txt, char*name);
-      ~__vpiStringParam();
+      ~__vpiStringParam() override;
       int get_type_code(void) const override;
       int vpi_get(int code) override;
       char*vpi_get_str(int code) override;
@@ -465,7 +465,7 @@ vvp_vector4_t vector4_from_text(const char*bits, unsigned wid)
 
 struct __vpiBinaryParam  : public __vpiBinaryConst {
       __vpiBinaryParam(const vvp_vector4_t&b, char*name);
-      ~__vpiBinaryParam();
+      ~__vpiBinaryParam() override;
       int get_type_code(void) const override;
       int vpi_get(int code) override;
       char*vpi_get_str(int code) override;
@@ -595,7 +595,7 @@ int __vpiDecConst::vpi_get(int code)
 void __vpiDecConst::vpi_get_value(p_vpi_value vp)
 {
       static const size_t RBUF_USE_SIZE = 64 + 1;
-      char*rbuf = (char *) need_result_buf(RBUF_USE_SIZE, RBUF_VAL);
+      char*rbuf = static_cast<char *>(need_result_buf(RBUF_USE_SIZE, RBUF_VAL));
       char*cp = rbuf;
 
       switch (vp->format) {
@@ -613,7 +613,7 @@ void __vpiDecConst::vpi_get_value(p_vpi_value vp)
 
           case vpiBinStrVal:
 	      for(int bit=31; bit>=0;bit--){
-		  *cp++ = "01"[ (value>>bit)&1 ];
+		  *cp++ = "01"[ (static_cast<unsigned>(value)>>bit)&1 ];
 	      }
 	      *cp = 0;
 
@@ -692,7 +692,7 @@ vpiHandle vpip_make_real_const(double value)
 
 struct __vpiRealParam  : public __vpiRealConst {
       __vpiRealParam(double val, char*name);
-      ~__vpiRealParam();
+      ~__vpiRealParam() override;
       int get_type_code(void) const override;
       int vpi_get(int code) override;
       char*vpi_get_str(int code) override;
@@ -815,7 +815,7 @@ int __vpiNullConst::vpi_get(int code)
 void __vpiNullConst::vpi_get_value(p_vpi_value val)
 {
       static const size_t RBUF_USE_SIZE = 64 + 1;
-      char*rbuf = (char *) need_result_buf(RBUF_USE_SIZE, RBUF_VAL);
+      char*rbuf = static_cast<char *>(need_result_buf(RBUF_USE_SIZE, RBUF_VAL));
 
       switch (val->format) {
 
@@ -840,9 +840,9 @@ void __vpiNullConst::vpi_get_value(p_vpi_value val)
 	    break;
 
 	  case vpiVectorVal:
-	    val->value.vector = (p_vpi_vecval)
-	                        need_result_buf(2*sizeof(s_vpi_vecval),
-	                        RBUF_VAL);
+	    val->value.vector = static_cast<p_vpi_vecval>
+	                        (need_result_buf(2*sizeof(s_vpi_vecval),
+	                                         RBUF_VAL));
 	    for (unsigned idx = 0; idx < 2; idx += 1) {
 		  val->value.vector[idx].aval = 0;
 		  val->value.vector[idx].bval = 0;

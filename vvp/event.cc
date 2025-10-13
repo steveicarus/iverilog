@@ -370,7 +370,7 @@ class anyedge_vec4_value : public anyedge_value {
 
     public:
       anyedge_vec4_value() {};
-      virtual ~anyedge_vec4_value() {};
+      virtual ~anyedge_vec4_value() override {};
 
       void reset() override { old_bits.set_to_x(); }
 
@@ -402,7 +402,7 @@ class anyedge_real_value : public anyedge_value {
 
     public:
       anyedge_real_value() : old_bits(0.0) {};
-      virtual ~anyedge_real_value() {};
+      virtual ~anyedge_real_value() override {};
 
       void reset() override { old_bits = 0.0; }
 
@@ -431,7 +431,7 @@ class anyedge_string_value : public anyedge_value {
 
     public:
       anyedge_string_value() {};
-      virtual ~anyedge_string_value() {};
+      virtual ~anyedge_string_value() override {};
 
       void reset() override { old_bits.clear(); }
 

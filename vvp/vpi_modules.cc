@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -72,7 +72,7 @@ void vpip_add_env_and_default_module_paths()
 
       if (char *var = ::getenv("IVERILOG_VPI_MODULE_PATH")) {
             char *ptr = var;
-            char *end = var+strlen(var);
+            const char *end = var+strlen(var);
             int len = 0;
             while (ptr <= end) {
                   if (*ptr == 0 || *ptr == path_sep) {
@@ -232,7 +232,7 @@ void vpip_load_module(const char*name)
 #if defined(__MINGW32__) || defined (__CYGWIN__)
       void*function = ivl_dlsym(dll, "vpip_set_callback");
       if (function) {
-            vpip_set_callback_t set_callback = (vpip_set_callback_t)function;
+            vpip_set_callback_t set_callback = static_cast<vpip_set_callback_t>(function);
             if (!set_callback(&vpi_routines, vpip_routines_version)) {
 	          fprintf(stderr, "Failed to link VPI module %s. Try rebuilding it with iverilog-vpi.\n", name);
 	          ivl_dlclose(dll);
@@ -250,7 +250,8 @@ void vpip_load_module(const char*name)
 
 	/* Add the dll to the list so it can be closed when we are done. */
       dll_list_cnt += 1;
-      dll_list = (ivl_dll_t*)realloc(dll_list, dll_list_cnt*sizeof(ivl_dll_t));
+      dll_list = static_cast<ivl_dll_t*>
+                 (realloc(static_cast<void *>(dll_list), dll_list_cnt*sizeof(ivl_dll_t)));
       dll_list[dll_list_cnt-1] = dll;
 
       vpi_mode_flag = VPI_MODE_REGISTER;

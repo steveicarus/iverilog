@@ -114,7 +114,7 @@ static int sysfunc_get(int type, vpiHandle ref)
 
 static char *systask_get_str(int type, vpiHandle ref)
 {
-      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
+      const struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
 
       switch (type) {
           case vpiFile:
@@ -143,7 +143,7 @@ static vpiHandle systask_iter(int, vpiHandle ref)
 }
 
 struct systask_def : public __vpiSysTaskCall {
-      virtual ~systask_def() {};
+      virtual ~systask_def() override {}
       virtual int get_type_code(void) const   override { return vpiSysTaskCall; }
       virtual int vpi_get(int code)           override { return systask_get(code, this); }
       virtual char*vpi_get_str(int code)      override { return systask_get_str(code, this); }
@@ -152,7 +152,7 @@ struct systask_def : public __vpiSysTaskCall {
 };
 
 struct sysfunc_def : public systask_def {
-      virtual ~sysfunc_def() {};
+      virtual ~sysfunc_def() override {};
       virtual int get_type_code(void) const override { return vpiSysFuncCall; }
       virtual int vpi_get(int code) override { return sysfunc_get(code, this); }
 };
@@ -571,8 +571,8 @@ static unsigned def_count = 0;
 static struct __vpiUserSystf* allocate_def(void)
 {
       if (def_table == 0) {
-	    def_table = (struct __vpiUserSystf**)
-		  malloc(sizeof (struct __vpiUserSystf*));
+	    def_table = static_cast<struct __vpiUserSystf**>
+	                (malloc(sizeof(struct __vpiUserSystf*)));
 
 	    def_table[0] = new __vpiUserSystf;
 
@@ -580,8 +580,9 @@ static struct __vpiUserSystf* allocate_def(void)
 	    return def_table[0];
       }
 
-      def_table = (struct __vpiUserSystf**)
-	    realloc(def_table, (def_count+1)*sizeof (struct __vpiUserSystf*));
+      def_table = static_cast<struct __vpiUserSystf**>
+                  (realloc(static_cast<void *>(def_table),
+                   (def_count+1)*sizeof(struct __vpiUserSystf*)));
 
       def_table[def_count] = new __vpiUserSystf;
 
@@ -706,10 +707,10 @@ static unsigned vpi_call_error_num = 0;
 static void add_vpi_call_error(vpi_call_error_type type, const char *name,
                                long file_idx, long lineno)
 {
-      vpi_call_error_lst = (vpi_call_error_p)
-                            realloc((void *)vpi_call_error_lst,
+      vpi_call_error_lst = static_cast<vpi_call_error_p>
+                           (realloc(static_cast<void *>(vpi_call_error_lst),
                                     (vpi_call_error_num + 1) *
-                                    sizeof(vpi_call_error_s));
+                                    sizeof(vpi_call_error_s)));
       vpi_call_error_lst[vpi_call_error_num].type = type;
       vpi_call_error_lst[vpi_call_error_num].name = strdup(name);
       vpi_call_error_lst[vpi_call_error_num].file_idx = file_idx;
@@ -974,13 +975,13 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 
 	/* If the function returns a value, then push the value
 	   to the appropriate thread stack. */
-      if (sysfunc_real*func_real = dynamic_cast<sysfunc_real*>(ref)) {
+      if (const sysfunc_real*func_real = dynamic_cast<sysfunc_real*>(ref)) {
 	    vthread_push(thr, func_real->return_value());
       }
-      else if (sysfunc_str*func_string = dynamic_cast<sysfunc_str*>(ref)) {
+      else if (const sysfunc_str*func_string = dynamic_cast<sysfunc_str*>(ref)) {
 	    vthread_push(thr, func_string->return_value());
       }
-      else if (sysfunc_vec4*func_vec4 = dynamic_cast<sysfunc_vec4*>(ref)) {
+      else if (const sysfunc_vec4*func_vec4 = dynamic_cast<sysfunc_vec4*>(ref)) {
 	    vthread_push(thr, func_vec4->return_value());
       }
       vpip_cur_task = 0;

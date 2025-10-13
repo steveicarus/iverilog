@@ -1,3 +1,19 @@
+// We use guarded memory allocation routines, but cppcheck is not
+// noticing this so it is complaining we could return a NULL value.
+nullPointerOutOfMemory:workarea.c:53     // calloc @  52
+nullPointerOutOfMemory:workarea.c:54     // calloc @  52
+nullPointerOutOfMemory:workarea.c:55     // calloc @  52
+nullPointerOutOfMemory:veriusertfs.c:61  // calloc @  70
+nullPointerOutOfMemory:veriusertfs.c:62  // calloc @  70
+nullPointerOutOfMemory:veriusertfs.c:63  // calloc @  70
+nullPointerOutOfMemory:a_vcl.c:167       // strdup @ 166
+nullPointerOutOfMemory:a_vcl.c:168       // strdup @ 166
+nullPointerOutOfMemory:a_vcl.c:169       // strdup @ 166
+nullPointerOutOfMemory:a_vcl.c:170       // strdup @ 166
+nullPointerOutOfMemory:a_vcl.c:171       // strdup @ 166
+nullPointerOutOfMemory:a_vcl.c:180       // strdup @ 166
+memleakOnRealloc:veriusertfs.c:66
+
 // These are the functions that the runtime exports.
 
 // The ACC functions.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -38,7 +38,7 @@ handle acc_handle_object(const char*name)
 
 char* acc_set_scope(handle ref, ...)
 {
-      char*name;
+      const char*name;
       search_scope = ref;
 
       name = acc_fetch_fullname(search_scope);

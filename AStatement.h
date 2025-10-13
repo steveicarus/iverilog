@@ -1,7 +1,7 @@
 #ifndef IVL_AStatement_H
 #define IVL_AStatement_H
 /*
- * Copyright (c) 2008-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,10 +40,10 @@ class AContrib : public Statement {
 
     public:
       AContrib(PExpr*lval, PExpr*rval);
-      ~AContrib();
+      ~AContrib() override;
 
-      virtual void dump(std::ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
 
     private:
       PExpr*lval_;
@@ -61,7 +61,7 @@ class AProcess : public LineInfo {
       AProcess(ivl_process_type_t t, Statement*st)
       : type_(t), statement_(st) { }
 
-      ~AProcess();
+      ~AProcess() override;
 
       bool elaborate(Design*des, NetScope*scope) const;
 

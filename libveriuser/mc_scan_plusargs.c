@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2013 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2025 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,7 +24,7 @@
 /*
  * mc_scan_plusargs implemented using VPI interface
  */
-char *mc_scan_plusargs(char *plusarg)
+char *mc_scan_plusargs(const char *plusarg)
 {
       int argc, diff;
       char **argv;
@@ -37,7 +37,8 @@ char *mc_scan_plusargs(char *plusarg)
       /* for each argument */
       argv = vpi_vlog_info.argv;
       for (argc = 0; argc < vpi_vlog_info.argc; argc++, argv++) {
-	    char *a, *p;
+	    char *a;
+	    const char *p;
 	    a = *argv;
 	    p = plusarg;
 

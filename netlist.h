@@ -1,7 +1,7 @@
 #ifndef IVL_netlist_H
 #define IVL_netlist_H
 /*
- * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -4011,18 +4011,18 @@ class NetEAccess : public NetExpr {
 
     public:
       explicit NetEAccess(NetBranch*br, ivl_nature_t nat);
-      ~NetEAccess();
+      ~NetEAccess() override;
 
       ivl_nature_t get_nature() const { return nature_; }
       NetBranch*   get_branch() const { return branch_; }
 
-      virtual ivl_variable_type_t expr_type() const;
-      virtual void dump(std::ostream&) const;
+      virtual ivl_variable_type_t expr_type() const override;
+      virtual void dump(std::ostream&) const override;
 
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual NetEAccess*dup_expr() const;
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual NetEAccess*dup_expr() const override;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
+                                  bool nested_func = false) const override;
 
     private:
       NetBranch*branch_;
@@ -4038,19 +4038,19 @@ class NetUTask  : public NetProc {
 
     public:
       explicit NetUTask(NetScope*);
-      ~NetUTask();
+      ~NetUTask() override;
 
       const std::string name() const;
 
       const NetScope* task() const;
 
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
-      virtual void nex_output(NexusSet&);
-      virtual bool emit_proc(struct target_t*) const;
-      virtual void dump(std::ostream&, unsigned ind) const;
-      virtual DelayType delay_type(bool print_delay=false) const;
-      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
+                                  bool nested_func = false) const override;
+      virtual void nex_output(NexusSet&) override;
+      virtual bool emit_proc(struct target_t*) const override;
+      virtual void dump(std::ostream&, unsigned ind) const override;
+      virtual DelayType delay_type(bool print_delay=false) const override;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const override;
 
     private:
       NetScope*task_;
@@ -4072,14 +4072,14 @@ class NetWhile  : public NetProc {
       void emit_proc_recurse(struct target_t*) const;
 
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
-      virtual void nex_output(NexusSet&);
-      virtual bool emit_proc(struct target_t*) const;
-      virtual void dump(std::ostream&, unsigned ind) const;
-      virtual DelayType delay_type(bool print_delay=false) const;
-      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const;
+                                  bool nested_func = false) const override;
+      virtual void nex_output(NexusSet&) override;
+      virtual bool emit_proc(struct target_t*) const override;
+      virtual void dump(std::ostream&, unsigned ind) const override;
+      virtual DelayType delay_type(bool print_delay=false) const override;
+      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const override;
       virtual bool evaluate_function(const LineInfo&loc,
-				     std::map<perm_string,LocalVar>&ctx) const;
+				     std::map<perm_string,LocalVar>&ctx) const override;
 
     private:
       NetExpr*cond_;
@@ -4096,7 +4096,7 @@ class NetProcTop  : public LineInfo, public Attrib {
 
     public:
       NetProcTop(NetScope*s, ivl_process_type_t t, class NetProc*st);
-      ~NetProcTop();
+      ~NetProcTop() override;
 
       ivl_process_type_t type() const { return type_; }
       NetProc*statement();
@@ -4141,7 +4141,7 @@ class NetAnalogTop  : public LineInfo, public Attrib {
 
     public:
       NetAnalogTop(NetScope*scope, ivl_process_type_t t, NetProc*st);
-      ~NetAnalogTop();
+      ~NetAnalogTop() override;
 
       ivl_process_type_t type() const { return type_; }
 
@@ -4200,7 +4200,7 @@ class NetEBinary  : public NetExpr {
 
     public:
       NetEBinary(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
-      ~NetEBinary();
+      ~NetEBinary() override;
 
       const NetExpr*left() const { return left_; }
       const NetExpr*right() const { return right_; }
@@ -4210,17 +4210,17 @@ class NetEBinary  : public NetExpr {
 	// A binary expression node only has a definite
 	// self-determinable width if the operands both have definite
 	// widths.
-      virtual bool has_width() const;
+      virtual bool has_width() const override;
 
-      virtual NetEBinary* dup_expr() const;
-      virtual NetExpr* eval_tree();
+      virtual NetEBinary* dup_expr() const override;
+      virtual NetExpr* eval_tree() override;
       virtual NetExpr* evaluate_function(const LineInfo&loc,
-					 std::map<perm_string,LocalVar>&ctx) const;
+					 std::map<perm_string,LocalVar>&ctx) const override;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
+                                  bool nested_func = false) const override;
 
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual void dump(std::ostream&) const;
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual void dump(std::ostream&) const override;
 
     protected:
       char op_;
@@ -4241,16 +4241,16 @@ class NetEBAdd : public NetEBinary {
 
     public:
       NetEBAdd(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
-      ~NetEBAdd();
+      ~NetEBAdd() override;
 
-      virtual ivl_variable_type_t expr_type() const;
+      virtual ivl_variable_type_t expr_type() const override;
 
-      virtual NetEBAdd* dup_expr() const;
-      virtual NetExpr* eval_tree();
-      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+      virtual NetEBAdd* dup_expr() const override;
+      virtual NetExpr* eval_tree() override;
+      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
 
     private:
-      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const override;
       NetECReal* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
@@ -4263,15 +4263,15 @@ class NetEBDiv : public NetEBinary {
 
     public:
       NetEBDiv(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
-      ~NetEBDiv();
+      ~NetEBDiv() override;
 
-      virtual ivl_variable_type_t expr_type() const;
+      virtual ivl_variable_type_t expr_type() const override;
 
-      virtual NetEBDiv* dup_expr() const;
-      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+      virtual NetEBDiv* dup_expr() const override;
+      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
 
     private:
-      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const override;
       NetExpr* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
@@ -4293,7 +4293,7 @@ class NetEBBits : public NetEBinary {
 
     public:
       NetEBBits(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
-      ~NetEBBits();
+      ~NetEBBits() override;
 
       virtual NetEBBits* dup_expr() const override;
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
@@ -4322,18 +4322,18 @@ class NetEBComp : public NetEBinary {
 
     public:
       NetEBComp(char op, NetExpr*l, NetExpr*r);
-      ~NetEBComp();
+      ~NetEBComp() override;
 
 	/* A compare expression has a definite width. */
-      virtual bool has_width() const;
-      virtual ivl_variable_type_t expr_type() const;
-      virtual NetEBComp* dup_expr() const;
-      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+      virtual bool has_width() const override;
+      virtual ivl_variable_type_t expr_type() const override;
+      virtual NetEBComp* dup_expr() const override;
+      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
 
     private:
       NetEConst* must_be_leeq_(const NetExpr*le, const verinum&rv, bool eq_flag) const;
 
-      virtual NetEConst*eval_arguments_(const NetExpr*le, const NetExpr*re) const;
+      virtual NetEConst*eval_arguments_(const NetExpr*le, const NetExpr*re) const override;
       NetEConst*eval_eqeq_(bool ne_flag, const NetExpr*le, const NetExpr*re) const;
       NetEConst*eval_eqeq_real_(bool ne_flag, const NetExpr*le, const NetExpr*re) const;
       NetEConst*eval_less_(const NetExpr*le, const NetExpr*re) const;
@@ -4378,12 +4378,12 @@ class NetEBMinMax : public NetEBinary {
 
     public:
       NetEBMinMax(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
-      ~NetEBMinMax();
+      ~NetEBMinMax() override;
 
-      virtual ivl_variable_type_t expr_type() const;
+      virtual ivl_variable_type_t expr_type() const override;
 
     private:
-      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const override;
       NetExpr* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
@@ -4394,15 +4394,15 @@ class NetEBMult : public NetEBinary {
 
     public:
       NetEBMult(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
-      ~NetEBMult();
+      ~NetEBMult() override;
 
-      virtual ivl_variable_type_t expr_type() const;
+      virtual ivl_variable_type_t expr_type() const override;
 
-      virtual NetEBMult* dup_expr() const;
-      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+      virtual NetEBMult* dup_expr() const override;
+      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
 
     private:
-      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const override;
       NetExpr* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
@@ -4413,15 +4413,15 @@ class NetEBPow : public NetEBinary {
 
     public:
       NetEBPow(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
-      ~NetEBPow();
+      ~NetEBPow() override;
 
-      virtual ivl_variable_type_t expr_type() const;
+      virtual ivl_variable_type_t expr_type() const override;
 
-      virtual NetEBPow* dup_expr() const;
-      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+      virtual NetEBPow* dup_expr() const override;
+      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
 
     private:
-      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const override;
       NetExpr* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
@@ -4437,7 +4437,7 @@ class NetEBShift : public NetEBinary {
 
     public:
       NetEBShift(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
-      ~NetEBShift();
+      ~NetEBShift() override;
 
 	// A shift expression only needs the left expression to have a
 	// definite width to give the expression a definite width.
@@ -4466,7 +4466,7 @@ class NetEConcat  : public NetExpr {
 
     public:
       NetEConcat(unsigned cnt, unsigned repeat, ivl_variable_type_t vt);
-      ~NetEConcat();
+      ~NetEConcat() override;
 
 	// Manipulate the parameters.
       void set(unsigned idx, NetExpr*e);
@@ -4475,16 +4475,16 @@ class NetEConcat  : public NetExpr {
       unsigned nparms() const { return parms_.size() ; }
       NetExpr* parm(unsigned idx) const { return parms_[idx]; }
 
-      virtual ivl_variable_type_t expr_type() const;
+      virtual ivl_variable_type_t expr_type() const override;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
-      virtual NetEConcat* dup_expr() const;
-      virtual NetEConst*  eval_tree();
+                                  bool nested_func = false) const override;
+      virtual NetEConcat* dup_expr() const override;
+      virtual NetEConst*  eval_tree() override;
       virtual NetExpr* evaluate_function(const LineInfo&loc,
-					 std::map<perm_string,LocalVar>&ctx) const;
-      virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*root);
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual void dump(std::ostream&) const;
+					 std::map<perm_string,LocalVar>&ctx) const override;
+      virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*root) override;
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual void dump(std::ostream&) const override;
 
     private:
       std::vector<NetExpr*>parms_;
@@ -4520,7 +4520,7 @@ class NetESelect  : public NetExpr {
                  ivl_select_type_t sel_type = IVL_SEL_OTHER);
       NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
                  ivl_type_t use_type);
-      ~NetESelect();
+      ~NetESelect() override;
 
       const NetExpr*sub_expr() const;
       const NetExpr*select() const;
@@ -4529,17 +4529,17 @@ class NetESelect  : public NetExpr {
 	// The type of a bit/part select is the base type of the
 	// sub-expression. The type of an array/member select is
 	// the base type of the element/member.
-      virtual ivl_variable_type_t expr_type() const;
+      virtual ivl_variable_type_t expr_type() const override;
 
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual NetEConst* eval_tree();
+                                  bool nested_func = false) const override;
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual NetEConst* eval_tree() override;
       virtual NetExpr*evaluate_function(const LineInfo&loc,
-					std::map<perm_string,LocalVar>&ctx) const;
+					std::map<perm_string,LocalVar>&ctx) const override;
       virtual NetESelect* dup_expr() const;
-      virtual NetNet*synthesize(Design*des, NetScope*scope, NetExpr*root);
-      virtual void dump(std::ostream&) const;
+      virtual NetNet*synthesize(Design*des, NetScope*scope, NetExpr*root) override;
+      virtual void dump(std::ostream&) const override;
 
     private:
       NetExpr*expr_;
@@ -4554,16 +4554,16 @@ class NetEEvent : public NetExpr {
 
     public:
       explicit NetEEvent(NetEvent*);
-      ~NetEEvent();
+      ~NetEEvent() override;
 
       const NetEvent* event() const;
 
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual NetEEvent* dup_expr() const;
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual NetEEvent* dup_expr() const override;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
+                                  bool nested_func = false) const override;
 
-      virtual void dump(std::ostream&os) const;
+      virtual void dump(std::ostream&os) const override;
 
     private:
       NetEvent*event_;
@@ -4578,16 +4578,16 @@ class NetENetenum  : public NetExpr {
 
     public:
       explicit NetENetenum(const netenum_t*);
-      ~NetENetenum();
+      ~NetENetenum() override;
 
       const netenum_t* netenum() const;
 
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual NetENetenum* dup_expr() const;
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual NetENetenum* dup_expr() const override;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
+                                  bool nested_func = false) const override;
 
-      virtual void dump(std::ostream&os) const;
+      virtual void dump(std::ostream&os) const override;
 
     private:
       const netenum_t*netenum_;
@@ -4599,19 +4599,19 @@ class NetENew : public NetExpr {
       explicit NetENew(ivl_type_t);
 	// dynamic array of objects.
       explicit NetENew(ivl_type_t, NetExpr*size, NetExpr* init_val=0);
-      ~NetENew();
+      ~NetENew() override;
 
       inline const NetExpr*size_expr() const { return size_; }
       inline const NetExpr*init_expr() const { return init_val_; }
 
-      virtual ivl_variable_type_t expr_type() const;
+      virtual ivl_variable_type_t expr_type() const override;
 
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual NetENew* dup_expr() const;
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual NetENew* dup_expr() const override;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
+                                  bool nested_func = false) const override;
 
-      virtual void dump(std::ostream&os) const;
+      virtual void dump(std::ostream&os) const override;
 
     private:
       NetExpr*size_;
@@ -4626,14 +4626,14 @@ class NetENull : public NetExpr {
 
     public:
       NetENull();
-      ~NetENull();
+      ~NetENull() override;
 
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual NetENull* dup_expr() const;
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual NetENull* dup_expr() const override;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
+                                  bool nested_func = false) const override;
 
-      virtual void dump(std::ostream&os) const;
+      virtual void dump(std::ostream&os) const override;
 };
 
 /*
@@ -4647,19 +4647,19 @@ class NetENull : public NetExpr {
 class NetEProperty : public NetExpr {
     public:
       NetEProperty(NetNet*n, size_t pidx_, NetExpr*canon_index =0);
-      ~NetEProperty();
+      ~NetEProperty() override;
 
       inline const NetNet* get_sig() const { return net_; }
       inline size_t property_idx() const { return pidx_; }
       inline const NetExpr*get_index() const { return index_; }
 
     public: // Overridden methods
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual NetEProperty* dup_expr() const;
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual NetEProperty* dup_expr() const override;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
+                                  bool nested_func = false) const override;
 
-      virtual void dump(std::ostream&os) const;
+      virtual void dump(std::ostream&os) const override;
 
     private:
       NetNet*net_;
@@ -4676,16 +4676,16 @@ class NetEScope  : public NetExpr {
 
     public:
       explicit NetEScope(NetScope*);
-      ~NetEScope();
+      ~NetEScope() override;
 
       const NetScope* scope() const;
 
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual NetEScope* dup_expr() const;
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual NetEScope* dup_expr() const override;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
+                                  bool nested_func = false) const override;
 
-      virtual void dump(std::ostream&os) const;
+      virtual void dump(std::ostream&os) const override;
 
     private:
       NetScope*scope_;
@@ -4702,7 +4702,7 @@ class NetESFunc  : public NetExpr {
       NetESFunc(const char*name, ivl_variable_type_t t,
 		unsigned width, unsigned nprms, bool is_overridden =false);
       NetESFunc(const char*name, ivl_type_t rtype, unsigned nprms);
-      ~NetESFunc();
+      ~NetESFunc() override;
 
       const char* name() const;
 
@@ -4711,18 +4711,18 @@ class NetESFunc  : public NetExpr {
       NetExpr* parm(unsigned idx);
       const NetExpr* parm(unsigned idx) const;
 
-      virtual NetExpr* eval_tree();
+      virtual NetExpr* eval_tree() override;
       virtual NetExpr* evaluate_function(const LineInfo&loc,
-					 std::map<perm_string,LocalVar>&ctx) const;
+					 std::map<perm_string,LocalVar>&ctx) const override;
 
-      virtual ivl_variable_type_t expr_type() const;
+      virtual ivl_variable_type_t expr_type() const override;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
-      virtual void dump(std::ostream&) const;
+                                  bool nested_func = false) const override;
+      virtual void dump(std::ostream&) const override;
 
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual NetESFunc*dup_expr() const;
-      virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*root);
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual NetESFunc*dup_expr() const override;
+      virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*root) override;
 
     private:
 	/* Use the 32 bit ID as follows:
@@ -4844,16 +4844,16 @@ class NetEShallowCopy : public NetExpr {
     public:
 	// Make a shallow copy from arg2 into arg1.
       explicit NetEShallowCopy(NetExpr*arg1, NetExpr*arg2);
-      ~NetEShallowCopy();
+      ~NetEShallowCopy() override;
 
-      virtual ivl_variable_type_t expr_type() const;
+      virtual ivl_variable_type_t expr_type() const override;
 
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual NetEShallowCopy* dup_expr() const;
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual NetEShallowCopy* dup_expr() const override;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
+                                  bool nested_func = false) const override;
 
-      virtual void dump(std::ostream&os) const;
+      virtual void dump(std::ostream&os) const override;
 
       void expr_scan_oper1(struct expr_scan_t*) const;
       void expr_scan_oper2(struct expr_scan_t*) const;
@@ -4872,24 +4872,24 @@ class NetETernary  : public NetExpr {
 
     public:
       NetETernary(NetExpr*c, NetExpr*t, NetExpr*f, unsigned wid, bool signed_flag);
-      ~NetETernary();
+      ~NetETernary() override;
 
-      const netenum_t* enumeration() const;
+      const netenum_t* enumeration() const override;
 
       const NetExpr*cond_expr() const;
       const NetExpr*true_expr() const;
       const NetExpr*false_expr() const;
 
-      virtual NetETernary* dup_expr() const;
-      virtual NetExpr* eval_tree();
+      virtual NetETernary* dup_expr() const override;
+      virtual NetExpr* eval_tree() override;
       virtual NetExpr*evaluate_function(const LineInfo&loc,
-					std::map<perm_string,LocalVar>&ctx) const;
-      virtual ivl_variable_type_t expr_type() const;
+					std::map<perm_string,LocalVar>&ctx) const override;
+      virtual ivl_variable_type_t expr_type() const override;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual void dump(std::ostream&) const;
-      virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*root);
+                                  bool nested_func = false) const override;
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual void dump(std::ostream&) const override;
+      virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*root) override;
 
     public:
       static bool test_operand_compat(ivl_variable_type_t tru, ivl_variable_type_t fal);
@@ -4929,22 +4929,22 @@ class NetEUnary  : public NetExpr {
 
     public:
       NetEUnary(char op, NetExpr*ex, unsigned wid, bool signed_flag);
-      ~NetEUnary();
+      ~NetEUnary() override;
 
       char op() const { return op_; }
       const NetExpr* expr() const { return expr_; }
 
-      virtual NetEUnary* dup_expr() const;
-      virtual NetExpr* eval_tree();
+      virtual NetEUnary* dup_expr() const override;
+      virtual NetExpr* eval_tree() override;
       virtual NetExpr* evaluate_function(const LineInfo&loc,
-					 std::map<perm_string,LocalVar>&ctx) const;
-      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+					 std::map<perm_string,LocalVar>&ctx) const override;
+      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
 
-      virtual ivl_variable_type_t expr_type() const;
+      virtual ivl_variable_type_t expr_type() const override;
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                                  bool nested_func = false) const;
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual void dump(std::ostream&) const;
+                                  bool nested_func = false) const override;
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual void dump(std::ostream&) const override;
 
     protected:
       char op_;
@@ -4959,42 +4959,42 @@ class NetEUBits : public NetEUnary {
 
     public:
       NetEUBits(char op, NetExpr*ex, unsigned wid, bool signed_flag);
-      ~NetEUBits();
+      ~NetEUBits() override;
 
-      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
 
-      virtual NetEUBits* dup_expr() const;
-      virtual ivl_variable_type_t expr_type() const;
+      virtual NetEUBits* dup_expr() const override;
+      virtual ivl_variable_type_t expr_type() const override;
 };
 
 class NetEUReduce : public NetEUnary {
 
     public:
       NetEUReduce(char op, NetExpr*ex);
-      ~NetEUReduce();
+      ~NetEUReduce() override;
 
-      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
-      virtual NetEUReduce* dup_expr() const;
-      virtual ivl_variable_type_t expr_type() const;
+      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
+      virtual NetEUReduce* dup_expr() const override;
+      virtual ivl_variable_type_t expr_type() const override;
 
     private:
-      virtual NetEConst* eval_arguments_(const NetExpr*ex) const;
-      virtual NetEConst* eval_tree_real_(const NetExpr*ex) const;
+      virtual NetEConst* eval_arguments_(const NetExpr*ex) const override;
+      virtual NetEConst* eval_tree_real_(const NetExpr*ex) const override;
 };
 
 class NetECast : public NetEUnary {
 
     public:
       NetECast(char op, NetExpr*ex, unsigned wid, bool signed_flag);
-      ~NetECast();
+      ~NetECast() override;
 
-      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
-      virtual NetECast* dup_expr() const;
-      virtual ivl_variable_type_t expr_type() const;
-      virtual void dump(std::ostream&) const;
+      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
+      virtual NetECast* dup_expr() const override;
+      virtual ivl_variable_type_t expr_type() const override;
+      virtual void dump(std::ostream&) const override;
 
     private:
-      virtual NetExpr* eval_arguments_(const NetExpr*ex) const;
+      virtual NetExpr* eval_arguments_(const NetExpr*ex) const override;
 };
 
 /*
@@ -5012,19 +5012,19 @@ class NetESignal  : public NetExpr {
     public:
       explicit NetESignal(NetNet*n);
       NetESignal(NetNet*n, NetExpr*word_index);
-      ~NetESignal();
+      ~NetESignal() override;
 
       perm_string name() const;
 
-      virtual NetESignal* dup_expr() const;
-      NetNet* synthesize(Design*des, NetScope*scope, NetExpr*root);
+      virtual NetESignal* dup_expr() const override;
+      NetNet* synthesize(Design*des, NetScope*scope, NetExpr*root) override;
       NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
-                          bool nested_func = false) const;
+                          bool nested_func = false) const override;
       NexusSet* nex_input_base(bool rem_out, bool always_sens, bool nested_func,
                                unsigned base, unsigned width) const;
 
       virtual NetExpr*evaluate_function(const LineInfo&loc,
-					std::map<perm_string,LocalVar>&ctx) const;
+					std::map<perm_string,LocalVar>&ctx) const override;
 
 	// This is the expression for selecting an array word, if this
 	// signal refers to an array.
@@ -5039,10 +5039,10 @@ class NetESignal  : public NetExpr {
       long msi() const;
       long lsi() const;
 
-      virtual ivl_variable_type_t expr_type() const;
+      virtual ivl_variable_type_t expr_type() const override;
 
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual void dump(std::ostream&) const;
+      virtual void expr_scan(struct expr_scan_t*) const override;
+      virtual void dump(std::ostream&) const override;
 
     private:
       NetNet*net_;

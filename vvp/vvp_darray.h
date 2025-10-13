@@ -29,7 +29,7 @@ class vvp_darray : public vvp_object {
 
     public:
       inline vvp_darray() { }
-      virtual ~vvp_darray();
+      virtual ~vvp_darray() override;
 
       virtual size_t get_size(void) const =0;
 
@@ -52,7 +52,7 @@ template <class TYPE> class vvp_darray_atom : public vvp_darray {
 
     public:
       explicit inline vvp_darray_atom(size_t siz) : array_(siz) { }
-      ~vvp_darray_atom();
+      ~vvp_darray_atom() override;
 
       size_t get_size(void) const override;
       void set_word(unsigned adr, const vvp_vector4_t&value) override;
@@ -184,7 +184,7 @@ class vvp_queue : public vvp_darray {
 class vvp_queue_real : public vvp_queue {
 
     public:
-      ~vvp_queue_real();
+      ~vvp_queue_real() override;
 
       size_t get_size(void) const override { return queue.size(); };
       void copy_elems(vvp_object_t src, unsigned max_size) override;
@@ -206,7 +206,7 @@ class vvp_queue_real : public vvp_queue {
 class vvp_queue_string : public vvp_queue {
 
     public:
-      ~vvp_queue_string();
+      ~vvp_queue_string() override;
 
       size_t get_size(void) const override { return queue.size(); };
       void copy_elems(vvp_object_t src, unsigned max_size) override;
@@ -228,7 +228,7 @@ class vvp_queue_string : public vvp_queue {
 class vvp_queue_vec4 : public vvp_queue {
 
     public:
-      ~vvp_queue_vec4();
+      ~vvp_queue_vec4() override;
 
       size_t get_size(void) const override { return queue.size(); };
       void copy_elems(vvp_object_t src, unsigned max_size) override;

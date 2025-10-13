@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -53,7 +53,7 @@ vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts)
       return ti;
 }
 
-double vpip_time_to_scaled_real(vvp_time64_t ti, __vpiScope*scope)
+double vpip_time_to_scaled_real(vvp_time64_t ti, const __vpiScope*scope)
 {
       double val;
       int scale = 0;
@@ -70,7 +70,7 @@ double vpip_time_to_scaled_real(vvp_time64_t ti, __vpiScope*scope)
  * does not check for overflow. It is only used for modpath delays and
  * they are required to be non-negative.
  */
-vvp_time64_t vpip_scaled_real_to_time64(double val, __vpiScope*scope)
+vvp_time64_t vpip_scaled_real_to_time64(double val, const __vpiScope*scope)
 {
       int shift = 0;
       if (scope) shift = scope->time_units - scope->time_precision;
@@ -107,7 +107,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func,
       int units = rfp->scope? rfp->scope->time_units : vpi_time_precision;
 
       static const size_t RBUF_USE_SIZE = 128;
-      char*rbuf = (char *) need_result_buf(RBUF_USE_SIZE, RBUF_VAL);
+      char*rbuf = static_cast<char *>(need_result_buf(RBUF_USE_SIZE, RBUF_VAL));
 
 	/* Calculate the divisor needed to scale the simulation time
 	   (in time_precision units) to time units of the scope. */

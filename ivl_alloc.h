@@ -1,7 +1,7 @@
 #ifndef IVL_ivl_alloc_H
 #define IVL_ivl_alloc_H
 /*
- *  Copyright (C) 2010-2014  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2010-2025  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,12 +21,30 @@
 #ifdef __cplusplus
 #  include <cstdlib>
 #  include <cstdio>
+#  include <cstring>
 #else
 #  include <stdlib.h>
 #  include <stdio.h>
+#  include <string.h>
 #endif
 
 #if defined(__GNUC__)
+/*
+ * Define a safer version of strdup().
+ */
+
+#define strdup(__ivl_str) \
+({ \
+      char *__ivl_rtn = strdup(__ivl_str); \
+	/* If we run out of memory then exit with a message. */ \
+      if (__ivl_rtn == NULL) { \
+	    fprintf(stderr, "%s:%d: Error: strdup() ran out of memory.\n", \
+	                    __FILE__, __LINE__); \
+	    exit(1); \
+      } \
+      __ivl_rtn; \
+})
+
 /*
  * Define a safer version of malloc().
  */

@@ -1,7 +1,7 @@
 #ifndef IVL_Statement_H
 #define IVL_Statement_H
 /*
- * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -53,7 +53,7 @@ class PProcess : public LineInfo {
       PProcess(ivl_process_type_t t, Statement*st)
       : type_(t), statement_(st) { }
 
-      virtual ~PProcess();
+      virtual ~PProcess() override;
 
       bool elaborate(Design*des, NetScope*scope) const;
 
@@ -78,7 +78,7 @@ class Statement : virtual public LineInfo {
 
     public:
       Statement() { }
-      virtual ~Statement() =0;
+      virtual ~Statement() override =0;
 
       virtual void dump(std::ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
@@ -99,7 +99,7 @@ class PAssign_  : public Statement {
 			bool is_init = false);
       explicit PAssign_(PExpr*lval, PExpr*de, PExpr*ex);
       explicit PAssign_(PExpr*lval, PExpr*cnt, PEventStatement*de, PExpr*ex);
-      virtual ~PAssign_() =0;
+      virtual ~PAssign_() override =0;
 
       const PExpr* lval() const  { return lval_; }
       PExpr* rval() const  { return rval_; }
@@ -139,10 +139,10 @@ class PAssign  : public PAssign_ {
       explicit PAssign(PExpr*lval, PExpr*de, PExpr*ex);
       explicit PAssign(PExpr*lval, PExpr*cnt, PEventStatement*de, PExpr*ex);
       explicit PAssign(PExpr*lval, PExpr*ex, bool is_constant, bool is_init);
-      ~PAssign();
+      ~PAssign() override;
 
-      virtual void dump(std::ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
 
     private:
       NetProc* elaborate_compressed_(Design*des, NetScope*scope) const;
@@ -155,10 +155,10 @@ class PAssignNB  : public PAssign_ {
       explicit PAssignNB(PExpr*lval, PExpr*ex);
       explicit PAssignNB(PExpr*lval, PExpr*de, PExpr*ex);
       explicit PAssignNB(PExpr*lval, PExpr*cnt, PEventStatement*de, PExpr*ex);
-      ~PAssignNB();
+      ~PAssignNB() override;
 
-      virtual void dump(std::ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
 
     private:
       NetProc*assign_to_memory_(class NetMemory*, PExpr*,
@@ -181,11 +181,11 @@ class PBlock  : public PScope, public Statement, public PNamedItem {
       explicit PBlock(perm_string n, LexicalScope*parent, BL_TYPE t);
 	// If it doesn't have a name, it's not a scope
       explicit PBlock(BL_TYPE t);
-      ~PBlock();
+      ~PBlock() override;
 
       BL_TYPE bl_type() const { return bl_type_; }
 
-      bool var_init_needs_explicit_lifetime() const;
+      bool var_init_needs_explicit_lifetime() const override;
 
 	// This is only used if this block is the statement list for a
 	// constructor. We look for a PChainConstructor as the first
@@ -202,12 +202,12 @@ class PBlock  : public PScope, public Statement, public PNamedItem {
 	// block.
       void push_statement_front(Statement*that);
 
-      virtual void dump(std::ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void elaborate_scope(Design*des, NetScope*scope) const;
-      virtual void elaborate_sig(Design*des, NetScope*scope) const;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const override;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const override;
 
-      SymbolType symbol_type() const;
+      SymbolType symbol_type() const override;
 
     private:
       BL_TYPE bl_type_;
@@ -216,8 +216,8 @@ class PBlock  : public PScope, public Statement, public PNamedItem {
 
 class PBreak : public Statement {
     public:
-      void dump(std::ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+      void dump(std::ostream&out, unsigned ind) const override;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
 };
 
 class PCallTask  : public Statement {
@@ -226,12 +226,12 @@ class PCallTask  : public Statement {
       explicit PCallTask(PPackage *pkg, const pform_name_t &n, const std::list<named_pexpr_t> &parms);
       explicit PCallTask(const pform_name_t &n, const std::list<named_pexpr_t> &parms);
       explicit PCallTask(perm_string n, const std::list<named_pexpr_t> &parms);
-      ~PCallTask();
+      ~PCallTask() override;
 
       const pform_name_t& path() const;
 
-      virtual void dump(std::ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
 
       bool elaborate_elab(Design*des, NetScope*scope) const;
 
@@ -282,12 +282,12 @@ class PCase  : public Statement {
       };
 
       PCase(ivl_case_quality_t, NetCase::TYPE, PExpr*ex, std::vector<Item*>*);
-      ~PCase();
+      ~PCase() override;
 
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void elaborate_scope(Design*des, NetScope*scope) const;
-      virtual void elaborate_sig(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const override;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       ivl_case_quality_t quality_;
@@ -305,10 +305,10 @@ class PCAssign  : public Statement {
 
     public:
       explicit PCAssign(PExpr*l, PExpr*r);
-      ~PCAssign();
+      ~PCAssign() override;
 
-      virtual NetCAssign* elaborate(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetCAssign* elaborate(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       PExpr*lval_;
@@ -324,10 +324,10 @@ class PChainConstructor : public Statement {
     public:
       explicit PChainConstructor(const std::list<named_pexpr_t> &parms);
       explicit PChainConstructor(const std::vector<named_pexpr_t> &parms);
-      ~PChainConstructor();
+      ~PChainConstructor() override;
 
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
       inline const std::vector<named_pexpr_t>& chain_args(void) const
       { return parms_; }
@@ -340,12 +340,12 @@ class PCondit  : public Statement {
 
     public:
       PCondit(PExpr*ex, Statement*i, Statement*e);
-      ~PCondit();
+      ~PCondit() override;
 
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void elaborate_scope(Design*des, NetScope*scope) const;
-      virtual void elaborate_sig(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const override;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       PExpr*expr_;
@@ -360,18 +360,18 @@ class PCondit  : public Statement {
 class PContinue : public Statement {
 
     public:
-      virtual void dump(std::ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
 };
 
 class PDeassign  : public Statement {
 
     public:
       explicit PDeassign(PExpr*l);
-      ~PDeassign();
+      ~PDeassign() override;
 
-      virtual NetDeassign* elaborate(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetDeassign* elaborate(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       PExpr*lval_;
@@ -381,12 +381,12 @@ class PDelayStatement  : public Statement {
 
     public:
       PDelayStatement(PExpr*d, Statement*st);
-      ~PDelayStatement();
+      ~PDelayStatement() override;
 
-      virtual void dump(std::ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void elaborate_scope(Design*des, NetScope*scope) const;
-      virtual void elaborate_sig(Design*des, NetScope*scope) const;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const override;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const override;
 
     private:
       PExpr*delay_;
@@ -401,10 +401,10 @@ class PDisable  : public Statement {
 
     public:
       explicit PDisable(const pform_name_t&sc);
-      ~PDisable();
+      ~PDisable() override;
 
-      virtual void dump(std::ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
 
     private:
       pform_name_t scope_;
@@ -414,12 +414,12 @@ class PDoWhile  : public Statement {
 
     public:
       PDoWhile(PExpr*ex, Statement*st);
-      ~PDoWhile();
+      ~PDoWhile() override;
 
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void elaborate_scope(Design*des, NetScope*scope) const;
-      virtual void elaborate_sig(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const override;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       PExpr*cond_;
@@ -444,17 +444,17 @@ class PEventStatement  : public Statement {
 	// from functions added and outputs removed for always_comb/latch.
       explicit PEventStatement(bool always_sens = false);
 
-      ~PEventStatement();
+      ~PEventStatement() override;
 
       void set_statement(Statement*st);
 
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 	// Call this with a NULL statement only. It is used to print
 	// the event expression for inter-assignment event controls.
       virtual void dump_inline(std::ostream&out) const;
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void elaborate_scope(Design*des, NetScope*scope) const;
-      virtual void elaborate_sig(Design*des, NetScope*scope) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const override;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const override;
 
       bool has_aa_term(Design*des, NetScope*scope);
 
@@ -477,10 +477,10 @@ class PForce  : public Statement {
 
     public:
       explicit PForce(PExpr*l, PExpr*r);
-      ~PForce();
+      ~PForce() override;
 
-      virtual NetForce* elaborate(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetForce* elaborate(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       PExpr*lval_;
@@ -490,12 +490,12 @@ class PForce  : public Statement {
 class PForeach : public Statement {
     public:
       explicit PForeach(perm_string var, const std::list<perm_string>&ix, Statement*stmt);
-      ~PForeach();
+      ~PForeach() override;
 
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void elaborate_scope(Design*des, NetScope*scope) const;
-      virtual void elaborate_sig(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const override;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       NetProc* elaborate_static_array_(Design*des, NetScope*scope,
@@ -510,12 +510,12 @@ class PForeach : public Statement {
 class PForever : public Statement {
     public:
       explicit PForever(Statement*s);
-      ~PForever();
+      ~PForever() override;
 
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void elaborate_scope(Design*des, NetScope*scope) const;
-      virtual void elaborate_sig(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const override;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       Statement*statement_;
@@ -526,12 +526,12 @@ class PForStatement  : public Statement {
     public:
       PForStatement(PExpr*n1, PExpr*e1, PExpr*cond,
 		    Statement*step, Statement*body);
-      ~PForStatement();
+      ~PForStatement() override;
 
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void elaborate_scope(Design*des, NetScope*scope) const;
-      virtual void elaborate_sig(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const override;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       PExpr* name1_;
@@ -548,18 +548,18 @@ class PNoop  : public Statement {
 
     public:
       PNoop() { }
-      ~PNoop() { }
+      ~PNoop() override { }
 };
 
 class PRepeat : public Statement {
     public:
       explicit PRepeat(PExpr*expr, Statement*s);
-      ~PRepeat();
+      ~PRepeat() override;
 
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void elaborate_scope(Design*des, NetScope*scope) const;
-      virtual void elaborate_sig(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const override;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       PExpr*expr_;
@@ -570,10 +570,10 @@ class PRelease  : public Statement {
 
     public:
       explicit PRelease(PExpr*l);
-      ~PRelease();
+      ~PRelease() override;
 
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       PExpr*lval_;
@@ -583,10 +583,10 @@ class PReturn  : public Statement {
 
     public:
       explicit PReturn(PExpr*e);
-      ~PReturn();
+      ~PReturn() override;
 
-      NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       PExpr*expr_;
@@ -600,10 +600,10 @@ class PTrigger  : public Statement {
 
     public:
       explicit PTrigger(PPackage*pkg, const pform_name_t&ev, unsigned lexical_pos);
-      ~PTrigger();
+      ~PTrigger() override;
 
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       pform_scoped_name_t event_;
@@ -613,10 +613,10 @@ class PTrigger  : public Statement {
 class PNBTrigger  : public Statement {
     public:
       explicit PNBTrigger(const pform_name_t&ev, unsigned lexical_pos, PExpr*dly);
-      ~PNBTrigger();
+      ~PNBTrigger() override;
 
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       pform_name_t event_;
@@ -628,12 +628,12 @@ class PWhile  : public Statement {
 
     public:
       PWhile(PExpr*ex, Statement*st);
-      ~PWhile();
+      ~PWhile() override;
 
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
-      virtual void elaborate_scope(Design*des, NetScope*scope) const;
-      virtual void elaborate_sig(Design*des, NetScope*scope) const;
-      virtual void dump(std::ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const override;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const override;
+      virtual void dump(std::ostream&out, unsigned ind) const override;
 
     private:
       PExpr*cond_;

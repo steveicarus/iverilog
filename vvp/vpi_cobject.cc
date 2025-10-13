@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2022 Picture Elements, Inc.
+ * Copyright (c) 2012-2025 Picture Elements, Inc.
  *    Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -69,7 +69,7 @@ void __vpiCobjectVar::vpi_get_value(p_vpi_value val)
 // FIXME: We need to get the assigned object address if one is assigned.
 //fprintf(stderr, "HERE: %p\n", get_net());
       static const size_t RBUF_USE_SIZE = 64 + 1;
-      char*rbuf = (char *) need_result_buf(RBUF_USE_SIZE, RBUF_VAL);
+      char*rbuf = static_cast<char *>(need_result_buf(RBUF_USE_SIZE, RBUF_VAL));
 
       switch (val->format) {
 	case vpiObjTypeVal:
@@ -93,9 +93,9 @@ void __vpiCobjectVar::vpi_get_value(p_vpi_value val)
 	    break;
 
 	case vpiVectorVal:
-	    val->value.vector = (p_vpi_vecval)
-	                        need_result_buf(2*sizeof(s_vpi_vecval),
-	                        RBUF_VAL);
+	    val->value.vector = static_cast<p_vpi_vecval>
+	                        (need_result_buf(2*sizeof(s_vpi_vecval),
+	                                         RBUF_VAL));
 	    for (unsigned idx = 0; idx < 2; idx += 1) {
 		  val->value.vector[idx].aval = 0;
 		  val->value.vector[idx].bval = 0;

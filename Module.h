@@ -1,7 +1,7 @@
 #ifndef IVL_Module_H
 #define IVL_Module_H
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -74,7 +74,7 @@ class Module : public PScopeExtra, public PNamedItem {
 	/* The name passed here is the module name, not the instance
 	   name. This name must be a permallocated string. */
       explicit Module(LexicalScope*parent, perm_string name);
-      ~Module();
+      ~Module() override;
 
 	/* Initially false. This is set to true if the module has been
 	   declared as a library module. This makes the module
@@ -167,7 +167,7 @@ class Module : public PScopeExtra, public PNamedItem {
 
       bool elaborate_sig(Design*, NetScope*scope) const;
 
-      SymbolType symbol_type() const;
+      SymbolType symbol_type() const override;
 
       bool can_be_toplevel() const;
 

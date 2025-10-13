@@ -1,7 +1,7 @@
 #ifndef IVL_PTask_H
 #define IVL_PTask_H
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,9 +39,9 @@ class PTaskFunc : public PScope, public PNamedItem {
 
     public:
       PTaskFunc(perm_string name, LexicalScope*parent);
-      ~PTaskFunc();
+      ~PTaskFunc() override;
 
-      bool var_init_needs_explicit_lifetime() const;
+      bool var_init_needs_explicit_lifetime() const override;
 
       void set_ports(std::vector<pform_tf_port_t>*p);
 
@@ -80,7 +80,7 @@ class PTask  : public PTaskFunc {
 
     public:
       explicit PTask(perm_string name, LexicalScope*parent, bool is_auto);
-      ~PTask();
+      ~PTask() override;
 
       void set_statement(Statement *s);
 
@@ -91,16 +91,16 @@ class PTask  : public PTaskFunc {
       void elaborate_scope(Design*des, NetScope*scope) const;
 
 	// Bind the ports to the regs that are the ports.
-      void elaborate_sig(Design*des, NetScope*scope) const;
+      void elaborate_sig(Design*des, NetScope*scope) const override;
 
 	// Elaborate the statement to finish off the task definition.
-      void elaborate(Design*des, NetScope*scope) const;
+      void elaborate(Design*des, NetScope*scope) const override;
 
       bool is_auto() const { return is_auto_; };
 
-      void dump(std::ostream&, unsigned) const;
+      void dump(std::ostream&, unsigned) const override;
 
-      SymbolType symbol_type() const;
+      SymbolType symbol_type() const override;
 
     private:
       Statement*statement_;
@@ -122,7 +122,7 @@ class PFunction : public PTaskFunc {
 
     public:
       explicit PFunction(perm_string name, LexicalScope*parent, bool is_auto);
-      ~PFunction();
+      ~PFunction() override;
 
       void set_statement(Statement *s);
       void set_return(data_type_t*t);
@@ -142,16 +142,16 @@ class PFunction : public PTaskFunc {
       void elaborate_scope(Design*des, NetScope*scope) const;
 
 	/* elaborate the ports and return value. */
-      void elaborate_sig(Design *des, NetScope*) const;
+      void elaborate_sig(Design *des, NetScope*) const override;
 
 	/* Elaborate the behavioral statement. */
-      void elaborate(Design *des, NetScope*) const;
+      void elaborate(Design *des, NetScope*) const override;
 
       bool is_auto() const { return is_auto_; };
 
-      void dump(std::ostream&, unsigned) const;
+      void dump(std::ostream&, unsigned) const override;
 
-      SymbolType symbol_type() const;
+      SymbolType symbol_type() const override;
 
     private:
       data_type_t* return_type_;
@@ -174,12 +174,12 @@ class PLet : public PTaskFunc {
 // FIXME: Should the port list be a vector. Check once implemented completely
       explicit PLet(perm_string name, LexicalScope*parent,
                     std::list<let_port_t*>*ports, PExpr*expr);
-      ~PLet();
+      ~PLet() override;
 
-      void elaborate_sig(Design*des, NetScope*scope) const { (void)des; (void)scope; }
-      void elaborate(Design*des, NetScope*scope) const { (void)des; (void)scope; }
+      void elaborate_sig(Design*des, NetScope*scope) const override { (void)des; (void)scope; }
+      void elaborate(Design*des, NetScope*scope) const override { (void)des; (void)scope; }
 
-      void dump(std::ostream&, unsigned) const;
+      void dump(std::ostream&, unsigned) const override;
 
     private:
       std::list<let_port_t*>*ports_;

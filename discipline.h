@@ -1,7 +1,7 @@
 #ifndef IVL_discipline_H
 #define IVL_discipline_H
 /*
- * Copyright (c) 2008-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,7 +36,7 @@ extern std::ostream& operator << (std::ostream&, ivl_dis_domain_t);
 class ivl_nature_s : public LineInfo {
     public:
       explicit ivl_nature_s(perm_string name, perm_string access);
-      ~ivl_nature_s();
+      ~ivl_nature_s() override;
 
       perm_string name() const   { return name_; }
 	// Identifier for the access function for this nature
@@ -51,12 +51,12 @@ class ivl_discipline_s : public LineInfo {
     public:
       explicit ivl_discipline_s (perm_string name, ivl_dis_domain_t dom,
 				 ivl_nature_t pot, ivl_nature_t flow);
-      ~ivl_discipline_s();
+      ~ivl_discipline_s() override;
 
-      perm_string name() const         { return name_; }
-      ivl_dis_domain_t domain() const  { return domain_; }
-      ivl_nature_t potential() const { return potential_; }
-      ivl_nature_t flow() const      { return flow_; }
+      perm_string name() const        { return name_; }
+      ivl_dis_domain_t domain() const { return domain_; }
+      ivl_nature_t potential() const  { return potential_; }
+      ivl_nature_t flow() const       { return flow_; }
 
     private:
       perm_string name_;

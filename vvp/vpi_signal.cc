@@ -95,7 +95,7 @@ void *need_result_buf(unsigned cnt, vpi_rbuf_t type)
 
 char *simple_set_rbuf_str(const char *s1)
 {
-      char *res = (char *) need_result_buf(strlen(s1)+1, RBUF_STR);
+      char *res = static_cast<char *>(need_result_buf(strlen(s1)+1, RBUF_STR));
       if (res) strcpy(res,s1);
       return res;
 }
@@ -114,7 +114,7 @@ char *generic_get_str(int code, vpiHandle ref, const char *name, const char *ind
       }
       if (index != NULL) len += strlen(index) + 2;  /* include space for brackets */
 
-      char *res = (char *) need_result_buf(len, RBUF_STR);
+      char *res = static_cast<char *>(need_result_buf(len, RBUF_STR));
       if (!res) {
 	    free(bn);
 	    return NULL;
@@ -159,7 +159,7 @@ static vpiHandle fill_in_var4(struct __vpiSignal*obj,
 static void format_vpiBinStrVal(vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
-      char *rbuf = (char *) need_result_buf(wid+1, RBUF_VAL);
+      char *rbuf = static_cast<char *>(need_result_buf(wid+1, RBUF_VAL));
       long end = base + (signed)wid;
       long offset = end - 1;
       long ssize = (signed)sig->value_size();
@@ -180,7 +180,7 @@ static void format_vpiOctStrVal(vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       unsigned dwid = (wid + 2) / 3;
-      char *rbuf = (char *) need_result_buf(dwid+1, RBUF_VAL);
+      char *rbuf = static_cast<char *>(need_result_buf(dwid+1, RBUF_VAL));
       long end = base + (signed)wid;
       long ssize = (signed)sig->value_size();
       unsigned val = 0;
@@ -236,7 +236,7 @@ static void format_vpiHexStrVal(vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       unsigned dwid = (wid + 3) / 4;
-      char *rbuf = (char *) need_result_buf(dwid+1, RBUF_VAL);
+      char *rbuf = static_cast<char *>(need_result_buf(dwid+1, RBUF_VAL));
       long end = base + (signed)wid;
       long ssize = (signed)sig->value_size();
       unsigned val = 0;
@@ -296,7 +296,7 @@ static void format_vpiDecStrVal(vvp_signal_value*sig, int base, unsigned wid,
                                 int signed_flag, s_vpi_value*vp)
 {
       unsigned hwid = (sig->value_size()+2) / 3 + 1;
-      char *rbuf = (char *) need_result_buf(hwid, RBUF_VAL);
+      char *rbuf = static_cast<char *>(need_result_buf(hwid, RBUF_VAL));
       long ssize = (signed)sig->value_size();
       long end = base + (signed)wid;
 
@@ -382,7 +382,7 @@ static void format_vpiStringVal(vvp_signal_value*sig, int base, unsigned wid,
       /* The result will use a character for each 8 bits of the
 	 vector. Add one extra character for the highest bits that
 	 don't form an 8 bit group. */
-      char *rbuf = (char *) need_result_buf(wid/8 + ((wid&7)!=0) + 1, RBUF_VAL);
+      char *rbuf = static_cast<char *>(need_result_buf(wid/8 + ((wid&7)!=0) + 1, RBUF_VAL));
       char *cp = rbuf;
 
       char tmp = 0;
@@ -442,8 +442,8 @@ static void format_vpiStrengthVal(vvp_signal_value*sig, int base,
       long end = base + (signed)wid;
       s_vpi_strengthval*op;
 
-      op = (s_vpi_strengthval*)
-	    need_result_buf(wid * sizeof(s_vpi_strengthval), RBUF_VAL);
+      op = static_cast<s_vpi_strengthval*>
+           (need_result_buf(wid * sizeof(s_vpi_strengthval), RBUF_VAL));
 
       for (long idx = base ;  idx < end ;  idx += 1) {
 	    if (idx >=0 && idx < (signed)sig->value_size()) {
@@ -497,8 +497,8 @@ static void format_vpiVectorVal(vvp_signal_value*sig, int base, unsigned wid,
       unsigned int obit = 0;
       unsigned hwid = (wid + 31)/32;
 
-      s_vpi_vecval *op = (p_vpi_vecval)
-                         need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
+      s_vpi_vecval *op = static_cast<p_vpi_vecval>
+                         (need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL));
       vp->value.vector = op;
 
       op->aval = op->bval = 0;
@@ -618,7 +618,8 @@ static char* signal_get_str(int code, vpiHandle ref)
 
       if ((code != vpiName) && (code != vpiFullName)) return NULL;
 
-      char *nm, *ixs;
+      char *nm;
+      const char *ixs;
       if (rfp->is_netarray) {
 	    nm = strdup(vpi_get_str(vpiName, rfp->within.parent));
 	    s_vpi_value vp;
@@ -1194,16 +1195,17 @@ void* __vpiSignal::operator new(size_t siz)
       const unsigned alloc_count = 512;
 
       if ((alloc_array == 0) || (alloc_index == alloc_count)) {
-	    alloc_array = (struct vpiSignal_plug*)
-		  calloc(alloc_count, sizeof(struct vpiSignal_plug));
+	    alloc_array = static_cast<struct vpiSignal_plug*>
+	                  (calloc(alloc_count, sizeof(struct vpiSignal_plug)));
 	    alloc_index = 0;
 #ifdef CHECK_WITH_VALGRIND
 	    VALGRIND_MAKE_MEM_NOACCESS(alloc_array, alloc_count *
 	                                            sizeof(struct vpiSignal_plug));
 	    VALGRIND_CREATE_MEMPOOL(alloc_array, 0, 1);
 	    signal_pool_count += 1;
-	    signal_pool = (vpiSignal_plug **) realloc(signal_pool,
-	                  signal_pool_count*sizeof(vpiSignal_plug **));
+	    signal_pool = static_cast<vpiSignal_plug **>
+	                  (realloc(static_cast<void *>(signal_pool),
+	                   signal_pool_count*sizeof(vpiSignal_plug **)));
 	    signal_pool[signal_pool_count-1] = alloc_array;
 #endif
       }
@@ -1374,7 +1376,7 @@ static char* PV_get_str(int code, vpiHandle ref)
 	case vpiFullName: {
 	    const char*nm = vpi_get_str(code, rfp->parent);
 	    size_t len = 256+strlen(nm);
-	    char *full = (char *) malloc(len);
+	    char *full = static_cast<char *>(malloc(len));
 	    snprintf(full, len, "%s[%d:%d]", nm,
 	                                     (int)vpi_get(vpiLeftRange, ref),
 	                                     (int)vpi_get(vpiRightRange, ref));

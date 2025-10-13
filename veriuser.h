@@ -1,7 +1,7 @@
 #ifndef VERIUSER_H
 #define VERIUSER_H
 /*
- * Copyright (c) 2002-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -251,7 +251,7 @@ typedef struct t_tfexprinfo {
 /* Extern functions from the library. */
 extern void io_printf (const char *, ...)
       __attribute__((format (printf,1,2)));
-extern char* mc_scan_plusargs(char*plusarg);
+extern char* mc_scan_plusargs(const char*plusarg);
 
 extern int tf_asynchoff(void);
 extern int tf_asynchon(void);

@@ -149,8 +149,9 @@ static void delete_sub_scopes(__vpiScope *scope)
       for (citer = scope->classes.begin();
            citer != scope->classes.end(); ++ citer ) {
 	    class_list_count += 1;
-	    class_list = (class_type **) realloc(class_list,
-	                 class_list_count*sizeof(class_type **));
+	    class_list = static_cast<class_type **>
+	                 (realloc(static_cast<void>(class_list),
+	                  class_list_count*sizeof(class_type **)));
 	    class_list[class_list_count-1] = citer->second;
       }
 }
@@ -324,7 +325,7 @@ static vpiHandle make_subset_iterator_(int type_code, vector<vpiHandle>&table)
       if (mcnt == 0)
 	    return 0;
 
-      args = (vpiHandle*)calloc(mcnt, sizeof(vpiHandle));
+      args = static_cast<vpiHandle*>(calloc(mcnt, sizeof(vpiHandle)));
       for (unsigned idx = 0; idx < table.size(); idx += 1)
 	    if (compare_types(type_code, table[idx]->get_type_code()))
 		  args[ncnt++] = table[idx];
@@ -658,11 +659,12 @@ unsigned vpip_add_item_to_context(automatic_hooks_s*item,
       unsigned idx = scope->nitem++;
 
       if (scope->item == 0)
-	    scope->item = (automatic_hooks_s**)
-		  malloc(sizeof(automatic_hooks_s*));
+	    scope->item = static_cast<automatic_hooks_s**>
+	                  (malloc(sizeof(automatic_hooks_s*)));
       else
-	    scope->item = (automatic_hooks_s**)
-		  realloc(scope->item, sizeof(automatic_hooks_s*)*scope->nitem);
+	    scope->item = static_cast<automatic_hooks_s**>
+	                  (realloc(static_cast<void *>(scope->item),
+	                   sizeof(automatic_hooks_s*)*scope->nitem));
 
       scope->item[idx] = item;
 
@@ -752,7 +754,7 @@ static vpiHandle portinfo_iterate(int code, vpiHandle ref)
 
       switch (code) {
 	  case vpiBit: {
-	    vpiHandle*args = (vpiHandle*)calloc(width, sizeof(vpiHandle*));
+	    vpiHandle*args = static_cast<vpiHandle*>(calloc(width, sizeof(vpiHandle*)));
 
 	    for (unsigned i = 0; i<rfp->port_bits_.size(); i++) {
 		  args[i] = rfp->port_bits_[i];

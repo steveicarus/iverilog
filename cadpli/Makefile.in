@@ -59,7 +59,11 @@ distclean: clean
 	rm -f Makefile config.log
 
 cppcheck: $(O:.o=.c)
-	cppcheck --enable=all --std=c99 --std=c++11 -f $(INCLUDE_PATH) $^
+	cppcheck --enable=all --std=c99 --std=c++11 -f \
+	         --check-level=exhaustive \
+	         --suppressions-list=$(srcdir)/../cppcheck-global.sup \
+	         --suppressions-list=$(srcdir)/cppcheck.sup \
+	         $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
 	cd ..; ./config.status --file=cadpli/$@

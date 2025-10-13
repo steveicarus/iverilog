@@ -223,7 +223,7 @@ PLI_INT32 vpi_chk_error(p_vpi_error_info info)
       info->level = vpip_last_error.level;
       info->message = vpip_last_error.message;
       info->product = vpi_vlog_info.product;
-      info->code = (char *) "";
+      info->code = (char *)"";
       info->file = 0;
       info->line = 0;
 
@@ -500,7 +500,7 @@ __vpiScope*vpip_timescale_scope_from_handle(vpiHandle obj)
       struct __vpiSysTaskCall*task;
       struct __vpiSignal*signal;
       struct __vpiRealVar*real;
-      __vpiNamedEvent*event;
+      const __vpiNamedEvent*event;
 
       switch (obj->get_type_code()) {
 	  case vpiSysTaskCall:
@@ -547,7 +547,7 @@ int vpip_time_units_from_handle(vpiHandle obj)
       if (obj == 0)
 	    return vpip_get_time_precision();
 
-      __vpiScope*scope = vpip_timescale_scope_from_handle(obj);
+      const __vpiScope*scope = vpip_timescale_scope_from_handle(obj);
       if (scope == 0)
 	    return vpip_get_time_precision();
 
@@ -559,7 +559,7 @@ int vpip_time_precision_from_handle(vpiHandle obj)
       if (obj == 0)
 	    return vpip_get_time_precision();
 
-      __vpiScope*scope = vpip_timescale_scope_from_handle(obj);
+      const __vpiScope*scope = vpip_timescale_scope_from_handle(obj);
       if (scope == 0)
 	    return vpip_get_time_precision();
 
@@ -641,7 +641,7 @@ static void vec4_get_value_string(const vvp_vector4_t&word_val, unsigned width,
       unsigned nchar = width / 8;
       unsigned tail = width % 8;
 
-      char*rbuf = (char *) need_result_buf(nchar + 1, RBUF_VAL);
+      char*rbuf = static_cast<char *>(need_result_buf(nchar + 1, RBUF_VAL));
       char*cp = rbuf;
 
       if (tail > 0) {
@@ -700,7 +700,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	    break;
 
 	  case vpiBinStrVal:
-	    rbuf = (char *) need_result_buf(width+1, RBUF_VAL);
+	    rbuf = static_cast<char *>(need_result_buf(width+1, RBUF_VAL));
 	    for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
 		  vvp_bit4_t bit = word_val.value(idx);
 		  rbuf[width-idx-1] = vvp_bit4_to_ascii(bit);
@@ -711,7 +711,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 
 	  case vpiOctStrVal: {
 		unsigned hwid = ((width+2) / 3) + 1;
-		rbuf = (char *) need_result_buf(hwid, RBUF_VAL);
+		rbuf = static_cast<char *>(need_result_buf(hwid, RBUF_VAL));
 		vpip_vec4_to_oct_str(word_val, rbuf, hwid);
 		vp->value.str = rbuf;
 		break;
@@ -719,7 +719,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 
 	  case vpiDecStrVal: {
 // HERE need a better estimate.
-		rbuf = (char *) need_result_buf(width+1, RBUF_VAL);
+		rbuf = static_cast<char *>(need_result_buf(width+1, RBUF_VAL));
 		vpip_vec4_to_dec_str(word_val, rbuf, width+1, signed_flag);
 		vp->value.str = rbuf;
 		break;
@@ -727,7 +727,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 
 	  case vpiHexStrVal: {
 		unsigned  hwid = ((width + 3) / 4) + 1;
-		rbuf = (char *) need_result_buf(hwid, RBUF_VAL);
+		rbuf = static_cast<char *>(need_result_buf(hwid, RBUF_VAL));
 		vpip_vec4_to_hex_str(word_val, rbuf, hwid);
 		vp->value.str = rbuf;
 		break;
@@ -778,8 +778,8 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	  case vpiVectorVal: {
 		unsigned hwid = (width + 31)/32;
 
-		s_vpi_vecval *op = (p_vpi_vecval)
-			need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
+		s_vpi_vecval *op = static_cast<p_vpi_vecval>
+		                   (need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL));
 		vp->value.vector = op;
 
 		op->aval = op->bval = 0;
@@ -842,8 +842,8 @@ void vpip_vec2_get_value(const vvp_vector2_t&word_val, unsigned width,
 	  case vpiVectorVal: {
 		unsigned hwid = (width + 31)/32;
 
-		s_vpi_vecval *op = (p_vpi_vecval)
-			need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
+		s_vpi_vecval *op = static_cast<p_vpi_vecval>
+		                   (need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL));
 		vp->value.vector = op;
 
 		op->aval = op->bval = 0;
@@ -923,7 +923,7 @@ void vpip_real_get_value(double real, s_vpi_value*vp)
 	    break;
 
 	  case vpiDecStrVal:
-	    rbuf = (char *) need_result_buf(1025, RBUF_VAL);
+	    rbuf = static_cast<char *>(need_result_buf(1025, RBUF_VAL));
 	    vpip_vec4_to_dec_str(vvp_vector4_t(1024, real), rbuf, 1025, true);
 	    vp->value.str = rbuf;
 	    break;
@@ -997,7 +997,7 @@ void vpip_string_get_value(const string&val, s_vpi_value*vp)
 	    vp->format = vpiStringVal;
 	    // fallthrough
 	  case vpiStringVal:
-	    rbuf = (char *) need_result_buf(val.size() + 1, RBUF_VAL);
+	    rbuf = static_cast<char *>(need_result_buf(val.size() + 1, RBUF_VAL));
 	    strcpy(rbuf, val.c_str());
 	    vp->value.str = rbuf;
 	    break;
@@ -1049,7 +1049,7 @@ struct vpip_put_value_event : vvp_gen_event_s {
       s_vpi_value value;
       int flags;
       virtual void run_run() override;
-      ~vpip_put_value_event() { }
+      ~vpip_put_value_event() override { }
 };
 
 void vpip_put_value_event::run_run()
@@ -1350,7 +1350,7 @@ static vpiHandle find_name(const char *name, vpiHandle handle)
 	       * name it cannot be found by name. Because of this we need
 	       * to skip ports here so the correct handle can be located. */
 	    if (vpi_get(vpiType, ref->intern[i]) == vpiPort) continue;
-	    char *nm = vpi_get_str(vpiName, ref->intern[i]);
+	    const char *nm = vpi_get_str(vpiName, ref->intern[i]);
 	    if (nm && !strcmp(name, nm)) {
 		  rtn = ref->intern[i];
 		  break;
@@ -1418,7 +1418,7 @@ static vpiHandle find_scope(const char *name, vpiHandle handle, int depth)
       vpiHandle rtn = 0;
       vpiHandle hand;
       while (iter && (hand = vpi_scan(iter))) {
-	    char *nm = vpi_get_str(vpiName, hand);
+	    const char *nm = vpi_get_str(vpiName, hand);
 
 	    if (strcmp(nm_first,nm)==0) {
 		  if (nm_rest)
@@ -1727,7 +1727,7 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
 	    while (current_net) {
 		  if (!current_net) break; // End of list
 
-		  vvp_fun_part* part = dynamic_cast<vvp_fun_part*>(current_net->fun);
+		  const vvp_fun_part* part = dynamic_cast<vvp_fun_part*>(current_net->fun);
 
 		    // Its a part select!
 		  if (part) {

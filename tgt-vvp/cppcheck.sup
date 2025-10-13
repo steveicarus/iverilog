@@ -1,3 +1,55 @@
+// We use guarded memory allocation routines, but cppcheck is not
+// noticing this so it is complaining we could return a NULL value.
+nullPointerOutOfMemory:vvp.c:90              // malloc @   89
+nullPointerOutOfMemory:vvp.c:91              // malloc @   89
+nullPointerOutOfMemory:vvp.c:92              // malloc @   89
+nullPointerOutOfMemory:draw_mux.c:83         // strdup @   80
+nullPointerOutOfMemory:draw_mux.c:95         // strdup @   80
+nullPointerOutOfMemory:draw_mux.c:110        // strdup @   80
+nullPointerOutOfMemory:draw_net_input.c:92   // malloc @   90
+nullPointerOutOfMemory:draw_net_input.c:93   // malloc @   90
+nullPointerOutOfMemory:draw_net_input.c:118  // malloc @  110
+nullPointerOutOfMemory:draw_net_input.c:119  // malloc @  110
+nullPointerOutOfMemory:draw_net_input.c:237  // malloc @  235
+nullPointerOutOfMemory:draw_net_input.c:238  // malloc @  235
+nullPointerOutOfMemory:draw_net_input.c:256  // malloc @  248
+nullPointerOutOfMemory:draw_net_input.c:257  // malloc @  248
+nullPointerOutOfMemory:draw_net_input.c:269  // malloc @  235
+nullPointerOutOfMemory:draw_net_input.c:667  // malloc @  665
+nullPointerOutOfMemory:draw_net_input.c:668  // malloc @  665
+nullPointerOutOfMemory:draw_net_input.c:779  // malloc @  761
+nullPointerOutOfMemory:draw_net_input.c:780  // malloc @  761
+nullPointerOutOfMemory:modpath.c:75          // calloc @   68
+nullPointerOutOfMemory:modpath.c:92          // calloc @   68
+nullPointerOutOfMemory:modpath.c:111         // calloc @   69
+nullPointerOutOfMemory:modpath.c:139         // calloc @  138
+nullPointerOutOfMemory:modpath.c:140         // calloc @  138
+nullPointerOutOfMemory:modpath.c:141         // calloc @  138
+nullPointerOutOfMemory:modpath.c:142         // calloc @  138
+nullPointerOutOfMemory:vvp_process.c:2120    // malloc @ 2118
+nullPointerOutOfMemory:vvp_process.c:2121    // malloc @ 2118
+nullPointerOutOfMemory:vvp_scope.c:900       // calloc @  865
+nullPointerOutOfMemory:vvp_scope.c:1094      // calloc @ 1092
+nullPointerOutOfMemory:vvp_scope.c:1117      // calloc @ 1092
+nullPointerOutOfMemory:vvp_scope.c:1700      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1701      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1730      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1731      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1741      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1745      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1746      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1757      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1764      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1991      // calloc @ 1989
+nullPointerOutOfMemory:vvp_scope.c:2062      // calloc @ 2060
+nullPointerOutOfMemory:vvp_scope.c:2077      // calloc @ 2060
+nullPointerArithmeticOutOfMemory:stmt_assign.c:216  // calloc @ 619
+nullPointerArithmeticOutOfMemory:stmt_assign.c:364  // calloc @ 619
+memleakOnRealloc:draw_net_input.c:639
+memleakOnRealloc:vvp_scope.c:57
+memleakOnRealloc:vvp_scope.c:106
+memleakOnRealloc:vvp_scope.c:853
+
 // These are the global access functions called from the compiler so they
 // are not used here.
 

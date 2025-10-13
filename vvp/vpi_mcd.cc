@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2024 Stephen G. Tell <steve@telltronics.org>
+ * Copyright (c) 2000-2025 Stephen G. Tell <steve@telltronics.org>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,7 +41,7 @@ extern FILE* vpi_trace;
 /*
  * MCD/FD manipulation macros
  */
-#define IS_MCD(mcd)	!((mcd)>>31&1)
+#define IS_MCD(mcd)	!(static_cast<unsigned>(mcd)>>31&1)
 #define FD_IDX(fd)	((fd)&~(1U<<31))
 #define FD_INCR		32
 
@@ -63,7 +63,7 @@ bool vpip_mcd0_disable = false;
 void vpip_mcd_init(FILE *log)
 {
       fd_table_len = FD_INCR;
-      fd_table = (mcd_entry_s *) malloc(fd_table_len*sizeof(mcd_entry_s));
+      fd_table = static_cast<mcd_entry_s *>(malloc(fd_table_len*sizeof(mcd_entry_s)));
       for (unsigned idx = 0; idx < fd_table_len; idx += 1) {
 	    fd_table[idx].fp = NULL;
 	    fd_table[idx].filename = NULL;
@@ -210,7 +210,7 @@ vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
 	 * so the print needs to be redone with a larger buffer (very rare).
 	 */
       if ((unsigned) rc >= sizeof buffer) {
-	    buf_ptr = (char *)malloc(rc + 1);
+	    buf_ptr = static_cast<char *>(malloc(rc + 1));
 	    need_free = true;
 	    rc = vsnprintf(buf_ptr, rc+1, fmt, saved_ap);
       }
@@ -313,8 +313,8 @@ extern "C" PLI_INT32 vpi_fopen(const char*name, const char*mode)
 	    return 0;
       }
       fd_table_len += FD_INCR;
-      fd_table = (mcd_entry_s *) realloc(fd_table,
-                                         fd_table_len*sizeof(mcd_entry_s));
+      fd_table = static_cast<mcd_entry_s *>
+                 (realloc(fd_table, fd_table_len*sizeof(mcd_entry_s)));
       for (unsigned idx = i; idx < fd_table_len; idx += 1) {
 	    fd_table[idx].fp = NULL;
 	    fd_table[idx].filename = NULL;

@@ -190,7 +190,7 @@ void compile_variable(char*label, char*name,
 	    net->fil = new vvp_wire_vec4(wid, init);
             net->fun = new vvp_fun_signal4_sa(wid);
       }
-      vvp_signal_value*vfil = dynamic_cast<vvp_signal_value*>(net->fil);
+      const vvp_signal_value*vfil = dynamic_cast<vvp_signal_value*>(net->fil);
 
       define_functor_symbol(label, net);
 
@@ -295,7 +295,7 @@ class __compile_net_resolv : public base_net_resolv {
 	signed_flag_ = signed_flag;
       }
 
-      ~__compile_net_resolv() { }
+      ~__compile_net_resolv() override { }
 
       bool resolve(bool message_flag) override;
 
@@ -457,7 +457,7 @@ class __compile_real_net_resolv : public base_net_resolv {
       {
       }
 
-      ~__compile_real_net_resolv() { }
+      ~__compile_real_net_resolv() override { }
 
       bool resolve(bool message_flag) override;
 

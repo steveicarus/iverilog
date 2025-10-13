@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -61,7 +61,8 @@ static char* real_var_get_str(int code, vpiHandle ref)
 	    return simple_set_rbuf_str(file_names[0]);
       }
 
-      char *nm, *ixs;
+      char *nm;
+      const char *ixs;
       if (rfp->is_netarray) {
 	    nm = strdup(vpi_get_str(vpiName, rfp->within.parent));
 	    s_vpi_value vp;
