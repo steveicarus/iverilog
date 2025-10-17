@@ -189,17 +189,16 @@ sub execute_regression {
         }
 
         $cmd = "iverilog-vpi$sfx --name=$tname $cargs{$tname} " .
-               "vpi/$ccode{$tname} > vpi_log/$tname.log 2>&1";
-        if (system("$cmd")) {
+               "vpi/$ccode{$tname}";
+        if (run_program($cmd, '>', "vpi_log/$tname.log")) {
             print "==> Failed - running iverilog-vpi.\n";
             $failed++;
             next;
         }
 
         $cmd = $with_valg ? "valgrind --trace-children=yes " : "";
-        $cmd .= "iverilog$sfx $args{$tname} -L . -m $tname -o vsim vpi/$tname.v >> " .
-                "vpi_log/$tname.log 2>&1";
-        if (system("$cmd")) {
+        $cmd .= "iverilog$sfx $args{$tname} -L . -m $tname -o vsim vpi/$tname.v";
+        if (run_program($cmd, '>>', "vpi_log/$tname.log")) {
             print "==> Failed - running iverilog.\n";
             $failed++;
             next;
@@ -207,8 +206,8 @@ sub execute_regression {
 
         $cmd = $with_valg ? "valgrind --leak-check=full " .
                             "--show-reachable=yes " : "";
-        $cmd .= "vvp$sfx vsim >> vpi_log/$tname.log 2>&1";
-        if (system("$cmd")) {
+        $cmd .= "vvp$sfx vsim";
+        if (run_program($cmd, '>>', "vpi_log/$tname.log")) {
             print "==> Failed - running vvp.\n";
             $failed++;
             next;
@@ -230,7 +229,7 @@ sub execute_regression {
         if ($tname ne "" and $ccode{$tname} ne "") {
             my $doto = $ccode{$tname};
             $doto =~ s/\.(c|cc|cpp)$/.o/;
-            system("rm -f $doto $tname.vpi vsim") and
+            run_program("rm -f $doto $tname.vpi vsim") and
                 die "Error: failed to remove temporary files.\n";
         }
     }

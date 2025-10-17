@@ -4,7 +4,7 @@
 #
 # This script is based on code with the following Copyright.
 #
-# Copyright (c) 1999-2024 Guy Hutchison (ghutchis@pacbell.net)
+# Copyright (c) 1999-2025 Guy Hutchison (ghutchis@pacbell.net)
 #
 #    This source code is free software; you can redistribute it
 #    and/or modify it in source code form under the terms of the GNU
@@ -136,9 +136,9 @@ sub execute_regression {
         $cmd .= "iverilog$sfx -o vsim $ivl_args $args{$tname}";
         $cmd .= " -s $testmod{$tname}" if ($testmod{$tname} ne "");
         $cmd .= " -t null" if ($testtype{$tname} eq "CN");
-        $cmd .= " ./$srcpath{$tname}/$tname.v > log/$tname.log 2>&1";
+        $cmd .= " ./$srcpath{$tname}/$tname.v";
 #        print "$cmd\n";
-        if (system("$cmd")) {
+        if (run_program($cmd, '>', "log/$tname.log")) {
             if ($testtype{$tname} eq "CE") {
                 # Check if the system command core dumped!
                 if ($? >> 8 & 128) {
@@ -174,9 +174,9 @@ sub execute_regression {
 
         $cmd = $with_valg ? "valgrind --leak-check=full " .
                             "--show-reachable=yes " : "";
-        $cmd .= "vvp$sfx vsim $vvp_args $plargs{$tname} >> log/$tname.log 2>&1";
+        $cmd .= "vvp$sfx vsim $vvp_args $plargs{$tname}";
 #        print "$cmd\n";
-        if ($pass_type == 0 and system("$cmd")) {
+        if ($pass_type == 0 and run_program($cmd, '>>', "log/$tname.log")) {
             if ($testtype{$tname} eq "RE") {
                 # Check if the system command core dumped!
                 if ($? >> 8 & 128) {
@@ -242,7 +242,7 @@ sub execute_regression {
 
     } continue {
         if ($tname ne "") {
-            system("rm -f ./vsim && rm -rf ivl_vhdl_work") and
+            run_program("rm -rf ./vsim ivl_vhdl_work") and
                 die "Error: failed to remove temporary file.\n";
         }
     }
@@ -252,7 +252,7 @@ sub execute_regression {
                " Not Implemented=$not_impl, Expected Fail=$expected_fail\n");
 
     # Remove remaining temporary files
-    system("rm -f *.tmp ivltests/*.tmp");
+    run_program("rm -f *.tmp ivltests/*.tmp");
 
     return $failed;
 }
