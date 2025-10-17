@@ -21,7 +21,6 @@ AC_PROG_CXX
 AC_PROG_RANLIB
 AC_CHECK_TOOL(LD, ld, false)
 AC_CHECK_TOOL(AR, ar, false)
-AC_CHECK_TOOL(DLLTOOL, dlltool, false)
 AC_CHECK_TOOL(STRIP, strip, true)
 AC_CHECK_TOOL(WINDRES,windres,false)
 AC_CHECK_PROGS(XGPERF,gperf,none)
