@@ -21,6 +21,7 @@ build() {
   cd "${srcdir}"/../..
   sh autoconf.sh
   ./configure \
+    --enable-libveriuser \
     --prefix="${MINGW_PREFIX}" \
     --host="$CARCH"-w64-mingw32
   mingw32-make

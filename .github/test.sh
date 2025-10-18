@@ -9,7 +9,7 @@ status=0
 
 perl vvp_reg.pl || status=1
 
-perl vpi_reg.pl || status=1
+perl vpi_reg.pl --with-pli1 || status=1
 
 python3 vvp_reg.py || status=1
 
