@@ -11,8 +11,10 @@ $| = 1;  # This turns off buffered I/O
 # We support a --suffix= and --with-valgrind flags.
 use Getopt::Long;
 $sfx = "";  # Default suffix.
+$with_pli1 = 0;  # Default PLI 1 support (keep this off).
 $with_valg = 0;  # Default valgrind usage (keep this off).
 if (!GetOptions("suffix=s" => \$sfx,
+                "with-pli1" => \$with_pli1,
                 "with-valgrind" => \$with_valg,
                 "help" => \&usage)) {
     die "Error: Invalid argument(s).\n";
@@ -22,6 +24,8 @@ sub usage {
     warn "$0 usage:\n\n" .
          "  --suffix=<suffix>  # The Icarus executables suffix, " .
          "default \"\".\n" .
+         "  --with-pli1        # Include the PLI 1 tests, " .
+         "default \"off\".\n" .
          "  --with-valgrind    # Run the test suite with valgrind, " .
          "default \"off\".\n" .
          "  <regression file>  # The regression file, " .
@@ -104,6 +108,7 @@ sub read_regression_list {
                 $testtype = $fields[1];
                 $args{$tname} = "";
             }
+            next if ($testtype eq "PLI1" && !$with_pli1);  # Skip PLI 1 tests if not enabled.
             # This version of the program does not implement something
             # required to run this test.
             if ($testtype eq "NI") {
@@ -128,8 +133,10 @@ sub read_regression_list {
                     $args{$tname} = join(' ', split(',', $args{$tname}));
                 }
             } else {
+                $testtype = $fields[1];
                 $args{$tname} = "";
             }
+            next if ($testtype eq "PLI1" && !$with_pli1);  # Skip PLI 1 tests if not enabled.
             $ccode{$tname}    = $fields[2];
             $goldfile{$tname} = $fields[3];
             $cargs{$tname}    = $fields[4];

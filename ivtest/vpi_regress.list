@@ -62,7 +62,7 @@ br_gh59			normal			br_gh59.c		br_gh59.gold
 br_gh73a		normal			force.c			br_gh73a.gold
 br_gh73b		normal			force.c			br_gh73b.gold
 br_gh117		normal			br_gh117.c		br_gh117.gold
-br_gh141		normal			br_gh141.c		br_gh141.gold
+br_gh141		PLI1			br_gh141.c		br_gh141.gold
 br_gh169a		normal			br_gh169.c		br_gh169a.gold
 br_gh169b		normal,-g2009		br_gh169.c		br_gh169b.gold
 br_gh184		normal			start_of_simtime1.c	br_gh184.gold
@@ -93,9 +93,9 @@ force_wire_real		normal			force_real.c		force_wire_real.gold
 genblk_named		normal			genblk_names.c		genblk_named.gold
 genblk_unnamed		normal			genblk_names.c		genblk_unnamed.gold
 genblk_direct		normal,-g2009		genblk_names.c		genblk_direct.gold
-getp			normal			getp.c			getp.log
+getp			PLI1			getp.c			getp.log
 hello_poke		normal			hello_poke.c		hello_poke.log
-hello_tf		normal			hello_tf.c		hello_tf.log
+hello_tf		PLI1			hello_tf.c		hello_tf.log
 hello_vpi		normal			hello_vpi.c		hello.log
 hello_vpi2		normal			hello_vpi2.c		hello2.log		vpi/hello_vpi1.c
 listparams		normal			listparams.c		listparams.log
@@ -105,15 +105,15 @@ nextsimtime_cb3		normal			nextsimtime_cb3.c	nextsimtime_cb3.gold
 nextsimtime_cb4		normal			nextsimtime_cb4.c	nextsimtime_cb4.gold
 memmon			normal,-g1995		memmon.c		memmon.log
 memwide			normal			memwide.cc		memwide.log
-mipname			normal			mipname.c		mipname.log
+mipname			PLI1			mipname.c		mipname.log
 myscope			normal			myscope.c		myscope.gold
-myscope2		normal			myscope2.c		myscope2.gold
+myscope2		PLI1			myscope2.c		myscope2.gold
 nulls1			normal			nulls1.c		nulls1.log
 poke_escaped		normal			poke_escaped.c		poke_escaped.gold
 pokevent		normal			pokevent.cc		pokevent.log
 pokereg			normal			pokereg.cc		pokereg.log
 ports_params		normal			ports_params.c		ports_params.gold
-pr521			normal			pr521.c			pr521.log
+pr521			PLI1			pr521.c			pr521.log
 pr686			normal			pr686.c			pr686.log
 pr723			normal			pr723.c			pr723.log
 pr1693971		normal			pr1693971.c		pr1693971.log
@@ -121,8 +121,8 @@ pr2048463		normal			pr2048463.c		pr2048463.log
 pr2314742		normal			pr2314742.c		pr2314742.gold
 pr2966059		normal			pr2966059.c		pr2966059.gold
 pr2971220		normal			pr2971220.c		pr2971220.gold
-putp			normal			putp.c			putp.log
-putp2			normal			putp2.c			putp2.log
+putp			PLI1			putp.c			putp.log
+putp2			PLI1			putp2.c			putp2.log
 putvalue		normal			putvalue.c		putvalue.log
 range1			normal			range1.c		range1.gold
 realcb			normal			realcb.c		realcb.log
@@ -137,7 +137,7 @@ sim_time_cb1		normal			sim_time_cb1.c		sim_time_cb1.gold
 sim_time_cb2		normal			sim_time_cb2.c		sim_time_cb2.gold
 spec_delays		normal,-gspecify	spec_delays.c		spec_delays.log
 start_of_simtime1	normal			start_of_simtime1.c	start_of_simtime1.log
-timescale		normal			timescale.c		timescale.log
+timescale		PLI1			timescale.c		timescale.log
 value_change_cb1	normal,-g2009		value_change_cb1.c	value_change_cb1.gold
 value_change_cb2	normal,-g2009		value_change_cb2.c	value_change_cb2.gold
 value_change_cb3	normal,-g2009		value_change_cb3.c	value_change_cb3.gold
