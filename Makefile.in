@@ -37,10 +37,16 @@ exec_prefix = @exec_prefix@
 srcdir = @srcdir@
 datarootdir = @datarootdir@
 
-SUBDIRS = ivlpp vhdlpp vvp vpi libveriuser cadpli tgt-null tgt-stub tgt-vvp \
+SUBDIRS = ivlpp vhdlpp vvp vpi tgt-null tgt-stub tgt-vvp \
           tgt-vhdl tgt-vlog95 tgt-pcb tgt-blif tgt-sizer driver
 # Only run distclean for these directories.
 NOTUSED = tgt-fpga tgt-pal tgt-verilog
+
+ifeq (@LIBVERIUSER@,yes)
+SUBDIRS += libveriuser cadpli
+else
+NOTUSED += libveriuser cadpli
+endif
 
 ifeq (@MINGW32@,yes)
 SUBDIRS += driver-vpi
@@ -228,6 +234,7 @@ all: iverilog-vpi
 
 iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
 	sed -e 's;@SHARED@;@shared@;' -e 's;@PIC@;@PICFLAG@;' \
+	    -e 's;@ENABLE_PLI1@;@LIBVERIUSER@;' \
 	    -e 's;@SUFFIX@;$(suffix);' \
 	    -e 's;@IVCC@;$(CC);' \
 	    -e 's;@IVCXX@;$(CXX);' \
