@@ -53,7 +53,13 @@ PLI_INT32 tf_igetp(PLI_INT32 n, void *obj)
 	    vpi_get_value(arg_h, &value);
 	    /* The following may generate a compilation warning, but this
 	     * functionality is required by some versions of the standard. */
-	    rtn = (int)(intptr_t)value.value.str;	/* Oh my */
+	    rtn = (PLI_INT32)(intptr_t)value.value.str;	/* Oh my */
+	    if ((intptr_t)rtn != (intptr_t)value.value.str) {
+		  fprintf(stderr, "warning: tf_getp returning string pointer. "
+				  "Pointer value doesn't fit in 32 bits, "
+				  "returning 0.\n");
+		  rtn = 0;
+	    }
       } else {
 	    value.format = vpiIntVal;
 	    vpi_get_value(arg_h, &value);
