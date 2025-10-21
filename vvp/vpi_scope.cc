@@ -150,7 +150,7 @@ static void delete_sub_scopes(__vpiScope *scope)
            citer != scope->classes.end(); ++ citer ) {
 	    class_list_count += 1;
 	    class_list = static_cast<class_type **>
-	                 (realloc(static_cast<void>(class_list),
+	                 (realloc(class_list,
 	                  class_list_count*sizeof(class_type **)));
 	    class_list[class_list_count-1] = citer->second;
       }
@@ -663,7 +663,7 @@ unsigned vpip_add_item_to_context(automatic_hooks_s*item,
 	                  (malloc(sizeof(automatic_hooks_s*)));
       else
 	    scope->item = static_cast<automatic_hooks_s**>
-	                  (realloc(static_cast<void *>(scope->item),
+	                  (realloc(scope->item,
 	                   sizeof(automatic_hooks_s*)*scope->nitem));
 
       scope->item[idx] = item;

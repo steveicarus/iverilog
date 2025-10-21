@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,8 +33,8 @@ using namespace std;
 
 class nodangle_f  : public functor_t {
     public:
-      void event(Design*des, NetEvent*ev);
-      void signal(Design*des, NetNet*sig);
+      void event(Design*des, NetEvent*ev) override;
+      void signal(Design*des, NetNet*sig) override;
 
       unsigned iteration;
       unsigned stotal, etotal;
@@ -230,7 +230,7 @@ void nodangle_f::signal(Design*, NetNet*sig)
 		  if (cur == &sig->pin(idx))
 			continue;
 
-		  NetNet*cursig = dynamic_cast<NetNet*>(cur->get_obj());
+		  const NetNet*cursig = dynamic_cast<NetNet*>(cur->get_obj());
 		  if (cursig == 0)
 			continue;
 

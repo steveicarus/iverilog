@@ -1204,7 +1204,7 @@ void* __vpiSignal::operator new(size_t siz)
 	    VALGRIND_CREATE_MEMPOOL(alloc_array, 0, 1);
 	    signal_pool_count += 1;
 	    signal_pool = static_cast<vpiSignal_plug **>
-	                  (realloc(static_cast<void *>(signal_pool),
+	                  (realloc(signal_pool,
 	                   signal_pool_count*sizeof(vpiSignal_plug **)));
 	    signal_pool[signal_pool_count-1] = alloc_array;
 #endif

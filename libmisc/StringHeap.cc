@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -56,8 +56,8 @@ const char* StringHeap::add(const char*text)
 	    char*buf = strdup(text);
 #ifdef CHECK_WITH_VALGRIND
 	    string_pool_count += 1;
-	    string_pool = (char**)realloc(string_pool,
-					  string_pool_count*sizeof(char**));
+	    string_pool = static_cast<char**>(realloc(string_pool,
+	                                              string_pool_count*sizeof(char**)));
 	    string_pool[string_pool_count-1] = buf;
 #endif
 	    return buf;
@@ -72,19 +72,19 @@ const char* StringHeap::add(const char*text)
 	      // same pointer.
 	    if (rem > 0) {
 		  char*old = cell_base_;
-		  cell_base_ = (char*)realloc(cell_base_, cell_ptr_);
+		  cell_base_ = static_cast<char*>(realloc(cell_base_, cell_ptr_));
 		  assert(cell_base_ != 0);
 		  assert(cell_base_ == old);
 	    }
 	      // start new cell
-	    cell_base_ = (char*)malloc(DEFAULT_CELL_SIZE);
+	    cell_base_ = static_cast<char*>(malloc(DEFAULT_CELL_SIZE));
 	    cell_ptr_  = 0;
 	    rem = DEFAULT_CELL_SIZE;
 	    assert(cell_base_ != 0);
 #ifdef CHECK_WITH_VALGRIND
 	    string_pool_count += 1;
-	    string_pool = (char **) realloc(string_pool,
-	                                    string_pool_count*sizeof(char **));
+	    string_pool = static_cast<char **>(realloc(string_pool,
+	                                       string_pool_count*sizeof(char **)));
 	    string_pool[string_pool_count-1] = cell_base_;
 #endif
       }

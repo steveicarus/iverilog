@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -261,7 +261,7 @@ bool NetProcTop::tie_off_floating_inputs_(Design*des,
 			      continue;
 
 			ivl_variable_type_t data_type = IVL_VT_LOGIC;
-			netvector_t*tmp_vec = new netvector_t(data_type, width-1,0);
+			const netvector_t*tmp_vec = new netvector_t(data_type, width-1,0);
 			NetNet*sig = new NetNet(scope(), scope()->local_symbol(),
 						NetNet::WIRE, tmp_vec);
 			sig->local_flag(true);
@@ -421,14 +421,14 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	      // Evaluate the index expression to a constant.
 	    const NetExpr*base_expr_raw = lval_->get_base();
 	    ivl_assert(*this, base_expr_raw);
-	    NetExpr*base_expr = base_expr_raw->evaluate_function(*this, scope->loop_index_tmp);
+	    const NetExpr*base_expr = base_expr_raw->evaluate_function(*this, scope->loop_index_tmp);
 	    if (! eval_as_long(base_off, base_expr)) {
 		  ivl_assert(*this, 0);
 	    }
 	    ivl_assert(*this, base_off >= 0);
 
 	    ivl_variable_type_t tmp_data_type = rsig->data_type();
-	    netvector_t*tmp_type = new netvector_t(tmp_data_type, lsig_width-1,0);
+	    const netvector_t*tmp_type = new netvector_t(tmp_data_type, lsig_width-1,0);
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, tmp_type);
@@ -451,7 +451,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 
 	    const NetExpr*base_expr_raw = lval_->get_base();
 	    ivl_assert(*this, base_expr_raw);
-	    NetExpr*base_expr = base_expr_raw->evaluate_function(*this, scope->loop_index_tmp);
+	    const NetExpr*base_expr = base_expr_raw->evaluate_function(*this, scope->loop_index_tmp);
 	    if (! eval_as_long(base_off, base_expr)) {
 		  cerr << get_fileline() << ": sorry: assignment to variable "
 			  "bit location is not currently supported in "
@@ -462,7 +462,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    ivl_assert(*this, base_off >= 0);
 
 	    ivl_variable_type_t tmp_data_type = rsig->data_type();
-	    netvector_t*tmp_type = new netvector_t(tmp_data_type, lsig_width-1,0);
+	    const netvector_t*tmp_type = new netvector_t(tmp_data_type, lsig_width-1,0);
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, tmp_type);
@@ -679,7 +679,7 @@ static NetNet* mux_selector_reduce_width(Design*des, NetScope*scope,
 
 	// This is the output signal, osig.
       ivl_variable_type_t osig_data_type = IVL_VT_LOGIC;
-      netvector_t*osig_vec = new netvector_t(osig_data_type, sel_need-1, 0);
+      const netvector_t*osig_vec = new netvector_t(osig_data_type, sel_need-1, 0);
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::TRI, osig_vec);
       osig->local_flag(true);
@@ -699,7 +699,7 @@ static NetNet* mux_selector_reduce_width(Design*des, NetScope*scope,
       des->add_node(ps0);
       connect(ps0->pin(1), esig->pin(0));
 
-      netvector_t*ps0_vec = new netvector_t(osig_data_type, sel_need-2, 0);
+      const netvector_t*ps0_vec = new netvector_t(osig_data_type, sel_need-2, 0);
       NetNet*ps0_sig = new NetNet(scope, scope->local_symbol(),
 				  NetNet::TRI, ps0_vec);
       ps0_sig->local_flag(true);
@@ -717,7 +717,7 @@ static NetNet* mux_selector_reduce_width(Design*des, NetScope*scope,
       des->add_node(ps1);
       connect(ps1->pin(1), esig->pin(0));
 
-      netvector_t*ps1_vec = new netvector_t(osig_data_type, sel_got-sel_need, 0);
+      const netvector_t*ps1_vec = new netvector_t(osig_data_type, sel_got-sel_need, 0);
       NetNet*ps1_sig = new NetNet(scope, scope->local_symbol(),
 				  NetNet::TRI, ps1_vec);
       ps1_sig->local_flag(true);
@@ -819,7 +819,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 		  continue;
 	    }
 
-	    NetEConst*ge = dynamic_cast<NetEConst*>(items_[item].guard);
+	    const NetEConst*ge = dynamic_cast<NetEConst*>(items_[item].guard);
 	    if (ge == 0) {
 		  cerr << items_[item].guard->get_fileline() << ": sorry: "
 		       << "variable case item expressions with a variable "
@@ -939,7 +939,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	      // the pin.
 	    if (out_mux[mdx]->pin_Result().nexus()->pick_any_net() == 0) {
 		  ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
-		  netvector_t*tmp_vec = new netvector_t(mux_data_type, mux_width[mdx]-1,0);
+		  const netvector_t*tmp_vec = new netvector_t(mux_data_type, mux_width[mdx]-1,0);
 		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 					  NetNet::WIRE, tmp_vec);
 		  tmp->local_flag(true);
@@ -1105,7 +1105,7 @@ bool NetCase::synth_async_casez_(Design*des, NetScope*scope,
 	    }
       }
 
-      netvector_t*condit_type = new netvector_t(IVL_VT_LOGIC, 0, 0);
+      const netvector_t*condit_type = new netvector_t(IVL_VT_LOGIC, 0, 0);
 
       NetCaseCmp::kind_t case_kind = NetCaseCmp::EEQ;
       switch (type()) {
@@ -1185,7 +1185,7 @@ bool NetCase::synth_async_casez_(Design*des, NetScope*scope,
 
 		    // Make a NetNet for the result.
 		  ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
-		  netvector_t*tmp_vec = new netvector_t(mux_data_type, mux_width[mdx]-1,0);
+		  const netvector_t*tmp_vec = new netvector_t(mux_data_type, mux_width[mdx]-1,0);
 		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 					  NetNet::WIRE, tmp_vec);
 		  tmp->local_flag(true);
@@ -1335,7 +1335,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
 	      // Guess the mux type from the type of the output.
 	    ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
-	    if (NetNet*tmp = nex_out.pin(idx).nexus()->pick_any_net()) {
+	    if (const NetNet*tmp = nex_out.pin(idx).nexus()->pick_any_net()) {
 		  mux_data_type = tmp->data_type();
 	    }
 
@@ -1389,7 +1389,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    mux->set_line(*this);
 	    des->add_node(mux);
 
-	    netvector_t*tmp_type = 0;
+	    const netvector_t*tmp_type = 0;
 	    if (mux_width==1)
 		  tmp_type = new netvector_t(mux_data_type);
 	    else
@@ -1477,7 +1477,7 @@ bool NetForLoop::synth_async(Design*des, NetScope*scope,
       NetAssign*step_assign = dynamic_cast<NetAssign*> (step_statement_);
       char assign_operator = step_assign->assign_operator();
       ivl_assert(*this, step_assign);
-      NetExpr*step_expr = step_assign->rval();
+      const NetExpr*step_expr = step_assign->rval();
 
 	// Tell the scope that this index value is like a genvar.
       LocalVar index_var;
@@ -1814,11 +1814,11 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	      case NetEvProbe::NEGEDGE: {
 		  bool is_inverter = false;
 		  NetNode*node = rst->pin(0).nexus()->pick_any_node();
-		  if (NetLogic*gate = dynamic_cast<NetLogic*>(node)) {
+		  if (const NetLogic*gate = dynamic_cast<NetLogic*>(node)) {
 			if (gate->type() == NetLogic::NOT)
 				is_inverter = true;
 		  }
-		  if (NetUReduce*gate = dynamic_cast<NetUReduce*>(node)) {
+		  if (const NetUReduce*gate = dynamic_cast<NetUReduce*>(node)) {
 			if (gate->type() == NetUReduce::NOR)
 				is_inverter = true;
 		  }
@@ -1854,7 +1854,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    ivl_assert(*this, tmp_out.pin_count() == ff_aset.pin_count());
 
 	    for (unsigned pin = 0 ; pin < tmp_out.pin_count() ; pin += 1) {
-		  Nexus*rst_nex = tmp_out.pin(pin).nexus();
+		  const Nexus*rst_nex = tmp_out.pin(pin).nexus();
 
 		  if (!all_bits_driven(tmp_masks[pin])) {
 			cerr << get_fileline() << ": sorry: Not all bits of '"
@@ -2034,7 +2034,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 
 	/* Get the input set from the substatement. This will be used
 	   to figure out which of the probes is the clock. */
-      NexusSet*statement_input = statement_ -> nex_input();
+      const NexusSet*statement_input = statement_ -> nex_input();
 
 	/* Search for a clock input. The clock input is the edge event
 	   that is not also an input to the substatement. */
@@ -2209,7 +2209,7 @@ bool NetProcTop::synth_sync(Design*des)
 class synth2_f	: public functor_t {
 
     public:
-      void process(Design*, NetProcTop*);
+      void process(Design*, NetProcTop*) override;
 
     private:
 };

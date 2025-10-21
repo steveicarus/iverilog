@@ -1,7 +1,7 @@
 #ifndef IVL_PScope_H
 #define IVL_PScope_H
 /*
- * Copyright (c) 2008-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -198,7 +198,7 @@ class PScope : public LexicalScope {
 	// modules. Scopes for tasks and functions point to their
 	// containing module.
       explicit PScope(perm_string name, LexicalScope*parent =0);
-      virtual ~PScope();
+      virtual ~PScope() override;
 
       perm_string pscope_name() const { return name_; }
 
@@ -233,7 +233,7 @@ class PScopeExtra : public PScope {
 
     public:
       explicit PScopeExtra(perm_string, LexicalScope*parent =0);
-      ~PScopeExtra();
+      ~PScopeExtra() override;
 
 	/* Task definitions within this module */
       std::map<perm_string,PTask*> tasks;

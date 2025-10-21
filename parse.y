@@ -439,7 +439,7 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 	      // are variables. Unlike the other port types, which are nets in
 	      // that case.
 	    if (net_type == NetNet::IMPLICIT) {
-		  if (vector_type_t*dtype = dynamic_cast<vector_type_t*> (data_type)) {
+		  if (const vector_type_t*dtype = dynamic_cast<vector_type_t*> (data_type)) {
 			if (!dtype->implicit_flag)
 			      net_type = NetNet::IMPLICIT_REG;
 		  } else if (data_type) {
@@ -4998,7 +4998,7 @@ module_item
    */
   | attribute_list_opt K_inout data_type_or_implicit list_of_port_identifiers ';'
       { NetNet::Type use_type = $3 ? NetNet::IMPLICIT : NetNet::NONE;
-	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
+	if (const vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
 	      if (dtype->implicit_flag)
 		    use_type = NetNet::NONE;
 	}
@@ -5010,7 +5010,7 @@ module_item
 
   | attribute_list_opt K_input data_type_or_implicit list_of_port_identifiers ';'
       { NetNet::Type use_type = $3 ? NetNet::IMPLICIT : NetNet::NONE;
-	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
+	if (const vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
 	      if (dtype->implicit_flag)
 		    use_type = NetNet::NONE;
 	}
@@ -5022,7 +5022,7 @@ module_item
 
   | attribute_list_opt K_output data_type_or_implicit list_of_variable_port_identifiers ';'
       { NetNet::Type use_type = $3 ? NetNet::IMPLICIT : NetNet::NONE;
-	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
+	if (const vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
 	      if (dtype->implicit_flag)
 		    use_type = NetNet::NONE;
 	      else

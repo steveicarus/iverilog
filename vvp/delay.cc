@@ -1082,7 +1082,7 @@ struct __vpiModPath* vpip_make_modpath(vvp_net_t *net)
 #ifdef CHECK_WITH_VALGRIND
       mp_count += 1;
       mp_list = static_cast<struct __vpiModPath **>
-                (realloc(static_cast<void*>(mp_list),
+                (realloc(mp_list,
                  mp_count*sizeof(struct __vpiModPath **)));
       mp_list[mp_count-1] = obj;
 #endif
@@ -1451,7 +1451,7 @@ struct __vpiInterModPath* vpip_make_intermodpath(vvp_net_t *net, vpiPortInfo* po
 #ifdef CHECK_WITH_VALGRIND
       imp_count += 1;
       imp_list = static_cast<struct __vpiInterModPath **>
-                 (realloc(static_cast<void>(imp_list),
+                 (realloc(imp_list,
                   imp_count*sizeof(struct __vpiInterModPath **)));
       imp_list[imp_count-1] = obj;
 #endif

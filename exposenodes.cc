@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2021 Martin Whitaker (icarus@martin-whitaker.me.uk)
+ * Copyright (c) 2016-2025 Martin Whitaker (icarus@martin-whitaker.me.uk)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -47,9 +47,9 @@ struct exposenodes_functor  : public functor_t {
 
       unsigned count;
 
-      virtual void lpm_mux(Design*des, NetMux*obj);
-      virtual void lpm_part_select(Design*des, NetPartSelect*obj);
-      virtual void lpm_substitute(Design*des, NetSubstitute*obj);
+      virtual void lpm_mux(Design*des, NetMux*obj) override;
+      virtual void lpm_part_select(Design*des, NetPartSelect*obj) override;
+      virtual void lpm_substitute(Design*des, NetSubstitute*obj) override;
 };
 
 static bool expose_nexus(Nexus*nex)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -538,7 +538,7 @@ bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 		  cerr << get_fileline() << ": debug: Elaborate nets in "
 		       << "scope " << scope_path(*cur)
 		       << " in generate " << id_number << endl;
-	    flag = elaborate_sig_(des, *cur) & flag;
+	    flag = elaborate_sig_(des, *cur) && flag;
       }
 
       return flag;
@@ -671,7 +671,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 			ivl_assert(*this, ret_type);
 		  }
 	    } else {
-		  netvector_t*tmp = new netvector_t(IVL_VT_LOGIC);
+		  const netvector_t*tmp = new netvector_t(IVL_VT_LOGIC);
 		  ret_type = tmp;
 	    }
 
@@ -970,7 +970,7 @@ bool test_ranges_eeq(const netranges_t&lef, const netranges_t&rig)
 ivl_type_t PWire::elaborate_type(Design*des, NetScope*scope,
 			         const netranges_t &packed_dimensions) const
 {
-      vector_type_t *vec_type = dynamic_cast<vector_type_t*>(set_data_type_.get());
+      const vector_type_t *vec_type = dynamic_cast<vector_type_t*>(set_data_type_.get());
       if (set_data_type_ && !vec_type) {
 	    ivl_assert(*this, packed_dimensions.empty());
 	    return set_data_type_->elaborate_type(des, scope);
@@ -1156,8 +1156,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope)
       }
 
       unsigned nattrib = 0;
-      attrib_list_t*attrib_list = evaluate_attributes(attributes, nattrib,
-						      des, scope);
+      const attrib_list_t*attrib_list = evaluate_attributes(attributes, nattrib,
+                                                            des, scope);
 
 	/* If the net type is supply0 or supply1, replace it
 	   with a simple wire with a pulldown/pullup with supply

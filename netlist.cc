@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1013,7 +1013,7 @@ NetProcTop::~NetProcTop()
       bool flag = false;
       for (unsigned idx = 0 ;  idx < nex_set.size() ;  idx += 1) {
 
-	    NetNet*net = nex_set[idx].lnk.nexus()->pick_any_net();
+	    const NetNet*net = nex_set[idx].lnk.nexus()->pick_any_net();
 	    if (net->peek_lref() > 0) {
 		  cerr << get_fileline() << ": warning: '" << net->name()
 		       << "' is driven by more than one process." << endl;
@@ -3070,7 +3070,7 @@ static void check_if_logic_l_value(const NetAssignBase *base,
       const NetAssign_*lval = base->l_val(0);
       if (! lval) return;
 
-      NetNet*sig = lval->sig();
+      const NetNet*sig = lval->sig();
       if (! sig) return;
 
       if ((sig->data_type() != IVL_VT_BOOL) &&
@@ -3451,7 +3451,7 @@ bool NetScope::check_synth(ivl_process_type_t pr_type,
 {
       bool result = false;
 	// Skip local events/signals
-      for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_) {
+      for (const NetEvent*cur = events_ ;  cur ;  cur = cur->snext_) {
 	    if (cur->local_flag()) continue;
 	    cerr << cur->get_fileline() << ": warning: An event ("
 	         << cur->name() << ") cannot be synthesized "

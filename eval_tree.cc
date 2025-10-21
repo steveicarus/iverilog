@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -153,8 +153,8 @@ NetExpr* NetEBAdd::eval_tree()
 	// example, the expression (a + 2) - 1 can be rewritten as a + 1.
 
       NetEBAdd*se = dynamic_cast<NetEBAdd*>(left_);
-      NetEConst*lc = se? dynamic_cast<NetEConst*>(se->right_) : NULL;
-      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      const NetEConst*lc = se? dynamic_cast<NetEConst*>(se->right_) : NULL;
+      const NetEConst*rc = dynamic_cast<NetEConst*>(right_);
 
       if (lc != 0 && rc != 0) {
 	    ivl_assert(*this, se != 0);
@@ -1194,12 +1194,12 @@ NetEConst* NetEConcat::eval_arguments_(const vector<NetExpr*>&vals,
 NetEConst* NetESelect::eval_tree()
 {
       eval_expr(expr_);
-      NetEConst*expr = dynamic_cast<NetEConst*>(expr_);
+      const NetEConst*expr = dynamic_cast<NetEConst*>(expr_);
 
       long bval = 0;
       if (base_) {
 	    eval_expr(base_);
-	    NetEConst*base = dynamic_cast<NetEConst*>(base_);
+	    const NetEConst*base = dynamic_cast<NetEConst*>(base_);
 
 	    if (base == 0) return 0;
 
@@ -1242,11 +1242,11 @@ NetEConst* NetESelect::eval_tree()
 
 static void print_ternary_cond(NetExpr*expr)
 {
-      if (NetEConst*c = dynamic_cast<NetEConst*>(expr)) {
+      if (const NetEConst*c = dynamic_cast<NetEConst*>(expr)) {
 	    cerr << c->value() << endl;
 	    return;
       }
-      if (NetECReal*c = dynamic_cast<NetECReal*>(expr)) {
+      if (const NetECReal*c = dynamic_cast<NetECReal*>(expr)) {
 	    cerr << c->value() << endl;
 	    return;
       }
@@ -2499,7 +2499,7 @@ NetExpr* NetEUFunc::eval_tree()
             return 0;
       }
 
-      NetFuncDef*def = func_->func_def();
+      const NetFuncDef*def = func_->func_def();
       ivl_assert(*this, def);
 
       vector<NetExpr*>args(parms_.size());

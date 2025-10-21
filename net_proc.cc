@@ -133,7 +133,7 @@ void NetCase::prune()
 
 	      // If the guard expression is not constant, assume
 	      // all bits are needed, so no pruning can be done.
-	    NetEConst*gc = dynamic_cast<NetEConst*>(items_[idx].guard);
+	    const NetEConst*gc = dynamic_cast<NetEConst*>(items_[idx].guard);
 	    if (gc == 0)
 		  return;
 

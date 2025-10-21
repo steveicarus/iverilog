@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -106,8 +106,8 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid, const LineInfo&info)
       connect(cc->pin(2), con->pin(0));
 
 	// Make a NetNet for the NetConst to NetConcat link.
-      netvector_t*tmp_vec = new netvector_t(net->data_type(),
-					    wid - net->vector_width() - 1, 0);
+      const netvector_t*tmp_vec = new netvector_t(net->data_type(),
+                                                  wid - net->vector_width() - 1, 0);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 			      NetNet::WIRE, tmp_vec);
       tmp->set_line(info);
@@ -162,7 +162,7 @@ NetNet*crop_to_width(Design*des, NetNet*net, unsigned wid)
       ps->set_line(*net);
       des->add_node(ps);
 
-      netvector_t*tmp_vec = new netvector_t(net->data_type(), wid-1, 0);
+      const netvector_t*tmp_vec = new netvector_t(net->data_type(), wid-1, 0);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 			      NetNet::WIRE, tmp_vec);
       tmp->set_line(*net);

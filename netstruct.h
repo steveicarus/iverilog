@@ -1,7 +1,7 @@
 #ifndef IVL_netstruct_H
 #define IVL_netstruct_H
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,7 +40,7 @@ class netstruct_t : public LineInfo, public ivl_type_s {
 
     public:
       netstruct_t();
-      ~netstruct_t();
+      ~netstruct_t() override;
 
 	// If this is a union (instead of struct) then this flag is
 	// set. We handle union and struct together because they are
@@ -49,11 +49,11 @@ class netstruct_t : public LineInfo, public ivl_type_s {
       bool union_flag(void) const;
 
       void packed(bool flag);
-      bool packed(void) const;
+      bool packed(void) const override;
 
         // When the struct is accessed as a primary it can be signed or unsigned
       void set_signed(bool flag) { signed_ = flag; }
-      bool get_signed(void) const { return signed_; }
+      bool get_signed(void) const override { return signed_; }
 
 	// Append a new member to the struct/union. This must be done
 	// after the union_flag and packed settings are set. This
@@ -69,16 +69,16 @@ class netstruct_t : public LineInfo, public ivl_type_s {
 
 	// Return the width (in bits) of the packed record, or -1 if
 	// the record is not packed.
-      long packed_width() const;
-      netranges_t slice_dimensions() const;
+      long packed_width() const override;
+      netranges_t slice_dimensions() const override;
 
 	// Return the base type of the packed record, or
 	// IVL_VT_NO_TYPE if the record is not packed.
-      ivl_variable_type_t base_type() const;
+      ivl_variable_type_t base_type() const override;
 
     private:
-      bool test_compatibility(ivl_type_t that) const;
-      bool test_equivalence(ivl_type_t that) const;
+      bool test_compatibility(ivl_type_t that) const override;
+      bool test_equivalence(ivl_type_t that) const override;
 
     private:
       bool union_;

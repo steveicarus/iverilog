@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -58,9 +58,9 @@ attrib_list_t* evaluate_attributes(const map<perm_string,PExpr*>&att,
 		  if (!tmp)
 			continue;
 
-		  if (NetEConst *ce = dynamic_cast<NetEConst*>(tmp)) {
+		  if (const NetEConst *ce = dynamic_cast<NetEConst*>(tmp)) {
 			table[idx].val = ce->value();
-		  } else if (NetECReal *cer = dynamic_cast<NetECReal*>(tmp)) {
+		  } else if (const NetECReal *cer = dynamic_cast<NetECReal*>(tmp)) {
 			table[idx].val = verinum(cer->value().as_long());
 		  } else {
 			cerr << exp->get_fileline() << ": error: ``"

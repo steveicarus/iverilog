@@ -138,7 +138,7 @@ void parm_to_defparam_list(const string&param)
     unsigned off = param.find('=');
     if (off > param.size()) {
         key = strdup(param.c_str());
-        value = (char*)malloc(1);
+        value = static_cast<char*>(malloc(1));
         *value = '\0';
 
     } else {
@@ -2007,7 +2007,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	      // XXXX
 	    ivl_assert(loc, pins[0]->get_wire_type() == NetNet::REG);
 
-	    PAssign*pa = dynamic_cast<PAssign*>(init_expr);
+	    const PAssign*pa = dynamic_cast<PAssign*>(init_expr);
 	    ivl_assert(*init_expr, pa);
 
 	    const PEIdent*id = dynamic_cast<const PEIdent*>(pa->lval());
@@ -2088,7 +2088,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	      // XXXX
 	    ivl_assert(*init_expr, pins[0]->get_wire_type() == NetNet::REG);
 
-	    PAssign*pa = dynamic_cast<PAssign*>(init_expr);
+	    const PAssign*pa = dynamic_cast<PAssign*>(init_expr);
 	    ivl_assert(*init_expr, pa);
 
 	    const PEIdent*id = dynamic_cast<const PEIdent*>(pa->lval());
@@ -2157,7 +2157,7 @@ static void pform_set_net_range(PWire *wire,
       if (!vec_type)
 	    return;
 
-      list<pform_range_t> *range = vec_type->pdims.get();
+      const list<pform_range_t> *range = vec_type->pdims.get();
       if (range)
 	    wire->set_range(*range, rt);
       wire->set_signed(vec_type->signed_flag);
@@ -2745,7 +2745,7 @@ vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 
       // If this is a non-ansi port declaration and the type is an implicit type
       // this is only a port declaration.
-      vector_type_t*vec_type = dynamic_cast<vector_type_t*>(vtype);
+      const vector_type_t*vec_type = dynamic_cast<vector_type_t*>(vtype);
       if (allow_implicit && (!vtype || (vec_type && vec_type->implicit_flag)))
 	    rt = SR_PORT;
 
@@ -3193,7 +3193,7 @@ void pform_set_port_type(const struct vlltype&li,
 {
       ivl_assert(li, pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
 
-      vector_type_t *vt = dynamic_cast<vector_type_t*> (dt);
+      const vector_type_t *vt = dynamic_cast<vector_type_t*> (dt);
 
       bool have_init_expr = false;
       for (list<pform_port_t>::iterator cur = ports->begin()
@@ -3242,7 +3242,7 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
 	    ivl_assert(li, 0);
       }
 
-      vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type);
+      const vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type);
 
       for (std::vector<PWire*>::iterator it= wires->begin();
 	   it != wires->end() ; ++it) {
@@ -3428,8 +3428,8 @@ int pform_parse(const char*path)
       if (strcmp(path, "-") == 0) {
 	    vl_input = stdin;
       } else if (ivlpp_string) {
-	    char*cmdline = (char*)malloc(strlen(ivlpp_string) +
-					        strlen(path) + 4);
+	    char*cmdline = static_cast<char*>(malloc(strlen(ivlpp_string) +
+	                                             strlen(path) + 4));
 	    strcpy(cmdline, ivlpp_string);
 	    strcat(cmdline, " \"");
 	    strcat(cmdline, path);

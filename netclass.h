@@ -1,7 +1,7 @@
 #ifndef IVL_netclass_H
 #define IVL_netclass_H
 /*
- * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,7 +36,7 @@ class PExpr;
 class netclass_t : public ivl_type_s {
     public:
       netclass_t(perm_string class_name, const netclass_t*super);
-      ~netclass_t();
+      ~netclass_t() override;
 
 	// Set the property of the class during elaboration. Set the
 	// name and type, and return true. If the name is already
@@ -61,7 +61,7 @@ class netclass_t : public ivl_type_s {
 
 	// As an ivl_type_s object, the netclass is always an
 	// ivl_VT_CLASS object.
-      ivl_variable_type_t base_type() const;
+      ivl_variable_type_t base_type() const override;
 
 	// This is the name of the class type
       inline perm_string get_name() const { return name_; }
@@ -114,7 +114,7 @@ class netclass_t : public ivl_type_s {
       void emit_scope(struct target_t*tgt) const;
       bool emit_defs(struct target_t*tgt) const;
 
-      std::ostream& debug_dump(std::ostream&fd) const;
+      std::ostream& debug_dump(std::ostream&fd) const override;
       void dump_scope(std::ostream&fd) const;
 
       const NetExpr* get_parameter(Design *des, perm_string name,
@@ -124,7 +124,7 @@ class netclass_t : public ivl_type_s {
       bool is_virtual() const { return virtual_class_; }
 
     protected:
-      bool test_compatibility(ivl_type_t that) const;
+      bool test_compatibility(ivl_type_t that) const override;
 
     private:
       perm_string name_;

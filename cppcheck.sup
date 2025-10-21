@@ -1,10 +1,10 @@
 // These are correct and are used to find the base (zero) pin.
-thisSubtraction:netlist.h:5244
-thisSubtraction:netlist.h:5253
+thisSubtraction:netlist.h:5311
+thisSubtraction:netlist.h:5320
 
 // This is used when running a debugger
 // debugger_release
-knownConditionTrueFalse:main.cc:921
+knownConditionTrueFalse:main.cc:931
 
 // This are just stubs
 // vpi_control()

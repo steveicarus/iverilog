@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -177,7 +177,7 @@ NetNet* NetEBBits::synthesize(Design*des, NetScope*scope, NetExpr*root)
       rsig = pad_to_width(des, rsig, width, *this);
 
       ivl_assert(*this, lsig->vector_width() == rsig->vector_width());
-      netvector_t*osig_vec = new netvector_t(expr_type(), width-1, 0);
+      const netvector_t*osig_vec = new netvector_t(expr_type(), width-1, 0);
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, osig_vec);
       osig->set_line(*this);
@@ -247,7 +247,7 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope, NetExpr*root)
 		  rsig = pad_to_width(des, rsig, width, *this);
       }
 
-      netvector_t*osig_vec = new netvector_t(IVL_VT_LOGIC);
+      const netvector_t*osig_vec = new netvector_t(IVL_VT_LOGIC);
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, osig_vec);
       osig->set_line(*this);
@@ -576,7 +576,7 @@ NetNet* NetEBLogic::synthesize(Design*des, NetScope*scope, NetExpr*root)
       olog->set_line(*this);
       des->add_node(olog);
 
-      netvector_t*osig_tmp = new netvector_t(expr_type());
+      const netvector_t*osig_tmp = new netvector_t(expr_type());
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, osig_tmp);
       osig->set_line(*this);
@@ -618,7 +618,7 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	/* Detect the special case where the shift amount is
 	   constant. Evaluate the shift amount, and simply reconnect
 	   the left operand to the output, but shifted. */
-      if (NetEConst*rcon = dynamic_cast<NetEConst*>(right_)) {
+      if (const NetEConst*rcon = dynamic_cast<NetEConst*>(right_)) {
 	    verinum shift_v = rcon->value();
 	    long shift = shift_v.as_long();
 
@@ -628,7 +628,7 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    if (shift == 0)
 		  return lsig;
 
-	    netvector_t*osig_vec = new netvector_t(expr_type(), expr_width()-1,0);
+	    const netvector_t*osig_vec = new netvector_t(expr_type(), expr_width()-1,0);
 	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::IMPLICIT, osig_vec);
 	    osig->set_line(*this);
@@ -650,7 +650,7 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    psel->set_line(*this);
 	    des->add_node(psel);
 
-	    netvector_t*psig_vec = new netvector_t(expr_type(), part_width-1, 0);
+	    const netvector_t*psig_vec = new netvector_t(expr_type(), part_width-1, 0);
 	    NetNet*psig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::IMPLICIT, psig_vec);
 	    psig->set_line(*this);
@@ -678,8 +678,8 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 					 znum);
 	    des->add_node(zcon);
 
-	    netvector_t*zsig_vec = new netvector_t(osig->data_type(),
-						   znum.len()-1, 0);
+	    const netvector_t*zsig_vec = new netvector_t(osig->data_type(),
+	                                                 znum.len()-1, 0);
 	    NetNet*zsig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, zsig_vec);
 	    zsig->set_line(*this);
@@ -709,7 +709,7 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       if (rsig == 0) return 0;
 
-      netvector_t*osig_vec = new netvector_t(expr_type(), expr_width()-1, 0);
+      const netvector_t*osig_vec = new netvector_t(expr_type(), expr_width()-1, 0);
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, osig_vec);
       osig->set_line(*this);
@@ -966,7 +966,7 @@ NetNet* NetEUBits::synthesize(Design*des, NetScope*scope, NetExpr*root)
       }
 
       unsigned width = isig->vector_width();
-      netvector_t*osig_vec = new netvector_t(expr_type(), width-1, 0);
+      const netvector_t*osig_vec = new netvector_t(expr_type(), width-1, 0);
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, osig_vec);
       osig->set_line(*this);
@@ -1009,8 +1009,8 @@ NetNet* NetEUnary::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    if (expr_->has_sign() == false)
 		  return sub;
 
-	    netvector_t*sig_vec = new netvector_t(sub->data_type(),
-						  sub->vector_width()-1, 0);
+	    const netvector_t*sig_vec = new netvector_t(sub->data_type(),
+	                                                sub->vector_width()-1, 0);
 	    NetNet*sig = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, sig_vec);
 	    sig->set_line(*this);
@@ -1084,7 +1084,7 @@ NetNet* NetEUReduce::synthesize(Design*des, NetScope*scope, NetExpr*root)
       gate->set_line(*this);
       des->add_node(gate);
 
-      netvector_t*osig_vec = new netvector_t(expr_type());
+      const netvector_t*osig_vec = new netvector_t(expr_type());
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, osig_vec);
       osig->set_line(*this);
@@ -1139,7 +1139,7 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 
 	// Detect the special case that there is a base expression and
 	// it is constant. In this case we can generate fixed part selects.
-      if (NetEConst*base_const = dynamic_cast<NetEConst*>(base_)) {
+      if (const NetEConst*base_const = dynamic_cast<NetEConst*>(base_)) {
 	    verinum base_tmp = base_const->value();
 	    unsigned select_width = expr_width();
 
@@ -1194,8 +1194,8 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 	    des->add_node(sel);
 
 	    ivl_assert(*this, select_width > 0);
-	    netvector_t*tmp_vec = new netvector_t(sub->data_type(),
-						  select_width-1, 0);
+	    const netvector_t*tmp_vec = new netvector_t(sub->data_type(),
+	                                                select_width-1, 0);
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, tmp_vec);
 	    tmp->set_line(*this);
@@ -1243,8 +1243,8 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 	    sel->set_line(*this);
 	    des->add_node(sel);
 
-	    netvector_t*tmp_vec = new netvector_t(sub->data_type(),
-						  expr_width()-1, 0);
+	    const netvector_t*tmp_vec = new netvector_t(sub->data_type(),
+	                                                expr_width()-1, 0);
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, tmp_vec);
 	    tmp->local_flag(true);
@@ -1321,7 +1321,7 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 	    con->set_line(*this);
 	    des->add_node(con);
 
-	    netvector_t*tmp_vec = new netvector_t(expr_type(), pad_width-1, 0);
+	    const netvector_t*tmp_vec = new netvector_t(expr_type(), pad_width-1, 0);
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, tmp_vec);
 	    tmp->set_line(*this);
@@ -1376,7 +1376,7 @@ NetNet* NetETernary::synthesize(Design *des, NetScope*scope, NetExpr*root)
       ivl_assert(*this, csig->vector_width() == 1);
 
       unsigned width=expr_width();
-      netvector_t*osig_vec = new netvector_t(expr_type(), width-1, 0);
+      const netvector_t*osig_vec = new netvector_t(expr_type(), width-1, 0);
       NetNet*osig = new NetNet(csig->scope(), path, NetNet::IMPLICIT, osig_vec);
       osig->set_line(*this);
       osig->local_flag(true);
@@ -1421,8 +1421,8 @@ NetNet* NetESignal::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	// If this is a synthesis with a specific value for the
 	// signal, then replace it (here) with a constant value.
       if (net_->scope()==scope && net_->name()==scope->genvar_tmp) {
-	    netvector_t*tmp_vec = new netvector_t(net_->data_type(),
-						  net_->vector_width()-1, 0);
+	    const netvector_t*tmp_vec = new netvector_t(net_->data_type(),
+	                                                net_->vector_width()-1, 0);
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, tmp_vec);
 	    tmp->set_line(*this);
@@ -1452,8 +1452,8 @@ NetNet* NetESignal::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    return tmp;
       }
 
-      netvector_t*tmp_vec = new netvector_t(net_->data_type(),
-					    net_->vector_width()-1, 0);
+      const netvector_t*tmp_vec = new netvector_t(net_->data_type(),
+                                                  net_->vector_width()-1, 0);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 			      NetNet::IMPLICIT, tmp_vec);
       tmp->set_line(*this);
@@ -1462,7 +1462,7 @@ NetNet* NetESignal::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	// For NetExpr objects, the word index is already converted to
 	// a canonical (lsb==0) address. Just use the index directly.
 
-      if (NetEConst*index_co = dynamic_cast<NetEConst*> (word_)) {
+      if (const NetEConst*index_co = dynamic_cast<NetEConst*> (word_)) {
 
 	    long index = index_co->value().as_long();
 	    connect(tmp->pin(0), net_->pin(index));
@@ -1611,8 +1611,8 @@ NetNet* NetEUFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
       des->add_node(net);
 
         /* Create an output signal and connect it to the function. */
-      netvector_t*osig_vec = new netvector_t(result_sig_->expr_type(),
-					     result_sig_->vector_width()-1, 0);
+      const netvector_t*osig_vec = new netvector_t(result_sig_->expr_type(),
+                                                   result_sig_->vector_width()-1, 0);
       NetNet*osig = new NetNet(scope_, scope_->local_symbol(), NetNet::WIRE,
                                osig_vec);
       osig->set_line(*this);
@@ -1626,7 +1626,7 @@ NetNet* NetEUFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
       }
 
         /* Connect the pins to the arguments. */
-      NetFuncDef*def = func_->func_def();
+      const NetFuncDef*def = func_->func_def();
       for (unsigned idx = 0; idx < eparms.size(); idx += 1) {
 	    unsigned width = def->port(idx)->vector_width();
 	    NetNet*tmp;

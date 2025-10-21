@@ -105,7 +105,7 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 	   concat operator from most significant to least significant,
 	   which is the order they are given in the concat list. */
 
-      netvector_t*tmp2_vec = new netvector_t(nets[0]->data_type(),width-1,0);
+      const netvector_t*tmp2_vec = new netvector_t(nets[0]->data_type(),width-1,0);
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, tmp2_vec);
 
@@ -237,7 +237,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 	  case index_component_t::SEL_IDX_DO:
 	  case index_component_t::SEL_IDX_UP: {
 		NetExpr*tmp_ex = elab_and_eval(des, scope, index_tail.msb, -1, true);
-		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
+		const NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
 		if (!tmp) {
 		      cerr << get_fileline() << ": error: Indexed part select "
 		              "base expression must be a constant integral value "
@@ -743,7 +743,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  member_select.sel = index_component_t::SEL_BIT;
 		  member_select.msb = new PENumber(new verinum(member_off));
 		  tmp_index.push_back(member_select);
-		  NetExpr*packed_base = collapse_array_indices(des, scope, sig, tmp_index);
+		  const NetExpr*packed_base = collapse_array_indices(des, scope, sig, tmp_index);
 
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
@@ -825,7 +825,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 			widx_flag = true;
 
 		  } else {
-			NetEConst*canon_const = dynamic_cast<NetEConst*>(canon_index);
+			const NetEConst*canon_const = dynamic_cast<NetEConst*>(canon_index);
 			ivl_assert(*this, canon_const);
 
 			widx = canon_const->value().as_long();
@@ -967,8 +967,8 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		       << " wid=" << subnet_wid <<"]"
 		       << endl;
 
-	    netvector_t*tmp2_vec = new netvector_t(sig->data_type(),
-						   subnet_wid-1,0);
+	    const netvector_t*tmp2_vec = new netvector_t(sig->data_type(),
+	                                                 subnet_wid-1,0);
 	    NetNet*subsig = new NetNet(sig->scope(),
 				       sig->scope()->local_symbol(),
 				       NetNet::WIRE, tmp2_vec);
@@ -1114,7 +1114,7 @@ NetNet* PEIdent::elaborate_subport(Design*des, NetScope*scope) const
       unsigned swid = abs(midx - lidx) + 1;
       ivl_assert(*this, swid > 0 && swid < sig->vector_width());
 
-      netvector_t*tmp2_vec = new netvector_t(sig->data_type(),swid-1,0);
+      const netvector_t*tmp2_vec = new netvector_t(sig->data_type(),swid-1,0);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 			      NetNet::WIRE, tmp2_vec);
       tmp->port_type(sig->port_type());

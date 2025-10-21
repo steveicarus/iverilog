@@ -218,7 +218,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		    // There is an explicit value. elaborate/evaluate
 		    // the value and assign it to the enumeration name.
 		  NetExpr*val = elab_and_eval(des, scope, cur->parm, -1);
-		  NetEConst*val_const = dynamic_cast<NetEConst*> (val);
+		  const NetEConst*val_const = dynamic_cast<NetEConst*> (val);
 		  if (val_const == 0) {
 			cerr << use_enum->get_fileline()
 			     << ": error: Enumeration expression for "
@@ -241,7 +241,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		  }
 		    // If this is a literal constant and it has a defined
 		    // width then the width must match the enumeration width.
-		  if (PENumber *tmp = dynamic_cast<PENumber*>(cur->parm)) {
+		  if (const PENumber *tmp = dynamic_cast<PENumber*>(cur->parm)) {
 			if (tmp->value().has_len() &&
 			    (tmp->value().len() != enum_width)) {
 			      cerr << use_enum->get_fileline()
@@ -706,7 +706,7 @@ class generate_schemes_work_item_t : public elaborator_work_item_t {
       : elaborator_work_item_t(des__), scope_(scope), mod_(mod)
       { }
 
-      void elaborate_runrun()
+      void elaborate_runrun() override
       {
 	    if (debug_scopes)
 		  cerr << mod_->get_fileline() << ": debug: "
@@ -965,7 +965,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	// use) the genvar itself, so we can evaluate this expression
 	// the same way any other parameter value is evaluated.
       NetExpr*init_ex = elab_and_eval(des, container, loop_init, -1, true);
-      NetEConst*init = dynamic_cast<NetEConst*> (init_ex);
+      const NetEConst*init = dynamic_cast<NetEConst*> (init_ex);
       if (init == 0) {
 	    cerr << get_fileline() << ": error: "
 	            "Cannot evaluate generate \"loop\" initialization "
@@ -991,7 +991,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
       container->genvar_tmp = loop_index;
       container->genvar_tmp_val = genvar;
       NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1, true);
-      NetEConst*test = dynamic_cast<NetEConst*>(test_ex);
+      const NetEConst*test = dynamic_cast<NetEConst*>(test_ex);
       if (test == 0) {
 	    cerr << get_fileline() << ": error: Cannot evaluate generate \"loop\" "
 		    "conditional expression: " << *loop_test << endl;
@@ -1123,7 +1123,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else_flag)
 {
       NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1, true);
-      NetEConst*test = dynamic_cast<NetEConst*> (test_ex);
+      const NetEConst*test = dynamic_cast<NetEConst*> (test_ex);
       if (test == 0) {
 	    cerr << get_fileline() << ": error: Cannot evaluate genvar"
 		 << " conditional expression: " << *loop_test << endl;
@@ -1380,9 +1380,9 @@ class delayed_elaborate_scope_mod_instances : public elaborator_work_item_t {
 					    NetScope*sc)
       : elaborator_work_item_t(des__), obj_(obj), mod_(mod), sc_(sc)
       { }
-      ~delayed_elaborate_scope_mod_instances() { }
+      ~delayed_elaborate_scope_mod_instances() override { }
 
-      virtual void elaborate_runrun();
+      virtual void elaborate_runrun() override;
 
     private:
       const PGModule*obj_;
@@ -1751,7 +1751,7 @@ void PCase::elaborate_scope(Design*des, NetScope*scope) const
       for (unsigned idx = 0 ;  idx < (*items_).size() ;  idx += 1) {
 	    ivl_assert(*this, (*items_)[idx]);
 
-	    if (Statement*sp = (*items_)[idx]->stat)
+	    if (const Statement*sp = (*items_)[idx]->stat)
 		  sp -> elaborate_scope(des, scope);
       }
 }

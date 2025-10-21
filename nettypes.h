@@ -1,7 +1,7 @@
 #ifndef IVL_nettypes_H
 #define IVL_nettypes_H
 /*
- * Copyright (c) 2012-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -80,13 +80,13 @@ class netarray_t : public ivl_type_s {
 
     public:
       inline explicit netarray_t(ivl_type_t etype) : element_type_(etype) { }
-      ~netarray_t();
+      ~netarray_t() override;
 
     public:
 	// Some virtual methods have a common implementation for arrays.
 
 	// The base_type() for arrays is the base_Typeof the element.
-      ivl_variable_type_t base_type() const;
+      ivl_variable_type_t base_type() const override;
 
     public:
       inline ivl_type_t element_type() const { return element_type_; }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -122,7 +122,7 @@ int build_library_index(const char*path, bool key_case_sensitive)
 	/* Scan the director for files. check each file name to see if
 	   it has one of the configured suffixes. If it does, then use
 	   the root of the name as the key and index the file name. */
-      while (struct dirent*de = readdir(dir)) {
+      while (const struct dirent*de = readdir(dir)) {
 	    unsigned namsiz = strlen(de->d_name);
 	    char*key = 0;
 

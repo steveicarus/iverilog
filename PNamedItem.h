@@ -1,7 +1,7 @@
 #ifndef IVL_PNamedItem_H
 #define IVL_PNamedItem_H
 /*
- * Copyright (c) 2019 Martin Whitaker (icarus@martin-whitaker.me.uk)
+ * Copyright (c) 2019-2025 Martin Whitaker (icarus@martin-whitaker.me.uk)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,7 +34,7 @@ class PNamedItem : virtual public LineInfo {
                         INSTANCE };
 
       explicit PNamedItem();
-      virtual ~PNamedItem();
+      virtual ~PNamedItem() override;
 
       virtual SymbolType symbol_type() const;
 };
@@ -49,9 +49,9 @@ class PGenvar : public PNamedItem {
 
     public:
       explicit PGenvar();
-      virtual ~PGenvar();
+      virtual ~PGenvar() override;
 
-      SymbolType symbol_type() const;
+      SymbolType symbol_type() const override;
 };
 
 #endif /* IVL_PNamedItem_H */

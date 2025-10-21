@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,8 +34,8 @@ using namespace std;
 
 NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 {
-      netvector_t*zero_vec = new netvector_t(sig->data_type(),
-					     sig->vector_width()-1, 0);
+      const netvector_t*zero_vec = new netvector_t(sig->data_type(),
+                                                   sig->vector_width()-1, 0);
       NetNet*zero_net = new NetNet(scope, scope->local_symbol(),
 				   NetNet::WIRE, zero_vec);
       zero_net->set_line(*sig);
@@ -68,8 +68,8 @@ NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
       connect(zero_net->pin(0), adder->pin_DataA());
       connect(adder->pin_DataB(), sig->pin(0));
 
-      netvector_t*tmp_vec = new netvector_t(sig->data_type(),
-					    sig->vector_width()-1, 0);
+      const netvector_t*tmp_vec = new netvector_t(sig->data_type(),
+                                                  sig->vector_width()-1, 0);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 			      NetNet::WIRE, tmp_vec);
       tmp->set_line(*sig);
@@ -85,8 +85,8 @@ NetNet* cast_to_int2(Design*des, NetScope*scope, NetNet*src, unsigned wid)
       if (src->data_type() == IVL_VT_BOOL)
 	    return src;
 
-      netvector_t*tmp_vec = new netvector_t(IVL_VT_BOOL, wid-1, 0,
-					    src->get_signed());
+      const netvector_t*tmp_vec = new netvector_t(IVL_VT_BOOL, wid-1, 0,
+                                                  src->get_signed());
       NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, tmp_vec);
       tmp->set_line(*src);
       tmp->local_flag(true);
@@ -106,7 +106,7 @@ NetNet* cast_to_int4(Design*des, NetScope*scope, NetNet*src, unsigned wid)
       if (src->data_type() != IVL_VT_REAL)
 	    return src;
 
-      netvector_t*tmp_vec = new netvector_t(IVL_VT_LOGIC, wid-1, 0);
+      const netvector_t*tmp_vec = new netvector_t(IVL_VT_LOGIC, wid-1, 0);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, tmp_vec);
       tmp->set_line(*src);
       tmp->local_flag(true);
@@ -126,7 +126,7 @@ NetNet* cast_to_real(Design*des, NetScope*scope, NetNet*src)
       if (src->data_type() == IVL_VT_REAL)
 	    return src;
 
-      netvector_t*tmp_vec = new netvector_t(IVL_VT_REAL);
+      const netvector_t*tmp_vec = new netvector_t(IVL_VT_REAL);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, tmp_vec);
       tmp->set_line(*src);
       tmp->local_flag(true);
@@ -514,7 +514,7 @@ void indices_to_expressions(Design*des, NetScope*scope,
 
 	      // Track if we detect any non-constant expressions
 	      // here. This may allow for a special case.
-	    NetEConst*word_const = dynamic_cast<NetEConst*> (word_index);
+	    const NetEConst*word_const = dynamic_cast<NetEConst*> (word_index);
 	    if (word_const == 0)
 		  flags.variable = true;
 	    else if (!word_const->value().is_defined())
@@ -631,7 +631,7 @@ NetExpr* normalize_variable_unpacked(const LineInfo&loc, const netranges_t&dims,
 
 	      // Now generate the math to calculate the canonical address.
 	    NetExpr*tmp_scaled = 0;
-	    if (NetEConst*tmp_const = dynamic_cast<NetEConst*> (tmp)) {
+	    if (const NetEConst*tmp_const = dynamic_cast<NetEConst*> (tmp)) {
 		    // Special case: the index is constant, so this
 		    // iteration can be replaced with a constant
 		    // expression.
@@ -748,7 +748,7 @@ static NetNet* make_const_net(Design*des, NetScope*scope, verinum val)
       NetConst*res = new NetConst(scope, scope->local_symbol(), val);
       des->add_node(res);
 
-      netvector_t*sig_vec = new netvector_t(IVL_VT_LOGIC, val.len() - 1, 0);
+      const netvector_t*sig_vec = new netvector_t(IVL_VT_LOGIC, val.len() - 1, 0);
       NetNet*sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, sig_vec);
       sig->local_flag(true);
 
@@ -774,7 +774,7 @@ NetNet* make_const_z(Design*des, NetScope*scope, unsigned long wid)
 NetExpr* condition_reduce(NetExpr*expr)
 {
       if (expr->expr_type() == IVL_VT_REAL) {
-	    if (NetECReal *tmp = dynamic_cast<NetECReal*>(expr)) {
+	    if (const NetECReal *tmp = dynamic_cast<NetECReal*>(expr)) {
 		  verinum::V res;
 		  if (tmp->value().as_double() == 0.0) res = verinum::V0;
 		  else res = verinum::V1;
@@ -1181,12 +1181,12 @@ bool eval_as_long(long&value, const NetExpr*expr)
 
 bool eval_as_double(double&value, NetExpr*expr)
 {
-      if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr) ) {
+      if (const NetEConst*tmp = dynamic_cast<NetEConst*>(expr) ) {
 	    value = tmp->value().as_double();
 	    return true;
       }
 
-      if (NetECReal*rtmp = dynamic_cast<NetECReal*>(expr)) {
+      if (const NetECReal*rtmp = dynamic_cast<NetECReal*>(expr)) {
 	    value = rtmp->value().as_double();
 	    return true;
       }
@@ -1431,7 +1431,7 @@ void collapse_partselect_pv_to_concat(Design*des, NetNet*sig)
       unsigned idx = 0;
       unsigned device_count = 0;
       while (idx < ps_map.size()) {
-	    NetPartSelect*ps_obj = ps_map[idx];
+	    const NetPartSelect*ps_obj = ps_map[idx];
 	    if (ps_obj == 0)
 		  return;
 

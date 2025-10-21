@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -144,9 +144,9 @@ NexusSet* NetESelect::nex_input(bool rem_out, bool always_sens, bool nested_func
       NexusSet*tmp = expr_->nex_input(rem_out, always_sens, nested_func);
       bool const_select = result->size() == 0;
       if (always_sens && const_select) {
-	    if (NetEConst *val = dynamic_cast <NetEConst*> (base_)) {
+	    if (const NetEConst *val = dynamic_cast <NetEConst*> (base_)) {
 		  assert(select_type() == IVL_SEL_OTHER);
-		  if (NetESignal *sig = dynamic_cast<NetESignal*> (expr_)) {
+		  if (const NetESignal *sig = dynamic_cast<NetESignal*> (expr_)) {
 			delete tmp;
 			tmp = sig->nex_input_base(rem_out, always_sens, nested_func,
                                                   val->value().as_unsigned(), expr_width());
@@ -221,7 +221,7 @@ NexusSet* NetESignal::nex_input_base(bool rem_out, bool always_sens, bool nested
                        << net_->unpacked_count() << " words in array '"
                        << name() << "'." << endl;
             }
-	    if (always_sens) if (NetEConst *val = dynamic_cast <NetEConst*> (word_)) {
+	    if (always_sens) if (const NetEConst *val = dynamic_cast <NetEConst*> (word_)) {
 		  const_select = true;
 		  const_word = val->value().as_unsigned();
 	    }
@@ -337,7 +337,7 @@ NexusSet* NetAssignBase::nex_input(bool rem_out, bool always_sens, bool nested_f
 	/* It is possible that the lval_ can have nex_input values. In
 	   particular, index expressions are statement inputs as well,
 	   so should be addressed here. */
-      for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {
+      for (const NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {
 	    NexusSet*tmp = cur->nex_input(rem_out, always_sens, nested_func);
 	    result->add(*tmp);
 	    delete tmp;

@@ -1,7 +1,7 @@
 #ifndef IVL_netarray_H
 #define IVL_netarray_H
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -31,7 +31,7 @@ class netsarray_t : public netarray_t {
 
     public:
       explicit netsarray_t(const netranges_t&packed, ivl_type_t etype);
-      ~netsarray_t();
+      ~netsarray_t() override;
 
     public:
 	// Virtual methods from the ivl_type_s type...
@@ -57,17 +57,17 @@ class netparray_t : public netsarray_t {
 
     public:
       explicit netparray_t(const netranges_t&packed, ivl_type_t etype);
-      ~netparray_t();
+      ~netparray_t() override;
 
     public:
 	// Virtual methods from the ivl_type_s type...
-      bool packed(void) const;
-      long packed_width(void) const;
-      netranges_t slice_dimensions() const;
+      bool packed(void) const override;
+      long packed_width(void) const override;
+      netranges_t slice_dimensions() const override;
 
     private:
-      bool test_compatibility(ivl_type_t that) const;
-      bool test_equivalence(ivl_type_t that) const;
+      bool test_compatibility(ivl_type_t that) const override;
+      bool test_equivalence(ivl_type_t that) const override;
 };
 
 inline netparray_t::netparray_t(const netranges_t&pd, ivl_type_t etype)
@@ -82,14 +82,14 @@ class netuarray_t : public netsarray_t {
 
     public:
       explicit netuarray_t(const netranges_t&packed, ivl_type_t etype);
-      ~netuarray_t();
+      ~netuarray_t() override;
 
     public:
 	// Virtual methods from the ivl_type_s type...
-      netranges_t slice_dimensions() const;
+      netranges_t slice_dimensions() const override;
 
     private:
-      bool test_equivalence(ivl_type_t that) const;
+      bool test_equivalence(ivl_type_t that) const override;
 };
 
 inline netuarray_t::netuarray_t(const netranges_t&pd, ivl_type_t etype)

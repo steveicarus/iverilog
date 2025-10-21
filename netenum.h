@@ -1,7 +1,7 @@
 #ifndef IVL_netenum_H
 #define IVL_netenum_H
 /*
- * Copyright (c) 2010-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,13 +34,13 @@ class netenum_t : public LineInfo, public ivl_type_s {
     public:
       explicit netenum_t(ivl_type_t base_type, size_t name_count,
 			 bool integer_flag);
-      ~netenum_t();
+      ~netenum_t() override;
 
-      virtual ivl_variable_type_t base_type() const;
-      virtual bool packed() const;
-      virtual long packed_width() const;
-      netranges_t slice_dimensions() const;
-      bool get_signed() const;
+      virtual ivl_variable_type_t base_type() const override;
+      virtual bool packed() const override;
+      virtual long packed_width() const override;
+      netranges_t slice_dimensions() const override;
+      bool get_signed() const override;
       bool get_isint() const;
 
 	// The size() is the number of enumeration literals.

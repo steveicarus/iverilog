@@ -1,7 +1,7 @@
 #ifndef IVL_netdarray_H
 #define IVL_netdarray_H
 /*
- * Copyright (c) 2012-2015 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,15 +26,15 @@ class netdarray_t : public netarray_t {
 
     public:
       explicit netdarray_t(ivl_type_t vec);
-      ~netdarray_t();
+      ~netdarray_t() override;
 
 	// This is the "base_type()" virtual method of the
 	// nettype_base_t. The ivl_target api expects this to return
 	// IVL_VT_DARRAY for dynamic arrays?
-      ivl_variable_type_t base_type() const;
+      ivl_variable_type_t base_type() const override;
 
 	// A dynamic array may have a type that is signed.
-      inline bool get_signed() const { return element_type()->get_signed(); }
+      inline bool get_signed() const override { return element_type()->get_signed(); }
 
 	// This is the base_type() of the element of the array. We
 	// need this in some cases in order to get the base type of
@@ -45,11 +45,11 @@ class netdarray_t : public netarray_t {
 	// element. Strictly speaking it's not necessary.
       inline unsigned long element_width(void) const { return element_type()->packed_width(); }
 
-      std::ostream& debug_dump(std::ostream&) const;
+      std::ostream& debug_dump(std::ostream&) const override;
 
     private:
-      bool test_compatibility(ivl_type_t that) const;
-      bool test_equivalence(ivl_type_t that) const;
+      bool test_compatibility(ivl_type_t that) const override;
+      bool test_equivalence(ivl_type_t that) const override;
 };
 
 #endif /* IVL_netdarray_H */

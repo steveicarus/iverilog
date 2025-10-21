@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -563,7 +563,7 @@ string verinum::as_string() const
       string res;
       for (unsigned idx = nbits_ ;  idx > 0 ;  idx -= 8) {
 	    char char_val = 0;
-	    V*bp = bits_+idx;
+	    const V*bp = bits_+idx;
 
 	    if (*(--bp) == V1) char_val |= 0x80;
 	    if (*(--bp) == V1) char_val |= 0x40;

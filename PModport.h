@@ -1,7 +1,7 @@
 #ifndef IVL_PModport_H
 #define IVL_PModport_H
 /*
- * Copyright (c) 2015-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2015-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,14 +34,14 @@ class PModport : public PNamedItem {
 	// The name is a perm-allocated string. It is the simple name
 	// of the modport, without any scope.
       explicit PModport(perm_string name);
-      ~PModport();
+      ~PModport() override;
 
       perm_string name() const { return name_; }
 
       typedef std::pair <NetNet::PortType,PExpr*> simple_port_t;
       std::map<perm_string,simple_port_t> simple_ports;
 
-      SymbolType symbol_type() const;
+      SymbolType symbol_type() const override;
 
     private:
       perm_string name_;

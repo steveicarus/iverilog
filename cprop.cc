@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,14 +41,14 @@ struct cprop_functor  : public functor_t {
 
       unsigned count;
 
-      virtual void signal(Design*des, NetNet*obj);
-      virtual void lpm_add_sub(Design*des, NetAddSub*obj);
-      virtual void lpm_compare(Design*des, const NetCompare*obj);
-      virtual void lpm_concat(Design*des, NetConcat*obj);
-      virtual void lpm_ff(Design*des, NetFF*obj);
-      virtual void lpm_logic(Design*des, NetLogic*obj);
-      virtual void lpm_mux(Design*des, NetMux*obj);
-      virtual void lpm_part_select(Design*des, NetPartSelect*obj);
+      virtual void signal(Design*des, NetNet*obj) override;
+      virtual void lpm_add_sub(Design*des, NetAddSub*obj) override;
+      virtual void lpm_compare(Design*des, const NetCompare*obj) override;
+      virtual void lpm_concat(Design*des, NetConcat*obj) override;
+      virtual void lpm_ff(Design*des, NetFF*obj) override;
+      virtual void lpm_logic(Design*des, NetLogic*obj) override;
+      virtual void lpm_mux(Design*des, NetMux*obj) override;
+      virtual void lpm_part_select(Design*des, NetPartSelect*obj) override;
 
       void lpm_compare_eq_(Design*des, const NetCompare*obj);
  };
@@ -90,7 +90,7 @@ void cprop_functor::lpm_concat(Design*des, NetConcat*obj)
       unsigned off = 0;
 
       for (unsigned idx = 1 ; idx < obj->pin_count() ; idx += 1) {
-	    Nexus*nex = obj->pin(idx).nexus();
+	    const Nexus*nex = obj->pin(idx).nexus();
 	      // If there are non-constant drivers, then give up.
 	    if (! nex->drivers_constant())
 		  return;
@@ -156,7 +156,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
       if (obj->sel_width() != 1)
 	    return;
 
-      Nexus*sel_nex = obj->pin_Sel().nexus();
+      const Nexus*sel_nex = obj->pin_Sel().nexus();
 
 	/* If the select input is constant, then replace with a BUFZ */
 
@@ -226,7 +226,7 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
 	    NetPins*tmp_obj = cur->get_obj();
 
 	      // Record if we are driving a 2-state net.
-	    NetNet*net_obj = dynamic_cast<NetNet*> (tmp_obj);
+	    const NetNet*net_obj = dynamic_cast<NetNet*> (tmp_obj);
 	    if (net_obj && (net_obj->data_type() == IVL_VT_BOOL))
 		  output_2_state = true;
 
@@ -355,7 +355,7 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
  */
 struct cprop_dc_functor  : public functor_t {
 
-      virtual void lpm_const(Design*des, NetConst*obj);
+      virtual void lpm_const(Design*des, NetConst*obj) override;
 };
 
 struct nexus_info_s {

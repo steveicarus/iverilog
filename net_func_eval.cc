@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -329,7 +329,7 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 		  return false;
 	    }
 
-	    NetEConst*word_const = dynamic_cast<NetEConst*>(word_result);
+	    const NetEConst*word_const = dynamic_cast<NetEConst*>(word_result);
 	    ivl_assert(loc, word_const);
 
 	    if (!word_const->value().is_defined())
@@ -353,7 +353,7 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 		  return false;
 	    }
 
-	    NetEConst*base_const = dynamic_cast<NetEConst*>(base_result);
+	    const NetEConst*base_const = dynamic_cast<NetEConst*>(base_result);
 	    ivl_assert(loc, base_const);
 
 	    long base = base_const->value().as_long();
@@ -361,10 +361,10 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 	    if (old_lval == 0)
 		  old_lval = make_const_x(lval->sig()->vector_width());
 
-	    NetEConst*lval_const = dynamic_cast<NetEConst*>(old_lval);
+	    const NetEConst*lval_const = dynamic_cast<NetEConst*>(old_lval);
 	    ivl_assert(loc, lval_const);
 	    verinum lval_v = lval_const->value();
-	    NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
+	    const NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
 	    ivl_assert(loc, rval_const);
 	    verinum rval_v = rval_const->value();
 
@@ -392,10 +392,10 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 	    if (op_ == 0) {
 		  rval_result = fix_assign_value(lval->sig(), rval_result);
 	    } else if (dynamic_cast<NetECReal*>(rval_result)) {
-		  NetECReal*lval_const = dynamic_cast<NetECReal*>(old_lval);
+		  const NetECReal*lval_const = dynamic_cast<NetECReal*>(old_lval);
 		  ivl_assert(loc, lval_const);
 		  verireal lval_r = lval_const->value();
-		  NetECReal*rval_const = dynamic_cast<NetECReal*>(rval_result);
+		  const NetECReal*rval_const = dynamic_cast<NetECReal*>(rval_result);
 		  ivl_assert(loc, rval_const);
 		  verireal rval_r = rval_const->value();
 
@@ -404,10 +404,10 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 		  delete rval_result;
 		  rval_result = new NetECReal(lval_r);
 	    } else {
-		  NetEConst*lval_const = dynamic_cast<NetEConst*>(old_lval);
+		  const NetEConst*lval_const = dynamic_cast<NetEConst*>(old_lval);
 		  ivl_assert(loc, lval_const);
 		  verinum lval_v = lval_const->value();
-		  NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
+		  const NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
 		  ivl_assert(loc, rval_const);
 		  verinum rval_v = rval_const->value();
 
@@ -453,7 +453,7 @@ bool NetAssign::evaluate_function(const LineInfo&loc,
 
 	// If we get here, the LHS must be a concatenation, so we
 	// expect the RHS to be a vector value.
-      NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
+      const NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
       ivl_assert(*this, rval_const);
 
       if (op_) {
@@ -557,13 +557,13 @@ bool NetCase::evaluate_function_vect_(const LineInfo&loc,
       if (case_expr == 0)
 	    return false;
 
-      NetEConst*case_const = dynamic_cast<NetEConst*> (case_expr);
+      const NetEConst*case_const = dynamic_cast<NetEConst*> (case_expr);
       ivl_assert(loc, case_const);
 
       verinum case_val = case_const->value();
       delete case_expr;
 
-      NetProc*default_statement = 0;
+      const NetProc*default_statement = 0;
 
       for (unsigned cnt = 0 ; cnt < items_.size() ; cnt += 1) {
             const Item*item = &items_[cnt];
@@ -577,7 +577,7 @@ bool NetCase::evaluate_function_vect_(const LineInfo&loc,
             if (item_expr == 0)
                   return false;
 
-            NetEConst*item_const = dynamic_cast<NetEConst*> (item_expr);
+            const NetEConst*item_const = dynamic_cast<NetEConst*> (item_expr);
             ivl_assert(loc, item_const);
 
             verinum item_val = item_const->value();
@@ -619,13 +619,13 @@ bool NetCase::evaluate_function_real_(const LineInfo&loc,
       if (case_expr == 0)
 	    return false;
 
-      NetECReal*case_const = dynamic_cast<NetECReal*> (case_expr);
+      const NetECReal*case_const = dynamic_cast<NetECReal*> (case_expr);
       ivl_assert(loc, case_const);
 
       double case_val = case_const->value().as_double();
       delete case_expr;
 
-      NetProc*default_statement = 0;
+      const NetProc*default_statement = 0;
 
       for (unsigned cnt = 0 ; cnt < items_.size() ; cnt += 1) {
             const Item*item = &items_[cnt];
@@ -639,7 +639,7 @@ bool NetCase::evaluate_function_real_(const LineInfo&loc,
             if (item_expr == 0)
                   return false;
 
-            NetECReal*item_const = dynamic_cast<NetECReal*> (item_expr);
+            const NetECReal*item_const = dynamic_cast<NetECReal*> (item_expr);
             ivl_assert(loc, item_const);
 
             double item_val = item_const->value().as_double();
@@ -677,7 +677,7 @@ bool NetCondit::evaluate_function(const LineInfo&loc,
 	    return false;
       }
 
-      NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
+      const NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
       ivl_assert(loc, cond_const);
 
       long val = cond_const->value().as_long();
@@ -767,7 +767,7 @@ bool NetDoWhile::evaluate_function(const LineInfo&loc,
 		  break;
 	    }
 
-	    NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
+	    const NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
 	    ivl_assert(loc, cond_const);
 
 	    long val = cond_const->value().as_long();
@@ -843,7 +843,7 @@ bool NetForLoop::evaluate_function(const LineInfo&loc,
 			break;
 		  }
 
-		  NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
+		  const NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
 		  ivl_assert(loc, cond_const);
 
 		  long val = cond_const->value().as_long();
@@ -891,7 +891,7 @@ bool NetRepeat::evaluate_function(const LineInfo&loc,
       NetExpr*count_expr = expr_->evaluate_function(loc, context_map);
       if (count_expr == 0) return false;
 
-      NetEConst*count_const = dynamic_cast<NetEConst*> (count_expr);
+      const NetEConst*count_const = dynamic_cast<NetEConst*> (count_expr);
       ivl_assert(loc, count_const);
 
       long count = count_const->value().as_long();
@@ -948,7 +948,7 @@ bool NetWhile::evaluate_function(const LineInfo&loc,
 		  break;
 	    }
 
-	    NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
+	    const NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
 	    ivl_assert(loc, cond_const);
 
 	    long val = cond_const->value().as_long();
@@ -1047,7 +1047,7 @@ NetExpr* NetESelect::evaluate_function(const LineInfo&loc,
       NetExpr*sub_exp = expr_->evaluate_function(loc, context_map);
       ivl_assert(loc, sub_exp);
 
-      NetEConst*sub_const = dynamic_cast<NetEConst*> (sub_exp);
+      const NetEConst*sub_const = dynamic_cast<NetEConst*> (sub_exp);
       ivl_assert(loc, sub_exp);
 
       verinum sub = sub_const->value();
@@ -1058,7 +1058,7 @@ NetExpr* NetESelect::evaluate_function(const LineInfo&loc,
 	    NetExpr*base_val = base_->evaluate_function(loc, context_map);
 	    ivl_assert(loc, base_val);
 
-	    NetEConst*base_const = dynamic_cast<NetEConst*>(base_val);
+	    const NetEConst*base_const = dynamic_cast<NetEConst*>(base_val);
 	    ivl_assert(loc, base_const);
 
 	    base = base_const->value().as_long();
@@ -1096,14 +1096,14 @@ NetExpr* NetESignal::evaluate_function(const LineInfo&loc,
 	    var = var->ref;
       }
 
-      NetExpr*value = 0;
+      const NetExpr*value = 0;
       if (var->nwords > 0) {
 	    ivl_assert(loc, word_);
 	    NetExpr*word_result = word_->evaluate_function(loc, context_map);
 	    if (word_result == 0)
 		  return 0;
 
-	    NetEConst*word_const = dynamic_cast<NetEConst*>(word_result);
+	    const NetEConst*word_const = dynamic_cast<NetEConst*>(word_result);
 	    ivl_assert(loc, word_const);
 
 	    int word = word_const->value().as_long();
@@ -1202,7 +1202,7 @@ NetExpr* NetESFunc::evaluate_function(const LineInfo&loc,
 NetExpr* NetEUFunc::evaluate_function(const LineInfo&loc,
 				map<perm_string,LocalVar>&context_map) const
 {
-      NetFuncDef*def = func_->func_def();
+      const NetFuncDef*def = func_->func_def();
       ivl_assert(*this, def);
 
       vector<NetExpr*>args(parms_.size());

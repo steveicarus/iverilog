@@ -1,7 +1,7 @@
 #ifndef IVL_pform_types_H
 #define IVL_pform_types_H
 /*
- * Copyright (c) 2007-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -157,7 +157,7 @@ struct pform_tf_port_t {
 class data_type_t : public PNamedItem {
     public:
       inline explicit data_type_t() { }
-      virtual ~data_type_t() = 0;
+      virtual ~data_type_t() override = 0;
       // This method is used by the pform dumper to diagnostic dump. The
       //  pform_dump dumps type type in pform format, and the debug_dump
       // prints the output in a linear form.
@@ -166,7 +166,7 @@ class data_type_t : public PNamedItem {
 
       ivl_type_t elaborate_type(Design*des, NetScope*scope);
 
-      virtual SymbolType symbol_type() const;
+      virtual SymbolType symbol_type() const override;
 
     private:
 	// Elaborate the type to an ivl_type_s type.
@@ -208,10 +208,10 @@ public:
 struct typeref_t : public data_type_t {
       explicit typeref_t(typedef_t *t, PScope *s = 0) : scope(s), type(t) {}
 
-      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
-      NetScope *find_scope(Design* des, NetScope *scope) const;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
+      NetScope *find_scope(Design* des, NetScope *scope) const override;
 
-      std::ostream& debug_dump(std::ostream&out) const;
+      std::ostream& debug_dump(std::ostream&out) const override;
 
 private:
       PScope *scope;
@@ -220,13 +220,13 @@ private:
 
 struct type_parameter_t : data_type_t {
       explicit type_parameter_t(perm_string n) : name(n) { }
-      ivl_type_t elaborate_type_raw(Design *des, NetScope *scope) const;
+      ivl_type_t elaborate_type_raw(Design *des, NetScope *scope) const override;
 
       perm_string name;
 };
 
 struct void_type_t : public data_type_t {
-      virtual void pform_dump(std::ostream&out, unsigned indent) const;
+      virtual void pform_dump(std::ostream&out, unsigned indent) const override;
 };
 
 /*
@@ -239,9 +239,9 @@ struct enum_type_t : public data_type_t {
       explicit enum_type_t(data_type_t *btype) : base_type(btype) { }
 
 	// Return the elaborated version of the type.
-      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
 
-      SymbolType symbol_type() const;
+      SymbolType symbol_type() const override;
 
       std::unique_ptr<data_type_t> base_type;
       std::unique_ptr< std::list<named_pexpr_t> > names;
@@ -254,8 +254,8 @@ struct struct_member_t : public LineInfo {
 };
 
 struct struct_type_t : public data_type_t {
-      virtual void pform_dump(std::ostream&out, unsigned indent) const;
-      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
+      virtual void pform_dump(std::ostream&out, unsigned indent) const override;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
 
       bool packed_flag;
       bool union_flag;
@@ -279,9 +279,9 @@ struct atom_type_t : public data_type_t {
       enum type_code type_code;
       bool signed_flag;
 
-      virtual std::ostream& debug_dump(std::ostream&out) const;
+      virtual std::ostream& debug_dump(std::ostream&out) const override;
 
-      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
 };
 
 extern atom_type_t size_type;
@@ -304,9 +304,9 @@ struct vector_type_t : public data_type_t {
       inline explicit vector_type_t(ivl_variable_type_t bt, bool sf,
 				    std::list<pform_range_t>*pd)
       : base_type(bt), signed_flag(sf), integer_flag(false), implicit_flag(false), pdims(pd) { }
-      virtual void pform_dump(std::ostream&out, unsigned indent) const;
-      virtual std::ostream& debug_dump(std::ostream&out) const;
-      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
+      virtual void pform_dump(std::ostream&out, unsigned indent) const override;
+      virtual std::ostream& debug_dump(std::ostream&out) const override;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
 
       ivl_variable_type_t base_type;
       bool signed_flag;
@@ -334,8 +334,8 @@ struct parray_type_t : public array_base_t {
       inline explicit parray_type_t(data_type_t*btype, std::list<pform_range_t>*pd)
       : array_base_t(btype, pd) { }
 
-      virtual void pform_dump(std::ostream&out, unsigned indent) const;
-      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
+      virtual void pform_dump(std::ostream&out, unsigned indent) const override;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
 };
 
 /*
@@ -346,17 +346,17 @@ struct uarray_type_t : public array_base_t {
       : array_base_t(btype, pd) { }
 
     public:
-      virtual void pform_dump(std::ostream&out, unsigned indent) const;
-      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
+      virtual void pform_dump(std::ostream&out, unsigned indent) const override;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
 };
 
 struct real_type_t : public data_type_t {
  public:
       enum type_t { REAL, SHORTREAL };
       inline explicit real_type_t(type_t tc) : type_code_(tc) { }
-      virtual std::ostream& debug_dump(std::ostream&out) const;
+      virtual std::ostream& debug_dump(std::ostream&out) const override;
 
-      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
 
       inline type_t type_code() const { return type_code_; }
 
@@ -366,16 +366,16 @@ struct real_type_t : public data_type_t {
 
 struct string_type_t : public data_type_t {
       inline explicit string_type_t() { }
-      ~string_type_t();
+      ~string_type_t() override;
 
-      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
 };
 
 struct class_type_t : public data_type_t {
 
       inline explicit class_type_t(perm_string n) : name(n) { }
 
-      void pform_dump(std::ostream&out, unsigned indent) const;
+      void pform_dump(std::ostream&out, unsigned indent) const override;
       void pform_dump_init(std::ostream&out, unsigned indent) const;
 
 	// This is the named type that is supposed to be the base
@@ -408,11 +408,11 @@ struct class_type_t : public data_type_t {
 	// without waiting for any constructor.
       std::vector<Statement*> initialize_static;
 
-      ivl_type_t elaborate_type_raw(Design*, NetScope*) const;
+      ivl_type_t elaborate_type_raw(Design*, NetScope*) const override;
 
       perm_string name;
 
-      virtual SymbolType symbol_type() const;
+      virtual SymbolType symbol_type() const override;
 };
 
 ivl_type_t elaborate_array_type(Design *des, NetScope *scope,

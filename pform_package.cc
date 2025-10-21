@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -118,7 +118,7 @@ PPackage *pform_package_importable(PPackage *pkg, perm_string name)
 	if (import_pkg == pkg->explicit_imports.end())
 		return nullptr;
 
-	for (auto &exp : pkg->exports) {
+	for (const auto &exp : pkg->exports) {
 		  // *::* will match all imports, P::* will match all imports
 		  // from a package and P::ID will match a specific identifier
 		  // from a package.

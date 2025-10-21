@@ -251,7 +251,7 @@ void vpip_load_module(const char*name)
 	/* Add the dll to the list so it can be closed when we are done. */
       dll_list_cnt += 1;
       dll_list = static_cast<ivl_dll_t*>
-                 (realloc(static_cast<void *>(dll_list), dll_list_cnt*sizeof(ivl_dll_t)));
+                 (realloc(dll_list, dll_list_cnt*sizeof(ivl_dll_t)));
       dll_list[dll_list_cnt-1] = dll;
 
       vpi_mode_flag = VPI_MODE_REGISTER;

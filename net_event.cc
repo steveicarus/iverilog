@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -73,7 +73,7 @@ const NetScope* NetEvent::scope() const
 unsigned NetEvent::nprobe() const
 {
       unsigned cnt = 0;
-      NetEvProbe*cur = probes_;
+      const NetEvProbe*cur = probes_;
       while (cur) {
 	    cnt += 1;
 	    cur = cur->enext_;
@@ -105,7 +105,7 @@ const NetEvProbe* NetEvent::probe(unsigned idx) const
 unsigned NetEvent::ntrig() const
 {
       unsigned cnt = 0;
-      NetEvTrig*cur = trig_;
+      const NetEvTrig*cur = trig_;
       while (cur) {
 	    cnt += 1;
 	    cur = cur->enext_;
@@ -198,7 +198,7 @@ void NetEvent::find_similar_event(list<NetEvent*>&event_list)
                   continue;
 
 	    unsigned tcnt = 0;
-	    for (NetEvProbe*cur = tmp->probes_ ; cur ; cur = cur->enext_)
+	    for (const NetEvProbe*cur = tmp->probes_ ; cur ; cur = cur->enext_)
 		  tcnt += 1;
 
 	    if (tcnt == probe_count)

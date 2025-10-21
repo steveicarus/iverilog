@@ -1,7 +1,7 @@
 #ifndef IVL_PPackage_H
 #define IVL_PPackage_H
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -36,7 +36,7 @@ class PPackage : public PScopeExtra, public LineInfo {
 
     public:
       explicit PPackage (perm_string name, LexicalScope*parent);
-      ~PPackage();
+      ~PPackage() override;
 
       bool elaborate_scope(Design*des, NetScope*scope);
       bool elaborate_sig(Design*des, NetScope*scope) const;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -132,8 +132,8 @@ static NetExpr* make_delay_nets(Design*des, NetScope*scope, NetExpr*expr)
 
 static NetExpr* calc_decay_time(NetExpr *rise, NetExpr *fall)
 {
-      NetEConst *c_rise = dynamic_cast<NetEConst*>(rise);
-      NetEConst *c_fall = dynamic_cast<NetEConst*>(fall);
+      const NetEConst *c_rise = dynamic_cast<NetEConst*>(rise);
+      const NetEConst *c_fall = dynamic_cast<NetEConst*>(fall);
       if (c_rise && c_fall) {
 	    if (c_rise->value() < c_fall->value()) return rise;
 	    else return fall;

@@ -1,7 +1,7 @@
 #ifndef IVL_netvector_H
 #define IVL_netvector_H
 /*
- * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,29 +37,29 @@ class netvector_t : public ivl_type_s {
 	// Special case: scalar object--no packed dimensions at all.
       explicit netvector_t(ivl_variable_type_t type);
 
-      ~netvector_t();
+      ~netvector_t() override;
 
 	// Vectors can be interpreted as signed or unsigned when
 	// handled as vectors.
       inline void set_signed(bool flag) { signed_ = flag; }
-      inline bool get_signed(void) const { return signed_; }
+      inline bool get_signed(void) const override { return signed_; }
 
       inline void set_isint(bool flag) { isint_ = flag; }
       inline bool get_isint(void) const { return isint_; }
 
-      inline bool get_scalar(void) const { return packed_dims_.empty(); }
+      inline bool get_scalar(void) const override { return packed_dims_.empty(); }
 
       void set_implicit(bool implicit) { implicit_ = implicit; }
       bool get_implicit() const { return implicit_; }
 
-      ivl_variable_type_t base_type() const;
+      ivl_variable_type_t base_type() const override;
       const netranges_t&packed_dims() const;
 
-      bool packed(void) const;
-      long packed_width() const;
-      netranges_t slice_dimensions() const;
+      bool packed(void) const override;
+      long packed_width() const override;
+      netranges_t slice_dimensions() const override;
 
-      std::ostream& debug_dump(std::ostream&) const;
+      std::ostream& debug_dump(std::ostream&) const override;
 
     public:
 	// Some commonly used predefined types
@@ -78,8 +78,8 @@ class netvector_t : public ivl_type_s {
       static const netvector_t*integer_type(bool is_signed = true);
 
     private:
-      bool test_compatibility(ivl_type_t that) const;
-      bool test_equivalence(ivl_type_t that) const;
+      bool test_compatibility(ivl_type_t that) const override;
+      bool test_equivalence(ivl_type_t that) const override;
 
     private:
       netranges_t packed_dims_;

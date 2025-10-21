@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -391,7 +391,7 @@ void NetBlock::emit_recurse(struct target_t*tgt) const
       if (last_ == 0)
 	    return;
 
-      NetProc*cur = last_;
+      const NetProc*cur = last_;
       do {
 	    cur = cur->next_;
 	    cur->emit_proc(tgt);
@@ -467,7 +467,7 @@ void NetScope::emit_scope(struct target_t*tgt) const
 
       tgt->scope(this);
 
-      for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_)
+      for (const NetEvent*cur = events_ ;  cur ;  cur = cur->snext_)
 	    tgt->event(cur);
 
       for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
@@ -566,7 +566,7 @@ int Design::emit(struct target_t*tgt) const
 	// emit nodes
       bool nodes_rc = true;
       if (nodes_) {
-	    NetNode*cur = nodes_->node_next_;
+	    const NetNode*cur = nodes_->node_next_;
 	    do {
 		  nodes_rc = nodes_rc && cur->emit_node(tgt);
 		  cur = cur->node_next_;
@@ -575,7 +575,7 @@ int Design::emit(struct target_t*tgt) const
 
 
       bool branches_rc = true;
-      for (NetBranch*cur = branches_ ; cur ; cur = cur->next_) {
+      for (const NetBranch*cur = branches_ ; cur ; cur = cur->next_) {
 	    branches_rc = tgt->branch(cur) && branches_rc;
       }
 

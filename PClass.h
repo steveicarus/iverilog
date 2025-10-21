@@ -1,7 +1,7 @@
 #ifndef IVL_PClass_H
 #define IVL_PClass_H
 /*
- * Copyright (c) 2012-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,11 +36,11 @@ class PClass : public PScopeExtra, public PNamedItem {
 
     public:
       explicit PClass (perm_string name, LexicalScope*parent);
-      ~PClass();
+      ~PClass() override;
 
       void dump(std::ostream&out, unsigned indent) const;
 
-      SymbolType symbol_type() const;
+      SymbolType symbol_type() const override;
 
     public:
       class_type_t*type;

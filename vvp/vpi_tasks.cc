@@ -581,7 +581,7 @@ static struct __vpiUserSystf* allocate_def(void)
       }
 
       def_table = static_cast<struct __vpiUserSystf**>
-                  (realloc(static_cast<void *>(def_table),
+                  (realloc(def_table,
                    (def_count+1)*sizeof(struct __vpiUserSystf*)));
 
       def_table[def_count] = new __vpiUserSystf;
@@ -708,7 +708,7 @@ static void add_vpi_call_error(vpi_call_error_type type, const char *name,
                                long file_idx, long lineno)
 {
       vpi_call_error_lst = static_cast<vpi_call_error_p>
-                           (realloc(static_cast<void *>(vpi_call_error_lst),
+                           (realloc(vpi_call_error_lst,
                                     (vpi_call_error_num + 1) *
                                     sizeof(vpi_call_error_s)));
       vpi_call_error_lst[vpi_call_error_num].type = type;

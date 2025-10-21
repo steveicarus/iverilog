@@ -177,7 +177,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       symbol_search(this, des, scope, path_, lexical_pos_, &sr);
 
       NetNet *reg = sr.net;
-      pform_name_t &member_path = sr.path_tail;
+      const pform_name_t &member_path = sr.path_tail;
 
 	/* The l-value must be a variable. If not, then give up and
 	   print a useful error message. */
@@ -475,7 +475,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 
       if ((reg->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
 	    ivl_assert(*this, reg->coerced_to_uwire());
-	    NetEConst*canon_const = dynamic_cast<NetEConst*>(canon_index);
+	    const NetEConst*canon_const = dynamic_cast<NetEConst*>(canon_index);
 	    if (!canon_const || reg->test_part_driven(reg->vector_width() - 1, 0,
 						      canon_const->value().as_long())) {
 		  report_mixed_assignment_conflict_("array word");
@@ -556,7 +556,7 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
            return false;
       }
 
-      if (NetEConst*index_con = dynamic_cast<NetEConst*> (mux)) {
+      if (const NetEConst*index_con = dynamic_cast<NetEConst*> (mux)) {
 	      // The index has a constant defined value.
 	    if (index_con->value().is_defined()) {
 		  lsb = index_con->value().as_long();
@@ -901,7 +901,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 
 	// Handle the special case that the base is constant. For this
 	// case we can reduce the expression.
-      if (NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
+      if (const NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
 	      // For the undefined case just let the constant pass and
 	      // we will handle it in the code generator.
 	    if (base_c->value().is_defined()) {

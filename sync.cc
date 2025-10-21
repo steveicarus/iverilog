@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,7 +40,7 @@ bool NetEvWait::is_synchronous()
 		  return false;
 
 	    for (unsigned pdx = 0 ;  pdx < ev->nprobe() ;  pdx += 1) {
-		  NetEvProbe*pr = ev->probe(pdx);
+		  const NetEvProbe*pr = ev->probe(pdx);
 
 		    /* No level sensitive clocks. */
 		  if (pr->edge() == NetEvProbe::ANYEDGE)

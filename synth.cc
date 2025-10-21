@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2017 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,10 +41,10 @@ class do_expr  : public proc_match_t {
       Design*des_;
       NetScope*scope_;
 
-      virtual int assign(NetAssign*);
-      virtual int assign_nb(NetAssignNB*);
-      virtual int event_wait(NetEvWait*);
-      virtual int condit(NetCondit*);
+      virtual int assign(NetAssign*) override;
+      virtual int assign_nb(NetAssignNB*) override;
+      virtual int event_wait(NetEvWait*) override;
+      virtual int condit(NetCondit*) override;
 };
 
 
@@ -114,7 +114,7 @@ class synth_f  : public functor_t {
 
     public:
       synth_f() { top_ = NULL; }
-      void process(Design*, NetProcTop*);
+      void process(Design*, NetProcTop*) override;
 
     private:
       void proc_always_(Design*);

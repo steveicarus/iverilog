@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -290,7 +290,7 @@ unsigned NetAssignBase::l_val_count() const
 unsigned NetAssignBase::lwidth() const
 {
       unsigned sum = 0;
-      for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more)
+      for (const NetAssign_*cur = lval_ ;  cur ;  cur = cur->more)
 	    sum += cur->lwidth();
       return sum;
 }

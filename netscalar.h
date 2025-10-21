@@ -1,7 +1,7 @@
 #ifndef IVL_netscalar_H
 #define IVL_netscalar_H
 /*
- * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,13 +25,13 @@ class netreal_t : public ivl_type_s {
 
     public:
       inline explicit netreal_t() { }
-      ~netreal_t();
+      ~netreal_t() override;
 
-      ivl_variable_type_t base_type() const;
-      bool get_signed() const { return true; }
-      bool get_scalar() const { return true; }
+      ivl_variable_type_t base_type() const override;
+      bool get_signed() const override { return true; }
+      bool get_scalar() const override { return true; }
 
-      std::ostream& debug_dump(std::ostream&) const;
+      std::ostream& debug_dump(std::ostream&) const override;
 
     public:
       static netreal_t type_real;
@@ -42,11 +42,11 @@ class netstring_t : public ivl_type_s {
 
     public:
       inline explicit netstring_t() { }
-      ~netstring_t();
+      ~netstring_t() override;
 
-      ivl_variable_type_t base_type() const;
+      ivl_variable_type_t base_type() const override;
 
-      std::ostream& debug_dump(std::ostream&) const;
+      std::ostream& debug_dump(std::ostream&) const override;
 
     public:
       static netstring_t type_string;

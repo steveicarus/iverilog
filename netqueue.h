@@ -1,7 +1,7 @@
 #ifndef IVL__netqueue_H
 #define IVL__netqueue_H
 /*
- * Copyright (c) 2014-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2014-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,16 +31,16 @@ class netqueue_t : public netdarray_t {
 
     public:
       explicit netqueue_t(ivl_type_t vec, long max_idx);
-      ~netqueue_t();
+      ~netqueue_t() override;
 
 	// This is the "base_type()" virtual method of the
 	// nettype_base_t. The ivl_target api expects this to return
 	// IVL_VT_QUEUE for queues.
-      ivl_variable_type_t base_type() const;
+      ivl_variable_type_t base_type() const override;
 
       long max_idx(void) const { return max_idx_; }
 
-      std::ostream& debug_dump(std::ostream&) const;
+      std::ostream& debug_dump(std::ostream&) const override;
 
     private:
       long max_idx_;

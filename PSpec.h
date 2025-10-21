@@ -1,7 +1,7 @@
 #ifndef IVL_PSpec_H
 #define IVL_PSpec_H
 /*
- * Copyright (c) 2006-2014 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2006-2025 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -60,7 +60,7 @@ class PSpecPath  : public LineInfo {
       PSpecPath(const std::list<perm_string> &src_list,
 	        const std::list<perm_string> &dst_list,
 		char polarity, bool full_flag);
-      ~PSpecPath();
+      ~PSpecPath() override;
 
       void elaborate(class Design*des, class NetScope*scope) const;
 
