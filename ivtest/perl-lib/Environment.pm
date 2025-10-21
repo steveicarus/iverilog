@@ -5,7 +5,7 @@
 package Environment;
 
 use strict;
-use warnings;
+#use warnings;
 
 our $VERSION = '1.03';
 
@@ -109,19 +109,19 @@ sub get_ivl_version {
 sub run_program {
     my ($cmd, $log_mode, $log_file) = @_;
 
-    my $pid = fork();
-    if (!defined($pid)) {
-        die("couldn't spawn new process\n");
-    } elsif ($pid == 0) {
-        if ($log_mode) {
-            open(STDOUT, $log_mode, $log_file) or die("couldn't open log file '$log_file'\n");
-            open(STDERR, '>&STDOUT');
-        }
-        exec($cmd);
+    my $ret;
+    if ($log_mode) {
+        open(OLDOUT, '>&STDOUT');
+        open(OLDERR, '>&STDERR');
+        open(STDOUT, $log_mode, $log_file) or die("couldn't open log file '$log_file'\n");
+        open(STDERR, '>&STDOUT');
+        $ret = system($cmd);
+        open(STDOUT, '>&OLDOUT');
+        open(STDERR, '>&OLDERR');
     } else {
-        waitpid($pid, 0);
-        $?; # return the child's exit status
+        $ret = system($cmd);
     }
+    $ret;
 }
 
 1;  # Module loaded OK
