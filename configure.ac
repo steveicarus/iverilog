@@ -21,7 +21,6 @@ AC_PROG_CXX
 AC_PROG_RANLIB
 AC_CHECK_TOOL(LD, ld, false)
 AC_CHECK_TOOL(AR, ar, false)
-AC_CHECK_TOOL(DLLTOOL, dlltool, false)
 AC_CHECK_TOOL(STRIP, strip, true)
 AC_CHECK_TOOL(WINDRES,windres,false)
 AC_CHECK_PROGS(XGPERF,gperf,none)
@@ -178,13 +177,21 @@ AC_SUBST(HAVE_LIBBZ2)
 AC_FUNC_ALLOCA
 AC_FUNC_FSEEKO
 
-# Package Options
+# Feature Options
 # ---------------
 
 # Build VVP as a library and stub
 AC_ARG_ENABLE([libvvp],
     [AS_HELP_STRING([--enable-libvvp], [build VVP as a shared library])],
     [AC_SUBST(LIBVVP, yes)],[])
+
+AC_ARG_ENABLE([libveriuser],
+    [AS_HELP_STRING([--enable-libveriuser], [include support for PLI 1 (deprecated)])],
+    [AC_SUBST(LIBVERIUSER, yes)],
+    [AC_SUBST(LIBVERIUSER, no)])
+
+# Package Options
+# ---------------
 
 # valgrind checks
 AC_ARG_WITH([valgrind], [AS_HELP_STRING([--with-valgrind],[Add valgrind hooks])],

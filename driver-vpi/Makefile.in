@@ -84,6 +84,11 @@ config.h: $(srcdir)/config.h.in Makefile
 	    -e 's;@IVLCFLAGS@;$(CFLAGS);' \
 	    -e 's;@IVLCXXFLAGS@;$(CXXFLAGS);' \
 	    -e 's;@SHARED@;@shared@;' $< > $@
+ifeq (@LIBVERIUSER@,yes)
+	sed -i 's;@VPILIBS@;-lveriuser$(suffix) -lvpi$(suffix);' $@
+else
+	sed -i 's;@VPILIBS@;-lvpi$(suffix);' $@
+endif
 
 # Windows specific...
 res.rc: $(srcdir)/res.rc.in ../version.exe

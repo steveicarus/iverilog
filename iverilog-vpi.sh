@@ -29,7 +29,11 @@ SUFFIX=@SUFFIX@
 # These are used for linking...
 LD=$CC
 LDFLAGS="@IVCTARGETFLAGS@ @SHARED@ -L@LIBDIR@"
-LDLIBS="-lveriuser$SUFFIX -lvpi$SUFFIX"
+if [ x@ENABLE_PLI1@ = xyes ] ; then
+    LDLIBS="-lveriuser$SUFFIX -lvpi$SUFFIX"
+else
+    LDLIBS="-lvpi$SUFFIX"
+fi
 
 CCSRC=
 CXSRC=

@@ -4,7 +4,7 @@
 #
 # This script is based on code with the following Copyright.
 #
-# Copyright (c) 1999-2024 Guy Hutchison (ghutchis@pacbell.net)
+# Copyright (c) 1999-2025 Guy Hutchison (ghutchis@pacbell.net)
 #
 #    This source code is free software; you can redistribute it
 #    and/or modify it in source code form under the terms of the GNU
@@ -126,9 +126,9 @@ sub execute_regression {
         $cmd .= $testtype{$tname} eq "CN" ? " -t null" : " -t vlog95";
         $cmd .= " -pfileline=1 -pspacing=4" if ($testtype{$tname} ne "CN");
         $cmd .= " -D__ICARUS_UNSIZED__ $args{$tname}";
-        $cmd .= " ./$srcpath{$tname}/$tname.v > log/$tname.log 2>&1";
+        $cmd .= " ./$srcpath{$tname}/$tname.v";
 #        print "$cmd\n";
-        if (system("$cmd")) {
+        if (run_program($cmd, '>', "log/$tname.log")) {
             if ($testtype{$tname} eq "CE") {
                 # Check if the system command core dumped!
                 if ($? >> 8 & 128) {
@@ -186,9 +186,9 @@ sub execute_regression {
         $args{$tname} =~ s/-gverilog-ams//g;
         $cmd = "iverilog$sfx -o vsim $gen_flag $args{$tname}";
         $cmd .= " -s $testmod{$tname}" if ($testmod{$tname} ne "");
-        $cmd .= " vlog95.v >> log/$tname.log 2>&1";
+        $cmd .= " vlog95.v";
 #        print "$cmd\n";
-        if ($pass_type == 0 and system("$cmd")) {
+        if ($pass_type == 0 and run_program($cmd, '>>', "log/$tname.log")) {
             if ($testtype{$tname} eq "TE") {
                 # Check if the system command core dumped!
                 if ($? >> 8 & 128) {
@@ -205,9 +205,9 @@ sub execute_regression {
             }
         }
 
-        $cmd = "vvp$sfx vsim $plargs{$tname} >> log/$tname.log 2>&1";
+        $cmd = "vvp$sfx vsim $plargs{$tname}";
 #        print "$cmd\n";
-        if ($pass_type == 0 and system("$cmd")) {
+        if ($pass_type == 0 and run_program($cmd, '>>', "log/$tname.log")) {
             if ($testtype{$tname} eq "RE") {
                 # Check if the system command core dumped!
                 if ($? >> 8 & 128) {
@@ -275,7 +275,7 @@ sub execute_regression {
 
     } continue {
         if ($tname ne "") {
-            system("rm -f ./vlog95.v ./vsim") and
+            run_program("rm -f ./vlog95.v ./vsim") and
                 die "Error: failed to remove temporary file.\n";
         }
     }

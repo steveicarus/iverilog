@@ -37,10 +37,16 @@ exec_prefix = @exec_prefix@
 srcdir = @srcdir@
 datarootdir = @datarootdir@
 
-SUBDIRS = ivlpp vhdlpp vvp vpi libveriuser cadpli tgt-null tgt-stub tgt-vvp \
+SUBDIRS = ivlpp vhdlpp vvp vpi tgt-null tgt-stub tgt-vvp \
           tgt-vhdl tgt-vlog95 tgt-pcb tgt-blif tgt-sizer driver
 # Only run distclean for these directories.
 NOTUSED = tgt-fpga tgt-pal tgt-verilog
+
+ifeq (@LIBVERIUSER@,yes)
+SUBDIRS += libveriuser cadpli
+else
+NOTUSED += libveriuser cadpli
+endif
 
 ifeq (@MINGW32@,yes)
 SUBDIRS += driver-vpi
@@ -75,7 +81,6 @@ BUILDCC = @CC_FOR_BUILD@
 BUILDEXT = @BUILD_EXEEXT@
 CC = @CC@
 CXX = @CXX@
-DLLTOOL = @DLLTOOL@
 INSTALL = @INSTALL@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -214,15 +219,11 @@ config.status: $(srcdir)/configure
 	./config.status
 
 ifeq (@WIN32@,yes)
-# Under Windows (mingw) I need to make the ivl.exe in two steps.
-# The first step makes an ivl.exe that dlltool can use to make an
-# export and import library, and the last link makes a, ivl.exe
-# that really exports the things that the import library imports.
+# Under Windows we need to create an import library to allow the target code
+# generators to access the items exported by ivl.exe. The .def file controls
+# what is visible in the import library.
 ivl@EXEEXT@: $O $(srcdir)/ivl.def
-	$(CXX) -o ivl@EXEEXT@ $O $(dllib) @EXTRALIBS@
-	$(DLLTOOL) --dllname ivl@EXEEXT@ --def $(srcdir)/ivl.def \
-		--output-lib libivl.a --output-exp ivl.exp
-	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@
+	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ -Wl,--out-implib=libivl.a $(srcdir)/ivl.def $O $(dllib) @EXTRALIBS@
 else
 ivl@EXEEXT@: $O
 	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ $O $(dllib)
@@ -233,6 +234,7 @@ all: iverilog-vpi
 
 iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
 	sed -e 's;@SHARED@;@shared@;' -e 's;@PIC@;@PICFLAG@;' \
+	    -e 's;@ENABLE_PLI1@;@LIBVERIUSER@;' \
 	    -e 's;@SUFFIX@;$(suffix);' \
 	    -e 's;@IVCC@;$(CC);' \
 	    -e 's;@IVCXX@;$(CXX);' \
