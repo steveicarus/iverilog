@@ -232,7 +232,7 @@ void vpip_load_module(const char*name)
 #if defined(__MINGW32__) || defined (__CYGWIN__)
       void*function = ivl_dlsym(dll, "vpip_set_callback");
       if (function) {
-            vpip_set_callback_t set_callback = static_cast<vpip_set_callback_t>(function);
+            vpip_set_callback_t set_callback = (vpip_set_callback_t)function;
             if (!set_callback(&vpi_routines, vpip_routines_version)) {
 	          fprintf(stderr, "Failed to link VPI module %s. Try rebuilding it with iverilog-vpi.\n", name);
 	          ivl_dlclose(dll);
