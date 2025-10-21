@@ -253,7 +253,7 @@ bool load_vpi_module(const char*path)
         ivl_dlclose(dll);
         return true;
     }
-    vpip_set_callback_t set_callback = (vpip_set_callback_t)function;
+    vpip_set_callback_t set_callback = reinterpret_cast<vpip_set_callback_t>(function);
     if (!set_callback(&vpi_routines, vpip_routines_version)) {
         cerr << "error: Failed to link '" << path << "'. "
                 "Try rebuilding it with iverilog-vpi." << endl;
