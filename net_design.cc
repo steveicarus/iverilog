@@ -214,7 +214,7 @@ NetScope* Design::find_scope(const hname_t&path) const
       return 0;
 }
 
-static bool is_design_unit(NetScope*scope)
+static bool is_design_unit(const NetScope*scope)
 {
       return (scope->type() == NetScope::MODULE && !scope->nested_module())
 	  || (scope->type() == NetScope::PACKAGE);

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 Lars-Peter Clausen <lars@metafoo.de>
+// SPDX-FileCopyrightText: 2023-2025 Lars-Peter Clausen <lars@metafoo.de>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "PExpr.h"
@@ -62,7 +62,7 @@ std::vector<PExpr*> map_named_args(Design *des,
       return args;
 }
 
-std::vector<PExpr*> map_named_args(Design *des, NetBaseDef *def,
+std::vector<PExpr*> map_named_args(Design *des, const NetBaseDef *def,
 				   const std::vector<named_pexpr_t> &parms,
 				   unsigned int off)
 {

@@ -1,7 +1,7 @@
 #ifndef IVL_pform_H
 #define IVL_pform_H
 /*
- * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -212,7 +212,7 @@ PPackage *pform_find_potential_import(const struct vlltype&loc, LexicalScope*sco
 
 
 extern PExpr* pform_package_ident(const struct vlltype&loc,
-				  PPackage*pkg, pform_name_t*ident);
+				  PPackage*pkg, const pform_name_t*ident);
 
 /*
  * Interface related functions.
@@ -255,13 +255,13 @@ extern PFunction*pform_push_constructor_scope(const struct vlltype&loc);
 extern PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name,
 					  LexicalScope::lifetime_t lifetime);
 
-extern PTask*pform_push_task_scope(const struct vlltype&loc, char*name,
+extern PTask*pform_push_task_scope(const struct vlltype&loc, const char*name,
 				   LexicalScope::lifetime_t lifetime);
 
 extern PFunction*pform_push_function_scope(const struct vlltype&loc, const char*name,
 					   LexicalScope::lifetime_t lifetime);
 
-extern PBlock*pform_push_block_scope(const struct vlltype&loc, char*name,
+extern PBlock*pform_push_block_scope(const struct vlltype&loc, const char*name,
 				     PBlock::BL_TYPE tt);
 
 extern void pform_put_behavior_in_scope(AProcess*proc);
@@ -294,7 +294,7 @@ extern void pform_start_generate_else(const struct vlltype&li);
 extern void pform_start_generate_case(const struct vlltype&lp, PExpr*test);
 extern void pform_start_generate_nblock(const struct vlltype&lp, char*name);
 extern void pform_generate_case_item(const struct vlltype&lp, std::list<PExpr*>*test);
-extern void pform_generate_block_name(char*name);
+extern void pform_generate_block_name(const char*name);
 extern void pform_endgenerate(bool end_conditional);
 
 /*
@@ -342,7 +342,7 @@ extern PForeach* pform_make_foreach(const struct vlltype&loc,
 extern PWire *pform_makewire(const struct vlltype&li,
                              const pform_ident_t&name,
 			     NetNet::Type type,
-			     std::list<pform_range_t> *indices);
+			     const std::list<pform_range_t> *indices);
 
 /* This form handles assignment declarations. */
 
@@ -401,10 +401,10 @@ extern LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 						    bool hig_open, PExpr*hig_expr);
 
 extern void pform_set_parameter(const struct vlltype&loc,
-				perm_string name,
-				bool is_local, bool is_type,
-				data_type_t*data_type, std::list<pform_range_t>*udims,
-				PExpr*expr, LexicalScope::range_t*value_range);
+                                perm_string name,
+                                bool is_local, bool is_type,
+                                data_type_t*data_type, const std::list<pform_range_t>*udims,
+                                PExpr*expr, LexicalScope::range_t*value_range);
 extern void pform_set_specparam(const struct vlltype&loc,
 				 perm_string name,
 				 std::list<pform_range_t>*range,
@@ -520,7 +520,7 @@ extern PExpr* pform_genvar_compressed(const struct vlltype &loc,
  * parses the source file and places all the modules it finds into the
  * mod list. The dump function dumps a module to the output stream.
  */
-extern void pform_dump(std::ostream&out, Module*mod);
+extern void pform_dump(std::ostream&out, const Module*mod);
 
 /* ** pform_discipline.cc
  * Functions for handling the parse of natures and disciplines. These
@@ -554,10 +554,10 @@ extern AContrib*pform_contribution_statement(const struct vlltype&loc,
 					     PExpr*lval, PExpr*rval);
 
 extern PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
-						 char*name, char*n1, char*n2);
+                                                 const char*name, const char*n1, const char*n2);
 
 extern PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
-						 char*name, char*branch);
+                                                 const char*name, const char*branch);
 
 /*
  * Parse configuration file with format <key>=<value>, where key

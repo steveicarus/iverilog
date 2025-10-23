@@ -3271,7 +3271,7 @@ bool NetForever::check_synth(ivl_process_type_t pr_type,
  * structure for synthesis.
  */
 static void print_for_idx_warning(const NetProc*proc, const char*check,
-                                  ivl_process_type_t pr_type, NetNet*idx)
+                                  ivl_process_type_t pr_type, const NetNet*idx)
 {
       cerr << proc->get_fileline() << ": warning: A for statement must use "
               "the index (" << idx->name() << ") in the " << check
@@ -3293,7 +3293,7 @@ static void check_for_const_synth(const NetExpr*expr, const NetProc*proc,
 static void check_for_bin_synth(const NetExpr*left,const NetExpr*right,
                                 const char*str, const char*check,
                                 const NetProc*proc,
-                                ivl_process_type_t pr_type, NetNet*index)
+                                ivl_process_type_t pr_type, const NetNet*index)
 {
       const NetESignal*lsig = dynamic_cast<const NetESignal*>(left);
       const NetESignal*rsig = dynamic_cast<const NetESignal*>(right);
@@ -3327,7 +3327,7 @@ static void print_for_step_warning(const NetProc*proc,
 }
 
 static void print_for_step_warning(const NetProc*proc,
-                                   ivl_process_type_t pr_type, NetNet*idx)
+                                   ivl_process_type_t pr_type, const NetNet*idx)
 {
       cerr << proc->get_fileline() << ": warning: A for statement step must "
               "be an assignment to the index variable ("
@@ -3336,7 +3336,7 @@ static void print_for_step_warning(const NetProc*proc,
 }
 
 static void check_for_bstep_synth(const NetExpr*expr, const NetProc*proc,
-                                  ivl_process_type_t pr_type, NetNet*index)
+                                  ivl_process_type_t pr_type, const NetNet*index)
 {
       if (const NetECast*tmp = dynamic_cast<const NetECast*>(expr)) {
 	    expr = tmp->expr();

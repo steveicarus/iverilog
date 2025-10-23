@@ -606,7 +606,7 @@ PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name,
       return pkg_scope;
 }
 
-PTask* pform_push_task_scope(const struct vlltype&loc, char*name,
+PTask* pform_push_task_scope(const struct vlltype&loc, const char*name,
 			     LexicalScope::lifetime_t lifetime)
 {
       perm_string task_name = lex_strings.make(name);
@@ -677,7 +677,7 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
       return func;
 }
 
-PBlock* pform_push_block_scope(const struct vlltype&loc, char*name,
+PBlock* pform_push_block_scope(const struct vlltype&loc, const char*name,
 			       PBlock::BL_TYPE bt)
 {
       perm_string block_name;
@@ -1678,7 +1678,7 @@ void pform_generate_case_item(const struct vlltype&li, list<PExpr*>*expr_list)
       }
 }
 
-void pform_generate_block_name(char*name)
+void pform_generate_block_name(const char*name)
 {
       assert(pform_cur_generate != 0);
       assert(pform_cur_generate->scope_name == 0);
@@ -2638,7 +2638,7 @@ void pform_module_define_port(const struct vlltype&li,
  * this one to create the wire and stash it.
  */
 PWire *pform_makewire(const vlltype&li, const pform_ident_t&name,
-		      NetNet::Type type, std::list<pform_range_t> *indices)
+		      NetNet::Type type, const std::list<pform_range_t> *indices)
 {
       PWire*cur = pform_get_or_make_wire(li, name, type, NetNet::NOT_A_PORT, SR_NET);
       ivl_assert(li, cur);
@@ -2911,7 +2911,7 @@ static void pform_set_type_parameter(const struct vlltype&loc, perm_string name,
 
 void pform_set_parameter(const struct vlltype&loc,
 			 perm_string name, bool is_local, bool is_type,
-			 data_type_t*data_type, list<pform_range_t>*udims,
+			 data_type_t*data_type, const list<pform_range_t>*udims,
 			 PExpr*expr, LexicalScope::range_t*value_range)
 {
       LexicalScope*scope = lexical_scope;

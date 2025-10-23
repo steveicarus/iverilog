@@ -265,7 +265,7 @@ class PCallTask  : public Statement {
 				     ivl_type_t type,
 				     perm_string method_name,
 				     const char*sys_task_name) const;
-      bool test_task_calls_ok_(Design*des, NetScope*scope) const;
+      bool test_task_calls_ok_(Design*des, const NetScope*scope) const;
 
       PPackage*package_;
       pform_name_t path_;
@@ -463,7 +463,7 @@ class PEventStatement  : public Statement {
       NetProc* elaborate_st(Design*des, NetScope*scope, NetProc*st) const;
 
       NetProc* elaborate_wait(Design*des, NetScope*scope, NetProc*st) const;
-      NetProc* elaborate_wait_fork(Design*des, NetScope*scope) const;
+      NetProc* elaborate_wait_fork(Design*des, const NetScope*scope) const;
 
     private:
       std::vector<PEEvent*>expr_;

@@ -206,7 +206,7 @@ bool PEConcat::is_collapsible_net(Design*des, NetScope*scope,
  * results, which may be the whole vector, or a single bit, or
  * anything in between. The values are in canonical indices.
  */
-bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
+bool PEIdent::eval_part_select_(Design*des, NetScope*scope, const NetNet*sig,
 				long&midx, long&lidx) const
 {
       list<long> prefix_indices;

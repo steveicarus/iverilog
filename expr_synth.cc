@@ -31,7 +31,7 @@
 
 using namespace std;
 
-static NetNet* convert_to_real_const(Design*des, NetScope*scope, NetEConst*expr)
+static NetNet* convert_to_real_const(Design*des, NetScope*scope, const NetEConst*expr)
 {
       verireal vrl(expr->value().as_double());
       NetECReal rlval(vrl);
@@ -53,7 +53,7 @@ static bool process_binary_args(Design*des, NetScope*scope, NetExpr*root,
 	         cases of constants, which can be converted more directly. */
 	    if (left->expr_type() == IVL_VT_REAL) {
 		  lsig = left->synthesize(des, scope, root);
-	    } else if (NetEConst*tmpc = dynamic_cast<NetEConst*> (left)) {
+	    } else if (const NetEConst*tmpc = dynamic_cast<NetEConst*> (left)) {
 		  lsig = convert_to_real_const(des, scope, tmpc);
 	    } else {
 		  NetNet*tmp = left->synthesize(des, scope, root);
@@ -62,7 +62,7 @@ static bool process_binary_args(Design*des, NetScope*scope, NetExpr*root,
 
 	    if (right->expr_type() == IVL_VT_REAL) {
 		  rsig = right->synthesize(des, scope, root);
-	    } else if (NetEConst*tmpc = dynamic_cast<NetEConst*> (right)) {
+	    } else if (const NetEConst*tmpc = dynamic_cast<NetEConst*> (right)) {
 		  rsig = convert_to_real_const(des, scope, tmpc);
 	    } else {
 		  NetNet*tmp = right->synthesize(des, scope, root);
@@ -1483,7 +1483,7 @@ NetNet* NetESignal::synthesize(Design*des, NetScope*scope, NetExpr*root)
       return tmp;
 }
 
-static NetEvWait* make_func_trigger(Design*des, NetScope*scope, NetExpr*root)
+static NetEvWait* make_func_trigger(Design*des, NetScope*scope, const NetExpr*root)
 {
       NetEvWait*trigger = 0;
 

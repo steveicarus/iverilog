@@ -412,7 +412,7 @@ class PEIdent : public PExpr {
 	// the values written to the msb/lsb arguments. If there are
 	// invalid bits (xz) in either expression, then the defined
 	// flag is set to *false*.
-      bool calculate_parts_(Design*, NetScope*, long&msb, long&lsb, bool&defined) const;
+      void calculate_parts_(Design*, NetScope*, long&msb, long&lsb, bool&defined) const;
       NetExpr* calculate_up_do_base_(Design*, NetScope*, bool need_const) const;
 
       bool calculate_up_do_width_(Design*, NetScope*, unsigned long&wid) const;
@@ -426,7 +426,7 @@ class PEIdent : public PExpr {
 	//    [2:0][x]     - BAD
 	//    [y][x]       - BAD
 	// Leave the last index for special handling.
-      bool calculate_packed_indices_(Design*des, NetScope*scope, NetNet*net,
+      bool calculate_packed_indices_(Design*des, NetScope*scope, const NetNet*net,
 				     std::list<long>&prefix_indices) const;
 
     private:
@@ -554,7 +554,7 @@ class PEIdent : public PExpr {
 				     bool var_allowed_in_sv) const;
 
 
-      bool eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
+      bool eval_part_select_(Design*des, NetScope*scope, const NetNet*sig,
 			     long&midx, long&lidx) const;
 };
 
@@ -959,8 +959,8 @@ class PECallFunction : public PExpr {
       NetExpr* elaborate_expr_method_(Design*des, NetScope*scope,
 				      symbol_search_results&search_results)
 				      const;
-      NetExpr* elaborate_expr_method_par_(Design*des, NetScope*scope,
-					  symbol_search_results&search_results)
+      NetExpr* elaborate_expr_method_par_(Design*des, const NetScope*scope,
+					  const symbol_search_results&search_results)
 					  const;
 
 
@@ -972,16 +972,16 @@ class PECallFunction : public PExpr {
       unsigned test_width_sfunc_(Design*des, NetScope*scope,
 			         width_mode_t&mode);
       unsigned test_width_method_(Design*des, NetScope*scope,
-				  symbol_search_results&search_results,
+				  const symbol_search_results&search_results,
 				  width_mode_t&mode);
 
       NetExpr*elaborate_base_(Design*des, NetScope*scope, NetScope*dscope,
 			      unsigned flags) const;
 
       unsigned elaborate_arguments_(Design*des, NetScope*scope,
-				    NetFuncDef*def, bool need_const,
-				    std::vector<NetExpr*>&parms,
-				    unsigned parm_off) const;
+                                    const NetFuncDef*def, bool need_const,
+                                    std::vector<NetExpr*>&parms,
+                                    unsigned parm_off) const;
 };
 
 /*

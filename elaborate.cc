@@ -60,7 +60,7 @@
 using namespace std;
 
 // Implemented in elab_scope.cc
-extern void set_scope_timescale(Design*des, NetScope*scope, PScope*pscope);
+extern void set_scope_timescale(Design*des, NetScope*scope, const PScope*pscope);
 
 void PGate::elaborate(Design*, NetScope*) const
 {
@@ -1203,7 +1203,7 @@ static void isolate_and_connect(Design*des, NetScope*scope, const PGModule*mod,
 
 void elaborate_unpacked_port(Design *des, NetScope *scope, NetNet *port_net,
 			     PExpr *expr, NetNet::PortType port_type,
-			     Module *mod, unsigned int port_idx)
+			     const Module *mod, unsigned int port_idx)
 {
       NetNet *expr_net = elaborate_unpacked_array(des, scope, *expr, port_net,
 						  expr);
@@ -3360,7 +3360,7 @@ NetProc* PChainConstructor::elaborate(Design*des, NetScope*scope) const
       if (NetScope*new_scope = class_super->get_constructor()) {
 
 	    int missing_parms = 0;
-	    NetFuncDef*def = new_scope->func_def();
+	    const NetFuncDef*def = new_scope->func_def();
 	    ivl_assert(*this, def);
 
 	    NetESignal*eres = new NetESignal(var_this);
@@ -4052,7 +4052,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
  * task call is allowed in the current context. If so, return true. If
  * not, print an error message and return false;
  */
-bool PCallTask::test_task_calls_ok_(Design*des, NetScope*scope) const
+bool PCallTask::test_task_calls_ok_(Design*des, const NetScope*scope) const
 {
       if (scope->in_func()) {
 	    cerr << get_fileline() << ": error: Functions cannot enable/call "
@@ -4130,7 +4130,7 @@ NetProc* PCallTask::elaborate_void_function_(Design*des, NetScope*scope,
 NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 					  NetScope*task, NetExpr*use_this) const
 {
-      NetBaseDef*def = 0;
+      const NetBaseDef*def = 0;
       if (task->type() == NetScope::TASK) {
 	    def = task->task_def();
 
@@ -4147,7 +4147,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	    }
 
       } else if (task->type() == NetScope::FUNC) {
-	    NetFuncDef*tmp = task->func_def();
+	    const NetFuncDef*tmp = task->func_def();
 	    if (!tmp->is_void())
 		  return elaborate_non_void_function_(des, scope);
 	    def = tmp;
@@ -5271,7 +5271,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
  *
  *     @(0) <noop>;
  */
-NetProc* PEventStatement::elaborate_wait_fork(Design*des, NetScope*scope) const
+NetProc* PEventStatement::elaborate_wait_fork(Design*des, const NetScope*scope) const
 {
       ivl_assert(*this, scope);
       ivl_assert(*this, expr_.size() == 1);
@@ -6259,7 +6259,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 		  delay_value[idx] = des->scale_to_precision(fn.as_ulong64(),
 		                                             scope);
 
-	    } else if (NetECReal*rcon = dynamic_cast<NetECReal*>(cur)) {
+	    } else if (const NetECReal*rcon = dynamic_cast<NetECReal*>(cur)) {
 		  delay_value[idx] = get_scaled_time_from_real(des, scope,
 		                                               rcon);
 

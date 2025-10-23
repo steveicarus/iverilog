@@ -268,7 +268,7 @@ static std::list<named_pexpr_t>* make_named_number(const struct vlltype &loc,
       return lst;
 }
 
-static long check_enum_seq_value(const YYLTYPE&loc, verinum *arg, bool zero_ok)
+static long check_enum_seq_value(const YYLTYPE&loc, const verinum *arg, bool zero_ok)
 {
       long value = 1;
 	// We can never have an undefined value in an enumeration name
@@ -308,8 +308,8 @@ static void check_end_label(const struct vlltype&loc, const char *type,
       delete[] end;
 }
 
-static void check_for_loop(const struct vlltype&loc, PExpr*init,
-			   PExpr*cond, Statement*step)
+static void check_for_loop(const struct vlltype&loc, const PExpr*init,
+			   const PExpr*cond, const Statement*step)
 {
       if (generation_flag >= GN_VER2012)
 	    return;

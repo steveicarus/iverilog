@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -52,7 +52,7 @@ void Definitions::add_enumeration_set(const enum_type_t*key, netenum_t*enum_set)
       tmp = enum_set;
 }
 
-bool Definitions::add_enumeration_name(netenum_t*enum_set, perm_string name)
+bool Definitions::add_enumeration_name(const netenum_t*enum_set, perm_string name)
 {
       netenum_t::iterator enum_val = enum_set->find_name(name);
       assert(enum_val != enum_set->end_name());
@@ -708,7 +708,7 @@ void NetScope::add_signal_placeholder(PWire*wire)
       signal_placeholders_[wire->basename()] = wire;
 }
 
-void NetScope::rem_signal_placeholder(PWire*wire)
+void NetScope::rem_signal_placeholder(const PWire*wire)
 {
       signal_placeholders_.erase(wire->basename());
 }

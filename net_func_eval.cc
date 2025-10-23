@@ -242,7 +242,7 @@ void NetAssign::eval_func_lval_op_real_(const LineInfo&loc,
 }
 
 void NetAssign::eval_func_lval_op_(const LineInfo&loc,
-				   verinum&lv, verinum&rv) const
+				   verinum&lv, const verinum&rv) const
 {
       unsigned lv_width = lv.len();
       bool lv_sign = lv.has_sign();

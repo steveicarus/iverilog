@@ -1519,7 +1519,7 @@ static NetFuncDef* find_function_definition(Design*des, NetScope*,
 }
 
 unsigned PECallFunction::test_width_method_(Design*, NetScope*,
-					    symbol_search_results&search_results,
+					    const symbol_search_results&search_results,
 					    width_mode_t&)
 {
       if (!gn_system_verilog())
@@ -3024,7 +3024,7 @@ NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*ds
       if (! check_call_matches_definition_(des, dscope))
 	    return 0;
 
-      NetFuncDef*def = dscope->func_def();
+      const NetFuncDef*def = dscope->func_def();
 
       bool need_const = NEED_CONST & flags;
 
@@ -3124,7 +3124,7 @@ NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*ds
  * def->port(0) will be the "this" argument and should be skipped.
  */
 unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
-					      NetFuncDef*def, bool need_const,
+					      const NetFuncDef*def, bool need_const,
 					      vector<NetExpr*>&parms,
 					      unsigned parm_off) const
 {
@@ -3408,7 +3408,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  return 0;
 	    }
 
-	    NetFuncDef*def = method->func_def();
+	    const NetFuncDef*def = method->func_def();
 	    ivl_assert(*this, def);
 
 	    NetNet*res = method->find_signal(method->basename());
@@ -3509,8 +3509,8 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
  * expression of some sort (it's a parameter value) and most methods are
  * stable in the sense that they generate a constant value for a constant input.
  */
-NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, NetScope*scope,
-						    symbol_search_results&search_results)
+NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, const NetScope*scope,
+						    const symbol_search_results&search_results)
 						    const
 {
       ivl_assert(*this, search_results.par_val);
@@ -4047,7 +4047,7 @@ NetExpr* PEFNumber::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
       return tmp;
 }
 
-bool PEIdent::calculate_packed_indices_(Design*des, NetScope*scope, NetNet*net,
+bool PEIdent::calculate_packed_indices_(Design*des, NetScope*scope, const NetNet*net,
 					list<long>&prefix_indices) const
 {
       unsigned dimensions = net->unpacked_dimensions() + net->packed_dimensions();
@@ -4120,7 +4120,7 @@ bool PEIdent::calculate_bits_(Design*des, NetScope*scope,
  * function calculates their values. Note that this method does *not*
  * convert the values to canonical form.
  */
-bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
+void PEIdent::calculate_parts_(Design*des, NetScope*scope,
 			       long&msb, long&lsb, bool&defined) const
 {
       defined = true;
@@ -4173,7 +4173,6 @@ bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
 
       delete msb_ex;
       delete lsb_ex;
-      return true;
 }
 
 bool PEIdent::calculate_up_do_width_(Design*des, NetScope*scope,
@@ -5274,9 +5273,7 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 {
       long msv, lsv;
       bool parts_defined_flag;
-      bool flag = calculate_parts_(des, scope, msv, lsv, parts_defined_flag);
-      if (!flag)
-	    return 0;
+      calculate_parts_(des, scope, msv, lsv, parts_defined_flag);
 
       const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
       ivl_assert(*this, par_ex);
@@ -5851,9 +5848,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 
       long msv, lsv;
       bool parts_defined_flag;
-      bool flag = calculate_parts_(des, scope, msv, lsv, parts_defined_flag);
-      if (!flag)
-	    return 0;
+      calculate_parts_(des, scope, msv, lsv, parts_defined_flag);
 
 	/* But wait... if the part select expressions are not fully
 	   defined, then fall back on the tested width. */
@@ -6722,7 +6717,7 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
       }
 
 
-      NetFuncDef*def = new_scope->func_def();
+      const NetFuncDef*def = new_scope->func_def();
       if (def == 0) {
 	    cerr << get_fileline() << ": internal error: "
 		 << "Scope " << scope_path(new_scope)

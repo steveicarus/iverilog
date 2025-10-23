@@ -271,11 +271,11 @@ extern void indices_to_expressions(Design*des, NetScope*scope,
 				   indices_flags&flags,
 				   std::list<NetExpr*>&indices,std::list<long>&indices_const);
 
-extern NetExpr*normalize_variable_unpacked(const NetNet*net, std::list<long>&indices);
-extern NetExpr*normalize_variable_unpacked(const netsarray_t*net, std::list<long>&indices);
+extern NetExpr*normalize_variable_unpacked(const NetNet*net, const std::list<long>&indices);
+extern NetExpr*normalize_variable_unpacked(const netsarray_t*net, const std::list<long>&indices);
 
-extern NetExpr*normalize_variable_unpacked(const NetNet*net, std::list<NetExpr*>&indices);
-extern NetExpr*normalize_variable_unpacked(const LineInfo&loc, const netsarray_t*net, std::list<NetExpr*>&indices);
+extern NetExpr*normalize_variable_unpacked(const NetNet*net, const std::list<NetExpr*>&indices);
+extern NetExpr*normalize_variable_unpacked(const LineInfo&loc, const netsarray_t*net, const std::list<NetExpr*>&indices);
 
 extern NetExpr*make_canonical_index(Design*des, NetScope*scope,
 				      // loc for error messages
@@ -454,9 +454,9 @@ const_bool const_logical(const NetExpr*expr);
  * When scaling a real value to a time we need to do some standard
  * processing.
  */
-extern uint64_t get_scaled_time_from_real(Design*des,
+extern uint64_t get_scaled_time_from_real(const Design*des,
                                           NetScope*scope,
-                                          NetECReal*val);
+                                          const NetECReal*val);
 
 extern void collapse_partselect_pv_to_concat(Design*des, NetNet*sig);
 
@@ -464,11 +464,11 @@ extern bool evaluate_index_prefix(Design*des, NetScope*scope,
 				  std::list<long>&prefix_indices,
 				  const std::list<index_component_t>&indices);
 
-extern NetExpr*collapse_array_indices(Design*des, NetScope*scope, NetNet*net,
+extern NetExpr*collapse_array_indices(Design*des, NetScope*scope, const NetNet*net,
 				      const std::list<index_component_t>&indices);
 
 extern NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
-				    const LineInfo*loc, NetNet*net,
+				    const LineInfo*loc, const NetNet*net,
 				    const std::list<index_component_t>&indices);
 
 extern void assign_unpacked_with_bufz(Design*des, NetScope*scope,
@@ -481,6 +481,6 @@ extern NetPartSelect* detect_partselect_lval(Link&pin);
  * Print a warning if we find a mixture of default and explicit timescale
  * based delays in the design, since this is likely an error.
  */
-extern void check_for_inconsistent_delays(NetScope*scope);
+extern void check_for_inconsistent_delays(const NetScope*scope);
 
 #endif /* IVL_netmisc_H */

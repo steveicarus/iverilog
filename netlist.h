@@ -125,7 +125,7 @@ class Link {
       DIR get_dir() const;
 
 	// Set the delay for all the drivers to this nexus.
-      void drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay);
+      void drivers_delays(const NetExpr*rise, const NetExpr*fall, const NetExpr*decay);
 
 	// A link has a drive strength for 0 and 1 values. The drive0
 	// strength is for when the link has the value 0, and drive1
@@ -373,7 +373,7 @@ class Nexus {
 
       const char* name() const;
 
-      void drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay);
+      void drivers_delays(const NetExpr*rise, const NetExpr*fall, const NetExpr*decay);
       void drivers_drive(ivl_drive_t d0, ivl_drive_t d1);
 
       Link*first_nlink();
@@ -475,7 +475,7 @@ class NexusSet {
 
 	// Add the nexus/part to the set, if it is not already present.
       void add(Nexus*that, unsigned base, unsigned wid);
-      void add(NexusSet&that);
+      void add(const NexusSet&that);
 
 	// Remove the nexus from the set, if it is present.
       void rem(const NexusSet&that);
@@ -911,7 +911,7 @@ class Definitions {
 	// up this enumeration based on the pform type.
       void add_enumeration_set(const enum_type_t*key, netenum_t*enum_set);
 
-      bool add_enumeration_name(netenum_t*enum_set, perm_string enum_name);
+      bool add_enumeration_name(const netenum_t*enum_set, perm_string enum_name);
 
 	// Look up the enumeration set that was added with the given
 	// key. This is used by enum_type_t::elaborate_type to locate
@@ -1020,7 +1020,7 @@ class NetScope : public Definitions, public Attrib {
 	   when using $bits in a range definition), regardless of the
 	   order in which the signals are elaborated. */
       void add_signal_placeholder(PWire*);
-      void rem_signal_placeholder(PWire*);
+      void rem_signal_placeholder(const PWire*);
       PWire* find_signal_placeholder(perm_string name);
 
 	/* These methods manage signals. The add_ and rem_signal
@@ -3019,7 +3019,7 @@ class NetAssign : public NetAssignBase {
 
     private:
       void eval_func_lval_op_real_(const LineInfo&loc, verireal&lv, const verireal&rv) const;
-      void eval_func_lval_op_(const LineInfo&loc, verinum&lv, verinum&rv) const;
+      void eval_func_lval_op_(const LineInfo&loc, verinum&lv, const verinum&rv) const;
       bool eval_func_lval_(const LineInfo&loc, std::map<perm_string,LocalVar>&ctx,
 			   const NetAssign_*lval, NetExpr*rval_result) const;
 

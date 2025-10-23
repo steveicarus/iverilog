@@ -543,7 +543,7 @@ static void make_strides(const netranges_t&dims, vector<long>&stride)
  * word. If any of the indices are out of bounds, return nil instead
  * of an expression.
  */
-static NetExpr* normalize_variable_unpacked(const netranges_t&dims, list<long>&indices)
+static NetExpr* normalize_variable_unpacked(const netranges_t&dims, const list<long>&indices)
 {
 	// Make strides for each index. The stride is the distance (in
 	// words) to the next element in the canonical array.
@@ -574,19 +574,19 @@ static NetExpr* normalize_variable_unpacked(const netranges_t&dims, list<long>&i
       return canonical_expr;
 }
 
-NetExpr* normalize_variable_unpacked(const NetNet*net, list<long>&indices)
+NetExpr* normalize_variable_unpacked(const NetNet*net, const list<long>&indices)
 {
       const netranges_t&dims = net->unpacked_dims();
       return normalize_variable_unpacked(dims, indices);
 }
 
-NetExpr* normalize_variable_unpacked(const netsarray_t*stype, list<long>&indices)
+NetExpr* normalize_variable_unpacked(const netsarray_t*stype, const list<long>&indices)
 {
       const netranges_t&dims = stype->static_dimensions();
       return normalize_variable_unpacked(dims, indices);
 }
 
-NetExpr* normalize_variable_unpacked(const LineInfo&loc, const netranges_t&dims, list<NetExpr*>&indices)
+NetExpr* normalize_variable_unpacked(const LineInfo&loc, const netranges_t&dims, const list<NetExpr*>&indices)
 {
 	// Make strides for each index. The stride is the distance (in
 	// words) to the next element in the canonical array.
@@ -671,13 +671,13 @@ NetExpr* normalize_variable_unpacked(const LineInfo&loc, const netranges_t&dims,
       return canonical_expr;
 }
 
-NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
+NetExpr* normalize_variable_unpacked(const NetNet*net, const list<NetExpr*>&indices)
 {
       const netranges_t&dims = net->unpacked_dims();
       return normalize_variable_unpacked(*net, dims, indices);
 }
 
-NetExpr* normalize_variable_unpacked(const LineInfo&loc, const netsarray_t*stype, list<NetExpr*>&indices)
+NetExpr* normalize_variable_unpacked(const LineInfo&loc, const netsarray_t*stype, const list<NetExpr*>&indices)
 {
       const netranges_t&dims = stype->static_dimensions();
       return normalize_variable_unpacked(loc, dims, indices);
@@ -1375,7 +1375,7 @@ const_bool const_logical(const NetExpr*expr)
       return C_NON;
 }
 
-uint64_t get_scaled_time_from_real(Design*des, NetScope*scope, NetECReal*val)
+uint64_t get_scaled_time_from_real(const Design*des, NetScope*scope, const NetECReal*val)
 {
       verireal fn = val->value();
 
@@ -1530,7 +1530,7 @@ bool evaluate_index_prefix(Design*des, NetScope*scope,
  * replace the exprs.
  */
 NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
-			     const LineInfo*loc, NetNet*net,
+			     const LineInfo*loc, const NetNet*net,
 			     const list<index_component_t>&indices)
 {
 	// First elaborate all the expressions as far as possible.
@@ -1589,7 +1589,7 @@ NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
  * them to an expression that normalizes the list to a single index
  * expression over a canonical equivalent 1-dimensional array.
  */
-NetExpr*collapse_array_indices(Design*des, NetScope*scope, NetNet*net,
+NetExpr*collapse_array_indices(Design*des, NetScope*scope, const NetNet*net,
 			       const list<index_component_t>&indices)
 {
       list<long>prefix_indices;
@@ -1787,7 +1787,7 @@ NetScope* find_method_containing_scope(const LineInfo&, NetScope*scope)
  * Print a warning if we find a mixture of default and explicit timescale
  * based delays in the design, since this is likely an error.
  */
-void check_for_inconsistent_delays(NetScope*scope)
+void check_for_inconsistent_delays(const NetScope*scope)
 {
       static bool used_implicit_timescale = false;
       static bool used_explicit_timescale = false;

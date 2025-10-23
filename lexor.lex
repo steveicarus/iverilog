@@ -920,7 +920,7 @@ void lex_end_table()
       BEGIN(INITIAL);
 }
 
-static unsigned truncate_to_integer_width(verinum::V*bits, unsigned size)
+static unsigned truncate_to_integer_width(const verinum::V*bits, unsigned size)
 {
       if (size <= integer_width) return size;
 

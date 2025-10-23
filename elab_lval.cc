@@ -254,7 +254,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 				        bool is_force, bool is_cassign,
 					NetNet *reg, ivl_type_t data_type,
-					pform_name_t tail_path) const
+					const pform_name_t tail_path) const
 {
 	// We are processing the tail of a string of names. For
 	// example, the Verilog may be "a.b.c", so we are processing
@@ -761,8 +761,7 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 	// values into msb and lsb.
       long msb, lsb;
       bool parts_defined_flag;
-      bool flag = calculate_parts_(des, scope, msb, lsb, parts_defined_flag);
-      if (!flag) return false;
+      calculate_parts_(des, scope, msb, lsb, parts_defined_flag);
 
       NetNet*reg = lv->sig();
       ivl_assert(*this, reg);

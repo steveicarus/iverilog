@@ -90,8 +90,8 @@ void Statement::elaborate_sig(Design*, NetScope*) const
 {
 }
 
-static void sig_check_data_type(Design*des, NetScope*scope,
-			        PWire *wire, NetNet *sig)
+static void sig_check_data_type(Design*des, const NetScope*scope,
+			        const PWire *wire, NetNet *sig)
 {
       ivl_type_t type = sig->net_type();
 
@@ -141,8 +141,8 @@ static void sig_check_data_type(Design*des, NetScope*scope,
       }
 }
 
-static void sig_check_port_type(Design*des, NetScope*scope,
-			        PWire *wire, NetNet *sig)
+static void sig_check_port_type(Design*des, const NetScope*scope,
+			        const PWire *wire, const NetNet *sig)
 {
       if (sig->port_type() == NetNet::PREF) {
 	    cerr << wire->get_fileline() << ": sorry: "
@@ -460,7 +460,7 @@ bool PGAssign::elaborate_sig(Design*, NetScope*) const
 }
 
 bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
-				  Module*rmod) const
+				  const Module*rmod) const
 {
       bool flag = true;
 

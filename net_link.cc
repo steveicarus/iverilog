@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -164,7 +164,7 @@ Link::DIR Link::get_dir() const
       return dir_;
 }
 
-void Link::drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay)
+void Link::drivers_delays(const NetExpr*rise, const NetExpr*fall, const NetExpr*decay)
 {
       find_nexus_()->drivers_delays(rise, fall, decay);
 }
@@ -358,7 +358,7 @@ bool Nexus::drivers_present() const
       return false;
 }
 
-void Nexus::drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay)
+void Nexus::drivers_delays(const NetExpr*rise, const NetExpr*fall, const NetExpr*decay)
 {
       for (Link*cur = first_nlink() ; cur ; cur = cur->next_nlink()) {
 	    if (cur->get_dir() != Link::OUTPUT)
@@ -600,7 +600,7 @@ void NexusSet::add(Nexus*that, unsigned base, unsigned wid)
       items_.push_back(cur);
 }
 
-void NexusSet::add(NexusSet&that)
+void NexusSet::add(const NexusSet&that)
 {
       for (size_t idx = 0 ;  idx < that.items_.size() ;  idx += 1)
 	    add(that.items_[idx]->lnk.nexus(), that.items_[idx]->base, that.items_[idx]->wid);

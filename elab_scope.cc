@@ -58,7 +58,7 @@
 
 using namespace std;
 
-void set_scope_timescale(Design*des, NetScope*scope, PScope*pscope)
+void set_scope_timescale(Design*des, NetScope*scope, const PScope*pscope)
 {
       scope->time_unit(pscope->time_unit);
       scope->time_precision(pscope->time_precision);

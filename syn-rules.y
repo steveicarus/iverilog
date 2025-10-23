@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -185,9 +185,9 @@ static syn_token_t*ptr_ = 0;
  */
 struct tokenize : public proc_match_t {
       tokenize() { }
-      ~tokenize() { }
+      ~tokenize() override { }
 
-      int assign(NetAssign*dev)
+      int assign(NetAssign*dev) override
       {
 	    syn_token_t*cur;
 	    cur = new syn_token_t;
@@ -202,7 +202,7 @@ struct tokenize : public proc_match_t {
 	    return 0;
       }
 
-      int assign_nb(NetAssignNB*dev)
+      int assign_nb(NetAssignNB*dev) override
       {
 	    syn_token_t*cur;
 	    cur = new syn_token_t;
@@ -217,7 +217,7 @@ struct tokenize : public proc_match_t {
 	    return 0;
       }
 
-      int condit(NetCondit*dev)
+      int condit(NetCondit*dev) override
       {
 	    syn_token_t*cur;
 
@@ -257,7 +257,7 @@ struct tokenize : public proc_match_t {
 	    return 0;
       }
 
-      int event_wait(NetEvWait*dev)
+      int event_wait(NetEvWait*dev) override
       {
 	    syn_token_t*cur;
 
@@ -345,9 +345,9 @@ static int yylex()
 }
 
 struct syn_rules_f  : public functor_t {
-      ~syn_rules_f() { }
+      ~syn_rules_f() override { }
 
-      void process(class Design*, class NetProcTop*top)
+      void process(class Design*, class NetProcTop*top) override
       {
 	      /* If the scope that contains this process as a cell
 		 attribute attached to it, then skip synthesis. */
