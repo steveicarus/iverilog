@@ -77,9 +77,11 @@ jobs:
       fail-fast: false
       matrix:
         include: [
-          { msystem: MINGW64, arch: x86_64 }
+          { msystem: MINGW64, env: x86_64 }
+          { msystem: UCRT64,  env: ucrt-x86_64 }
+          { msystem: CLANG64, env: clang-x86_64 }
         ]
-    name: 🟪 ${{ matrix.msystem}} · ${{ matrix.arch }}
+    name: 🟪 ${{ matrix.msystem}}
     defaults:
       run:
         shell: msys2 {0}
@@ -99,9 +101,8 @@ jobs:
         install: >
           git
           base-devel
-          gperf
           python-pip
-          mingw-w64-${{ matrix.arch }}-toolchain
+          mingw-w64-${{ matrix.env }}-perl
 
     - uses: actions/setup-python@v5
       with:
@@ -110,6 +111,7 @@ jobs:
     - name: Build and check
       run: |
         cd msys2
+        export IVL_CONFIG_OPTIONS="--enable-libveriuser"
         makepkg-mingw --noconfirm --noprogressbar -sCLf
 
     - name: Install
@@ -121,5 +123,5 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.msystem }}-${{ matrix.arch }}
+        name: ${{ matrix.msystem }}
         path: msys2/*.zst
