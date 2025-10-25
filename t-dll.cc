@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -42,14 +42,14 @@ struct dll_target dll_target_obj;
 
 inline ivl_dll_t ivl_dlopen(const char *name)
 {
-      ivl_dll_t res =  (ivl_dll_t) LoadLibrary(name);
+      ivl_dll_t res = static_cast<ivl_dll_t>(LoadLibrary(name));
       return res;
 }
 
 
 inline void * ivl_dlsym(ivl_dll_t dll, const char *nm)
 {
-      return (void*)GetProcAddress((HMODULE)dll, nm);
+      return static_cast<void*>(GetProcAddress((HMODULE)dll, nm));
 }
 
 inline void ivl_dlclose(ivl_dll_t dll)
@@ -419,13 +419,13 @@ void scope_add_logic(ivl_scope_t scope, ivl_net_logic_t net)
 {
       if (scope->nlog_ == 0) {
 	    scope->nlog_ = 1;
-	    scope->log_ = (ivl_net_logic_t*)malloc(sizeof(ivl_net_logic_t));
+	    scope->log_ = static_cast<ivl_net_logic_t*>(malloc(sizeof(ivl_net_logic_t)));
 	    scope->log_[0] = net;
 
       } else {
 	    scope->nlog_ += 1;
-	    scope->log_ = (ivl_net_logic_t*)
-		  realloc(scope->log_, scope->nlog_*sizeof(ivl_net_logic_t));
+	    scope->log_ = static_cast<ivl_net_logic_t*>
+	                  (realloc(scope->log_, scope->nlog_*sizeof(ivl_net_logic_t)));
 	    scope->log_[scope->nlog_-1] = net;
       }
 
@@ -435,13 +435,13 @@ void scope_add_event(ivl_scope_t scope, ivl_event_t net)
 {
       if (scope->nevent_ == 0) {
 	    scope->nevent_ = 1;
-	    scope->event_ = (ivl_event_t*)malloc(sizeof(ivl_event_t));
+	    scope->event_ = static_cast<ivl_event_t*>(malloc(sizeof(ivl_event_t)));
 	    scope->event_[0] = net;
 
       } else {
 	    scope->nevent_ += 1;
-	    scope->event_ = (ivl_event_t*)
-		  realloc(scope->event_, scope->nevent_*sizeof(ivl_event_t));
+	    scope->event_ = static_cast<ivl_event_t*>
+	                    (realloc(scope->event_, scope->nevent_*sizeof(ivl_event_t)));
 	    scope->event_[scope->nevent_-1] = net;
       }
 
@@ -452,15 +452,14 @@ static void scope_add_lpm(ivl_scope_t scope, ivl_lpm_t net)
       if (scope->nlpm_ == 0) {
 	    assert(scope->lpm_ == 0);
 	    scope->nlpm_ = 1;
-	    scope->lpm_ = (ivl_lpm_t*)malloc(sizeof(ivl_lpm_t));
+	    scope->lpm_ = static_cast<ivl_lpm_t*>(malloc(sizeof(ivl_lpm_t)));
 	    scope->lpm_[0] = net;
 
       } else {
 	    assert(scope->lpm_);
 	    scope->nlpm_ += 1;
-	    scope->lpm_   = (ivl_lpm_t*)
-		  realloc(scope->lpm_,
-			  scope->nlpm_*sizeof(ivl_lpm_t));
+	    scope->lpm_   = static_cast<ivl_lpm_t*>
+                            (realloc(scope->lpm_, scope->nlpm_*sizeof(ivl_lpm_t)));
 	    scope->lpm_[scope->nlpm_-1] = net;
       }
 }
@@ -713,7 +712,7 @@ bool dll_target::start_design(const Design*des)
 	    add_root(*cur);
       }
 
-      target_ = (target_design_f)ivl_dlsym(dll_, LU "target_design" TU);
+      target_ = reinterpret_cast<target_design_f>(ivl_dlsym(dll_, LU "target_design" TU));
       if (target_ == 0) {
 	    cerr << dll_path_ << ": error: target_design entry "
 		  "point is missing." << endl;
@@ -955,7 +954,7 @@ void dll_target::event(const NetEvent*net)
 	    }
 
 	    unsigned npins = obj->nany + obj->nneg + obj->npos + obj->nedg;
-	    obj->pins = (ivl_nexus_t*)calloc(npins, sizeof(ivl_nexus_t));
+	    obj->pins = static_cast<ivl_nexus_t*>(calloc(npins, sizeof(ivl_nexus_t)));
 
       } else {
 	    obj->pins  = 0;
@@ -1321,8 +1320,8 @@ ivl_event_t dll_target::make_lpm_trigger(const NetEvWait*net)
             assert(ev->nprobe() == 1);
             const NetEvProbe*pr = ev->probe(0);
             for (unsigned bit = 0; bit < pr->pin_count(); bit += 1) {
-                  ivl_nexus_t nex = (ivl_nexus_t)
-                        pr->pin(bit).nexus()->t_cookie();
+                  ivl_nexus_t nex = static_cast<ivl_nexus_t>
+		                    (pr->pin(bit).nexus()->t_cookie());
                   assert(nex);
                   trigger->pins[bit] = nex;
             }
@@ -1453,7 +1452,7 @@ void dll_target::udp(const NetUDP*net)
       } else {
 	    u = new struct ivl_udp_s;
 	    u->nrows = net->rows();
-	    u->table = (ivl_udp_s::ccharp_t*)malloc((u->nrows+1)*sizeof(char*));
+	    u->table = static_cast<ivl_udp_s::ccharp_t*>(malloc((u->nrows+1)*sizeof(char*)));
 	    u->table[u->nrows] = 0x0;
 	    u->nin = net->nin();
 	    u->sequ = net->is_sequential();
@@ -2397,7 +2396,7 @@ bool dll_target::net_const(const NetConst*net)
 
       } else {
 	    if (obj->width_ >= bits_cnt) {
-		  bits_tmp = (char*)realloc(bits_tmp, obj->width_+1);
+		  bits_tmp = static_cast<char*>(realloc(bits_tmp, obj->width_+1));
 		  bits_cnt = obj->width_+1;
 	    }
 	    bits = bits_tmp;
@@ -2869,7 +2868,8 @@ void dll_target::test_version(const char*target_name)
 	    return;
       }
 
-      target_query_f targ_query = (target_query_f)ivl_dlsym(dll_, LU "target_query" TU);
+      target_query_f targ_query = reinterpret_cast<target_query_f>
+                                  (ivl_dlsym(dll_, LU "target_query" TU));
       if (targ_query == 0) {
 	    cerr << "Target " << target_name
 		 << " has no version hooks." << endl;

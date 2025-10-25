@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,8 +36,8 @@ bool dll_target::process(const NetProcTop*net)
 {
       bool rc_flag = true;
 
-      ivl_process_t obj = (struct ivl_process_s*)
-	    calloc(1, sizeof(struct ivl_process_s));
+      ivl_process_t obj = static_cast<struct ivl_process_s*>
+                          (calloc(1, sizeof(struct ivl_process_s)));
 
       obj->type_ = net->type();
       obj->analog_flag = 0;
@@ -61,7 +61,7 @@ bool dll_target::process(const NetProcTop*net)
 	   statement back. The asserts check these conditions. */
 
       assert(stmt_cur_ == 0);
-      stmt_cur_ = (struct ivl_statement_s*)calloc(1, sizeof*stmt_cur_);
+      stmt_cur_ = static_cast<struct ivl_statement_s*>(calloc(1, sizeof*stmt_cur_));
       rc_flag = net->statement()->emit_proc(this) && rc_flag;
 
       assert(stmt_cur_);
@@ -83,7 +83,7 @@ void dll_target::task_def(const NetScope*net)
       assert(def);
       assert(def->proc());
       assert(stmt_cur_ == 0);
-      stmt_cur_ = (struct ivl_statement_s*)calloc(1, sizeof*stmt_cur_);
+      stmt_cur_ = static_cast<struct ivl_statement_s*>(calloc(1, sizeof*stmt_cur_));
       def->proc()->emit_proc(this);
 
       assert(stmt_cur_);
@@ -107,7 +107,7 @@ bool dll_target::func_def(const NetScope*net)
       assert(def);
       assert(def->proc());
       assert(stmt_cur_ == 0);
-      stmt_cur_ = (struct ivl_statement_s*)calloc(1, sizeof*stmt_cur_);
+      stmt_cur_ = static_cast<struct ivl_statement_s*>(calloc(1, sizeof*stmt_cur_));
       def->proc()->emit_proc(this);
 
       assert(stmt_cur_);
@@ -315,8 +315,8 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
       if (net->nevents() > 0) {
 	    stmt_cur_->u_.assign_.nevent = net->nevents();
 	    if (net->nevents() > 1) {
-		  stmt_cur_->u_.assign_.events = (ivl_event_t*)
-		        calloc(net->nevents(), sizeof(ivl_event_t*));
+		  stmt_cur_->u_.assign_.events = static_cast<ivl_event_t*>
+		                                 (calloc(net->nevents(), sizeof(ivl_event_t*)));
 	    }
 
 	    for (unsigned edx = 0 ;  edx < net->nevents() ;  edx += 1) {
@@ -377,10 +377,9 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 				    break;
 			      }
 
-			      for (unsigned bit = 0; bit < pr->pin_count();
-				   bit += 1) {
-				    ivl_nexus_t nex = (ivl_nexus_t)
-				          pr->pin(bit).nexus()->t_cookie();
+			      for (unsigned bit = 0; bit < pr->pin_count(); bit += 1) {
+				    ivl_nexus_t nex = static_cast<ivl_nexus_t>
+				                      (pr->pin(bit).nexus()->t_cookie());
 				    assert(nex);
 				    ev_tmp->pins[base+bit] = nex;
 			      }
@@ -436,8 +435,8 @@ bool dll_target::proc_block(const NetBlock*net)
 	    break;
       }
       stmt_cur_->u_.block_.nstmt_ = count;
-      stmt_cur_->u_.block_.stmt_ = (struct ivl_statement_s*)
-	    calloc(count, sizeof(struct ivl_statement_s));
+      stmt_cur_->u_.block_.stmt_ = static_cast<struct ivl_statement_s*>
+                                   (calloc(count, sizeof(struct ivl_statement_s)));
 
       if (net->subscope())
 	    stmt_cur_->u_.block_.scope = lookup_scope_(net->subscope());
@@ -566,8 +565,8 @@ bool dll_target::proc_condit(const NetCondit*net)
       FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_CONDIT;
-      stmt_cur_->u_.condit_.stmt_ = (struct ivl_statement_s*)
-	    calloc(2, sizeof(struct ivl_statement_s));
+      stmt_cur_->u_.condit_.stmt_ = static_cast<struct ivl_statement_s*>
+                                    (calloc(2, sizeof(struct ivl_statement_s)));
 
       assert(expr_ == 0);
       net->expr()->expr_scan(this);
@@ -617,8 +616,8 @@ bool dll_target::proc_delay(const NetPDelay*net)
       assert(stmt_cur_->type_ == IVL_ST_NONE);
       FILE_NAME(stmt_cur_, net);
 
-      ivl_statement_t tmp = (struct ivl_statement_s*)
-	    calloc(1, sizeof(struct ivl_statement_s));
+      ivl_statement_t tmp = static_cast<struct ivl_statement_s*>
+                            (calloc(1, sizeof(struct ivl_statement_s)));
 
       if (const NetExpr*expr = net->expr()) {
 
@@ -675,8 +674,8 @@ void dll_target::proc_do_while(const NetDoWhile*net)
       FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_DO_WHILE;
-      stmt_cur_->u_.while_.stmt_ = (struct ivl_statement_s*)
-	    calloc(1, sizeof(struct ivl_statement_s));
+      stmt_cur_->u_.while_.stmt_ = static_cast<struct ivl_statement_s*>
+                                   (calloc(1, sizeof(struct ivl_statement_s)));
 
       assert(expr_ == 0);
       net->expr()->expr_scan(this);
@@ -721,8 +720,8 @@ void dll_target::proc_forever(const NetForever*net)
 
       stmt_cur_->type_ = IVL_ST_FOREVER;
 
-      ivl_statement_t tmp = (struct ivl_statement_s*)
-	    calloc(1, sizeof(struct ivl_statement_s));
+      ivl_statement_t tmp = static_cast<struct ivl_statement_s*>
+                            (calloc(1, sizeof(struct ivl_statement_s)));
 
       ivl_statement_t save_cur_ = stmt_cur_;
       stmt_cur_ = tmp;
@@ -747,7 +746,7 @@ bool dll_target::proc_forloop(const NetForLoop*net)
 
       // Note that the init statement is optional. If it is not present,
       // then the emit_recurse_init will not generate a statement.
-      tmp = (struct ivl_statement_s*)calloc(1, sizeof(struct ivl_statement_s));
+      tmp = static_cast<struct ivl_statement_s*> (calloc(1, sizeof(struct ivl_statement_s)));
       stmt_cur_ = tmp;
       rc = net->emit_recurse_init(this);
       if (stmt_cur_->type_ != IVL_ST_NONE)
@@ -758,13 +757,13 @@ bool dll_target::proc_forloop(const NetForLoop*net)
       }
       res = res && rc;
 
-      tmp = (struct ivl_statement_s*)calloc(1, sizeof(struct ivl_statement_s));
+      tmp = static_cast<struct ivl_statement_s*>(calloc(1, sizeof(struct ivl_statement_s)));
       stmt_cur_ = tmp;
       rc = net->emit_recurse_stmt(this);
       save_cur_->u_.forloop_.stmt = stmt_cur_;
       res = res && rc;
 
-      tmp = (struct ivl_statement_s*)calloc(1, sizeof(struct ivl_statement_s));
+      tmp = static_cast<struct ivl_statement_s*>(calloc(1, sizeof(struct ivl_statement_s)));
       stmt_cur_ = tmp;
       rc = net->emit_recurse_step(this);
       if (stmt_cur_->type_ != IVL_ST_NONE)
@@ -822,8 +821,8 @@ void dll_target::proc_repeat(const NetRepeat*net)
       stmt_cur_->u_.while_.cond_ = expr_;
       expr_ = 0;
 
-      ivl_statement_t tmp = (struct ivl_statement_s*)
-	    calloc(1, sizeof(struct ivl_statement_s));
+      ivl_statement_t tmp = static_cast<struct ivl_statement_s*>
+                            (calloc(1, sizeof(struct ivl_statement_s)));
 
       ivl_statement_t save_cur_ = stmt_cur_;
       stmt_cur_ = tmp;
@@ -846,8 +845,8 @@ void dll_target::proc_stask(const NetSTask*net)
       stmt_cur_->u_.stask_.name_ = net->name();
       stmt_cur_->u_.stask_.sfunc_as_task_ = net->sfunc_as_task();
       stmt_cur_->u_.stask_.nparm_= nparms;
-      stmt_cur_->u_.stask_.parms_= (ivl_expr_t*)
-	    calloc(nparms, sizeof(ivl_expr_t));
+      stmt_cur_->u_.stask_.parms_= static_cast<ivl_expr_t*>
+                                   (calloc(nparms, sizeof(ivl_expr_t)));
 
       for (unsigned idx = 0 ;  idx < nparms ;  idx += 1) {
 	    if (net->parm(idx))
@@ -933,8 +932,8 @@ bool dll_target::proc_wait(const NetEvWait*net)
       FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_WAIT;
-      stmt_cur_->u_.wait_.stmt_ = (struct ivl_statement_s*)
-	    calloc(1, sizeof(struct ivl_statement_s));
+      stmt_cur_->u_.wait_.stmt_ = static_cast<struct ivl_statement_s*>
+                                  (calloc(1, sizeof(struct ivl_statement_s)));
 
       stmt_cur_->u_.wait_.nevent = net->nevents();
 
@@ -951,8 +950,8 @@ bool dll_target::proc_wait(const NetEvWait*net)
 
 	// This event processing code is also in the NB assign above.
       if (net->nevents() > 1) {
-	    stmt_cur_->u_.wait_.events = (ivl_event_t*)
-		  calloc(net->nevents(), sizeof(ivl_event_t*));
+	    stmt_cur_->u_.wait_.events = static_cast<ivl_event_t*>
+	                                 (calloc(net->nevents(), sizeof(ivl_event_t*)));
       }
 
       for (unsigned edx = 0 ;  edx < net->nevents() ;  edx += 1) {
@@ -1013,8 +1012,8 @@ bool dll_target::proc_wait(const NetEvWait*net)
 			}
 
 			for (unsigned bit = 0; bit < pr->pin_count(); bit += 1) {
-			      ivl_nexus_t nex = (ivl_nexus_t)
-				    pr->pin(bit).nexus()->t_cookie();
+			      ivl_nexus_t nex = static_cast<ivl_nexus_t>
+			                        (pr->pin(bit).nexus()->t_cookie());
 			      ivl_assert(*ev, nex);
 			      ev_tmp->pins[base+bit] = nex;
 			}
@@ -1043,8 +1042,8 @@ void dll_target::proc_while(const NetWhile*net)
       FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_WHILE;
-      stmt_cur_->u_.while_.stmt_ = (struct ivl_statement_s*)
-	    calloc(1, sizeof(struct ivl_statement_s));
+      stmt_cur_->u_.while_.stmt_ = static_cast<struct ivl_statement_s*>
+                                   (calloc(1, sizeof(struct ivl_statement_s)));
 
       assert(expr_ == 0);
       net->expr()->expr_scan(this);

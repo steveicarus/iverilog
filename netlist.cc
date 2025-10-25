@@ -3355,7 +3355,7 @@ static void check_for_bstep_synth(const NetExpr*expr, const NetProc*proc,
 }
 
 static void check_for_step_synth(const NetAssign*assign, const NetProc*proc,
-                                 ivl_process_type_t pr_type, NetNet*index)
+                                 ivl_process_type_t pr_type, const NetNet*index)
 {
       if (assign->l_val_count() != 1) {
 	    print_for_step_warning(proc, pr_type);

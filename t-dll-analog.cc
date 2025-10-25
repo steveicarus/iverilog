@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,8 +34,8 @@ bool dll_target::process(const NetAnalogTop*net)
 {
       bool rc_flag = true;
 
-      ivl_process_t obj = (struct ivl_process_s*)
-	    calloc(1, sizeof(struct ivl_process_s));
+      ivl_process_t obj = static_cast<struct ivl_process_s*>
+                          (calloc(1, sizeof(struct ivl_process_s)));
 
       obj->type_ = net->type();
       obj->analog_flag = 1;
@@ -49,7 +49,7 @@ bool dll_target::process(const NetAnalogTop*net)
       obj->attr = fill_in_attributes(net);
 
       assert(stmt_cur_ == 0);
-      stmt_cur_ = (struct ivl_statement_s*)calloc(1, sizeof*stmt_cur_);
+      stmt_cur_ = static_cast<struct ivl_statement_s*>(calloc(1, sizeof*stmt_cur_));
       rc_flag = net->statement()->emit_proc(this) && rc_flag;
 
       assert(stmt_cur_);

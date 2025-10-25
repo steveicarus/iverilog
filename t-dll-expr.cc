@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,14 +57,14 @@ void dll_target::sub_off_from_expr_(long off)
       assert(expr_ != 0);
 
       char*bits;
-      ivl_expr_t tmpc = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      ivl_expr_t tmpc = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
       tmpc->type_   = IVL_EX_NUMBER;
       tmpc->value_  = IVL_VT_VECTOR;
       tmpc->net_type= 0;
       tmpc->width_  = expr_->width_;
       tmpc->signed_ = expr_->signed_;
       tmpc->sized_  = 1;
-      tmpc->u_.number_.bits_ = bits = (char*)malloc(tmpc->width_);
+      tmpc->u_.number_.bits_ = bits = static_cast<char*>(malloc(tmpc->width_));
       for (unsigned idx = 0 ;  idx < tmpc->width_ ;  idx += 1) {
 	    bits[idx] = (off & 1)? '1' : '0';
 	    off >>= 1;
@@ -73,7 +73,7 @@ void dll_target::sub_off_from_expr_(long off)
 	/* Now make the subtracter (x-4 in the above example)
 	   that has as input A the index expression and input B
 	   the constant to subtract. */
-      ivl_expr_t tmps = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      ivl_expr_t tmps = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
       tmps->type_  = IVL_EX_BINARY;
       tmps->value_ = IVL_VT_VECTOR;
       tmps->net_type= 0;
@@ -93,14 +93,14 @@ void dll_target::mul_expr_by_const_(long val)
       assert(expr_ != 0);
 
       char*bits;
-      ivl_expr_t tmpc = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      ivl_expr_t tmpc = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
       tmpc->type_   = IVL_EX_NUMBER;
       tmpc->value_  = IVL_VT_VECTOR;
       tmpc->net_type= 0;
       tmpc->width_  = expr_->width_;
       tmpc->signed_ = expr_->signed_;
       tmpc->sized_  = 1;
-      tmpc->u_.number_.bits_ = bits = (char*)malloc(tmpc->width_);
+      tmpc->u_.number_.bits_ = bits = static_cast<char*>(malloc(tmpc->width_));
       for (unsigned idx = 0 ;  idx < tmpc->width_ ;  idx += 1) {
 	    bits[idx] = (val & 1)? '1' : '0';
 	    val >>= 1;
@@ -109,7 +109,7 @@ void dll_target::mul_expr_by_const_(long val)
 	/* Now make the subtracter (x-4 in the above example)
 	   that has as input A the index expression and input B
 	   the constant to subtract. */
-      ivl_expr_t tmps = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      ivl_expr_t tmps = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
       tmps->type_  = IVL_EX_BINARY;
       tmps->value_ = IVL_VT_VECTOR;
       tmpc->net_type= 0;
@@ -126,7 +126,7 @@ void dll_target::mul_expr_by_const_(long val)
 
 ivl_expr_t dll_target::expr_from_value_(const verinum&val)
 {
-      ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      ivl_expr_t expr = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
 
       unsigned idx;
       char*bits;
@@ -136,7 +136,7 @@ ivl_expr_t dll_target::expr_from_value_(const verinum&val)
       expr->width_= val.len();
       expr->signed_ = val.has_sign()? 1 : 0;
       expr->sized_= 1;
-      expr->u_.number_.bits_ = bits = (char*)malloc(expr->width_ + 1);
+      expr->u_.number_.bits_ = bits = static_cast<char*>(malloc(expr->width_ + 1));
       for (idx = 0 ;  idx < expr->width_ ;  idx += 1)
 	    switch (val.get(idx)) {
 		case verinum::V0:
@@ -164,7 +164,7 @@ void dll_target::expr_access_func(const NetEAccess*net)
 {
       assert(expr_ == 0);
 	// Make a stub Branch Access Function expression node.
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_ = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
       expr_->type_  = IVL_EX_BACCESS;
       expr_->value_ = IVL_VT_REAL;
       expr_->net_type=0;
@@ -180,7 +180,7 @@ void dll_target::expr_access_func(const NetEAccess*net)
 void dll_target::expr_array_pattern(const NetEArrayPattern*net)
 {
       assert(expr_ == 0);
-      ivl_expr_t expr_tmp = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      ivl_expr_t expr_tmp = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
       expr_tmp->type_ = IVL_EX_ARRAY_PATTERN;
       expr_tmp->value_= net->expr_type();
       expr_tmp->net_type = net->net_type();
@@ -213,7 +213,7 @@ void dll_target::expr_binary(const NetEBinary*net)
       net->right()->expr_scan(this);
       ivl_expr_t rght = expr_;
 
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_ = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
 
       expr_->type_ = IVL_EX_BINARY;
       expr_->value_= get_expr_type(net);
@@ -261,7 +261,7 @@ void dll_target::expr_const(const NetEConst*net)
 {
       assert(expr_ == 0);
 
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_ = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
       expr_->value_= net->expr_type();
       expr_->net_type=0;
       FILE_NAME(expr_, net);
@@ -279,7 +279,7 @@ void dll_target::expr_const(const NetEConst*net)
 	    expr_->width_= net->expr_width();
 	    expr_->signed_ = net->has_sign()? 1 : 0;
 	    expr_->sized_= net->has_width()? 1 : 0;
-	    expr_->u_.number_.bits_ = bits = (char*)malloc(expr_->width_);
+	    expr_->u_.number_.bits_ = bits = static_cast<char*>(malloc(expr_->width_));
 	    for (idx = 0 ;  idx < expr_->width_ ;  idx += 1)
 		  switch (val.get(idx)) {
 		      case verinum::V0:
@@ -334,7 +334,7 @@ void dll_target::expr_rparam(const NetECRealParam*net)
 void dll_target::expr_creal(const NetECReal*net)
 {
       assert(expr_ == 0);
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_ = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
       expr_->width_  = net->expr_width();
       expr_->signed_ = 1;
       expr_->sized_  = 1;
@@ -396,7 +396,7 @@ void dll_target::expr_new(const NetENew*net)
       }
 
       assert(expr_ == 0);
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_ = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
       expr_->width_  = net->expr_width();
       expr_->signed_ = 0;
       expr_->sized_  = 1;
@@ -411,7 +411,7 @@ void dll_target::expr_new(const NetENew*net)
 void dll_target::expr_null(const NetENull*net)
 {
       assert(expr_ == 0);
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_ = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
       expr_->width_  = net->expr_width();
       expr_->signed_ = 0;
       expr_->sized_  = 1;
@@ -430,7 +430,7 @@ void dll_target::expr_property(const NetEProperty*net)
 	    expr_ = 0;
       }
       assert(expr_ == 0);
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_ = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
       expr_->width_  = net->expr_width();
       expr_->signed_ = net->has_sign();
       expr_->sized_  = 1;
@@ -447,7 +447,7 @@ void dll_target::expr_event(const NetEEvent*net)
 {
       assert(expr_ == 0);
 
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_ = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
 
       expr_->type_ = IVL_EX_EVENT;
       FILE_NAME(expr_, net);
@@ -472,7 +472,7 @@ void dll_target::expr_scope(const NetEScope*net)
 {
       assert(expr_ == 0);
 
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_ = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
 
       expr_->type_ = IVL_EX_SCOPE;
       FILE_NAME(expr_, net);
@@ -493,7 +493,7 @@ void dll_target::expr_scopy(const NetEShallowCopy*net)
       ivl_expr_t expr2 = expr_;
       expr_ = 0;
 
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_ = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
       expr_->type_ = IVL_EX_SHALLOWCOPY;
       FILE_NAME(expr_, net);
       expr_->value_ = net->expr_type();
@@ -507,7 +507,7 @@ void dll_target::expr_netenum(const NetENetenum*net)
 {
       assert(expr_ == 0);
 
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_ = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
 
       expr_->type_ = IVL_EX_ENUMTYPE;
       FILE_NAME(expr_, net);
@@ -529,7 +529,7 @@ void dll_target::expr_select(const NetESelect*net)
 
       ivl_expr_t base = expr_;
 
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_ = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
 
       expr_->type_ = IVL_EX_SELECT;
       expr_->value_= net->expr_type();
@@ -548,7 +548,7 @@ void dll_target::expr_sfunc(const NetESFunc*net)
 {
       assert(expr_ == 0);
 
-      ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      ivl_expr_t expr = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
 
       expr->type_ = IVL_EX_SFUNC;
       expr->value_= net->expr_type();
@@ -579,7 +579,7 @@ void dll_target::expr_ternary(const NetETernary*net)
 {
       assert(expr_ == 0);
 
-      ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      ivl_expr_t expr = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
 
       expr->type_  = IVL_EX_TERNARY;
       expr->value_= net->expr_type();
@@ -621,7 +621,7 @@ void dll_target::expr_signal(const NetESignal*net)
 	    expr_ = 0;
       }
 
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_ = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
 
       expr_->type_ = IVL_EX_SIGNAL;
       expr_->value_= net->expr_type();
@@ -649,7 +649,7 @@ void dll_target::expr_ufunc(const NetEUFunc*net)
 {
       assert(expr_ == 0);
 
-      ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      ivl_expr_t expr = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
 
       expr->type_ = IVL_EX_UFUNC;
       expr->value_= net->expr_type();
@@ -692,7 +692,7 @@ void dll_target::expr_unary(const NetEUnary*net)
 
       ivl_expr_t sub = expr_;
 
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_ = static_cast<ivl_expr_t>(calloc(1, sizeof(struct ivl_expr_s)));
       expr_->type_ = IVL_EX_UNARY;
       expr_->value_= net->expr_type();
       expr_->net_type=0;

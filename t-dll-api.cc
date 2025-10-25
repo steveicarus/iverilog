@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
@@ -317,7 +317,7 @@ extern "C" const char* ivl_event_name(ivl_event_t net)
 
       unsigned need = strlen(sn) + 1 + strlen(net->name) + 1;
       if (need > name_size) {
-	    name_buffer = (char*)realloc(name_buffer, need);
+	    name_buffer = static_cast<char*>(realloc(name_buffer, need));
 	    name_size = need;
       }
 
@@ -1379,7 +1379,7 @@ extern "C" const char* ivl_lpm_name(ivl_lpm_t net)
 
       unsigned need = strlen(sn) + 1 + strlen(net->name) + 1;
       if (need > name_size) {
-	    name_buffer = (char*)realloc(name_buffer, need);
+	    name_buffer = static_cast<char*>(realloc(name_buffer, need));
 	    name_size = need;
       }
 
@@ -1768,7 +1768,7 @@ extern "C" const char* ivl_nexus_name(ivl_nexus_t net)
       assert(net);
       if (net->name_ == 0) {
 	    char tmp[2 * sizeof(net) + 5];
-	    snprintf(tmp, sizeof tmp, "n%p", (void *)net);
+	    snprintf(tmp, sizeof tmp, "n%p", static_cast<void *>(net));
 	    net->name_ = api_strings.add(tmp);
       }
       return net->name_;
@@ -2257,10 +2257,9 @@ extern "C" const char* ivl_scope_name(ivl_scope_t net)
       unsigned needlen = scope_name_len(net);
 
       if (name_size < needlen) {
-	    name_buffer = (char*)realloc(name_buffer, needlen);
+	    name_buffer = static_cast<char*>(realloc(name_buffer, needlen));
 	    name_size = needlen;
       }
-
 
       push_scope_basename(net, name_buffer);
 
@@ -2478,7 +2477,7 @@ extern "C" const char* ivl_signal_name(ivl_signal_t net)
       needlen += strlen(net->name_) + 2;
 
       if (name_size < needlen) {
-	    name_buffer = (char*)realloc(name_buffer, needlen);
+	    name_buffer = static_cast<char*>(realloc(name_buffer, needlen));
 	    name_size = needlen;
       }
 
