@@ -103,6 +103,22 @@ reference the correct run time files and directories. The run time will check
 that it is running a file with a compatible version e.g.(you can not run a
 V0.9 file with the V0.8 run time).
 
+.. code-block:: none
+
+  --enable-libvvp
+
+The vvp progam is built as a small stub linked to a shared library,
+libvvp.so, that may be linked with other programs so that they can host
+a vvp simulation.
+
+.. code-block:: none
+
+  --enable-libveriuser
+
+PLI version 1 (the ACC and TF routines) were deprecated in IEEE 1364-2005.
+These are supported in Icarus Verilog by the libveriuser library and cadpli
+module. Starting with v13, these will only be built if this option is used.
+
 A debug options is:
 
 .. code-block:: none
@@ -111,7 +127,7 @@ A debug options is:
 
 This option adds extra memory cleanup code and pool management code to allow
 better memory leak checking when valgrind is available. This option is not
-need when checking for basic errors with valgrind.
+needed when checking for basic errors with valgrind.
 
 Compiling on Linux
 ------------------
@@ -222,4 +238,3 @@ or the version branch that you are working on. Your pull request will be run
 through continuous integration, and reviewed by one of the main
 authors. Feedback may be offered to your PR, and once accepted, an approved
 individual will merge it for you. Then you are done.
-

@@ -99,13 +99,19 @@ time). ::
 
 This option adds extra memory cleanup code and pool management code to allow
 better memory leak checking when valgrind is available. This option is not
-need when checking for basic errors with valgrind. ::
+needed when checking for basic errors with valgrind. ::
 
   --enable-libvvp
 
 The vvp progam is built as a small stub linked to a shared library,
 libvvp.so, that may be linked with other programs so that they can host
-a vvp simulation.
+a vvp simulation. ::
+
+  --enable-libveriuser
+
+PLI version 1 (the ACC and TF routines) were deprecated in IEEE 1364-2005.
+These are supported in Icarus Verilog by the libveriuser library and cadpli
+module. Starting with v13, these will only be built if this option is used.
 
 Compiling on Linux/Unix
 -----------------------
