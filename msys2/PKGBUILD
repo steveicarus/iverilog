@@ -1,17 +1,19 @@
 _realname=iverilog
 pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=ci
+pkgver=devel
 pkgrel=1
-pkgdesc="Icarus Verilog, a Verilog simulation and synthesis tool (mingw-w64)"
-arch=('any')
+pkgdesc="Icarus Verilog, a Verilog simulation tool (mingw-w64)"
+arch=('mingw64', 'ucrt64', 'clang64')
 url="https://steveicarus.github.io/iverilog/"
-license=('GPLv2+')
-depends=("${MINGW_PACKAGE_PREFIX}-readline"
-         "${MINGW_PACKAGE_PREFIX}-gcc-libs")
-makedepends=("autoconf"
-             "man-db"
-             "${MINGW_PACKAGE_PREFIX}-gcc"
+license=('spdx:GPL-2.0-or-later')
+depends=("${MINGW_PACKAGE_PREFIX}-cc-libs"
+         "${MINGW_PACKAGE_PREFIX}-readline"
+         "${MINGW_PACKAGE_PREFIX}-bzip2"
+         "${MINGW_PACKAGE_PREFIX}-zlib")
+makedepends=("man-db"
+             "${MINGW_PACKAGE_PREFIX}-cc"
+             "${MINGW_PACKAGE_PREFIX}-autotools"
              "${MINGW_PACKAGE_PREFIX}-ghostscript")
 
 source=()
@@ -21,18 +23,17 @@ build() {
   cd "${srcdir}"/../..
   sh autoconf.sh
   ./configure \
-    --enable-libveriuser \
     --prefix="${MINGW_PREFIX}" \
-    --host="$CARCH"-w64-mingw32
-  mingw32-make
+    ${IVL_CONFIG_OPTIONS}
+  make
 }
 
 check() {
   cd "${srcdir}"/../..
-  mingw32-make check
+  make check
 }
 
 package() {
   cd "${srcdir}"/../..
-  mingw32-make DESTDIR="${pkgdir}" PACKAGE="${_realname}" install
+  make DESTDIR="${pkgdir}" PACKAGE="${_realname}" install
 }
