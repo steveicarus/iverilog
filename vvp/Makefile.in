@@ -62,6 +62,14 @@ CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@
 
+ifeq (@WIN32@,yes)
+SLDIR=$(bindir)
+SLEXT=dll
+else
+SLDIR=$(libdir)
+SLEXT=so
+endif
+
 dllib=@DLLIB@
 
 MDIR1 = -DMODULE_DIR1='"$(libdir)/ivl$(suffix)"'
@@ -101,7 +109,7 @@ else
 endif
 
 clean:
-	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc libvvp$(suffix).*
+	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc libvvp$(suffix).$(SLEXT)
 	rm -rf dep vvp@EXEEXT@ parse.output vvp.man vvp.ps vvp.pdf vvp.exp
 
 distclean: clean
@@ -129,14 +137,6 @@ dep:
 ifeq (@LIBVVP@,yes)
 
 CPPFLAGS+= -fpic
-
-ifeq (@WIN32@,yes)
-SLDIR=$(bindir)
-SLEXT=dll
-else
-SLDIR=$(libdir)
-SLEXT=so
-endif
 
 # To avoid setting LD_LIBRARY_PATH when running vvp from the build tree,
 # add option -Wl,-rpath=`pwd` to the CXX command below.
