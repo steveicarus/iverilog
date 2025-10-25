@@ -76,11 +76,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: [
-          { msystem: MINGW64, env: x86_64 }
-          { msystem: UCRT64,  env: ucrt-x86_64 }
-          { msystem: CLANG64, env: clang-x86_64 }
-        ]
+        include:
+          - { msystem: MINGW64, env: x86_64 }
+          - { msystem: UCRT64,  env: ucrt-x86_64 }
+          - { msystem: CLANG64, env: clang-x86_64 }
     name: 🟪 ${{ matrix.msystem}}
     defaults:
       run:
