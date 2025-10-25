@@ -77,9 +77,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { msystem: MINGW64, env: x86_64       opt: pli1 }
-          - { msystem: UCRT64,  env: ucrt-x86_64  opt: pli1 }
-          - { msystem: CLANG64, env: clang-x86_64 opt: no-pli1 }
+          - { msystem: MINGW64, env: x86_64 }
+          - { msystem: UCRT64,  env: ucrt-x86_64 }
+          - { msystem: CLANG64, env: clang-x86_64 }
     name: 🟪 ${{ matrix.msystem}}
     defaults:
       run:
@@ -110,7 +110,7 @@ jobs:
     - name: Build and check
       run: |
         cd msys2
-        if [ ${{ matrix.opt }} = "pli1" ] ; then
+        if [ ${{ matrix.msystem }} != "CLANG64" ] ; then
             export IVL_CONFIG_OPTIONS="--enable-libveriuser"
         fi
         makepkg-mingw --noconfirm --noprogressbar -sCLf
@@ -120,7 +120,11 @@ jobs:
 
     - name: Test
       run: |
-        ./.github/test.sh ${{ matrix.opt }}
+        if [ ${{ matrix.msystem }} = "CLANG64" ] ; then
+            ./.github/test.sh no-pli1
+        else
+            ./.github/test.sh
+        fi
 
     - uses: actions/upload-artifact@v4
       with:
