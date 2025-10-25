@@ -157,8 +157,8 @@ be updated to version 3. ::
 Icarus Verilog is also available through the Homebrew package manager: "brew
 install icarus-verilog".
 
-Compiling for Windows
----------------------
+Cross-Compiling for Windows
+---------------------------
 
 These are instructions for building Icarus Verilog binaries for
 Windows using mingw cross compiler tools on Linux.
@@ -186,4 +186,8 @@ bits that need to be compiled with the native compiler. (version.exe
 for example is used by the build process but is not installed.) The
 configure script should have gotten all that right.
 
-There is also a MSYS2 build recipe which you can find under `msys2/` in the repository.
+Compiling for Windows using MSYS2
+---------------------------------
+
+There is a MSYS2 build recipe which you can find under `msys2/` in the
+repository. The accompanying README file provides further details.
