@@ -49,7 +49,7 @@ inline ivl_dll_t ivl_dlopen(const char *name)
 
 inline void * ivl_dlsym(ivl_dll_t dll, const char *nm)
 {
-      return static_cast<void*>(GetProcAddress((HMODULE)dll, nm));
+      return reinterpret_cast<void*>(GetProcAddress((HMODULE)dll, nm));
 }
 
 inline void ivl_dlclose(ivl_dll_t dll)
