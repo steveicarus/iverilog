@@ -4,14 +4,16 @@ pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
 pkgver=devel
 pkgrel=1
 pkgdesc="Icarus Verilog, a Verilog simulation tool (mingw-w64)"
-arch=('mingw64', 'ucrt64', 'clang64')
+arch=('any')
+mingw_arch=('mingw64', 'ucrt64', 'clang64')
 url="https://steveicarus.github.io/iverilog/"
 license=('spdx:GPL-2.0-or-later')
 depends=("${MINGW_PACKAGE_PREFIX}-cc-libs"
          "${MINGW_PACKAGE_PREFIX}-readline"
          "${MINGW_PACKAGE_PREFIX}-bzip2"
          "${MINGW_PACKAGE_PREFIX}-zlib")
-makedepends=("gperf man-db"
+makedepends=("gperf"
+             " man-db"
              "${MINGW_PACKAGE_PREFIX}-cc"
              "${MINGW_PACKAGE_PREFIX}-autotools"
              "${MINGW_PACKAGE_PREFIX}-ghostscript")
