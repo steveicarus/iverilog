@@ -24,6 +24,7 @@
 # include  "ufunc.h"
 # include  "event.h"
 # include  "vpi_priv.h"
+# include  "vpi_utils.h"
 # include  "vvp_net_sig.h"
 # include  "vvp_cobject.h"
 # include  "vvp_darray.h"
@@ -2380,11 +2381,7 @@ bool of_CVT_SR(vthread_t thr, vvp_code_t cp)
 bool of_CVT_UR(vthread_t thr, vvp_code_t cp)
 {
       double r = thr->pop_real();
-      if (r >= 0.0)
-	    thr->words[cp->bit_idx[0]].w_uint = (uint64_t)floor(r+0.5);
-      else
-	    thr->words[cp->bit_idx[0]].w_uint = (uint64_t)ceil(r-0.5);
-
+      thr->words[cp->bit_idx[0]].w_uint = vlg_round_to_u64(r);
       return true;
 }
 

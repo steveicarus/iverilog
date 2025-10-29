@@ -26,6 +26,7 @@
 
 # include  "vpi_user.h"
 # include  "vpi_priv.h"
+# include  "vpi_utils.h"
 # include  "vvp_net.h"
 # include  "schedule.h"
 # include  "event.h"
@@ -949,23 +950,6 @@ void vvp_signal_value::get_signal_value(struct t_vpi_value*vp)
       }
 }
 
-static double vlg_round(double rval)
-{
-      if (rval >= 0.0) {
-            return floor(rval + 0.5);
-      } else {
-            return ceil(rval - 0.5);
-      }
-}
-
-static uint64_t vlg_round_to_u64(double rval)
-{
-      // Directly casting a negative double to an unsigned integer types is
-      // undefined behavior and behaves differently on different architectures.
-      // Cast to signed integer first to get the behavior we want.
-      return static_cast<uint64_t>(static_cast<int64_t>(vlg_round(rval)));
-}
-
 static void real_signal_value(struct t_vpi_value*vp, double rval)
 {
       static const size_t RBUF_SIZE = 64 + 1;
@@ -984,7 +968,7 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 	    if (rval != rval || (rval && (rval == 0.5*rval))) {
 		  rval = 0.0;
 	    } else {
-		  rval = vlg_round(rval);
+		  rval = std::round(rval);
 	    }
 	    vp->value.integer = (PLI_INT32)rval;
 	    break;
@@ -993,7 +977,7 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 	    if (std::isnan(rval))
 		  snprintf(rbuf, RBUF_SIZE, "%s", "nan");
 	    else
-		  snprintf(rbuf, RBUF_SIZE, "%0.0f", vlg_round(rval));
+		  snprintf(rbuf, RBUF_SIZE, "%0.0f", std::round(rval));
 	    vp->value.str = rbuf;
 	    break;
 
@@ -1003,28 +987,26 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 	    break;
 
 	  case vpiBinStrVal: {
-		uint64_t val = vlg_round_to_u64(rval);
-		unsigned len = 0;
+        const uint64_t val = vlg_round_to_u64(rval);
+        unsigned len = 0;
 
-		while (val > 0) {
-		      len += 1;
-		      val /= 2;
-		}
+        // Compute bit‑width; For val==0, this yields len==1
+        uint64_t tmp = val;
+        do {
+            len += 1;
+            tmp /= 2;
+        } while (tmp > 0);
 
-		val = vlg_round_to_u64(rval);
-		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
-		      rbuf[len-idx-1] = (val & 1)? '1' : '0';
-		      val /= 2;
-		}
+        tmp = val;
+        for (unsigned idx = 0; idx < len; idx += 1) {
+            rbuf[len - idx - 1] = (tmp & 1) ? '1' : '0';
+            tmp /= 2;
+        }
 
-		rbuf[len] = 0;
-		if (len == 0) {
-		      rbuf[0] = '0';
-		      rbuf[1] = 0;
-		}
-		vp->value.str = rbuf;
-		break;
-	  }
+        rbuf[len] = '\0';
+        vp->value.str = rbuf;
+        break;
+      }
 
 	  case vpiSuppressVal:
 	    break;
