@@ -18,7 +18,7 @@ This section contains documents to help support Icarus Verilog users.
    vvp_debug
    vvp_library
    vhdlpp_flags
-   gtkwave
+   waveform_viewer
    vpi
    icarus_verilog_extensions
    icarus_verilog_quirks
