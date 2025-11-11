@@ -144,12 +144,20 @@ NexusSet* NetESelect::nex_input(bool rem_out, bool always_sens, bool nested_func
       NexusSet*tmp = expr_->nex_input(rem_out, always_sens, nested_func);
       bool const_select = result->size() == 0;
       if (always_sens && const_select) {
-	    if (const NetEConst *val = dynamic_cast <NetEConst*> (base_)) {
+	    if (/* const NetEConst *val = */ dynamic_cast <NetEConst*> (base_)) {
 		  assert(select_type() == IVL_SEL_OTHER);
 		  if (const NetESignal *sig = dynamic_cast<NetESignal*> (expr_)) {
+			cerr << get_fileline() << ": sorry: constant selects "
+			        "in always_* processes are not fully supported "
+			        "(the process will be sensitive to all bits in '"
+                             << *sig << "')." << endl;
+#if 0
+// Enable this code once PEventStatement::elaborate_st() has been enhanced to
+// support bit/part select sensitivity.
 			delete tmp;
 			tmp = sig->nex_input_base(rem_out, always_sens, nested_func,
                                                   val->value().as_unsigned(), expr_width());
+#endif
 		  } else {
 			cerr << get_fileline() << ": Sorry, cannot determine the sensitivity "
 			     << "for the select of " << *expr_ << ", using all bits." << endl;

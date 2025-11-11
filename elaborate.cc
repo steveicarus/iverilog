@@ -4908,11 +4908,9 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 		  unsigned vwid = nset->at(idx).lnk.nexus()->vector_width();
 		    // Is this a part select?
 		  if (always_sens_ && (wid != vwid)) {
-			cerr << get_fileline() << ": sorry: constant "
-			        "selects in always_* processes are not "
-			        "currently supported (all bits will be "
-			        "included)." << endl;
 # if 0
+// Once this is fixed, enable constant bit/part select sensitivity in
+// NetESelect::nex_input().
 			unsigned base = nset->at(idx).base;
 cerr << get_fileline() << ": base = " << base << endl;
 // FIXME: make this work with selects that go before the base.
