@@ -636,3 +636,58 @@ unusedFunction:t-dll-api.cc:1007
 unusedFunction:t-dll-api.cc:1016
 // ivl_udp_sequ()
 unusedFunction:t-dll-api.cc:980
+
+// Unused routines
+// has_compat_attributes()
+unusedFunction:Attrib.cc:72
+// bl_type()
+unusedFunction:Statement.h:186
+// chain_args()
+unusedFunction:Statement.h:332
+// gn_modules_nest()
+unusedFunction:compiler.h:228
+// driven_mask()
+unusedFunction:link_const.cc:275
+// find_root_scope()
+unusedFunction:net_design.cc:121
+// assign_lval()
+unusedFunction:net_link.cc:282
+// intersect()
+unusedFunction:net_link.cc:689
+// get_def_fileline()
+unusedFunction:net_scope.cc:201
+// get_module_port_info()
+unusedFunction:net_scope.cc:591
+// find_link_signal()
+unusedFunction:netlist.cc:111
+// find_link()
+unusedFunction:netlist.cc:297
+// set_module_port_index()
+unusedFunction:netlist.cc:649
+// width_a()
+unusedFunction:netlist.cc:1674
+// width_b()
+unusedFunction:netlist.cc:1679
+// result_sig()
+unusedFunction:netlist.cc:2180
+// test_protected()
+unusedFunction:property_qual.h:50
+// test_rand()
+unusedFunction:property_qual.h:52
+// test_randc()
+unusedFunction:property_qual.h:53
+// sub_off_from_expr_()
+unusedFunction:t-dll-expr.cc:55
+// mul_expr_by_const_()
+unusedFunction:t-dll-expr.cc:91
+// net_assign()
+unusedFunction:t-dll.cc:2368
+// is_before()
+unusedFunction:verinum.cc:592
+
+// Errors in the generated yacc and lex files
+cstyleCast:<stdout>
+syntaxError:<stdout>
+unusedFunction:<stdout>
+duplicateBreak:lexor.lex
+syntaxError:parse.cc

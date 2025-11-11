@@ -28,7 +28,7 @@
 #  include <string.h>
 #endif
 
-#if defined(__GNUC__)
+#if !defined(_MSC_VER)
 /*
  * Define a safer version of strdup().
  */
@@ -101,6 +101,7 @@
       } \
       __ivl_rtn; \
 })
-#endif
+
+#endif // !defined(_MSC_VER)
 
 #endif /* IVL_ivl_alloc_H */
