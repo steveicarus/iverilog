@@ -69,6 +69,7 @@ br_gh1256a			vvp_tests/br_gh1256a.json
 br_gh1256b			vvp_tests/br_gh1256b.json
 br_gh1258a			vvp_tests/br_gh1258a.json
 br_gh1258b			vvp_tests/br_gh1258b.json
+br_gh1286			vvp_tests/br_gh1286.json
 ca_time_real			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json
