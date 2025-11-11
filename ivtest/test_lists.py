@@ -30,7 +30,7 @@ def read_list(fd) -> list:
     in the list a list of tokens for the line. This is used by the read_lists
     function.'''
 
-    build_list = list()
+    build_list = []
     for line_raw in fd:
         # Strip comments and leading/traling white space
         idx = line_raw.find("#")
@@ -56,18 +56,18 @@ def read_lists(paths: list) -> list:
     of the test file lists is important, as is the order of tests
     within each list file.'''
 
-    tests_list = list()
+    tests_list = []
     for path in paths:
-        with open(path, "r") as fd:
+        with open(path, "rt", encoding='ascii') as fd:
             tests_list += read_list(fd)
 
     # The loop above creates a tests_list to list all of the tests in the
     # order that they appear. Now we go though the list in order and eliminate
     # duplictes by test name. This allows that lists might override tests that
     # are already declared.
-    tests_dict = dict()
+    tests_dict = {}
     for item in tests_list:
-        tests_dict[item[0]] = item;
+        tests_dict[item[0]] = item
 
     # Convert the result to a sorted list, and return that.
     tests_list = list(tests_dict.values())

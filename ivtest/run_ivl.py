@@ -8,8 +8,10 @@ import os
 import sys
 import re
 
-def assemble_iverilog_cmd(source: str, it_dir: str, args: list, outfile = "a.out") -> list:
-    res = ["iverilog", "-o", os.path.join("work", outfile)]
+def assemble_iverilog_cmd(suffix: str, source: str, it_dir: str,
+                          args: list, outfile = "a.out") -> list:
+    '''Build the iverilog command line'''
+    res = ["iverilog"+suffix, "-o", os.path.join("work", outfile)]
     res += ["-D__ICARUS_UNSIZED__"]
     res += args
     src = os.path.join(it_dir, source)
@@ -17,28 +19,29 @@ def assemble_iverilog_cmd(source: str, it_dir: str, args: list, outfile = "a.out
     return res
 
 
-def assemble_vvp_cmd(args: list = [], plusargs: list = []) -> list:
-    res = ["vvp"]
+def assemble_vvp_cmd(suffix: str, args: list, plusargs: list) -> list:
+    '''Build the vvp command line'''
+    res = ["vvp"+suffix]
     res = res + args
     res.append(os.path.join("work", "a.out"))
     res = res + plusargs
     return res
 
 
-def get_ivl_version () -> list:
+def get_ivl_version (suffix: str) -> int:
     '''Figure out the version of the installed iverilog compler.
 
     The return value is a list of 2 numbers, the major and minor version
     numbers, or None if the version string couldn't be found.'''
 
     # Get the output from the "iverilog -V" command for the version string.
-    text = subprocess.check_output(["iverilog", "-V"])
+    text = subprocess.check_output(["iverilog"+suffix, "-V"])
     match = re.search(b'Icarus Verilog version ([0-9]+)\\.([0-9]+)', text)
     if not match:
         return None
 
     items = match.groups()
-    return [int(items[0]), int(items[1])]
+    return int(items[0])
 
 def build_runtime(it_key: str) -> None:
     '''Check and prepare the runtime environment for a test
@@ -70,6 +73,8 @@ def build_runtime(it_key: str) -> None:
         pass
 
 def get_log_file(key: str, title: str, stream: str) -> str:
+    '''Get the name of the log file'''
+    # pylint: disable-next=consider-using-f-string
     res = "{key}-{title}-{stream}.log".format(key=key, title=title, stream=stream)
     return res
 
@@ -93,42 +98,49 @@ def compare_files(log_path, gold_path):
     If they differ, then write tou stdout a unified diff. In any case,
     return True or False to indicate the results of the test.'''
 
-    with open(log_path, 'rt') as fd:
+    with open(log_path, 'rt', encoding='ascii') as fd:
         a = fd.readlines()
 
     # Allow to omit empty gold files
     if os.path.exists(gold_path):
-        with open(gold_path, 'rt') as fd:
+        with open(gold_path, 'rt', encoding='ascii') as fd:
             b = fd.readlines()
     else:
         b = []
 
     flag = a == b
     if not flag:
+        # pylint: disable-next=consider-using-f-string
         print("{log} and {gold} differ:".format(log=log_path, gold=gold_path))
         sys.stdout.writelines(difflib.unified_diff(a, b, log_path, gold_path))
 
     return flag
 
 def run_cmd(cmd: list) -> subprocess.CompletedProcess:
-    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    '''Run the given command'''
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
     return res
 
-def check_gold(it_key : str, it_gold : str, log_list : list) -> bool:
+def check_gold(it_key: str, it_gold: str, log_list: list) -> bool:
+    '''Check if the log and gold file match'''
     compared = True
     for log_name in log_list:
+        # pylint: disable-next=consider-using-f-string
         log_path = os.path.join("log", "{key}-{log}.log".format(key=it_key, log=log_name))
+        # pylint: disable-next=consider-using-f-string
         gold_path = os.path.join("gold", "{gold}-{log}.gold".format(gold=it_gold, log=log_name))
         compared = compared and compare_files(log_path, gold_path)
 
     return compared
 
-def run_CE(options : dict) -> list:
+# pylint: disable-next=invalid-name
+def run_CE(options: dict) -> list:
     ''' Run the compiler, and expect an error
 
     In this case, we assert that the command fails to run and reports
     an error. This is to check that invalid input generates errors.'''
 
+    suffix = options['suffix']
     it_key = options['key']
     it_dir = options['directory']
     it_args = options['iverilog_args']
@@ -136,7 +148,7 @@ def run_CE(options : dict) -> list:
 
     build_runtime(it_key)
 
-    cmd = assemble_iverilog_cmd(options['source'], it_dir, it_args)
+    cmd = assemble_iverilog_cmd(suffix, options['source'], it_dir, it_args)
     res = run_cmd(cmd)
     log_results(it_key, "iverilog", res)
 
@@ -151,7 +163,7 @@ def run_CE(options : dict) -> list:
     else:
         return [0, "Passed - CE"]
 
-def check_run_outputs(options : dict, it_stdout : str, log_list : list) -> list:
+def check_run_outputs(options: dict, it_stdout: str, log_list: list) -> list:
     '''Check the output files, and return success for failed.
 
     This function takes an options dictionary that describes the settings, and
@@ -178,12 +190,13 @@ def check_run_outputs(options : dict, it_stdout : str, log_list : list) -> list:
         diff_name2 = it_diff[1]
         diff_skip = int(it_diff[2])
 
-        with open(diff_name1) as fd:
+        with open(diff_name1, 'rt', encoding='ascii') as fd:
+            # pylint: disable-next=unused-variable
             for idx in range(diff_skip):
                 fd.readline()
             diff_data1 = fd.read()
 
-        with open(diff_name2) as fd:
+        with open(diff_name2, 'rt', encoding='ascii') as fd:
             for idx in range(diff_skip):
                 fd.readline()
             diff_data2 = fd.read()
@@ -191,7 +204,9 @@ def check_run_outputs(options : dict, it_stdout : str, log_list : list) -> list:
         if diff_data1 == diff_data2:
             return [0, "Passed"]
         else:
-            return [1, "Failed - Files {name1} and {name2} differ.".format(name1=diff_name1, name2=diff_name2)]
+            # pylint: disable-next=consider-using-f-string
+            return [1, "Failed - Files {name1} and {name2} differ.".format(name1=diff_name1, \
+                                                                           name2=diff_name2)]
 
 
     # Otherwise, look for the PASSED output string in stdout.
@@ -204,7 +219,8 @@ def check_run_outputs(options : dict, it_stdout : str, log_list : list) -> list:
     return [1, "Failed - No PASSED output, and no gold file"]
 
 
-def do_run_normal_vlog95(options : dict, expected_fail : bool) -> list:
+# pylint: disable-next=unused-argument
+def do_run_normal_vlog95(options: dict, expected_fail: bool) -> list:
     '''Run the iverilog and vvp commands.
 
     In this case, run the compiler with the -tvlog95 flag to generate
@@ -212,6 +228,7 @@ def do_run_normal_vlog95(options : dict, expected_fail : bool) -> list:
     a vvp out. Run that vvp output to test the simulation results. Collect
     the results and look for a "PASSED" string.'''
 
+    suffix = options['suffix']
     it_key = options['key']
     it_dir = options['directory']
     it_iverilog_args = ["-tvlog95"] + options['iverilog_args']
@@ -221,7 +238,7 @@ def do_run_normal_vlog95(options : dict, expected_fail : bool) -> list:
     build_runtime(it_key)
 
     # Run the first iverilog command, to generate the intermediate verilog
-    ivl1_cmd = assemble_iverilog_cmd(options['source'], it_dir, it_iverilog_args, "a.out.v")
+    ivl1_cmd = assemble_iverilog_cmd(suffix, options['source'], it_dir, it_iverilog_args, "a.out.v")
     ivl1_res = run_cmd(ivl1_cmd)
 
     log_results(it_key, "iverilog", ivl1_res)
@@ -229,7 +246,7 @@ def do_run_normal_vlog95(options : dict, expected_fail : bool) -> list:
         return [1, "Failed - Compile failed"]
 
     # Run another iverilog command to compile the code generated from the first step.
-    ivl2_cmd = assemble_iverilog_cmd("a.out.v", "work", [ ], "a.out")
+    ivl2_cmd = assemble_iverilog_cmd(suffix, "a.out.v", "work", [ ], "a.out")
     ivl2_res = run_cmd(ivl2_cmd)
 
     log_results(it_key, "iverilog-vlog95", ivl2_res)
@@ -237,9 +254,9 @@ def do_run_normal_vlog95(options : dict, expected_fail : bool) -> list:
         return [1, "Failed - Compile of generated code failed"]
 
     # Run the vvp command
-    vvp_cmd = assemble_vvp_cmd(it_vvp_args, it_vvp_args_extended)
+    vvp_cmd = assemble_vvp_cmd(suffix, it_vvp_args, it_vvp_args_extended)
     vvp_res = run_cmd(vvp_cmd)
-    log_results(it_key, "vvp", vvp_res);
+    log_results(it_key, "vvp", vvp_res)
 
     if vvp_res.returncode != 0:
         return [1, "Failed - Vvp execution failed"]
@@ -252,13 +269,14 @@ def do_run_normal_vlog95(options : dict, expected_fail : bool) -> list:
     return check_run_outputs(options, it_stdout, log_list)
 
 
-def do_run_normal(options : dict, expected_fail : bool) -> list:
+def do_run_normal(options: dict, expected_fail: bool) -> list:
     '''Run the iverilog and vvp commands.
 
     In this case, run the compiler to generate a vvp output file, and
     run the vvp command to actually execute the simulation. Collect
     the results and look for a "PASSED" string.'''
 
+    suffix = options['suffix']
     it_key = options['key']
     it_dir = options['directory']
     it_iverilog_args = options['iverilog_args']
@@ -268,7 +286,7 @@ def do_run_normal(options : dict, expected_fail : bool) -> list:
     build_runtime(it_key)
 
     # Run the iverilog command
-    ivl_cmd = assemble_iverilog_cmd(options['source'], it_dir, it_iverilog_args)
+    ivl_cmd = assemble_iverilog_cmd(suffix, options['source'], it_dir, it_iverilog_args)
     ivl_res = run_cmd(ivl_cmd)
 
     log_results(it_key, "iverilog", ivl_res)
@@ -276,9 +294,9 @@ def do_run_normal(options : dict, expected_fail : bool) -> list:
         return [1, "Failed - Compile failed"]
 
     # run the vvp command
-    vvp_cmd = assemble_vvp_cmd(it_vvp_args, it_vvp_args_extended)
+    vvp_cmd = assemble_vvp_cmd(suffix, it_vvp_args, it_vvp_args_extended)
     vvp_res = run_cmd(vvp_cmd)
-    log_results(it_key, "vvp", vvp_res);
+    log_results(it_key, "vvp", vvp_res)
 
     if vvp_res.returncode == 0 and expected_fail:
         return [1, "Failed - Vvp execution did not fail, but was expted to fail."]
@@ -293,14 +311,20 @@ def do_run_normal(options : dict, expected_fail : bool) -> list:
 
     return check_run_outputs(options, it_stdout, log_list)
 
-def run_normal(options : dict) -> list:
+def run_normal(options: dict) -> list:
+    '''Run a normal test'''
     return do_run_normal(options, False)
 
-def run_EF(options : dict) -> list:
+# pylint: disable-next=invalid-name
+def run_EF(options: dict) -> list:
+    '''Run an expected fail test'''
     return do_run_normal(options, True)
 
-def run_normal_vlog95(options : dict) -> list:
+def run_normal_vlog95(options: dict) -> list:
+    '''Run a vlog95 test'''
     return do_run_normal_vlog95(options, False)
 
-def run_EF_vlog95(options : dict) -> list:
+# pylint: disable-next=invalid-name
+def run_EF_vlog95(options: dict) -> list:
+    '''Run an expected fail vlog95 test'''
     return do_run_normal_vlog95(options, True)
