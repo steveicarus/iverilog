@@ -1,6 +1,9 @@
 {
     "type"   : "CE",
     "source" : "br_gh1087a.v",
+    "iverilog-args" : [ "-gno-xtypes" ],
     "gold"   : "br_gh1087a1",
-    "iverilog-args" : [ "-gno-xtypes" ]
+    "force-sv" : {
+        "gold"   : "br_gh1087a1-fsv"
+    }
 }

@@ -1,5 +1,8 @@
 {
     "type"   : "normal",
     "source" : "pr1701890.v",
-    "gold"   : "pr1701890"
+    "gold"   : "pr1701890",
+    "strict" : {
+        "gold"   : "pr1701890_std"
+    }
 }

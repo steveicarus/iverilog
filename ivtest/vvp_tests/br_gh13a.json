@@ -1,5 +1,8 @@
 {
     "type"   : "normal",
     "source" : "br_gh13a.v",
-    "gold"   : "br_gh13a"
+    "gold"   : "br_gh13a",
+    "strict" : {
+        "gold"   : "br_gh13a_std"
+    }
 }

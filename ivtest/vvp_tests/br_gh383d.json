@@ -2,5 +2,8 @@
     "type"   : "normal",
     "source" : "br_gh383d.v",
     "iverilog-args" : [ "-g2012" ],
-    "gold"   : "br_gh383d"
+    "gold"   : "br_gh383d",
+    "strict" : {
+        "gold"   : "br_gh383d_std"
+    }
 }

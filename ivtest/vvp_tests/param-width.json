@@ -1,5 +1,8 @@
 {
     "type"   : "normal",
     "source" : "param-width.v",
-    "gold"   : "param-width"
+    "gold"   : "param-width",
+    "strict" : {
+        "gold"   : "param-width_std"
+    }
 }

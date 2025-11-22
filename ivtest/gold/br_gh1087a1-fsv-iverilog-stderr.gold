@@ -1,0 +1,2 @@
+ivltests/br_gh1087a.v:3: error: Net `r` can not be of type `real`.
+1 error(s) during elaboration.

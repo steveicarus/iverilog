@@ -1,5 +1,8 @@
 {
     "type"   : "normal",
     "source" : "parameter_type.v",
-    "gold"   : "parameter_type"
+    "gold"   : "parameter_type",
+    "strict" : {
+        "gold"   : "parameter_type_std"
+    }
 }

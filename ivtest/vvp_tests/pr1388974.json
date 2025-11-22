@@ -1,4 +1,7 @@
 {
     "type"   : "normal",
-    "source" : "pr1388974.v"
+    "source" : "pr1388974.v",
+    "strict" : {
+        "type"   : "EF"
+    }
 }
