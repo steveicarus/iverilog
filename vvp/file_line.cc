@@ -89,7 +89,7 @@ char* __vpiFileLine::vpi_get_str(int code)
 { return file_line_get_str(code, this); }
 
 
-vpiHandle vpip_build_file_line(char*description, long file_idx, long lineno)
+vpiHandle vpip_build_file_line(const char*description, long file_idx, long lineno)
 {
       __vpiFileLine*obj = new __vpiFileLine(description, file_idx, lineno);
 

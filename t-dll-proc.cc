@@ -115,11 +115,9 @@ bool dll_target::func_def(const NetScope*net)
       stmt_cur_ = 0;
 
       scop->ports = def->port_count() + 1;
-      if (scop->ports > 0) {
-	    scop->u_.port = new ivl_signal_t[scop->ports];
-	    for (unsigned idx = 1 ;  idx < scop->ports ;  idx += 1)
-		  scop->u_.port[idx] = find_signal(des_, def->port(idx-1));
-      }
+      scop->u_.port = new ivl_signal_t[scop->ports];
+      for (unsigned idx = 1 ;  idx < scop->ports ;  idx += 1)
+	    scop->u_.port[idx] = find_signal(des_, def->port(idx-1));
 
 	/* FIXME: the ivl_target API expects port-0 to be the output
 	   port. This assumes that the return value is a signal, which

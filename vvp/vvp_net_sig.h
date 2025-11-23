@@ -161,7 +161,7 @@ class vvp_fun_signal4_aa : public vvp_fun_signal_vec, public automatic_signal_ba
 
     public:
       explicit vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init=BIT4_X);
-      ~vvp_fun_signal4_aa();
+      ~vvp_fun_signal4_aa() override;
 
       void alloc_instance(vvp_context_t context) override;
       void reset_instance(vvp_context_t context) override;
@@ -227,7 +227,7 @@ class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_sign
 
     public:
       explicit vvp_fun_signal_real_aa();
-      ~vvp_fun_signal_real_aa();
+      ~vvp_fun_signal_real_aa() override;
 
       void alloc_instance(vvp_context_t context) override;
       void reset_instance(vvp_context_t context) override;
@@ -293,7 +293,7 @@ class vvp_fun_signal_string_aa : public vvp_fun_signal_string, public automatic_
 
     public:
       explicit vvp_fun_signal_string_aa();
-      ~vvp_fun_signal_string_aa();
+      ~vvp_fun_signal_string_aa() override;
 
       void alloc_instance(vvp_context_t context) override;
       void reset_instance(vvp_context_t context) override;
@@ -355,7 +355,7 @@ class vvp_fun_signal_object_aa : public vvp_fun_signal_object, public automatic_
 
     public:
       explicit vvp_fun_signal_object_aa(unsigned size);
-      ~vvp_fun_signal_object_aa();
+      ~vvp_fun_signal_object_aa() override;
 
       void alloc_instance(vvp_context_t context) override;
       void reset_instance(vvp_context_t context) override;
@@ -405,7 +405,7 @@ class vvp_wire_base  : public vvp_net_fil_t, public vvp_signal_value {
 
     public:
       vvp_wire_base();
-      ~vvp_wire_base();
+      ~vvp_wire_base() override;
 
         // Support for $countdrivers
       virtual vvp_bit4_t driven_value(unsigned idx) const;

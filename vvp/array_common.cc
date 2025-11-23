@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2014-2025 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2014 CERN
  * @author Maciej Suminski <maciej.suminski@cern.ch>
  *
@@ -181,23 +181,23 @@ struct __vpiArrayWord*array_var_word_from_handle(vpiHandle ref)
 {
       if (ref == 0)
 	    return 0;
-      __vpiArrayWord::as_word_t*ptr = dynamic_cast<__vpiArrayWord::as_word_t*> (ref);
+      const __vpiArrayWord::as_word_t*ptr = dynamic_cast<__vpiArrayWord::as_word_t*> (ref);
       if (ptr == 0)
 	    return 0;
 
-      return (struct __vpiArrayWord*) ref;
+      return (struct __vpiArrayWord*)(ref);
 }
 
 struct __vpiArrayWord* array_var_index_from_handle(vpiHandle ref)
 {
       if (ref == 0)
 	    return 0;
-      __vpiArrayWord::as_index_t*ptr = dynamic_cast<__vpiArrayWord::as_index_t*> (ref);
+      const __vpiArrayWord::as_index_t*ptr = dynamic_cast<__vpiArrayWord::as_index_t*> (ref);
       if (ptr == 0)
 	    return 0;
 
       assert(sizeof(__vpiHandle) == sizeof(__vpiArrayWord::as_index_t));
       assert(sizeof(__vpiHandle) == sizeof(__vpiArrayWord::as_word_t));
-      return (struct __vpiArrayWord*) (ref-1);
+      return (struct __vpiArrayWord*)(ref-1);
 }
 

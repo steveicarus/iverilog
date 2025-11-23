@@ -28,7 +28,7 @@ class vvp_fun_substitute : public vvp_net_fun_t {
 
     public:
       vvp_fun_substitute(unsigned wid, unsigned soff, unsigned swid);
-      ~vvp_fun_substitute();
+      ~vvp_fun_substitute() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit, vvp_context_t) override;
 

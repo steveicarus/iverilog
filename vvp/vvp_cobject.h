@@ -30,7 +30,7 @@ class vvp_cobject : public vvp_object {
 
     public:
       explicit vvp_cobject(const class_type*defn);
-      ~vvp_cobject();
+      ~vvp_cobject() override;
 
       void set_vec4(size_t pid, const vvp_vector4_t&val);
       void get_vec4(size_t pid, vvp_vector4_t&val);

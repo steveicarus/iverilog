@@ -42,7 +42,7 @@ class evctl_real : public evctl {
     public:
       explicit evctl_real(class __vpiHandle*handle, double value,
                           unsigned long ecount);
-      virtual ~evctl_real() {}
+      virtual ~evctl_real() override {}
       void run_run() override;
 
     private:
@@ -55,7 +55,7 @@ class evctl_vector : public evctl {
     public:
       explicit evctl_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
                             unsigned off, unsigned wid, unsigned long ecount);
-      virtual ~evctl_vector() {}
+      virtual ~evctl_vector() override {}
       void run_run() override;
 
     private:
@@ -71,7 +71,7 @@ class evctl_array : public evctl {
       explicit evctl_array(vvp_array_t memory, unsigned index,
                            const vvp_vector4_t&value, unsigned off,
                            unsigned long ecount);
-      virtual ~evctl_array() {}
+      virtual ~evctl_array() override {}
       virtual void run_run() override;
 
     private:
@@ -86,7 +86,7 @@ class evctl_array_r : public evctl {
     public:
       explicit evctl_array_r(vvp_array_t memory, unsigned index,
                            double value, unsigned long ecount);
-      virtual ~evctl_array_r() {}
+      virtual ~evctl_array_r() override {}
       virtual void run_run() override;
 
     private:
@@ -154,7 +154,7 @@ class vvp_fun_edge : public vvp_net_fun_t, public waitable_hooks_s {
     public:
       typedef unsigned short edge_t;
       explicit vvp_fun_edge(edge_t e);
-      virtual ~vvp_fun_edge();
+      virtual ~vvp_fun_edge() override;
 
     protected:
       bool recv_vec4_(const vvp_vector4_t&bit,
@@ -178,7 +178,7 @@ class vvp_fun_edge_sa : public vvp_fun_edge {
 
     public:
       explicit vvp_fun_edge_sa(edge_t e);
-      virtual ~vvp_fun_edge_sa();
+      virtual ~vvp_fun_edge_sa() override;
 
       vthread_t add_waiting_thread(vthread_t thread) override;
 
@@ -198,7 +198,7 @@ class vvp_fun_edge_aa : public vvp_fun_edge, public automatic_hooks_s {
 
     public:
       explicit vvp_fun_edge_aa(edge_t e);
-      virtual ~vvp_fun_edge_aa();
+      virtual ~vvp_fun_edge_aa() override;
 
       void alloc_instance(vvp_context_t context) override;
       void reset_instance(vvp_context_t context) override;
@@ -236,7 +236,7 @@ class vvp_fun_anyedge : public vvp_net_fun_t, public waitable_hooks_s {
 
     public:
       explicit vvp_fun_anyedge();
-      virtual ~vvp_fun_anyedge();
+      virtual ~vvp_fun_anyedge() override;
 
     protected:
       anyedge_value*last_value_[4];
@@ -249,7 +249,7 @@ class vvp_fun_anyedge_sa : public vvp_fun_anyedge {
 
     public:
       explicit vvp_fun_anyedge_sa();
-      virtual ~vvp_fun_anyedge_sa();
+      virtual ~vvp_fun_anyedge_sa() override;
 
       vthread_t add_waiting_thread(vthread_t thread) override;
 
@@ -277,7 +277,7 @@ class vvp_fun_anyedge_aa : public vvp_fun_anyedge, public automatic_hooks_s {
 
     public:
       explicit vvp_fun_anyedge_aa();
-      virtual ~vvp_fun_anyedge_aa();
+      virtual ~vvp_fun_anyedge_aa() override;
 
       void alloc_instance(vvp_context_t context) override;
       void reset_instance(vvp_context_t context) override;
@@ -311,7 +311,7 @@ class vvp_fun_event_or : public vvp_net_fun_t, public waitable_hooks_s {
 
     public:
       explicit vvp_fun_event_or(vvp_net_t*base_net);
-      ~vvp_fun_event_or();
+      ~vvp_fun_event_or() override;
 
     protected:
       vvp_net_t*base_net_;
@@ -324,7 +324,7 @@ class vvp_fun_event_or_sa : public vvp_fun_event_or {
 
     public:
       explicit vvp_fun_event_or_sa(vvp_net_t*base_net);
-      ~vvp_fun_event_or_sa();
+      ~vvp_fun_event_or_sa() override;
 
       vthread_t add_waiting_thread(vthread_t thread) override;
 
@@ -342,7 +342,7 @@ class vvp_fun_event_or_aa : public vvp_fun_event_or, public automatic_hooks_s {
 
     public:
       explicit vvp_fun_event_or_aa(vvp_net_t*base_net);
-      ~vvp_fun_event_or_aa();
+      ~vvp_fun_event_or_aa() override;
 
       void alloc_instance(vvp_context_t context) override;
       void reset_instance(vvp_context_t context) override;
@@ -369,7 +369,7 @@ class vvp_named_event : public vvp_net_fun_t, public waitable_hooks_s {
 
     public:
       explicit vvp_named_event(class __vpiHandle*eh);
-      ~vvp_named_event();
+      ~vvp_named_event() override;
 
     protected:
       class __vpiHandle*handle_;
@@ -382,7 +382,7 @@ class vvp_named_event_sa : public vvp_named_event {
 
     public:
       explicit vvp_named_event_sa(class __vpiHandle*eh);
-      ~vvp_named_event_sa();
+      ~vvp_named_event_sa() override;
 
       vthread_t add_waiting_thread(vthread_t thread) override;
 
@@ -400,7 +400,7 @@ class vvp_named_event_aa : public vvp_named_event, public automatic_hooks_s {
 
     public:
       explicit vvp_named_event_aa(class __vpiHandle*eh);
-      ~vvp_named_event_aa();
+      ~vvp_named_event_aa() override;
 
       void alloc_instance(vvp_context_t context) override;
       void reset_instance(vvp_context_t context) override;

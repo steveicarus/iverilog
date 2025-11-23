@@ -339,7 +339,8 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 		  lval_->more = 0;
 		  if (!synth_async(des, scope, nex_map, nex_out, enables, bitmasks))
 			flag = false;
-		  lval_ = lval_->more = more;
+		  lval_->more = more;
+		  lval_ = lval_->more;
 		  offset += width;
 	    }
 	    lval_ = full_lval;

@@ -75,8 +75,8 @@ void* vvp_net_t::operator new (size_t size)
 	    VALGRIND_MAKE_MEM_NOACCESS(vvp_net_alloc_table, size*VVP_NET_CHUNK);
 	    VALGRIND_CREATE_MEMPOOL(vvp_net_alloc_table, 0, 0);
 	    vvp_net_pool_count += 1;
-	    vvp_net_pool = (vvp_net_t **) realloc(vvp_net_pool,
-	                   vvp_net_pool_count*sizeof(vvp_net_t **));
+	    vvp_net_pool = static_cast<vvp_net_t **>(realloc(vvp_net_pool,
+	                   vvp_net_pool_count*sizeof(vvp_net_t **)));
 	    vvp_net_pool[vvp_net_pool_count-1] = vvp_net_alloc_table;
 #endif
       }
@@ -104,8 +104,8 @@ static unsigned local_net_pool_count = 0;
 void pool_local_net(vvp_net_t*net)
 {
       local_net_pool_count += 1;
-      local_net_pool = (vvp_net_t **) realloc(local_net_pool,
-                       local_net_pool_count*sizeof(vvp_net_t **));
+      local_net_pool = static_cast<vvp_net_t **>(realloc(local_net_pool,
+                       local_net_pool_count*sizeof(vvp_net_t **)));
       local_net_pool[local_net_pool_count-1] = net;
 }
 
@@ -2744,7 +2744,6 @@ static void multiply_long(unsigned long a, unsigned long b,
       res[0] &= word_mask;
 
       tmpa = (a >> 4UL*sizeof(unsigned long)) & word_mask;
-      tmpb = b & word_mask;
       res[1] += tmpa * tmpb;
       res[2] = res[1] >> 4UL*sizeof(unsigned long);
       res[1] &= word_mask;
@@ -2758,7 +2757,6 @@ static void multiply_long(unsigned long a, unsigned long b,
       res[2] &= word_mask;
 
       tmpa = (a >> 4UL*sizeof(unsigned long)) & word_mask;
-      tmpb = (b >> 4UL*sizeof(unsigned long)) & word_mask;
       res[2] += tmpa * tmpb;
       res[3] += res[2] >> 4UL*sizeof(unsigned long);
       res[2] &= word_mask;

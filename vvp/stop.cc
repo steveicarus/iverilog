@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -72,7 +72,7 @@ static char* readline_stub(const char*prompt)
 
 static bool interact_flag = true;
 
-static void cmd_call(unsigned argc, char*argv[])
+static void cmd_call(unsigned argc, const char*argv[])
 {
       __vpiHandle**table;
       unsigned ntable;
@@ -88,8 +88,8 @@ static void cmd_call(unsigned argc, char*argv[])
 	/* This is an array of vpiHandles, for passing to the created
 	   command. */
       unsigned vpi_argc = argc - 1;
-      vpiHandle*vpi_argv = (vpiHandle*)calloc(vpi_argc, sizeof(vpiHandle));
-      vpiHandle*vpi_free = (vpiHandle*)calloc(vpi_argc, sizeof(vpiHandle));
+      vpiHandle*vpi_argv = static_cast<vpiHandle*>(calloc(vpi_argc, sizeof(vpiHandle)));
+      vpiHandle*vpi_free = static_cast<vpiHandle*>(calloc(vpi_argc, sizeof(vpiHandle)));
 
       unsigned errors = 0;
 
@@ -127,7 +127,7 @@ static void cmd_call(unsigned argc, char*argv[])
 		 the name in argv[idx+2]. Look in the current scope. */
 
 	    for (unsigned tmp = 0 ;  (tmp < ntable)&& !handle ;  tmp += 1) {
-		  __vpiScope*scope;
+		  const __vpiScope*scope;
 		  const char*name;
 
 		  switch (table[tmp]->get_type_code()) {
@@ -193,26 +193,26 @@ static void cmd_call(unsigned argc, char*argv[])
       free(vpi_free);
 }
 
-static void cmd_cont(unsigned, char*[])
+static void cmd_cont(unsigned, const char*[])
 {
       interact_flag = false;
 }
 
-static void cmd_step(unsigned, char*[])
+static void cmd_step(unsigned, const char*[])
 {
       interact_flag = false;
       schedule_single_step(0);
 }
 
-static void cmd_finish(unsigned, char*[])
+static void cmd_finish(unsigned, const char*[])
 {
       interact_flag = false;
       schedule_finish(0);
 }
 
-static void cmd_help(unsigned, char*[]);
+static void cmd_help(unsigned, const char*[]);
 
-static void cmd_list(unsigned, char*[])
+static void cmd_list(unsigned, const char*[])
 {
       __vpiHandle**table;
       unsigned ntable;
@@ -228,7 +228,7 @@ static void cmd_list(unsigned, char*[])
       printf("%u items in this scope:\n", ntable);
       for (unsigned idx = 0 ;  idx < ntable ;  idx += 1) {
 
-	    __vpiScope*scope;
+	    const __vpiScope*scope;
 	    struct __vpiSignal*sig;
 
 	    switch (table[idx]->get_type_code()) {
@@ -312,7 +312,7 @@ static void cmd_list(unsigned, char*[])
       }
 }
 
-static void cmd_load(unsigned argc, char*argv[])
+static void cmd_load(unsigned argc, const char*argv[])
 {
       unsigned idx;
 
@@ -322,15 +322,14 @@ static void cmd_load(unsigned argc, char*argv[])
       }
 }
 
-static void cmd_pop(unsigned, char*[])
+static void cmd_pop(unsigned, const char*[])
 {
       if (stop_current_scope != 0)
 	    stop_current_scope = stop_current_scope->scope;
 }
 
-static void cmd_push(unsigned argc, char* argv[])
+static void cmd_push(unsigned argc, const char* argv[])
 {
-
       for (unsigned idx = 1 ;  idx < argc ;  idx += 1) {
 	    __vpiHandle**table;
 	    unsigned ntable;
@@ -367,13 +366,13 @@ static void cmd_push(unsigned argc, char* argv[])
       }
 }
 
-static void cmd_time(unsigned, char*[])
+static void cmd_time(unsigned, const char*[])
 {
       unsigned long ticks = schedule_simtime();
       printf("%lu ticks\n", ticks);
 }
 
-static void cmd_trace(unsigned argc, char*argv[])
+static void cmd_trace(unsigned argc, const char*argv[])
 {
       assert(argc);
       switch (argc) {
@@ -404,9 +403,9 @@ static void cmd_trace(unsigned argc, char*argv[])
       }
 }
 
-static void cmd_where(unsigned, char*[])
+static void cmd_where(unsigned, const char*[])
 {
-      __vpiScope*cur = stop_current_scope;
+      const __vpiScope*cur = stop_current_scope;
 
       while (cur) {
 	    switch (cur->get_type_code()) {
@@ -425,7 +424,7 @@ static void cmd_where(unsigned, char*[])
       }
 }
 
-static void cmd_unknown(unsigned, char*argv[])
+static void cmd_unknown(unsigned, const char*argv[])
 {
       printf("Unknown command: %s\n", argv[0]);
       printf("Try the help command to get a summary\n"
@@ -434,7 +433,7 @@ static void cmd_unknown(unsigned, char*argv[])
 
 static struct {
       const char*name;
-      void (*proc)(unsigned argc, char*argv[]);
+      void (*proc)(unsigned argc, const char*argv[]);
       const char*summary;
 } cmd_table[] = {
       { "cd",     &cmd_push,
@@ -468,7 +467,7 @@ static struct {
       { 0,        &cmd_unknown, 0}
 };
 
-static void cmd_help(unsigned, char*[])
+static void cmd_help(unsigned, const char*[])
 {
       printf("Commands can be from the following table of base commands,\n"
 	     "or can be invocations of system tasks/functions.\n\n");
@@ -486,7 +485,7 @@ static void cmd_help(unsigned, char*[])
 static void invoke_command(char*txt)
 {
       unsigned argc = 0;
-      char**argv = new char*[strlen(txt)/2];
+      const char**argv = const_cast<const char**>(new char*[strlen(txt)/2]);
 
 	/* Chop the line into words. */
       for (char*cp = txt+strspn(txt, " ")

@@ -143,7 +143,6 @@ static vpiHandle systask_iter(int, vpiHandle ref)
 }
 
 struct systask_def : public __vpiSysTaskCall {
-      virtual ~systask_def() override {}
       virtual int get_type_code(void) const   override { return vpiSysTaskCall; }
       virtual int vpi_get(int code)           override { return systask_get(code, this); }
       virtual char*vpi_get_str(int code)      override { return systask_get_str(code, this); }
@@ -152,7 +151,6 @@ struct systask_def : public __vpiSysTaskCall {
 };
 
 struct sysfunc_def : public systask_def {
-      virtual ~sysfunc_def() override {};
       virtual int get_type_code(void) const override { return vpiSysFuncCall; }
       virtual int vpi_get(int code) override { return sysfunc_get(code, this); }
 };
@@ -258,7 +256,7 @@ int sysfunc_vec4::vpi_get(int code)
       }
 }
 
-vpiHandle sysfunc_vec4::put_value_scalar_(p_vpi_value vp)
+vpiHandle sysfunc_vec4::put_value_scalar_(const p_vpi_value vp)
 {
       switch (vp->value.scalar) {
 	  case vpi0:

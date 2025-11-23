@@ -278,7 +278,7 @@ bool vvp_island_branch_tran::rerun_test_enabled()
 inline vvp_vector8_t resolve_ambiguous(const vvp_vector8_t&a,
                                        const vvp_vector8_t&b,
                                        tran_state_t state,
-                                       unsigned str_map[8])
+                                       const unsigned str_map[8])
 {
       assert(a.size() == b.size());
       vvp_vector8_t out (a.size());
@@ -307,7 +307,7 @@ inline vvp_vector8_t resolve_ambiguous(const vvp_vector8_t&a,
 }
 
 static void push_value_through_branches(const vvp_vector8_t&val,
-					list<vvp_branch_ptr_t>&connections);
+					const list<vvp_branch_ptr_t>&connections);
 
 static void push_value_through_branch(const vvp_vector8_t&val,
                                       vvp_branch_ptr_t cur)
@@ -367,10 +367,10 @@ static void push_value_through_branch(const vvp_vector8_t&val,
 }
 
 static void push_value_through_branches(const vvp_vector8_t&val,
-					list<vvp_branch_ptr_t>&connections)
+					const list<vvp_branch_ptr_t>&connections)
 {
-      for (list<vvp_branch_ptr_t>::iterator idx = connections.begin()
-		 ; idx != connections.end() ; ++ idx ) {
+      for (list<vvp_branch_ptr_t>::const_iterator idx = connections.cbegin()
+		 ; idx != connections.cend() ; ++ idx ) {
 
             push_value_through_branch(val, *idx);
       }

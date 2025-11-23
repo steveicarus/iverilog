@@ -326,8 +326,8 @@ static const unsigned opcode_count =
 
 static int opcode_compare(const void*k, const void*r)
 {
-      const char*kp = (const char*)k;
-      const struct opcode_table_s*rp = (const struct opcode_table_s*)r;
+      const char*kp = static_cast<const char*>(k);
+      const struct opcode_table_s*rp = static_cast<const struct opcode_table_s*>(r);
       return strcmp(kp, rp->mnemonic);
 }
 
@@ -398,7 +398,7 @@ vvp_net_t* vvp_net_lookup(const char*label)
 	   the vpiHandle. */
       symbol_value_t val = sym_get_value(sym_vpi, label);
       if (val.ptr) {
-	    vpiHandle vpi = (vpiHandle) val.ptr;
+	    vpiHandle vpi = static_cast<vpiHandle>(val.ptr);
 	    switch (vpi->get_type_code()) {
 		case vpiNet:
 		case vpiReg:
@@ -420,7 +420,7 @@ vvp_net_t* vvp_net_lookup(const char*label)
 		case vpiStringVar:
 		case vpiArrayVar:
 		case vpiClassVar: {
-		      __vpiBaseVar*sig = dynamic_cast<__vpiBaseVar*>(vpi);
+		      const __vpiBaseVar*sig = dynamic_cast<__vpiBaseVar*>(vpi);
 		      return sig->get_net();
 		}
 
@@ -636,7 +636,7 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
       }
 
       if (val.ptr) {
-	    *handle = (vpiHandle) val.ptr;
+	    *handle = static_cast<vpiHandle>(val.ptr);
 	    return true;
       }
 
@@ -1761,7 +1761,7 @@ char **compile_udp_table(char **table, char *row)
   for (tt = table; tt && *tt; tt++) { }
   int n = (tt-table) + 2;
 
-  table = (char**)realloc(table, n*sizeof(char*));
+  table = static_cast<char**>(realloc(table, n*sizeof(char*)));
   table[n-2] = row;
   table[n-1] = 0x0;
 
@@ -1784,9 +1784,10 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	    compile_codelabel(label);
 
 	/* Lookup the opcode in the opcode table. */
-      struct opcode_table_s*op = (struct opcode_table_s*)
-	    bsearch(mnem, opcode_table, opcode_count,
-		    sizeof(struct opcode_table_s), &opcode_compare);
+      struct opcode_table_s*op = static_cast<struct opcode_table_s*>
+                                            (bsearch(mnem, opcode_table, opcode_count,
+                                                     sizeof(struct opcode_table_s),
+                                                     &opcode_compare));
       if (op == 0) {
 	    yyerror("Invalid opcode");
 	    compile_errors += 1;

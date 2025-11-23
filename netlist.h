@@ -3238,7 +3238,6 @@ class NetCondit  : public NetProc {
                                   bool nested_func = false) const override;
       virtual void nex_output(NexusSet&o) override;
 
-      bool is_asynchronous() override;
       bool synth_async(Design*des, NetScope*scope,
                        NexusSet&nex_map, NetBus&nex_out,
                        NetBus&enables, std::vector<mask_t>&bitmasks) override;

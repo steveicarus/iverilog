@@ -270,7 +270,7 @@ vpiHandle vpip_make_string_const(char*text, bool persistent_flag)
 
 class __vpiStringParam  : public __vpiStringConst {
     public:
-      __vpiStringParam(char*txt, char*name);
+      __vpiStringParam(char*txt, const char*name);
       ~__vpiStringParam() override;
       int get_type_code(void) const override;
       int vpi_get(int code) override;
@@ -285,7 +285,7 @@ class __vpiStringParam  : public __vpiStringConst {
       const char*basename_;
 };
 
-inline __vpiStringParam::__vpiStringParam(char*txt, char*nam)
+inline __vpiStringParam::__vpiStringParam(char*txt, const char*nam)
 : __vpiStringConst(txt)
 {
       basename_ = nam;
@@ -338,8 +338,8 @@ vpiHandle __vpiStringParam::vpi_handle(int code)
       }
 }
 
-vpiHandle vpip_make_string_param(char*name, char*text,
-                                  bool local_flag, long file_idx, long lineno)
+vpiHandle vpip_make_string_param(const char*name, char*text,
+                                 bool local_flag, long file_idx, long lineno)
 {
       __vpiStringParam*obj = new __vpiStringParam(text, name);
       obj->scope = vpip_peek_current_scope();
@@ -691,7 +691,7 @@ vpiHandle vpip_make_real_const(double value)
 }
 
 struct __vpiRealParam  : public __vpiRealConst {
-      __vpiRealParam(double val, char*name);
+      __vpiRealParam(double val, const char*name);
       ~__vpiRealParam() override;
       int get_type_code(void) const override;
       int vpi_get(int code) override;
@@ -707,7 +707,7 @@ struct __vpiRealParam  : public __vpiRealConst {
 };
 
 
-inline __vpiRealParam::__vpiRealParam(double val, char*name)
+inline __vpiRealParam::__vpiRealParam(double val, const char*name)
 : __vpiRealConst(val)
 {
       basename_ = name;
@@ -759,8 +759,8 @@ vpiHandle __vpiRealParam::vpi_handle(int code)
 }
 
 
-vpiHandle vpip_make_real_param(char*name, double value,
-                                bool local_flag, long file_idx, long lineno)
+vpiHandle vpip_make_real_param(const char*name, double value,
+                               bool local_flag, long file_idx, long lineno)
 {
       struct __vpiRealParam*obj = new __vpiRealParam(value, name);
 

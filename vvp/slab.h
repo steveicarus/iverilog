@@ -76,8 +76,8 @@ inline void* slab_t<SLAB_SIZE,CHUNK_COUNT>::alloc_slab()
 	    item_cell_u*chunk = new item_cell_u[CHUNK_COUNT];
 #ifdef CHECK_WITH_VALGRIND
 	    slab_pool_count += 1;
-	    slab_pool = (item_cell_u **) realloc(slab_pool,
-	                slab_pool_count*sizeof(item_cell_u **));
+	    slab_pool = static_cast<item_cell_u **>(realloc(slab_pool,
+	                slab_pool_count*sizeof(item_cell_u **)));
 	    slab_pool[slab_pool_count-1] = chunk;
 #endif
 	    for (unsigned idx = 0 ; idx < CHUNK_COUNT ; idx += 1) {

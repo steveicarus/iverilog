@@ -1092,7 +1092,7 @@ static t_vpi_time *timedup(const t_vpi_time *val)
 }
 
 /* Make a copy of a pointer to a vector value structure. */
-static t_vpi_vecval *vectordup(t_vpi_vecval *val, PLI_INT32 size)
+static t_vpi_vecval *vectordup(const t_vpi_vecval *val, PLI_INT32 size)
 {
       unsigned num_bytes;
       t_vpi_vecval *rtn;
@@ -1725,8 +1725,6 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
 	    vvp_net_t* current_net = net1_ptr->ptr();
 
 	    while (current_net) {
-		  if (!current_net) break; // End of list
-
 		  const vvp_fun_part* part = dynamic_cast<vvp_fun_part*>(current_net->fun);
 
 		    // Its a part select!

@@ -34,7 +34,7 @@ class resolv_core : public vvp_net_fun_t {
 
     public:
       explicit resolv_core(unsigned nports, vvp_net_t*net);
-      virtual ~resolv_core();
+      virtual ~resolv_core() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t) override
@@ -72,7 +72,7 @@ class resolv_extend : public vvp_net_fun_t {
 
     public:
       resolv_extend(resolv_core*core, unsigned port_base);
-      ~resolv_extend();
+      ~resolv_extend() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t) override
@@ -113,7 +113,7 @@ class resolv_tri : public resolv_core {
     public:
       explicit resolv_tri(unsigned nports, vvp_net_t*net,
                           vvp_scalar_t hiz_value);
-      ~resolv_tri();
+      ~resolv_tri() override;
 
       void count_drivers(unsigned bit_idx, unsigned counts[3]) override;
 
@@ -141,7 +141,7 @@ class resolv_wired_logic : public resolv_core {
 
     public:
       explicit resolv_wired_logic(unsigned nports, vvp_net_t*net);
-      virtual ~resolv_wired_logic();
+      virtual ~resolv_wired_logic() override;
 
       void count_drivers(unsigned bit_idx, unsigned counts[3]) override;
 
@@ -161,7 +161,7 @@ class resolv_triand : public resolv_wired_logic {
 
     public:
       explicit resolv_triand(unsigned nports, vvp_net_t*net);
-      ~resolv_triand();
+      ~resolv_triand() override;
 
     private:
       virtual vvp_vector4_t wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b) override;
@@ -171,7 +171,7 @@ class resolv_trior : public resolv_wired_logic {
 
     public:
       explicit resolv_trior(unsigned nports, vvp_net_t*net);
-      ~resolv_trior();
+      ~resolv_trior() override;
 
     private:
       virtual vvp_vector4_t wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b) override;

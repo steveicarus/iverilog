@@ -627,7 +627,7 @@ class vvp_vector4array_sa : public vvp_vector4array_t {
 
     public:
       vvp_vector4array_sa(unsigned width, unsigned words);
-      ~vvp_vector4array_sa();
+      ~vvp_vector4array_sa() override;
 
       vvp_vector4_t get_word(unsigned idx) const override;
       void set_word(unsigned idx, const vvp_vector4_t&that) override;
@@ -643,7 +643,7 @@ class vvp_vector4array_aa : public vvp_vector4array_t, public automatic_hooks_s 
 
     public:
       vvp_vector4array_aa(unsigned width, unsigned words);
-      ~vvp_vector4array_aa();
+      ~vvp_vector4array_aa() override;
 
       void alloc_instance(vvp_context_t context) override;
       void reset_instance(vvp_context_t context) override;
@@ -1278,7 +1278,7 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 
     public:
       vvp_net_fil_t();
-      virtual ~vvp_net_fil_t();
+      virtual ~vvp_net_fil_t() override;
 
     public:
       enum prop_t { STOP=0, PROP, REPL };
@@ -1388,7 +1388,7 @@ class vvp_fun_force : public vvp_net_fun_t {
 
     public:
       vvp_fun_force();
-      ~vvp_fun_force();
+      ~vvp_fun_force() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 		     vvp_context_t context) override;
@@ -1410,7 +1410,7 @@ class vvp_fun_drive  : public vvp_net_fun_t {
 
     public:
       vvp_fun_drive(unsigned str0 =6, unsigned str1 =6);
-      ~vvp_fun_drive();
+      ~vvp_fun_drive() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context) override;
@@ -1432,7 +1432,7 @@ class vvp_fun_extend_signed  : public vvp_net_fun_t {
 
     public:
       explicit vvp_fun_extend_signed(unsigned wid);
-      ~vvp_fun_extend_signed();
+      ~vvp_fun_extend_signed() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context) override;
@@ -1471,10 +1471,10 @@ class vvp_wide_fun_core : public vvp_net_fun_t {
 
     public:
       vvp_wide_fun_core(vvp_net_t*net, unsigned nports);
-      virtual ~vvp_wide_fun_core();
+      virtual ~vvp_wide_fun_core() override;
 	// These objects are not perm allocated.
       void* operator new(std::size_t size) { return ::new char[size]; }
-      void operator delete(void* ptr) { ::delete[]((char*)ptr); }
+      void operator delete(void* ptr) { ::delete[](static_cast<char*>(ptr)); }
 
     protected:
       void propagate_vec4(const vvp_vector4_t&bit, vvp_time64_t delay =0);
@@ -1513,7 +1513,7 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
     public:
       vvp_wide_fun_t(vvp_wide_fun_core*c, unsigned base);
-      ~vvp_wide_fun_t();
+      ~vvp_wide_fun_t() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context) override;

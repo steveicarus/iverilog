@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2025 Stephen Williams (steve@icarus.com)
  *
  * (This is a rewrite of code that was ...
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
@@ -84,7 +84,7 @@ ostream& operator <<(ostream&o, const struct udp_levels_table&table)
       return o;
 }
 
-vvp_udp_s::vvp_udp_s(char*label, char*name__, unsigned ports,
+vvp_udp_s::vvp_udp_s(const char*label, char*name__, unsigned ports,
                      vvp_bit4_t init, bool type)
 : name_(name__), ports_(ports), init_(init), seq_(type)
 {
@@ -99,8 +99,8 @@ vvp_udp_s::vvp_udp_s(char*label, char*name__, unsigned ports,
 
 #ifdef CHECK_WITH_VALGRIND
       udp_defns_count += 1;
-      udp_defns = (vvp_udp_s **) realloc(udp_defns,
-                  udp_defns_count*sizeof(vvp_udp_s **));
+      udp_defns = static_cast<vvp_udp_s **>(realloc(udp_defns,
+                  udp_defns_count*sizeof(vvp_udp_s **)));
       udp_defns[udp_defns_count-1] = this;
 #endif
 }
@@ -120,7 +120,7 @@ vvp_bit4_t vvp_udp_s::get_init() const
       return init_;
 }
 
-vvp_udp_comb_s::vvp_udp_comb_s(char*label, char*name__, unsigned ports)
+vvp_udp_comb_s::vvp_udp_comb_s(const char*label, char*name__, unsigned ports)
 : vvp_udp_s(label, name__, ports, BIT4_X, false)
 {
       levels0_ = 0;
@@ -294,7 +294,7 @@ void vvp_udp_comb_s::compile_table(char**tab)
       assert(nrows1 == nlevels1_);
 }
 
-vvp_udp_seq_s::vvp_udp_seq_s(char*label, char*name__,
+vvp_udp_seq_s::vvp_udp_seq_s(const char*label, char*name__,
 			     unsigned ports, vvp_bit4_t init)
 : vvp_udp_s(label, name__, ports, init, true)
 {
@@ -330,7 +330,7 @@ vvp_udp_seq_s::~vvp_udp_seq_s()
 
 void edge_based_on_char(struct udp_edges_table&cur, char chr, unsigned pos)
 {
-      unsigned long mask_bit = 1 << pos;
+      unsigned long mask_bit = 1UL << pos;
 
       switch (chr) {
 	  case '0':
@@ -826,7 +826,7 @@ vvp_bit4_t vvp_udp_seq_s::test_edges_(const udp_levels_table&cur,
 	   entries. */
 
       for (unsigned idx = 0 ;  idx < nedges0_ ;  idx += 1) {
-	    struct udp_edges_table*row = edges0_ + idx;
+	    const struct udp_edges_table*row = edges0_ + idx;
 
 	    if (row->edge_position != edge_position)
 		  continue;
@@ -847,7 +847,7 @@ vvp_bit4_t vvp_udp_seq_s::test_edges_(const udp_levels_table&cur,
       }
 
       for (unsigned idx = 0 ;  idx < nedges1_ ;  idx += 1) {
-	    struct udp_edges_table*row = edges1_ + idx;
+	    const struct udp_edges_table*row = edges1_ + idx;
 
 	    if (row->edge_position != edge_position)
 		  continue;
@@ -868,7 +868,7 @@ vvp_bit4_t vvp_udp_seq_s::test_edges_(const udp_levels_table&cur,
       }
 
       for (unsigned idx = 0 ;  idx < nedgesL_ ;  idx += 1) {
-	    struct udp_edges_table*row = edgesL_ + idx;
+	    const struct udp_edges_table*row = edgesL_ + idx;
 
 	    if (row->edge_position != edge_position)
 		  continue;

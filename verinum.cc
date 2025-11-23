@@ -838,10 +838,10 @@ ostream& operator<< (ostream&o, const verinum&v)
 	    return o;
       }
 
-      verinum::V trim_left = v.get(v.len()-1);
       unsigned idx;
 
       if (v.has_sign()) {
+	    verinum::V trim_left = v.get(v.len()-1);
 	    for (idx = v.len()-1;  idx > 0;  idx -= 1)
 		  if (trim_left != v.get(idx-1))
 			break;

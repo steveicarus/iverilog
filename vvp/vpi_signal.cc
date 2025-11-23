@@ -156,7 +156,7 @@ static vpiHandle fill_in_var4(struct __vpiSignal*obj,
  * They work with full or partial signals.
  */
 
-static void format_vpiBinStrVal(vvp_signal_value*sig, int base, unsigned wid,
+static void format_vpiBinStrVal(const vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       char *rbuf = static_cast<char *>(need_result_buf(wid+1, RBUF_VAL));
@@ -176,7 +176,7 @@ static void format_vpiBinStrVal(vvp_signal_value*sig, int base, unsigned wid,
       vp->value.str = rbuf;
 }
 
-static void format_vpiOctStrVal(vvp_signal_value*sig, int base, unsigned wid,
+static void format_vpiOctStrVal(const vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       unsigned dwid = (wid + 2) / 3;
@@ -232,7 +232,7 @@ static void format_vpiOctStrVal(vvp_signal_value*sig, int base, unsigned wid,
       vp->value.str = rbuf;
 }
 
-static void format_vpiHexStrVal(vvp_signal_value*sig, int base, unsigned wid,
+static void format_vpiHexStrVal(const vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       unsigned dwid = (wid + 3) / 4;
@@ -292,7 +292,7 @@ static void format_vpiHexStrVal(vvp_signal_value*sig, int base, unsigned wid,
       vp->value.str = rbuf;
 }
 
-static void format_vpiDecStrVal(vvp_signal_value*sig, int base, unsigned wid,
+static void format_vpiDecStrVal(const vvp_signal_value*sig, int base, unsigned wid,
                                 int signed_flag, s_vpi_value*vp)
 {
       unsigned hwid = (sig->value_size()+2) / 3 + 1;
@@ -337,7 +337,7 @@ static void format_vpiDecStrVal(vvp_signal_value*sig, int base, unsigned wid,
       vp->value.str = rbuf;
 }
 
-static void format_vpiIntVal(vvp_signal_value*sig, int base, unsigned wid,
+static void format_vpiIntVal(const vvp_signal_value*sig, int base, unsigned wid,
                              int signed_flag, s_vpi_value*vp)
 {
       vvp_vector4_t tmp;
@@ -360,7 +360,7 @@ static void format_vpiIntVal(vvp_signal_value*sig, int base, unsigned wid,
       }
 }
 
-static void format_vpiRealVal(vvp_signal_value*sig, int base, unsigned wid,
+static void format_vpiRealVal(const vvp_signal_value*sig, int base, unsigned wid,
                               int signed_flag, s_vpi_value*vp)
 {
       vvp_vector4_t vec4(wid);
@@ -376,7 +376,7 @@ static void format_vpiRealVal(vvp_signal_value*sig, int base, unsigned wid,
       vector4_to_value(vec4, vp->value.real, signed_flag);
 }
 
-static void format_vpiStringVal(vvp_signal_value*sig, int base, unsigned wid,
+static void format_vpiStringVal(const vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       /* The result will use a character for each 8 bits of the
@@ -409,7 +409,7 @@ static void format_vpiStringVal(vvp_signal_value*sig, int base, unsigned wid,
       vp->value.str = rbuf;
 }
 
-static void format_vpiScalarVal(vvp_signal_value*sig, int base,
+static void format_vpiScalarVal(const vvp_signal_value*sig, int base,
                                 s_vpi_value*vp)
 {
       if (base >= 0 && base < (signed)sig->value_size()) {
@@ -436,7 +436,7 @@ static void format_vpiScalarVal(vvp_signal_value*sig, int base,
       }
 }
 
-static void format_vpiStrengthVal(vvp_signal_value*sig, int base,
+static void format_vpiStrengthVal(const vvp_signal_value*sig, int base,
                                   unsigned wid, s_vpi_value*vp)
 {
       long end = base + (signed)wid;
@@ -490,7 +490,7 @@ static void format_vpiStrengthVal(vvp_signal_value*sig, int base,
       vp->value.strength = op;
 }
 
-static void format_vpiVectorVal(vvp_signal_value*sig, int base, unsigned wid,
+static void format_vpiVectorVal(const vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       long end = base + (signed)wid;
@@ -723,7 +723,7 @@ vpiHandle __vpiSignal::get_index(int idx)
       return &(bits[norm_idx].as_bit);
 }
 
-void __vpiSignal::get_bit_value(struct __vpiBit*bit, p_vpi_value vp)
+void __vpiSignal::get_bit_value(const struct __vpiBit*bit, p_vpi_value vp)
 {
       unsigned index = bit->get_norm_index();
 

@@ -85,8 +85,8 @@ int __vpiEnumTypespec::vpi_get(int code)
 vpiHandle __vpiEnumTypespec::vpi_iterate(int code)
 {
       if (code == vpiEnumConst) {
-	    vpiHandle*args = (vpiHandle*)
-		  calloc(names.size(), sizeof(vpiHandle*));
+	    vpiHandle*args = static_cast<vpiHandle*>
+	                                (calloc(names.size(), sizeof(vpiHandle*)));
 	    for (size_t idx = 0 ; idx < names.size() ; idx += 1)
 		  args[idx] = &names[idx];
 

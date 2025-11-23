@@ -35,7 +35,7 @@ using namespace std;
 
 static vector<vpiHandle> vpip_root_table;
 
-static vpiHandle make_subset_iterator_(int type_code, vector<vpiHandle>&table);
+static vpiHandle make_subset_iterator_(int type_code, const vector<vpiHandle>&table);
 
 vpiHandle vpip_make_root_iterator(int type_code)
 {
@@ -313,7 +313,7 @@ static int compare_types(int code, int type)
       return 0;
 }
 
-static vpiHandle make_subset_iterator_(int type_code, vector<vpiHandle>&table)
+static vpiHandle make_subset_iterator_(int type_code, const vector<vpiHandle>&table)
 {
       unsigned mcnt = 0, ncnt = 0;
       vpiHandle*args;

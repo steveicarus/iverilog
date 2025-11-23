@@ -45,7 +45,7 @@ class ufunc_real : public ufunc_core {
 		 vvp_code_t start_address,
 		 __vpiScope*call_scope,
 		 char*scope_label);
-      ~ufunc_real();
+      ~ufunc_real() override;
 
       void finish_thread() override;
 };
@@ -57,7 +57,7 @@ class ufunc_vec4 : public ufunc_core {
 		 vvp_code_t start_address,
 		 __vpiScope*call_scope,
 		 char*scope_label);
-      ~ufunc_vec4();
+      ~ufunc_vec4() override;
 
       void finish_thread() override;
 };

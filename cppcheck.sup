@@ -1,10 +1,16 @@
 // These are correct and are used to find the base (zero) pin.
-thisSubtraction:netlist.h:5311
-thisSubtraction:netlist.h:5320
+thisSubtraction:netlist.h:5310
+thisSubtraction:netlist.h:5319
 
 // This is used when running a debugger
 // debugger_release
 knownConditionTrueFalse:main.cc:931
+
+// Yes, it's a duplicate
+duplicateCondition:elaborate.cc:7672
+
+// To complicated to use std::find_if()
+useStlAlgorithm:map_named_args.cc:38
 
 // This are just stubs
 // vpi_control()
@@ -685,9 +691,15 @@ unusedFunction:t-dll.cc:2368
 // is_before()
 unusedFunction:verinum.cc:592
 
-// Errors in the generated yacc and lex files
+// Errors/limitations in the generated yacc and lex files
+constVariablePointer:<stdout>
 cstyleCast:<stdout>
+nullPointer:<stdout>
+redundantInitialization:<stdout>
 syntaxError:<stdout>
 unusedFunction:<stdout>
 duplicateBreak:lexor.lex
+allocaCalled:parse.cc
 syntaxError:parse.cc
+allocaCalled:syn-rules.cc
+constVariablePointer:syn-rules.cc

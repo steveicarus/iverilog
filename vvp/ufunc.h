@@ -57,7 +57,7 @@ class ufunc_core : public vvp_wide_fun_core {
 		 vvp_code_t start_address,
 		 __vpiScope*call_scope,
 		 char*scope_label);
-      virtual ~ufunc_core() =0;
+      virtual ~ufunc_core() override =0;
 
       __vpiScope*call_scope() { return call_scope_; }
       __vpiScope*func_scope() { return func_scope_; }

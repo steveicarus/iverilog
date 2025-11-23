@@ -23,8 +23,9 @@
 # include  <cstring>
 # include  <cassert>
 
-#ifdef CHECK_WITH_VALGRIND
 # include  "ivl_alloc.h"
+
+#ifdef CHECK_WITH_VALGRIND
 static char **string_pool = NULL;
 static unsigned string_pool_count = 0;
 #endif
@@ -71,7 +72,7 @@ const char* StringHeap::add(const char*text)
 	      // realloc shrink of the memory region will return the
 	      // same pointer.
 	    if (rem > 0) {
-		  char*old = cell_base_;
+		  const char*old = cell_base_;
 		  cell_base_ = static_cast<char*>(realloc(cell_base_, cell_ptr_));
 		  assert(cell_base_ != 0);
 		  assert(cell_base_ == old);

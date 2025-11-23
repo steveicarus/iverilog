@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -162,19 +162,20 @@ void vvp_fun_part_aa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 				   unsigned base, unsigned vwid, vvp_context_t context)
 {
       if (context) {
-            vvp_vector4_t*val = static_cast<vvp_vector4_t*>
-                  (vvp_get_context_item(context, context_idx_));
+	    const vvp_vector4_t*val = static_cast<vvp_vector4_t*>
+	                                         (vvp_get_context_item(context,
+	                                                               context_idx_));
 
-            vvp_vector4_t tmp (vwid, BIT4_Z);
-            tmp.set_vec(base_, *val);
-            tmp.set_vec(base, bit);
-            recv_vec4(port, tmp, context);
+	    vvp_vector4_t tmp (vwid, BIT4_Z);
+	    tmp.set_vec(base_, *val);
+	    tmp.set_vec(base, bit);
+	    recv_vec4(port, tmp, context);
       } else {
-            context = context_scope_->live_contexts;
-            while (context) {
-                  recv_vec4_pv(port, bit, base, vwid, context);
-                  context = vvp_get_next_context(context);
-            }
+	    context = context_scope_->live_contexts;
+	    while (context) {
+		  recv_vec4_pv(port, bit, base, vwid, context);
+		  context = vvp_get_next_context(context);
+	    }
       }
 }
 
@@ -377,8 +378,9 @@ void vvp_fun_part_var_aa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&b
 				       unsigned base, unsigned vwid, vvp_context_t context)
 {
       if (context) {
-            vvp_fun_part_var_state_s*state = static_cast<vvp_fun_part_var_state_s*>
-                  (vvp_get_context_item(context, context_idx_));
+	    const vvp_fun_part_var_state_s*state = static_cast<vvp_fun_part_var_state_s*>
+	                                                      (vvp_get_context_item(context,
+	                                                       context_idx_));
 
             vvp_vector4_t tmp = state->source;
             if (tmp.size() == 0)

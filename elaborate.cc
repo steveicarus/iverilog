@@ -1139,12 +1139,9 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
 
 static bool need_bufz_for_input_port(const vector<NetNet*>&prts)
 {
-      if (prts[0]->port_type() != NetNet::PINPUT)
-	    return false;
-
-      if (prts[0]->pin(0).nexus()->drivers_present())
-	    return true;
-
+      if (prts.empty()) return false;
+      if (prts[0]->port_type() != NetNet::PINPUT) return false;
+      if (prts[0]->pin(0).nexus()->drivers_present()) return true;
       return false;
 }
 
@@ -1573,7 +1570,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // array, then there should be no sub-ports and
 		    // the r-value expression is processed
 		    // differently.
-		  if (prts.size() >= 1 && prts[0]->unpacked_dimensions() > 0) {
+		  if (!prts.empty() && prts[0]->unpacked_dimensions() > 0) {
 			ivl_assert(*this, prts.size()==1);
 			elaborate_unpacked_port(des, scope, prts[0], pins[idx],
 						ptype, rmod, idx);
@@ -1681,7 +1678,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  if ((sig->data_type() == IVL_VT_REAL ) &&
 		      !prts.empty() && (prts[0]->data_type() != IVL_VT_REAL )) {
 			sig = cast_to_int4(des, scope, sig,
-			                  prts_vector_width/instance.size());
+			                   prts_vector_width/instance.size());
 		  }
 		    // If we have a bit/vector signal driving a real port
 		    // then we convert the value to a real.
@@ -1983,7 +1980,6 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // to the port from the outside, and the prts object is
 	      // an array of signals to be connected to the sig.
 
-	    NetConcat*ctmp;
 
 	    if (prts.size() == 1) {
 
@@ -2027,6 +2023,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	    } else switch (ptype) {
 		case NetNet::POUTPUT:
+		  NetConcat*ctmp;
 		  ctmp = new NetConcat(scope, scope->local_symbol(),
 				       prts_vector_width, prts.size());
 		  ctmp->set_line(*this);

@@ -131,7 +131,6 @@ class PGAssign  : public PGate {
 
       void dump(std::ostream&out, unsigned ind =4) const override;
       virtual void elaborate(Design*des, NetScope*scope) const override;
-      virtual bool elaborate_sig(Design*des, NetScope*scope) const override;
 
     private:
       void elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval) const;
@@ -170,7 +169,6 @@ class PGBuiltin  : public PGate {
 
       virtual void dump(std::ostream&out, unsigned ind =4) const override;
       virtual void elaborate(Design*, NetScope*scope) const override;
-      virtual bool elaborate_sig(Design*des, NetScope*scope) const override;
 
     private:
       void calculate_gate_and_lval_count_(unsigned&gate_count,

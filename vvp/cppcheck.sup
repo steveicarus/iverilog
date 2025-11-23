@@ -1,3 +1,10 @@
+// Only for conditional debugging
+knownConditionTrueFalse:lib_main.cc:289
+
+// Index calculation
+thisSubtraction:vpi_priv.h:430
+thisSubtraction:array_common.h:91
+
 // We use guarded memory allocation routines, but cppcheck is not
 // noticing this so it is complaining we could return a NULL value.
 nullPointerOutOfMemory:delay.cc:829          // calloc @  828
@@ -107,11 +114,14 @@ unusedFunction:vvp_net.cc:1751
 // as_string()
 unusedFunction:vvp_net.cc:1854
 // fully_featured_resolv_()
-unusedFunction:vvp_net.cc:3582
+unusedFunction:vvp_net.cc:3580
 // words()
 unusedFunction:vvp_net.h:595
 // force_vec8()
 unusedFunction:vvp_net_sig.cc:128
 
 // Unused functions from the lexor
+duplicateBreak:lexor.lex
 unusedFunction:lexor.cc
+unusedStructMember:lexor.lex
+allocaCalled:parse.cc

@@ -32,7 +32,7 @@ class vvp_latch : public vvp_net_fun_t {
 
     public:
       explicit vvp_latch(unsigned width);
-      ~vvp_latch();
+      ~vvp_latch() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t) override;

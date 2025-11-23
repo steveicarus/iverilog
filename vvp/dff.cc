@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,10 +57,9 @@ vvp_dff_aset::vvp_dff_aset(unsigned width, bool negedge)
 {
 }
 
-vvp_dff_asc::vvp_dff_asc(unsigned width, bool negedge, char*asc_value)
-: vvp_dff(width, negedge)
+vvp_dff_asc::vvp_dff_asc(unsigned width, bool negedge, const char*asc_value)
+: vvp_dff(width, negedge), asc_value_(c4string_to_vector4(asc_value))
 {
-      asc_value_ = c4string_to_vector4(asc_value);
 }
 
 void vvp_dff::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,

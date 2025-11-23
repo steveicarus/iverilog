@@ -1,7 +1,7 @@
 #ifndef IVL_config_H
 #define IVL_config_H
 /*
- * Copyright (c) 2001-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -204,7 +204,7 @@ inline int64_t i64round(double x)
 static inline char*strndup(const char*s, size_t n)
 {
       if (strlen(s) < n) return strdup(s);
-      char*tmp = (char*)malloc(n+1);
+      char*tmp = static_cast<char*>(malloc(n+1));
       strncpy(tmp, s, n);
       tmp[n] = 0;
       return tmp;

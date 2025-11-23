@@ -134,7 +134,7 @@ static bool vpi_array_is_real(const vvp_array_t arr)
 	// This must be a net array so look at element 0 to find the type.
       assert(arr->nets != 0);
       assert(arr->get_size() > 0);
-      struct __vpiRealVar*rsig = dynamic_cast<__vpiRealVar*>(arr->nets[0]);
+      const struct __vpiRealVar*rsig = dynamic_cast<__vpiRealVar*>(arr->nets[0]);
       if (rsig) {
 	    return true;
       }
@@ -787,9 +787,9 @@ string __vpiArray::get_word_str(unsigned address)
       return "";
 }
 
-vpiHandle vpip_make_array(char*label, const char*name,
-				 int first_addr, int last_addr,
-				 bool signed_flag)
+vpiHandle vpip_make_array(const char*label, const char*name,
+                          int first_addr, int last_addr,
+                          bool signed_flag)
 {
       struct __vpiArray*obj = new __vpiArray;
 
@@ -1014,7 +1014,7 @@ void compile_net_array(char*label, char*name, int last, int first)
       vpiHandle obj = vpip_make_array(label, name, first, last, false);
 
       struct __vpiArray*arr = dynamic_cast<__vpiArray*>(obj);
-      arr->nets = (vpiHandle*)calloc(arr->get_size(), sizeof(vpiHandle));
+      arr->nets = static_cast<vpiHandle*>(calloc(arr->get_size(), sizeof(vpiHandle)));
 
       count_net_arrays += 1;
       count_net_array_words += arr->get_size();
@@ -1028,7 +1028,7 @@ class vvp_fun_arrayport  : public vvp_net_fun_t {
     public:
       explicit vvp_fun_arrayport(vvp_array_t mem, vvp_net_t*net);
       explicit vvp_fun_arrayport(vvp_array_t mem, vvp_net_t*net, long addr);
-      ~vvp_fun_arrayport();
+      ~vvp_fun_arrayport() override;
 
       virtual void check_word_change(unsigned long addr) = 0;
 
@@ -1063,7 +1063,7 @@ class vvp_fun_arrayport_sa  : public vvp_fun_arrayport {
     public:
       explicit vvp_fun_arrayport_sa(vvp_array_t mem, vvp_net_t*net);
       explicit vvp_fun_arrayport_sa(vvp_array_t mem, vvp_net_t*net, long addr);
-      ~vvp_fun_arrayport_sa();
+      ~vvp_fun_arrayport_sa() override;
 
       void check_word_change(unsigned long addr) override;
 
@@ -1127,7 +1127,7 @@ class vvp_fun_arrayport_aa  : public vvp_fun_arrayport, public automatic_hooks_s
     public:
       explicit vvp_fun_arrayport_aa(__vpiScope*context_scope, vvp_array_t mem, vvp_net_t*net);
       explicit vvp_fun_arrayport_aa(__vpiScope*context_scope, vvp_array_t mem, vvp_net_t*net, long addr);
-      ~vvp_fun_arrayport_aa();
+      ~vvp_fun_arrayport_aa() override;
 
       void alloc_instance(vvp_context_t context) override;
       void reset_instance(vvp_context_t context) override;
@@ -1227,7 +1227,7 @@ void vvp_fun_arrayport_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit
 void vvp_fun_arrayport_aa::check_word_change_(unsigned long addr,
                                               vvp_context_t context)
 {
-      unsigned long*port_addr = static_cast<unsigned long*>
+      const unsigned long*port_addr = static_cast<unsigned long*>
             (vvp_get_context_item(context, context_idx_));
 
       if (addr != *port_addr)
@@ -1443,7 +1443,7 @@ bool array_port_resolv_list_t::resolve(bool mes)
 class array_word_part_callback : public array_word_value_callback {
     public:
       explicit array_word_part_callback(p_cb_data data);
-      ~array_word_part_callback();
+      ~array_word_part_callback() override;
 
       bool test_value_callback_ready(void) override;
 
@@ -1494,7 +1494,7 @@ value_callback*vpip_array_word_change(p_cb_data data)
 {
       struct __vpiArray*parent = 0;
       array_word_value_callback*cbh = 0;
-      if (struct __vpiArrayWord*word = array_var_word_from_handle(data->obj)) {
+      if (const struct __vpiArrayWord*word = array_var_word_from_handle(data->obj)) {
 	    parent = static_cast<__vpiArray*>(word->get_parent());
 	    unsigned addr = word->get_index();
 	    cbh = new array_word_value_callback(data);
@@ -1684,7 +1684,7 @@ void compile_array_cleanup(void)
 #ifdef CHECK_WITH_VALGRIND
 void memory_delete(vpiHandle item)
 {
-      struct __vpiArray*arr = (struct __vpiArray*) item;
+      struct __vpiArray*arr = static_cast<struct __vpiArray*>(item);
       if (arr->vals_words) delete [] (arr->vals_words-1);
 
 //      if (arr->vals4) {}
@@ -1707,8 +1707,8 @@ void memory_delete(vpiHandle item)
 		  } else {
 			assert(arr->nets[idx]->get_type_code() ==
 			       vpiRealVar);
-			struct __vpiRealVar *sigr = (struct __vpiRealVar *)
-			                            arr->nets[idx];
+			struct __vpiRealVar *sigr = static_cast<struct __vpiRealVar *>
+			                            (arr->nets[idx]);
 			constant_delete(sigr->id.index);
 // Why are only the real words still here?
 			delete arr->nets[idx];
@@ -1728,7 +1728,7 @@ void memory_delete(vpiHandle item)
 
 void A_delete(vpiHandle item)
 {
-      struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*) item;
+      struct __vpiArrayVthrA*obj = static_cast<struct __vpiArrayVthrA*>(item);
       if (obj->address_handle) {
 	    switch (obj->address_handle->get_type_code()) {
 		case vpiMemoryWord:
@@ -1749,7 +1749,7 @@ void A_delete(vpiHandle item)
 
 void APV_delete(vpiHandle item)
 {
-      struct __vpiArrayVthrAPV*obj = (struct __vpiArrayVthrAPV*) item;
+      struct __vpiArrayVthrAPV*obj = static_cast<struct __vpiArrayVthrAPV*>(item);
       delete obj;
 }
 #endif

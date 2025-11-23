@@ -61,7 +61,7 @@ extern vpip_routines_s vpi_routines;
 extern bool show_file_line;
 extern bool code_is_instrumented;
 
-extern vpiHandle vpip_build_file_line(char*description,
+extern vpiHandle vpip_build_file_line(const char*description,
                                       long file_idx, long lineno);
 
 /*
@@ -194,7 +194,7 @@ class __vpiDecConst : public __vpiHandle {
  */
 struct __vpiCallback : public __vpiHandle {
       __vpiCallback();
-      ~__vpiCallback();
+      ~__vpiCallback() override;
       int get_type_code(void) const override;
 
 	// Used for listing callbacks.
@@ -362,7 +362,7 @@ struct __vpiSignal : public __vpiHandle {
     public:
       unsigned width() const;
       vpiHandle get_index(int index);
-      void get_bit_value(struct __vpiBit*bit, p_vpi_value vp);
+      void get_bit_value(const struct __vpiBit*bit, p_vpi_value vp);
       vpiHandle put_bit_value(struct __vpiBit*bit, p_vpi_value vp, int flags);
       void make_bits();
 
@@ -442,7 +442,7 @@ class vpiPortInfo  : public __vpiHandle {
                     unsigned width,
                     const char *name,
                     char* buffer );
-      ~vpiPortInfo();
+      ~vpiPortInfo() override;
 
       int get_type_code(void) const override { return vpiPort; }
       int get_direction(void) { return direction_; }
@@ -471,7 +471,7 @@ class vpiPortBitInfo  : public __vpiHandle {
     public:
       vpiPortBitInfo(vpiPortInfo *parent,
                      unsigned bit);
-      ~vpiPortBitInfo();
+      ~vpiPortBitInfo() override;
 
       int get_type_code(void) const override { return vpiPortBit; }
       unsigned get_bit(void) const { return bit_; }
@@ -619,7 +619,7 @@ class __vpiNamedEvent : public __vpiHandle {
 
     public:
       __vpiNamedEvent(__vpiScope*scope, const char*name);
-      ~__vpiNamedEvent();
+      ~__vpiNamedEvent() override;
       int get_type_code(void) const override;
       __vpiScope*get_scope(void) const { return scope_; }
       int vpi_get(int code) override;
@@ -694,7 +694,7 @@ class __vpiBaseVar : public __vpiHandle {
     public:
       __vpiBaseVar(__vpiScope*scope, const char*name, vvp_net_t*net);
 #ifdef CHECK_WITH_VALGRIND
-      ~__vpiBaseVar();
+      ~__vpiBaseVar() override;
 #endif
 
       inline vvp_net_t* get_net() const { return net_; }
@@ -826,9 +826,9 @@ private:
       unsigned array_count;
       __vpiScope*scope;
 
-friend vpiHandle vpip_make_array(char*label, const char*name,
-                                        int first_addr, int last_addr,
-                                        bool signed_flag);
+friend vpiHandle vpip_make_array(const char*label, const char*name,
+                                 int first_addr, int last_addr,
+                                 bool signed_flag);
 friend void compile_array_alias(char*label, char*name, char*src);
 };
 
@@ -957,7 +957,7 @@ extern struct __vpiSysTaskCall*vpip_cur_task;
  */
 
 vpiHandle vpip_make_string_const(char*text, bool persistent =true);
-vpiHandle vpip_make_string_param(char*name, char*value, bool local_flag,
+vpiHandle vpip_make_string_param(const char*name, char*value, bool local_flag,
                                  long file_idx, long lineno);
 
 struct __vpiBinaryConst : public __vpiHandle {
@@ -989,7 +989,7 @@ class __vpiRealConst : public __vpiHandle {
 };
 
 vpiHandle vpip_make_real_const(double value);
-vpiHandle vpip_make_real_param(char*name, double value, bool local_flag,
+vpiHandle vpip_make_real_param(const char*name, double value, bool local_flag,
                                long file_idx, long lineno);
 
 class __vpiNullConst : public __vpiHandle {

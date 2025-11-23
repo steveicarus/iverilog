@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -509,10 +509,6 @@ void vvp_queue::push_front(const string&, unsigned)
       cerr << "XXXX push_front(string) not implemented for " << typeid(*this).name() << endl;
 }
 
-vvp_queue_real::~vvp_queue_real()
-{
-}
-
 /*
  * Helper functions used while copying multiple elements into a queue.
  */
@@ -665,10 +661,6 @@ void vvp_queue_real::erase_tail(unsigned idx)
 	    queue.resize(idx);
 }
 
-vvp_queue_string::~vvp_queue_string()
-{
-}
-
 void vvp_queue_string::copy_elems(vvp_object_t src, unsigned max_size)
 {
       if (vvp_queue*src_queue = src.peek<vvp_queue>())
@@ -775,10 +767,6 @@ void vvp_queue_string::erase_tail(unsigned idx)
       assert(queue.size() >= idx);
       if (queue.size() > idx)
 	    queue.resize(idx);
-}
-
-vvp_queue_vec4::~vvp_queue_vec4()
-{
 }
 
 void vvp_queue_vec4::copy_elems(vvp_object_t src, unsigned max_size)

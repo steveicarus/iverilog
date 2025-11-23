@@ -39,7 +39,7 @@ class vvp_dff : public vvp_net_fun_t {
 
     public:
       explicit vvp_dff(unsigned width, bool negedge);
-      ~vvp_dff();
+      ~vvp_dff() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t) override;
@@ -90,7 +90,7 @@ class vvp_dff_aset : public vvp_dff {
 class vvp_dff_asc : public vvp_dff {
 
     public:
-      explicit vvp_dff_asc(unsigned width, bool negedge, char*asc_value);
+      explicit vvp_dff_asc(unsigned width, bool negedge, const char*asc_value);
 
     private:
       void recv_async(vvp_net_ptr_t port) override;

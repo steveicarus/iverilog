@@ -37,7 +37,7 @@ class vvp_fun_concat  : public vvp_net_fun_t, protected vvp_gen_event_s  {
     public:
       vvp_fun_concat(unsigned w0, unsigned w1,
 		     unsigned w2, unsigned w3);
-      ~vvp_fun_concat();
+      ~vvp_fun_concat() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context) final;
@@ -57,7 +57,7 @@ class vvp_fun_concat8  : public vvp_net_fun_t, protected vvp_gen_event_s {
     public:
       vvp_fun_concat8(unsigned w0, unsigned w1,
 		     unsigned w2, unsigned w3);
-      ~vvp_fun_concat8();
+      ~vvp_fun_concat8() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context) final;
@@ -86,7 +86,7 @@ class vvp_fun_repeat  : public vvp_net_fun_t {
 
     public:
       vvp_fun_repeat(unsigned width, unsigned repeat);
-      ~vvp_fun_repeat();
+      ~vvp_fun_repeat() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context) override;

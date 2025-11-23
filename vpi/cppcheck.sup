@@ -374,3 +374,11 @@ variableScope:sys_random.c:47
 variableScope:sys_random.c:70
 variableScope:sys_random.c:93
 variableScope:sys_random.c:148
+
+// Issues in Lex/Yacc files
+allocaCalled:sdf_parse.c
+allocaCalled:table_mod_parse.c
+constVariablePointer:<stdout>
+duplicateBreak:<stdout>
+nullPointer:<stdout>
+redundantInitialization:<stdout>

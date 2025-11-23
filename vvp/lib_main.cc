@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-  "Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)";
+  "Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -300,7 +300,7 @@ void vvp_init(const char *logfile_name, int argc, char*argv[])
 	/* If the VVP_DEBUG variable is set, then it contains the path
 	   to the vvp debug file. Open it for output. */
 
-      if (char*path = getenv("VVP_DEBUG")) {
+      if (const char*path = getenv("VVP_DEBUG")) {
 	    debug_file.open(path, ios::out);
       }
 

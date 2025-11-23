@@ -30,7 +30,7 @@ class vvp_fun_boolean_ : public vvp_net_fun_t, protected vvp_gen_event_s {
 
     public:
       explicit vvp_fun_boolean_(unsigned wid);
-      ~vvp_fun_boolean_();
+      ~vvp_fun_boolean_() override;
 
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit,
                      vvp_context_t) override;
@@ -48,7 +48,7 @@ class vvp_fun_and  : public vvp_fun_boolean_ {
 
     public:
       explicit vvp_fun_and(unsigned wid, bool invert);
-      ~vvp_fun_and();
+      ~vvp_fun_and() override;
 
     private:
       void run_run() override;
@@ -59,7 +59,7 @@ class vvp_fun_equiv : public vvp_fun_boolean_ {
 
     public:
       explicit vvp_fun_equiv();
-      ~vvp_fun_equiv();
+      ~vvp_fun_equiv() override;
 
     private:
       void run_run() override;
@@ -69,7 +69,7 @@ class vvp_fun_impl : public vvp_fun_boolean_ {
 
     public:
       explicit vvp_fun_impl();
-      ~vvp_fun_impl();
+      ~vvp_fun_impl() override;
 
     private:
       void run_run() override;
@@ -82,7 +82,7 @@ class vvp_fun_buf_not_ : public vvp_net_fun_t, protected vvp_gen_event_s {
 
     public:
       explicit vvp_fun_buf_not_(unsigned wid);
-      ~vvp_fun_buf_not_();
+      ~vvp_fun_buf_not_() override;
 
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit,
                      vvp_context_t) override;
@@ -106,7 +106,7 @@ class vvp_fun_buf: public vvp_fun_buf_not_ {
 
     public:
       explicit vvp_fun_buf(unsigned wid);
-      virtual ~vvp_fun_buf();
+      virtual ~vvp_fun_buf() override;
 
     private:
       void run_run() override;
@@ -120,7 +120,7 @@ class vvp_fun_bufz: public vvp_net_fun_t {
 
     public:
       explicit vvp_fun_bufz();
-      virtual ~vvp_fun_bufz();
+      virtual ~vvp_fun_bufz() override;
 
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit,
                      vvp_context_t) override;
@@ -161,7 +161,7 @@ class vvp_fun_muxz : public vvp_net_fun_t, private vvp_gen_event_s {
 
     public:
       explicit vvp_fun_muxz(unsigned width);
-      virtual ~vvp_fun_muxz();
+      virtual ~vvp_fun_muxz() override;
 
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit,
                      vvp_context_t) override;
@@ -183,7 +183,7 @@ class vvp_fun_muxr : public vvp_net_fun_t, private vvp_gen_event_s {
 
     public:
       explicit vvp_fun_muxr();
-      virtual ~vvp_fun_muxr();
+      virtual ~vvp_fun_muxr() override;
 
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit,
                      vvp_context_t) override;
@@ -204,7 +204,7 @@ class vvp_fun_not: public vvp_fun_buf_not_ {
 
     public:
       explicit vvp_fun_not(unsigned wid);
-      virtual ~vvp_fun_not();
+      virtual ~vvp_fun_not() override;
 
     private:
       void run_run() override;
@@ -214,7 +214,7 @@ class vvp_fun_or  : public vvp_fun_boolean_ {
 
     public:
       explicit vvp_fun_or(unsigned wid, bool invert);
-      ~vvp_fun_or();
+      ~vvp_fun_or() override;
 
     private:
       void run_run() override;
@@ -225,7 +225,7 @@ class vvp_fun_xor  : public vvp_fun_boolean_ {
 
     public:
       explicit vvp_fun_xor(unsigned wid, bool invert);
-      ~vvp_fun_xor();
+      ~vvp_fun_xor() override;
 
     private:
       void run_run() override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -597,7 +597,7 @@ template vvp_vector4_t coerce_to_width(const vvp_vector4_t&that,
                                        unsigned width);
 
 
-static void multiply_array_imm(unsigned long*res, unsigned long*val,
+static void multiply_array_imm(unsigned long*res, const unsigned long*val,
 			       unsigned words, unsigned long imm)
 {
       for (unsigned idx = 0 ; idx < words ; idx += 1)
@@ -1103,10 +1103,10 @@ bool of_ASSIGN_AR(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_ARD(vthread_t thr, vvp_code_t cp)
 {
       long adr = thr->words[3].w_int;
-      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_uint;
       double value = thr->pop_real();
 
       if (adr >= 0) {
+	    vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_uint;
 	    schedule_assign_array_word(cp->array, adr, value, delay);
       }
 
@@ -2665,7 +2665,7 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 
 bool of_DISABLE_FLOW(vthread_t thr, vvp_code_t cp)
 {
-      __vpiScope*scope = static_cast<__vpiScope*>(cp->handle);
+      const __vpiScope*scope = static_cast<__vpiScope*>(cp->handle);
       vthread_t cur = thr;
 
       while (cur && cur->parent_scope != scope)
@@ -2753,7 +2753,7 @@ static unsigned long divide2words(unsigned long a, unsigned long b,
       return result + a/b;
 }
 
-static unsigned long* divide_bits(unsigned long*ap, unsigned long*bp, unsigned wid)
+static unsigned long* divide_bits(unsigned long*ap, const unsigned long*bp, unsigned wid)
 {
 	// Do all our work a cpu-word at a time. The "words" variable
 	// is the number of words of the wid.
@@ -3815,13 +3815,13 @@ bool of_JOIN_DETACH(vthread_t thr, vvp_code_t cp)
 bool of_LOAD_AR(vthread_t thr, vvp_code_t cp)
 {
       unsigned idx = cp->bit_idx[0];
-      unsigned adr = thr->words[idx].w_int;
       double word;
 
 	/* The result is 0.0 if the address is undefined. */
       if (thr->flags[4] == BIT4_1) {
 	    word = 0.0;
       } else {
+	    unsigned adr = thr->words[idx].w_int;
 	    word = cp->array->get_word_r(adr);
       }
 
@@ -3900,13 +3900,13 @@ bool of_LOAD_OBJ(vthread_t thr, vvp_code_t cp)
 bool of_LOAD_OBJA(vthread_t thr, vvp_code_t cp)
 {
       unsigned idx = cp->bit_idx[0];
-      unsigned adr = thr->words[idx].w_int;
       vvp_object_t word;
 
 	/* The result is 0.0 if the address is undefined. */
       if (thr->flags[4] == BIT4_1) {
 	    ; // Return nil
       } else {
+	    unsigned adr = thr->words[idx].w_int;
 	    cp->array->get_word_obj(adr, word);
       }
 
@@ -3950,12 +3950,12 @@ bool of_LOAD_STR(vthread_t thr, vvp_code_t cp)
 bool of_LOAD_STRA(vthread_t thr, vvp_code_t cp)
 {
       unsigned idx = cp->bit_idx[0];
-      unsigned adr = thr->words[idx].w_int;
       string word;
 
       if (thr->flags[4] == BIT4_1) {
 	    word = "";
       } else {
+	    unsigned adr = thr->words[idx].w_int;
 	    word = cp->array->get_word_str(adr);
       }
 
@@ -5124,7 +5124,6 @@ static bool qinsert(vthread_t thr, vvp_code_t cp, unsigned wid=0)
       int64_t idx = thr->words[3].w_int;
       ELEM value;
       vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
       pop_value(thr, value, wid); // Pop the value to store.
 
       vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
@@ -5142,8 +5141,10 @@ static bool qinsert(vthread_t thr, vvp_code_t cp, unsigned wid=0)
 	         << get_queue_type(value) << " index. ";
 	    print_queue_value(value);
 	    cerr << " was not added." << endl;
-      } else
+      } else {
+	    unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
 	    queue->insert(idx, value, max_size);
+      }
       return true;
 }
 
@@ -6027,7 +6028,6 @@ static bool store_qdar(vthread_t thr, vvp_code_t cp, unsigned wid=0)
       int64_t idx = thr->words[3].w_int;
       ELEM value;
       vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
       pop_value(thr, value, wid); // Pop the value to store.
 
       vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
@@ -6045,8 +6045,10 @@ static bool store_qdar(vthread_t thr, vvp_code_t cp, unsigned wid=0)
 	         << get_queue_type(value) << " index. ";
 	    print_queue_value(value);
 	    cerr << " was not added." << endl;
-      } else
+      } else {
+	    unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
 	    queue->set_word_max(idx, value, max_size);
+      }
       return true;
 }
 
@@ -6117,7 +6119,6 @@ static bool store_qobj(vthread_t thr, vvp_code_t cp, unsigned wid=0)
 // FIXME: Can we actually use wid here?
       (void)wid;
       vvp_net_t*net = cp->net;
-      unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
 
       vvp_queue*queue = get_queue_object<QTYPE>(thr, net);
       assert(queue);
@@ -6128,8 +6129,10 @@ static bool store_qobj(vthread_t thr, vvp_code_t cp, unsigned wid=0)
         // If it is null just clear the queue
       if (src.test_nil())
 	    queue->erase_tail(0);
-      else
+      else {
+	    unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
 	    queue->copy_elems(src, max_size);
+      }
 
       return true;
 }
@@ -6179,12 +6182,13 @@ template <typename ELEM>
 static bool storea(vthread_t thr, vvp_code_t cp)
 {
       unsigned idx = cp->bit_idx[0];
-      unsigned adr = thr->words[idx].w_int;
       ELEM val;
       pop_value(thr, val, 0);
 
-      if (thr->flags[4] != BIT4_1)
+      if (thr->flags[4] != BIT4_1) {
+	    unsigned adr = thr->words[idx].w_int;
 	    cp->array->set_word(adr, val);
+      }
 
       return true;
 }
@@ -6379,7 +6383,7 @@ bool of_SUBSTR_VEC4(vthread_t thr, vvp_code_t cp)
       unsigned wid = cp->bit_idx[1];
 
       int32_t sel = thr->words[sel_idx].w_int;
-      string&val = thr->peek_str(0);
+      const string&val = thr->peek_str(0);
 
       assert(wid%8 == 0);
 

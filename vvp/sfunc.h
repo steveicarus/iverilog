@@ -25,7 +25,7 @@ class sfunc_core : public vvp_wide_fun_core, protected vvp_gen_event_s {
 
     public:
       sfunc_core(vvp_net_t*ptr, vpiHandle sys, unsigned argc, vpiHandle*argv);
-      ~sfunc_core();
+      ~sfunc_core() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context) override;

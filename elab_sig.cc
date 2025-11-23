@@ -449,16 +449,6 @@ bool PGate::elaborate_sig(Design*, NetScope*) const
       return true;
 }
 
-bool PGBuiltin::elaborate_sig(Design*, NetScope*) const
-{
-      return true;
-}
-
-bool PGAssign::elaborate_sig(Design*, NetScope*) const
-{
-      return true;
-}
-
 bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 				  const Module*rmod) const
 {

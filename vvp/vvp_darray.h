@@ -70,7 +70,7 @@ class vvp_darray_vec4 : public vvp_darray {
     public:
       inline vvp_darray_vec4(size_t siz, unsigned word_wid) :
                              array_(siz), word_wid_(word_wid) { }
-      ~vvp_darray_vec4();
+      ~vvp_darray_vec4() override;
 
       size_t get_size(void) const override;
       void set_word(unsigned adr, const vvp_vector4_t&value) override;
@@ -89,7 +89,7 @@ class vvp_darray_vec2 : public vvp_darray {
     public:
       inline vvp_darray_vec2(size_t siz, unsigned word_wid) :
                              array_(siz), word_wid_(word_wid) { }
-      ~vvp_darray_vec2();
+      ~vvp_darray_vec2() override;
 
       size_t get_size(void) const override;
       void set_word(unsigned adr, const vvp_vector4_t&value) override;
@@ -106,7 +106,7 @@ class vvp_darray_real : public vvp_darray {
 
     public:
       explicit inline vvp_darray_real(size_t siz) : array_(siz) { }
-      ~vvp_darray_real();
+      ~vvp_darray_real() override;
 
       size_t get_size(void) const override;
       void set_word(unsigned adr, double value) override;
@@ -123,7 +123,7 @@ class vvp_darray_string : public vvp_darray {
 
     public:
       explicit inline vvp_darray_string(size_t siz) : array_(siz) { }
-      ~vvp_darray_string();
+      ~vvp_darray_string() override;
 
       size_t get_size(void) const override;
       void set_word(unsigned adr, const std::string&value) override;
@@ -139,7 +139,7 @@ class vvp_darray_object : public vvp_darray {
 
     public:
       explicit inline vvp_darray_object(size_t siz) : array_(siz) { }
-      ~vvp_darray_object();
+      ~vvp_darray_object() override;
 
       size_t get_size(void) const override;
       void set_word(unsigned adr, const vvp_object_t&value) override;
@@ -155,7 +155,7 @@ class vvp_queue : public vvp_darray {
 
     public:
       inline vvp_queue(void) { }
-      ~vvp_queue();
+      ~vvp_queue() override;
 
       virtual size_t get_size(void) const override =0;
       virtual void copy_elems(vvp_object_t src, unsigned max_size);
@@ -184,8 +184,6 @@ class vvp_queue : public vvp_darray {
 class vvp_queue_real : public vvp_queue {
 
     public:
-      ~vvp_queue_real() override;
-
       size_t get_size(void) const override { return queue.size(); };
       void copy_elems(vvp_object_t src, unsigned max_size) override;
       void set_word_max(unsigned adr, double value, unsigned max_size) override;
@@ -206,8 +204,6 @@ class vvp_queue_real : public vvp_queue {
 class vvp_queue_string : public vvp_queue {
 
     public:
-      ~vvp_queue_string() override;
-
       size_t get_size(void) const override { return queue.size(); };
       void copy_elems(vvp_object_t src, unsigned max_size) override;
       void set_word_max(unsigned adr, const std::string&value, unsigned max_size) override;
@@ -228,8 +224,6 @@ class vvp_queue_string : public vvp_queue {
 class vvp_queue_vec4 : public vvp_queue {
 
     public:
-      ~vvp_queue_vec4() override;
-
       size_t get_size(void) const override { return queue.size(); };
       void copy_elems(vvp_object_t src, unsigned max_size) override;
       void set_word_max(unsigned adr, const vvp_vector4_t&value, unsigned max_size) override;

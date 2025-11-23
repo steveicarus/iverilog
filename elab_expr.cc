@@ -403,7 +403,7 @@ NetExpr* PEAssignPattern::elaborate_expr_packed_(Design *des, NetScope *scope,
       width /= dims[cur_dim].width();
       cur_dim++;
 
-      NetEConcat *concat = new NetEConcat(parms_.size(), 1, base_type);
+      NetEConcat *neconcat = new NetEConcat(parms_.size(), 1, base_type);
       for (size_t idx = 0; idx < parms_.size(); idx++) {
 	    NetExpr *expr;
 	    // Handle nested assignment patterns as a special case. We do not
@@ -419,10 +419,10 @@ NetExpr* PEAssignPattern::elaborate_expr_packed_(Design *des, NetScope *scope,
 					     base_type, width,
 					     parms_[idx], need_const);
 	    if (expr)
-		  concat->set(idx, expr);
+		  neconcat->set(idx, expr);
       }
 
-      return concat;
+      return neconcat;
 }
 
 NetExpr* PEAssignPattern::elaborate_expr_struct_(Design *des, NetScope *scope,
@@ -439,17 +439,16 @@ NetExpr* PEAssignPattern::elaborate_expr_struct_(Design *des, NetScope *scope,
 	    des->errors++;
       }
 
-      NetEConcat *concat = new NetEConcat(parms_.size(), 1,
-					  struct_type->base_type());
+      NetEConcat *neconcat = new NetEConcat(parms_.size(), 1, struct_type->base_type());
       for (size_t idx = 0; idx < std::min(parms_.size(), members.size()); idx++) {
 	    auto expr = elaborate_rval_expr(des, scope,
 					    members[idx].net_type,
 					    parms_[idx], need_const);
 	    if (expr)
-		  concat->set(idx, expr);
+		  neconcat->set(idx, expr);
       }
 
-      return concat;
+      return neconcat;
 }
 
 NetExpr* PEAssignPattern::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
@@ -4263,7 +4262,7 @@ ivl_type_t PEIdent::resolve_type_(Design *des, const symbol_search_results &sr,
       else
 	    type = sr.type;
 
-      auto path = sr.path_tail.cbegin();
+      auto cpath = sr.path_tail.cbegin();
 
       ivl_assert(*this, !sr.path_head.empty());
 
@@ -4301,12 +4300,12 @@ ivl_type_t PEIdent::resolve_type_(Design *des, const symbol_search_results &sr,
 		  }
 	    }
 
-	    if (path == sr.path_tail.cend())
+	    if (cpath == sr.path_tail.cend())
 		  return type;
 
 	    // Next look up the next path element based on name
 
-	    const auto &name = path->name;
+	    const auto &name = cpath->name;
 
 	    if (auto class_type = dynamic_cast<const netclass_t*>(type)) {
 		  // If the type is an object, the next path member may be a
@@ -4363,8 +4362,8 @@ ivl_type_t PEIdent::resolve_type_(Design *des, const symbol_search_results &sr,
 		  return nullptr;
 	    }
 
-	    indices = &path->index;
-	    path++;
+	    indices = &cpath->index;
+	    cpath++;
       }
 
       return type;

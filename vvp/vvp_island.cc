@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -274,8 +274,8 @@ void compile_island_base(char*label, vvp_island*use_island)
 
       island_table->sym_set_value(label, use_island);
       island_count += 1;
-      island_list = (vvp_island **)realloc(island_list,
-                                           island_count*sizeof(vvp_island **));
+      island_list = static_cast<vvp_island **>(realloc(island_list,
+                                               island_count*sizeof(vvp_island **)));
       island_list[island_count-1] = use_island;
       free(label);
 }

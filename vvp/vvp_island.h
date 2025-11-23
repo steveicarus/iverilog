@@ -61,7 +61,7 @@ class vvp_island  : private vvp_gen_event_s {
 
     public:
       vvp_island();
-      virtual ~vvp_island();
+      virtual ~vvp_island() override;
 
 	// Ports call this method to flag that something happened at
 	// the input. The island will use this to create an active
@@ -123,7 +123,7 @@ class vvp_island_port  : public vvp_net_fun_t {
 
     public:
       explicit vvp_island_port(vvp_island*ip);
-      ~vvp_island_port();
+      ~vvp_island_port() override;
 
     public: // Implement vvp_net_fun_t methods
       virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -163,7 +163,7 @@ class vvp_island_port  : public vvp_net_fun_t {
 inline vvp_vector8_t island_get_value(vvp_net_t*net)
 {
       vvp_island_port*fun = dynamic_cast<vvp_island_port*>(net->fun);
-      vvp_wire_vec8*fil = dynamic_cast<vvp_wire_vec8*>(net->fil);
+      const vvp_wire_vec8*fil = dynamic_cast<vvp_wire_vec8*>(net->fil);
 
       if (fil == 0) {
 	    return fun->invalue;
@@ -185,7 +185,7 @@ inline vvp_vector8_t island_get_value(vvp_net_t*net)
 
 inline vvp_vector8_t island_get_sent_value(vvp_net_t*net)
 {
-      vvp_island_port*fun = dynamic_cast<vvp_island_port*>(net->fun);
+      const vvp_island_port*fun = dynamic_cast<vvp_island_port*>(net->fun);
       return fun->outvalue;
 }
 

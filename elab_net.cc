@@ -616,8 +616,6 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       // array word assignment.
       bool widx_flag = false;
 
-      list<long> unpacked_indices_const;
-
       // Detect the net is a structure and there was a method path
       // detected. We have already broken the path_ into the path to
       // the net, and the path of member names. For example, if the
@@ -685,6 +683,8 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		    return 0;
                   }
 
+		  use_path.pop_front();
+
 		  member_off += tmp_off;
 		  member_width = member->net_type->packed_width();
 
@@ -692,9 +692,8 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		        struct_type = tmp_struct;
 		  } else {
 		        struct_type = 0;
+			assert (use_path.empty());
 		  }
-
-		  use_path.pop_front();
 	    }
 
 	    // Look for part selects on the final member. For example if
@@ -771,6 +770,8 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    }
 
       } else if (sig->unpacked_dimensions() > 0) {
+
+	    list<long> unpacked_indices_const;
 
 	      // Make sure there are enough indices to address an array element.
 	    if (path_tail.index.size() < sig->unpacked_dimensions()) {

@@ -382,13 +382,11 @@ PEIdent::~PEIdent()
 
 static bool find_enum_constant(LexicalScope*scope, perm_string name)
 {
-      for (vector<enum_type_t*>::const_iterator cur = scope->enum_sets.begin() ;
-           cur != scope->enum_sets.end() ; ++ cur) {
-	    for (list<named_pexpr_t>::const_iterator idx = (*cur)->names->begin() ;
-                 idx != (*cur)->names->end() ; ++ idx) {
-                  if (idx->name == name) return true;
-            }
-      }
+      std::any_of(scope->enum_sets.cbegin(), scope->enum_sets.cend(),
+                  [name](const enum_type_t *cur) {
+	    return std::any_of(cur->names->cbegin(), cur->names->cend(),
+	                       [name](const named_pexpr_t idx){return idx.name == name;});
+      });
       return false;
 }
 

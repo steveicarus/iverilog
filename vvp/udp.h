@@ -30,7 +30,7 @@ struct udp_levels_table;
 struct vvp_udp_s {
 
     public:
-      explicit vvp_udp_s(char*label, char*name, unsigned ports,
+      explicit vvp_udp_s(const char*label, char*name, unsigned ports,
                          vvp_bit4_t init, bool type);
       virtual ~vvp_udp_s();
 
@@ -114,8 +114,8 @@ extern std::ostream& operator<< (std::ostream&o, const struct udp_levels_table&t
 class vvp_udp_comb_s : public vvp_udp_s {
 
     public:
-      vvp_udp_comb_s(char*label, char*name__, unsigned ports);
-      ~vvp_udp_comb_s();
+      vvp_udp_comb_s(const char*label, char*name__, unsigned ports);
+      ~vvp_udp_comb_s() override;
       void compile_table(char**tab);
 
 	// Test the cur table with the compiled rows, and return the
@@ -180,8 +180,8 @@ struct udp_edges_table {
 class vvp_udp_seq_s : public vvp_udp_s {
 
     public:
-      vvp_udp_seq_s(char*label, char*name__, unsigned ports, vvp_bit4_t init);
-      ~vvp_udp_seq_s();
+      vvp_udp_seq_s(const char*label, char*name__, unsigned ports, vvp_bit4_t init);
+      ~vvp_udp_seq_s() override;
 
       void compile_table(char**tab);
 
@@ -226,7 +226,7 @@ class vvp_udp_fun_core  : public vvp_wide_fun_core, private vvp_gen_event_s {
 
     public:
       vvp_udp_fun_core(vvp_net_t*net, vvp_udp_s*def);
-      ~vvp_udp_fun_core();
+      ~vvp_udp_fun_core() override;
 
       void recv_vec4_from_inputs(unsigned) override;
 

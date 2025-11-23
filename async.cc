@@ -28,11 +28,6 @@ bool NetAssign::is_asynchronous()
       return true;
 }
 
-bool NetCondit::is_asynchronous()
-{
-      return false;
-}
-
 /*
  * NetEvWait statements come from statements of the form @(...) in the
  * Verilog source. These event waits are considered asynchronous if

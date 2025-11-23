@@ -32,7 +32,7 @@ class vvp_fun_part  : public vvp_net_fun_t {
 
     public:
       vvp_fun_part(unsigned base, unsigned wid);
-      ~vvp_fun_part();
+      ~vvp_fun_part() override;
 
       unsigned get_base() const { return base_; }
       unsigned get_wid() const { return wid_; }
@@ -49,7 +49,7 @@ class vvp_fun_part_sa  : public vvp_fun_part, public vvp_gen_event_s {
 
     public:
       vvp_fun_part_sa(unsigned base, unsigned wid);
-      ~vvp_fun_part_sa();
+      ~vvp_fun_part_sa() override;
 
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -73,7 +73,7 @@ class vvp_fun_part_aa  : public vvp_fun_part, public automatic_hooks_s {
 
     public:
       vvp_fun_part_aa(unsigned base, unsigned wid);
-      ~vvp_fun_part_aa();
+      ~vvp_fun_part_aa() override;
 
     public:
       void alloc_instance(vvp_context_t context) override;
@@ -104,7 +104,7 @@ class vvp_fun_part_pv  : public vvp_net_fun_t {
 
     public:
       vvp_fun_part_pv(unsigned base, unsigned wid, unsigned vec_wid);
-      ~vvp_fun_part_pv();
+      ~vvp_fun_part_pv() override;
 
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -130,7 +130,7 @@ class vvp_fun_part_var  : public vvp_net_fun_t {
 
     public:
       explicit vvp_fun_part_var(unsigned wid, bool is_signed);
-      ~vvp_fun_part_var();
+      ~vvp_fun_part_var() override;
 
     protected:
       bool recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -148,7 +148,7 @@ class vvp_fun_part_var_sa  : public vvp_fun_part_var {
 
     public:
       explicit vvp_fun_part_var_sa(unsigned wid, bool is_signed);
-      ~vvp_fun_part_var_sa();
+      ~vvp_fun_part_var_sa() override;
 
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -171,7 +171,7 @@ class vvp_fun_part_var_aa  : public vvp_fun_part_var, public automatic_hooks_s {
 
     public:
       explicit vvp_fun_part_var_aa(unsigned wid, bool is_signed);
-      ~vvp_fun_part_var_aa();
+      ~vvp_fun_part_var_aa() override;
 
     public:
       void alloc_instance(vvp_context_t context) override;

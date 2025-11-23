@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1017,24 +1017,24 @@ operands
 
 operand
   : symbol
-      { comp_operands_t opa = (comp_operands_t)
-		  calloc(1, sizeof(struct comp_operands_s));
+      { comp_operands_t opa = static_cast<comp_operands_t>
+                                         (calloc(1, sizeof(struct comp_operands_s)));
 	opa->argc = 1;
 	opa->argv[0].ltype = L_SYMB;
 	opa->argv[0].symb = $1;
 	$$ = opa;
       }
   | T_NUMBER
-      { comp_operands_t opa = (comp_operands_t)
-		  calloc(1, sizeof(struct comp_operands_s));
+      { comp_operands_t opa = static_cast<comp_operands_t>
+                                         (calloc(1, sizeof(struct comp_operands_s)));
 	opa->argc = 1;
 	opa->argv[0].ltype = L_NUMB;
 	opa->argv[0].numb = $1;
 	$$ = opa;
       }
   | T_STRING
-      { comp_operands_t opa = (comp_operands_t)
-		  calloc(1, sizeof(struct comp_operands_s));
+      { comp_operands_t opa = static_cast<comp_operands_t>
+                                         (calloc(1, sizeof(struct comp_operands_s)));
 	opa->argc = 1;
 	opa->argv[0].ltype = L_STRING;
 	opa->argv[0].text = $1;

@@ -125,7 +125,7 @@ void class_property_t::get_object(char*, vvp_object_t&, uint64_t)
 template <class T> class property_atom : public class_property_t {
     public:
       inline explicit property_atom(void) { }
-      ~property_atom() { }
+      ~property_atom() override { }
 
       size_t instance_size() const override { return sizeof(T); }
 
@@ -144,7 +144,7 @@ template <class T> class property_atom : public class_property_t {
 class property_bit : public class_property_t {
     public:
       explicit inline property_bit(size_t wid): wid_(wid) { }
-      ~property_bit() { }
+      ~property_bit() override { }
 
       size_t instance_size() const override { return sizeof(vvp_vector2_t); }
 
@@ -169,7 +169,7 @@ class property_bit : public class_property_t {
 class property_logic : public class_property_t {
     public:
       explicit inline property_logic(size_t wid): wid_(wid) { }
-      ~property_logic() { }
+      ~property_logic() override { }
 
       size_t instance_size() const override { return sizeof(vvp_vector4_t); }
 
@@ -194,7 +194,7 @@ class property_logic : public class_property_t {
 template <class T> class property_real : public class_property_t {
     public:
       inline explicit property_real(void) { }
-      ~property_real() { }
+      ~property_real() override { }
 
       size_t instance_size() const override { return sizeof(T); }
 
@@ -213,7 +213,7 @@ template <class T> class property_real : public class_property_t {
 class property_string : public class_property_t {
     public:
       inline explicit property_string(void) { }
-      ~property_string() { }
+      ~property_string() override { }
 
       size_t instance_size() const override { return sizeof(std::string); }
 
@@ -235,7 +235,7 @@ class property_string : public class_property_t {
 class property_object : public class_property_t {
     public:
       inline explicit property_object(uint64_t as): array_size_(as==0? 1 : as) { }
-      ~property_object() { }
+      ~property_object() override { }
 
       size_t instance_size() const override { return array_size_ * sizeof(vvp_object_t); }
 
@@ -291,14 +291,14 @@ void property_bit::set_vec4(char*buf, const vvp_vector4_t&val)
 
 void property_bit::get_vec4(char*buf, vvp_vector4_t&val)
 {
-      vvp_vector2_t*obj = reinterpret_cast<vvp_vector2_t*> (buf+offset_);
+      const vvp_vector2_t*obj = reinterpret_cast<vvp_vector2_t*> (buf+offset_);
       val = vector2_to_vector4(*obj, obj->size());
 }
 
 void property_bit::copy(char*dst, char*src)
 {
       vvp_vector2_t*dst_obj = reinterpret_cast<vvp_vector2_t*> (dst+offset_);
-      vvp_vector2_t*src_obj = reinterpret_cast<vvp_vector2_t*> (src+offset_);
+      const vvp_vector2_t*src_obj = reinterpret_cast<vvp_vector2_t*> (src+offset_);
       *dst_obj = *src_obj;
 }
 
@@ -310,14 +310,14 @@ void property_logic::set_vec4(char*buf, const vvp_vector4_t&val)
 
 void property_logic::get_vec4(char*buf, vvp_vector4_t&val)
 {
-      vvp_vector4_t*obj = reinterpret_cast<vvp_vector4_t*> (buf+offset_);
+      const vvp_vector4_t*obj = reinterpret_cast<vvp_vector4_t*> (buf+offset_);
       val = *obj;
 }
 
 void property_logic::copy(char*dst, char*src)
 {
       vvp_vector4_t*dst_obj = reinterpret_cast<vvp_vector4_t*> (dst+offset_);
-      vvp_vector4_t*src_obj = reinterpret_cast<vvp_vector4_t*> (src+offset_);
+      const vvp_vector4_t*src_obj = reinterpret_cast<vvp_vector4_t*> (src+offset_);
       *dst_obj = *src_obj;
 }
 
@@ -348,14 +348,14 @@ void property_string::set_string(char*buf, const string&val)
 
 string property_string::get_string(char*buf)
 {
-      string*tmp = reinterpret_cast<string*>(buf+offset_);
+      const string*tmp = reinterpret_cast<string*>(buf+offset_);
       return *tmp;
 }
 
 void property_string::copy(char*dst, char*src)
 {
       string*dst_obj = reinterpret_cast<string*> (dst+offset_);
-      string*src_obj = reinterpret_cast<string*> (src+offset_);
+      const string*src_obj = reinterpret_cast<string*> (src+offset_);
       *dst_obj = *src_obj;
 }
 
@@ -382,14 +382,14 @@ void property_object::set_object(char*buf, const vvp_object_t&val, uint64_t idx)
 void property_object::get_object(char*buf, vvp_object_t&val, uint64_t idx)
 {
       assert(idx < array_size_);
-      vvp_object_t*tmp = reinterpret_cast<vvp_object_t*>(buf+offset_);
+      const vvp_object_t*tmp = reinterpret_cast<vvp_object_t*>(buf+offset_);
       val = tmp[idx];
 }
 
 void property_object::copy(char*dst, char*src)
 {
       vvp_object_t*dst_obj = reinterpret_cast<vvp_object_t*>(dst+offset_);
-      vvp_object_t*src_obj = reinterpret_cast<vvp_object_t*>(src+offset_);
+      const vvp_object_t*src_obj = reinterpret_cast<vvp_object_t*>(src+offset_);
       for (size_t idx = 0 ; idx < array_size_ ; idx += 1)
 	    dst_obj[idx] = src_obj[idx];
 }

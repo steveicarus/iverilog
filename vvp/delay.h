@@ -90,7 +90,7 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
 
     public:
       vvp_fun_delay(vvp_net_t*net, unsigned width, const vvp_delay_t&d);
-      ~vvp_fun_delay();
+      ~vvp_fun_delay() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t) override;
@@ -167,7 +167,7 @@ class vvp_fun_modpath  : public vvp_net_fun_t, private vvp_gen_event_s {
 
     public:
       vvp_fun_modpath(vvp_net_t*net, unsigned width);
-      ~vvp_fun_modpath();
+      ~vvp_fun_modpath() override;
 
       void add_modpath_src(vvp_fun_modpath_src*that, bool ifnone);
 
@@ -197,7 +197,7 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
     public:
       explicit vvp_fun_modpath_src(vvp_time64_t const del[12]);
     protected:
-      ~vvp_fun_modpath_src();
+      ~vvp_fun_modpath_src() override;
 
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -243,7 +243,7 @@ class vvp_fun_intermodpath  : public vvp_net_fun_t, private vvp_gen_event_s {
 
     public:
       vvp_fun_intermodpath(vvp_net_t*net, unsigned width);
-      ~vvp_fun_intermodpath();
+      ~vvp_fun_intermodpath() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t) override;
