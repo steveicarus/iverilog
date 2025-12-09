@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -51,10 +51,10 @@ int Package::elaborate()
 
       for (map<perm_string,SubHeaderList>::iterator cur = cur_subprograms_.begin()
 		 ; cur != cur_subprograms_.end() ; ++ cur) {
-	    SubHeaderList& subp_list = cur->second;
+	    const SubHeaderList& subp_list = cur->second;
 
-	    for(SubHeaderList::iterator it = subp_list.begin();
-			it != subp_list.end(); ++it) {
+	    for(SubHeaderList::const_iterator it = subp_list.cbegin();
+	              it != subp_list.cend(); ++it) {
                 (*it)->set_package(this);
                 errors += (*it)->elaborate();
             }

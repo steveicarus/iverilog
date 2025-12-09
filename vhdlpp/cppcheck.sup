@@ -1,0 +1,9 @@
+
+// Errors/limitations in the generated yacc and lex files
+cstyleCast:lexor.cc
+constVariablePointer:lexor.cc
+duplicateBreak:lexor.lex
+unusedFunction:lexor.cc
+unusedStructMember:lexor.cc
+constParameterPointer:parse.cc
+syntaxError:parse.cc

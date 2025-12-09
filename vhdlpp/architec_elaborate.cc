@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -105,7 +105,7 @@ int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      ComponentBase*base = arc->find_component(cname_);
+      const ComponentBase*base = arc->find_component(cname_);
       if (base == 0) {
 	    cerr << get_fileline() << ": error: No component declaration"
 		 << " for instance " << iname_

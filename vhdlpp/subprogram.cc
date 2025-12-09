@@ -242,7 +242,7 @@ int SubprogramHeader::elaborate_argument(Expression*expr, int idx,
     return expr->elaborate_expr(ent, scope, type);
 }
 
-SubprogramHeader*SubprogramHeader::make_instance(std::vector<Expression*> arguments,
+SubprogramHeader*SubprogramHeader::make_instance(const std::vector<Expression*>&arguments,
                                                  ScopeBase*scope) const {
     assert(arguments.size() == ports_->size());
 
@@ -288,7 +288,7 @@ SubprogramHeader*SubprogramHeader::make_instance(std::vector<Expression*> argume
 struct check_return_type : public SeqStmtVisitor {
     explicit check_return_type(const SubprogramBody*subp) : subp_(subp), ret_type_(NULL) {}
 
-    void operator() (SequentialStmt*s)
+    void operator() (SequentialStmt*s) override
     {
         const ReturnStmt*ret;
         if((ret = dynamic_cast<ReturnStmt*>(s))) {

@@ -1,5 +1,5 @@
 /*
- * Copyright CERN 2016-2021
+ * Copyright CERN 2016-2025
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -41,7 +41,7 @@ class SubprogramToInteger : public SubprogramStdHeader {
       }
 
       int emit_name(const std::vector<Expression*>&argv,
-                    std::ostream&out, Entity*ent, ScopeBase*scope) const {
+                    std::ostream&out, Entity*ent, ScopeBase*scope) const override {
           bool signed_flag = false;
 
           // to_integer converts unsigned to natural
@@ -74,12 +74,12 @@ class SubprogramSizeCast : public SubprogramStdHeader {
       }
 
       int emit_name(const std::vector<Expression*>&,
-                    std::ostream&, Entity*, ScopeBase*) const {
+                    std::ostream&, Entity*, ScopeBase*) const override {
           return 0;
       }
 
       int emit_args(const std::vector<Expression*>&argv,
-                    std::ostream&out, Entity*ent, ScopeBase*scope) const {
+                    std::ostream&out, Entity*ent, ScopeBase*scope) const override {
           int64_t new_size, old_size;
 
           const VType*type = argv[0]->probe_type(ent, scope);
@@ -131,7 +131,7 @@ class SubprogramReadWrite : public SubprogramBuiltin {
       enum format_t { FORMAT_STD, FORMAT_BOOL, FORMAT_TIME, FORMAT_HEX, FORMAT_STRING };
 
       int emit_args(const std::vector<Expression*>&argv,
-                    std::ostream&out, Entity*ent, ScopeBase*scope) const {
+                    std::ostream&out, Entity*ent, ScopeBase*scope) const override {
 
           int errors = 0;
 

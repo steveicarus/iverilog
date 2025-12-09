@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -52,7 +52,7 @@ bool Architecture::find_constant(perm_string by_name, const VType*&typ, Expressi
             c = old_components_.find(cur_component_->component_name());
 
         assert(c != old_components_.end());
-        ComponentBase*base = c->second;
+        const ComponentBase*base = c->second;
 
         const InterfacePort*generic = base->find_generic(by_name);
         if(!generic)
@@ -209,7 +209,7 @@ ComponentInstantiation::ComponentInstantiation(perm_string i, perm_string c,
       typedef pair<map<perm_string,Expression*>::iterator,bool> insert_rc;
 
       while (parms && ! parms->empty()) {
-	    named_expr_t*cur = parms->front();
+	    const named_expr_t*cur = parms->front();
 	    parms->pop_front();
 	    insert_rc rc = generic_map_.insert(make_pair(cur->name(), cur->expr()));
 	    if (! rc.second) {
@@ -220,7 +220,7 @@ ComponentInstantiation::ComponentInstantiation(perm_string i, perm_string c,
       }
 
       while (ports && ! ports->empty()) {
-	    named_expr_t*cur = ports->front();
+	    const named_expr_t*cur = ports->front();
 	    ports->pop_front();
 	    insert_rc rc = port_map_.insert(make_pair(cur->name(), cur->expr()));
 	    if (! rc.second) {

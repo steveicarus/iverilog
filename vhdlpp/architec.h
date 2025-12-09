@@ -1,7 +1,7 @@
 #ifndef IVL_architec_H
 #define IVL_architec_H
 /*
- * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -50,7 +50,7 @@ class Architecture : public Scope, public LineInfo {
 
 	  public:
 	    Statement();
-	    virtual ~Statement() =0;
+	    virtual ~Statement() override =0;
 
 	    virtual int elaborate(Entity*ent, Architecture*arc);
 	    virtual int emit(std::ostream&out, Entity*ent, Architecture*arc);
@@ -62,12 +62,12 @@ class Architecture : public Scope, public LineInfo {
 	// NOTE: The statement list passed in is emptied.
       Architecture(perm_string name, const ActiveScope&ref,
 		   std::list<Architecture::Statement*>&s);
-      ~Architecture();
+      ~Architecture() override;
 
       perm_string get_name() const { return name_; }
 
-      bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp) const;
-      Variable* find_variable(perm_string by_name) const;
+      bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp) const override;
+      Variable* find_variable(perm_string by_name) const override;
 
 	// Sets the currently processed component (to be able to reach its parameters).
       void set_cur_component(ComponentInstantiation*component) {
@@ -137,7 +137,7 @@ class GenerateStatement : public Architecture::Statement {
 
     public:
       GenerateStatement(perm_string gname, std::list<Architecture::Statement*>&s);
-      ~GenerateStatement();
+      ~GenerateStatement() override;
 
       inline perm_string get_name() const { return name_; }
 
@@ -156,10 +156,10 @@ class ForGenerate : public GenerateStatement {
     public:
       ForGenerate(perm_string gname, perm_string genvar,
 		  ExpRange*rang, std::list<Architecture::Statement*>&s);
-      ~ForGenerate();
+      ~ForGenerate() override;
 
-      int elaborate(Entity*ent, Architecture*arc);
-      int emit(std::ostream&out, Entity*entity, Architecture*arc);
+      int elaborate(Entity*ent, Architecture*arc) override;
+      int emit(std::ostream&out, Entity*entity, Architecture*arc) override;
       void dump(std::ostream&out, int ident =0) const;
 
     private:
@@ -173,10 +173,10 @@ class IfGenerate : public GenerateStatement {
     public:
       IfGenerate(perm_string gname, Expression*cond,
 		 std::list<Architecture::Statement*>&s);
-      ~IfGenerate();
+      ~IfGenerate() override;
 
-      int elaborate(Entity*ent, Architecture*arc);
-      int emit(std::ostream&out, Entity*entity, Architecture*arc);
+      int elaborate(Entity*ent, Architecture*arc) override;
+      int emit(std::ostream&out, Entity*entity, Architecture*arc) override;
 
     private:
       Expression*cond_;
@@ -191,10 +191,10 @@ class SignalAssignment  : public Architecture::Statement {
     public:
       SignalAssignment(ExpName*target, std::list<Expression*>&rval);
       SignalAssignment(ExpName*target, Expression*rval);
-      ~SignalAssignment();
+      ~SignalAssignment() override;
 
-      virtual int elaborate(Entity*ent, Architecture*arc);
-      virtual int emit(std::ostream&out, Entity*entity, Architecture*arc);
+      virtual int elaborate(Entity*ent, Architecture*arc) override;
+      virtual int emit(std::ostream&out, Entity*entity, Architecture*arc) override;
       virtual void dump(std::ostream&out, int ident =0) const;
 
     private:
@@ -206,10 +206,10 @@ class CondSignalAssignment : public Architecture::Statement {
 
     public:
       CondSignalAssignment(ExpName*target, std::list<ExpConditional::case_t*>&options);
-      ~CondSignalAssignment();
+      ~CondSignalAssignment() override;
 
-      int elaborate(Entity*ent, Architecture*arc);
-      int emit(std::ostream&out, Entity*entity, Architecture*arc);
+      int elaborate(Entity*ent, Architecture*arc) override;
+      int emit(std::ostream&out, Entity*entity, Architecture*arc) override;
       void dump(std::ostream&out, int ident =0) const;
 
     private:
@@ -227,11 +227,11 @@ class ComponentInstantiation  : public Architecture::Statement {
       ComponentInstantiation(perm_string iname, perm_string cname,
 			     std::list<named_expr_t*>*parms,
 			     std::list<named_expr_t*>*ports);
-      ~ComponentInstantiation();
+      ~ComponentInstantiation() override;
 
-      virtual int elaborate(Entity*ent, Architecture*arc);
-      virtual int emit(std::ostream&out, Entity*entity, Architecture*arc);
-      virtual void dump(std::ostream&out, int indent =0) const;
+      virtual int elaborate(Entity*ent, Architecture*arc) override;
+      virtual int emit(std::ostream&out, Entity*entity, Architecture*arc) override;
+      virtual void dump(std::ostream&out, int indent =0) const override;
 
 	// Returns the expression that initializes a generic (or NULL if not found).
       Expression*find_generic_map(perm_string by_name) const;
@@ -250,19 +250,19 @@ class ComponentInstantiation  : public Architecture::Statement {
 class StatementList : public Architecture::Statement {
     public:
       explicit StatementList(std::list<SequentialStmt*>*statement_list);
-      virtual ~StatementList();
+      virtual ~StatementList() override;
 
-      int elaborate(Entity*ent, Architecture*arc) {
+      int elaborate(Entity*ent, Architecture*arc) override {
           return elaborate(ent, static_cast<ScopeBase*>(arc));
       }
 
-      int emit(std::ostream&out, Entity*ent, Architecture*arc) {
+      int emit(std::ostream&out, Entity*ent, Architecture*arc) override {
           return emit(out, ent, static_cast<ScopeBase*>(arc));
       }
 
       virtual int elaborate(Entity*ent, ScopeBase*scope);
       virtual int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
-      virtual void dump(std::ostream&out, int indent =0) const;
+      virtual void dump(std::ostream&out, int indent =0) const override;
 
       std::list<SequentialStmt*>& stmt_list() { return statements_; }
 
@@ -277,8 +277,8 @@ class InitialStatement : public StatementList {
       explicit InitialStatement(std::list<SequentialStmt*>*statement_list)
           : StatementList(statement_list) {}
 
-      int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
-      void dump(std::ostream&out, int indent =0) const;
+      int emit(std::ostream&out, Entity*entity, ScopeBase*scope) override;
+      void dump(std::ostream&out, int indent =0) const override;
 };
 
 // There is no direct VHDL counterpart to SV 'final' statement,
@@ -288,8 +288,8 @@ class FinalStatement : public StatementList {
       explicit FinalStatement(std::list<SequentialStmt*>*statement_list)
           : StatementList(statement_list) {}
 
-      int emit(std::ostream&out, Entity*entity, ScopeBase*scope);
-      void dump(std::ostream&out, int indent =0) const;
+      int emit(std::ostream&out, Entity*entity, ScopeBase*scope) override;
+      void dump(std::ostream&out, int indent =0) const override;
 };
 
 class ProcessStatement : public StatementList, public Scope {
@@ -299,11 +299,11 @@ class ProcessStatement : public StatementList, public Scope {
 		       const ActiveScope&ref,
 		       std::list<Expression*>*sensitivity_list,
 		       std::list<SequentialStmt*>*statement_list);
-      ~ProcessStatement();
+      ~ProcessStatement() override;
 
-      int elaborate(Entity*ent, Architecture*arc);
-      int emit(std::ostream&out, Entity*entity, Architecture*arc);
-      void dump(std::ostream&out, int indent =0) const;
+      int elaborate(Entity*ent, Architecture*arc) override;
+      int emit(std::ostream&out, Entity*entity, Architecture*arc) override;
+      void dump(std::ostream&out, int indent =0) const override;
 
     private:
       perm_string iname_;

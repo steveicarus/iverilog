@@ -1,7 +1,7 @@
 #ifndef IVL_subprogram_H
 #define IVL_subprogram_H
 /*
- * Copyright (c) 2013-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright CERN 2015
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -38,9 +38,9 @@ class SubprogramBody : public LineInfo, public ScopeBase {
 
     public:
       SubprogramBody();
-      ~SubprogramBody();
+      ~SubprogramBody() override;
 
-      const InterfacePort*find_param(perm_string nam) const;
+      const InterfacePort*find_param(perm_string nam) const override;
 
       void set_statements(std::list<SequentialStmt*>*statements);
       inline bool empty_statements() const { return !statements_ || statements_->empty(); }
@@ -55,7 +55,7 @@ class SubprogramBody : public LineInfo, public ScopeBase {
       void dump(std::ostream&fd) const;
 
       const SubprogramHeader*header() const { return header_; }
-      bool is_subprogram() const { return true; }
+      bool is_subprogram() const override { return true; }
 
     private:
       std::list<SequentialStmt*>*statements_;
@@ -68,7 +68,7 @@ class SubprogramHeader : public LineInfo {
     public:
       SubprogramHeader(perm_string name, std::list<InterfacePort*>*ports,
 		 const VType*return_type);
-      virtual ~SubprogramHeader();
+      virtual ~SubprogramHeader() override;
 
 	// Return true if the specification (name, types, ports)
 	// matches this subprogram and that subprogram.
@@ -124,7 +124,7 @@ class SubprogramHeader : public LineInfo {
 	// a different type. It is used to allow VHDL functions that work with
 	// unbounded std_logic_vectors, so there can be a separate instance
 	// for limited length logic vector.
-      SubprogramHeader*make_instance(std::vector<Expression*> arguments, ScopeBase*scope) const;
+      SubprogramHeader*make_instance(const std::vector<Expression*>&arguments, ScopeBase*scope) const;
 
 	// Emit header as it would show up in a package.
       int emit_package(std::ostream&fd) const;
@@ -154,9 +154,9 @@ class SubprogramStdHeader : public SubprogramHeader
       SubprogramStdHeader(perm_string nam, std::list<InterfacePort*>*ports,
               const VType*return_type) :
           SubprogramHeader(nam, ports, return_type) {}
-      virtual ~SubprogramStdHeader() {};
+      virtual ~SubprogramStdHeader() override {};
 
-      bool is_std() const { return true; }
+      bool is_std() const override { return true; }
 };
 
 // The simplest case, when only function name has to be changed.
@@ -166,9 +166,9 @@ class SubprogramBuiltin : public SubprogramStdHeader
       SubprogramBuiltin(perm_string vhdl_name, perm_string sv_name,
               std::list<InterfacePort*>*ports, const VType*return_type) :
           SubprogramStdHeader(vhdl_name, ports, return_type), sv_name_(sv_name) {}
-      ~SubprogramBuiltin() {}
+      ~SubprogramBuiltin() override {}
 
-      int emit_name(const std::vector<Expression*>&, std::ostream&out, Entity*, ScopeBase*) const;
+      int emit_name(const std::vector<Expression*>&, std::ostream&out, Entity*, ScopeBase*) const override;
 
     private:
 	// SystemVerilog counterpart function name

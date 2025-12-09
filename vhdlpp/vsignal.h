@@ -1,7 +1,7 @@
 #ifndef IVL_vsignal_H
 #define IVL_vsignal_H
 /*
- * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -32,7 +32,7 @@ class SigVarBase : public LineInfo {
 
     public:
       SigVarBase(perm_string name, const VType*type, Expression*init_expr);
-      virtual ~SigVarBase();
+      virtual ~SigVarBase() override;
 
       const VType* peek_type(void) const { return type_; }
 

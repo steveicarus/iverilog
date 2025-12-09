@@ -1,7 +1,7 @@
 #ifndef IVL_scope_H
 #define IVL_scope_H
 /*
- * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -180,7 +180,7 @@ class Scope : public ScopeBase {
 
     public:
       explicit Scope(const ActiveScope&ref) : ScopeBase(ref) {}
-      virtual ~Scope() {}
+      virtual ~Scope() override {}
 
       ComponentBase* find_component(perm_string by_name);
 
@@ -202,7 +202,7 @@ class ActiveScope : public ScopeBase {
       ActiveScope() : context_entity_(0) { }
       explicit ActiveScope(const ActiveScope*par);
 
-      ~ActiveScope() { }
+      ~ActiveScope() override { }
 
 	// Pull items from "that" scope into "this" scope as is
 	// defined by a "use" directive. The parser uses this method
