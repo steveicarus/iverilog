@@ -160,7 +160,7 @@ class ForGenerate : public GenerateStatement {
 
       int elaborate(Entity*ent, Architecture*arc) override;
       int emit(std::ostream&out, Entity*entity, Architecture*arc) override;
-      void dump(std::ostream&out, int ident =0) const;
+      void dump(std::ostream&out, int ident =0) const override;
 
     private:
       perm_string genvar_;
@@ -195,7 +195,7 @@ class SignalAssignment  : public Architecture::Statement {
 
       virtual int elaborate(Entity*ent, Architecture*arc) override;
       virtual int emit(std::ostream&out, Entity*entity, Architecture*arc) override;
-      virtual void dump(std::ostream&out, int ident =0) const;
+      virtual void dump(std::ostream&out, int ident =0) const override;
 
     private:
       ExpName*lval_;
@@ -210,7 +210,7 @@ class CondSignalAssignment : public Architecture::Statement {
 
       int elaborate(Entity*ent, Architecture*arc) override;
       int emit(std::ostream&out, Entity*entity, Architecture*arc) override;
-      void dump(std::ostream&out, int ident =0) const;
+      void dump(std::ostream&out, int ident =0) const override;
 
     private:
       ExpName*lval_;
