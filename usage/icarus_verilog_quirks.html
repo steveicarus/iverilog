@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Icarus Verilog Quirks &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=cb25574f" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Reporting Issues" href="reporting_issues.html" />
+    <link rel="prev" title="Icarus Verilog Extensions" href="icarus_verilog_extensions.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="icarus-verilog-quirks">
+<h1>Icarus Verilog Quirks<a class="headerlink" href="#icarus-verilog-quirks" title="Link to this heading">¶</a></h1>
+<p>This is a list of known quirks that are presented by Icarus Verilog. The idea
+of this chapter is to call out ways that Icarus Verilog differs from the
+standard, or from other implementations.</p>
+<p>This is NOT AN EXHAUSTIVE LIST. If something is missing from this list, let us
+know and we can add documentation.</p>
+<section id="unsized-numeric-constants-are-not-limited-to-32-bits">
+<h2>Unsized Numeric Constants are Not Limited to 32 Bits<a class="headerlink" href="#unsized-numeric-constants-are-not-limited-to-32-bits" title="Link to this heading">¶</a></h2>
+<p>The Verilog standard allows Verilog implementations to limit the size of
+unsized constants to a bit width of at least 32. That means that a constant
+17179869183 (<code class="docutils literal notranslate"><span class="pre">36'h3_ffff_ffff</span></code>) may overflow some compilers. In fact, it
+is common to limit these values to 32 bits. However, a compiler may just as
+easily choose another width limit, for example 64 bits. That value is
+equally good.</p>
+<p>However, it is not required that an implementation truncate at 32 bits, and
+in fact Icarus Verilog does not truncate at all. It will make the unsized
+constant as big as it needs to be to hold the value accurately. This is
+especially useful in situations like this;</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="kt">reg</span><span class="w"> </span><span class="p">[</span><span class="n">width</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">foo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">17179869183</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>The programmer wants the constant to take on the width of the reg, which in
+this example is parameterized. Since constant sizes cannot be parameterized,
+the programmer ideally gives an unsized constant, which the compiler then
+expands/contracts to match the l-value.</p>
+<p>Also, by choosing to not ever truncate, Icarus Verilog can handle code written
+for a 64 bit compiler as easily as for a 32 bit compiler. In particular, any
+constants that the user does not expect to be arbitrarily truncated by their
+compiler will also not be truncated by Icarus Verilog, no matter what that
+other compiler chooses as a truncation point.</p>
+</section>
+<section id="unsized-expressions">
+<h2>Unsized Expressions<a class="headerlink" href="#unsized-expressions" title="Link to this heading">¶</a></h2>
+<p>Icarus Verilog classes any expression containing an unsized numeric constant
+or unsized parameter value that is not part of a self-determined operand as
+an unsized expression. When calculating the bit width of an unsized expression,
+it extends the width of the expression to avoid arithmetic overflow or
+underflow; in other words, the expression width will be made large enough to
+represent any possible arithmetic result of the expression. If the expression
+contains operations that do not follow the normal rules of arithmetic (e.g. an
+explicit or implicit cast between signed and unsigned values), the expression
+width will be extended to at least the width of an integer.</p>
+<p>An exception to the above is made if the expression contains a shift or power
+operator with a right hand operand that is a non-constant unsized expression.
+In this case any expansion of the expression width due to that operation is
+limited to the width of an integer, to avoid excessive expression widths
+(without this, an expression such as <code class="docutils literal notranslate"><span class="pre">2**(i-1)</span></code>, where <code class="docutils literal notranslate"><span class="pre">i</span></code> is an integer,
+would be expanded to 2**33 bits).</p>
+<p>The above behaviour is a deviation from the Verilog standard, which states
+that when calculating an expression width, the width of an unsized constant
+number is the same as the width of an integer. If you need strict standard
+compliance (for compatibility with other EDA tools), then the compiler has
+a command line option, <code class="docutils literal notranslate"><span class="pre">-gstrict-expr-width</span></code>, which disables the special
+treatment of unsized expressions. With this option, the compiler will output
+a warning message if an unsized numeric constant is encountered that cannot
+be represented in integer-width bits and will truncate the value.</p>
+<p>If you are simulating synthesisable code, it is recommended that the
+<code class="docutils literal notranslate"><span class="pre">-gstrict-expr-width</span></code> option is used, as this eliminates a potential
+source of synthesis vs. simulation mismatches.</p>
+</section>
+<section id="unsized-parameters">
+<h2>Unsized Parameters<a class="headerlink" href="#unsized-parameters" title="Link to this heading">¶</a></h2>
+<p>Icarus Verilog classes any parameter declaration that has no explicit or
+implicit range specification as an unsized parameter declaration. When
+calculating the bit width of the final value expression for the parameter,
+it follows the same rules as it does for unsized expressions, regardless of
+whether or not the expression contains any unsized numeric constants.</p>
+<p>If the final value expression for an unsized parameter is an unsized
+expression (i.e. does contain unsized numeric constants), any subsequent use
+of that parameter will be treated as if it was an unsized numeric constant.
+If not, it will be treated as if it was a numeric constant of the appropriate
+size. For example, with the declarations:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="k">localparam</span><span class="w"> </span><span class="n">Value1</span><span class="w"> </span><span class="o">=</span><span class="w">  </span><span class="mi">&#39;d3</span><span class="w"> </span><span class="o">+</span><span class="w">  </span><span class="mi">&#39;d2</span><span class="p">;</span>
+<span class="k">localparam</span><span class="w"> </span><span class="n">Value2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">2</span><span class="mi">&#39;d3</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">2</span><span class="mi">&#39;d2</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>any subsequent use of <code class="docutils literal notranslate"><span class="pre">Value1</span></code> will be treated as if the programmer had
+written <code class="docutils literal notranslate"><span class="pre">'d5</span></code> and any subsequent use of <code class="docutils literal notranslate"><span class="pre">Value2</span></code> will be treated as if
+the programmer had written <code class="docutils literal notranslate"><span class="pre">3'd5</span></code>. In particular, note that <code class="docutils literal notranslate"><span class="pre">Value2</span></code> can
+be used as a concatenation operand, but <code class="docutils literal notranslate"><span class="pre">Value1</span></code> cannot.</p>
+<p>The above behaviour is a deviation from the Verilog standard. As for
+unsized expressions, if you need strict standard compliance. use the
+<code class="docutils literal notranslate"><span class="pre">-gstrict-expr-width</span></code> compiler option.</p>
+</section>
+<section id="unsized-expressions-as-arguments-to-concatenation">
+<h2>Unsized Expressions as Arguments to Concatenation<a class="headerlink" href="#unsized-expressions-as-arguments-to-concatenation" title="Link to this heading">¶</a></h2>
+<p>The Verilog standard clearly states in 4.1.14:</p>
+<blockquote>
+<div><p>“Unsized constant numbers shall not be allowed in  concatenations. This
+is because the size of each  operand in the concatenation is needed to
+calculate the complete size of the concatenation.”</p>
+</div></blockquote>
+<p>So for example the expression <code class="docutils literal notranslate"><span class="pre">{1'b0,</span> <span class="pre">16}</span></code> is clearly illegal. It also stands
+to reason that <code class="docutils literal notranslate"><span class="pre">{1'b0,</span> <span class="pre">15+1}</span></code> is illegal, for exactly the same justification.
+What is the size of the expression (15+1)? Furthermore, it is reasonable to
+expect that (16) and (15+1) are exactly the same so far as the compiler is
+concerned.</p>
+<p>Unfortunately, Cadence seems to feel otherwise. In particular, it has been
+reported that although <code class="docutils literal notranslate"><span class="pre">{1'b0,</span> <span class="pre">16}</span></code> causes an error, <code class="docutils literal notranslate"><span class="pre">{1'b0,</span> <span class="pre">15+1}</span></code> is
+accepted. Further testing shows that any expression other than a simple
+unsized constant is accepted there, even if all the operands of all the
+operators that make up the expression are unsized integers.</p>
+<p>This is a semantic problem. Icarus Verilog doesn’t limit the size of integer
+constants. This is valid as stated in 2.5.1 Note 3:</p>
+<blockquote>
+<div><p>“The number of bits that make up an unsized number (which is a simple
+decimal number or a number without the size specification) shall be
+<strong>at least</strong> 32.” [emphasis added]</p>
+</div></blockquote>
+<p>Icarus Verilog will hold any integer constant, so the size will be as large as
+it needs to be, whether that is 64 bits, 128 bits, or more. With this in mind,
+what is the value of these expressions?</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="mh">&#39;h1</span><span class="n">_00_00_00_00</span><span class="p">}</span>
+<span class="p">{</span><span class="mh">&#39;h1</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="mh">32</span><span class="p">}</span>
+<span class="p">{</span><span class="mh">&#39;h0</span><span class="n">_00_00_00_01</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="mh">32</span><span class="p">}</span>
+<span class="p">{</span><span class="mh">&#39;h5</span><span class="n">_00_00_00_00</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">1</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>These examples show that the standard is justified in requiring that the
+operands of concatenation have size. The dispute is what it takes to cause
+an expression to have a size, and what that size is. Verilog-XL claims that
+(16) does not have a size, but (15+1) does. The size of the expression (15+1)
+is the size of the adder that is created, but how wide is the adder when
+adding unsized constants?</p>
+<p>One might note that the quote from section 4.1.14 says “Unsized constant
+numbers shall not be allowed.” It does not say “Unsized expressions…”, so
+arguably accepting (15+1) or even (16+0) as an operand to a concatenation is
+not a violation of the letter of the law. However, the very next sentence of
+the quote expresses the intent, and accepting (15+1) as having a more defined
+size then (16) seems to be a violation of that intent.</p>
+<p>Whatever a compiler decides the size is, the user has no way to predict it,
+and the compiler should not have the right to treat (15+1) any differently
+then (16). Therefore, Icarus Verilog takes the position that such expressions
+are unsized and are not allowed as operands to concatenations. Icarus Verilog
+will in general assume that operations on unsized numbers produce unsized
+results. There are exceptions when the operator itself does define a size,
+such as the comparison operators or the reduction operators. Icarus Verilog
+will generate appropriate error messages.</p>
+</section>
+<section id="scope-of-macro-defines-doesn-t-extend-into-libraries">
+<h2>Scope of Macro Defines Doesn’t Extend into Libraries<a class="headerlink" href="#scope-of-macro-defines-doesn-t-extend-into-libraries" title="Link to this heading">¶</a></h2>
+<p>Icarus Verilog does preprocess modules that are loaded from libraries via the
+<code class="docutils literal notranslate"><span class="pre">-y</span></code> mechanism to substitute macros and load includes. However, the only
+macros defined during compilation of an automatically loaded library module
+file are those that it defines itself (or includes) or that are defined on the
+command line or in the command file. Specifically, macros defined in the non-
+library source files are not remembered when the library module is loaded, and
+macros defined in a library module do not escape into the rest of the design.
+This is intentional. If it were otherwise, then compilation results might vary
+depending on the order that libraries are loaded, and that is unacceptable.</p>
+<p>For example, given sample library module <code class="docutils literal notranslate"><span class="pre">a.v</span></code>:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="cp">`define MACRO_A 1</span>
+<span class="k">module</span><span class="w"> </span><span class="n">a</span><span class="p">(</span><span class="k">input</span><span class="w"> </span><span class="n">x</span><span class="p">);</span>
+<span class="w">  </span><span class="k">always</span><span class="w"> </span><span class="p">@(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;x=&quot;</span><span class="p">,</span><span class="n">x</span><span class="p">);</span>
+<span class="k">endmodule</span>
+</pre></div>
+</div>
+<p>and sample library module <code class="docutils literal notranslate"><span class="pre">b.v</span></code>:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="w"> </span><span class="k">module</span><span class="w"> </span><span class="n">b</span><span class="p">(</span><span class="k">input</span><span class="w"> </span><span class="n">y</span><span class="p">);</span>
+<span class="w"> </span><span class="no">`ifdef</span><span class="w"> </span><span class="n">MACRO_A</span>
+<span class="w">   </span><span class="k">always</span><span class="w"> </span><span class="p">@(</span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;MACRO_A is defined&quot;</span><span class="p">,,</span><span class="n">y</span><span class="p">);</span>
+<span class="no">`else</span>
+<span class="w">   </span><span class="k">always</span><span class="w"> </span><span class="p">@(</span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;MACRO_A is NOT defined&quot;</span><span class="p">,,</span><span class="n">y</span><span class="p">);</span>
+<span class="w"> </span><span class="no">`endif</span>
+<span class="w"> </span><span class="k">endmodule</span>
+</pre></div>
+</div>
+<p>If a program instantiates both of these modules, there is no way to know
+which will be loaded first by the compiler, so if the definition of
+<code class="docutils literal notranslate"><span class="pre">MACRO_A</span></code> in <code class="docutils literal notranslate"><span class="pre">a.v</span></code> were to escape, then there is no way to predict or
+control whether <code class="docutils literal notranslate"><span class="pre">MACRO_A</span></code> is defined when <code class="docutils literal notranslate"><span class="pre">b.v</span></code> is processed. So the
+preprocessor processes automatic library module files as if they are in
+their own compilation unit, and you can know that <code class="docutils literal notranslate"><span class="pre">MACRO_A</span></code> will not be
+defined in <code class="docutils literal notranslate"><span class="pre">b.v</span></code> unless it is defined on the command line (a <code class="docutils literal notranslate"><span class="pre">-D</span></code> flag)
+or in the command file (a <code class="docutils literal notranslate"><span class="pre">+define+</span></code> record.)</p>
+<p>Of course if <code class="docutils literal notranslate"><span class="pre">a.v</span></code> and <code class="docutils literal notranslate"><span class="pre">b.v</span></code> were listed in the command file or on the
+command line, then the situation is different; the order is clear. The files
+are processed as if they were concatenated in the order that they are listed
+on the command line. The non-library modules are all together in a main
+compilation unit, and they are all processed before any library modules are
+loaded.</p>
+<p>It is said that some commercial compilers do allow macro definitions to span
+library modules. That’s just plain weird. However, there is a special case
+that Icarus Verilog does handle. Preprocessor definitions that are made in
+files explicitly listed on the command line or in the command file, do pass
+into implicitly loaded library files. For example, given the source file
+<code class="docutils literal notranslate"><span class="pre">x.v</span></code>:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span><span class="w"> </span><span class="n">main</span><span class="p">;</span>
+<span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="n">foo</span><span class="p">;</span>
+<span class="w">  </span><span class="n">b</span><span class="w"> </span><span class="n">dut</span><span class="p">(</span><span class="n">foo</span><span class="p">);</span>
+<span class="k">endmodule</span>
+<span class="cp">`define MACRO_A</span>
+</pre></div>
+</div>
+<p>and the library module file <code class="docutils literal notranslate"><span class="pre">b.v</span></code> described above, the situation is well
+defined, assuming the <code class="docutils literal notranslate"><span class="pre">x.v</span></code> file is listed on the command line or in the
+command file. The library module will receive the <code class="docutils literal notranslate"><span class="pre">MACRO_A</span></code> definition
+from the last explicitly loaded source file. The position of the define of
+<code class="docutils literal notranslate"><span class="pre">MACRO_A</span></code> in the explicitly loaded source files does not matter, as all
+explicitly loaded source files are preprocessed before any library files
+are loaded.</p>
+</section>
+<section id="continuous-assign-l-values-can-implicit-define-wires">
+<h2>Continuous Assign L-Values Can Implicit-Define Wires<a class="headerlink" href="#continuous-assign-l-values-can-implicit-define-wires" title="Link to this heading">¶</a></h2>
+<p>The IEEE 1364-2001 standard, Section 3.5, lists the cases where nets may be
+implicitly created. These include:</p>
+<ul class="simple">
+<li><p>identifier is a module port</p></li>
+<li><p>identifier is passed as a port to a primitive or module</p></li>
+</ul>
+<p>This does not seem to include continuous assignment l-values (or r-values)
+so the standard does not justify allowing implicit declarations of nets by
+continuous assignment.</p>
+<p>However, it has been reported that many Verilog compilers, including the big
+name tools, do allow this. So, Icarus Verilog will allow it as well, as an
+extension. If <code class="docutils literal notranslate"><span class="pre">-gxtypes</span></code> (the default) is used, this extension is enabled.
+To turn off this behavior, use the <code class="docutils literal notranslate"><span class="pre">-gno-xtypes</span></code> flag.</p>
+</section>
+<section id="dumping-array-words-dumpvars">
+<h2>Dumping Array Words (<code class="docutils literal notranslate"><span class="pre">$dumpvars</span></code>)<a class="headerlink" href="#dumping-array-words-dumpvars" title="Link to this heading">¶</a></h2>
+<p>Icarus has the ability to dump individual array words. They are only dumped
+when explicitly passed to $dumpvars. They are not dumped by default. For
+example given the following:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span><span class="w"> </span><span class="n">top</span><span class="p">;</span>
+<span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="p">[</span><span class="mh">7</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">array</span><span class="w"> </span><span class="p">[</span><span class="mh">2</span><span class="o">:</span><span class="mh">0</span><span class="p">];</span>
+<span class="w">  </span><span class="k">initial</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">    </span><span class="n">$dumpvars</span><span class="p">(</span><span class="mh">0</span><span class="p">,</span><span class="w"> </span><span class="n">array</span><span class="p">[</span><span class="mh">0</span><span class="p">],</span><span class="w"> </span><span class="n">array</span><span class="p">[</span><span class="mh">1</span><span class="p">]);</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">  </span><span class="k">end</span>
+<span class="k">endmodule</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">array[0]</span></code> and <code class="docutils literal notranslate"><span class="pre">array[1]</span></code> will be dumped whenever they change value. They
+will be displayed as an escaped identifier and GTKWave fully supports this.
+Note that this is an implicitly created escaped identifier that could conflict
+with an explicitly created escaped identifier. You can automate adding the
+array word by adding an index definition</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="k">integer</span><span class="w"> </span><span class="n">idx</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>and replacing the previous $dumpvars statement with</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mh">2</span><span class="p">;</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">1</span><span class="p">)</span><span class="w"> </span><span class="n">$dumpvars</span><span class="p">(</span><span class="mh">0</span><span class="p">,</span><span class="w"> </span><span class="n">array</span><span class="p">[</span><span class="n">idx</span><span class="p">]);</span>
+</pre></div>
+</div>
+<p>This will produce the same results as the previous example, but it is much
+easier to specify/change which elements are to be dumped. One important note
+regarding this syntax. Most system tasks/functions keep the variable selection
+(for this case it is a variable array word selection) context. If <code class="docutils literal notranslate"><span class="pre">$dumpvars</span></code>
+did this then all callback created would point to this element and would use
+the same index which for the example above would have the value 2. This is
+certainly not what is desired and for this special case when <code class="docutils literal notranslate"><span class="pre">$dumpvars</span></code>
+executes it uses the current index value to create a constant array selection
+and that is monitored instead of the original variable selection.</p>
+</section>
+<section id="referencing-declarations-within-an-unnamed-generate-block">
+<h2>Referencing Declarations Within an Unnamed Generate Block<a class="headerlink" href="#referencing-declarations-within-an-unnamed-generate-block" title="Link to this heading">¶</a></h2>
+<p>The IEEE 1364-2005 standard permits generate blocks to be unnamed, but states:</p>
+<blockquote>
+<div><p>“If the generate block selected for instantiation is not named, it still
+creates a scope; but the declarations within it cannot be referenced using
+hierarchical names other than from within the hierarchy instantiated by the
+generate block itself.”</p>
+</div></blockquote>
+<p>The standard later defines a scheme for automatically naming the unnamed
+scopes for use with external interfaces.</p>
+<p>Icarus Verilog implements the defined automatic naming scheme, but does not
+prevent the automatically generated names being used in a hierarchical
+reference. This behaviour is harmless - the automatically generated names are
+guaranteed to be unique within the enclosing scope, so there is no possibility
+of confusion with explicit scope names. However, to maintain code portability,
+it is recommended that this behavior is not exploited.</p>
+</section>
+<section id="g-g-format-specifiers">
+<h2><code class="docutils literal notranslate"><span class="pre">%g/%G</span></code> Format Specifiers<a class="headerlink" href="#g-g-format-specifiers" title="Link to this heading">¶</a></h2>
+<p>In the IEEE 1364-2001 standard there is a general statement that the real
+number format specifiers will use the full formatting capabilities of C.
+This is then followed by an example that describes <code class="docutils literal notranslate"><span class="pre">%10.3g</span></code>. The example
+description would be correct for the <code class="docutils literal notranslate"><span class="pre">%e</span></code> format specifier which should
+always have three fractional digits, but the <code class="docutils literal notranslate"><span class="pre">%g</span></code> format specifier does
+not work that way. For it the <code class="docutils literal notranslate"><span class="pre">.3</span></code> specifies that there will be three
+significant digits. What this means is that <code class="docutils literal notranslate"><span class="pre">%g</span></code> will always produce one
+less significant digit than <code class="docutils literal notranslate"><span class="pre">%e</span></code> and will only match the output from <code class="docutils literal notranslate"><span class="pre">%f</span></code>
+for certain values. For example:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span><span class="w"> </span><span class="n">top_level</span><span class="p">;</span>
+<span class="w">  </span><span class="kt">real</span><span class="w"> </span><span class="n">rval</span><span class="p">;</span>
+<span class="w">  </span><span class="k">initial</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">    </span><span class="n">rval</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">1234567890</span><span class="p">;</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;This is g and e: %10.3g, %10.3e.&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">rval</span><span class="p">,</span><span class="w"> </span><span class="n">rval</span><span class="p">);</span>
+<span class="w">    </span><span class="n">rval</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.1234567890</span><span class="p">;</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;This is g and f: %10.3g, %10.3f.&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">rval</span><span class="p">,</span><span class="w"> </span><span class="n">rval</span><span class="p">);</span>
+<span class="w">    </span><span class="n">rval</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.234567890</span><span class="p">;</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;This is more g and f: %10.3g, %10.3f.&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">rval</span><span class="p">,</span><span class="w"> </span><span class="n">rval</span><span class="p">);</span>
+<span class="w">  </span><span class="k">end</span>
+<span class="k">endmodule</span><span class="w"> </span><span class="c1">// top_level</span>
+</pre></div>
+</div>
+<p>will produce the following output:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="n">This</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="nl">e:</span><span class="w">   </span><span class="mf">1.23e+09</span><span class="p">,</span><span class="w">  </span><span class="mf">1.235e+09</span><span class="p">.</span>
+<span class="n">This</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="nl">f:</span><span class="w">      </span><span class="mf">0.123</span><span class="p">,</span><span class="w">      </span><span class="mf">0.123</span><span class="p">.</span>
+<span class="n">This</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="n">more</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="nl">f:</span><span class="w">       </span><span class="mf">1.23</span><span class="p">,</span><span class="w">      </span><span class="mf">1.235</span><span class="p">.</span>
+</pre></div>
+</div>
+</section>
+<section id="t-time-format-specifier-can-specify-width">
+<h2><code class="docutils literal notranslate"><span class="pre">%t</span></code> Time Format Specifier Can Specify Width<a class="headerlink" href="#t-time-format-specifier-can-specify-width" title="Link to this heading">¶</a></h2>
+<p>Standard Verilog does not allow width fields in the <code class="docutils literal notranslate"><span class="pre">%t</span></code> formats of display
+strings. For example, this is illegal:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;Time is %0t&quot;</span><span class="p">,</span><span class="w"> </span><span class="nb">$time</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Standard Verilog instead relies on the <code class="docutils literal notranslate"><span class="pre">$timeformat</span></code> to completely specify
+the format.</p>
+<p>Icarus Verilog allows the programmer to specify the field width. The <code class="docutils literal notranslate"><span class="pre">%t</span></code>
+format in Icarus Verilog works exactly as it does in standard Verilog.
+However, if the programmer chooses to specify a minimum width (i.e., <code class="docutils literal notranslate"><span class="pre">%5t</span></code>),
+then for that display Icarus Verilog will override the <code class="docutils literal notranslate"><span class="pre">$timeformat</span></code> minimum
+width and use the explicit minimum width.</p>
+</section>
+<section id="v-format-specifier-can-display-vectors">
+<h2><code class="docutils literal notranslate"><span class="pre">%v</span></code> Format Specifier Can Display Vectors<a class="headerlink" href="#v-format-specifier-can-display-vectors" title="Link to this heading">¶</a></h2>
+<p>The IEEE 1364-2005 standard limits the <code class="docutils literal notranslate"><span class="pre">%v</span></code> specifier in display strings to
+work only with a single bit. Icarus Verilog extends that to support displaying
+the strength of vectors. The output is a strength specifier for each bit of the
+vector, with underscore characters separating each bit, e.g. <code class="docutils literal notranslate"><span class="pre">St0_St1_Pu1_HiZ</span></code>.
+Most other tools will just print the strength of the least significant bit of
+a vector, so this may give different output results for code that otherwise
+works fine.</p>
+</section>
+<section id="assign-deassign-and-force-release-of-bit-part-selects">
+<h2>Assign/Deassign and Force/Release of Bit/Part Selects<a class="headerlink" href="#assign-deassign-and-force-release-of-bit-part-selects" title="Link to this heading">¶</a></h2>
+<p>Icarus Verilog allows as an extension the assign/deassign and force/release
+of variable bit and part selects in certain cases. This allows the Verilog
+test bench writer to assign/deassign for example single bits of a variable
+(register, etc.). Other tools will report this as an error.</p>
+</section>
+<section id="repeat-statement-is-sign-aware">
+<h2><code class="docutils literal notranslate"><span class="pre">repeat</span></code> Statement is Sign Aware<a class="headerlink" href="#repeat-statement-is-sign-aware" title="Link to this heading">¶</a></h2>
+<p>The standard does not specify what to do for this case, but it does say what
+a repeat event control should do. In Icarus Verilog the <code class="docutils literal notranslate"><span class="pre">repeat</span></code> statement
+is consistent with the repeat event control definition. If the argument is
+signed and is a negative value this will be treated the same as an argument
+value of 0.</p>
+</section>
+<section id="built-in-system-functions-may-be-evaluated-at-compile-time">
+<h2>Built-in System Functions May Be Evaluated at Compile Time<a class="headerlink" href="#built-in-system-functions-may-be-evaluated-at-compile-time" title="Link to this heading">¶</a></h2>
+<p>Certain of the system functions have well-defined meanings, so can
+theoretically be evaluated at compile-time, instead of using runtime VPI
+code. Doing so means that VPI cannot override the definitions of functions
+handled in this manner. On the other hand, this makes them synthesizable,
+and also allows for more aggressive constant propagation. The functions
+handled in this manner are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">$bits</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">$signed</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">$sizeof</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">$unsigned</span></code></p></li>
+</ul>
+<p>Implementations of these system functions in VPI modules will be ignored.</p>
+</section>
+<section id="vpiscope-iterator-on-vpiscope-objects">
+<h2><code class="docutils literal notranslate"><span class="pre">vpiScope</span></code> Iterator on <code class="docutils literal notranslate"><span class="pre">vpiScope</span></code> Objects<a class="headerlink" href="#vpiscope-iterator-on-vpiscope-objects" title="Link to this heading">¶</a></h2>
+<p>In the VPI, the normal way to iterate over <code class="docutils literal notranslate"><span class="pre">vpiScope</span></code> objects contained
+within a <code class="docutils literal notranslate"><span class="pre">vpiScope</span></code> object, is the <code class="docutils literal notranslate"><span class="pre">vpiInternalScope</span></code> iterator. Icarus
+Verilog adds support for the <code class="docutils literal notranslate"><span class="pre">vpiScope</span></code> iterator of a <code class="docutils literal notranslate"><span class="pre">vpiScope</span></code> object,
+that iterates over <em>everything</em> that is contained in the current scope. This
+is useful in cases where one wants to iterate over all the objects in a scope
+without iterating over all the contained types explicitly.</p>
+</section>
+<section id="time-0-race-resolution">
+<h2>Time 0 Race Resolution<a class="headerlink" href="#time-0-race-resolution" title="Link to this heading">¶</a></h2>
+<p>Combinational logic is routinely modelled using always blocks. However, this
+can lead to race conditions if the inputs to the combinational block are
+initialized in initial statements. Icarus Verilog slightly modifies time 0
+scheduling by arranging for always statements with ANYEDGE sensitivity lists
+to be scheduled before any other threads. This causes combinational always
+blocks to be triggered when the values in the sensitivity list are initialized
+by initial threads.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gtkwave.html">Waveforms With GTKWave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Usage</a><ul>
+      <li>Previous: <a href="icarus_verilog_extensions.html" title="previous chapter">Icarus Verilog Extensions</a></li>
+      <li>Next: <a href="reporting_issues.html" title="next chapter">Reporting Issues</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024-2025, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/icarus_verilog_quirks.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
