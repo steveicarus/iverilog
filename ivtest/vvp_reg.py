@@ -206,8 +206,7 @@ if __name__ == "__main__":
     # pylint: disable-next=invalid-name
     width = 0
     for cur in tests_list:
-        if len(cur[0]) > width:
-            width = len(cur[0])
+        width = max(width, len(cur[0]))
 
     # pylint: disable-next=invalid-name
     error_count = 0
