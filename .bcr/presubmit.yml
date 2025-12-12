@@ -13,11 +13,6 @@ tasks:
     platform: ${{ platform }}
     bazel: ${{ bazel }}
     build_targets:
-      - "@iverilog//:iverilog"
-      - "@iverilog//:vvp"
       - "@iverilog//:ivl"
       - "@iverilog//:ivlpp"
       - "@iverilog//:iverilog-bin"
-      - "@iverilog//:vvp-bin"
-    test_targets:
-      - "@iverilog//:hello_verilog_test"

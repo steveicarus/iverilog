@@ -118,6 +118,7 @@ cc_library(
     srcs = [
         "libmisc/LineInfo.cc",
         "libmisc/StringHeap.cc",
+        "ivl_alloc.h",
     ],
     hdrs = [
         "libmisc/LineInfo.h",
@@ -312,6 +313,8 @@ vpi_binary(
         ":config_h",
         "ivl_alloc.h",
         "sv_vpi_user.h",
+        "vpi_user.h",
+        "_pli_types.h",
         "version_base.h",
         "vpi/fastlz.c",
         "vpi/fastlz.h",
@@ -427,6 +430,8 @@ vpi_binary(
     srcs = [
         "ivl_alloc.h",
         "sv_vpi_user.h",
+        "vpi_user.h",
+        "_pli_types.h",
         "vpi/sys_priv.c",
         "vpi/sys_priv.h",
         "vpi/vhdl_table.c",
@@ -447,6 +452,8 @@ vpi_binary(
     srcs = [
         "ivl_alloc.h",
         "sv_vpi_user.h",
+        "vpi_user.h",
+        "_pli_types.h",
         "vpi/sys_priv.c",
         "vpi/sys_priv.h",
         "vpi/vhdl_textio.c",
@@ -466,6 +473,8 @@ vpi_binary(
     name = "va_math_vpi",
     srcs = [
         "ivl_alloc.h",
+        "vpi_user.h",
+        "_pli_types.h",
         "vpi/va_math.c",
         "vpi/vpi_config.h",
     ],
@@ -485,6 +494,8 @@ vpi_binary(
     srcs = [
         "ivl_alloc.h",
         "sv_vpi_user.h",
+        "vpi_user.h",
+        "_pli_types.h",
         "vpi/sys_clog2.c",
         "vpi/v2005_math.c",
         "vpi/vpi_config.h",
@@ -502,7 +513,11 @@ vpi_binary(
 
 vpi_binary(
     name = "vpi_debug_vpi",
-    srcs = ["vpi/vpi_debug.c"],
+    srcs = [
+        "vpi/vpi_debug.c",
+        "vpi_user.h",
+        "_pli_types.h",
+    ],
     out = "vpi_debug.vpi",
     copts = ["-O2"],
     includes = [
@@ -518,6 +533,8 @@ vpi_binary(
     srcs = [
         "ivl_alloc.h",
         "sv_vpi_user.h",
+        "vpi_user.h",
+        "_pli_types.h",
         "vpi/sys_priv.c",
         "vpi/sys_priv.h",
         "vpi/v2009_array.c",
