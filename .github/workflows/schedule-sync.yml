@@ -1,0 +1,150 @@
+name: Monthly Sync
+
+on:
+  schedule:
+    - cron: "0 0 1 * *" # Monthly on the 1st at 00:00 UTC
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: "Force release even if no changes?"
+        type: boolean
+        default: false
+
+env:
+  UPSTREAM_BRANCH: main # Will auto-detect if upstream uses 'master' instead
+
+jobs:
+  sync-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.CI_PAT_TOKEN }}
+
+      - name: Get upstream URL from fork parent
+        id: get-upstream
+        run: |
+          # Get parent repository URL from GitHub API
+          UPSTREAM_URL=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}" | \
+            jq -r '.parent.html_url')
+
+          if [ -z "$UPSTREAM_URL" ] || [ "$UPSTREAM_URL" = "null" ]; then
+            echo "Error: Could not get upstream URL. Is this repository a fork?"
+            exit 1
+          fi
+
+          echo "Upstream URL: $UPSTREAM_URL"
+          echo "upstream_url=$UPSTREAM_URL" >> $GITHUB_OUTPUT
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Detect upstream default branch
+        id: detect-branch
+        run: |
+          UPSTREAM_URL="${{ steps.get-upstream.outputs.upstream_url }}"
+
+          # Add upstream remote
+          git remote add upstream "$UPSTREAM_URL"
+          git fetch upstream
+
+          # Try to detect default branch
+          UPSTREAM_BRANCH=$(git remote show upstream | grep 'HEAD branch' | cut -d' ' -f5)
+
+          if [ -z "$UPSTREAM_BRANCH" ]; then
+            # Fallback to env default
+            UPSTREAM_BRANCH="${{ env.UPSTREAM_BRANCH }}"
+          fi
+
+          echo "Detected upstream branch: $UPSTREAM_BRANCH"
+          echo "branch=$UPSTREAM_BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Merge upstream changes
+        run: |
+          UPSTREAM_BRANCH="${{ steps.detect-branch.outputs.branch }}"
+          CURRENT_BRANCH=$(git branch --show-current)
+
+          echo "Current branch: $CURRENT_BRANCH"
+          echo "Syncing from upstream branch: $UPSTREAM_BRANCH"
+
+          # Merge upstream changes
+          git merge upstream/$UPSTREAM_BRANCH --no-edit || {
+            echo "Merge conflict detected. Manual intervention required."
+            exit 1
+          }
+
+          # Push merged changes to current branch
+          git push origin $CURRENT_BRANCH
+
+      - name: Check changes and generate tag
+        id: check
+        run: |
+          # Get the last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          # Get current and last tag commit hashes
+          CURRENT_HASH=$(git rev-parse HEAD)
+          if [ -n "$LAST_TAG" ]; then
+            LAST_TAG_HASH=$(git rev-parse "$LAST_TAG^{}")
+          else
+            LAST_TAG_HASH=""
+          fi
+
+          echo "Last Tag: $LAST_TAG ($LAST_TAG_HASH)"
+          echo "Current:  $CURRENT_HASH"
+
+          # Skip if no changes and not forced
+          if [ "$CURRENT_HASH" == "$LAST_TAG_HASH" ] && [ "${{ inputs.force_release }}" != "true" ]; then
+            echo "No changes detected. Skipping release."
+            echo "release_needed=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Generate pseudo-version: v0.0.0-YYYYMMDD-commitHash
+          SHORT_HASH=$(git rev-parse --short=7 HEAD)
+          DATE_STR=$(date +'%Y%m%d')
+          NEW_TAG="v0.0.0-${DATE_STR}-${SHORT_HASH}"
+
+          # Check if tag already exists
+          if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
+             echo "Tag $NEW_TAG already exists. Skipping."
+             echo "release_needed=false" >> $GITHUB_OUTPUT
+             exit 0
+          fi
+
+          echo "New release will be: $NEW_TAG"
+          echo "release_needed=true" >> $GITHUB_OUTPUT
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub release
+        if: steps.check.outputs.release_needed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.CI_PAT_TOKEN }}
+        run: |
+          TAG_NAME="${{ steps.check.outputs.new_tag }}"
+          UPSTREAM_URL="${{ steps.get-upstream.outputs.upstream_url }}"
+
+          echo "Creating tag and release: $TAG_NAME"
+
+          # Create and push tag
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"
+
+          # Create GitHub release
+          COMMIT_HASH=$(git rev-parse HEAD)
+          RELEASE_NOTES="Synced with upstream $UPSTREAM_URL on $(date +'%Y-%m-%d').
+
+          Commit: $COMMIT_HASH"
+
+          gh release create "$TAG_NAME" \
+            --repo ${{ github.repository }} \
+            --title "Auto Release $TAG_NAME" \
+            --notes "$RELEASE_NOTES" \
+            --generate-notes

@@ -1,6 +1,6 @@
 module(
     name = "iverilog",
-    version = "12.0.0",
+    version = "0.0.0",
 )
 
 bazel_dep(name = "gperf", version = "3.1")

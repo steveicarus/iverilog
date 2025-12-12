@@ -1,0 +1,5 @@
+{
+  "integrity": "",
+  "strip_prefix": "iverilog-{VERSION}",
+  "url": "https://github.com/{OWNER}/{REPO}/releases/download/v{VERSION}/iverilog-{VERSION}.tar.gz"
+}

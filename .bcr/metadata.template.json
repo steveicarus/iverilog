@@ -1,0 +1,13 @@
+{
+  "homepage": "https://github.com/MrAMS/iverilog",
+  "maintainers": [
+    {
+      "email": "",
+      "github": "MrAMS",
+      "name": "Qijia Yang"
+    }
+  ],
+  "repository": ["github:MrAMS/iverilog"],
+  "versions": [],
+  "yanked_versions": {}
+}

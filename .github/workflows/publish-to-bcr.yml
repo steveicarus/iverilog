@@ -1,0 +1,103 @@
+name: Publish to BCR
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Tag name to publish (e.g., v1.0.0)"
+        required: true
+        type: string
+
+jobs:
+  create-archive:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag_name: ${{ steps.get_version.outputs.tag_name }}
+      project_name: ${{ steps.load_config.outputs.project_name }}
+      bcr_registry_fork: ${{ steps.load_config.outputs.bcr_registry_fork }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag_name }}
+          submodules: recursive
+
+      - name: Load configuration
+        id: load_config
+        run: |
+          PROJECT_NAME=$(yq '.project_name' .github/bcr-config.yml)
+          BCR_REGISTRY_FORK=$(yq '.bcr_registry_fork' .github/bcr-config.yml)
+
+          echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
+          echo "bcr_registry_fork=$BCR_REGISTRY_FORK" >> $GITHUB_OUTPUT
+
+          echo "Loaded configuration:"
+          echo "  PROJECT_NAME=$PROJECT_NAME"
+          echo "  BCR_REGISTRY_FORK=$BCR_REGISTRY_FORK"
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          TAG_NAME="${{ github.event.release.tag_name || inputs.tag_name }}"
+          VERSION="${TAG_NAME#v}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+          echo "Tag: ${TAG_NAME}"
+
+      - name: Create release archive
+        run: |
+          PROJECT_NAME="${{ steps.load_config.outputs.project_name }}"
+          VERSION="${{ steps.get_version.outputs.version }}"
+          ARCHIVE_NAME="${PROJECT_NAME}-${VERSION}.tar.gz"
+
+          echo "Creating archive: ${ARCHIVE_NAME}"
+
+          # Create temporary directory with proper structure
+          mkdir -p /tmp/archive
+          cp -r . "/tmp/archive/${PROJECT_NAME}-${VERSION}/"
+
+          # Remove unwanted files from archive
+          cd "/tmp/archive/${PROJECT_NAME}-${VERSION}"
+          rm -rf .git .github bazel-* scripts .gitmodules .gitignore
+
+          # Create tar.gz archive
+          cd /tmp/archive
+          tar -czf "${ARCHIVE_NAME}" "${PROJECT_NAME}-${VERSION}/"
+          mv "${ARCHIVE_NAME}" "${GITHUB_WORKSPACE}/"
+
+          echo "Archive created: ${ARCHIVE_NAME}"
+          ls -lh "${GITHUB_WORKSPACE}/${ARCHIVE_NAME}"
+
+      - name: Upload release archive
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PROJECT_NAME="${{ steps.load_config.outputs.project_name }}"
+          TAG_NAME="${{ steps.get_version.outputs.tag_name }}"
+          VERSION="${{ steps.get_version.outputs.version }}"
+          ARCHIVE_NAME="${PROJECT_NAME}-${VERSION}.tar.gz"
+
+          echo "Uploading ${ARCHIVE_NAME} to release ${TAG_NAME}..."
+
+          gh release upload "${TAG_NAME}" "${ARCHIVE_NAME}" \
+            --repo "${{ github.repository }}" \
+            --clobber
+
+          echo "Upload completed successfully"
+
+  publish:
+    needs: create-archive
+    permissions:
+      contents: write
+    uses: bazel-contrib/publish-to-bcr/.github/workflows/publish.yaml@v1.0.0
+    with:
+      tag_name: ${{ needs.create-archive.outputs.tag_name }}
+      registry_fork: ${{ needs.create-archive.outputs.bcr_registry_fork }}
+      attest: false
+    secrets:
+      publish_token: ${{ secrets.CI_PAT_TOKEN }}

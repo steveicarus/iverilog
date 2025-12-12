@@ -1,0 +1,3 @@
+# Fix ccache issues in sandbox by using local strategy
+# This prevents "Read-only file system" errors when ccache tries to write temp files
+build --spawn_strategy=local

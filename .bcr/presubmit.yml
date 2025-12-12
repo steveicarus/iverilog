@@ -1,0 +1,23 @@
+# BCR presubmit configuration for iverilog module
+# This file defines the build verification tests
+
+# Simple smoke test matrix
+matrix:
+  platform:
+    - ubuntu2004
+  bazel: ["7.x", "8.x"]
+
+tasks:
+  verify_targets:
+    name: Verify build targets
+    platform: ${{ platform }}
+    bazel: ${{ bazel }}
+    build_targets:
+      - "@iverilog//:iverilog"
+      - "@iverilog//:vvp"
+      - "@iverilog//:ivl"
+      - "@iverilog//:ivlpp"
+      - "@iverilog//:iverilog-bin"
+      - "@iverilog//:vvp-bin"
+    test_targets:
+      - "@iverilog//:hello_verilog_test"
