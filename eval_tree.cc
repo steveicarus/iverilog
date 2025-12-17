@@ -1727,8 +1727,7 @@ NetECReal* NetESFunc::evaluate_itor_(const NetExpr*arg_) const
 		  return new NetECReal(verireal(0.0));
 	    }
 
-	    if (arg >= 0.0) arg = floor(arg + 0.5);
-	    else arg = ceil(arg - 0.5);
+	    arg = std::round(arg);
 
 	    return new NetECReal(verireal(arg));
       }

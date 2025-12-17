@@ -1157,4 +1157,12 @@ extern int vpip_delay_selection;
 /* A flag to disable output to MCD bit 0. */
 extern bool vpip_mcd0_disable;
 
+inline uint64_t vlg_round_to_u64(double rval)
+{
+      // Directly casting a negative double to an unsigned integer types is
+      // undefined behavior and behaves differently on different architectures.
+      // Cast to signed integer first to get the behavior we want.
+      return static_cast<uint64_t>(static_cast<int64_t>(std::round(rval)));
+}
+
 #endif /* IVL_vpi_priv_H */

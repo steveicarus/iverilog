@@ -2380,10 +2380,7 @@ bool of_CVT_SR(vthread_t thr, vvp_code_t cp)
 bool of_CVT_UR(vthread_t thr, vvp_code_t cp)
 {
       double r = thr->pop_real();
-      if (r >= 0.0)
-	    thr->words[cp->bit_idx[0]].w_uint = (uint64_t)floor(r+0.5);
-      else
-	    thr->words[cp->bit_idx[0]].w_uint = (uint64_t)ceil(r-0.5);
+      thr->words[cp->bit_idx[0]].w_uint = vlg_round_to_u64(r);
 
       return true;
 }

@@ -87,15 +87,6 @@ static int vthr_word_get(int code, vpiHandle ref)
       }
 }
 
-static double vlg_round(double rval)
-{
-      if (rval >= 0.0) {
-            return floor(rval + 0.5);
-      } else {
-            return ceil(rval - 0.5);
-      }
-}
-
 static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       const __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(ref);
@@ -127,7 +118,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    if (val != val || (val && (val == 0.5*val))) {
 		  val = 0.0;
 	    } else {
-		  val = vlg_round(val);
+		  val = std::round(val);
 	    }
 	    vp->value.integer = (PLI_INT32)val;
 	    break;
@@ -136,22 +127,22 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    if (std::isnan(val))
 		  snprintf(rbuf, RBUF_USE_SIZE, "%s", "nan");
 	    else
-		  snprintf(rbuf, RBUF_USE_SIZE, "%0.0f", vlg_round(val));
+		  snprintf(rbuf, RBUF_USE_SIZE, "%0.0f", std::round(val));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiOctStrVal:
-	    snprintf(rbuf, RBUF_USE_SIZE, "%" PRIo64, (uint64_t)vlg_round(val));
+	    snprintf(rbuf, RBUF_USE_SIZE, "%" PRIo64, vlg_round_to_u64(val));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    snprintf(rbuf, RBUF_USE_SIZE, "%" PRIx64, (uint64_t)vlg_round(val));
+	    snprintf(rbuf, RBUF_USE_SIZE, "%" PRIx64, vlg_round_to_u64(val));
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiBinStrVal: {
-		uint64_t vali = (uint64_t)vlg_round(val);
+		uint64_t vali = vlg_round_to_u64(val);
 		unsigned len = 0;
 
 		while (vali > 0) {
@@ -159,7 +150,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 		      vali /= 2;
 		}
 
-		vali = (uint64_t)vlg_round(val);
+		vali = vlg_round_to_u64(val);
 		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
 		      rbuf[len-idx-1] = (vali & 1)? '1' : '0';
 		      vali /= 2;

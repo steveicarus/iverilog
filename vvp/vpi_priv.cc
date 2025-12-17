@@ -880,14 +880,7 @@ static PLI_INT32 get_real_as_int(double real)
 	    return 0;
       }
 
-	/* Round away from zero. */
-      if (real >= 0.0) {
-	    rtn = floor(real);
-	    if (real >= (rtn + 0.5)) rtn += 1.0;
-      } else {
-	    rtn = ceil(real);
-	    if (real <= (rtn - 0.5)) rtn -= 1.0;
-      }
+      rtn = std::round(real);
 
       return (PLI_INT32) rtn;
 }

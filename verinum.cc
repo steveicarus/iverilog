@@ -37,10 +37,7 @@ using namespace std;
  */
 extern "C" long int lround(double x)
 {
-      if (x >= 0.0)
-	    return (long)floor(x+0.5);
-      else
-	    return (long)ceil(x-0.5);
+      return (long)std::round(x);
 }
 #endif
 

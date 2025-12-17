@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -71,15 +71,8 @@ long verireal::as_long() const
       double out = value_;
       double outf;
 
-      if (out >= 0.0) {
-	    outf = floor(out);
-	    if (out >= (outf + 0.5))
-		  outf += 1.0;
-      } else {
-	    outf = ceil(out);
-	    if (out <= (outf - 0.5))
-		  outf -= 1.0;
-      }
+      outf = std::round(out);
+
       return (long) outf;
 }
 
@@ -88,15 +81,8 @@ int64_t verireal::as_long64(int shift) const
       double out = value_ * pow(10.0,shift);
       double outf;
 
-      if (out >= 0.0) {
-	    outf = floor(out);
-	    if (out >= (outf + 0.5))
-		  outf += 1.0;
-      } else {
-	    outf = ceil(out);
-	    if (out <= (outf - 0.5))
-		  outf -= 1.0;
-      }
+      outf = std::round(out);
+
       return (int64_t) outf;
 }
 

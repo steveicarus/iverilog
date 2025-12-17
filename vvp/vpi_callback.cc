@@ -949,23 +949,6 @@ void vvp_signal_value::get_signal_value(struct t_vpi_value*vp)
       }
 }
 
-static double vlg_round(double rval)
-{
-      if (rval >= 0.0) {
-            return floor(rval + 0.5);
-      } else {
-            return ceil(rval - 0.5);
-      }
-}
-
-static uint64_t vlg_round_to_u64(double rval)
-{
-      // Directly casting a negative double to an unsigned integer types is
-      // undefined behavior and behaves differently on different architectures.
-      // Cast to signed integer first to get the behavior we want.
-      return static_cast<uint64_t>(static_cast<int64_t>(vlg_round(rval)));
-}
-
 static void real_signal_value(struct t_vpi_value*vp, double rval)
 {
       static const size_t RBUF_SIZE = 64 + 1;
@@ -984,7 +967,7 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 	    if (rval != rval || (rval && (rval == 0.5*rval))) {
 		  rval = 0.0;
 	    } else {
-		  rval = vlg_round(rval);
+		  rval = std::round(rval);
 	    }
 	    vp->value.integer = (PLI_INT32)rval;
 	    break;
@@ -993,7 +976,7 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 	    if (std::isnan(rval))
 		  snprintf(rbuf, RBUF_SIZE, "%s", "nan");
 	    else
-		  snprintf(rbuf, RBUF_SIZE, "%0.0f", vlg_round(rval));
+		  snprintf(rbuf, RBUF_SIZE, "%0.0f", std::round(rval));
 	    vp->value.str = rbuf;
 	    break;
 
