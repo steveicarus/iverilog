@@ -229,6 +229,8 @@ AC_DEFUN([AX_C99_STRTOD],
 case "${host}" in
     x86_64-w64-mingw32)
         ;;
+    aarch64-w64-mingw32)
+        ;;
     *-*-mingw32)
         LDFLAGS+=" -Wl,--undefined=___strtod,--wrap,strtod,--defsym,___wrap_strtod=___strtod"
         ;;
