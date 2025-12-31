@@ -1,6 +1,0 @@
-
-{
-    "type" : "normal-vlog95",
-    "source" : "constfunc4_ams.v",
-    "iverilog-args" : [ "-gverilog-ams", "-pallowsigned=1" ]
-}

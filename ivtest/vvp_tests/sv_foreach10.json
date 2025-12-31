@@ -1,5 +1,9 @@
 {
     "type"          : "normal",
     "source"        : "sv_foreach10.v",
-    "iverilog-args" : [ "-g2009" ]
+    "iverilog-args" : [ "-g2009" ],
+    "vlog95" : {
+        "type" : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }

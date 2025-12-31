@@ -2,5 +2,8 @@
     "type"          : "normal",
     "source"        : "sv_foreach9.v",
     "iverilog-args" : [ "-g2009" ],
-    "gold"          : "sv_foreach9"
+    "gold"          : "sv_foreach9",
+    "vlog95" : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }

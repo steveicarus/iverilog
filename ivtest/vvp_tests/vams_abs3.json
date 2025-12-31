@@ -1,6 +1,10 @@
-
 {
     "type" : "normal",
     "source" : "vams_abs3.v",
-    "iverilog-args" : [ "-gverilog-ams" ]
+    "iverilog-args" : [ "-gverilog-ams" ],
+    "vlog95" : {
+        "__comment" : "Real nets are not supported",
+        "type" : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }

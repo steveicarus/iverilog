@@ -1,5 +1,9 @@
 {
     "type"          : "normal",
     "source"        : "task_return1.v",
-    "iverilog-args" : [ "-g2005-sv" ]
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Automatic tasks are not supported",
+        "type"      : "CE"
+    }
 }

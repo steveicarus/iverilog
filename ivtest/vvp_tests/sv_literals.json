@@ -1,5 +1,8 @@
 {
     "type" : "normal",
     "source" : "sv_literals.v",
-    "iverilog-args" : [ "-g2012" ]
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }

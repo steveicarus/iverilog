@@ -1,5 +1,7 @@
-
 {
     "type" : "normal",
-    "source" : "shift6.v"
+    "source" : "shift6.v",
+    "vlog95" : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }

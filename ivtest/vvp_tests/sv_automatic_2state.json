@@ -1,5 +1,10 @@
 {
     "type"          : "normal",
     "source"        : "sv_automatic_2state.v",
-    "iverilog-args" : [ "-g2005-sv" ]
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Automatic tasks/functions are not supported",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }

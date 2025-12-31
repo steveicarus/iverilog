@@ -1,4 +1,8 @@
 {
     "type"   : "normal",
-    "source" : "br_gh1155.v"
+    "source" : "br_gh1155.v",
+    "vlog95" : {
+        "__comment" : "Net arrays are not supported",
+        "type"      : "CE"
+    }
 }

@@ -1,5 +1,9 @@
 {
     "type"   : "normal",
     "source" : "casex_synth.v",
-    "iverilog-args" : [ "-S" ]
+    "iverilog-args" : [ "-S" ],
+    "vlog95" : {
+        "__comment" : "Case equality is not supported",
+        "type"      : "CE"
+    }
 }

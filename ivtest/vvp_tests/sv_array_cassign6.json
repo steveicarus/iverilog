@@ -1,5 +1,9 @@
 {
     "type"          : "normal",
     "source"        : "sv_array_cassign6.v",
-    "iverilog-args" : [ "-g2009" ]
+    "iverilog-args" : [ "-g2009" ],
+    "vlog95" : {
+        "__comment"     : "Array nets/final blocks ar not supported",
+        "type"          : "CE"
+    }
 }

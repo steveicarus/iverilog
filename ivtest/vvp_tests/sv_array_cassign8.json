@@ -1,5 +1,9 @@
 {
     "type"          : "normal",
     "source"        : "sv_array_cassign8.v",
-    "iverilog-args" : [ "-g2009" ]
+    "iverilog-args" : [ "-g2009" ],
+    "vlog95" : {
+        "type"          : "Array nets are not supported",
+        "type"          : "CE"
+    }
 }

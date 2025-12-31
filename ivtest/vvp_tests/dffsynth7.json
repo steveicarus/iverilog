@@ -1,5 +1,9 @@
 {
     "type"   : "normal",
     "source" : "dffsynth7.v",
-    "iverilog-args" : [ "-S" ]
+    "iverilog-args" : [ "-S" ],
+    "vlog95" : {
+        "__comment" : "No support for multi-bit async set",
+        "type"      : "CE"
+    }
 }

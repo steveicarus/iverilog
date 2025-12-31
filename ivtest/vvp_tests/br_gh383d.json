@@ -5,5 +5,11 @@
     "gold"   : "br_gh383d",
     "strict" : {
         "gold"   : "br_gh383d_std"
+    },
+    "vlog95" : {
+        "__comment"     : "Real/dynamic arrays are not supported",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ],
+        "gold"          : ""
     }
 }

@@ -1,5 +1,9 @@
 {
     "type"          : "normal",
     "source"        : "sv_ap_uarray5.v",
-    "iverilog-args" : [ "-g2005-sv" ]
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Real arrays/assignment patterns are not supported",
+        "type"      : "CE"
+    }
 }

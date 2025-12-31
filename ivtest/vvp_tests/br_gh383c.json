@@ -2,5 +2,11 @@
     "type"   : "normal",
     "source" : "br_gh383c.v",
     "iverilog-args" : [ "-g2012" ],
-    "gold"   : "br_gh383c"
+    "gold"   : "br_gh383c",
+    "vlog95" : {
+        "__comment"     : "Strings/dynamic arrays are not supported",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ],
+        "gold"          : ""
+    }
 }

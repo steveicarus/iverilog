@@ -1,5 +1,10 @@
 {
     "type" : "normal",
     "source" : "program2b.v",
-    "iverilog-args" : [ "-g2009" ]
+    "iverilog-args" : [ "-g2009" ],
+    "vlog95" : {
+        "__comment" : "Final blocks are not supported",
+        "type" : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }

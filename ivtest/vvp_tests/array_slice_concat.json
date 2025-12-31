@@ -1,4 +1,8 @@
 {
     "type"   : "normal",
-    "source" : "array_slice_concat.v"
+    "source" : "array_slice_concat.v",
+    "vlog95" : {
+        "__comment" : "Array nets are not supported",
+        "type"      : "CE"
+    }
 }

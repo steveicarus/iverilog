@@ -1,5 +1,8 @@
 {
     "type" : "normal",
     "source" : "pr2509349a.v",
-    "gold" : "pr2509349a"
+    "gold" : "pr2509349a",
+    "vlog95" : {
+        "gold" : "pr2509349a-vlog95"
+    }
 }

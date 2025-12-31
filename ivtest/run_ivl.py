@@ -15,7 +15,7 @@ def assemble_iverilog_cmd(options: dict, cfg: dict, outfile: str) -> list:
         res += ["valgrind", "--trace-children=yes"]
     res += ["iverilog"+cfg['suffix'], "-o", os.path.join("work", outfile)]
     res += options['iverilog_args']
-    res += [os.path.join(options['directory'], options['source'])]
+    res += [options['source']]
     return res
 
 
@@ -139,19 +139,25 @@ def run_CE(options: dict, cfg: dict) -> list:
     it_key = options['key']
     build_runtime(it_key)
 
-    cmd = assemble_iverilog_cmd(options, cfg, 'a.out')
-    res = run_cmd(cmd)
+    # Run as vlog95 if needed.
+    if cfg['vlog95']:
+        options['iverilog_args'].extend(["-tvlog95", "-pfileline=1", "-pspacing=4"])
+        ivl_cmd = assemble_iverilog_cmd(options, cfg, 'vlog95.v')
+    else:
+        ivl_cmd = assemble_iverilog_cmd(options, cfg, 'a.out')
+
+    res = run_cmd(ivl_cmd)
     log_results(it_key, "iverilog", res)
 
     log_list = ["iverilog-stdout", "iverilog-stderr"]
 
     if res.returncode == 0:
-        return [1, "Failed - CE (no error reported)"]
+        return [1, "Failed - CE (no error reported)."]
     if res.returncode >= 256:
-        return [1, "Failed - CE (execution error)"]
+        return [1, "Failed - CE (execution error)."]
     if options['gold'] is not None and not check_gold(options, log_list):
-        return [1, "Failed - CE (Gold output doesn't match actual output.)"]
-    return [0, "Passed - CE"]
+        return [1, "Failed - CE (Gold file doesn't match output)."]
+    return [0, "Passed - CE."]
 
 
 def check_gold(options: dict, log_list: list) -> list:
@@ -167,7 +173,7 @@ def check_gold(options: dict, log_list: list) -> list:
         compared = compared and compare_files(log_path, gold_path)
 
     if compared:
-        return [0, "Passed"]
+        return [0, "Passed."]
     return [1, "Failed - Gold output doesn't match actual output."]
 
 
@@ -187,9 +193,9 @@ def check_diff(fname1: str, fname2: str, skip: int, expected_fail: bool) -> list
         data2 = fd.read()
 
     if data1 == data2:
-        return [0, "Passed"]
+        return [0, "Passed."]
     if expected_fail:
-        return [0, "Passed - EF"]
+        return [0, "Passed - EF."]
     # pylint: disable-next=consider-using-f-string
     return [1, "Failed - Files {name1} and {name2} differ.".format(name1=fname1,
                                                                   name2=fname2)]
@@ -215,62 +221,17 @@ def check_run_outputs(options: dict, it_stdout: str, log_list: list,
     # Otherwise, look for the PASSED output string in stdout.
     for line in it_stdout.splitlines():
         if line == "PASSED":
-            return [0, "Passed"]
+            return [0, "Passed."]
 
     # If there is no PASSED output, and nothing else to check, then
     # assume a failure unless a fail is expected.
     if expected_fail:
-        return [0, "Passed - EF"]
-    return [1, "Failed - No PASSED output, and no gold file"]
+        return [0, "Passed - EF."]
+    return [1, "Failed - No PASSED output, and no gold file."]
 
 
-# pylint: disable-next=unused-argument
-def do_run_normal_vlog95(options: dict, cfg: dict, expected_fail: bool) -> list:
-    '''Run the iverilog and vvp commands.
-
-    In this case, run the compiler with the -tvlog95 flag to generate
-    an intermediate verilog file, then run the compiler again to generate
-    a vvp out. Run that vvp output to test the simulation results. Collect
-    the results and look for a "PASSED" string.'''
-
-    it_key = options['key']
-    build_runtime(it_key)
-
-    # Run the first iverilog command, to generate the intermediate verilog
-    # FIXME: this doesn't work since -tvlog95 is not passed
-    ivl1_cmd = assemble_iverilog_cmd(options, cfg, "a.out.v")
-    ivl1_res = run_cmd(ivl1_cmd)
-
-    log_results(it_key, "iverilog", ivl1_res)
-    if ivl1_res.returncode != 0:
-        return [1, "Failed - Compile failed"]
-
-    # Run another iverilog command to compile the code generated from the first step.
-    # FIXME: this doesn't currently work since the vlog95 path needs to be used
-    ivl2_cmd = assemble_iverilog_cmd(options, cfg, 'a.out')
-    ivl2_res = run_cmd(ivl2_cmd)
-
-    log_results(it_key, "iverilog-vlog95", ivl2_res)
-    if ivl2_res.returncode != 0:
-        return [1, "Failed - Compile of generated code failed"]
-
-    # Run the vvp command
-    vvp_cmd = assemble_vvp_cmd(options, cfg)
-    vvp_res = run_cmd(vvp_cmd)
-    log_results(it_key, "vvp", vvp_res)
-
-    if vvp_res.returncode != 0:
-        return [1, "Failed - vvp execution failed"]
-
-    it_stdout = vvp_res.stdout.decode('ascii')
-    log_list = ["iverilog-stdout", "iverilog-stderr",
-                "iverilog-vlog95-stdout", "iverilog-vlog95-stderr",
-                "vvp-stdout", "vvp-stderr"]
-
-    return check_run_outputs(options, it_stdout, log_list, expected_fail)
-
-
-def do_run_normal(options: dict, cfg: dict, expected_fail: bool) -> list:
+def do_run_normal(options: dict, cfg: dict, expected_fail: bool,
+                  translation_fail: bool) -> list:
     '''Run the iverilog and vvp commands.
 
     In this case, run the compiler to generate a vvp output file, and
@@ -280,13 +241,40 @@ def do_run_normal(options: dict, cfg: dict, expected_fail: bool) -> list:
     it_key = options['key']
     build_runtime(it_key)
 
+    # Run the vlog95 translation if needed.
+    if cfg['vlog95']:
+        options['iverilog_args'].append("-tvlog95")
+        options['iverilog_args'].append("-pfileline=1")
+        options['iverilog_args'].append("-pspacing=4")
+        ivl_tcmd = assemble_iverilog_cmd(options, cfg, 'vlog95.v')
+        ivl_tres = run_cmd(ivl_tcmd)
+
+        log_results(it_key, "iverilog", ivl_tres)
+        if ivl_tres.returncode != 0:
+            return [1, "Failed - vlog95 translation failed."]
+
+        if "-pallowsigned=1" in options['iverilog_args']:
+            options['iverilog_args'] = [ "-g2001-noconfig" ]
+        else:
+            options['iverilog_args'] = [ "-g1995" ]
+        options['source'] = os.path.join("work", "vlog95.v")
+
     # Run the iverilog command
     ivl_cmd = assemble_iverilog_cmd(options, cfg, 'a.out')
     ivl_res = run_cmd(ivl_cmd)
 
-    log_results(it_key, "iverilog", ivl_res)
-    if ivl_res.returncode != 0:
-        return [1, "Failed - Compile failed"]
+    if cfg['vlog95']:
+        log_results(it_key, "iverilog-vlog95", ivl_res)
+    else:
+        log_results(it_key, "iverilog", ivl_res)
+
+    if translation_fail:
+        if ivl_res.returncode != 0:
+            return [0, "Passed - TE."]
+        else:
+            return [1, "Failed - TE did not fail."]
+    elif ivl_res.returncode != 0:
+        return [1, "Failed - Compile failed."]
 
     # run the vvp command
     vvp_cmd = assemble_vvp_cmd(options, cfg)
@@ -294,7 +282,7 @@ def do_run_normal(options: dict, cfg: dict, expected_fail: bool) -> list:
     log_results(it_key, "vvp", vvp_res)
 
     if vvp_res.returncode != 0 and expected_fail:
-        return [0, "Passed - EF"]
+        return [0, "Passed - EF."]
     if vvp_res.returncode >= 256:
         return [1, "Failed - vvp execution error"]
     if vvp_res.returncode > 0 and vvp_res.returncode < 256 and not expected_fail:
@@ -303,23 +291,23 @@ def do_run_normal(options: dict, cfg: dict, expected_fail: bool) -> list:
     it_stdout = vvp_res.stdout.decode('ascii')
     log_list = ["iverilog-stdout", "iverilog-stderr",
                 "vvp-stdout", "vvp-stderr"]
+    if cfg['vlog95']:
+        log_list[2:2] = ["iverilog-vlog95-stdout", "iverilog-vlog95-stderr"]
 
     return check_run_outputs(options, it_stdout, log_list, expected_fail)
 
 def run_normal(options: dict, cfg: dict) -> list:
     '''Run a normal test'''
-    return do_run_normal(options, cfg, False)
+    return do_run_normal(options, cfg, False, False)
+
 
 # pylint: disable-next=invalid-name
 def run_EF(options: dict, cfg: dict) -> list:
     '''Run an expected fail test'''
-    return do_run_normal(options, cfg, True)
+    return do_run_normal(options, cfg, True, False)
 
-def run_normal_vlog95(options: dict, cfg: dict) -> list:
-    '''Run a vlog95 test'''
-    return do_run_normal_vlog95(options, cfg, False)
 
 # pylint: disable-next=invalid-name
-def run_EF_vlog95(options: dict, cfg: dict) -> list:
-    '''Run an expected fail vlog95 test'''
-    return do_run_normal_vlog95(options, cfg, True)
+def run_TE(options: dict, cfg: dict) -> list:
+    '''Run a translation fail test'''
+    return do_run_normal(options, cfg, False, True)

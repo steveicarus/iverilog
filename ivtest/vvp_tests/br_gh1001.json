@@ -1,5 +1,9 @@
 {
     "type"   : "normal",
     "source" : "br_gh1001.v",
-    "iverilog-args" : [ "-g2009" ]
+    "iverilog-args" : [ "-g2009" ],
+    "vlog95" : {
+         "__comment" : "array nets are not supported",
+         "type"      : "CE"
+    }
 }

@@ -1,5 +1,8 @@
 {
     "type"   : "normal",
     "source" : "array_packed_write_read.v",
-    "iverilog-args" : [ "-g2009" ]
+    "iverilog-args" : [ "-g2009" ],
+    "vlog95" : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }

@@ -1,6 +1,8 @@
-
 {
     "type" : "normal",
     "source" : "br_gh99c.v",
-    "iverilog-args" : [ "-gverilog-ams" ]
+    "iverilog-args" : [ "-gverilog-ams" ],
+    "vlog95" : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }

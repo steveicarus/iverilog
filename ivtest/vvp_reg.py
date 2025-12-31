@@ -11,6 +11,7 @@ Usage:
             default list is used.
 '''
 
+import os
 import sys
 import json
 import argparse
@@ -48,7 +49,7 @@ class InvalidJSON(Exception):
 
 
 def process_overrides(group: str, it_dict: dict, it_opts: dict):
-    '''Override the gold file or type if needed.'''
+    '''Override the gold file, type or arguments if needed.'''
     if group in it_dict:
         overrides = ['gold', 'type']
         for override in overrides:
@@ -57,6 +58,8 @@ def process_overrides(group: str, it_dict: dict, it_opts: dict):
                     it_opts[override] = None
                 else:
                     it_opts[override] = it_dict[group][override]
+        if 'iverilog-args' in it_dict[group]:
+            it_opts['iverilog_args'].extend(it_dict[group]['iverilog-args'])
 
 
 def force_gen(it_opts: dict):
@@ -95,8 +98,7 @@ def process_test(item: list, cfg: list) -> str:
         'key'               : it_key,
         'type'              : it_dict['type'],
         'iverilog_args'     : it_dict.get('iverilog-args', [ ]),
-        'directory'         : "ivltests",
-        'source'            : it_dict['source'],
+        'source'            : os.path.join("ivltests", it_dict['source']),
         'modulename'        : None,
         'gold'              : it_dict.get('gold', None),
         'diff'              : None,
@@ -115,6 +117,9 @@ def process_test(item: list, cfg: list) -> str:
         force_gen(it_opts)
         process_overrides('force-sv', it_dict, it_opts)
 
+    if cfg['vlog95']:
+        process_overrides('vlog95', it_dict, it_opts)
+
     # Get the overridden test type.
     it_type = it_opts['type']
 
@@ -124,17 +129,14 @@ def process_test(item: list, cfg: list) -> str:
     elif it_type == "normal":
         res = run_ivl.run_normal(it_opts, cfg)
 
-    elif it_type == "normal-vlog95":
-        res = run_ivl.run_normal_vlog95(it_opts, cfg)
-
     elif it_type == "CE":
         res = run_ivl.run_CE(it_opts, cfg)
 
     elif it_type == "EF":
         res = run_ivl.run_EF(it_opts, cfg)
 
-    elif it_type == "EF-vlog95":
-        res = run_ivl.run_EF_vlog95(it_opts, cfg)
+    elif it_type == "TE":
+        res = run_ivl.run_TE(it_opts, cfg)
 
     else:
         raise InvalidTestType(it_key, it_type)
@@ -147,7 +149,10 @@ def print_header(cfg: dict, files: list):
     # This returns 13 or similar
     ivl_version = run_ivl.get_ivl_version(cfg['suffix'])
 
-    print("Running compiler/VVP tests for Icarus Verilog ", end='')
+    print("Running ", end='')
+    if cfg['vlog95']:
+        print("vlog95 ", end='')
+    print("compiler/VVP tests for Icarus Verilog ", end='')
     # pylint: disable-next=consider-using-f-string
     print("version: {ver}".format(ver=ivl_version), end='')
     if cfg['suffix']:
@@ -184,16 +189,12 @@ if __name__ == "__main__":
                       help='File(s) containing a list of the tests to run, default "%(default)s".')
     args = argp.parse_args()
 
-    # FIXME: need to add real vlog95 support
-    if args.vlog95:
-        print('Sorry: Converting to Verilog-95 and running is not currently supported!')
-        sys.exit(1)
-
     ivl_cfg = {
         'suffix'        : args.suffix,
         'strict'        : args.strict,
         'with-valgrind' : args.with_valgrind,
-        'force-sv'      : args.force_sv
+        'force-sv'      : args.force_sv,
+        'vlog95'        : args.vlog95
               }
 
     print_header(ivl_cfg, args.files)

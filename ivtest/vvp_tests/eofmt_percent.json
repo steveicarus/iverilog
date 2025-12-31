@@ -1,5 +1,8 @@
 {
     "type" : "normal",
     "source" : "eofmt_percent.v",
-    "gold" : "eofmt_percent"
+    "gold" : "eofmt_percent",
+    "vlog95" : {
+        "gold" : "eofmt_percent-vlog95"
+    }
 }

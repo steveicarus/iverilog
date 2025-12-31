@@ -2,5 +2,8 @@
     "type" : "normal",
     "source" : "dumpfile.v",
     "gold"   : "dumpfile",
-    "vvp-args-extended" : [ "-vcd", "-dumpfile=foo" ]
+    "vvp-args-extended" : [ "-vcd", "-dumpfile=foo" ],
+    "vlog95" : {
+        "gold"   : "dumpfile-vlog95"
+    }
 }

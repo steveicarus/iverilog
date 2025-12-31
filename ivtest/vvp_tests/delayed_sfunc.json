@@ -5,5 +5,10 @@
     "gold"   : "delayed_sfunc",
     "strict" : {
         "gold"   : "delayed_sfunc_std"
+    },
+    "vlog95" : {
+        "_comment" : "Real nets are not supported",
+        "type"     : "CE",
+        "gold"   : ""
     }
 }

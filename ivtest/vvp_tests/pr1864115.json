@@ -4,5 +4,10 @@
     "gold"   : "pr1864115",
     "strict" : {
         "gold"   : "pr1864115_std"
+    },
+    "vlog95" : {
+        "__comment" : "Real nets are not supported",
+        "type"      : "CE",
+        "gold"      : ""
     }
 }

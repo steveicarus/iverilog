@@ -1,5 +1,10 @@
 {
     "type"          : "normal",
     "source"        : "sv_queue_assign_op.v",
-    "iverilog-args" : [ "-g2005-sv" ]
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Queues and array patterns are not supported",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }

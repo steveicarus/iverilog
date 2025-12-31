@@ -1,5 +1,10 @@
 {
     "type"          : "normal",
     "source"        : "sv_class_prop_nest_darray1.v",
-    "iverilog-args" : [ "-g2005-sv" ]
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Classes/dynamic arrays are not supported",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }

@@ -1,6 +1,9 @@
 {
-    "type"          : "normal",
-    "source"        : "vvp_quiet_mode.v",
-    "gold"          : "vvp_quiet_mode",
-    "vvp-args" : [ "-ql-" ]
+    "type"     : "normal",
+    "source"   : "vvp_quiet_mode.v",
+    "gold"     : "vvp_quiet_mode",
+    "vvp-args" : [ "-ql-" ],
+    "vlog95" : {
+        "gold"     : "vvp_quiet_mode-vlog95"
+    }
 }

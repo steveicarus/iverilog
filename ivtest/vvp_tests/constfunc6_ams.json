@@ -1,5 +1,7 @@
-
 {
     "type" : "normal",
-    "source" : "constfunc6_ams.v"
+    "source" : "constfunc6_ams.v",
+    "vlog95" : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }

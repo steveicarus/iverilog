@@ -1,5 +1,9 @@
 {
     "type"          : "normal",
     "source"        : "sv_argumentless_func.v",
-    "iverilog-args" : [ "-g2012" ]
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "__comment"     : "Automatic functions are not supported",
+        "type"          : "CE"
+    }
 }

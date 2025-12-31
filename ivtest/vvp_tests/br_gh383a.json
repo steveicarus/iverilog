@@ -2,5 +2,10 @@
     "type"   : "normal",
     "source" : "br_gh383a.v",
     "iverilog-args" : [ "-g2012" ],
-    "gold"   : "br_gh383a"
+    "gold"   : "br_gh383a",
+    "vlog95" : {
+        "__commnt" : "Dynamic arrays are not supported",
+        "type"     : "CE",
+        "gold"     : ""
+    }
 }

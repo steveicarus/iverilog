@@ -1,5 +1,10 @@
 {
     "type" : "EF",
     "source" : "scan-invalid.v",
-    "gold" : "scan-invalid"
+    "gold" : "scan-invalid",
+    "vlog95" : {
+        "__comment" : "Array nets are not supported",
+        "type" : "CE",
+        "gold" : ""
+    }
 }

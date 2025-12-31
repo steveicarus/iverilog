@@ -1,5 +1,10 @@
 {
     "type" : "EF",
     "source" : "automatic_error12.v",
-    "gold" : "automatic_error12"
+    "gold" : "automatic_error12",
+    "vlog95" : {
+        "__comment" : "Automatic tasks are not supported",
+        "type"      : "CE",
+        "gold"      : ""
+    }
 }

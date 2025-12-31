@@ -1,5 +1,9 @@
 {
     "type"          : "normal",
     "source"        : "module_port_array1.v",
-    "iverilog-args" : [ "-g2009" ]
+    "iverilog-args" : [ "-g2009" ],
+    "vlog95" : {
+        "__comment" : "Array nets/ports are not supported",
+        "type"      : "CE"
+    }
 }

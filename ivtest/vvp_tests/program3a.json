@@ -1,5 +1,9 @@
 {
     "type" : "normal",
     "source" : "program3a.v",
-    "iverilog-args" : [ "-g2009" ]
+    "iverilog-args" : [ "-g2009" ],
+    "vlog95" : {
+        "type" : "Final blocks are not supported",
+        "type" : "CE"
+    }
 }

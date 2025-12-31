@@ -1,5 +1,9 @@
 {
     "type"          : "normal",
     "source"        : "sv_class_prop_assign_op2.v",
-    "iverilog-args" : [ "-g2005-sv" ]
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Classes are not supported",
+        "type"          : "CE"
+    }
 }
