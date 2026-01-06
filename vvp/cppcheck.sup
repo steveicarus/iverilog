@@ -1,38 +1,40 @@
+// Skip the use STL messages
+//useStlAlgorithm
+
+// Skip all memory issues since they should be handled by ivl_alloc.h
+ctunullpointerOutOfMemory
+nullPointerArithmeticOutOfMemory
+nullPointerOutOfMemory
+
+// Skip strdup() not constant.
+//constVariablePointer:main.cc:400
+
 // Only for conditional debugging
 knownConditionTrueFalse:lib_main.cc:289
+
+// By convention we put statics at the top scope.
+variableScope:vpi_priv.cc:623
 
 // Index calculation
 thisSubtraction:vpi_priv.h:430
 thisSubtraction:array_common.h:91
 
-// We use guarded memory allocation routines, but cppcheck is not
-// noticing this so it is complaining we could return a NULL value.
-nullPointerOutOfMemory:delay.cc:829          // calloc @  828
-nullPointerOutOfMemory:delay.cc:1252         // calloc @ 1251
-nullPointerOutOfMemory:delay.cc:1253         // calloc @ 1251
-nullPointerOutOfMemory:vpi_scope.cc:760      // calloc @  757
-nullPointerOutOfMemory:vpi_mcd.cc:68         // malloc @   66
-nullPointerOutOfMemory:vpi_mcd.cc:69         // malloc @   66
-nullPointerOutOfMemory:vpi_mcd.cc:75         // malloc @   66
-nullPointerOutOfMemory:vpi_mcd.cc:76         // malloc @   66
-nullPointerOutOfMemory:vpi_mcd.cc:77         // malloc @   66
-nullPointerOutOfMemory:vpi_mcd.cc:78         // malloc @   66
-nullPointerOutOfMemory:vpi_mcd.cc:79         // malloc @   66
-nullPointerOutOfMemory:vpi_mcd.cc:80         // malloc @   66
-nullPointerOutOfMemory:vpi_priv.cc:1090      // malloc @ 1089
-nullPointerOutOfMemory:vpi_priv.cc:1102      // malloc @ 1101
-nullPointerOutOfMemory:vpi_priv.cc:1112      // malloc @ 1111
-nullPointerOutOfMemory:vpi_signal.cc:105     // strdup @  623
-nullPointerOutOfMemory:vpi_signal.cc:110     // strdup @  109
-nullPointerOutOfMemory:vpi_signal.cc:1380    // malloc @ 1379
-nullPointerOutOfMemory:vpi_tasks.cc:577      // malloc @  574
-nullPointerOutOfMemory:vpi_tasks.cc:580      // malloc @  574
-ctunullpointerOutOfMemory:compile.cc:651     // strdup @  1599 (vpi_signal.cc)
-ctunullpointerOutOfMemory:stop.cc:489        // strdup @  543
-ctunullpointerOutOfMemory:vpi_signal.cc:105  // strdup @  122 (vpi_bit.cc)
-memleakOnRealloc:vpi_modules.cc:254
-memleakOnRealloc:vpi_mcd.cc:316
-memleakOnRealloc:vpi_signal.cc:1205
+// The interface is from the standard.
+constParameterCallback:vpi_priv.cc:1110
+constParameterPointer:vpi_mcd.cc:158
+
+// cppcheck is missing the code adds a \0 at the previous location.
+knownConditionTrueFalse:vpi_modules.cc:118
+redundantAssignment:vpi_modules.cc:117
+
+// cppcheck does not undestand the format types match
+invalidScanfArgType_int:compile.cc:597
+invalidScanfArgType_int:compile.cc:603
+invalidScanfArgType_int:compile.cc:609
+invalidScanfArgType_int:vthread.cc:4545
+invalidScanfArgType_int:vthread.cc:4548
+invalidScanfArgType_int:vthread.cc:4551
+invalidScanfArgType_int:vthread.cc:4554
 
 // The new() operator is always used to allocate space for this class and
 // pool is defined there.
@@ -122,6 +124,15 @@ unusedFunction:vvp_net_sig.cc:128
 
 // Unused functions from the lexor
 duplicateBreak:lexor.lex
-unusedFunction:lexor.cc
 unusedStructMember:lexor.lex
+constVariablePointer:lexor.cc
+cstyleCast:lexor.cc
+knownConditionTrueFalse:lexor.cc
+nullPointer:lexor.cc
+redundantInitialization:lexor.cc
+unusedFunction:lexor.cc
+unusedStructMember:lexor.cc
 allocaCalled:parse.cc
+constParameterPointer:parse.cc
+constVariablePointer:parse.cc
+knownConditionTrueFalse:parse.cc

@@ -1,7 +1,7 @@
 #ifndef IVL_architec_H
 #define IVL_architec_H
 /*
- * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -193,6 +193,9 @@ class SignalAssignment  : public Architecture::Statement {
       SignalAssignment(ExpName*target, Expression*rval);
       ~SignalAssignment() override;
 
+      SignalAssignment(const SignalAssignment&) = delete;
+      SignalAssignment& operator=(const SignalAssignment&) = delete;
+
       virtual int elaborate(Entity*ent, Architecture*arc) override;
       virtual int emit(std::ostream&out, Entity*entity, Architecture*arc) override;
       virtual void dump(std::ostream&out, int ident =0) const override;
@@ -207,6 +210,9 @@ class CondSignalAssignment : public Architecture::Statement {
     public:
       CondSignalAssignment(ExpName*target, std::list<ExpConditional::case_t*>&options);
       ~CondSignalAssignment() override;
+
+      CondSignalAssignment(const CondSignalAssignment&) = delete;
+      CondSignalAssignment& operator=(const CondSignalAssignment&) = delete;
 
       int elaborate(Entity*ent, Architecture*arc) override;
       int emit(std::ostream&out, Entity*entity, Architecture*arc) override;

@@ -1,7 +1,7 @@
 #ifndef IVL_nex_data_H
 #define IVL_nex_data_H
 /*
- * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,6 +34,8 @@ class blif_nex_data_t {
 	// function can create these objects.
       explicit blif_nex_data_t(ivl_nexus_t nex);
       ~blif_nex_data_t();
+      blif_nex_data_t(const blif_nex_data_t&) = delete;
+      blif_nex_data_t& operator=(const blif_nex_data_t&) = delete;
 
     public:
 	// Return the blif_nex_data_t object that is associated with

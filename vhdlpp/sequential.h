@@ -1,7 +1,7 @@
 #ifndef IVL_sequential_H
 #define IVL_sequential_H
 /*
- * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -106,6 +106,9 @@ class IfSequential  : public SequentialStmt {
 		   std::list<SequentialStmt*>*fa);
       ~IfSequential() override;
 
+      IfSequential(const IfSequential&) = delete;
+      IfSequential& operator=(const IfSequential&) = delete;
+
     public:
       int elaborate(Entity*ent, ScopeBase*scope) override;
       int emit(std::ostream&out, Entity*entity, ScopeBase*scope) override;
@@ -134,6 +137,9 @@ class ReturnStmt  : public SequentialStmt {
       explicit ReturnStmt(Expression*val);
       ~ReturnStmt() override;
 
+      ReturnStmt(const ReturnStmt&) = delete;
+      ReturnStmt& operator=(const ReturnStmt&) = delete;
+
     public:
       int elaborate(Entity*ent, ScopeBase*scope) override;
       int emit(std::ostream&out, Entity*entity, ScopeBase*scope) override;
@@ -151,6 +157,9 @@ class SignalSeqAssignment  : public SequentialStmt {
     public:
       SignalSeqAssignment(Expression*sig, std::list<Expression*>*wav);
       ~SignalSeqAssignment() override;
+
+      SignalSeqAssignment(const SignalSeqAssignment&) = delete;
+      SignalSeqAssignment& operator=(const SignalSeqAssignment&) = delete;
 
     public:
       int elaborate(Entity*ent, ScopeBase*scope) override;
@@ -188,6 +197,9 @@ class CaseSeqStmt : public SequentialStmt {
       CaseSeqStmt(Expression*cond, std::list<CaseStmtAlternative*>*sp);
       ~CaseSeqStmt() override;
 
+      CaseSeqStmt(const CaseSeqStmt&) = delete;
+      CaseSeqStmt& operator=(const CaseSeqStmt&) = delete;
+
     public:
       void dump(std::ostream&out, int indent) const override;
       int elaborate(Entity*ent, ScopeBase*scope) override;
@@ -207,6 +219,9 @@ class ProcedureCall : public SequentialStmt {
       ProcedureCall(perm_string name, std::list<Expression*>* param_list);
       ~ProcedureCall() override;
 
+      ProcedureCall(const ProcedureCall&) = delete;
+      ProcedureCall& operator=(const ProcedureCall&) = delete;
+
       int elaborate(Entity*ent, ScopeBase*scope) override;
       int emit(std::ostream&out, Entity*entity, ScopeBase*scope) override;
       void dump(std::ostream&out, int indent) const override;
@@ -221,6 +236,9 @@ class VariableSeqAssignment  : public SequentialStmt {
     public:
       VariableSeqAssignment(Expression*sig, Expression*rval);
       ~VariableSeqAssignment() override;
+
+      VariableSeqAssignment(const VariableSeqAssignment&) = delete;
+      VariableSeqAssignment& operator=(const VariableSeqAssignment&) = delete;
 
     public:
       int elaborate(Entity*ent, ScopeBase*scope) override;
@@ -239,6 +257,9 @@ class WhileLoopStatement : public LoopStatement {
 			 Expression*, std::list<SequentialStmt*>*);
       ~WhileLoopStatement() override;
 
+      WhileLoopStatement(const WhileLoopStatement&) = delete;
+      WhileLoopStatement& operator=(const WhileLoopStatement&) = delete;
+
       int elaborate(Entity*ent, ScopeBase*scope) override;
       int emit(std::ostream&out, Entity*ent, ScopeBase*scope) override;
       void write_to_stream(std::ostream&fd) override;
@@ -253,6 +274,9 @@ class ForLoopStatement : public LoopStatement {
       ForLoopStatement(perm_string loop_name,
 		       perm_string index, ExpRange*, std::list<SequentialStmt*>*);
       ~ForLoopStatement() override;
+
+      ForLoopStatement(const ForLoopStatement&) = delete;
+      ForLoopStatement& operator=(const ForLoopStatement&) = delete;
 
       int elaborate(Entity*ent, ScopeBase*scope) override;
       int emit(std::ostream&out, Entity*ent, ScopeBase*scope) override;

@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_net_H
 #define IVL_vvp_net_H
 /*
- * Copyright (c) 2004-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1409,7 +1409,7 @@ class vvp_fun_force : public vvp_net_fun_t {
 class vvp_fun_drive  : public vvp_net_fun_t {
 
     public:
-      vvp_fun_drive(unsigned str0 =6, unsigned str1 =6);
+      explicit vvp_fun_drive(unsigned str0 =6, unsigned str1 =6);
       ~vvp_fun_drive() override;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,

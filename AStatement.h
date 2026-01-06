@@ -1,7 +1,7 @@
 #ifndef IVL_AStatement_H
 #define IVL_AStatement_H
 /*
- * Copyright (c) 2008-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,6 +41,9 @@ class AContrib : public Statement {
     public:
       AContrib(PExpr*lval, PExpr*rval);
       ~AContrib() override;
+
+      AContrib(const AContrib&) = delete;
+      AContrib& operator=(const AContrib&) = delete;
 
       virtual void dump(std::ostream&out, unsigned ind) const override;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const override;

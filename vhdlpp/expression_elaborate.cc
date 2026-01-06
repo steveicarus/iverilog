@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  * Copyright CERN 2016
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -795,11 +795,6 @@ int ExpConcat::elaborate_expr_array_(Entity*ent, ScopeBase*scope, const VTypeArr
       errors += operand2_->elaborate_expr(ent, scope, type2);
 
       return errors;
-}
-
-const VType* ExpConditional::probe_type(Entity*, ScopeBase*) const
-{
-      return 0;
 }
 
 int ExpConditional::elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype)

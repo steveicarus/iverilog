@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -3910,7 +3910,7 @@ expr_primary
               int rdigit = pform_get_timeunit() - pform_get_timeprec();
               assert(rdigit >= 0);
               double scale = pow(10.0, (double)rdigit);
-              time = round(time*scale)/scale;
+              time = std::round(time*scale)/scale;
 
               verireal *v = new verireal(time);
               $$ = new PEFNumber(v);
@@ -7052,7 +7052,7 @@ statement_item /* This is roughly statement_item in the LRM */
 
   | hierarchy_identifier K_with '{' constraint_block_item_list_opt '}' ';'
       { /* ....randomize with { <constraints> } */
-	if ($1 && peek_tail_name(*$1) == "randomize") {
+	if (peek_tail_name(*$1) == "randomize") {
 	      if (pform_requires_sv(@2, "Randomize with constraint"))
 		    yyerror(@2, "sorry: Randomize with constraint not supported.");
 	} else {

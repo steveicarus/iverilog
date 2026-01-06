@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -101,7 +101,7 @@ inline uint64_t strtouint64(const char*str, char**endptr, int base)
      preceded by an 's' if the vector is signed. */
 [1-9][0-9]*("'b"|"'sb")[01xz]+ {
       yylval.vect.idx = strtoul(yytext, 0, 10);
-      yylval.vect.text = (char*)malloc(yylval.vect.idx + 2);
+      yylval.vect.text = static_cast<char*>(malloc(yylval.vect.idx + 2));
       char*dest = yylval.vect.text;
 
       const char*bits = strchr(yytext, '\'');

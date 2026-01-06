@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2192,7 +2192,7 @@ void pform_make_events(const struct vlltype&loc, const list<pform_ident_t>*names
  */
 static void pform_makegate(PGBuiltin::Type type,
 			   struct str_pair_t str,
-			   list<PExpr*>* delay,
+			   const list<PExpr*>*delay,
 			   const lgate&info,
 			   list<named_pexpr_t>*attr)
 {
@@ -2235,7 +2235,7 @@ static void pform_makegate(PGBuiltin::Type type,
 void pform_makegates(const struct vlltype&loc,
 		     PGBuiltin::Type type,
 		     struct str_pair_t str,
-		     list<PExpr*>*delay,
+		     const list<PExpr*>*delay,
 		     std::vector<lgate>*gates,
 		     list<named_pexpr_t>*attr)
 {

@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for statements.
  *
- *  Copyright (C) 2008-2025  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2026  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1495,6 +1495,7 @@ int draw_casezx(vhdl_procedural *proc, stmt_container *container,
    vhdl_if_stmt *result = NULL;
 
    int nbranches = ivl_stmt_case_count(stmt);
+   assert(nbranches > 0);
    bool is_casez = ivl_statement_type(stmt) == IVL_ST_CASEZ;
    for (int i = 0; i < nbranches; i++) {
       stmt_container *where = NULL;
@@ -1564,8 +1565,7 @@ int draw_while(vhdl_procedural *proc, stmt_container *container,
    // When we are emitting a for as a while we need to add the step
    if (step) {
       rc = draw_assign(proc, &tmp_container, step);
-      if (rc != 0)
-         return rc;
+      assert(rc == 0);
    }
 
    vhdl_expr *test = translate_expr(ivl_stmt_cond_expr(stmt));
@@ -1585,8 +1585,7 @@ int draw_while(vhdl_procedural *proc, stmt_container *container,
    // When we are emitting a for as a while we need to add the step
    if (step) {
       rc = draw_assign(proc, loop->get_container(), step);
-      if (rc != 0)
-         return rc;
+      assert(rc == 0);
    }
 
    emit_wait_for_0(proc, loop->get_container(), stmt, test);
@@ -1599,8 +1598,7 @@ int draw_for_loop(vhdl_procedural *proc, stmt_container *container,
                   ivl_statement_t stmt)
 {
    int rc = draw_assign(proc, container, ivl_stmt_init_stmt(stmt));
-   if (rc != 0)
-      return rc;
+   assert(rc == 0);
 
    return draw_while(proc, container, stmt, ivl_stmt_step_stmt(stmt));
 }

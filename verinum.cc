@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -228,7 +228,7 @@ verinum::verinum(double val, bool)
 
 	/* Round to the nearest integer now, as this may increase the
 	   number of bits we need to allocate. */
-      val = round(val);
+      val = std::round(val);
 
 	/* Get the exponent and fractional part of the number. */
       fraction = frexp(val, &exponent);

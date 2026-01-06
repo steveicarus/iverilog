@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008-2025  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2026  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ class vhdl_expr : public vhdl_element {
 public:
    explicit vhdl_expr(const vhdl_type* type, bool isconst=false)
       : type_(type), isconst_(isconst) {}
-   virtual ~vhdl_expr();
+   virtual ~vhdl_expr() override;
 
    const vhdl_type *get_type() const { return type_; }
    bool constant() const { return isconst_; }
@@ -71,13 +71,13 @@ public:
    vhdl_var_ref(const std::string& name, const vhdl_type *type,
                 vhdl_expr *slice = NULL)
       : vhdl_expr(type), name_(name), slice_(slice), slice_width_(0) {}
-   ~vhdl_var_ref();
+   ~vhdl_var_ref() override;
 
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
    const std::string &get_name() const { return name_; }
    void set_name(const std::string &name) { name_ = name; }
    void set_slice(vhdl_expr *s, int w=0);
-   void find_vars(vhdl_var_set_t& read);
+   void find_vars(vhdl_var_set_t& read) override;
 private:
    std::string name_;
    vhdl_expr *slice_;
@@ -121,12 +121,12 @@ public:
       : vhdl_expr(type), op_(op) {}
    vhdl_binop_expr(vhdl_expr *left, vhdl_binop_t op,
                    vhdl_expr *right, const vhdl_type *type);
-   ~vhdl_binop_expr();
+   ~vhdl_binop_expr() override;
 
    void add_expr(vhdl_expr *e);
    void add_expr_front(vhdl_expr *e);
-   void emit(std::ostream &of, int level) const;
-   void find_vars(vhdl_var_set_t& read);
+   void emit(std::ostream &of, int level) const override;
+   void find_vars(vhdl_var_set_t& read) override;
 private:
    std::list<vhdl_expr*> operands_;
    vhdl_binop_t op_;
@@ -143,10 +143,10 @@ public:
    vhdl_unaryop_expr(vhdl_unaryop_t op, vhdl_expr *operand,
                      const vhdl_type *type)
       : vhdl_expr(type), op_(op), operand_(operand) {}
-   ~vhdl_unaryop_expr();
+   ~vhdl_unaryop_expr() override;
 
-   void emit(std::ostream &of, int level) const;
-   void find_vars(vhdl_var_set_t& read);
+   void emit(std::ostream &of, int level) const override;
+   void find_vars(vhdl_var_set_t& read) override;
 private:
    vhdl_unaryop_t op_;
    vhdl_expr *operand_;
@@ -160,10 +160,10 @@ class vhdl_bit_spec_expr : public vhdl_expr {
 public:
    vhdl_bit_spec_expr(const vhdl_type *type, vhdl_expr *others)
       : vhdl_expr(type), others_(others) {}
-   ~vhdl_bit_spec_expr();
+   ~vhdl_bit_spec_expr() override;
 
    void add_bit(int bit, vhdl_expr *e);
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
 private:
    vhdl_expr *others_;
    struct bit_map {
@@ -179,7 +179,7 @@ public:
    explicit vhdl_const_string(const std::string& value)
       : vhdl_expr(vhdl_type::string(), true), value_(value) {}
 
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
 private:
    std::string value_;
 };
@@ -188,12 +188,12 @@ class vhdl_const_bits : public vhdl_expr {
 public:
    vhdl_const_bits(const char *value, int width, bool issigned,
                    bool qualify=false);
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
    const std::string &get_value() const { return value_; }
-   vhdl_expr *to_integer();
-   vhdl_expr *to_std_logic();
-   vhdl_expr *to_vector(vhdl_type_name_t name, int w);
-   vhdl_expr *resize(int w);
+   vhdl_expr *to_integer() override;
+   vhdl_expr *to_std_logic() override;
+   vhdl_expr *to_vector(vhdl_type_name_t name, int w) override;
+   vhdl_expr *resize(int w) override;
 private:
    int64_t bits_to_int() const;
    char sign_bit() const;
@@ -207,11 +207,11 @@ class vhdl_const_bit : public vhdl_expr {
 public:
    explicit vhdl_const_bit(char bit)
       : vhdl_expr(vhdl_type::std_logic(), true), bit_(bit) {}
-   void emit(std::ostream &of, int level) const;
-   vhdl_expr *to_boolean();
-   vhdl_expr *to_integer();
-   vhdl_expr *to_vector(vhdl_type_name_t name, int w);
-   vhdl_expr *to_std_ulogic();
+   void emit(std::ostream &of, int level) const override;
+   vhdl_expr *to_boolean() override;
+   vhdl_expr *to_integer() override;
+   vhdl_expr *to_vector(vhdl_type_name_t name, int w) override;
+   vhdl_expr *to_std_ulogic() override;
 private:
    char bit_;
 };
@@ -227,7 +227,7 @@ class vhdl_const_time : public vhdl_expr {
 public:
    explicit vhdl_const_time(uint64_t value, time_unit_t units = TIME_UNIT_NS)
       : vhdl_expr(vhdl_type::time(), true), value_(value), units_(units) {}
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
 private:
    uint64_t value_;
    time_unit_t units_;
@@ -237,8 +237,8 @@ class vhdl_const_int : public vhdl_expr {
 public:
    explicit vhdl_const_int(int64_t value)
       : vhdl_expr(vhdl_type::integer(), true), value_(value) {}
-   void emit(std::ostream &of, int level) const;
-   vhdl_expr *to_vector(vhdl_type_name_t name, int w);
+   void emit(std::ostream &of, int level) const override;
+   vhdl_expr *to_vector(vhdl_type_name_t name, int w) override;
 private:
    int64_t value_;
 };
@@ -247,16 +247,14 @@ class vhdl_const_bool : public vhdl_expr {
 public:
    explicit vhdl_const_bool(bool value)
       : vhdl_expr(vhdl_type::boolean(), true), value_(value) {}
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
 private:
    bool value_;
 };
 
 class vhdl_expr_list : public vhdl_element {
 public:
-   ~vhdl_expr_list();
-
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
    bool empty() const { return exprs_.empty(); }
    void add_expr(vhdl_expr *e);
    void find_vars(vhdl_var_set_t& read);
@@ -272,11 +270,11 @@ class vhdl_fcall : public vhdl_expr {
 public:
    vhdl_fcall(const std::string& name, const vhdl_type *rtype)
       : vhdl_expr(rtype), name_(name) {};
-   ~vhdl_fcall() {}
+   ~vhdl_fcall() override {}
 
    void add_expr(vhdl_expr *e) { exprs_.add_expr(e); }
-   void emit(std::ostream &of, int level) const;
-   void find_vars(vhdl_var_set_t& read);
+   void emit(std::ostream &of, int level) const override;
+   void find_vars(vhdl_var_set_t& read) override;
 private:
    std::string name_;
    vhdl_expr_list exprs_;
@@ -286,8 +284,6 @@ private:
  * A concurrent statement appears in architecture bodies/
  */
 class vhdl_conc_stmt : public vhdl_element {
-public:
-   virtual ~vhdl_conc_stmt() {}
 };
 
 typedef std::list<vhdl_conc_stmt*> conc_stmt_list_t;
@@ -311,9 +307,9 @@ class vhdl_cassign_stmt : public vhdl_conc_stmt {
 public:
    vhdl_cassign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
       : lhs_(lhs), rhs_(rhs), after_(NULL) {}
-   ~vhdl_cassign_stmt();
+   ~vhdl_cassign_stmt() override;
 
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
    void add_condition(vhdl_expr *value, vhdl_expr *cond);
    void set_after(vhdl_expr *a) { after_ = a; }
 private:
@@ -328,9 +324,9 @@ class vhdl_with_select_stmt : public vhdl_conc_stmt {
 public:
    vhdl_with_select_stmt(vhdl_expr *test, vhdl_var_ref *out)
       : test_(test), out_(out), others_(NULL) {}
-   ~vhdl_with_select_stmt();
+   ~vhdl_with_select_stmt() override;
 
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
    void add_condition(vhdl_expr *value, vhdl_expr *cond, vhdl_expr *delay=NULL);
    void add_default(vhdl_expr* value);
 private:
@@ -346,8 +342,6 @@ private:
  */
 class vhdl_seq_stmt : public vhdl_element {
 public:
-   virtual ~vhdl_seq_stmt() {}
-
    // Find all the variables that are read or written in the
    // expressions within this statement
    // This is used to clean up the VHDL output
@@ -384,10 +378,10 @@ class vhdl_abstract_assign_stmt : public vhdl_seq_stmt {
 public:
    vhdl_abstract_assign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
       : lhs_(lhs), rhs_(rhs), after_(NULL) {}
-   virtual ~vhdl_abstract_assign_stmt();
+   virtual ~vhdl_abstract_assign_stmt() override;
 
    void set_after(vhdl_expr *after) { after_ = after; }
-   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write) override;
 protected:
    vhdl_var_ref *lhs_;
    vhdl_expr *rhs_, *after_;
@@ -403,7 +397,7 @@ public:
    vhdl_nbassign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
       : vhdl_abstract_assign_stmt(lhs, rhs) {}
 
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
 };
 
 
@@ -412,7 +406,7 @@ public:
    vhdl_assign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
       : vhdl_abstract_assign_stmt(lhs, rhs) {}
 
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
 };
 
 
@@ -430,15 +424,15 @@ enum vhdl_wait_type_t {
  */
 class vhdl_wait_stmt : public vhdl_seq_stmt {
 public:
-   vhdl_wait_stmt(vhdl_wait_type_t type = VHDL_WAIT_INDEF,
+   explicit vhdl_wait_stmt(vhdl_wait_type_t type = VHDL_WAIT_INDEF,
                   vhdl_expr *expr = NULL)
       : type_(type), expr_(expr) {}
-   ~vhdl_wait_stmt();
+   ~vhdl_wait_stmt() override;
 
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
    void add_sensitivity(const std::string &s) { sensitivity_.push_back(s); }
    vhdl_wait_type_t get_type() const { return type_; }
-   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write) override;
 private:
    vhdl_wait_type_t type_;
    vhdl_expr *expr_;
@@ -448,8 +442,8 @@ private:
 
 class vhdl_null_stmt : public vhdl_seq_stmt {
 public:
-   void emit(std::ostream &of, int level) const;
-   void find_vars(vhdl_var_set_t&, vhdl_var_set_t&) {}
+   void emit(std::ostream &of, int level) const override;
+   void find_vars(vhdl_var_set_t&, vhdl_var_set_t&) override {}
 };
 
 
@@ -464,10 +458,10 @@ class vhdl_report_stmt : public vhdl_seq_stmt {
 public:
    explicit vhdl_report_stmt(vhdl_expr *text,
                              vhdl_severity_t severity = SEVERITY_NOTE);
-   virtual ~vhdl_report_stmt() {}
+   virtual ~vhdl_report_stmt() override {}
 
-   virtual void emit(std::ostream& of, int level) const;
-   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
+   virtual void emit(std::ostream& of, int level) const override;
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write) override;
 private:
    vhdl_severity_t severity_;
    vhdl_expr *text_;
@@ -478,20 +472,20 @@ class vhdl_assert_stmt : public vhdl_report_stmt {
 public:
    explicit vhdl_assert_stmt(const char *reason);
 
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
 };
 
 
 class vhdl_if_stmt : public vhdl_seq_stmt {
 public:
    explicit vhdl_if_stmt(vhdl_expr *test);
-   ~vhdl_if_stmt();
+   ~vhdl_if_stmt() override;
 
    stmt_container *get_then_container() { return &then_part_; }
    stmt_container *get_else_container() { return &else_part_; }
    stmt_container *add_elsif(vhdl_expr *test);
-   void emit(std::ostream &of, int level) const;
-   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
+   void emit(std::ostream &of, int level) const override;
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write) override;
 private:
    struct elsif {
       vhdl_expr *test;
@@ -512,10 +506,10 @@ class vhdl_case_branch : public vhdl_element {
    friend class vhdl_case_stmt;
 public:
    explicit vhdl_case_branch(vhdl_expr *when) : when_(when) {}
-   ~vhdl_case_branch();
+   ~vhdl_case_branch() override;
 
    stmt_container *get_container() { return &stmts_; }
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
 private:
    vhdl_expr *when_;
    stmt_container stmts_;
@@ -526,11 +520,11 @@ typedef std::list<vhdl_case_branch*> case_branch_list_t;
 class vhdl_case_stmt : public vhdl_seq_stmt {
 public:
    explicit vhdl_case_stmt(vhdl_expr *test) : test_(test) {}
-   ~vhdl_case_stmt();
+   ~vhdl_case_stmt() override;
 
    void add_branch(vhdl_case_branch *b) { branches_.push_back(b); }
-   void emit(std::ostream &of, int level) const;
-   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
+   void emit(std::ostream &of, int level) const override;
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write) override;
 private:
    vhdl_expr *test_;
    case_branch_list_t branches_;
@@ -539,12 +533,10 @@ private:
 
 class vhdl_loop_stmt : public vhdl_seq_stmt {
 public:
-   virtual ~vhdl_loop_stmt() {}
-
    stmt_container *get_container() { return &stmts_; }
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
    virtual void find_vars(vhdl_var_set_t& read,
-                          vhdl_var_set_t& write);
+                          vhdl_var_set_t& write) override;
 private:
    stmt_container stmts_;
 };
@@ -553,10 +545,10 @@ private:
 class vhdl_while_stmt : public vhdl_loop_stmt {
 public:
    explicit vhdl_while_stmt(vhdl_expr *test) : test_(test) {}
-   ~vhdl_while_stmt();
+   ~vhdl_while_stmt() override;
 
-   void emit(std::ostream &of, int level) const;
-   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
+   void emit(std::ostream &of, int level) const override;
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write) override;
 private:
    vhdl_expr *test_;
 };
@@ -566,10 +558,10 @@ class vhdl_for_stmt : public vhdl_loop_stmt {
 public:
    vhdl_for_stmt(const char *lname, vhdl_expr *from, vhdl_expr *to)
       : lname_(lname), from_(from), to_(to) {}
-   ~vhdl_for_stmt();
+   ~vhdl_for_stmt() override;
 
-   void emit(std::ostream &of, int level) const;
-   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
+   void emit(std::ostream &of, int level) const override;
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write) override;
 private:
    const char *lname_;
    vhdl_expr *from_, *to_;
@@ -584,9 +576,9 @@ class vhdl_pcall_stmt : public vhdl_seq_stmt {
 public:
    explicit vhdl_pcall_stmt(const char *name) : name_(name) {}
 
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
    void add_expr(vhdl_expr *e) { exprs_.add_expr(e); }
-   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write) override;
 private:
    std::string name_;
    vhdl_expr_list exprs_;
@@ -604,7 +596,7 @@ public:
                       vhdl_expr *initial = NULL)
       : name_(name), type_(type), initial_(initial),
         has_initial_(initial != NULL) {}
-   virtual ~vhdl_decl();
+   virtual ~vhdl_decl() override;
 
    const std::string &get_name() const { return name_; }
    const vhdl_type *get_type() const;
@@ -654,7 +646,7 @@ class vhdl_component_decl : public vhdl_decl {
 public:
    static vhdl_component_decl *component_decl_for(vhdl_entity *ent);
 
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
 private:
    explicit vhdl_component_decl(const char *name);
 
@@ -666,7 +658,7 @@ class vhdl_type_decl : public vhdl_decl {
 public:
    vhdl_type_decl(const std::string& name, const vhdl_type *base)
       : vhdl_decl(name, base) {}
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
 };
 
 /*
@@ -677,8 +669,8 @@ class vhdl_var_decl : public vhdl_decl {
 public:
    vhdl_var_decl(const std::string& name, const vhdl_type *type)
       : vhdl_decl(name, type) {}
-   void emit(std::ostream &of, int level) const;
-   assign_type_t assignment_type() const { return ASSIGN_BLOCK; }
+   void emit(std::ostream &of, int level) const override;
+   assign_type_t assignment_type() const override { return ASSIGN_BLOCK; }
 };
 
 
@@ -689,8 +681,8 @@ class vhdl_signal_decl : public vhdl_decl {
 public:
    vhdl_signal_decl(const std::string& name, const vhdl_type* type)
       : vhdl_decl(name, type) {}
-   virtual void emit(std::ostream &of, int level) const;
-   assign_type_t assignment_type() const { return ASSIGN_NONBLOCK; }
+   virtual void emit(std::ostream &of, int level) const override;
+   assign_type_t assignment_type() const override { return ASSIGN_NONBLOCK; }
 };
 
 
@@ -701,8 +693,8 @@ class vhdl_param_decl : public vhdl_decl {
 public:
    vhdl_param_decl(const char *name, const vhdl_type *type)
       : vhdl_decl(name, type) {}
-   void emit(std::ostream &of, int level) const;
-   assign_type_t assignment_type() const { return ASSIGN_CONST; }
+   void emit(std::ostream &of, int level) const override;
+   assign_type_t assignment_type() const override { return ASSIGN_CONST; }
 };
 
 enum vhdl_port_mode_t {
@@ -723,12 +715,12 @@ public:
                   vhdl_port_mode_t mode)
       : vhdl_decl(name, type), mode_(mode) {}
 
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
    vhdl_port_mode_t get_mode() const { return mode_; }
    void set_mode(vhdl_port_mode_t m) { mode_ = m; }
-   assign_type_t assignment_type() const { return ASSIGN_NONBLOCK; }
-   void ensure_readable();
-   bool is_readable() const;
+   assign_type_t assignment_type() const override { return ASSIGN_NONBLOCK; }
+   void ensure_readable() override;
+   bool is_readable() const override;
 private:
    vhdl_port_mode_t mode_;
 };
@@ -750,9 +742,9 @@ typedef std::list<port_map_t> port_map_list_t;
 class vhdl_comp_inst : public vhdl_conc_stmt {
 public:
    vhdl_comp_inst(const char *inst_name, const char *comp_name);
-   ~vhdl_comp_inst();
+   ~vhdl_comp_inst() override;
 
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
    void map_port(const std::string& name, vhdl_expr *expr);
 
    const std::string &get_comp_name() const { return comp_name_; }
@@ -841,8 +833,8 @@ class vhdl_function : public vhdl_decl, public vhdl_procedural {
 public:
    vhdl_function(const char *name, vhdl_type *ret_type);
 
-   virtual void emit(std::ostream &of, int level) const;
-   vhdl_scope *get_scope() { return &variables_; }
+   virtual void emit(std::ostream &of, int level) const override;
+   vhdl_scope *get_scope() override { return &variables_; }
    void add_param(vhdl_param_decl *p) { scope_.add_decl(p); }
 private:
    vhdl_scope variables_;
@@ -853,7 +845,7 @@ public:
    explicit vhdl_forward_fdecl(const vhdl_function *f)
       : vhdl_decl((f->get_name() + "_Forward").c_str()), f_(f) {}
 
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
 private:
    const vhdl_function *f_;
 };
@@ -863,7 +855,7 @@ class vhdl_process : public vhdl_conc_stmt, public vhdl_procedural {
 public:
    explicit vhdl_process(const char *name = "") : name_(name) {}
 
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
    void add_sensitivity(const std::string &name);
 private:
    std::string name_;
@@ -878,9 +870,9 @@ class vhdl_arch : public vhdl_element {
 public:
    vhdl_arch(const std::string& entity, const std::string& name)
       : name_(name), entity_(entity) {}
-   virtual ~vhdl_arch();
+   virtual ~vhdl_arch() override;
 
-   void emit(std::ostream &of, int level=0) const;
+   void emit(std::ostream &of, int level=0) const override;
    void add_stmt(vhdl_process *proc);
    void add_stmt(vhdl_conc_stmt *stmt);
    vhdl_scope *get_scope() { return &scope_; }
@@ -899,9 +891,9 @@ private:
 class vhdl_entity : public vhdl_element {
 public:
    vhdl_entity(const std::string& name, vhdl_arch *arch, int depth=0);
-   virtual ~vhdl_entity();
+   virtual ~vhdl_entity() override;
 
-   void emit(std::ostream &of, int level=0) const;
+   void emit(std::ostream &of, int level=0) const override;
    void add_port(vhdl_port_decl *decl);
    vhdl_arch *get_arch() const { return arch_; }
    const std::string &get_name() const { return name_; }

@@ -1,7 +1,7 @@
 #ifndef IVL_vtype_H
 #define IVL_vtype_H
 /*
- * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2014 / Stephen Williams (steve@icarus.com),
  * @author Maciej Suminski (maciej.suminski@cern.ch)
  *
@@ -126,7 +126,7 @@ class VType {
       };
 
     protected:
-      inline void emit_name(std::ostream&out, perm_string name) const
+      static inline void emit_name(std::ostream&out, perm_string name)
       {
         if(name != empty_perm_string)
             out << " \\" << name << " ";
@@ -194,7 +194,7 @@ class VTypeArray : public VType {
     public:
       class range_t {
 	  public:
-	    range_t(Expression*m = NULL, Expression*l = NULL, bool down_to = true) :
+	    explicit range_t(Expression*m = NULL, Expression*l = NULL, bool down_to = true) :
                 msb_(m), lsb_(l), direction_(down_to) { }
 
 	    range_t*clone() const;
@@ -312,6 +312,9 @@ class VTypeRangeExpr : public VTypeRange {
     public:
       VTypeRangeExpr(const VType*base, Expression*end, Expression*start, bool downto);
       ~VTypeRangeExpr() override;
+
+      VTypeRangeExpr(const VTypeRangeExpr&) = delete;
+      VTypeRangeExpr& operator=(const VTypeRangeExpr&) = delete;
 
       VType*clone() const override;
       int elaborate(Entity*end, ScopeBase*scope) const override;

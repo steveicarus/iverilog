@@ -1,7 +1,7 @@
 /*
  *  VHDL variable and signal types.
  *
- *  Copyright (C) 2008-2021  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2026  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -58,9 +58,11 @@ public:
    // Copy constructor
    vhdl_type(const vhdl_type &other);
 
-   virtual ~vhdl_type();
+   virtual ~vhdl_type() override;
 
-   void emit(std::ostream &of, int level) const;
+   vhdl_type& operator=(const vhdl_type&) = delete;
+
+   void emit(std::ostream &of, int level) const override;
    vhdl_type_name_t get_name() const { return name_; }
    std::string get_string() const;
    std::string get_decl_string() const;

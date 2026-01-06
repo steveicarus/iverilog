@@ -1,7 +1,7 @@
 #ifndef IVL_entity_H
 #define IVL_entity_H
 /*
- * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,7 +34,7 @@ class Expression;
 
 class InterfacePort : public LineInfo {
     public:
-      InterfacePort(port_mode_t mod = PORT_NONE,
+      explicit InterfacePort(port_mode_t mod = PORT_NONE,
                     perm_string nam = empty_perm_string,
                     const VType*typ = NULL,
                     Expression*exp = NULL)

@@ -6,3 +6,16 @@ unusedFunction:vhdl.cc:96
 
 // target_query()
 unusedFunction:vhdl.cc:137
+
+// Skip the use STL messages
+useStlAlgorithm
+
+// cppcheck does not notice that the condition is asserted to be true at least once
+nullPointer:stmt.cc:1543
+
+// Other unused functions
+unusedFunction:expr.cc
+unusedFunction:vhdl_element.cc
+unusedFunction:vhdl_syntax.cc
+unusedFunction:vhdl_syntax.hh
+unusedFunction:vhdl_type.cc

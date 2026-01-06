@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008-2025  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2026  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -529,11 +529,6 @@ vhdl_expr::~vhdl_expr()
 void vhdl_expr_list::add_expr(vhdl_expr *e)
 {
    exprs_.push_back(e);
-}
-
-vhdl_expr_list::~vhdl_expr_list()
-{
-
 }
 
 void vhdl_expr_list::find_vars(vhdl_var_set_t& read)

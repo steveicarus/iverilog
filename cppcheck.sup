@@ -1,6 +1,25 @@
+// Skip the use STL messages
+useStlAlgorithm
+
+// Skip all memory issues since they should be handled by ivl_alloc.h
+ctunullpointerOutOfMemory
+nullPointerArithmeticOutOfMemory
+nullPointerOutOfMemory
+
+// Skip strdup() not constant.
+constVariablePointer:main.cc:400
+constVariablePointer:main.cc:404
+constVariablePointer:main.cc:654
+
+// Skip not initialized in the constructor for target scope
+uninitMemberVar:t-dll.cc
+
+// By convention we put statics at the top scope.
+variableScope:pform.cc:3461
+
 // These are correct and are used to find the base (zero) pin.
-thisSubtraction:netlist.h:5310
-thisSubtraction:netlist.h:5319
+thisSubtraction:netlist.h:5309
+thisSubtraction:netlist.h:5318
 
 // This is used when running a debugger
 // debugger_release
@@ -647,9 +666,9 @@ unusedFunction:t-dll-api.cc:980
 // has_compat_attributes()
 unusedFunction:Attrib.cc:72
 // bl_type()
-unusedFunction:Statement.h:186
+unusedFunction:Statement.h:192
 // chain_args()
-unusedFunction:Statement.h:332
+unusedFunction:Statement.h:341
 // gn_modules_nest()
 unusedFunction:compiler.h:228
 // driven_mask()
@@ -689,7 +708,7 @@ unusedFunction:t-dll-expr.cc:91
 // net_assign()
 unusedFunction:t-dll.cc:2368
 // is_before()
-unusedFunction:verinum.cc:592
+unusedFunction:verinum.cc:589
 
 // Errors/limitations in the generated yacc and lex files
 constVariablePointer:<stdout>
@@ -700,6 +719,11 @@ syntaxError:<stdout>
 unusedFunction:<stdout>
 duplicateBreak:lexor.lex
 allocaCalled:parse.cc
+constParameterPointer:parse.cc
+constVariablePointer:parse.cc
+knownConditionTrueFalse:parse.cc
 syntaxError:parse.cc
 allocaCalled:syn-rules.cc
+constParameterPointer:syn-rules.cc
+knownConditionTrueFalse:syn-rules.cc
 constVariablePointer:syn-rules.cc

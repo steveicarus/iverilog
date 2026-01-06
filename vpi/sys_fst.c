@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -657,10 +657,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiNamedFork:
 
 	    if (depth > 0) {
-		  char *instname;
+		  const char *instname;
 		  char *defname = NULL;
 		  /* list of types to iterate upon */
-		  static int types[] = {
+		  const static int types[] = {
 			/* Value */
 			vpiNamedEvent,
 			vpiNet,

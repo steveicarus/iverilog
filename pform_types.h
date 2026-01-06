@@ -1,7 +1,7 @@
 #ifndef IVL_pform_types_H
 #define IVL_pform_types_H
 /*
- * Copyright (c) 2007-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -451,7 +451,7 @@ struct pform_scoped_name_t {
       pform_scoped_name_t() = default;
       pform_scoped_name_t(PPackage *p, const pform_name_t &n) : package(p),
 							        name(n) {}
-      pform_scoped_name_t(const pform_name_t &n) : name(n) {}
+      explicit pform_scoped_name_t(const pform_name_t &n) : name(n) {}
 
       const name_component_t& back() const { return name.back(); }
       size_t size() const { return name.size(); }

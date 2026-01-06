@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1687,7 +1687,7 @@ NetEConst* NetESFunc::evaluate_clog2_(const NetExpr*arg_) const
       return rtn;
 }
 
-NetEConst* NetESFunc::evaluate_rtoi_(const NetExpr*arg_) const
+NetEConst* NetESFunc::evaluate_rtoi_(const NetExpr*arg_)
 {
       const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg_);
       const NetECReal*tmpr = dynamic_cast<const NetECReal*>(arg_);
@@ -1710,7 +1710,7 @@ NetEConst* NetESFunc::evaluate_rtoi_(const NetExpr*arg_) const
       return new NetEConst(verinum(verinum(arg, false), integer_width));
 }
 
-NetECReal* NetESFunc::evaluate_itor_(const NetExpr*arg_) const
+NetECReal* NetESFunc::evaluate_itor_(const NetExpr*arg_)
 {
       const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg_);
       const NetECReal*tmpr = dynamic_cast<const NetECReal*>(arg_);
@@ -2139,7 +2139,7 @@ NetEConst* NetESFunc::evaluate_onehot0_(const NetExpr* arg) const
 }
 
 /* Get the number of unpacked dimensions for the given expression. */
-NetEConst* NetESFunc::evaluate_unpacked_dimensions_(const NetExpr*arg) const
+NetEConst* NetESFunc::evaluate_unpacked_dimensions_(const NetExpr*arg)
 {
       const NetESignal*esig = dynamic_cast<const NetESignal*>(arg);
       long res = 0;

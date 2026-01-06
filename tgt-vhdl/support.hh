@@ -1,7 +1,7 @@
 /*
  *  Support functions for VHDL output.
  *
- *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2026  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,14 +44,14 @@ public:
    explicit support_function(support_function_t type)
       : vhdl_function(function_name(type), function_type(type)),
         type_(type) {}
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level) const override;
    static const char *function_name(support_function_t type);
    static vhdl_type *function_type(support_function_t type);
 
 private:
-   void emit_ternary(std::ostream &of, int level) const;
-   void emit_reduction(std::ostream &of, int level, const char *op,
-                       char unit) const;
+   static void emit_ternary(std::ostream &of, int level);
+   static void emit_reduction(std::ostream &of, int level, const char *op,
+                              char unit);
 
    support_function_t type_;
 };

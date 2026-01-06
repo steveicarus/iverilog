@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2025 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2026 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -385,7 +385,7 @@ static bool find_enum_constant(LexicalScope*scope, perm_string name)
       return std::any_of(scope->enum_sets.cbegin(), scope->enum_sets.cend(),
                          [name](const enum_type_t *cur) {
 	    return std::any_of(cur->names->cbegin(), cur->names->cend(),
-	                       [name](const named_pexpr_t idx){return idx.name == name;});
+	                       [name](const named_pexpr_t&idx){return idx.name == name;});
       });
 }
 

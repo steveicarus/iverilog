@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright CERN 2016
  * @author Maciej Suminski <maciej.suminski@cern.ch>
@@ -125,10 +125,10 @@ static void dump_library_package(ostream&file, perm_string lname, perm_string pn
       file << "end package " << lname << "." << pname << endl;
 }
 
-static void dump_library_packages(ostream&file, perm_string lname, map<perm_string,Package*>packages)
+static void dump_library_packages(ostream&file, perm_string lname, const map<perm_string,Package*>&packages)
 {
-      for (map<perm_string,Package*>::iterator cur = packages.begin()
-		 ; cur != packages.end() ;  ++cur) {
+      for (map<perm_string,Package*>::const_iterator cur = packages.cbegin()
+		 ; cur != packages.cend() ;  ++cur) {
 	    dump_library_package(file, lname, cur->first, cur->second);
       }
 }
@@ -260,7 +260,7 @@ void library_use(const YYLTYPE&loc, ActiveScope*res,
 	    string path = make_work_package_path(use_package.str());
 	    parse_source_file(path.c_str(), use_library);
 	    pack = lib.packages[use_package];
-      } else if (use_library != "ieee" && pack == 0) {
+      } else if (pack == 0) {
 	    string path = make_library_package_path(use_library, use_package);
 	    if (path == "") {
 		  errormsg(loc, "Unable to find library %s\n", use_library.str());

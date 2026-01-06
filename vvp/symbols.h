@@ -1,7 +1,7 @@
 #ifndef IVL_symbols_H
 #define IVL_symbols_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,6 +57,7 @@ class symbol_table_s {
     public:
       explicit symbol_table_s();
       virtual ~symbol_table_s();
+      symbol_table_s& operator=(const symbol_table_s&) = delete;
 
 	// This method locates the value in the symbol table and sets its
 	// value. If the key doesn't yet exist, create it.

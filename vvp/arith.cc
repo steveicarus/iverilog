@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -955,7 +955,7 @@ void vvp_shiftl::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       vvp_vector4_t out (op_a_.size());
 
       bool overflow_flag;
-      unsigned long shift;
+      unsigned long shift = 0;
       if (! vector4_to_value(op_b_, overflow_flag, shift)) {
 	    ptr.ptr()->send_vec4(x_val_, 0);
 	    return;
@@ -990,7 +990,7 @@ void vvp_shiftr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       vvp_vector4_t out (op_a_.size());
 
       bool overflow_flag;
-      unsigned long shift;
+      unsigned long shift = 0;
       if (! vector4_to_value(op_b_, overflow_flag, shift)) {
 	    ptr.ptr()->send_vec4(x_val_, 0);
 	    return;

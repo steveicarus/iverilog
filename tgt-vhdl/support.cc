@@ -1,7 +1,7 @@
 /*
  *  Support functions for VHDL output.
  *
- *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2026  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -80,14 +80,14 @@ vhdl_type *support_function::function_type(support_function_t type)
    return vhdl_type::boolean();
 }
 
-void support_function::emit_ternary(std::ostream &of, int level) const
+void support_function::emit_ternary(std::ostream &of, int level)
 {
    of << nl_string(level) << "begin" << nl_string(indent(level))
       << "if T then return X; else return Y; end if;";
 }
 
 void support_function::emit_reduction(std::ostream &of, int level,
-                                      const char *op, char unit) const
+                                      const char *op, char unit)
 {
    // Emit a VHDL function emulating a Verilog reduction operator
    // Where op is the corresponding VHDL operator and unit is the

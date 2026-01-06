@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for scopes.
  *
- *  Copyright (C) 2008-2025  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2026  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1044,12 +1044,12 @@ extern "C" int draw_functions(ivl_scope_t scope, void *_parent)
 
    ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
    if (ivl_scope_type(scope) == IVL_SCT_FUNCTION) {
-      if (draw_function(scope, parent) != 0)
-         return 1;
+      int rc = draw_function(scope, parent);
+      assert(rc == 0);
    }
    else if (ivl_scope_type(scope) == IVL_SCT_TASK) {
-      if (draw_task(scope, parent) != 0)
-         return 1;
+      int rc = draw_task(scope, parent);
+      assert(rc == 0);
    }
 
    return ivl_scope_children(scope, draw_functions, scope);
@@ -1258,8 +1258,7 @@ int draw_scope(ivl_scope_t scope, void *_parent)
       return rc;
 
    rc = draw_constant_drivers(scope, _parent);
-   if (rc != 0)
-      return rc;
+   assert(rc == 0);
 
    return 0;
 }

@@ -1,7 +1,7 @@
 #ifndef IVL_subprogram_H
 #define IVL_subprogram_H
 /*
- * Copyright (c) 2013-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright CERN 2015
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -69,6 +69,8 @@ class SubprogramHeader : public LineInfo {
       SubprogramHeader(perm_string name, std::list<InterfacePort*>*ports,
 		 const VType*return_type);
       virtual ~SubprogramHeader() override;
+      SubprogramHeader(const SubprogramHeader&) = delete;
+      SubprogramHeader& operator=(const SubprogramHeader&) = delete;
 
 	// Return true if the specification (name, types, ports)
 	// matches this subprogram and that subprogram.

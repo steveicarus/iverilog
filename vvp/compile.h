@@ -1,7 +1,7 @@
 #ifndef IVL_compile_H
 #define IVL_compile_H
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -282,13 +282,13 @@ extern void compile_timescale(long units, long precision);
 extern void compile_vpi_symbol(const char*label, vpiHandle obj);
 extern void compile_vpi_lookup(vpiHandle *objref, char*label);
 
-extern void compile_param_string(char*label, char*name, char*value,
+extern void compile_param_string(char*label, const char*name, char*value,
                                  bool local_flag,
                                  long file_idx, long lineno);
-extern void compile_param_logic(char*label, char*name, char*value,
+extern void compile_param_logic(char*label, const char*name, char*value,
 				bool signed_flag, bool local_flag,
                                 long file_idx, long lineno);
-extern void compile_param_real(char*label, char*name, char*value,
+extern void compile_param_real(char*label, const char*name, char*value,
                                bool local_flag,
                                long file_idx, long lineno);
 
@@ -316,6 +316,10 @@ class resolv_list_s {
 	    next = NULL;
       }
       virtual ~resolv_list_s();
+
+      resolv_list_s(const resolv_list_s&) = delete;
+      resolv_list_s& operator=(const resolv_list_s&) = delete;
+
       virtual bool resolve(bool mes = false) = 0;
 
     protected:

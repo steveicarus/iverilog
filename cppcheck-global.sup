@@ -1,5 +1,3 @@
-// For now skip using STL algorithms
-useStlAlgorithm
 // Skip all messages about missing system include files
 missingIncludeSystem
 // Skip the active checker report message

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,7 +36,7 @@ PLI_UINT64 timerec_to_time64(const struct t_vpi_time*timerec)
       return tmp;
 }
 
-char *as_escaped(char *arg)
+char *as_escaped(const char *arg)
 {
       unsigned idx, cur, cnt, len = strlen(arg) + 1;
       char *res = (char *) malloc(sizeof(char) * len);
@@ -111,7 +111,7 @@ char* attach_suffix_to_filename(char *path, const char*suff)
 {
 	/* If the name already has a suffix, then don't replace it or
 	   add another suffix. Just return this path. */
-      char*tailp = strrchr(path, '.');
+      const char*tailp = strrchr(path, '.');
       if (tailp != 0) return path;
 
 	/* The name doesn't have a suffix, so append the passed in

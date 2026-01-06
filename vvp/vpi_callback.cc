@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -233,6 +233,9 @@ class value_part_callback : public value_callback {
       explicit value_part_callback(p_cb_data data);
       ~value_part_callback() override;
 
+      value_part_callback(const value_part_callback&) = delete;
+      value_part_callback& operator=(const value_part_callback&) = delete;
+
       bool test_value_callback_ready(void) override;
 
     private:
@@ -399,6 +402,9 @@ class sync_callback : public __vpiCallback {
     public:
       explicit sync_callback(p_cb_data data);
       ~sync_callback() override;
+
+      sync_callback(const sync_callback&) = delete;
+      sync_callback& operator=(const sync_callback&) = delete;
 
     public:
 	// scheduled event

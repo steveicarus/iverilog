@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1444,6 +1444,9 @@ class array_word_part_callback : public array_word_value_callback {
     public:
       explicit array_word_part_callback(p_cb_data data);
       ~array_word_part_callback() override;
+
+      array_word_part_callback(const array_word_part_callback&) = delete;
+      array_word_part_callback& operator=(const array_word_part_callback&) = delete;
 
       bool test_value_callback_ready(void) override;
 

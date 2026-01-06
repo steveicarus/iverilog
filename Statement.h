@@ -1,7 +1,7 @@
 #ifndef IVL_Statement_H
 #define IVL_Statement_H
 /*
- * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -55,6 +55,9 @@ class PProcess : public LineInfo {
 
       virtual ~PProcess() override;
 
+      PProcess(const PProcess&) = delete;
+      PProcess& operator=(const PProcess&) = delete;
+
       bool elaborate(Design*des, NetScope*scope) const;
 
       ivl_process_type_t type() const { return type_; }
@@ -100,6 +103,9 @@ class PAssign_  : public Statement {
       explicit PAssign_(PExpr*lval, PExpr*de, PExpr*ex);
       explicit PAssign_(PExpr*lval, PExpr*cnt, PEventStatement*de, PExpr*ex);
       virtual ~PAssign_() override =0;
+
+      PAssign_(const PAssign_&) = delete;
+      PAssign_& operator=(const PAssign_&) = delete;
 
       const PExpr* lval() const  { return lval_; }
       PExpr* rval() const  { return rval_; }
@@ -307,6 +313,9 @@ class PCAssign  : public Statement {
       explicit PCAssign(PExpr*l, PExpr*r);
       ~PCAssign() override;
 
+      PCAssign(const PCAssign&) = delete;
+      PCAssign& operator=(const PCAssign&) = delete;
+
       virtual NetCAssign* elaborate(Design*des, NetScope*scope) const override;
       virtual void dump(std::ostream&out, unsigned ind) const override;
 
@@ -370,6 +379,9 @@ class PDeassign  : public Statement {
       explicit PDeassign(PExpr*l);
       ~PDeassign() override;
 
+      PDeassign(const PDeassign&) = delete;
+      PDeassign& operator=(const PDeassign&) = delete;
+
       virtual NetDeassign* elaborate(Design*des, NetScope*scope) const override;
       virtual void dump(std::ostream&out, unsigned ind) const override;
 
@@ -415,6 +427,9 @@ class PDoWhile  : public Statement {
     public:
       PDoWhile(PExpr*ex, Statement*st);
       ~PDoWhile() override;
+
+      PDoWhile(const PDoWhile&) = delete;
+      PDoWhile& operator=(const PDoWhile&) = delete;
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
       virtual void elaborate_scope(Design*des, NetScope*scope) const override;
@@ -479,6 +494,9 @@ class PForce  : public Statement {
       explicit PForce(PExpr*l, PExpr*r);
       ~PForce() override;
 
+      PForce(const PForce&) = delete;
+      PForce& operator=(const PForce&) = delete;
+
       virtual NetForce* elaborate(Design*des, NetScope*scope) const override;
       virtual void dump(std::ostream&out, unsigned ind) const override;
 
@@ -491,6 +509,9 @@ class PForeach : public Statement {
     public:
       explicit PForeach(perm_string var, const std::list<perm_string>&ix, Statement*stmt);
       ~PForeach() override;
+
+      PForeach(const PForeach&) = delete;
+      PForeach& operator=(const PForeach&) = delete;
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
       virtual void elaborate_scope(Design*des, NetScope*scope) const override;
@@ -511,6 +532,9 @@ class PForever : public Statement {
     public:
       explicit PForever(Statement*s);
       ~PForever() override;
+
+      PForever(const PForever&) = delete;
+      PForever& operator=(const PForever&) = delete;
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
       virtual void elaborate_scope(Design*des, NetScope*scope) const override;
@@ -556,6 +580,9 @@ class PRepeat : public Statement {
       explicit PRepeat(PExpr*expr, Statement*s);
       ~PRepeat() override;
 
+      PRepeat(const PRepeat&) = delete;
+      PRepeat& operator=(const PRepeat&) = delete;
+
       virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
       virtual void elaborate_scope(Design*des, NetScope*scope) const override;
       virtual void elaborate_sig(Design*des, NetScope*scope) const override;
@@ -572,6 +599,9 @@ class PRelease  : public Statement {
       explicit PRelease(PExpr*l);
       ~PRelease() override;
 
+      PRelease(const PRelease&) = delete;
+      PRelease& operator=(const PRelease&) = delete;
+
       virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
       virtual void dump(std::ostream&out, unsigned ind) const override;
 
@@ -584,6 +614,9 @@ class PReturn  : public Statement {
     public:
       explicit PReturn(PExpr*e);
       ~PReturn() override;
+
+      PReturn(const PReturn&) = delete;
+      PReturn& operator=(const PReturn&) = delete;
 
       NetProc* elaborate(Design*des, NetScope*scope) const override;
       virtual void dump(std::ostream&out, unsigned ind) const override;
@@ -629,6 +662,9 @@ class PWhile  : public Statement {
     public:
       PWhile(PExpr*ex, Statement*st);
       ~PWhile() override;
+
+      PWhile(const PWhile&) = delete;
+      PWhile& operator=(const PWhile&) = delete;
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
       virtual void elaborate_scope(Design*des, NetScope*scope) const override;

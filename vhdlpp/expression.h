@@ -1,7 +1,7 @@
 #ifndef IVL_expression_H
 #define IVL_expression_H
 /*
- * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2015 / Stephen Williams (steve@icarus.com),
  * Copyright CERN 2016
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -284,7 +284,7 @@ class ExpAggregate : public Expression {
       };
 
       struct choice_element {
-	    choice_element() : choice(), expr() {}
+	    choice_element() : choice(), expr(), alias_flag(false) {}
 
 	    choice_element(const choice_element&other) {
 	        choice = other.choice ? new choice_t(*other.choice) : NULL;
@@ -451,7 +451,7 @@ class ExpBitstring : public Expression {
 
     public:
       explicit ExpBitstring(const char*);
-      ExpBitstring(const ExpBitstring&other) : Expression() { value_ = other.value_; }
+      ExpBitstring(const ExpBitstring&other) : Expression(), value_(other.value_) {}
       ~ExpBitstring() override;
 
       Expression*clone() const override { return new ExpBitstring(*this); }
@@ -557,7 +557,6 @@ class ExpConditional : public Expression {
 
       virtual Expression*clone() const override;
 
-      const VType*probe_type(Entity*ent, ScopeBase*scope) const override;
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype) override;
       void write_to_stream(std::ostream&fd) const override;
       int emit(std::ostream&out, Entity*ent, ScopeBase*scope) const override;
@@ -750,6 +749,9 @@ class ExpName : public Expression {
                 delete size_;
                 delete offset_;
           }
+
+      index_t(const index_t&) = delete;
+      index_t& operator=(const index_t&) = delete;
 
           int emit(std::ostream&out, Entity*ent, ScopeBase*scope) const;
 

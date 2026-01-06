@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3495,7 +3495,7 @@ bool of_IX_GETV(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t vec;
       sig->vec4_value(vec);
       bool overflow_flag;
-      uint64_t val;
+      uint64_t val = 0;
       bool known_flag = vector4_to_value(vec, overflow_flag, val);
 
       if (known_flag)

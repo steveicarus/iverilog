@@ -6,7 +6,7 @@
 
 %{
 /*
- * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -318,7 +318,6 @@ static bool is_based_correct(const char* text)
     if(strchr(text, '\0') - strrchr(text, '#') > 1) { //the number contains an exponent
         if(*(strrchr(text, '#') + 2) == '-')
             return 0;
-        length = 0;
         for(ptr = strrchr(text, '#')+2; *ptr != '\0'; ++ptr)
         {
             //the exponent consists of other chars than {'0'.,'9','a'..'f'}

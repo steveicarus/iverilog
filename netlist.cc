@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1731,7 +1731,7 @@ NetLiteral::~NetLiteral()
 {
 }
 
-ivl_variable_type_t NetLiteral::data_type() const
+ivl_variable_type_t NetLiteral::data_type()
 {
       return IVL_VT_REAL;
 }
@@ -2593,11 +2593,6 @@ NetEUBits::~NetEUBits()
 {
 }
 
-ivl_variable_type_t NetEUBits::expr_type() const
-{
-      return expr_->expr_type();
-}
-
 NetEUReduce::NetEUReduce(char op__, NetExpr*ex)
 : NetEUnary(op__, ex, 1, false)
 {
@@ -2605,11 +2600,6 @@ NetEUReduce::NetEUReduce(char op__, NetExpr*ex)
 
 NetEUReduce::~NetEUReduce()
 {
-}
-
-ivl_variable_type_t NetEUReduce::expr_type() const
-{
-      return expr_->expr_type();
 }
 
 NetECast::NetECast(char op__, NetExpr*ex, unsigned wid, bool signed_flag)
@@ -3093,13 +3083,6 @@ bool NetProc::check_synth(ivl_process_type_t /* pr_type */,
 //      : Non-constant system functions need a warning (NetESFunc).
 //      : Constant functions should already be elaborated.
 
-/* By default assign elements can be synthesized. */
-bool NetAssignBase::check_synth(ivl_process_type_t /* pr_type */,
-                                const NetScope* /* scope */  ) const
-{
-      return false;
-}
-
 bool NetAssign::check_synth(ivl_process_type_t pr_type,
                             const NetScope* /* scope */ ) const
 {
@@ -3421,13 +3404,6 @@ bool NetForLoop::check_synth(ivl_process_type_t pr_type,
 
       if (statement_) result |= statement_->check_synth(pr_type, scope);
       return result;
-}
-
-// The delay check above has already marked this as an error.
-bool NetPDelay::check_synth(ivl_process_type_t /* pr_type */,
-                            const NetScope* /* scope */ ) const
-{
-      return false;
 }
 
 bool NetRelease::check_synth(ivl_process_type_t pr_type,

@@ -1,7 +1,7 @@
 #ifndef IVL_parse_types_H
 #define IVL_parse_types_H
 /*
- * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -48,6 +48,9 @@ class entity_aspect_t {
       entity_aspect_t(entity_aspect_type_t t, ExpName* n) : type_(t), name_(n) {}
       ~entity_aspect_t() { delete name_; }
 
+      entity_aspect_t(const entity_aspect_t&) = delete;
+      entity_aspect_t& operator=(const entity_aspect_t&) = delete;
+
       ExpName* name() const { return name_; }
       entity_aspect_type_t type() const {return type_; }
 
@@ -61,6 +64,9 @@ class instant_list_t {
 
       instant_list_t(application_domain_t d, std::list<perm_string>* l) : domain_(d), labels_(l) {}
       ~instant_list_t() { delete labels_; }
+
+      instant_list_t(const instant_list_t&) = delete;
+      instant_list_t& operator=(const instant_list_t&) = delete;
 
       std::list<perm_string>* labels() const { return labels_; }
       application_domain_t domain() const { return domain_; }
@@ -84,6 +90,9 @@ class file_open_info_t {
           if(!kind_) kind_ = new ExpName(perm_string::literal("read_mode"));
       }
       ~file_open_info_t() { delete kind_; delete filename_; }
+
+      file_open_info_t(const file_open_info_t&) = delete;
+      file_open_info_t& operator=(const file_open_info_t&) = delete;
 
       ExpName*kind() { return kind_; }
       ExpString*filename() { return filename_; }

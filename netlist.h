@@ -1,7 +1,7 @@
 #ifndef IVL_netlist_H
 #define IVL_netlist_H
 /*
- * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1290,9 +1290,9 @@ class NetScope : public Definitions, public Attrib {
 
     private:
       void evaluate_type_parameter_(Design*des, param_ref_t cur);
-      void evaluate_parameter_logic_(Design*des, param_ref_t cur);
-      void evaluate_parameter_real_(Design*des, param_ref_t cur);
-      void evaluate_parameter_string_(Design*des, param_ref_t cur);
+      static void evaluate_parameter_logic_(Design*des, param_ref_t cur);
+      static void evaluate_parameter_real_(Design*des, param_ref_t cur);
+      static void evaluate_parameter_string_(Design*des, param_ref_t cur);
       void evaluate_parameter_(Design*des, param_ref_t cur);
 
     private:
@@ -2502,7 +2502,7 @@ class NetLiteral  : public NetNode {
       explicit NetLiteral(NetScope*s, perm_string n, const verireal&val);
       ~NetLiteral() override;
 
-      ivl_variable_type_t data_type() const;
+      static ivl_variable_type_t data_type();
 
       const verireal& value_real() const;
 
@@ -2861,6 +2861,9 @@ class NetAssign_ {
       explicit NetAssign_(NetNet*sig);
       ~NetAssign_();
 
+      NetAssign_(const NetAssign_&) = delete;
+      NetAssign_& operator=(const NetAssign_&) = delete;
+
 	// This is so NetAssign_ objects can be passed to ivl_assert
 	// and other macros that call this method.
       std::string get_fileline() const;
@@ -2991,7 +2994,6 @@ class NetAssignBase : public NetProc {
 	// This dumps all the lval structures.
       void dump_lval(std::ostream&) const;
       virtual void dump(std::ostream&, unsigned ind) const override;
-      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const override;
 
     private:
       NetAssign_*lval_;
@@ -3816,7 +3818,6 @@ class NetPDelay  : public NetProc {
       virtual bool emit_proc(struct target_t*) const override;
       virtual void dump(std::ostream&, unsigned ind) const override;
       virtual DelayType delay_type(bool print_delay=false) const override;
-      virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const override;
 
       bool emit_proc_recurse(struct target_t*) const;
 
@@ -4785,7 +4786,7 @@ class NetESFunc  : public NetExpr {
                   /* A dummy value to properly close the enum. */
 		DUMMY  = 0xffffffff };
 
-      bool takes_nargs_(ID func, unsigned nargs) {
+      static bool takes_nargs_(ID func, unsigned nargs) {
 	    if (nargs > 15) nargs = 15;
 	    return func & (1U << (nargs + 16));
       }
@@ -4801,8 +4802,8 @@ class NetESFunc  : public NetExpr {
       NetExpr* evaluate_two_arg_(ID id, const NetExpr*arg0,
 					const NetExpr*arg1) const;
 
-      NetEConst* evaluate_rtoi_(const NetExpr*arg) const;
-      NetECReal* evaluate_itor_(const NetExpr*arg) const;
+      static NetEConst* evaluate_rtoi_(const NetExpr*arg);
+      static NetECReal* evaluate_itor_(const NetExpr*arg);
 
       NetEConst* evaluate_clog2_(const NetExpr*arg) const;
 
@@ -4820,7 +4821,7 @@ class NetESFunc  : public NetExpr {
       NetEConst* evaluate_isunknown_(const NetExpr*arg) const;
       NetEConst* evaluate_onehot_(const NetExpr*arg) const;
       NetEConst* evaluate_onehot0_(const NetExpr*arg) const;
-      NetEConst* evaluate_unpacked_dimensions_(const NetExpr*arg) const;
+      static NetEConst* evaluate_unpacked_dimensions_(const NetExpr*arg);
 
 	/* This value is used as a default when the array functions are
 	 * called with a single argument. */
@@ -4963,7 +4964,6 @@ class NetEUBits : public NetEUnary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
 
       virtual NetEUBits* dup_expr() const override;
-      virtual ivl_variable_type_t expr_type() const override;
 };
 
 class NetEUReduce : public NetEUnary {
@@ -4974,7 +4974,6 @@ class NetEUReduce : public NetEUnary {
 
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root) override;
       virtual NetEUReduce* dup_expr() const override;
-      virtual ivl_variable_type_t expr_type() const override;
 
     private:
       virtual NetEConst* eval_arguments_(const NetExpr*ex) const override;

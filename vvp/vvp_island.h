@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_island_H
 #define IVL_vvp_island_H
 /*
- * Copyright (c) 2008-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -62,6 +62,9 @@ class vvp_island  : private vvp_gen_event_s {
     public:
       vvp_island();
       virtual ~vvp_island() override;
+
+      vvp_island(const vvp_island&) = delete;
+      vvp_island& operator=(const vvp_island&) = delete;
 
 	// Ports call this method to flag that something happened at
 	// the input. The island will use this to create an active

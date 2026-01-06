@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2014-2026 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2014 CERN
  * @author Maciej Suminski <maciej.suminski@cern.ch>
  *
@@ -70,17 +70,17 @@ struct __vpiArrayIndex : public __vpiHandle {
  */
 struct __vpiArrayWord {
       struct as_word_t : public __vpiHandle {
-	    int get_type_code(void) const { return vpiMemoryWord; }
-	    int vpi_get(int code);
-	    char*vpi_get_str(int code);
-	    void vpi_get_value(p_vpi_value vp);
-	    vpiHandle vpi_put_value(p_vpi_value vp, int flags);
-	    vpiHandle vpi_handle(int code);
+	    int get_type_code(void) const override { return vpiMemoryWord; }
+	    int vpi_get(int code) override;
+	    char*vpi_get_str(int code) override;
+	    void vpi_get_value(p_vpi_value vp) override;
+	    vpiHandle vpi_put_value(p_vpi_value vp, int flags) override;
+	    vpiHandle vpi_handle(int code) override;
       } as_word;
 
       struct as_index_t : public __vpiHandle {
-	    int get_type_code(void) const { return vpiIndex; }
-	    void vpi_get_value(p_vpi_value val);
+	    int get_type_code(void) const override { return vpiIndex; }
+	    void vpi_get_value(p_vpi_value val) override;
       } as_index;
 
       union {

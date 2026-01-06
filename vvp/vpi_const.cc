@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,6 +26,7 @@
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cstring>
+# include  <climits>
 # include  <cassert>
 # include  "ivl_alloc.h"
 
@@ -245,7 +246,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 
 struct __vpiStringConstTEMP : public __vpiStringConst {
       explicit inline __vpiStringConstTEMP(char*v) : __vpiStringConst(v) { }
-      free_object_fun_t free_object_fun(void);
+      free_object_fun_t free_object_fun(void) override;
 };
 
 static int free_temp_string(vpiHandle obj)
@@ -270,25 +271,33 @@ vpiHandle vpip_make_string_const(char*text, bool persistent_flag)
 
 class __vpiStringParam  : public __vpiStringConst {
     public:
-      __vpiStringParam(char*txt, const char*name);
+      __vpiStringParam(__vpiScope* scope, char*txt, const char*name,
+                       bool local_flag, long file_idx, long lineno);
       ~__vpiStringParam() override;
       int get_type_code(void) const override;
       int vpi_get(int code) override;
       char*vpi_get_str(int code) override;
       vpiHandle vpi_handle(int code) override;
 
-      __vpiScope* scope;
-      bool     local_flag;
-      unsigned file_idx;
-      unsigned lineno;
     private:
+      __vpiScope* scope_;
       const char*basename_;
+      bool       local_flag_;
+      unsigned   file_idx_;
+      unsigned   lineno_;
 };
 
-inline __vpiStringParam::__vpiStringParam(char*txt, const char*nam)
+inline __vpiStringParam::__vpiStringParam(__vpiScope* scope, char*txt, const char*nam,
+                                          bool local_flag, long file_idx, long lineno)
 : __vpiStringConst(txt)
 {
+      scope_ = scope;
       basename_ = nam;
+      local_flag_ = local_flag;
+      assert(file_idx >= 0 && file_idx <= UINT_MAX);
+      file_idx_ = (unsigned) file_idx;
+      assert(lineno >= 0 && lineno <= UINT_MAX);
+      lineno_ = (unsigned) lineno;
 }
 
 __vpiStringParam::~__vpiStringParam()
@@ -303,10 +312,10 @@ int __vpiStringParam::vpi_get(int code)
 {
     switch (code) {
        case vpiLineNo :
-         return lineno;
+         return lineno_;
 
        case vpiLocalParam :
-         return local_flag;
+         return local_flag_;
 
        default :
          return __vpiStringConst::vpi_get(code);
@@ -317,10 +326,10 @@ int __vpiStringParam::vpi_get(int code)
 char*__vpiStringParam::vpi_get_str(int code)
 {
       if (code == vpiFile) {
-	    return simple_set_rbuf_str(file_names[file_idx]);
+	    return simple_set_rbuf_str(file_names[file_idx_]);
       }
 
-      return generic_get_str(code, scope, basename_, NULL);
+      return generic_get_str(code, scope_, basename_, NULL);
 }
 
 
@@ -328,10 +337,10 @@ vpiHandle __vpiStringParam::vpi_handle(int code)
 {
       switch (code) {
 	  case vpiScope:
-	    return scope;
+	    return scope_;
 
 	  case vpiModule:
-	    return vpip_module(scope);
+	    return vpip_module(scope_);
 
 	  default:
 	    return 0;
@@ -341,11 +350,8 @@ vpiHandle __vpiStringParam::vpi_handle(int code)
 vpiHandle vpip_make_string_param(const char*name, char*text,
                                  bool local_flag, long file_idx, long lineno)
 {
-      __vpiStringParam*obj = new __vpiStringParam(text, name);
-      obj->scope = vpip_peek_current_scope();
-      obj->local_flag = local_flag;
-      obj->file_idx = (unsigned) file_idx;
-      obj->lineno = (unsigned) lineno;
+      __vpiStringParam*obj = new __vpiStringParam(vpip_peek_current_scope(), text, name,
+                                                  local_flag, file_idx, lineno);
 
       return obj;
 }
@@ -464,25 +470,36 @@ vvp_vector4_t vector4_from_text(const char*bits, unsigned wid)
 }
 
 struct __vpiBinaryParam  : public __vpiBinaryConst {
-      __vpiBinaryParam(const vvp_vector4_t&b, char*name);
+      __vpiBinaryParam(__vpiScope*scope, const vvp_vector4_t&b, bool is_signed,
+                       const char*name, bool local_flag, long file_idx, long lineno);
       ~__vpiBinaryParam() override;
       int get_type_code(void) const override;
       int vpi_get(int code) override;
       char*vpi_get_str(int code) override;
       vpiHandle vpi_handle(int code) override;
 
-      __vpiScope*scope;
-      unsigned file_idx;
-      unsigned lineno;
-      bool     local_flag;
     private:
-      char*basename_;
+      __vpiScope*scope_;
+      const char*basename_;
+      bool     local_flag_;
+      unsigned file_idx_;
+      unsigned lineno_;
 };
 
-inline __vpiBinaryParam::__vpiBinaryParam(const vvp_vector4_t&b, char*nam)
+inline __vpiBinaryParam::__vpiBinaryParam(__vpiScope*scope, const vvp_vector4_t&b,
+                                          bool is_signed, const char*nam,
+                                          bool local_flag, long file_idx, long lineno)
 {
+      scope_ = scope;
       bits = b;
+      signed_flag = is_signed ? 1 : 0;
+      sized_flag = 0;
       basename_ = nam;
+      local_flag_ = local_flag;
+      assert(file_idx >= 0 && file_idx <= UINT_MAX);
+      file_idx_ = (unsigned) file_idx;
+      assert(lineno >= 0 && lineno <= UINT_MAX);
+      lineno_ = (unsigned) lineno;
 }
 
 __vpiBinaryParam::~__vpiBinaryParam()
@@ -497,10 +514,10 @@ int __vpiBinaryParam::vpi_get(int code)
 {
     switch (code) {
       case vpiLineNo :
-        return lineno;
+        return lineno_;
 
       case vpiLocalParam :
-        return local_flag;
+        return local_flag_;
 
       default :
         return __vpiBinaryConst::vpi_get(code);
@@ -510,9 +527,9 @@ int __vpiBinaryParam::vpi_get(int code)
 char*__vpiBinaryParam::vpi_get_str(int code)
 {
       if (code == vpiFile)
-	    return simple_set_rbuf_str(file_names[file_idx]);
+	    return simple_set_rbuf_str(file_names[file_idx_]);
 
-      return generic_get_str(code, scope, basename_, NULL);
+      return generic_get_str(code, scope_, basename_, NULL);
 }
 
 
@@ -520,10 +537,10 @@ vpiHandle __vpiBinaryParam::vpi_handle(int code)
 {
       switch (code) {
 	  case vpiScope:
-	    return scope;
+	    return scope_;
 
 	  case vpiModule:
-	    return vpip_module(scope);
+	    return vpip_module(scope_);
 
 	  default:
 	    return 0;
@@ -531,18 +548,13 @@ vpiHandle __vpiBinaryParam::vpi_handle(int code)
 }
 
 
-vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
+vpiHandle vpip_make_binary_param(const char*name, const vvp_vector4_t&bits,
 				 bool signed_flag, bool local_flag,
 				 long file_idx, long lineno)
 {
-      struct __vpiBinaryParam*obj = new __vpiBinaryParam(bits, name);
-
-      obj->signed_flag = signed_flag? 1 : 0;
-      obj->sized_flag = 0;
-      obj->local_flag = local_flag;
-      obj->scope = vpip_peek_current_scope();
-      obj->file_idx = (unsigned) file_idx;
-      obj->lineno = (unsigned) lineno;
+      struct __vpiBinaryParam*obj = new __vpiBinaryParam(vpip_peek_current_scope(),
+                                                         bits, signed_flag, name,
+                                                         local_flag, file_idx, lineno);
 
       return obj;
 }
@@ -691,26 +703,34 @@ vpiHandle vpip_make_real_const(double value)
 }
 
 struct __vpiRealParam  : public __vpiRealConst {
-      __vpiRealParam(double val, const char*name);
+      __vpiRealParam(__vpiScope* scope, double val, const char*name,
+                     bool local_flag, long file_idx, long lineno);
       ~__vpiRealParam() override;
       int get_type_code(void) const override;
       int vpi_get(int code) override;
       char*vpi_get_str(int code) override;
       vpiHandle vpi_handle(int code) override;
 
-      __vpiScope* scope;
-      bool local_flag;
-      unsigned file_idx;
-      unsigned lineno;
     private:
+      __vpiScope* scope_;
       const char*basename_;
+      bool local_flag_;
+      unsigned file_idx_;
+      unsigned lineno_;
 };
 
 
-inline __vpiRealParam::__vpiRealParam(double val, const char*name)
+inline __vpiRealParam::__vpiRealParam(__vpiScope* scope, double val, const char*name,
+                                      bool local_flag, long file_idx, long lineno)
 : __vpiRealConst(val)
 {
+      scope_ = scope;
       basename_ = name;
+      local_flag_ = local_flag;
+      assert(file_idx >= 0 && file_idx <= UINT_MAX);
+      file_idx_ = (unsigned) file_idx;
+      assert(lineno >= 0 && lineno <= UINT_MAX);
+      lineno_ = (unsigned) lineno;
 }
 
 __vpiRealParam::~__vpiRealParam()
@@ -726,10 +746,10 @@ int __vpiRealParam::vpi_get(int code)
 {
     switch (code) {
       case vpiLineNo :
-        return lineno;
+        return lineno_;
 
       case vpiLocalParam :
-        return local_flag;
+        return local_flag_;
 
       default :
            return __vpiRealConst::vpi_get(code);
@@ -739,19 +759,19 @@ int __vpiRealParam::vpi_get(int code)
 char* __vpiRealParam::vpi_get_str(int code)
 {
       if (code == vpiFile)
-            return simple_set_rbuf_str(file_names[file_idx]);
+            return simple_set_rbuf_str(file_names[file_idx_]);
 
-      return generic_get_str(code, scope, basename_, NULL);
+      return generic_get_str(code, scope_, basename_, NULL);
 }
 
 vpiHandle __vpiRealParam::vpi_handle(int code)
 {
       switch (code) {
           case vpiScope:
-            return scope;
+            return scope_;
 
 	  case vpiModule:
-	    return vpip_module(scope);
+	    return vpip_module(scope_);
 
           default:
             return 0;
@@ -762,13 +782,9 @@ vpiHandle __vpiRealParam::vpi_handle(int code)
 vpiHandle vpip_make_real_param(const char*name, double value,
                                bool local_flag, long file_idx, long lineno)
 {
-      struct __vpiRealParam*obj = new __vpiRealParam(value, name);
-
-      obj->scope = vpip_peek_current_scope();
-      obj->local_flag = local_flag;
-      obj->file_idx = (unsigned) file_idx;
-      obj->lineno = (unsigned) lineno;
-
+      struct __vpiRealParam*obj = new __vpiRealParam(vpip_peek_current_scope(),
+                                                     value, name, local_flag,
+                                                     file_idx, lineno);
       return obj;
 }
 

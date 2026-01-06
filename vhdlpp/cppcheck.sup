@@ -1,9 +1,38 @@
+// cppcheck is wrong
+// text is used in strchr()/strrchr() which take a char* not a const char*
+constParameterPointer:lexor.lex:698
+
+// Skip the use STL messages
+useStlAlgorithm
 
 // Errors/limitations in the generated yacc and lex files
 cstyleCast:lexor.cc
 constVariablePointer:lexor.cc
-duplicateBreak:lexor.lex
+redundantInitialization:lexor.cc
 unusedFunction:lexor.cc
 unusedStructMember:lexor.cc
+uselessAssignmentPtrArg:lexor.cc
+duplicateBreak:lexor.lex
+redundantInitialization:lexor.lex
+uselessAssignmentPtrArg:lexor.lex
 constParameterPointer:parse.cc
+invalidPrintfArgType_sint:parse.cc
+knownConditionTrueFalse:parse.cc
 syntaxError:parse.cc
+unsignedPositive:parse.cc
+
+// Unused functions
+unusedFunction:LineInfo.h
+unusedFunction:StringHeap.cc
+unusedFunction:architec.h
+unusedFunction:expression.cc
+unusedFunction:expression.h
+unusedFunction:parse_types.h
+unusedFunction:scope.cc
+unusedFunction:sequential.cc
+unusedFunction:sequential.h
+unusedFunction:std_types.cc
+unusedFunction:subprogram.cc
+unusedFunction:subprogram.h
+unusedFunction:vhdlint.cc
+unusedFunction:vtype.cc

@@ -1,7 +1,7 @@
 #ifndef IVL_scope_H
 #define IVL_scope_H
 /*
- * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -141,8 +141,11 @@ class ScopeBase {
       std::map<perm_string,const VType*> cur_types_; //current types
 	// Constant declarations...
       struct const_t {
-        ~const_t() {delete val;}
         const_t(const VType*t, Expression* v) : typ(t), val(v) {};
+        ~const_t() {delete val;}
+
+        const_t(const const_t&) = delete;
+        const_t& operator=(const const_t&) = delete;
 
 	    const VType*typ;
 	    Expression*val;

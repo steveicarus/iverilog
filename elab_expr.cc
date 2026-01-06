@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -4972,7 +4972,8 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 		  const name_component_t member_comp = sr.path_tail.front();
 		  ivl_assert(*this, member_comp.index.empty());
 		  return check_for_enum_methods(this, des, scope,
-						netenum, sr.path_head,
+						netenum,
+						pform_scoped_name_t(sr.path_head),
 						member_comp.name,
 						expr, {});
 	    }

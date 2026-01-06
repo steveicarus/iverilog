@@ -1,97 +1,54 @@
+// Skip all memory issues since they should be handled by ivl_alloc.h
+ctunullpointerOutOfMemory
+nullPointerArithmeticOutOfMemory
+nullPointerOutOfMemory
+memleakOnRealloc
+
+// Skip strdup() not constant.
+constVariablePointer:sys_vcd.c:631
+constVariablePointer:sys_vcd.c:688
+
 // Invalid issues.
 // This always run once so v1 is assigned a value.
 uninitvar:sys_random.c:267
+
+// The interface is from the standard.
+constParameterCallback:sys_convert.c:150
+constParameterCallback:sys_display.c:1281
+constParameterCallback:sys_display.c:1379
+constParameterCallback:sys_display.c:1553
+constParameterCallback:sys_display.c:2169
+constParameterCallback:sys_fileio.c:261
+constParameterCallback:sys_random.c:497
+constParameterCallback:sys_sdf.c:437
+constParameterCallback:sys_time.c:25
+constParameterCallback:sys_time.c:81
+constParameterCallback:table_mod.c:663
+
+// Unused functions.
+unusedFunction:sys_sdf.c:60
 
 // The following three files are copied directly from GTKWave and we do not
 // have control over them. Tony has a specific programming style so these
 // problems will not be fixed.
 
 // fstapi.c from GTKWave
-asctimeCalled:fstapi.c:906
-//allocaCalled:fstapi.c:2396
-duplicateConditionalAssign:fstapi.c:4708
-knownConditionTrueFalse:fstapi.c:5666
-nullPointer:fstapi.c:951
-nullPointer:fstapi.c:3359
-shiftNegativeLHS:fstapi.c:653
-shiftTooManyBits:fstapi.c:3046
-shiftTooManyBits:fstapi.c:3047
-shiftTooManyBits:fstapi.c:3048
-shiftTooManyBits:fstapi.c:3049
-shiftTooManyBitsSigned:fstapi.c:634
-unreadVariable:fstapi.c:191
-unreadVariable:fstapi.c:192
-unreadVariable:fstapi.c:1577
-unreadVariable:fstapi.c:1588
-unreadVariable:fstapi.c:1595
-unreadVariable:fstapi.c:1598
-unreadVariable:fstapi.c:1615
-unreadVariable:fstapi.c:1620
-unreadVariable:fstapi.c:1623
-unreadVariable:fstapi.c:1625
-unreadVariable:fstapi.c:2731
-unreadVariable:fstapi.c:6445
-uselessAssignmentPtrArg:fstapi.c:954
-variableScope:fstapi.c:646
-variableScope:fstapi.c:1035
-variableScope:fstapi.c:1344
-variableScope:fstapi.c:1345
-variableScope:fstapi.c:1346
-variableScope:fstapi.c:1399
-variableScope:fstapi.c:1856
-variableScope:fstapi.c:1984
-variableScope:fstapi.c:1986
-variableScope:fstapi.c:2120
-variableScope:fstapi.c:2131
-variableScope:fstapi.c:2314
-variableScope:fstapi.c:2832
-variableScope:fstapi.c:2540
-variableScope:fstapi.c:2541
-variableScope:fstapi.c:2725
-variableScope:fstapi.c:2726
-variableScope:fstapi.c:2727
-variableScope:fstapi.c:2728
-variableScope:fstapi.c:2729
-variableScope:fstapi.c:2730
-variableScope:fstapi.c:2731
-variableScope:fstapi.c:2732
-variableScope:fstapi.c:2733
-variableScope:fstapi.c:2736
-variableScope:fstapi.c:2833
-variableScope:fstapi.c:2836
-variableScope:fstapi.c:3065
-variableScope:fstapi.c:3107
-variableScope:fstapi.c:3108
-variableScope:fstapi.c:3708
-variableScope:fstapi.c:3711
-variableScope:fstapi.c:3875
-variableScope:fstapi.c:3877
-variableScope:fstapi.c:3878
-variableScope:fstapi.c:4423
-variableScope:fstapi.c:4424
-variableScope:fstapi.c:4427
-variableScope:fstapi.c:4428
-variableScope:fstapi.c:4435
-variableScope:fstapi.c:4436
-variableScope:fstapi.c:4685
-variableScope:fstapi.c:4966
-variableScope:fstapi.c:4969
-variableScope:fstapi.c:5544
-variableScope:fstapi.c:5547
-variableScope:fstapi.c:5548
-variableScope:fstapi.c:5717
-variableScope:fstapi.c:5777
-variableScope:fstapi.c:6075
-variableScope:fstapi.c:6078
-variableScope:fstapi.c:6366
-variableScope:fstapi.c:6445
-variableScope:fstapi.c:6446
-variableScope:fstapi.c:6472
-variableScope:fstapi.c:6711
-variableScope:fstapi.c:6933
-variableScope:fstapi.c:6934
-variableScope:fstapi.c:6935
-
+asctimeCalled:fstapi.c
+badBitmaskCheck:fstapi.c
+constParameterPointer:fstapi.c
+constVariablePointer:fstapi.c
+duplicateConditionalAssign:fstapi.c
+knownConditionTrueFalse:fstapi.c
+memleak:fstapi.c
+missingInclude:fst_win_unistd.h:50
+nullPointer:fstapi.c
+shiftTooManyBits:fstapi.c
+shiftTooManyBitsSigned:fstapi.c
+staticFunction:fstapi.c
+uninitvar:fstapi.c
+unreadVariable:fstapi.c
+uselessAssignmentPtrArg:fstapi.c
+variableScope:fstapi.c
 // These functions are not used by Icarus
 // fstReaderClrFacProcessMask()
 unusedFunction:fstapi.c:3513
@@ -205,24 +162,12 @@ unusedFunction:fstapi.c:2434
 unusedFunction:fstapi.c:2352
 
 // lxt2_write.c from GTKWave
-allocaCalled:lxt2_write.c:1813
-allocaCalled:lxt2_write.c:1819
-knownConditionTrueFalse:lxt2_write.c:899
-shiftNegativeLHS:lxt2_write.c:315
-shiftNegativeLHS:lxt2_write.c:316
-shiftNegativeLHS:lxt2_write.c:317
-shiftNegativeLHS:lxt2_write.c:1935
-variableScope:lxt2_write.c:33
-variableScope:lxt2_write.c:63
-variableScope:lxt2_write.c:196
-variableScope:lxt2_write.c:463
-variableScope:lxt2_write.c:464
-variableScope:lxt2_write.c:523
-variableScope:lxt2_write.c:581
-variableScope:lxt2_write.c:587
-variableScope:lxt2_write.c:1157
-variableScope:lxt2_write.c:1613
-variableScope:lxt2_write.c:2060
+allocaCalled:lxt2_write.c
+constParameterPointer:lxt2_write.c
+knownConditionTrueFalse:lxt2_write.c
+shiftNegativeLHS:lxt2_write.c
+staticFunction:lxt2_write.c
+variableScope:lxt2_write.c
 // These functions are not used by Icarus
 // lxt2_wr_emit_value_int()
 unusedFunction:lxt2_write.c:1611
@@ -246,7 +191,10 @@ unusedFunction:lxt2_write.c:1581
 unusedFunction:lxt2_write.c:877
 
 // lxt_write.c from GTKWave
-knownConditionTrueFalse:lxt_write.c:1299
+constParameterCallback:lxt_write.c
+constParameterPointer:lxt_write.c
+constVariablePointer:lxt_write.c
+knownConditionTrueFalse:lxt_write.c
 shiftNegative:lxt_write.c:2700
 shiftNegative:lxt_write.c:2744
 variableScope:lxt_write.c:31
@@ -295,9 +243,9 @@ unusedFunction:lxt_write.c:1585
 unusedFunction:lxt_write.c:1277
 
 // fastlz.c from GTKWave
-unreadVariable:fastlz.c:423
-
-unusedLabel:fastlz.c:545
+constVariablePointer:fastlz.c
+syntaxError:fastlz.c
+unreadVariable:fastlz.c
 // These functions are not used by Icarus
 // fastlz_compress_level()
 unusedFunction:fastlz.c:152
@@ -307,66 +255,80 @@ unusedFunction:fastlz.c:164
 unusedFunction:fastlz.c:418
 
 // lz4.c from GTKWave
-unusedStructMember:lz4.c:140
+bitwiseOnBoolean:lz4.c
+constVariablePointer:lz4.c
+staticFunction:lz4.c
+syntaxError:lz4.c
+unusedStructMember:lz4.c
 // These functions are not used by Icarus
-// LZ4_compress_continue()
-unusedFunction:lz4.c:1465
-// LZ4_compress_destSize()
-unusedFunction:lz4.c:917
-// LZ4_compress_fast_force()
-unusedFunction:lz4.c:710
-// LZ4_compress_forceExtDict()
-unusedFunction:lz4.c:1068
-// LZ4_compress_limitedOutput()
-unusedFunction:lz4.c:1460
-// LZ4_compress_limitedOutput_continue()
-unusedFunction:lz4.c:1464
-// LZ4_compress_limitedOutput_withState()
-unusedFunction:lz4.c:1462
-// LZ4_compress_withState()
-unusedFunction:lz4.c:1463
-// LZ4_create()
-unusedFunction:lz4.c:1494
-// LZ4_createStream()
-unusedFunction:lz4.c:940
-// LZ4_createStreamDecode()
-unusedFunction:lz4.c:1324
-// LZ4_decompress_fast_continue()
-unusedFunction:lz4.c:1389
-// LZ4_decompress_fast_usingDict()
-unusedFunction:lz4.c:1444
-// LZ4_decompress_fast_withPrefix64k()
-unusedFunction:lz4.c:1515
-// LZ4_decompress_safe_continue()
-unusedFunction:lz4.c:1360
-// LZ4_decompress_safe_forceExtDict()
-unusedFunction:lz4.c:1450
-// LZ4_decompress_safe_usingDict()
-unusedFunction:lz4.c:1439
-// LZ4_decompress_safe_withPrefix64k()
-unusedFunction:lz4.c:1510
-// LZ4_freeStream()
-unusedFunction:lz4.c:953
-// LZ4_freeStreamDecode()
-unusedFunction:lz4.c:1330
-// LZ4_loadDict()
-unusedFunction:lz4.c:961
-// LZ4_resetStreamState()
-unusedFunction:lz4.c:1487
-// LZ4_setStreamDecode()
-unusedFunction:lz4.c:1343
-// LZ4_sizeofState()
-unusedFunction:lz4.c:378
-// LZ4_sizeofStreamState()
-unusedFunction:lz4.c:1479
-// LZ4_slideInputBuffer()
-unusedFunction:lz4.c:1501
-// LZ4_uncompress()
-unusedFunction:lz4.c:1473
-// LZ4_uncompress_unknownOutputSize()
-unusedFunction:lz4.c:1474
 // LZ4_versionNumber()
-unusedFunction:lz4.c:376
+unusedFunction:lz4.c:746
+// LZ4_versionString()
+unusedFunction:lz4.c:747
+// LZ4_sizeofState()
+unusedFunction:lz4.c:749
+// LZ4_compress_fast_extState_fastReset()
+unusedFunction:lz4.c:1411
+// LZ4_compress_destSize_extState()
+unusedFunction:lz4.c:1494
+// LZ4_compress_destSize()
+unusedFunction:lz4.c:1503
+// LZ4_resetStream_fast()
+unusedFunction:lz4.c:1567
+// LZ4_resetStream()
+unusedFunction:lz4.c:1572
+// LZ4_loadDict()
+unusedFunction:lz4.c:1583
+// LZ4_attach_dictionary()
+unusedFunction:lz4.c:1626
+// LZ4_compress_forceExtDict()
+unusedFunction:lz4.c:1755
+// LZ4_saveDict()
+unusedFunction:lz4.c:1782
+// LZ4_decompress_fast_withPrefix64k()
+unusedFunction:lz4.c:2456
+// LZ4_createStreamDecode()
+unusedFunction:lz4.c:2529
+// LZ4_freeStreamDecode()
+unusedFunction:lz4.c:2535
+// LZ4_setStreamDecode()
+unusedFunction:lz4.c:2549
+// LZ4_decoderRingBufferSize()
+unusedFunction:lz4.c:2575
+// LZ4_decompress_safe_continue()
+unusedFunction:lz4.c:2591
+// LZ4_decompress_fast_continue()
+unusedFunction:lz4.c:2631
+// LZ4_decompress_safe_usingDict()
+unusedFunction:lz4.c:2679
+// LZ4_decompress_safe_partial_usingDict()
+unusedFunction:lz4.c:2694
+// LZ4_decompress_fast_usingDict()
+unusedFunction:lz4.c:2709
+// LZ4_compress_limitedOutput()
+unusedFunction:lz4.c:2724
+// LZ4_compress()
+unusedFunction:lz4.c:2728
+// LZ4_compress_limitedOutput_withState()
+unusedFunction:lz4.c:2732
+// LZ4_compress_withState()
+unusedFunction:lz4.c:2736
+// LZ4_compress_limitedOutput_continue()
+unusedFunction:lz4.c:2740
+// LZ4_compress_continue()
+unusedFunction:lz4.c:2744
+// LZ4_uncompress()
+unusedFunction:lz4.c:2755
+// LZ4_uncompress_unknownOutputSize()
+unusedFunction:lz4.c:2759
+// LZ4_sizeofStreamState()
+unusedFunction:lz4.c:2766
+// LZ4_resetStreamState()
+unusedFunction:lz4.c:2768
+// LZ4_create()
+unusedFunction:lz4.c:2776
+// LZ4_slideInputBuffer()
+unusedFunction:lz4.c:2783
 
 // The routines in sys_random.c are exact copies from IEEE1364-2005 and
 // they have scope warnings that we need to ignore.
@@ -377,8 +339,19 @@ variableScope:sys_random.c:148
 
 // Issues in Lex/Yacc files
 allocaCalled:sdf_parse.c
+constParameterPointer:sdf_parse.c
+constVariablePointer:sdf_parse.c
+knownConditionTrueFalse:sdf_parse.c
+duplicateBreak:sdf_lexor.lex
+duplicateBreak:sys_readmem_lex.lex
 allocaCalled:table_mod_parse.c
+constParameterPointer:table_mod_parse.c
+constVariablePointer:table_mod_parse.c
+knownConditionTrueFalse:table_mod_parse.c
+duplicateBreak:table_mod_lexor.lex
 constVariablePointer:<stdout>
 duplicateBreak:<stdout>
 nullPointer:<stdout>
 redundantInitialization:<stdout>
+staticFunction:<stdout>
+unusedFunction:<stdout>

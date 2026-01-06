@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2015 / Stephen Williams (steve@icarus.com),
  * Copyright CERN 2016
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -913,7 +913,7 @@ double ExpTime::to_fs() const
 
 ExpRange::ExpRange(Expression*left_idx, Expression*right_idx, range_dir_t dir)
 : left_(left_idx), right_(right_idx), direction_(dir), range_expr_(false),
-    range_base_(NULL)
+    range_base_(NULL), range_reverse_(false)
 {
 }
 
