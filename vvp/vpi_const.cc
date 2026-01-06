@@ -294,9 +294,9 @@ inline __vpiStringParam::__vpiStringParam(__vpiScope* scope, char*txt, const cha
       scope_ = scope;
       basename_ = nam;
       local_flag_ = local_flag;
-      assert(file_idx >= 0 && file_idx <= UINT_MAX);
+      assert(file_idx >= 0 && file_idx <= INT_MAX);
       file_idx_ = (unsigned) file_idx;
-      assert(lineno >= 0 && lineno <= UINT_MAX);
+      assert(lineno >= 0 && lineno <= INT_MAX);
       lineno_ = (unsigned) lineno;
 }
 
@@ -496,9 +496,9 @@ inline __vpiBinaryParam::__vpiBinaryParam(__vpiScope*scope, const vvp_vector4_t&
       sized_flag = 0;
       basename_ = nam;
       local_flag_ = local_flag;
-      assert(file_idx >= 0 && file_idx <= UINT_MAX);
+      assert(file_idx >= 0 && file_idx <= INT_MAX);
       file_idx_ = (unsigned) file_idx;
-      assert(lineno >= 0 && lineno <= UINT_MAX);
+      assert(lineno >= 0 && lineno <= INT_MAX);
       lineno_ = (unsigned) lineno;
 }
 
@@ -727,9 +727,9 @@ inline __vpiRealParam::__vpiRealParam(__vpiScope* scope, double val, const char*
       scope_ = scope;
       basename_ = name;
       local_flag_ = local_flag;
-      assert(file_idx >= 0 && file_idx <= UINT_MAX);
+      assert(file_idx >= 0 && file_idx <= INT_MAX);
       file_idx_ = (unsigned) file_idx;
-      assert(lineno >= 0 && lineno <= UINT_MAX);
+      assert(lineno >= 0 && lineno <= INT_MAX);
       lineno_ = (unsigned) lineno;
 }
 
