@@ -660,7 +660,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  const char *instname;
 		  char *defname = NULL;
 		  /* list of types to iterate upon */
-		  const static int types[] = {
+		  static const int types[] = {
 			/* Value */
 			vpiNamedEvent,
 			vpiNet,
