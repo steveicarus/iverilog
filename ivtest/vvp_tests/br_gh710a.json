@@ -3,5 +3,9 @@
     "source" : "br_gh710.v",
     "gold"   : "br_gh710a",
     "iverilog-args" : [ "-g2009" ],
-    "vvp-args-extended" : [ "-vcd" ]
+    "vvp-args-extended" : [ "-vcd" ],
+    "vlog95" : {
+        "__comment" : "packages are translated to modules that can be dumped",
+        "gold"   : "br_gh710a-vlog95"
+    }
 }

@@ -1,0 +1,12 @@
+SDF INFO: Loading ivltests/sdf_header.sdf from work/vlog95.v:11
+SDF INFO: ivltests/sdf_header.sdf:2: Version: 3.0
+SDF INFO: ivltests/sdf_header.sdf:3: Design: test
+SDF INFO: ivltests/sdf_header.sdf:4: Date: Wed Mar 8 12:34:56 2023
+SDF INFO: ivltests/sdf_header.sdf:5: Vendor: No Vendor
+SDF INFO: ivltests/sdf_header.sdf:6: Program: Human
+SDF INFO: ivltests/sdf_header.sdf:7: Program Version: 1.0.0
+SDF INFO: ivltests/sdf_header.sdf:8: Divider: "/"
+SDF INFO: ivltests/sdf_header.sdf:9: Voltage: 5.000000
+SDF INFO: ivltests/sdf_header.sdf:10: Process: best=0.65:nom=1.0:worst=1.8
+SDF INFO: ivltests/sdf_header.sdf:11: Temperature: 25.000000
+SDF INFO: ivltests/sdf_header.sdf:12: Timescale: 1ps

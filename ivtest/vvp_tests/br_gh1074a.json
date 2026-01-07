@@ -1,5 +1,9 @@
 {
     "type"   : "normal",
     "source" : "br_gh1074a.v",
-    "iverilog-args" : [ "-g2009" ]
+    "iverilog-args" : [ "-g2009" ],
+    "vlog95" : {
+        "__comment" : "two-state variables are not supported",
+        "type"      : "EF"
+    }
 }

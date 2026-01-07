@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2021 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2026 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -68,6 +68,7 @@ static int32_t get_int32_from_bits(const char *bits, unsigned nbits,
 	    value |= ~(((uint32_t)1 << trim_wid) - (uint32_t)1);
       }
       *result_type = 0;
+      if ((msb == 'x') || (msb == 'z')) *result_type = -1;
       return value;
 }
 
@@ -136,7 +137,17 @@ void emit_number(const char *bits, unsigned nbits, unsigned is_signed,
 	    int rtype;
 	    int32_t value = get_int32_from_bits(bits, nbits, 1, &rtype);
 	    if (rtype != 0) emit_bits(bits, nbits, is_signed);
-	    else fprintf(vlog_out, "%"PRId32, value);
+	    else {
+		    /* Limit the size of the decimal value if needed. */
+		  if (nbits < 32U) {
+			if (value < 0) {
+			      value *= -1;
+			      fprintf(vlog_out, "-");
+			}
+			fprintf(vlog_out, "%u'sd", nbits);
+		  }
+		  fprintf(vlog_out, "%"PRId32, value);
+	    }
 	/* Otherwise a signed value can only be 32 bits long since it can
 	 * only be represented as an integer. We can trim any matching MSB
 	 * bits to make it fit. We cannot support individual undefined

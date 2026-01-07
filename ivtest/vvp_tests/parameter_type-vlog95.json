@@ -1,8 +1,0 @@
-{
-    "type"   : "normal-vlog95",
-    "source" : "parameter_type.v",
-    "gold"   : "parameter_type-vlog95",
-    "strict" : {
-        "gold"   : "parameter_type-vlog95_std"
-    }
-}

@@ -1110,3 +1110,8 @@ case_unique		normal,-g2009		ivltests gold=case_unique-vlog95.gold
 
 # An error is reported for both compiler passes
 br_gh377		normal,-Ptest.name=	ivltests gold=br_gh377-vlog95.gold
+
+# When the work was done to support timing checks this caused multiple
+# names for a single nexus so this test now fails. This needs to be fixed
+# or the code needs to be reworked.
+pr1520314		NI

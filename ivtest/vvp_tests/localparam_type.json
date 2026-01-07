@@ -4,5 +4,8 @@
     "gold"   : "parameter_type",
     "strict" : {
         "gold"   : "parameter_type_std"
+    },
+    "vlog95" : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
     }
 }

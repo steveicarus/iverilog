@@ -3,5 +3,8 @@
     "source" : "sdf_header.v",
     "gold"   : "sdf_header",
     "iverilog-args" : [ "-gspecify" ],
-    "vvp-args-extended" : [ "-sdf-verbose" ]
+    "vvp-args-extended" : [ "-sdf-verbose" ],
+    "vlog95" : {
+        "gold"   : "sdf_header-vlog95"
+    }
 }

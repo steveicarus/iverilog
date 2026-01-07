@@ -1,5 +1,9 @@
 {
     "type"          : "normal",
     "source"        : "sv_2state_array_init_prop.v",
-    "iverilog-args" : [ "-g2005-sv" ]
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "two-state variables are not supported",
+        "type"      : "EF"
+    }
 }

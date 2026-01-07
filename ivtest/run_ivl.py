@@ -116,8 +116,8 @@ def compare_files(log_path, gold_path):
 
     if a != b:
         # pylint: disable-next=consider-using-f-string
-        print("{log} and {gold} differ:".format(log=log_path, gold=gold_path))
-        sys.stdout.writelines(difflib.unified_diff(a, b, log_path, gold_path))
+        print("{gold} and {log} differ:".format(gold=gold_path,log=log_path))
+        sys.stdout.writelines(difflib.unified_diff(b, a, gold_path, log_path))
         return False
 
     return True
@@ -243,9 +243,7 @@ def do_run_normal(options: dict, cfg: dict, expected_fail: bool,
 
     # Run the vlog95 translation if needed.
     if cfg['vlog95']:
-        options['iverilog_args'].append("-tvlog95")
-        options['iverilog_args'].append("-pfileline=1")
-        options['iverilog_args'].append("-pspacing=4")
+        options['iverilog_args'].extend(["-tvlog95", "-pfileline=1", "-pspacing=4"])
         ivl_tcmd = assemble_iverilog_cmd(options, cfg, 'vlog95.v')
         ivl_tres = run_cmd(ivl_tcmd)
 
@@ -253,10 +251,13 @@ def do_run_normal(options: dict, cfg: dict, expected_fail: bool,
         if ivl_tres.returncode != 0:
             return [1, "Failed - vlog95 translation failed."]
 
+        enable_specify = "-gspecify" in options['iverilog_args']
         if "-pallowsigned=1" in options['iverilog_args']:
             options['iverilog_args'] = [ "-g2001-noconfig" ]
         else:
             options['iverilog_args'] = [ "-g1995" ]
+        if enable_specify:
+            options['iverilog_args'].append("-gspecify")
         options['source'] = os.path.join("work", "vlog95.v")
 
     # Run the iverilog command
