@@ -1,5 +1,9 @@
 {
     "type"   : "normal",
     "source" : "br_gh1143d.v",
-    "iverilog-args" : [ "-g2012" ]
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "__comment" : "No way to add the missing init, cond, incr to the for loop",
+        "type"      : "CE"
+    }
 }

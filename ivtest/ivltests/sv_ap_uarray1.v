@@ -3,12 +3,11 @@
 
 module test;
 
-  bit failed;
-
+  bit passed;
   `define check(val, exp) do \
     if (val !== exp) begin \
       $display("FAILED(%0d). '%s' expected %0d, got %0d", `__LINE__, `"val`", exp, val); \
-      failed = 1'b1; \
+      passed = 1'b0; \
     end \
   while(0)
 
@@ -17,6 +16,7 @@ module test;
   int z[4];
 
   initial begin
+    passed = 1'b1;
     x = '{1'b1, 1 + 1, 3.3, "TEST"};
     y = '{1'b1, 1 + 1, 3.3, "TEST"};
     z = '{1'b1, 1 + 1, 3.3, "TEST"};
@@ -36,7 +36,7 @@ module test;
     `check(z[2], 3);
     `check(z[3], 1413829460);
 
-    if (!failed) begin
+    if (passed) begin
       $display("PASSED");
     end
   end

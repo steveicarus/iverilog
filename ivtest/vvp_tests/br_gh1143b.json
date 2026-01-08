@@ -1,5 +1,9 @@
 {
     "type"   : "normal",
     "source" : "br_gh1143b.v",
-    "iverilog-args" : [ "-g2012" ]
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "__comment" : "No way to add the condition to the for loop",
+        "type"      : "CE"
+    }
 }

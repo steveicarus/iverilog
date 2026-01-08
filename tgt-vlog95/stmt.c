@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2022 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2026 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -408,22 +408,75 @@ static unsigned is_delayed_or_event_assign(ivl_scope_t scope,
 }
 
 /*
+ * Unroll an array pattern to the individual assignments.
+ */
+static void emit_array_pattern(ivl_scope_t scope, ivl_lval_t lval,
+                               ivl_signal_t var, ivl_expr_t rval,
+                               unsigned array_idx)
+{
+      (void)array_idx;
+      for (unsigned idx = 0; idx < ivl_expr_parms(rval); idx += 1) {
+	    ivl_expr_t expr = ivl_expr_parm(rval, idx);
+	    unsigned wid;
+	    int lsb;
+	    if (ivl_expr_type(expr) == IVL_EX_ARRAY_PATTERN) {
+		  fprintf(stderr, "%s:%u: vlog95 error: nested array patterns "
+		                  "are not currently supported!\n",
+		                  ivl_expr_file(rval), ivl_expr_lineno(rval));
+		  vlog_errors += 1;
+		  return;
+	    }
+	    fprintf(vlog_out, "%*c", get_indent(), ' ');
+	    emit_stmt_lval_name(scope, lval, var);
+	    assert(ivl_signal_dimensions(var));
+	      /* For an array the LSB/MSB order is not important.
+	       * They are always accessed from base counting up. */
+	    lsb = ivl_signal_array_base(var);
+	    fprintf(vlog_out, "[%d] = ", lsb+idx);
+	    wid = ivl_lval_width(lval);
+	    emit_expr(scope, expr, wid, 1, 0, 0);
+	    fprintf(vlog_out, ";\n");
+      }
+}
+
+/*
  * A common routine to emit the basic assignment construct. It can also
  * translate an assignment with an opcode when allowed.
  */
-static void emit_assign_and_opt_opcode(ivl_scope_t scope, ivl_statement_t stmt,
-                                       unsigned allow_opcode)
+static unsigned emit_assign_and_opt_opcode(ivl_scope_t scope, ivl_statement_t stmt,
+                                           unsigned allow_opcode)
 {
       unsigned wid;
       char opcode;
       const char *opcode_str;
+      ivl_expr_t rval;
 
       assert (ivl_statement_type(stmt) == IVL_ST_ASSIGN);
+      rval = ivl_stmt_rval(stmt);
+      opcode = ivl_stmt_opcode(stmt);
+       /* Check for an array assignment pattern and wrap it in a begin/end. */
+      if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
+	    ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
+	    ivl_signal_t sig = ivl_lval_sig(lval);
+	    assert(opcode == 0);
+	    assert(ivl_stmt_lvals(stmt) == 1);
+	    fprintf(vlog_out, "begin");
+	    if (emit_file_line) {
+		  fprintf(vlog_out, " /* %s:%u */",
+		                    ivl_stmt_file(stmt),
+		                    ivl_stmt_lineno(stmt));
+	    }
+	    fprintf(vlog_out, "\n");
+	    indent += indent_incr;
+	    emit_array_pattern(scope, lval, sig, rval, 0);
+	    indent -= indent_incr;
+	    fprintf(vlog_out, "%*cend", get_indent(), ' ');
+	    return 0;
+      }
 // HERE: Do we need to calculate the width? The compiler should have already
 //       done this for us.
       wid = emit_stmt_lval(scope, stmt);
 	/* Get the opcode and the string version of the opcode. */
-      opcode = ivl_stmt_opcode(stmt);
       switch (opcode) {
 	case  0:  opcode_str = ""; break;
 	case '+': opcode_str = "+"; break;
@@ -467,7 +520,8 @@ static void emit_assign_and_opt_opcode(ivl_scope_t scope, ivl_statement_t stmt,
 		  vlog_errors += 1;
 	    }
       }
-      emit_expr(scope, ivl_stmt_rval(stmt), wid, 1, 0, 0);
+      emit_expr(scope, rval, wid, 1, 0, 0);
+      return 1;
 }
 
 /*
@@ -847,10 +901,11 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 
 static void emit_stmt_assign(ivl_scope_t scope, ivl_statement_t stmt)
 {
+      unsigned emit_semi;
       fprintf(vlog_out, "%*c", get_indent(), ' ');
 	/* Emit the basic assignment (an opcode is allowed).*/
-      emit_assign_and_opt_opcode(scope, stmt, 1);
-      fprintf(vlog_out, ";");
+      emit_semi = emit_assign_and_opt_opcode(scope, stmt, 1);
+      if (emit_semi) fprintf(vlog_out, ";");
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
 }
@@ -1313,19 +1368,39 @@ static void emit_stmt_fork_named(ivl_scope_t scope, ivl_statement_t stmt)
 static void emit_stmt_forloop(ivl_scope_t scope, ivl_statement_t stmt)
 {
       ivl_statement_t use_init = ivl_stmt_init_stmt(stmt);
+      ivl_expr_t      use_cond = ivl_stmt_cond_expr(stmt);
       ivl_statement_t use_step = ivl_stmt_step_stmt(stmt);
       ivl_statement_t use_stmt = ivl_stmt_sub_stmt(stmt);
 
       fprintf(vlog_out, "%*cfor (", get_indent(), ' ');
       /* Assume that the init statement is an assignment. */
       if (use_init)
-	    emit_assign_and_opt_opcode(scope, use_init, 0);
+	    (void)emit_assign_and_opt_opcode(scope, use_init, 0);
+      else {
+	    fprintf(vlog_out, "<add init>");
+	    fprintf(stderr, "%s:%u: vlog95 warning: Missing for() "
+	                    "initialization will need to be added manually.\n",
+	                    ivl_stmt_file(stmt), ivl_stmt_lineno(stmt));
+      }
       fprintf(vlog_out, "; ");
-      emit_expr(scope, ivl_stmt_cond_expr(stmt), 0, 0, 0, 0);
+      if (use_cond)
+	    emit_expr(scope, use_cond, 0, 0, 0, 0);
+      else {
+	    fprintf(vlog_out, "<add cond>");
+	    fprintf(stderr, "%s:%u: vlog95 warning: Missing for() "
+	                    "condition will need to be added manually.\n",
+	                    ivl_stmt_file(stmt), ivl_stmt_lineno(stmt));
+      }
       fprintf(vlog_out, "; ");
       /* Assume that the step statement is an assignment. */
       if (use_step)
-	    emit_assign_and_opt_opcode(scope, use_step, 1);
+	    (void)emit_assign_and_opt_opcode(scope, use_step, 1);
+      else {
+	    fprintf(vlog_out, "<add step>");
+	    fprintf(stderr, "%s:%u: vlog95 warning: Missing for() "
+	                    "increment will need to be added manually.\n",
+	                    ivl_stmt_file(stmt), ivl_stmt_lineno(stmt));
+      }
       fprintf(vlog_out, ")");
       single_indent = 1;
       emit_stmt(scope, use_stmt);
@@ -1501,6 +1576,7 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 	    }
 	    break;
 	case IVL_ST_BREAK:
+	    fprintf(vlog_out, "%*c<break>;\n", get_indent(), ' ');
 	    fprintf(stderr, "%s:%u: vlog95 sorry: 'break' is not "
 	                    "currently translated.\n",
 	                    ivl_stmt_file(stmt),
@@ -1520,6 +1596,7 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 	    emit_stmt_condit(scope, stmt);
 	    break;
 	case IVL_ST_CONTINUE:
+	    fprintf(vlog_out, "%*c<continue>;\n", get_indent(), ' ');
 	    fprintf(stderr, "%s:%u: vlog95 sorry: 'continue' is not "
 	                    "currently translated.\n",
 	                    ivl_stmt_file(stmt),
