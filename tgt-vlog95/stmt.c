@@ -428,7 +428,6 @@ static void emit_array_pattern(ivl_scope_t scope, ivl_lval_t lval,
 	    }
 	    fprintf(vlog_out, "%*c", get_indent(), ' ');
 	    emit_stmt_lval_name(scope, lval, var);
-	    assert(ivl_signal_dimensions(var));
 	      /* For an array the LSB/MSB order is not important.
 	       * They are always accessed from base counting up. */
 	    lsb = ivl_signal_array_base(var);
