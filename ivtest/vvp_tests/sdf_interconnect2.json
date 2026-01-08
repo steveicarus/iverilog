@@ -2,5 +2,8 @@
     "type"          : "normal",
     "source"        : "sdf_interconnect2.v",
     "iverilog-args" : [ "-Ttyp", "-ginterconnect", "-gspecify" ],
-    "gold"   : "sdf_interconnect2"
+    "gold"   : "sdf_interconnect2",
+    "vlog95" : {
+        "gold"   : "sdf_interconnect2-vlog95"
+    }
 }

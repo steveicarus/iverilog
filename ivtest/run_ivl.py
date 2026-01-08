@@ -230,6 +230,41 @@ def check_run_outputs(options: dict, it_stdout: str, log_list: list,
     return [1, "Failed - No PASSED output, and no gold file."]
 
 
+def options_to_pass(options: dict) -> list:
+    '''Options to pass to the translated compile stage.'''
+    rtn = []
+    if "-gspecify" in options['iverilog_args']:
+        rtn.append("-gspecify")
+    if "-ginterconnect" in options['iverilog_args']:
+        rtn.append("-ginterconnect")
+    if "-Tmin" in options['iverilog_args']:
+        rtn.append("-Tmin")
+    if "-Ttyp" in options['iverilog_args']:
+        rtn.append("-Ttyp")
+    if "-Tmax" in options['iverilog_args']:
+        rtn.append("-Tmax")
+    return rtn
+
+def build_ivl_return(translation_fail: bool, res: subprocess.CompletedProcess) -> list:
+    '''Generate the return for the iverilog run.'''
+    if translation_fail:
+        if res.returncode != 0:
+            return [0, "Passed - TE."]
+        return [1, "Failed - TE did not fail."]
+    if res.returncode != 0:
+        return [1, "Failed - Compile failed."]
+    return[]
+
+def build_vvp_return(expected_fail: bool, res: subprocess.CompletedProcess) -> list:
+    '''Generate the return for the vvp run.'''
+    if res.returncode != 0 and expected_fail:
+        return [0, "Passed - EF."]
+    if res.returncode >= 256:
+        return [1, "Failed - vvp execution error"]
+    if res.returncode > 0 and res.returncode < 256 and not expected_fail:
+        return [1, "Failed - vvp error, but expected to succeed"]
+    return []
+
 def do_run_normal(options: dict, cfg: dict, expected_fail: bool,
                   translation_fail: bool) -> list:
     '''Run the iverilog and vvp commands.
@@ -251,13 +286,12 @@ def do_run_normal(options: dict, cfg: dict, expected_fail: bool,
         if ivl_tres.returncode != 0:
             return [1, "Failed - vlog95 translation failed."]
 
-        enable_specify = "-gspecify" in options['iverilog_args']
+        saved_options = options_to_pass(options)
         if "-pallowsigned=1" in options['iverilog_args']:
             options['iverilog_args'] = [ "-g2001-noconfig" ]
         else:
             options['iverilog_args'] = [ "-g1995" ]
-        if enable_specify:
-            options['iverilog_args'].append("-gspecify")
+        options['iverilog_args'].extend(saved_options)
         options['source'] = os.path.join("work", "vlog95.v")
 
     # Run the iverilog command
@@ -269,33 +303,25 @@ def do_run_normal(options: dict, cfg: dict, expected_fail: bool,
     else:
         log_results(it_key, "iverilog", ivl_res)
 
-    if translation_fail:
-        if ivl_res.returncode != 0:
-            return [0, "Passed - TE."]
-        else:
-            return [1, "Failed - TE did not fail."]
-    elif ivl_res.returncode != 0:
-        return [1, "Failed - Compile failed."]
+    ivl_rtn = build_ivl_return(translation_fail, ivl_res)
+    if ivl_rtn:
+        return ivl_rtn
 
     # run the vvp command
     vvp_cmd = assemble_vvp_cmd(options, cfg)
     vvp_res = run_cmd(vvp_cmd)
     log_results(it_key, "vvp", vvp_res)
 
-    if vvp_res.returncode != 0 and expected_fail:
-        return [0, "Passed - EF."]
-    if vvp_res.returncode >= 256:
-        return [1, "Failed - vvp execution error"]
-    if vvp_res.returncode > 0 and vvp_res.returncode < 256 and not expected_fail:
-        return [1, "Failed - vvp error, but expected to succeed"]
+    vvp_rtn = build_vvp_return(expected_fail, vvp_res)
+    if vvp_rtn:
+        return vvp_rtn
 
-    it_stdout = vvp_res.stdout.decode('ascii')
     log_list = ["iverilog-stdout", "iverilog-stderr",
                 "vvp-stdout", "vvp-stderr"]
     if cfg['vlog95']:
         log_list[2:2] = ["iverilog-vlog95-stdout", "iverilog-vlog95-stderr"]
 
-    return check_run_outputs(options, it_stdout, log_list, expected_fail)
+    return check_run_outputs(options, vvp_res.stdout.decode('ascii'), log_list, expected_fail)
 
 def run_normal(options: dict, cfg: dict) -> list:
     '''Run a normal test'''
