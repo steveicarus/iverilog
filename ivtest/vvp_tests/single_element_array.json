@@ -1,4 +1,8 @@
 {
     "type"   : "normal",
-    "source" : "single_element_array.v"
+    "source" : "single_element_array.v",
+    "vlog95" : {
+        "__comment" : "No support for net arrays.",
+	"type"      : "CE"
+    }
 }

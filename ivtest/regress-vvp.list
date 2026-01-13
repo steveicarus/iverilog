@@ -121,7 +121,6 @@ fmonitor2			vvp_tests/fmonitor2.json
 fread-error			vvp_tests/fread-error.json
 line_directive			vvp_tests/line_directive.json
 localparam_type			vvp_tests/localparam_type.json
-#localparam_type-vlog95		vvp_tests/localparam_type-vlog95.json
 macro_str_esc			vvp_tests/macro_str_esc.json
 memsynth1			vvp_tests/memsynth1.json
 memsynth2			vvp_tests/memsynth2.json
@@ -163,7 +162,6 @@ partsel_reversed_idx6		vvp_tests/partsel_reversed_idx6.json
 param_test3			vvp_tests/param_test3.json
 param-width			vvp_tests/param-width.json
 parameter_type			vvp_tests/parameter_type.json
-#parameter_type-vlog95		vvp_tests/parameter_type-vlog95.json
 pr1388974			vvp_tests/pr1388974.json
 pr1701890			vvp_tests/pr1701890.json
 pr1864110a			vvp_tests/pr1864110a.json
@@ -262,7 +260,7 @@ sv_module_port1			vvp_tests/sv_module_port1.json
 sv_module_port2			vvp_tests/sv_module_port2.json
 sv_module_port3			vvp_tests/sv_module_port3.json
 sv_module_port4			vvp_tests/sv_module_port4.json
-#sv_parameter_type		vvp_tests/sv_parameter_type.json
+sv_parameter_type		vvp_tests/sv_parameter_type.json
 sv_queue_assign_op		vvp_tests/sv_queue_assign_op.json
 sv_wildcard_import8		vvp_tests/sv_wildcard_import8.json
 sdf_header			vvp_tests/sdf_header.json

@@ -3,6 +3,8 @@
     "source"        : "sv_ap_uarray2.v",
     "iverilog-args" : [ "-g2005-sv" ],
     "vlog95" : {
+        "__comment"     : "No support for emitting nested array patterns.",
+        "type"          : "CE",
         "iverilog-args" : [ "-pallowsigned=1" ]
     }
 }
