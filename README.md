@@ -1,6 +1,6 @@
 # The ICARUS Verilog Compilation System
 
-Copyright 2000-2025 Stephen Williams
+Copyright 2000-2026 Stephen Williams
 
 <details>
 <summary><h2>Table of Contents</h2></summary>
@@ -400,9 +400,6 @@ constructs.
   - Net delays, of the form `wire #N foo;` do not work. Delays in
     every other context do work properly, including the V2001 form
     `wire #5 foo = bar;`
-
-  - Event controls inside non-blocking assignments are not supported.
-    i.e.: `a <= @(posedge clk) b;`
 
 The list of unsupported SystemVerilog constructs is too large to
 enumerate here.

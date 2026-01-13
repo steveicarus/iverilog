@@ -1,4 +1,4 @@
-.TH vvp 1 "Oct 12th, 2025" "" "Version %M.%n %E"
+.TH vvp 1 "Jan 13th, 2026" "" "Version %M.%n %E"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -202,7 +202,7 @@ iverilog\-vpi(1),
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2001\-2024 Stephen Williams
+Copyright \(co  2001\-2026 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0
