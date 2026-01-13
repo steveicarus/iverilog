@@ -5,7 +5,7 @@ nullPointerOutOfMemory:logic_lpm.c:2247  // strdup @ 2244
 nullPointerOutOfMemory:misc.c:39         // malloc @   38
 nullPointerOutOfMemory:misc.c:794        // malloc @  793
 nullPointerOutOfMemory:misc.c:795        // malloc @  793
-nullPointerOutOfMemory:numbers.c:351     // strdup @  348
+nullPointerOutOfMemory:numbers.c:362     // strdup @  348
 nullPointerOutOfMemory:scope.c:301       // malloc @  300
 nullPointerOutOfMemory:scope.c:302       // malloc @  300
 nullPointerOutOfMemory:scope.c:303       // malloc @  300
@@ -16,8 +16,8 @@ nullPointerOutOfMemory:scope.c:993       // malloc @  990
 nullPointerOutOfMemory:scope.c:994       // malloc @  990
 nullPointerOutOfMemory:scope.c:995       // malloc @  990
 nullPointerOutOfMemory:scope.c:996       // malloc @  990
-nullPointerOutOfMemory:stmt.c:777        // malloc @  775
-nullPointerOutOfMemory:stmt.c:778        // malloc @  775
+nullPointerOutOfMemory:stmt.c:830        // malloc @  775
+nullPointerOutOfMemory:stmt.c:831        // malloc @  775
 memleakOnRealloc:scope.c:175
 memleakOnRealloc:scope.c:1021
 memleakOnRealloc:scope.c:1067

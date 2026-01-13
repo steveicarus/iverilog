@@ -1,7 +1,7 @@
 #ifndef IVL_t_dll_H
 #define IVL_t_dll_H
 /*
- * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -84,7 +84,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool concat(const NetConcat*) override;
       bool part_select(const NetPartSelect*) override;
       bool replicate(const NetReplicate*) override;
-      void net_assign(const NetAssign_*) const;
+      static void net_assign(const NetAssign_*);
       bool net_sysfunction(const NetSysFunc*) override;
       bool net_function(const NetUserFunc*) override;
       bool net_const(const NetConst*) override;

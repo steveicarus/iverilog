@@ -373,7 +373,7 @@ struct string_type_t : public data_type_t {
 
 struct class_type_t : public data_type_t {
 
-      inline explicit class_type_t(perm_string n) : name(n) { }
+      inline explicit class_type_t(perm_string n) : name(n) { virtual_class = false; }
 
       void pform_dump(std::ostream&out, unsigned indent) const override;
       void pform_dump_init(std::ostream&out, unsigned indent) const;

@@ -813,7 +813,7 @@ class NetNet  : public NetObj, public PortType {
       unsigned delay_paths(void) const;
       const class NetDelaySrc*delay_path(unsigned idx) const;
 
-      virtual void dump_net(std::ostream&, unsigned) const;
+      void dump_net(std::ostream&, unsigned) const;
 
     private:
       void initialize_dir_();

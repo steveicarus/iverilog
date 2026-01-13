@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,7 +37,7 @@ char* substitutions(const char*str)
 		       it in the destination with the contents of the
 		       environment variable x. */
 		  char*name;
-		  char*value;
+		  const char*value;
 		  const char*ep = strchr(str, (str[1]=='(') ? ')' : '}');
 		  str += 2;
 

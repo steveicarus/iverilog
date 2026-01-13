@@ -145,6 +145,7 @@ bool PECastSize::has_aa_term(Design *des, NetScope *scope) const
 PECastType::PECastType(data_type_t*t, PExpr*b)
 : target_(t), base_(b)
 {
+      target_type_ = nullptr;
 }
 
 PECastType::~PECastType()

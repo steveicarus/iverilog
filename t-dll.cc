@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2365,7 +2365,7 @@ bool dll_target::replicate(const NetReplicate*net)
  * The assignment l-values are captured by the assignment statements
  * themselves in the process handling.
  */
-void dll_target::net_assign(const NetAssign_*) const
+void dll_target::net_assign(const NetAssign_*)
 {
 }
 

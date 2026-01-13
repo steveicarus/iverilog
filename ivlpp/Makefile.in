@@ -63,7 +63,8 @@ cppcheck: $(O:.o=.c)
 	cppcheck --enable=all --std=c99 --std=c++11 -f \
 	         --check-level=exhaustive \
 	         --suppressions-list=$(srcdir)/../cppcheck-global.sup \
-	         $(INCLUDE_PATH) $^
+	         --suppressions-list=$(srcdir)/cppcheck.sup \
+	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
 	cd ..; ./config.status --file=ivlpp/$@

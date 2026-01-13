@@ -1,7 +1,7 @@
 #ifndef IVL_PGate_H
 #define IVL_PGate_H
 /*
- * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -214,8 +214,6 @@ class PGModule  : public PGate {
 	// of named expressions.
       void set_parameters(std::list<PExpr*>*o);
       void set_parameters(named_pexpr_t *pa, unsigned npa);
-
-      std::map<perm_string,PExpr*> attributes;
 
       virtual void dump(std::ostream&out, unsigned ind =4) const override;
       virtual void elaborate(Design*, NetScope*scope) const override;

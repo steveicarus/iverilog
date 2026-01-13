@@ -69,11 +69,12 @@ distclean: clean
 
 cppcheck: $(O:.o=.c)
 	cppcheck --enable=all --std=c99 --std=c++11 -f \
-	         -UYY_USER_INIT \
-	         -UYYPARSE_PARAM -UYYPRINT -Ushort -Uyyoverflow \
-	         -UYYTYPE_INT8 -UYYTYPE_INT16 -UYYTYPE_UINT8 -UYYTYPE_UINT16 \
-	         -UYYSTYPE -U__SIZE_TYPE__ -Umalloc -Usize_t -Ufree \
-	         $(INCLUDE_PATH) $^
+	         --check-level=exhaustive \
+	         --suppressions-list=$(srcdir)/../cppcheck-global.sup \
+	         --suppressions-list=$(srcdir)/cppcheck.sup \
+	         -Ushort -Usize_t -Uyyoverflow \
+	         -U__SIZE_TYPE__ -Umalloc -Ufree \
+	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
 	cd ..; ./config.status --file=driver/$@

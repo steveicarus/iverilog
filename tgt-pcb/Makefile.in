@@ -68,7 +68,7 @@ cppcheck: $(O:.o=.cc)
 	         -UYY_USER_INIT \
 	         -UYYPARSE_PARAM -UYYPRINT -Ushort -Usize_t -Uyyoverflow \
 	         -UYYTYPE_INT8 -UYYTYPE_INT16 -UYYTYPE_UINT8 -UYYTYPE_UINT16 \
-	         -UYYSTYPE -U__SIZE_TYPE__ -Ufree \
+	         -UYYSTYPE -U__SIZE_TYPE__ -Ufree -Umalloc \
 	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status

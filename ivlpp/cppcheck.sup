@@ -1,0 +1,16 @@
+// Skip the sscanf() field width limit warning
+invalidscanf:lexor.lex:1495
+
+// Skip all memory issues since they should be handled by ivl_alloc.h
+memleakOnRealloc
+nullPointerArithmeticOutOfMemory
+nullPointerOutOfMemory
+
+// Errors/limitations in the generated yacc and lex files
+ctunullpointerOutOfMemory:lexor.lex
+memleakOnRealloc:lexor.lex
+nullPointerOutOfMemory:lexor.lex
+constVariablePointer:<stdout>
+nullPointer:<stdout>
+staticFunction:<stdout>
+unusedFunction:<stdout>

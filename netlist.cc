@@ -319,6 +319,8 @@ NetDelaySrc::NetDelaySrc(NetScope*s, perm_string n, unsigned npins,
       for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
       }
+      for (unsigned dly = 0 ;  dly < 12 ;  dly += 1)
+	    transition_delays_[dly] = static_cast<uint64_t>(0);
 
       if (condit_src) {
 	    condit_flag_ = true;
@@ -996,6 +998,8 @@ NetProcTop::NetProcTop(NetScope*s, ivl_process_type_t t, NetProc*st)
 : type_(t), statement_(st), scope_(s)
 {
       synthesized_design_ = 0;
+      next_ = nullptr;
+
 }
 
 NetProcTop::~NetProcTop()

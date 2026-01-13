@@ -431,7 +431,7 @@ static void emit_array_pattern(ivl_scope_t scope, ivl_lval_t lval,
 	      /* For an array the LSB/MSB order is not important.
 	       * They are always accessed from base counting up. */
 	    lsb = ivl_signal_array_base(var);
-	    fprintf(vlog_out, "[%d] = ", lsb+idx);
+	    fprintf(vlog_out, "[%u] = ", lsb+idx);
 	    wid = ivl_lval_width(lval);
 	    emit_expr(scope, expr, wid, 1, 0, 0);
 	    fprintf(vlog_out, ";\n");

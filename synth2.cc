@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1639,7 +1639,8 @@ bool NetProcTop::synth_async(Design*des)
 		  connect(nex_set[idx].lnk, latch->pin_Q());
 		  connect(tmp->pin(0), latch->pin_Data());
 
-		  assert (enables.pin(idx).is_linked());
+		  bool is_linked_tmp = enables.pin(idx).is_linked();
+		  assert (is_linked_tmp);
 		  connect(enables.pin(idx), latch->pin_Enable());
 	    }
       }

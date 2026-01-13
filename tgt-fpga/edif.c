@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -431,7 +431,7 @@ void edif_print(FILE*fd, edif_t edf)
       edif_cell_t cell;
       edif_cellref_t ref;
       edif_joint_t jnt;
-      struct cellref_property_*prp;
+      const struct cellref_property_*prp;
       unsigned idx;
 
       fprintf(fd, "(edif %s\n", edf->name);
@@ -460,7 +460,7 @@ void edif_print(FILE*fd, edif_t edf)
 			      "              (interface");
 
 		  for (idx = 0 ;  idx < cell->nports ;  idx += 1) {
-			struct __cell_port*pp = cell->ports + idx;
+			const struct __cell_port*pp = cell->ports + idx;
 			fprintf(fd, "\n                (port %s", pp->name);
 			switch (pp->dir) {
 			    case IVL_SIP_INPUT:
@@ -559,7 +559,7 @@ void edif_print(FILE*fd, edif_t edf)
 	/* Display all the joints. */
       idx = 0;
       for (jnt = edf->nexa ;  jnt ;  jnt = jnt->next, idx += 1) {
-	    struct joint_cell_*jc;
+	    const struct joint_cell_*jc;
 
 	    fprintf(fd, "(net ");
 	    if (jnt->name != 0)

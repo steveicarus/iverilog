@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -61,8 +61,7 @@ int fit_registers(ivl_scope_t scope, void*x)
 
 	    for (q = 0 ;  q < wid ;  q += 1) {
 		  rc = scan_ff_q(lpm, q);
-		  if (rc != 0)
-			return rc;
+		  assert(rc == 0);
 	    }
       }
 

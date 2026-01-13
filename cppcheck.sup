@@ -11,6 +11,22 @@ constVariablePointer:main.cc:400
 constVariablePointer:main.cc:404
 constVariablePointer:main.cc:654
 
+// const auto should be const
+constVariablePointer:elab_expr.cc:344
+constVariablePointer:elab_expr.cc:413
+
+// The reference cannot be const since it is updated in the calling function.
+constParameterReference:net_udp.cc:37
+
+// These cannot be static since they access object data
+functionStatic:net_link.cc:178
+functionStatic:net_link.cc:183
+functionStatic:net_link.cc:188
+functionStatic:net_link.cc:193
+
+// This cannot be static when checking with valgrind
+functionStatic:libmisc/StringHeap.cc
+
 // Skip not initialized in the constructor for target scope
 uninitMemberVar:t-dll.cc
 
@@ -30,6 +46,26 @@ duplicateCondition:elaborate.cc:7672
 
 // To complicated to use std::find_if()
 useStlAlgorithm:map_named_args.cc:38
+
+// The condition is always true at least once based on the previous assertion
+derefInvalidIterator:netmisc.cc:420
+
+// We only use a StringHeap or a StringHepLex
+duplInheritedMember:libmisc/StringHeap.h:99
+duplInheritedMember:libmisc/StringHeap.h:100
+duplInheritedMember:libmisc/StringHeap.cc:160
+duplInheritedMember:libmisc/StringHeap.cc:182
+
+// cppcheck is wrong this is correct usage
+redundantAssignment:syn-rules.y:230
+redundantAssignment:syn-rules.y:234
+redundantAssignment:syn-rules.y:243
+redundantAssignment:syn-rules.y:271
+redundantAssignment:syn-rules.y:274
+redundantAssignment:syn-rules.y:294
+
+// Cannot define a constructor sine this is in the parser union
+noConstructor:property_qual.h:22
 
 // This are just stubs
 // vpi_control()
@@ -688,13 +724,13 @@ unusedFunction:netlist.cc:111
 // find_link()
 unusedFunction:netlist.cc:297
 // set_module_port_index()
-unusedFunction:netlist.cc:649
+unusedFunction:netlist.cc:651
 // width_a()
-unusedFunction:netlist.cc:1674
+unusedFunction:netlist.cc:1678
 // width_b()
-unusedFunction:netlist.cc:1679
+unusedFunction:netlist.cc:1683
 // result_sig()
-unusedFunction:netlist.cc:2180
+unusedFunction:netlist.cc:2184
 // test_protected()
 unusedFunction:property_qual.h:50
 // test_rand()
@@ -708,7 +744,7 @@ unusedFunction:t-dll-expr.cc:91
 // net_assign()
 unusedFunction:t-dll.cc:2368
 // is_before()
-unusedFunction:verinum.cc:589
+unusedFunction:verinum.cc:588
 
 // Errors/limitations in the generated yacc and lex files
 constVariablePointer:<stdout>

@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-  "Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)";
+  "Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -887,7 +887,8 @@ static void add_env_vpi_module_path(const char*path)
 static void get_env_vpi_module_paths(void)
 {
       char *var = getenv("IVERILOG_VPI_MODULE_PATH");
-      char *ptr, *end;
+      char *ptr;
+      const char *end;
 
       if (!var)
 	    return;

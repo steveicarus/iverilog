@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -64,7 +64,7 @@ static term_t** build_expr(ivl_nexus_t nex)
 	/* First look to see if I'm connected to an input pin. If so,
 	   then this expression is done. */
       for (idx = 0 ;  idx < pins ;  idx += 1) {
-	    struct pal_bind_s*pin = bind_pin + idx;
+	    const struct pal_bind_s*pin = bind_pin + idx;
 	    if ((nex == pin->nexus) && (pin->sop == 0)) {
 		  return expr;
 	    }

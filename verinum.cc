@@ -254,7 +254,6 @@ verinum::verinum(double val, bool)
 
       if (nwords == 0) {
 	    unsigned long bits = (unsigned long) fraction;
-	    fraction = fraction - (double) bits;
 	    for (unsigned idx = 0; idx < nbits_; idx += 1) {
 		  bits_[idx] = (bits&1) ? V1 : V0;
 		  bits >>= 1;

@@ -2,6 +2,12 @@
 // text is used in strchr()/strrchr() which take a char* not a const char*
 constParameterPointer:lexor.lex:698
 
+// We only use a StringHeap or a StringHepLex
+duplInheritedMember:libmisc/StringHeap.h:99
+duplInheritedMember:libmisc/StringHeap.h:100
+duplInheritedMember:libmisc/StringHeap.cc:160
+duplInheritedMember:libmisc/StringHeap.cc:182
+
 // Skip the use STL messages
 useStlAlgorithm
 

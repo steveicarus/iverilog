@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-  "Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)";
+  "Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -245,9 +245,9 @@ int main(int argc, char*argv[])
       unsigned lp;
       const char*flist_path = 0;
       unsigned flag_errors = 0;
-      char*out_path = 0;
+      const char*out_path = 0;
       FILE*out;
-      char*precomp_out_path = 0;
+      const char*precomp_out_path = 0;
       FILE*precomp_out = NULL;
 
 	/* Define preprocessor keywords that I plan to just pass. */
