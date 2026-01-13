@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Icarus Verilog Extensions &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=cb25574f" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Icarus Verilog Quirks" href="icarus_verilog_quirks.html" />
+    <link rel="prev" title="Using VPI" href="vpi.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="icarus-verilog-extensions">
+<h1>Icarus Verilog Extensions<a class="headerlink" href="#icarus-verilog-extensions" title="Link to this heading">¶</a></h1>
+<p>Icarus Verilog supports certain extensions to the baseline IEEE 1364
+standard. Some of these are picked from extended variants of the
+language, such as SystemVerilog, and some are expressions of internal
+behavior of Icarus Verilog, made available as a tool debugging aid.</p>
+<p>Don’t use any of these extensions if you want to keep your code portable
+across other Verilog compilers.</p>
+<section id="system-functions">
+<h2>System Functions<a class="headerlink" href="#system-functions" title="Link to this heading">¶</a></h2>
+<section id="is-signed-expr">
+<h3><code class="docutils literal notranslate"><span class="pre">$is_signed(&lt;expr&gt;)</span></code><a class="headerlink" href="#is-signed-expr" title="Link to this heading">¶</a></h3>
+<p>This function returns 1 if the expression contained is signed, or 0 otherwise.
+This is mostly of use for compiler regression tests.</p>
+</section>
+<section id="bits-expr-sizeof-expr">
+<h3><code class="docutils literal notranslate"><span class="pre">$bits(&lt;expr&gt;)</span></code>, <code class="docutils literal notranslate"><span class="pre">$sizeof(&lt;expr&gt;)</span></code><a class="headerlink" href="#bits-expr-sizeof-expr" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">$bits</span></code> system function returns the size in bits of the expression that
+is its argument. The result of this function is undefined if the argument
+doesn’t have a self-determined size.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">$sizeof</span></code> system function is deprecated in favour of <code class="docutils literal notranslate"><span class="pre">$bits</span></code>, which is
+the same thing, but included in the SystemVerilog definition.</p>
+</section>
+<section id="simtime">
+<h3><code class="docutils literal notranslate"><span class="pre">$simtime()</span></code><a class="headerlink" href="#simtime" title="Link to this heading">¶</a></h3>
+<p>This returns as a 64bit value the simulation time, unscaled by the time units
+of the local scope. This is different from the <code class="docutils literal notranslate"><span class="pre">$time</span></code> and <code class="docutils literal notranslate"><span class="pre">$stime</span></code>
+functions which return the scaled times. This function is added for regression
+testing of the compiler and run time, but can be used by applications who
+really want the simulation time.</p>
+<p>Note that the simulation time can be confusing if there are lots of different
+<code class="docutils literal notranslate"><span class="pre">`timescales</span></code> within a design. It is not in general possible to predict
+what the simulation precision will turn out to be.</p>
+</section>
+<section id="mti-random-mti-dist-uniform">
+<h3><code class="docutils literal notranslate"><span class="pre">$mti_random()</span></code>, <code class="docutils literal notranslate"><span class="pre">$mti_dist_uniform</span></code><a class="headerlink" href="#mti-random-mti-dist-uniform" title="Link to this heading">¶</a></h3>
+<p>These functions are similar to the IEEE 1364 standard <code class="docutils literal notranslate"><span class="pre">$random</span></code> functions,
+but they use the Mersenne Twister (MT19937) algorithm. This is considered an
+excellent random number generator, but does not generate the same sequence as
+the standardized <code class="docutils literal notranslate"><span class="pre">$random</span></code>.</p>
+</section>
+</section>
+<section id="system-tasks">
+<h2>System Tasks<a class="headerlink" href="#system-tasks" title="Link to this heading">¶</a></h2>
+<section id="readmempath">
+<h3><code class="docutils literal notranslate"><span class="pre">$readmempath</span></code><a class="headerlink" href="#readmempath" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">$readmemb</span></code> and <code class="docutils literal notranslate"><span class="pre">$readmemh</span></code> system tasks read text files that contain
+data values to populate memories. Normally, those files are found in a current
+working directory. The <code class="docutils literal notranslate"><span class="pre">$readmempath()</span></code> system task can be used to create a
+search path for those files. For example:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="kt">reg</span><span class="w"> </span><span class="p">[</span><span class="mh">7</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">mem</span><span class="w"> </span><span class="p">[</span><span class="mh">0</span><span class="o">:</span><span class="mh">7</span><span class="p">];</span>
+<span class="k">initial</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">  </span><span class="nb">$readmemh</span><span class="p">(</span><span class="s">&quot;datafile.txt&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">mem</span><span class="p">);</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>This assumes that “datafile.txt” is in the current working directory where
+the <code class="docutils literal notranslate"><span class="pre">vvp</span></code> command is running. But with the <code class="docutils literal notranslate"><span class="pre">$readmempath</span></code>, one can specify
+a search path:</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span class="kt">reg</span><span class="w"> </span><span class="p">[</span><span class="mh">7</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">mem</span><span class="w"> </span><span class="p">[</span><span class="mh">0</span><span class="o">:</span><span class="mh">7</span><span class="p">];</span>
+<span class="k">initial</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">  </span><span class="n">$readmempath</span><span class="p">(</span><span class="s">&quot;.:alternative:/global/defaults&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="nb">$readmemh</span><span class="p">(</span><span class="s">&quot;datafile.txt&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">mem</span><span class="p">);</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>In this example, “datafile.txt” is searched for in each of the directories
+in the above list (separated by “:” characters). The first located instance
+is the one that is used. So for example, if “./datafile.txt” exists, then it
+is read instead of “/global/defaults/datafile.txt” even if the latter exists.</p>
+</section>
+<section id="finish-and-return-code">
+<h3><code class="docutils literal notranslate"><span class="pre">$finish_and_return(code)</span></code><a class="headerlink" href="#finish-and-return-code" title="Link to this heading">¶</a></h3>
+<p>This task operates the same as the <code class="docutils literal notranslate"><span class="pre">$finish</span></code> system task, but adds the
+feature of specifying an exit code for the interpreter. This can be useful in
+automated test environments to indicate whether the simulation finished with
+or without errors.</p>
+</section>
+</section>
+<section id="extended-verilog-data-types">
+<h2>Extended Verilog Data Types<a class="headerlink" href="#extended-verilog-data-types" title="Link to this heading">¶</a></h2>
+<p>This feature is turned on by the generation flag “-gxtypes” and turned
+off by the generation flag “-gno-xtypes”. It is turned on by default.</p>
+<p>Icarus Verilog adds support for extended data types. This extended
+type syntax is based on a proposal by Cadence Design Systems,
+originally as an update to the IEEE 1364 standard. Icarus Verilog
+currently only takes the new primitive types from the proposal.</p>
+<p>SystemVerilog provides the same functionality using somewhat different
+syntax. This extension is maintained for backwards compatibility.</p>
+<ul class="simple">
+<li><p>Types</p></li>
+</ul>
+<p>Extended data types separates the concept of net/variable from the
+data type. Both nets and variables can declared with any data
+type. The primitive types available are:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>logic  - The familiar 0, 1, x and z, optionally with strength.
+bool   - Limited to only 0 and 1
+real   - 64-bit real values
+</pre></div>
+</div>
+<p>Nets with logic type may have multiple drivers with strength, and the
+value is resolved the usual way. Only logic values may be driven to
+logic nets, so bool values driven onto logic nets are implicitly
+converted to logic.</p>
+<p>Nets with any other type may not have multiple drivers. The compiler
+should detect the multiple drivers and report an error.</p>
+<ul class="simple">
+<li><p>Declarations</p></li>
+</ul>
+<p>The declaration of a net is extended to include the type of the wire,
+with the syntax:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>wire &lt;type&gt; &lt;wire-assignment-list&gt;... ;
+</pre></div>
+</div>
+<p>The &lt;type&gt;, if omitted, is taken to be logic. The “wire” can be any of
+the net keywords. Wires can be logic, bool, real, or vectors of logic
+or bool. Some valid examples:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>wire real foo = 1.0;
+tri logic bus[31:0];
+wire bool addr[23:0];
+... and so on.
+</pre></div>
+</div>
+<p>The declarations of variables is similar. The “reg” keyword is used to
+specify that this is a variable. Variables can have the same data
+types as nets.</p>
+<ul class="simple">
+<li><p>Ports</p></li>
+</ul>
+<p>Module and task ports in standard Verilog are restricted to logic
+types. This extension removes that restriction, allowing any of
+the above types to pass through the port consistent with the
+continuous assignment connectivity that is implied by the type.</p>
+<ul class="simple">
+<li><p>Expressions</p></li>
+</ul>
+<p>Expressions in the face of real values is covered by the baseline
+Verilog standard.</p>
+<p>The bool type supports the same operators as the logic type, with the
+obvious differences imposed by the limited domain.</p>
+<p>Comparison operators (not case compare) return logic if either of
+their operands is logic. If both are bool or real (including mix of
+bool and real) then the result is bool. This is because comparison of
+bools and reals always return exactly true or false.</p>
+<p>Case comparison returns bool. This differs from baseline Verilog,
+which strictly speaking returns a logic, but only 0 or 1 values.</p>
+<p>Arithmetic operators return real if either of their operands is real,
+otherwise they return logic if either of their operands is logic. If
+both operands are bool, they return bool.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gtkwave.html">Waveforms With GTKWave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Usage</a><ul>
+      <li>Previous: <a href="vpi.html" title="previous chapter">Using VPI</a></li>
+      <li>Next: <a href="icarus_verilog_quirks.html" title="next chapter">Icarus Verilog Quirks</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024-2025, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/icarus_verilog_extensions.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
