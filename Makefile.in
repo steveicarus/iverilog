@@ -249,7 +249,7 @@ iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
 endif
 
 version.exe: $(srcdir)/version.c $(srcdir)/version_base.h version_tag.h
-	$(BUILDCC) $(CFLAGS) -o version.exe -I. -I$(srcdir) $(srcdir)/version.c
+	$(BUILDCC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o version.exe -I. -I$(srcdir) $(srcdir)/version.c
 
 %.o: %.cc config.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
