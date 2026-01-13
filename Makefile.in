@@ -138,7 +138,7 @@ all: dep config.h _pli_types.h version_tag.h ivl@EXEEXT@ version.exe iverilog-vp
 ifeq (@MINGW32@,yes)
 all: dosify$(BUILDEXT)
 dosify$(BUILDEXT): $(srcdir)/dosify.c
-	$(BUILDCC) $(CFLAGS) -o dosify$(BUILDEXT) $(srcdir)/dosify.c
+	$(BUILDCC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o dosify$(BUILDEXT) $(srcdir)/dosify.c
 endif
 
 # This rule rules the compiler in the trivial hello.vl program to make
