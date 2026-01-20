@@ -57,6 +57,7 @@ class symbol_table_s {
     public:
       explicit symbol_table_s();
       virtual ~symbol_table_s();
+      symbol_table_s(const symbol_table_s&) = delete;
       symbol_table_s& operator=(const symbol_table_s&) = delete;
 
 	// This method locates the value in the symbol table and sets its
@@ -69,7 +70,6 @@ class symbol_table_s {
       symbol_value_t sym_get_value(const char*key);
 
     private:
-      symbol_table_s(const symbol_table_s&) { assert(0); };
       struct tree_node_*root;
       struct key_strings*str_chunk;
       unsigned str_used;

@@ -5090,7 +5090,7 @@ class Design {
       NetScope* make_root_scope(perm_string name, NetScope*unit_scope,
 				bool program_block, bool is_interface);
       NetScope* find_root_scope();
-      std::list<NetScope*> find_root_scopes() const;
+      std::list<NetScope*>&find_root_scopes() const;
 
       NetScope* make_package_scope(perm_string name, NetScope*unit_scope,
 				   bool is_unit);

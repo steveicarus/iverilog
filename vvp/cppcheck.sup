@@ -12,8 +12,90 @@ nullPointerOutOfMemory
 // Only for conditional debugging
 knownConditionTrueFalse:lib_main.cc:289
 
+// For now these casts have to be used
+dangerousTypeCast:array_common.cc:188
+dangerousTypeCast:array_common.cc:201
+invalidPointerCast:class_type.cc:203
+invalidPointerCast:class_type.cc:326
+invalidPointerCast:class_type.cc:332
+invalidPointerCast:class_type.cc:338
+invalidPointerCast:class_type.cc:339
+cstyleCast:ufunc.cc:80
+
+// Skip the sscanf() field width limit warning
+invalidscanf:compile.cc:597
+invalidscanf:compile.cc:609
+
 // By convention we put statics at the top scope.
 variableScope:vpi_priv.cc:623
+
+// Operator new/delete are static so cannot override
+duplInheritedMember:vvp_net.h:1476
+duplInheritedMember:vvp_net.h:1477
+duplInheritedMember:vvp_net_sig.h:187
+duplInheritedMember:vvp_net_sig.h:188
+duplInheritedMember:vvp_net_sig.h:253
+duplInheritedMember:vvp_net_sig.h:254
+duplInheritedMember:vvp_net_sig.h:313
+duplInheritedMember:vvp_net_sig.h:314
+duplInheritedMember:vvp_net_sig.h:377
+duplInheritedMember:vvp_net_sig.h:378
+duplInheritedMember:vvp_net_sig.cc:442
+duplInheritedMember:vvp_net_sig.cc:580
+duplInheritedMember:vvp_net_sig.cc:585
+duplInheritedMember:vvp_net_sig.cc:697
+duplInheritedMember:vvp_net_sig.cc:702
+duplInheritedMember:vvp_net_sig.cc:810
+duplInheritedMember:vvp_net_sig.cc:815
+duplInheritedMember:schedule.cc:143
+duplInheritedMember:schedule.cc:149
+duplInheritedMember:schedule.cc:212
+duplInheritedMember:schedule.cc:218
+duplInheritedMember:schedule.cc:249
+duplInheritedMember:schedule.cc:255
+duplInheritedMember:schedule.cc:286
+duplInheritedMember:schedule.cc:292
+duplInheritedMember:schedule.cc:319
+duplInheritedMember:schedule.cc:325
+duplInheritedMember:schedule.cc:391
+duplInheritedMember:schedule.cc:397
+duplInheritedMember:schedule.cc:480
+duplInheritedMember:schedule.cc:486
+duplInheritedMember:schedule.cc:521
+duplInheritedMember:schedule.cc:527
+
+// The derived class calls the base class routine and uses private inheritance
+duplInheritedMember:symbols.h:112
+
+// This is not always true
+duplicateValueTernary:class_type.cc:268
+
+// cppcheck is wrong this can be true or false
+knownConditionTrueFalse:vthread.cc:2986
+
+// cppcheck does not relize this is deleted[] in the called routine
+leakNoVarFunctionCall:compile.cc:452
+
+// Yes, these are not currently initialized in the constructor
+// All are added after __vpiSysTaskCall is built
+uninitMemberVar:vpi_priv.h:944
+// All are added after __vpiSignal is built
+uninitMemberVar:vpi_priv.h:392
+// run_run_ptr is added after the event is built
+uninitMemberVar:delay.h:79
+// The array values are added after it is allocated
+noConstructor:vpi_priv.h:778
+// The enum values are added after this is built
+uninitMemberVar:enum_type.cc:54
+// The names for the enum values are added after allocation
+uninitMemberVar:enum_type.cc:100
+// The thread values get assigned after being created
+uninitMemberVar:vthread.cc:316
+// The mod path has the values added after creation
+uninitMemberVar:delay.cc:1005
+uninitMemberVar:delay.cc:1045
+// The intermod path has the values added after creation
+uninitMemberVar:delay.cc:1395
 
 // Index calculation
 thisSubtraction:vpi_priv.h:430

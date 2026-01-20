@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_net_sig_H
 #define IVL_vvp_net_sig_H
 /*
- * Copyright (c) 2004-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -264,9 +264,6 @@ class vvp_fun_signal_string : public vvp_fun_signal_base {
       explicit vvp_fun_signal_string() {};
 
       virtual const std::string& get_string() const =0;
-
-    protected:
-      std::string value_;
 };
 
 /*

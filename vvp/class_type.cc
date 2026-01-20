@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,7 +36,7 @@ using namespace std;
  */
 class class_property_t {
     public:
-      inline class_property_t() { }
+      inline class_property_t() { offset_ = 0; }
       virtual ~class_property_t() =0;
 	// How much space does an instance of this property require?
       virtual size_t instance_size() const =0;

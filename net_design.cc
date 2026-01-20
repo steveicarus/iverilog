@@ -124,9 +124,9 @@ NetScope* Design::find_root_scope()
       return root_scopes_.front();
 }
 
-list<NetScope*> Design::find_root_scopes() const
+list<NetScope*>&Design::find_root_scopes() const
 {
-      return root_scopes_;
+      return const_cast<list<NetScope*>&>(root_scopes_);
 }
 
 NetScope* Design::make_package_scope(perm_string name, NetScope*unit_scope,

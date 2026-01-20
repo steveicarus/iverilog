@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -365,10 +365,10 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           vpi_printf("WARNING: %s:%d: incompatible value for %s%s.\n",
                      info->filename, info->lineno, info->name, fmtb);
         } else {
-          unsigned swidth = strlen(value.value.str), free_flag = 0;;
+          unsigned free_flag = 0;
           char *cp = value.value.str;
-
           if (ld_zero == 1) {
+            unsigned swidth = strlen(value.value.str);
             /* Strip the leading zeros if a width is not given. */
             if (width == -1) while (*cp == '0' && *(cp+1) != '\0') cp++;
             /* Pad with leading zeros. */

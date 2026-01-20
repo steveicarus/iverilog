@@ -194,7 +194,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
       count += 1;
 }
 
-static bool compare_base(NetPartSelect*a, NetPartSelect*b)
+static bool compare_base(const NetPartSelect*a, const NetPartSelect*b)
 {
       return a->base() < b->base();
 }

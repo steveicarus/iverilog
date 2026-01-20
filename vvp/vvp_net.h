@@ -1473,8 +1473,8 @@ class vvp_wide_fun_core : public vvp_net_fun_t {
       vvp_wide_fun_core(vvp_net_t*net, unsigned nports);
       virtual ~vvp_wide_fun_core() override;
 	// These objects are not perm allocated.
-      void* operator new(std::size_t size) { return ::new char[size]; }
-      void operator delete(void* ptr) { ::delete[](static_cast<char*>(ptr)); }
+      static void* operator new(std::size_t size) { return ::new char[size]; }
+      static void operator delete(void* ptr) { ::delete[](static_cast<char*>(ptr)); }
 
     protected:
       void propagate_vec4(const vvp_vector4_t&bit, vvp_time64_t delay =0);

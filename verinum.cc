@@ -1478,9 +1478,10 @@ verinum operator / (const verinum&left, const verinum&right)
 		  long r = right.as_long();
 		  bool overflow = (l == LONG_MIN) && (r == -1);
 		  long v = overflow ? LONG_MIN : l / r;
+		  unsigned long uv = v;
 		  for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
-			result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
-			v >>= 1;
+			result.set(idx,  (uv & 1)? verinum::V1 : verinum::V0);
+			uv >>= 1;
 		  }
 
 	    } else {

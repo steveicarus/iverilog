@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -68,7 +68,7 @@ static struct vcd_info*new_vcd_info(void)
 	    struct vcd_info_chunk*tmp = calloc(1, sizeof(struct vcd_info_chunk));
 	    tmp->chunk_fill = 0;
 	    tmp->chunk_next = cur_chunk;
-	    info_chunk_list = cur_chunk = tmp;
+	    info_chunk_list = tmp;
 	    return info_chunk_list->data + 0;
       }
 
@@ -104,7 +104,7 @@ static void delete_all_vcd_info(void)
  * if they are in the list already, even if they are at the end of the
  * list.
  */
-# define VCD_INFO_ENDP ((struct vcd_info*)1)
+#define VCD_INFO_ENDP ((struct vcd_info*)(uintptr_t) 0x01)
 static struct vcd_info *vcd_dmp_list = VCD_INFO_ENDP;
 
 static PLI_UINT64 vcd_cur_time = 0;
@@ -182,7 +182,7 @@ static char *create_full_name(const char *name)
       char *n, *n2;
       int len = 0;
       int is_esc_id = is_escaped_id(name);
-      struct lxt_scope *t = lxt_scope_head;
+      const struct lxt_scope *t = lxt_scope_head;
 
 	/* Figure out how long the combined string will be. */
       while(t) {

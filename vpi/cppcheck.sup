@@ -4,6 +4,16 @@ nullPointerArithmeticOutOfMemory
 nullPointerOutOfMemory
 memleakOnRealloc
 
+// Skip asctime() obsolete for now.
+asctimeCalled:sys_fst.c:381
+asctimeCalled:sys_vcd.c:443
+
+// Skip since table_model() is not complete.
+memleak:table_mod.c:225
+memleak:table_mod.c:230
+memleak:table_mod.c:243
+resourceLeak:table_mod.c:607
+
 // Skip strdup() not constant.
 constVariablePointer:sys_vcd.c:631
 constVariablePointer:sys_vcd.c:688
