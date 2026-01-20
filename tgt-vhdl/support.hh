@@ -41,19 +41,19 @@ enum support_function_t {
 
 class support_function : public vhdl_function {
 public:
-   explicit support_function(support_function_t type)
-      : vhdl_function(function_name(type), function_type(type)),
-        type_(type) {}
+   explicit support_function(support_function_t sf_type)
+      : vhdl_function(function_name(sf_type), function_type(sf_type)),
+        sf_type_(sf_type) {}
    void emit(std::ostream &of, int level) const override;
-   static const char *function_name(support_function_t type);
-   static vhdl_type *function_type(support_function_t type);
+   static const char *function_name(support_function_t sf_type);
+   static vhdl_type *function_type(support_function_t sf_type);
 
 private:
    static void emit_ternary(std::ostream &of, int level);
    static void emit_reduction(std::ostream &of, int level, const char *op,
                               char unit);
 
-   support_function_t type_;
+   support_function_t sf_type_;
 };
 
 #endif

@@ -32,9 +32,9 @@ void require_support_function(support_function_t f)
       scope->add_decl(new support_function(f));
 }
 
-const char *support_function::function_name(support_function_t type)
+const char *support_function::function_name(support_function_t sf_type)
 {
-   switch (type) {
+   switch (sf_type) {
    case SF_UNSIGNED_TO_BOOLEAN: return "Unsigned_To_Boolean";
    case SF_SIGNED_TO_BOOLEAN:   return "Signed_To_Boolean";
    case SF_BOOLEAN_TO_LOGIC:    return "Boolean_To_Logic";
@@ -54,9 +54,9 @@ const char *support_function::function_name(support_function_t type)
    return "Invalid";
 }
 
-vhdl_type *support_function::function_type(support_function_t type)
+vhdl_type *support_function::function_type(support_function_t sf_type)
 {
-   switch (type) {
+   switch (sf_type) {
    case SF_UNSIGNED_TO_BOOLEAN:
    case SF_SIGNED_TO_BOOLEAN:
       return vhdl_type::boolean();
@@ -105,9 +105,9 @@ void support_function::emit_reduction(std::ostream &of, int level,
 
 void support_function::emit(std::ostream &of, int level) const
 {
-   of << nl_string(level) << "function " << function_name(type_);
+   of << nl_string(level) << "function " << function_name(sf_type_);
 
-   switch (type_) {
+   switch (sf_type_) {
    case SF_UNSIGNED_TO_BOOLEAN:
       of << "(X : unsigned) return Boolean is" << nl_string(level)
          << "begin" << nl_string(indent(level))

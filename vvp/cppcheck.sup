@@ -21,6 +21,8 @@ invalidPointerCast:class_type.cc:332
 invalidPointerCast:class_type.cc:338
 invalidPointerCast:class_type.cc:339
 cstyleCast:ufunc.cc:80
+cstyleCast:vpi_priv.cc:226
+cstyleCast:vpi_scope.cc:615
 
 // Skip the sscanf() field width limit warning
 invalidscanf:compile.cc:597
@@ -28,6 +30,11 @@ invalidscanf:compile.cc:609
 
 // By convention we put statics at the top scope.
 variableScope:vpi_priv.cc:623
+
+// Changing this breaks the compile
+constParameterPointer:vthread.cc:423
+useInitializationList:delay.cc:513
+constParameterPointer:vpi_priv.cc:1434
 
 // Operator new/delete are static so cannot override
 duplInheritedMember:vvp_net.h:1476
@@ -49,20 +56,20 @@ duplInheritedMember:vvp_net_sig.cc:810
 duplInheritedMember:vvp_net_sig.cc:815
 duplInheritedMember:schedule.cc:143
 duplInheritedMember:schedule.cc:149
-duplInheritedMember:schedule.cc:212
-duplInheritedMember:schedule.cc:218
-duplInheritedMember:schedule.cc:249
-duplInheritedMember:schedule.cc:255
-duplInheritedMember:schedule.cc:286
-duplInheritedMember:schedule.cc:292
-duplInheritedMember:schedule.cc:319
-duplInheritedMember:schedule.cc:325
-duplInheritedMember:schedule.cc:391
-duplInheritedMember:schedule.cc:397
-duplInheritedMember:schedule.cc:480
-duplInheritedMember:schedule.cc:486
-duplInheritedMember:schedule.cc:521
-duplInheritedMember:schedule.cc:527
+duplInheritedMember:schedule.cc:213
+duplInheritedMember:schedule.cc:219
+duplInheritedMember:schedule.cc:250
+duplInheritedMember:schedule.cc:256
+duplInheritedMember:schedule.cc:287
+duplInheritedMember:schedule.cc:293
+duplInheritedMember:schedule.cc:320
+duplInheritedMember:schedule.cc:326
+duplInheritedMember:schedule.cc:393
+duplInheritedMember:schedule.cc:399
+duplInheritedMember:schedule.cc:484
+duplInheritedMember:schedule.cc:490
+duplInheritedMember:schedule.cc:525
+duplInheritedMember:schedule.cc:531
 
 // The derived class calls the base class routine and uses private inheritance
 duplInheritedMember:symbols.h:112
@@ -72,6 +79,14 @@ duplicateValueTernary:class_type.cc:268
 
 // cppcheck is wrong this can be true or false
 knownConditionTrueFalse:vthread.cc:2986
+knownConditionTrueFalse:vpi_priv.cc:657
+knownConditionTrueFalse:vpi_priv.cc:1955
+
+// cppcheck is wrong this is already const
+constParameterPointer:vpi_tasks.cc:259
+
+// For some cases this expression can be different
+duplicateExpression:vpi_signal.cc:1189
 
 // cppcheck does not relize this is deleted[] in the called routine
 leakNoVarFunctionCall:compile.cc:452
@@ -96,6 +111,28 @@ uninitMemberVar:delay.cc:1005
 uninitMemberVar:delay.cc:1045
 // The intermod path has the values added after creation
 uninitMemberVar:delay.cc:1395
+// The island values are set after creation
+uninitDerivedMemberVar:island_tran.cc:60
+// The cb_data is set after creation
+uninitMemberVar:vpi_callback.cc:182
+// The funct is set after creation
+uninitMemberVar:vpi_event.cc:28
+// Iterator values are set after creation
+uninitMemberVar:vpi_iter.cc:41
+// Scope values are set after creation
+uninitMemberVar:vpi_scope.cc:353
+// The real var values are set after creation
+uninitMemberVar:vpi_real.cc:158
+// The PV values are set after creation
+uninitMemberVar:vpi_signal.cc:1577
+// The info/is_user_defn are added ater creation
+uninitMemberVar:vpi_tasks.cc:41
+// All the values are set after creation using the default constructor
+noConstructor:vpi_tasks.cc:158
+
+// We check memory usage using valgrind.
+unsafeClassCanLeak:vpi_priv.h:750
+unsafeClassCanLeak:permaheap.h:47
 
 // Index calculation
 thisSubtraction:vpi_priv.h:430
@@ -104,6 +141,7 @@ thisSubtraction:array_common.h:91
 // The interface is from the standard.
 constParameterCallback:vpi_priv.cc:1110
 constParameterPointer:vpi_mcd.cc:158
+constParameterPointer:vpi_priv.cc:1110
 
 // cppcheck is missing the code adds a \0 at the previous location.
 knownConditionTrueFalse:vpi_modules.cc:118
@@ -184,7 +222,7 @@ unusedFunction:array.cc:848
 // intermodpath_delete()
 unusedFunction:delay.cc:1462
 // count_force4_pool()
-unusedFunction:schedule.cc:402
+unusedFunction:schedule.cc:404
 // call_scope()
 unusedFunction:ufunc.h:62
 // get_bit()
@@ -192,13 +230,13 @@ unusedFunction:vpi_priv.h:477
 // copy_bits()
 unusedFunction:vvp_net.cc:615
 // mov()
-unusedFunction:vvp_net.cc:1546
+unusedFunction:vvp_net.cc:1547
 // eq_xz()
-unusedFunction:vvp_net.cc:1751
+unusedFunction:vvp_net.cc:1752
 // as_string()
-unusedFunction:vvp_net.cc:1854
+unusedFunction:vvp_net.cc:1855
 // fully_featured_resolv_()
-unusedFunction:vvp_net.cc:3580
+unusedFunction:vvp_net.cc:3581
 // words()
 unusedFunction:vvp_net.h:595
 // force_vec8()

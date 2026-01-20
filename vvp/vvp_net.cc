@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -637,7 +637,8 @@ void vvp_vector4_t::copy_bits(const vvp_vector4_t&that)
 	   the bit values. */
       if (size_ <= BITS_PER_WORD && that.size_ <= BITS_PER_WORD) {
 	    unsigned bits_to_copy = (that.size_ < size_) ? that.size_ : size_;
-	    unsigned long mask = (1UL << bits_to_copy) - 1UL;
+	    unsigned long mask = ((bits_to_copy < BITS_PER_WORD) ? (1UL << bits_to_copy) :
+	                                                           (0UL)) - 1UL;
 	    abits_val_ &= ~mask;
 	    bbits_val_ &= ~mask;
 	    abits_val_ |= that.abits_val_&mask;

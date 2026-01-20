@@ -386,7 +386,7 @@ class VTypeRecord : public VType {
 
       bool can_be_packed() const override { return true; }
       const element_t* element_by_name(perm_string name, int*index = NULL) const;
-      inline const std::vector<element_t*> get_elements() const { return elements_; }
+      inline const std::vector<element_t*>&get_elements() const { return elements_; }
 
     private:
       std::vector<element_t*> elements_;

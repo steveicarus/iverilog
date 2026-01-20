@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2026 Stephen Williams (steve@icarus.com)
  *
  * (This is a rewrite of code that was ...
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
@@ -935,7 +935,8 @@ void vvp_udp_fun_core::run_run()
 void vvp_udp_fun_core::recv_vec4_from_inputs(unsigned port)
 {
 	/* For now, assume udps are 1-bit wide. */
-      assert(value(port).size() == 1);
+      unsigned port_width = value(port).size();
+      assert(port_width == 1);
 
       unsigned long mask = 1UL << port;
 

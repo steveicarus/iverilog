@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2025 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2005-2026 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -489,19 +489,19 @@ void vvp_fun_delay::run_run()
       delete cur;
 }
 
-void vvp_fun_delay::run_run_vec4_(struct event_*cur)
+void vvp_fun_delay::run_run_vec4_(const struct event_*cur)
 {
       cur_vec4_ = cur->ptr_vec4;
       net_->send_vec4(cur_vec4_, 0);
 }
 
-void vvp_fun_delay::run_run_vec8_(struct vvp_fun_delay::event_*cur)
+void vvp_fun_delay::run_run_vec8_(const struct vvp_fun_delay::event_*cur)
 {
       cur_vec8_ = cur->ptr_vec8;
       net_->send_vec8(cur_vec8_);
 }
 
-void vvp_fun_delay::run_run_real_(struct vvp_fun_delay::event_*cur)
+void vvp_fun_delay::run_run_real_(const struct vvp_fun_delay::event_*cur)
 {
       cur_real_ = cur->ptr_real;
       net_->send_real(cur_real_, 0);

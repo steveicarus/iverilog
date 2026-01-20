@@ -76,12 +76,15 @@ ExpAttribute::~ExpAttribute()
 list<Expression*>*ExpAttribute::clone_args() const {
       list<Expression*>*new_args = NULL;
 
+      ivl_assert(*this, !args_);
+/* This is not a proper implementation so assert for now.
       if(args_) {
 	    for(list<Expression*>::iterator it = args_->begin();
                     it != args_->end(); ++it) {
 		new_args->push_back((*it)->clone());
             }
       }
+*/
 
       return new_args;
 }

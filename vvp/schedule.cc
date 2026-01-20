@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -65,7 +65,7 @@ struct event_s {
 
 	// Fallback new/delete
       static void*operator new (size_t size) { return ::new char[size]; }
-      static void operator delete(void*ptr)  { ::delete[]( (char*)ptr ); }
+      static void operator delete(void*ptr)  { ::delete[]( static_cast<char*>(ptr) ); }
 };
 
 void event_s::single_step_display(void)
@@ -174,6 +174,7 @@ struct assign_vector4_event_s  : public event_s {
       explicit assign_vector4_event_s(const vvp_vector4_t&that) : val(that) {
 	    base = 0;
 	    vwid = 0;
+	    next = NULL;
       }
 
 	/* Where to do the assign. */
@@ -335,6 +336,7 @@ struct force_vector4_event_s  : public event_s {
 	    net = NULL;
 	    base = 0;
 	    vwid = 0;
+	    next = NULL;
       }
 	/* Where to do the force. */
       vvp_net_t*net;
@@ -409,11 +411,13 @@ struct propagate_vector4_event_s : public event_s {
 	/* The default constructor. */
       explicit propagate_vector4_event_s(const vvp_vector4_t&that) : val(that) {
 	    net = NULL;
+	    next = NULL;
       }
 	/* A constructor that makes the val directly. */
       propagate_vector4_event_s(const vvp_vector4_t&that, unsigned adr, unsigned wid)
       : val(that,adr,wid) {
 	    net = NULL;
+	    next = NULL;
       }
 
 	/* Propagate the output of this net. */

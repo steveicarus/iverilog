@@ -438,7 +438,6 @@ class ExpTypeAttribute : public ExpAttribute {
       int elaborate_expr(Entity*ent, ScopeBase*scope, const VType*ltype) override;
       void write_to_stream(std::ostream&fd) const override;
 	// Some attributes can be evaluated at compile time
-      bool evaluate(ScopeBase*scope, int64_t&val) const;
       bool evaluate(Entity*ent, ScopeBase*scope, int64_t&val) const override;
       void dump(std::ostream&out, int indent = 0) const override;
       void visit(ExprVisitor& func) override;

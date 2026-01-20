@@ -2,6 +2,13 @@
 // text is used in strchr()/strrchr() which take a char* not a const char*
 constParameterPointer:lexor.lex:698
 
+// Yes, the assetion should always trigger
+incorrectStringBooleanError:expression_stream.cc:153
+incorrectStringBooleanError:expression_stream.cc:158
+
+// cppcheck is wrong this cannot be a const
+constVariableReference:library.cc:255
+
 // We only use a StringHeap or a StringHepLex
 duplInheritedMember:libmisc/StringHeap.h:99
 duplInheritedMember:libmisc/StringHeap.h:100

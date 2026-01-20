@@ -1,7 +1,7 @@
 #ifndef IVL_delay_H
 #define IVL_delay_H
 /*
- * Copyright 2005-2025 Stephen Williams
+ * Copyright 2005-2026 Stephen Williams
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -80,7 +80,7 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
 		  ptr_real = 0.0;
 		  next = NULL;
 	    }
-	    void (vvp_fun_delay::*run_run_ptr)(struct vvp_fun_delay::event_*cur);
+	    void (vvp_fun_delay::*run_run_ptr)(const struct vvp_fun_delay::event_*cur);
 	    const vvp_time64_t sim_time;
 	    vvp_vector4_t ptr_vec4;
 	    vvp_vector8_t ptr_vec8;
@@ -107,9 +107,9 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
       virtual void run_run() override;
 
 
-      void run_run_vec4_(struct vvp_fun_delay::event_*cur);
-      void run_run_vec8_(struct vvp_fun_delay::event_*cur);
-      void run_run_real_(struct vvp_fun_delay::event_*cur);
+      void run_run_vec4_(const struct vvp_fun_delay::event_*cur);
+      void run_run_vec8_(const struct vvp_fun_delay::event_*cur);
+      void run_run_real_(const struct vvp_fun_delay::event_*cur);
 
     private:
       vvp_net_t*net_;
