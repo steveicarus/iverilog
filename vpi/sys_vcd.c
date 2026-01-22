@@ -676,7 +676,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	  case vpiParameter:
 
-	    /* If we are skipping all pamaeters then just return. */
+	    /* If we are skipping all parameters then just return. */
             if (skip) return;
 
 	    size = vpi_get(vpiSize, item);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,12 +51,16 @@ int is_escaped_id(const char *name)
       return 1;
 }
 
+/* Check if there are any things that could be dumped in this item. */
 int vcd_instance_contains_dumpable_items(const int dumpable_types[], vpiHandle item)
 {
       int i;
       for (i = 0; dumpable_types[i] > 0; i++) {
-            if (vpi_iterate(dumpable_types[i], item))
-                  return 1;
+	    vpiHandle iter = vpi_iterate(dumpable_types[i], item);
+	    if (iter) {
+		  vpi_release_handle(iter);
+		  return 1;
+	    }
       }
       return 0;
 }
