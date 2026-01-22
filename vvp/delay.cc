@@ -665,9 +665,10 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	       * is needed for this bit. */
 	    if (cur_vec4_.value(idx) == bit.value(idx)) continue;
 	    if (tmp != use_delay) {
-                  fprintf(stderr, "sorry: multi-bit module path delays are "
-                                  "currently not fully supported.\n");
-                  exit(2);
+		  fprintf(stderr, "sorry: multi-bit module path delays are "
+		                  "currently not fully supported.\n");
+		  fprintf(stderr, "     : using the LSB delay for all bits.\n");
+		  continue;
             }
       }
 

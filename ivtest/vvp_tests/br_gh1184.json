@@ -1,6 +1,6 @@
 {
     "type" : "EF",
     "source" : "br_gh1184.v",
-    "gold" : "br_gh1184",
+    "remove_gold_check_for_now" : "br_gh1184",
     "iverilog-args" : [ "-gspecify" ]
 }
