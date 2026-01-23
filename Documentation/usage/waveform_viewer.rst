@@ -25,9 +25,9 @@ Waveform dumps are written by the Icarus Verilog runtime program vvp. The user
 uses $dumpfile and $dumpvars system tasks to enable waveform dumping, then the
 vvp runtime takes care of the rest. The output is written into the file
 specified by the $dumpfile system task. If the $dumpfile call is absent, the
-compiler will choose the file name dump.vcd, dump.lxt, or dump.fst, depending
-on runtime flags. The example below dumps everything in and below the test
-module:
+compiler will choose the file name dump.vcd, dump.lxt, dump.lxt2, or dump.fst,
+depending on runtime flags. The example below dumps everything in and below
+the test module:
 
 .. code-block:: verilog
 
