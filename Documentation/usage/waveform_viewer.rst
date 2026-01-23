@@ -1,20 +1,31 @@
 
-Waveforms With GTKWave
-======================
+Viewing Waveforms
+=================
 
-GTKWave is a VCD waveform viewer based on the GTK library. This viewer support
-VCD and LXT formats for signal dumps. GTKWAVE is available on github
+To view waveforms, either GTKWave or Surfer can be used.
+
+GTKWave is a waveform viewer based on the GTK library. This viewer supports
+VCD, FST, LXT, and LXT2 formats for waveform dumps. GTKWave is available on GitHub
 `here <https://github.com/gtkwave/gtkwave>`_. Most Linux distributions already
-include gtkwave prepackaged.
+include gtkwave prepackaged and there are binaries for Windows available.
 
 .. image:: GTKWave_Example2.png
 
-Generating VCD/FST files for GTKWAVE ------------------------------------
+Surfer is a waveform viewer based on the Rust egui library. This viewer supports
+VCD and FST formats for waveform dumps. Surfer is available on GitLab
+`here <https://gitlab.com/surfer-project/surfer>`_. It runs on Windows, Linux,
+and MacOS, but can also run in a `web browser <https://app.surfer-project.org/>`_
+and there is a VS Code
+`extension <https://marketplace.visualstudio.com/items?itemName=surfer-project.surfer>`_.
+
+Generating waveform dump files for viewing
+------------------------------------------
+
 Waveform dumps are written by the Icarus Verilog runtime program vvp. The user
 uses $dumpfile and $dumpvars system tasks to enable waveform dumping, then the
 vvp runtime takes care of the rest. The output is written into the file
 specified by the $dumpfile system task. If the $dumpfile call is absent, the
-compiler will choose the file name dump.vcd or dump.lxt or dump.fst, depending
+compiler will choose the file name dump.vcd, dump.lxt, or dump.fst, depending
 on runtime flags. The example below dumps everything in and below the test
 module:
 
@@ -30,9 +41,9 @@ module:
 
 By default, the vvp runtime will generate VCD dump output. This is the default
 because it is the most portable. However, when using gtkwave, the FST output
-format is faster and most compact. Use the "-fst" extended argument to
-activate LXT output. For example, if your compiled output is written into the
-file "foo.vvp", the command:
+format is faster and most compact. Use the "-fst", "-lxt", or "-lxt2" extended
+argument to activate FST, LXT, or LXT2 output, respectively. For example, if
+your compiled output is written into the file "foo.vvp", the command:
 
 .. code-block:: console
 
@@ -40,7 +51,7 @@ file "foo.vvp", the command:
 
 will cause the dumpfile output to be written in FST format. Absent any
 specific $dumpfile command, this file will be called dump.fst, which can be
-viewed with the command:
+viewed with GTKWave using the command:
 
 .. code-block:: console
 
@@ -105,7 +116,7 @@ Then the simulation file:
                 $time, value, value);
   endmodule // test
 
-Compile, run, and view waveforms with these commands:
+Compile, run, and view waveforms with GTKWave using these commands:
 
 .. code-block:: console
 
@@ -113,6 +124,6 @@ Compile, run, and view waveforms with these commands:
   % vvp dsn
   % gtkwave test.vcd &
 
-Click on the 'test', then 'c1' in the top left box on GTKWAVE, then drag the
+Click on the 'test', then 'c1' in the top left box of GTKWave, then drag the
 signals to the Signals box. You will be able to add signals to display,
 scanning by scope.
