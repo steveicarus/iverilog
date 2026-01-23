@@ -1983,6 +1983,15 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 		  }
 
 	    } else {
+		    // Check if the expression could be resolved. If test_width
+		    // failed to find the identifier, expr_type will be NO_TYPE.
+		  if (expr->expr_type() == IVL_VT_NO_TYPE) {
+			  // Try to elaborate the expression to get a proper error
+			  // message about the undefined identifier.
+			NetExpr *tmp = expr->elaborate_expr(des, scope, (unsigned)1, flags);
+			if (tmp) delete tmp;
+			return 0;
+		  }
 		  use_width = expr->expr_width();
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PECallFunction::elaborate_sfunc_: "
