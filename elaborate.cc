@@ -4340,9 +4340,15 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 			rv = cast_to_int4(rv, lv_width);
 			break;
 		      default:
-			  /* Don't yet know how to handle this. */
-			ivl_assert(*this, 0);
-			break;
+			  /* Cannot cast between these types. */
+			cerr << get_fileline() << ": error: "
+			     << "Type of task port " << (idx+1)
+			     << " is not compatible with the argument type."
+			     << endl;
+			des->errors += 1;
+			delete rv;
+			delete lv;
+			continue;
 		  }
 	    }
 	    rv = pad_to_width(rv, lv_width, *this);
