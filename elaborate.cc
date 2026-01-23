@@ -774,11 +774,13 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  return;
 	    }
-	      // Gates can never have variable output ports.
+	      // In SystemVerilog, variables can be driven by a single
+	      // primitive/gate output (IEEE 1800-2017 6.5). Primitives always
+	      // use default (strong) drive strength.
             if (lval_count > gate_count)
-	          lval_sigs[idx] = pin(idx)->elaborate_bi_net(des, scope, false);
+	          lval_sigs[idx] = pin(idx)->elaborate_bi_net(des, scope, gn_system_verilog());
             else
-	          lval_sigs[idx] = pin(idx)->elaborate_lnet(des, scope, false);
+	          lval_sigs[idx] = pin(idx)->elaborate_lnet(des, scope, gn_system_verilog());
 
 	      // The only way this should return zero is if an error
 	      // happened, so for that case just return.
