@@ -1582,7 +1582,7 @@ for_step_opt
      definitions in the func_body to take on the scope of the function
      instead of the module. */
 function_declaration /* IEEE1800-2005: A.2.6 */
-  : K_function lifetime_opt data_type_or_implicit_or_void IDENTIFIER ';'
+  : K_function lifetime_opt data_type_or_implicit_or_void identifier_name ';'
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
@@ -1602,7 +1602,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	delete[]$4;
       }
 
-  | K_function lifetime_opt data_type_or_implicit_or_void IDENTIFIER
+  | K_function lifetime_opt data_type_or_implicit_or_void identifier_name
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
@@ -1628,7 +1628,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 
   /* Detect and recover from some errors. */
 
-  | K_function lifetime_opt data_type_or_implicit_or_void IDENTIFIER error K_endfunction
+  | K_function lifetime_opt data_type_or_implicit_or_void identifier_name error K_endfunction
       { /* */
 	if (current_function) {
 	      pform_pop_scope();
@@ -2442,7 +2442,7 @@ streaming_concatenation /* IEEE1800-2005: A.8.1 */
 
 task_declaration /* IEEE1800-2005: A.2.7 */
 
-  : K_task lifetime_opt IDENTIFIER ';'
+  : K_task lifetime_opt identifier_name ';'
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -2469,7 +2469,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	delete[]$3;
       }
 
-  | K_task lifetime_opt IDENTIFIER '('
+  | K_task lifetime_opt identifier_name '('
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -2498,7 +2498,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	delete[]$3;
       }
 
-  | K_task lifetime_opt IDENTIFIER error K_endtask
+  | K_task lifetime_opt identifier_name error K_endtask
       {
 	if (current_task) {
 	      pform_pop_scope();
@@ -4468,7 +4468,7 @@ hierarchy_identifier
 	$$->push_back(name_component_t(lex_strings.make($1)));
 	delete[]$1;
       }
-  | hierarchy_identifier '.' IDENTIFIER
+  | hierarchy_identifier '.' identifier_name
       { pform_name_t * tmp = $1;
 	tmp->push_back(name_component_t(lex_strings.make($3)));
 	delete[]$3;
