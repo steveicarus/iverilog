@@ -212,6 +212,7 @@ br_gh477		normal,-g2009		ivltests
 br_gh478		normal,-g2009		ivltests
 br_gh498		normal,-g2009		ivltests
 br_gh508a		normal,-g2009		ivltests
+br_gh521		normal,-g2012		ivltests
 br_gh527		normal,-g2009		ivltests
 br_gh530		CO,-g2009		ivltests
 br_gh540		normal,-g2009		ivltests
