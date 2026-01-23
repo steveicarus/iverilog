@@ -30,6 +30,8 @@ static ivl_signal_type_t signal_type_of_nexus(ivl_nexus_t nex)
 {
       unsigned idx;
       ivl_signal_type_t out = IVL_SIT_TRI;
+      int has_tri = 0;
+      int has_uwire = 0;
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
 	    ivl_signal_type_t stype;
@@ -41,13 +43,28 @@ static ivl_signal_type_t signal_type_of_nexus(ivl_nexus_t nex)
 	    stype = ivl_signal_type(sig);
 	    if (stype == IVL_SIT_REG)
 		  continue;
-	    if (stype == IVL_SIT_TRI)
+	    if (stype == IVL_SIT_TRI) {
+		  has_tri = 1;
 		  continue;
+	    }
 	    if (stype == IVL_SIT_NONE)
 		  continue;
-	    if (stype == IVL_SIT_UWIRE) return IVL_SIT_UWIRE;
+	    if (stype == IVL_SIT_UWIRE) {
+		  has_uwire = 1;
+		  continue;
+	    }
 	    out = stype;
       }
+
+	/* If both TRI (wire) and UWIRE are in the nexus, return TRI
+	   because wire semantics allow multiple drivers. Only return
+	   UWIRE if no TRI signals are present. This fixes GitHub #1267
+	   where wire logic connected to uwire ports was incorrectly
+	   treated as requiring single-driver semantics.
+	   TODO: Decide how resolved net types (tri0/tri1/triand/trior)
+	         should interact with uwire in a shared nexus. */
+      if (has_uwire && !has_tri)
+	    return IVL_SIT_UWIRE;
 
       return out;
 }
