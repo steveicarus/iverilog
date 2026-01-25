@@ -133,8 +133,26 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       }
 
 	// If this turns out to be an assignment to an unpacked array,
-	// then handle that special case elsewhere.
+	// then handle that special case elsewhere. We need to distinguish:
+	// 1. Whole array assignment: `assign arr = expr` -> elaborate_unpacked_array_
+	// 2. Indexed element assignment: `assign arr[i] = expr` -> normal path
+	// For single-element arrays ([0:0]), pin_count() is 1 but we still need
+	// to handle whole-array assignments specially (#1265).
+      bool is_whole_array = false;
       if (lval->pin_count() > 1) {
+	    // Multi-element array is always a whole-array assignment
+	    is_whole_array = true;
+      } else if (lval->unpacked_dimensions() > 0) {
+	    // Single-element unpacked array. Check if lval has array indices.
+	    const PEIdent* lval_ident = dynamic_cast<const PEIdent*>(pin(0));
+	    if (lval_ident && !lval_ident->path().name.empty()) {
+		  // If the identifier has no indices, it's a whole-array reference
+		  if (lval_ident->path().back().index.empty()) {
+			is_whole_array = true;
+		  }
+	    }
+      }
+      if (is_whole_array) {
 	    elaborate_unpacked_array_(des, scope, lval);
 	    return;
       }
