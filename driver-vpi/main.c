@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2022 Martin Whitaker
+ * Copyright (c) 2015-2026 Martin Whitaker
  * Copyright (c) 2002 Gus Baldauf (gus@picturel.com)
  *
  *    This source code is free software; you can redistribute it
@@ -34,7 +34,7 @@
 #include <windows.h>
 
 static void setup_ivl_environment(void);
-static void assign(char **ptr, char *str);
+static void assign(char **ptr, const char *str);
 
 /* The compile options: compiler, flags, etc. are in here */
 #include "config.h"
@@ -164,7 +164,7 @@ static int startsWith (char *prefix, char *str)
 /* append "app" to "ptr", allocating memory as needed    */
 /*   if count is zero, then copy all characters of "app" */
 
-static void appendn (char **ptr, char *app, size_t count)
+static void appendn (char **ptr, const char *app, size_t count)
 {
 	char *nptr = (char *) realloc(*ptr, strlen(*ptr) +
                                             (count ? count : strlen(app)) + 1);
@@ -184,7 +184,7 @@ static void appendn (char **ptr, char *app, size_t count)
 
 /* append "app" to "ptr", allocating memory as needed    */
 
-static void append (char **ptr, char *app)
+static void append (char **ptr, const char *app)
 {
 	appendn(ptr, app, 0);
 }
@@ -200,7 +200,7 @@ static void appendBackSlash(char **str)
 /* copy count characters of "str" to "ptr", allocating memory as needed */
 /*   if count is zero, then copy all characters of "str"                */
 
-static void assignn (char **ptr, char *str, size_t count)
+static void assignn (char **ptr, const char *str, size_t count)
 {
 	char *nptr = (char *) realloc(*ptr, (count ? count : strlen(str)) + 1);
 
@@ -221,7 +221,7 @@ static void assignn (char **ptr, char *str, size_t count)
 
 /* copy count characters of "str" to "ptr", allocating memory as needed */
 
-static void assign (char **ptr, char *str)
+static void assign (char **ptr, const char *str)
 {
 	assignn(ptr, str, 0);
 }
@@ -428,7 +428,7 @@ static int parse(int argc, char *argv[])
 
 /* do minimal check that the MinGW root directory looks valid */
 
-static void checkMingwDir(char *root)
+static void checkMingwDir(const char *root)
 {
 	int irv;
 	struct _stat stat_buf;
@@ -551,9 +551,10 @@ static void setup_ivl_environment(void)
 
 /* compile source modules */
 
-static void compile(char *pSource, char *pFlags, char **pObject, int *compile_errors, char *compiler)
+static void compile(const char *pSource, const char *pFlags, char **pObject,
+                    int *compile_errors, const char *compiler)
 {
-	char *ptr1 = pSource;
+	const char *ptr1 = pSource;
 	char *ptr2 = strchr(ptr1, ' ');
 	char *buf=0, *src=0, *obj=0;
 

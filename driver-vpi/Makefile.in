@@ -65,10 +65,11 @@ clean:
 distclean: clean
 	rm -f Makefile config.log
 
-cppcheck: main.c
+cppcheck: main.c config.h
 	cppcheck --enable=all --std=c99 --std=c++11 -f \
 	         --check-level=exhaustive \
 	         --suppressions-list=$(srcdir)/../cppcheck-global.sup \
+	         --suppressions-list=$(srcdir)/cppcheck.sup \
 	         $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
