@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,9 +31,12 @@ static int print_lpm_cmp_gt_s(FILE*fd, ivl_lpm_t net)
       blif_nex_data_t*a_ned = blif_nex_data_t::get_nex_data(a_nex);
       blif_nex_data_t*b_ned = blif_nex_data_t::get_nex_data(b_nex);
 
-      assert(1                  == q_ned->get_width());
-      assert(ivl_lpm_width(net) == a_ned->get_width());
-      assert(ivl_lpm_width(net) == b_ned->get_width());
+      size_t q_wid = q_ned->get_width();
+      size_t a_wid = a_ned->get_width();
+      size_t b_wid = b_ned->get_width();
+      assert(1                  == q_wid);
+      assert(ivl_lpm_width(net) == a_wid);
+      assert(ivl_lpm_width(net) == b_wid);
 
 	// This is true if the operator is GE instead of just GT.
       bool ge_flag = ivl_lpm_type(net)==IVL_LPM_CMP_GE;
@@ -67,9 +70,12 @@ static int print_lpm_cmp_gt_u(FILE*fd, ivl_lpm_t net)
       blif_nex_data_t*a_ned = blif_nex_data_t::get_nex_data(a_nex);
       blif_nex_data_t*b_ned = blif_nex_data_t::get_nex_data(b_nex);
 
-      assert(1                  == q_ned->get_width());
-      assert(ivl_lpm_width(net) == a_ned->get_width());
-      assert(ivl_lpm_width(net) == b_ned->get_width());
+      size_t q_wid = q_ned->get_width();
+      size_t a_wid = a_ned->get_width();
+      size_t b_wid = b_ned->get_width();
+      assert(1                  == q_wid);
+      assert(ivl_lpm_width(net) == a_wid);
+      assert(ivl_lpm_width(net) == b_wid);
 
 	// This is true if the operator is GE instead of just GT.
       bool ge_flag = ivl_lpm_type(net)==IVL_LPM_CMP_GE;

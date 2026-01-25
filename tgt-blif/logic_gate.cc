@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -42,7 +42,8 @@ static int do_print_logic_gate(FILE*fd, ivl_net_logic_t net, unsigned bit)
       ivl_nexus_t nex_out = ivl_logic_pin(net,0);
       blif_nex_data_t*ned_out = blif_nex_data_t::get_nex_data(nex_out);
 
-      assert(ned_out->get_width() > bit);
+      size_t o_wid = ned_out->get_width();
+      assert(o_wid > bit);
 
       fprintf(fd, ".names");
       for (unsigned idx = 1 ; idx < ivl_logic_pins(net) ; idx += 1) {

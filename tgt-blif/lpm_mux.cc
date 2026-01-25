@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,12 +46,16 @@ static int print_lpm_mux_s1(FILE*fd, ivl_lpm_t net)
 
       fprintf(fd, "# IVL_LPM_MUX ivl_lpm_width(net)=%u, Q=%s, D0=%s, D1=%s\n",
 	      ivl_lpm_width(net), ned_out->get_name(), ned_d0->get_name(), ned_d1->get_name());
-      assert(ivl_lpm_width(net) == ned_out->get_width());
-      assert(ivl_lpm_width(net) == ned_d0->get_width());
-      assert(ivl_lpm_width(net) == ned_d1->get_width());
+      size_t o_wid = ned_out->get_width();
+      size_t d0_wid = ned_d0->get_width();
+      size_t d1_wid = ned_d1->get_width();
+      assert(ivl_lpm_width(net) == o_wid);
+      assert(ivl_lpm_width(net) == d0_wid);
+      assert(ivl_lpm_width(net) == d1_wid);
 
 	// Only support single-bit select
-      assert(ned_sel->get_width() == 1);
+      size_t s_wid = ned_sel->get_width();
+      assert(1 == s_wid);
 
       for (unsigned idx = 0 ; idx < ivl_lpm_width(net) ; idx += 1) {
 	    fprintf(fd, ".names %s%s %s%s %s%s %s%s\n"

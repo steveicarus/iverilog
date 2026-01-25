@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Yury Gribov (tetra2005@gmail.com)
+ * Copyright (c) 2016-2026 Yury Gribov (tetra2005@gmail.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -43,8 +43,10 @@ int print_lpm_shift(FILE*fd, ivl_lpm_t net, bool left)
       size_t shiftw = s_ned->get_width();
       bool signed_ = ivl_lpm_signed(net);
 
-      assert(dataw == q_ned->get_width());
-      assert(dataw == d_ned->get_width());
+      size_t q_wid = q_ned->get_width();
+      size_t d_wid = d_ned->get_width();
+      assert(dataw == q_wid);
+      assert(dataw == d_wid);
 
       // TODO: output width can be larger than data
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,7 +40,8 @@ int print_lpm_part_vp(FILE*fd, ivl_lpm_t net)
       ivl_nexus_t nex_out = ivl_lpm_q(net);
       blif_nex_data_t*ned_out = blif_nex_data_t::get_nex_data(nex_out);
 
-      assert(ivl_lpm_width(net) == ned_out->get_width());
+      size_t o_wid = ned_out->get_width();
+      assert(ivl_lpm_width(net) == o_wid);
 	// Only handle constant part select base.
       assert(ivl_lpm_data(net,1) == 0);
 
@@ -49,7 +50,8 @@ int print_lpm_part_vp(FILE*fd, ivl_lpm_t net)
       ivl_nexus_t nex_in = ivl_lpm_data(net,0);
       blif_nex_data_t*ned_in = blif_nex_data_t::get_nex_data(nex_in);
 
-      assert(bit_sel < ned_in->get_width());
+      size_t i_wid = ned_in->get_width();
+      assert(bit_sel < i_wid);
 
       for (unsigned idx = 0 ; idx < ivl_lpm_width(net) ; idx += 1) {
 	    fprintf(fd, ".names %s%s %s%s # %s:%u\n1 1\n",
@@ -70,7 +72,8 @@ static int print_part_vp_mux(FILE*fd, ivl_lpm_t net)
       blif_nex_data_t*ned_out = blif_nex_data_t::get_nex_data(nex_out);
 
 	// Only handle bit selects.
-      assert(ned_out->get_width() == 1);
+      size_t o_wid = ned_out->get_width();
+      assert(1 == o_wid);
 
       ivl_nexus_t nex_in = ivl_lpm_data(net,0);
       blif_nex_data_t*ned_in = blif_nex_data_t::get_nex_data(nex_in);

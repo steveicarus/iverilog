@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -38,9 +38,12 @@ int print_lpm_add(FILE*fd, ivl_lpm_t net)
       blif_nex_data_t*a_ned = blif_nex_data_t::get_nex_data(a_nex);
       blif_nex_data_t*b_ned = blif_nex_data_t::get_nex_data(b_nex);
 
-      assert(ivl_lpm_width(net) == q_ned->get_width());
-      assert(ivl_lpm_width(net) == a_ned->get_width());
-      assert(ivl_lpm_width(net) == b_ned->get_width());
+      size_t q_wid = q_ned->get_width();
+      size_t a_wid = a_ned->get_width();
+      size_t b_wid = b_ned->get_width();
+      assert(ivl_lpm_width(net) == q_wid);
+      assert(ivl_lpm_width(net) == a_wid);
+      assert(ivl_lpm_width(net) == b_wid);
 
 	// Q[0] = A[0] ^ B[0]
       fprintf(fd, ".names %s%s %s%s %s%s\n"
@@ -114,9 +117,12 @@ int print_lpm_sub(FILE*fd, ivl_lpm_t net)
       blif_nex_data_t*a_ned = blif_nex_data_t::get_nex_data(a_nex);
       blif_nex_data_t*b_ned = blif_nex_data_t::get_nex_data(b_nex);
 
-      assert(ivl_lpm_width(net) == q_ned->get_width());
-      assert(ivl_lpm_width(net) == a_ned->get_width());
-      assert(ivl_lpm_width(net) == b_ned->get_width());
+      size_t q_wid = q_ned->get_width();
+      size_t a_wid = a_ned->get_width();
+      size_t b_wid = b_ned->get_width();
+      assert(ivl_lpm_width(net) == q_wid);
+      assert(ivl_lpm_width(net) == a_wid);
+      assert(ivl_lpm_width(net) == b_wid);
 
 	// Q[0] = A[0] ^ ~B[0] ^ 1
       fprintf(fd, ".names %s%s %s%s %s%s\n"

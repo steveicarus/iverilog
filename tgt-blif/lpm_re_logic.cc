@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,24 +40,26 @@ int print_lpm_re_logic(FILE*fd, ivl_lpm_t net)
       ivl_nexus_t nex_d = ivl_lpm_data(net,0);
       blif_nex_data_t*ned_d = blif_nex_data_t::get_nex_data(nex_d);
 
-      assert(ned_q->get_width() == 1);
+      size_t q_wid = ned_q->get_width();
+      assert(1 == q_wid);
 
+      size_t d_wid = ned_d->get_width();
       fprintf(fd, ".names");
-      for (size_t idx = 0 ; idx < ned_d->get_width() ; idx += 1) {
+      for (size_t idx = 0 ; idx < d_wid ; idx += 1) {
 	    fprintf(fd, " %s%s", ned_d->get_name(), ned_d->get_name_index(idx));
       }
       fprintf(fd, " %s%s\n", ned_q->get_name(), ned_q->get_name_index(0));
 
       switch (ivl_lpm_type(net)) {
 	  case IVL_LPM_RE_AND:
-	    for (size_t idx = 0 ; idx < ned_d->get_width() ; idx += 1)
+	    for (size_t idx = 0 ; idx < d_wid ; idx += 1)
 		  fputc('1', fd);
 	    fprintf(fd, " 1\n");
 	    break;
 
 	  case IVL_LPM_RE_OR:
-	    for (size_t idx = 0 ; idx < ned_d->get_width() ; idx += 1) {
-		  for (size_t wid = 0 ; wid < ned_d->get_width() ; wid += 1) {
+	    for (size_t idx = 0 ; idx < d_wid ; idx += 1) {
+		  for (size_t wid = 0 ; wid < d_wid ; wid += 1) {
 			if (wid==idx)
 			      fputc('1', fd);
 			else
@@ -68,12 +70,12 @@ int print_lpm_re_logic(FILE*fd, ivl_lpm_t net)
 	    break;
 
 	  case IVL_LPM_RE_XOR:
-	    assert(ned_d->get_width() < 8*sizeof(unsigned));
-	    for (unsigned val = 0; val < (1U<<ned_d->get_width()); val += 1) {
+	    assert(d_wid < 8*sizeof(unsigned));
+	    for (unsigned val = 0; val < (1U << d_wid) ; val += 1) {
 		  if (! re_xor(val))
 			continue;
 
-		  for (size_t idx = 0 ; idx < ned_d->get_width() ; idx += 1) {
+		  for (size_t idx = 0 ; idx < d_wid ; idx += 1) {
 			if (val & (1<<idx))
 			      fputc('1', fd);
 			else
@@ -84,8 +86,8 @@ int print_lpm_re_logic(FILE*fd, ivl_lpm_t net)
 	    break;
 
 	  case IVL_LPM_RE_NAND:
-	    for (size_t idx = 0 ; idx < ned_d->get_width() ; idx += 1) {
-		  for (size_t wid = 0 ; wid < ned_d->get_width() ; wid += 1) {
+	    for (size_t idx = 0 ; idx < d_wid ; idx += 1) {
+		  for (size_t wid = 0 ; wid < d_wid ; wid += 1) {
 			if (wid==idx)
 			      fputc('0', fd);
 			else
@@ -96,18 +98,18 @@ int print_lpm_re_logic(FILE*fd, ivl_lpm_t net)
 	    break;
 
 	  case IVL_LPM_RE_NOR:
-	    for (size_t idx = 0 ; idx < ned_d->get_width() ; idx += 1)
+	    for (size_t idx = 0 ; idx < d_wid ; idx += 1)
 		  fputc('0', fd);
 	    fprintf(fd, " 1\n");
 	    break;
 
 	  case IVL_LPM_RE_XNOR:
-	    assert(ned_d->get_width() < 8*sizeof(unsigned));
-	    for (unsigned val = 0; val < (1U<<ned_d->get_width()); val += 1) {
+	    assert(d_wid < 8*sizeof(unsigned));
+	    for (unsigned val = 0; val < (1U << d_wid) ; val += 1) {
 		  if (re_xor(val))
 			continue;
 
-		  for (size_t idx = 0 ; idx < ned_d->get_width() ; idx += 1) {
+		  for (size_t idx = 0 ; idx < d_wid ; idx += 1) {
 			if (val & (1<<idx))
 			      fputc('1', fd);
 			else

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Yury Gribov (tetra2005@gmail.com)
+ * Copyright (c) 2016-2026 Yury Gribov (tetra2005@gmail.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,7 +41,8 @@ int print_lpm_sign_ext(FILE*fd, ivl_lpm_t net)
 
 //printf("Shift: LPM width = %u, output width = %zd, input width = %u\n", outw, q_ned->get_width(), inw);
 
-      assert(outw == q_ned->get_width());
+      size_t q_wid = q_ned->get_width();
+      assert(outw == q_wid);
       assert(inw < outw);
 
       for (unsigned idx = 0 ; idx < outw ; idx += 1) {
