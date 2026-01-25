@@ -230,6 +230,7 @@ br_gh782b		normal,-g2009		ivltests gold=br_gh782b.gold
 br_gh800		normal,-g2009		ivltests
 br_gh801		normal,-g2012		ivltests
 br_gh801b		normal,-g2012		ivltests
+br_gh1217		normal,-g2012		ivltests
 br_gh1220		normal,-g2012		ivltests
 br_gh1222		CE,-g2009		ivltests gold=br_gh1222.gold
 br_gh1223a		normal,-g2009		ivltests
