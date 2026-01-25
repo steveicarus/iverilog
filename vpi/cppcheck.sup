@@ -8,6 +8,17 @@ memleakOnRealloc
 asctimeCalled:sys_fst.c:381
 asctimeCalled:sys_vcd.c:443
 
+// This is not an integer overflow
+integerOverflow:sys_random.c:590
+integerOverflow:sys_random.c:591
+integerOverflow:sys_random.c:593
+
+// cppcheck is missing this is passed/used as part of the delay structure
+unreadVariable:sys_sdf.c:269
+unreadVariable:sys_sdf.c:273
+unreadVariable:sys_sdf.c:343
+unreadVariable:sys_sdf.c:345
+
 // Skip since table_model() is not complete.
 memleak:table_mod.c:225
 memleak:table_mod.c:230
