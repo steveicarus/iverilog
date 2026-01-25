@@ -1,5 +1,5 @@
 
-The sizer Code Analyzer (-tvvp)
+The sizer Code Analyzer (-tsizer)
 ===============================
 
 The sizer target does not generate any code. Instead it will print statistics about the Verilog code.
