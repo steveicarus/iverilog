@@ -6,6 +6,9 @@ ctunullpointerOutOfMemory
 nullPointerArithmeticOutOfMemory
 nullPointerOutOfMemory
 
+// valgrind does not find any issues so cppcheck is wrong
+ctuuninitvar:parse_misc.cc:61
+
 // Skip strdup() not constant.
 constVariablePointer:main.cc:400
 constVariablePointer:main.cc:404
