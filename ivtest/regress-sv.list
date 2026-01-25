@@ -236,6 +236,7 @@ br_gh1222		CE,-g2009		ivltests gold=br_gh1222.gold
 br_gh1223a		normal,-g2009		ivltests
 br_gh1223b		normal,-g2009		ivltests
 br_gh1223c		normal,-g2009		ivltests
+br_gh1224		normal,-g2012		ivltests
 br_gh1230		normal,-g2009		ivltests
 br_ml20171017		normal,-g2009		ivltests
 br_ml20180227		CE,-g2009		ivltests
