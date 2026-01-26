@@ -137,3 +137,4 @@ ssetclr2		normal			ivltests
 ssetclr3		normal			ivltests
 synth_if_no_else	normal			ivltests
 ufuncsynth1		normal			ivltests
+br_gh1170		CO,-g2012,-tsizer		ivltests
