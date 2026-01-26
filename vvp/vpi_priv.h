@@ -124,6 +124,7 @@ class __vpiHandle {
 
       virtual int get_type_code(void) const =0;
       virtual int vpi_get(int code);
+      virtual int64_t vpi_get64(int code);
       virtual char* vpi_get_str(int code);
 
       virtual void vpi_get_value(p_vpi_value val);
@@ -352,6 +353,7 @@ extern void vpip_make_root_iterator(class __vpiHandle**&table,
  */
 struct __vpiSignal : public __vpiHandle {
       int vpi_get(int code) override;
+      int64_t vpi_get64(int code) override;
       char* vpi_get_str(int code) override;
       void vpi_get_value(p_vpi_value val) override;
       vpiHandle vpi_put_value(p_vpi_value val, int flags) override;

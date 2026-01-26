@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -44,18 +44,18 @@
    The _vpiNexusId is a private (int) property of IVL simulators.
 */
 
-static std::map<int,const char*> nexus_ident_map;
+static std::map<int64_t,const char*> nexus_ident_map;
 
-extern "C" const char*find_nexus_ident(int nex)
+extern "C" const char*find_nexus_ident(int64_t nex)
 {
-      std::map<int,const char*>::const_iterator cur = nexus_ident_map.find(nex);
+      std::map<int64_t,const char*>::const_iterator cur = nexus_ident_map.find(nex);
       if (cur == nexus_ident_map.end())
 	    return 0;
       else
 	    return cur->second;
 }
 
-extern "C" void set_nexus_ident(int nex, const char*id)
+extern "C" void set_nexus_ident(int64_t nex, const char*id)
 {
       nexus_ident_map[nex] = id;
 }

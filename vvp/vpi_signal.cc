@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -593,15 +593,30 @@ static int signal_get(int code, vpiHandle ref)
             return _vpiNoThr;
 #endif
 
+	  default:
+	    fprintf(stderr, "VPI error: unknown signal_get property %d.\n",
+	            code);
+	    return vpiUndefined;
+      }
+}
+
+/*
+ * implement vpi_get64 for vpiReg objects.
+ */
+static int64_t signal_get64(int code, vpiHandle ref)
+{
+      struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
+      assert(rfp);
+
+      switch (code) {
 	    // This private property must return zero when undefined.
 	  case _vpiNexusId:
 	    if (rfp->msb.get_value() == rfp->lsb.get_value())
-		  return (int) (uintptr_t) rfp->node;
-	    else
-		  return 0;
+		  return reinterpret_cast<int64_t>(rfp->node);
+	    return 0;
 
 	  default:
-	    fprintf(stderr, "VPI error: unknown signal_get property %d.\n",
+	    fprintf(stderr, "VPI error: unknown signal_get64 property %d.\n",
 	            code);
 	    return vpiUndefined;
       }
@@ -1049,6 +1064,9 @@ vvp_vector4_t vec4_from_vpi_value(s_vpi_value*vp, unsigned wid)
 
 int __vpiSignal::vpi_get(int code)
 { return signal_get(code, this); }
+
+int64_t __vpiSignal::vpi_get64(int code)
+{ return signal_get64(code, this); }
 
 char* __vpiSignal::vpi_get_str(int code)
 { return signal_get_str(code, this); }

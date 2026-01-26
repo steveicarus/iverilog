@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Martin Whitaker (icarus@martin-whitaker.me.uk)
+ * Copyright (c) 2019-2026 Martin Whitaker (icarus@martin-whitaker.me.uk)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,6 +57,7 @@ vpiHandle   vpi_scan(vpiHandle) { return 0; }
 // for processing properties
 
 PLI_INT32   vpi_get(int, vpiHandle) { return 0; }
+PLI_INT64   vpi_get64(int, vpiHandle) { return 0; }
 char*       vpi_get_str(PLI_INT32, vpiHandle) { return 0; }
 
 // delay processing
@@ -202,6 +203,7 @@ vpip_routines_s vpi_routines = {
     .iterate                    = vpi_iterate,
     .scan                       = vpi_scan,
     .get                        = vpi_get,
+    .get64                      = vpi_get64,
     .get_str                    = vpi_get_str,
     .get_delays                 = vpi_get_delays,
     .put_delays                 = vpi_put_delays,

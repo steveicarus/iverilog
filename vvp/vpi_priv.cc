@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2026 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2023 Leo Moser (leo.moser@pm.me)
  *
  *    This source code is free software; you can redistribute it
@@ -66,6 +66,9 @@ __vpiHandle::~__vpiHandle()
 
 int __vpiHandle::vpi_get(int)
 { return vpiUndefined; }
+
+int64_t __vpiHandle::vpi_get64(int code)
+{ return (code == _vpiNexusId) ? 0 : vpiUndefined; }
 
 char* __vpiHandle::vpi_get_str(int)
 { return 0; }
@@ -331,6 +334,8 @@ static const char* vpi_property_str(PLI_INT32 code)
 	    return "vpiTimePrecision";
           case vpiSize:
 	    return "vpiSize";
+          case _vpiNexusId:
+	    return "_vpiNexusId";
 	  default:
 	    snprintf(buf, sizeof(buf), "%d", (int)code);
       }
@@ -443,6 +448,25 @@ PLI_INT32 vpi_get(int property, vpiHandle ref)
 
       if (vpi_trace) {
 	    fprintf(vpi_trace, "vpi_get(%s, %p) --> %d\n",
+		    vpi_property_str(property), ref, res);
+      }
+
+      return res;
+}
+
+PLI_INT64 vpi_get64(int property, vpiHandle ref)
+{
+	// For now we only support getting the nexus id.
+      if ((ref == 0) || (property != _vpiNexusId)) {
+	    fprintf(vpi_trace, "vpi_get64(%s, %p) is not currently supported.\n",
+		    vpi_property_str(property), ref);
+	    return vpiUndefined;
+      }
+
+      int64_t res = ref->vpi_get64(property);
+
+      if (vpi_trace) {
+	    fprintf(vpi_trace, "vpi_get64(%s, %p) --> %" PRId64 "\n",
 		    vpi_property_str(property), ref, res);
       }
 

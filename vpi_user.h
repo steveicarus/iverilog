@@ -1,7 +1,7 @@
 #ifndef VPI_USER_H
 #define VPI_USER_H
 /*
- * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -543,6 +543,7 @@ extern vpiHandle  vpi_handle_multi(PLI_INT32 type, vpiHandle ref1, vpiHandle ref
 
 extern void  vpi_get_time(vpiHandle obj, s_vpi_time*t);
 extern PLI_INT32 vpi_get(int property, vpiHandle ref);
+extern PLI_INT64 vpi_get64(int property, vpiHandle ref);
 extern char      *vpi_get_str(PLI_INT32 property, vpiHandle ref);
 extern void  vpi_get_value(vpiHandle expr, p_vpi_value value);
 
@@ -709,6 +710,7 @@ typedef struct {
     vpiHandle   (*iterate)(PLI_INT32, vpiHandle);
     vpiHandle   (*scan)(vpiHandle);
     PLI_INT32   (*get)(int, vpiHandle);
+    PLI_INT64   (*get64)(int, vpiHandle);
     char*       (*get_str)(PLI_INT32, vpiHandle);
     void        (*get_delays)(vpiHandle, p_vpi_delay);
     void        (*put_delays)(vpiHandle, p_vpi_delay);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -523,7 +523,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
       const char* name;
       const char* ident;
-      int nexus_id;
+      int64_t nexus_id;
 
       switch (vpi_get(vpiType, item)) {
 
@@ -558,7 +558,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
             if (skip || vpi_get(vpiAutomatic, item)) break;
 
 	    name = vpi_get_str(vpiName, item);
-	    nexus_id = vpi_get(_vpiNexusId, item);
+	    nexus_id = vpi_get64(_vpiNexusId, item);
 	    if (nexus_id) {
 		  ident = find_nexus_ident(nexus_id);
 	    } else {

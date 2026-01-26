@@ -582,7 +582,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
       const char* name;
       const char* ident;
-      int nexus_id;
+      int64_t nexus_id;
 
       switch (vpi_get(vpiType, item)) {
 
@@ -617,7 +617,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
             if (skip || vpi_get(vpiAutomatic, item)) break;
 
 	    name = vpi_get_str(vpiName, item);
-	    nexus_id = vpi_get(_vpiNexusId, item);
+	    nexus_id = vpi_get64(_vpiNexusId, item);
 	    if (nexus_id) {
 		  ident = find_nexus_ident(nexus_id);
 	    } else {

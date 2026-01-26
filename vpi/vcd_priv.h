@@ -1,7 +1,7 @@
 #ifndef IVL_vcd_priv_H
 #define IVL_vcd_priv_H
 /*
- * Copyright (c) 2003-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -52,8 +52,8 @@ EXTERN void vcd_names_delete(struct vcd_names_list_s*tab);
 /*
  * Keep a map of nexus ident's to help with alias detection.
  */
-EXTERN const char*find_nexus_ident(int nex);
-EXTERN void       set_nexus_ident(int nex, const char *id);
+EXTERN const char*find_nexus_ident(int64_t nex);
+EXTERN void       set_nexus_ident(int64_t nex, const char *id);
 
 EXTERN void nexus_ident_delete(void);
 

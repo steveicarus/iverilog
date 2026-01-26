@@ -21,7 +21,7 @@ invalidPointerCast:class_type.cc:332
 invalidPointerCast:class_type.cc:338
 invalidPointerCast:class_type.cc:339
 cstyleCast:ufunc.cc:80
-cstyleCast:vpi_priv.cc:226
+cstyleCast:vpi_priv.cc:229
 cstyleCast:vpi_scope.cc:615
 
 // Skip the sscanf() field width limit warning
@@ -29,12 +29,12 @@ invalidscanf:compile.cc:597
 invalidscanf:compile.cc:609
 
 // By convention we put statics at the top scope.
-variableScope:vpi_priv.cc:623
+variableScope:vpi_priv.cc:647
 
 // Changing this breaks the compile
 constParameterPointer:vthread.cc:423
 useInitializationList:delay.cc:513
-constParameterPointer:vpi_priv.cc:1434
+constParameterPointer:vpi_priv.cc:1458
 
 // Operator new/delete are static so cannot override
 duplInheritedMember:vvp_net.h:1476
@@ -79,27 +79,27 @@ duplicateValueTernary:class_type.cc:268
 
 // cppcheck is wrong this can be true or false
 knownConditionTrueFalse:vthread.cc:2986
-knownConditionTrueFalse:vpi_priv.cc:657
-knownConditionTrueFalse:vpi_priv.cc:1955
+knownConditionTrueFalse:vpi_priv.cc:681
+knownConditionTrueFalse:vpi_priv.cc:1979
 
 // cppcheck is wrong this is already const
 constParameterPointer:vpi_tasks.cc:259
 
 // For some cases this expression can be different
-duplicateExpression:vpi_signal.cc:1189
+duplicateExpression:vpi_signal.cc:1207
 
 // cppcheck does not relize this is deleted[] in the called routine
 leakNoVarFunctionCall:compile.cc:452
 
 // Yes, these are not currently initialized in the constructor
 // All are added after __vpiSysTaskCall is built
-uninitMemberVar:vpi_priv.h:944
+uninitMemberVar:vpi_priv.h:946
 // All are added after __vpiSignal is built
-uninitMemberVar:vpi_priv.h:392
+uninitMemberVar:vpi_priv.h:394
 // run_run_ptr is added after the event is built
 uninitMemberVar:delay.h:79
 // The array values are added after it is allocated
-noConstructor:vpi_priv.h:778
+noConstructor:vpi_priv.h:780
 // The enum values are added after this is built
 uninitMemberVar:enum_type.cc:54
 // The names for the enum values are added after allocation
@@ -107,10 +107,10 @@ uninitMemberVar:enum_type.cc:100
 // The thread values get assigned after being created
 uninitMemberVar:vthread.cc:316
 // The mod path has the values added after creation
-uninitMemberVar:delay.cc:1005
-uninitMemberVar:delay.cc:1045
+uninitMemberVar:delay.cc:1006
+uninitMemberVar:delay.cc:1046
 // The intermod path has the values added after creation
-uninitMemberVar:delay.cc:1395
+uninitMemberVar:delay.cc:1396
 // The island values are set after creation
 uninitDerivedMemberVar:island_tran.cc:60
 // The cb_data is set after creation
@@ -124,24 +124,24 @@ uninitMemberVar:vpi_scope.cc:353
 // The real var values are set after creation
 uninitMemberVar:vpi_real.cc:158
 // The PV values are set after creation
-uninitMemberVar:vpi_signal.cc:1577
+uninitMemberVar:vpi_signal.cc:1595
 // The info/is_user_defn are added ater creation
 uninitMemberVar:vpi_tasks.cc:41
 // All the values are set after creation using the default constructor
 noConstructor:vpi_tasks.cc:158
 
 // We check memory usage using valgrind.
-unsafeClassCanLeak:vpi_priv.h:750
+unsafeClassCanLeak:vpi_priv.h:752
 unsafeClassCanLeak:permaheap.h:47
 
 // Index calculation
-thisSubtraction:vpi_priv.h:430
+thisSubtraction:vpi_priv.h:432
 thisSubtraction:array_common.h:91
 
 // The interface is from the standard.
-constParameterCallback:vpi_priv.cc:1110
+constParameterCallback:vpi_priv.cc:1134
+constParameterPointer:vpi_priv.cc:1134
 constParameterPointer:vpi_mcd.cc:158
-constParameterPointer:vpi_priv.cc:1110
 
 // cppcheck is missing the code adds a \0 at the previous location.
 knownConditionTrueFalse:vpi_modules.cc:118
@@ -220,13 +220,13 @@ unusedFunction:lib_main.cc:76
 // alias_word()
 unusedFunction:array.cc:848
 // intermodpath_delete()
-unusedFunction:delay.cc:1462
+unusedFunction:delay.cc:1463
 // count_force4_pool()
 unusedFunction:schedule.cc:404
 // call_scope()
 unusedFunction:ufunc.h:62
 // get_bit()
-unusedFunction:vpi_priv.h:477
+unusedFunction:vpi_priv.h:479
 // copy_bits()
 unusedFunction:vvp_net.cc:615
 // mov()

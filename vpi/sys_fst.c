@@ -442,7 +442,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       char *escname;
       const char *ident;
       fstHandle new_ident;
-      int nexus_id;
+      int64_t nexus_id;
       unsigned size;
       PLI_INT32 item_type;
 
@@ -557,7 +557,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    } else escname = strdup(name);
 
 	      /* Some signals can have an alias so handle that. */
-	    nexus_id = vpi_get(_vpiNexusId, item);
+	    nexus_id = vpi_get64(_vpiNexusId, item);
 
 	    ident = 0;
 	    if (nexus_id) ident = find_nexus_ident(nexus_id);
