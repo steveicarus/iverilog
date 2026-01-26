@@ -2020,6 +2020,7 @@ vpip_routines_s vpi_routines = {
     .iterate                    = vpi_iterate,
     .scan                       = vpi_scan,
     .get                        = vpi_get,
+    .get64                      = vpi_get64,
     .get_str                    = vpi_get_str,
     .get_delays                 = vpi_get_delays,
     .put_delays                 = vpi_put_delays,

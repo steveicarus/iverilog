@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Martin Whitaker (icarus@martin-whitaker.me.uk)
+ * Copyright (c) 2019-2026 Martin Whitaker (icarus@martin-whitaker.me.uk)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -90,6 +90,11 @@ PLI_INT32 vpi_get(int property, vpiHandle ref)
 {
       assert(vpip_routines);
       return vpip_routines->get(property, ref);
+}
+PLI_INT64 vpi_get64(int property, vpiHandle ref)
+{
+      assert(vpip_routines);
+      return vpip_routines->get64(property, ref);
 }
 char*vpi_get_str(PLI_INT32 property, vpiHandle ref)
 {
