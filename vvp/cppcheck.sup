@@ -85,6 +85,9 @@ knownConditionTrueFalse:vpi_priv.cc:1979
 // cppcheck is wrong this is already const
 constParameterPointer:vpi_tasks.cc:259
 
+// cppcheck is wrong. When all bits are 1 this is false
+knownConditionTrueFalse:vthread.cc:3571
+
 // For some cases this expression can be different
 duplicateExpression:vpi_signal.cc:1207
 
