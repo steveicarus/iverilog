@@ -20,6 +20,7 @@
 
 # include "config.h"
 
+# include  <algorithm>
 # include  <iostream>
 
 # include  "compiler.h"
