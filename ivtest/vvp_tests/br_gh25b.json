@@ -1,5 +1,5 @@
 {
     "type"   : "normal",
     "source" : "br_gh25b.v",
-    "iverilog-args" : [ "-g2009" }
+    "iverilog-args" : [ "-g2009" ]
 }
