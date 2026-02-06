@@ -51,7 +51,7 @@ def run_test(test):
 
     if rc == 0:
         # Use ABC to convert the .blif file to Verilog
-        abc_cmd = "abc -c 'read_blif tmp_blif.blif ; write_verilog tmp_blif.v' >> " + redirect
+        abc_cmd = "berkeley-abc -c 'read_blif tmp_blif.blif ; write_verilog tmp_blif.v' >> " + redirect
         rc = subprocess.call(abc_cmd, shell=True);
 
     if rc == 0:
@@ -66,10 +66,10 @@ def run_test(test):
         rc = 0 if output == "PASSED\n" else 1
 
     if rc == 0:
-        print test, "PASSED"
+        print(test, "PASSED")
         count_passed = count_passed + 1
     else:
-        print test, "FAILED"
+        print(test, "FAILED")
         count_failed = count_failed + 1
 
     for tmp in ["tmp_blif.blif", "tmp_blif.v", "tmp_blif.vvp"]:
@@ -82,5 +82,5 @@ count_failed = 0
 for test in tests:
     run_test(test)
 
-print
-print count_passed, "tests passed,", count_failed, "tests failed."
+print()
+print(count_passed, "tests passed,", count_failed, "tests failed.")
