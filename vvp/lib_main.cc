@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-  "Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)";
+  "Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,9 +30,6 @@ const char COPYRIGHT[] =
 # include  <cstring>
 # include  <unistd.h>
 # include  <cassert>
-#ifdef CHECK_WITH_VALGRIND
-# include  <pthread.h>
-#endif
 
 #if defined(HAVE_SYS_RESOURCE_H)
 # include  <sys/time.h>
@@ -256,10 +253,6 @@ static void final_cleanup()
 
 #ifdef CHECK_WITH_VALGRIND
       simulator_cb_delete();
-	/* This is needed to prevent valgrind from complaining about
-	 * _dlerror_run() having a memory leak. */
-// HERE: Is this portable? Does it break anything?
-      pthread_exit(NULL);
 #endif
 }
 
