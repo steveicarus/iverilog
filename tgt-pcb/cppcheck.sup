@@ -10,14 +10,10 @@ unusedFunction:pcb.cc:84
 // Errors/limitations in the generated yacc and lex files
 duplicateBreak:fp.lex
 constParameterPointer:fp.cc
-invalidPrintfArgType_sint:fp.cc
 knownConditionTrueFalse:fp.cc
-syntaxError:fp.cc
-unsignedPositive:fp.cc
 constVariablePointer:fp_lex.cc
 cstyleCast:fp_lex.cc
 nullPointer:fp_lex.cc
 redundantInitialization:fp_lex.cc
-syntaxError:fp_lex.cc
 unusedFunction:fp_lex.cc
 unusedStructMember:fp_lex.cc

@@ -10,7 +10,7 @@ nullPointerOutOfMemory
 //constVariablePointer:main.cc:400
 
 // Only for conditional debugging
-knownConditionTrueFalse:lib_main.cc:289
+knownConditionTrueFalse:lib_main.cc:282
 
 // For now these casts have to be used
 dangerousTypeCast:array_common.cc:188
@@ -206,18 +206,6 @@ unusedFunction:vpi_callback.cc:601
 unusedFunction:vpi_priv.cc:1904
 // vpi_vprintf()
 unusedFunction:vpi_priv.cc:1505
-
-// The following are used in the embedded version of iverilog.
-// vvp_init()
-unusedFunction:lib_main.cc:275
-// vvp_run()
-unusedFunction:lib_main.cc:339
-// vvp_set_quiet_flag()
-unusedFunction:lib_main.cc:71
-// vvp_set_stop_is_finish()
-unusedFunction:lib_main.cc:62
-// vvp_set_verbose_flag()
-unusedFunction:lib_main.cc:76
 
 // The following are just unused.
 // alias_word()

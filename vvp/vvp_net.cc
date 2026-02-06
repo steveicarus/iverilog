@@ -2146,7 +2146,7 @@ bool vector2_to_value(const vvp_vector2_t&a, int32_t&val, bool is_signed)
 {
       val = 0;
       unsigned idx;
-      int32_t mask;
+      uint32_t mask;
       for (idx = 0, mask = 1 ; idx < a.size() && idx < 32 ; idx += 1, mask <<= 1) {
 	    if (a.value(idx)) val |= mask;
       }

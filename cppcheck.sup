@@ -761,7 +761,6 @@ allocaCalled:parse.cc
 constParameterPointer:parse.cc
 constVariablePointer:parse.cc
 knownConditionTrueFalse:parse.cc
-syntaxError:parse.cc
 allocaCalled:syn-rules.cc
 constParameterPointer:syn-rules.cc
 knownConditionTrueFalse:syn-rules.cc

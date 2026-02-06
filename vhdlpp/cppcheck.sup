@@ -29,10 +29,7 @@ duplicateBreak:lexor.lex
 redundantInitialization:lexor.lex
 uselessAssignmentPtrArg:lexor.lex
 constParameterPointer:parse.cc
-invalidPrintfArgType_sint:parse.cc
 knownConditionTrueFalse:parse.cc
-syntaxError:parse.cc
-unsignedPositive:parse.cc
 
 // Unused functions
 unusedFunction:LineInfo.h

@@ -18,11 +18,8 @@ memleakOnRealloc:cfparse.y
 allocaCalled:cfparse.c
 constParameterPointer:cfparse.c
 constVariablePointer:cfparse.c
-invalidPrintfArgType_sint:cfparse.c
 knownConditionTrueFalse:cfparse.c
 sizeofwithnumericparameter:cfparse.c
-syntaxError:cfparse.c
-unsignedPositive:cfparse.c
 constVariablePointer:<stdout>
 nullPointer:<stdout>
 redundantInitialization:<stdout>
