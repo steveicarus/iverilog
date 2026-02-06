@@ -173,6 +173,7 @@ sub execute_regression {
         }
 
         $cmd = $with_valg ? "valgrind --leak-check=full " .
+                            "--keep-debuginfo=yes " .
                             "--show-reachable=yes " : "";
         $cmd .= "vvp$sfx vsim $vvp_args $plargs{$tname}";
 #        print "$cmd\n";

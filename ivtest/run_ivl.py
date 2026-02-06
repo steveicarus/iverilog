@@ -23,7 +23,8 @@ def assemble_vvp_cmd(options: dict, cfg: dict) -> list:
     '''Build the vvp command line'''
     res = []
     if cfg['with-valgrind']:
-        res += ["valgrind", "--leak-check=full", "--show-reachable=yes"]
+        res += ["valgrind", "--leak-check=full", "--keep-debuginfo=yes",
+                            "--show-reachable=yes"]
     res += ["vvp"+cfg['suffix']]
     res += options['vvp_args']
     res.append(os.path.join("work", "a.out"))
