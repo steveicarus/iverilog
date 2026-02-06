@@ -1080,7 +1080,6 @@ vvp_time64_t schedule_simtime(void)
 
 extern void vpiEndOfCompile();
 extern void vpiStartOfSim();
-extern void vpiPostsim();
 extern void vpiNextSimTime(void);
 
 static bool sim_at_rosync = false;

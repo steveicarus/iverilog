@@ -1,7 +1,7 @@
 #ifndef IVL_schedule_H
 #define IVL_schedule_H
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -215,5 +215,8 @@ extern unsigned long count_gen_events;
 extern unsigned long count_prop_events;
 extern unsigned long count_thread_events;
 extern unsigned long count_event_pool;
+
+// Run the post simulation callbacks.
+extern void vpiPostsim(void);
 
 #endif /* IVL_schedule_H */
