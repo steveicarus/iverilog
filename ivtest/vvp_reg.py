@@ -205,9 +205,7 @@ if __name__ == "__main__":
     # We need the width of the widest key so that we can figure out
     # how to align the key:result columns.
     # pylint: disable-next=invalid-name
-    width = 0
-    for cur in tests_list:
-        width = max(width, len(cur[0]))
+    width = max(len(item[0]) for item in tests_list)
 
     # pylint: disable-next=invalid-name
     error_count = 0
