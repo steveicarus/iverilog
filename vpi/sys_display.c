@@ -1908,6 +1908,11 @@ static PLI_INT32 sys_end_of_compile(p_cb_data cb_data)
       (void)cb_data; /* Parameter is not used. */
 	/* The default timeformat prints times in unit of simulation
 	   precision. */
+
+        // Allocate the first entry in monitor_info for use by $monitor
+        // based tasks.
+      (void)allocate_monitor_info();
+
       free(timeformat_info.suff);
       timeformat_info.suff  = strdup("");
       timeformat_info.units = vpi_get(vpiTimePrecision, 0);
@@ -2272,10 +2277,6 @@ void sys_display_register(void)
       s_cb_data cb_data;
       s_vpi_systf_data tf_data;
       vpiHandle res;
-
-        // Allocate the first entry in monitor_info for use by $monitor
-        // based tasks.
-      (void)allocate_monitor_info();
 
       check_command_line_args();
 
