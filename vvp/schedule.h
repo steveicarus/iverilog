@@ -216,7 +216,10 @@ extern unsigned long count_prop_events;
 extern unsigned long count_thread_events;
 extern unsigned long count_event_pool;
 
-// Run the post simulation callbacks.
+// Trigger the simulation callbacks.
+extern void vpiEndOfCompile(void);
+extern void vpiStartOfSim(void);
 extern void vpiPostsim(void);
+extern void vpiNextSimTime(void);
 
 #endif /* IVL_schedule_H */

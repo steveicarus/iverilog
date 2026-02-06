@@ -1078,10 +1078,6 @@ static vvp_time64_t schedule_time;
 vvp_time64_t schedule_simtime(void)
 { return schedule_time; }
 
-extern void vpiEndOfCompile();
-extern void vpiStartOfSim();
-extern void vpiNextSimTime(void);
-
 static bool sim_at_rosync = false;
 bool schedule_at_rosync(void)
 { return sim_at_rosync; }
