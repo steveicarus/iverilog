@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -121,19 +121,7 @@ static void delete_sub_scopes(__vpiScope *scope)
 		  class_delete(item);
 		  break;
 		case vpiArrayVar:
-		  switch(item->vpi_get(vpiArrayType)) {
-		      case vpiQueueArray:
-			queue_delete(item);
-			break;
-		      case vpiDynamicArray:
-			darray_delete(item);
-			break;
-		      default:
-			fprintf(stderr, "Need support for array type: %d\n",
-			                item->vpi_get(vpiArrayType));
-			assert(0);
-			break;
-		  }
+		  array_delete(item);
 		  break;
 		default:
 		  fprintf(stderr, "Need support for type: %d\n",

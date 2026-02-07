@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -340,16 +340,22 @@ vpiHandle vpip_make_queue_var(const char*name, vvp_net_t*net)
 }
 
 #ifdef CHECK_WITH_VALGRIND
-void darray_delete(vpiHandle item)
+void array_delete(vpiHandle item)
 {
-      __vpiDarrayVar*obj = dynamic_cast<__vpiDarrayVar*>(item);
-      if (obj->vals_words) delete [] (obj->vals_words-1);
-      delete obj;
-}
+      __vpiDarrayVar*dobj = dynamic_cast<__vpiDarrayVar*>(item);
+      if (dobj) {
+	    if (dobj->vals_words) delete [] (dobj->vals_words-1);
+	    delete dobj;
+	    return;
+      }
 
-void queue_delete(vpiHandle item)
-{
-      __vpiQueueVar*obj = dynamic_cast<__vpiQueueVar*>(item);
-      delete obj;
+      __vpiQueueVar*qobj = dynamic_cast<__vpiQueueVar*>(item);
+      if (qobj) {
+	    delete qobj;
+	    return;
+      }
+
+      fprintf(stderr, "Need support for deleting array type: %d\n", item->vpi_get(vpiArrayType));
+      assert(0);
 }
 #endif

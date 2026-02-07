@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_cleanup_H
 #define IVL_vvp_cleanup_H
 /*
- * Copyright (c) 2009-2015 Cary R. (cygcary@yahoo.com)
+ * Copyright (c) 2009-2026 Cary R. (cygcary@yahoo.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -49,8 +49,7 @@ extern void class_delete(class __vpiHandle *item);
 extern void class_def_delete(class_type *item);
 extern void constant_delete(class __vpiHandle *item);
 extern void contexts_delete(__vpiScope *scope);
-extern void darray_delete(class __vpiHandle *item);
-extern void queue_delete(class __vpiHandle *item);
+extern void array_delete(class __vpiHandle *item);
 extern void enum_delete(class __vpiHandle *item);
 extern void memory_delete(class __vpiHandle *item);
 extern void named_event_delete(class __vpiHandle *item);
