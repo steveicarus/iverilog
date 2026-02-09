@@ -102,7 +102,7 @@ sub read_regression_list {
             $args{$tname} = "";
         }
         if ($opt ne "std") {
-            $args{$tname} = $opt . $args{$tname};
+            $args{$tname} = $opt . ($args{$tname} ? " " . $args{$tname} : "");
         }
 
         $srcpath{$tname} = $fields[2];

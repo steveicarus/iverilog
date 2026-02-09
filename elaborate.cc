@@ -133,8 +133,26 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       }
 
 	// If this turns out to be an assignment to an unpacked array,
-	// then handle that special case elsewhere.
+	// then handle that special case elsewhere. We need to distinguish:
+	// 1. Whole array assignment: `assign arr = expr` -> elaborate_unpacked_array_
+	// 2. Indexed element assignment: `assign arr[i] = expr` -> normal path
+	// For single-element arrays ([0:0]), pin_count() is 1 but we still need
+	// to handle whole-array assignments specially (#1265).
+      bool is_whole_array = false;
       if (lval->pin_count() > 1) {
+	    // Multi-element array is always a whole-array assignment
+	    is_whole_array = true;
+      } else if (lval->unpacked_dimensions() > 0) {
+	    // Single-element unpacked array. Check if lval has array indices.
+	    const PEIdent* lval_ident = dynamic_cast<const PEIdent*>(pin(0));
+	    if (lval_ident && !lval_ident->path().name.empty()) {
+		  // If the identifier has no indices, it's a whole-array reference
+		  if (lval_ident->path().back().index.empty()) {
+			is_whole_array = true;
+		  }
+	    }
+      }
+      if (is_whole_array) {
 	    elaborate_unpacked_array_(des, scope, lval);
 	    return;
       }
@@ -774,11 +792,13 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  return;
 	    }
-	      // Gates can never have variable output ports.
+	      // In SystemVerilog, variables can be driven by a single
+	      // primitive/gate output (IEEE 1800-2017 6.5). Primitives always
+	      // use default (strong) drive strength.
             if (lval_count > gate_count)
-	          lval_sigs[idx] = pin(idx)->elaborate_bi_net(des, scope, false);
+	          lval_sigs[idx] = pin(idx)->elaborate_bi_net(des, scope, gn_system_verilog());
             else
-	          lval_sigs[idx] = pin(idx)->elaborate_lnet(des, scope, false);
+	          lval_sigs[idx] = pin(idx)->elaborate_lnet(des, scope, gn_system_verilog());
 
 	      // The only way this should return zero is if an error
 	      // happened, so for that case just return.
@@ -4338,9 +4358,15 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 			rv = cast_to_int4(rv, lv_width);
 			break;
 		      default:
-			  /* Don't yet know how to handle this. */
-			ivl_assert(*this, 0);
-			break;
+			  /* Cannot cast between these types. */
+			cerr << get_fileline() << ": error: "
+			     << "Type of task port " << (idx+1)
+			     << " is not compatible with the argument type."
+			     << endl;
+			des->errors += 1;
+			delete rv;
+			delete lv;
+			continue;
 		  }
 	    }
 	    rv = pad_to_width(rv, lv_width, *this);

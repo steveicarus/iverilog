@@ -92,6 +92,10 @@ int target_design(ivl_design_t des)
 	// multiple root scopes, we will give isolated numbers for
 	// each and keep then separate.
       for (unsigned idx = 0 ; idx < nroots ; idx += 1) {
+	      // Skip SystemVerilog $unit scope (compilation unit scope)
+	    if (ivl_scope_type(roots[idx]) == IVL_SCT_PACKAGE) {
+		  continue;
+	    }
 	    if (ivl_scope_type(roots[idx]) != IVL_SCT_MODULE) {
 		  fprintf(stderr, "SIZER: The root scope %s must be a module.\n", ivl_scope_basename(roots[idx]));
 		  sizer_errors += 1;
