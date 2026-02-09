@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -185,7 +185,7 @@ bool dll_target::make_single_lval_(const LineInfo*li, struct ivl_lval_s*cur, con
 	    const NetAssign_*asn_nest = asn->nest();
 	    ivl_assert(*li, asn_nest);
 	    struct ivl_lval_s*cur_nest = new struct ivl_lval_s;
-	    make_single_lval_(li, cur_nest, asn_nest);
+	    flag &= make_single_lval_(li, cur_nest, asn_nest);
 
 	    cur->type_ = IVL_LVAL_LVAL;
 	    cur->n.nest = cur_nest;

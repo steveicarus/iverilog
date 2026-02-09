@@ -31,7 +31,7 @@ functionStatic:net_link.cc:193
 functionStatic:libmisc/StringHeap.cc
 
 // Skip not initialized in the constructor for target scope
-uninitMemberVar:t-dll.cc
+uninitMemberVar:t-dll.cc:109
 
 // By convention we put statics at the top scope.
 variableScope:pform.cc:3461

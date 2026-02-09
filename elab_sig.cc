@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -528,7 +528,7 @@ bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 		  cerr << get_fileline() << ": debug: Elaborate nets in "
 		       << "scope " << scope_path(*cur)
 		       << " in generate " << id_number << endl;
-	    flag = elaborate_sig_(des, *cur) && flag;
+	    flag &= elaborate_sig_(des, *cur) && flag;
       }
 
       return flag;
@@ -574,6 +574,7 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
 {
 	// Scan the declared PWires to elaborate the obvious signals
 	// in the current scope.
+      bool flag = true;
       typedef map<perm_string,PWire*>::const_iterator wires_it_t;
       for (wires_it_t wt = wires.begin()
 		 ; wt != wires.end() ; ++ wt ) {
@@ -584,7 +585,8 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
 		  cerr << get_fileline() << ": debug: Elaborate PWire "
 		       << cur->basename() << " in scope " << scope_path(scope) << endl;
 
-	    cur->elaborate_sig(des, scope);
+	    const NetNet* res = cur->elaborate_sig(des, scope);
+	    flag &= (res != nullptr);
       }
 
       elaborate_sig_funcs(des, scope, funcs);
@@ -593,23 +595,23 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()
 		 ; cur != generate_schemes.end() ; ++ cur ) {
-	    (*cur) -> elaborate_sig(des, scope);
+	    flag &= (*cur)->elaborate_sig(des, scope);
       }
 
       typedef list<PGate*>::const_iterator pgate_list_it_t;
       for (pgate_list_it_t cur = gates.begin()
 		 ; cur != gates.end() ; ++ cur ) {
-	    (*cur) ->elaborate_sig(des, scope);
+	    flag &= (*cur)->elaborate_sig(des, scope);
       }
 
       typedef list<PProcess*>::const_iterator proc_it_t;
       for (proc_it_t cur = behaviors.begin()
 		 ; cur != behaviors.end() ; ++ cur ) {
-	    (*cur) -> statement() -> elaborate_sig(des, scope);
+	    (*cur)->statement()->elaborate_sig(des, scope);
       }
 
 
-      return true;
+      return flag;
 }
 
 

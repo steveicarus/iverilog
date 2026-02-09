@@ -22,7 +22,7 @@ invalidPointerCast:class_type.cc:338
 invalidPointerCast:class_type.cc:339
 cstyleCast:ufunc.cc:80
 cstyleCast:vpi_priv.cc:229
-cstyleCast:vpi_scope.cc:615
+cstyleCast:vpi_scope.cc:603
 
 // Skip the sscanf() field width limit warning
 invalidscanf:compile.cc:597
@@ -123,7 +123,7 @@ uninitMemberVar:vpi_event.cc:28
 // Iterator values are set after creation
 uninitMemberVar:vpi_iter.cc:41
 // Scope values are set after creation
-uninitMemberVar:vpi_scope.cc:353
+uninitMemberVar:vpi_scope.cc:341
 // The real var values are set after creation
 uninitMemberVar:vpi_real.cc:158
 // The PV values are set after creation
