@@ -89,6 +89,7 @@ LEX = @LEX@
 YACC = @YACC@
 MAN = @MAN@
 PS2PDF = @PS2PDF@
+GROFF = @GROFF@
 GIT = @GIT@
 
 ifeq (@srcdir@,.)
@@ -275,17 +276,24 @@ lexor.cc: $(srcdir)/lexor.lex
 lexor_keyword.o: lexor_keyword.cc parse.h
 
 lexor_keyword.cc: $(srcdir)/lexor_keyword.gperf
-	gperf -o -i 7 -C -k 1-4,6,9,$$ -H keyword_hash -N check_identifier -t $(srcdir)/lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
+	gperf -o -i 7 -C -k 1-4,6,9,$$ -H keyword_hash -N check_identifier -t $< > $@ || (rm -f $@ ; false)
 
 iverilog-vpi.man: $(srcdir)/iverilog-vpi.man.in version.exe
-	./version.exe `head -1 $(srcdir)/iverilog-vpi.man.in`'\n' > $@
-	tail -n +2 $(srcdir)/iverilog-vpi.man.in >> $@
+	./version.exe `head -1 $<`'\n' > $@
+	tail -n +2 $< >> $@
 
-iverilog-vpi.ps: iverilog-vpi.man
-	$(MAN) -t ./iverilog-vpi.man > iverilog-vpi.ps
+iverilog-vpi.ps: ./iverilog-vpi.man
+	$(MAN) -t $< > $@
 
 iverilog-vpi.pdf: iverilog-vpi.ps
-	$(PS2PDF) iverilog-vpi.ps iverilog-vpi.pdf
+	$(PS2PDF) $< $@
+
+iverilog_man.ps: driver/iverilog.man vvp/vvp.man iverilog-vpi.man
+	$(GROFF) -man -rC1 -rD1 -T ps $^ > $@
+
+iverilog_man.pdf: iverilog_man.ps ./version.exe
+	$(PS2PDF) $< $@
+	cp $@ iverilog_man_`./version.exe %M_%n`.pdf
 
 # For VERSION_TAG in driver/main.c, first try git-describe, then look for a
 # release_tag.h file in the source tree (included in snapshots and releases),

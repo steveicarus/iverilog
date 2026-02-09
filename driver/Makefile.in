@@ -103,14 +103,14 @@ main.o: main.c globals.h $(srcdir)/../version_base.h ../version_tag.h Makefile
 cflexor.o: cflexor.c cfparse.h
 
 iverilog.man: $(srcdir)/iverilog.man.in ../version.exe
-	../version.exe `head -1 $(srcdir)/iverilog.man.in`'\n' > $@
-	tail -n +2 $(srcdir)/iverilog.man.in >> $@
+	../version.exe `head -1 $<`'\n' > $@
+	tail -n +2 $< >> $@
 
-iverilog.ps: iverilog.man
-	$(MAN) -t ./iverilog.man > iverilog.ps
+iverilog.ps: ./iverilog.man
+	$(MAN) -t $< > $@
 
 iverilog.pdf: iverilog.ps
-	$(PS2PDF) iverilog.ps iverilog.pdf
+	$(PS2PDF) $< $@
 
 ifeq (@MINGW32@,yes)
 ifeq ($(MAN),none)

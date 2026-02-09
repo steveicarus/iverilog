@@ -183,17 +183,17 @@ parse%cc parse%h: $(srcdir)/parse%y
 	$(YACC) --verbose -t --defines=parse.h -o parse.cc $<
 
 lexor.cc: $(srcdir)/lexor.lex
-	$(LEX) -s -olexor.cc $(srcdir)/lexor.lex
+	$(LEX) -s -o$@ $<
 
 vvp.man: $(srcdir)/vvp.man.in ../version.exe
-	../version.exe `head -1 $(srcdir)/vvp.man.in`'\n' > $@
-	tail -n +2 $(srcdir)/vvp.man.in >> $@
+	../version.exe `head -1 $<`'\n' > $@
+	tail -n +2 $< >> $@
 
-vvp.ps: vvp.man
-	$(MAN) -t ./vvp.man > vvp.ps
+vvp.ps: ./vvp.man
+	$(MAN) -t $< > $@
 
 vvp.pdf: vvp.ps
-	$(PS2PDF) vvp.ps vvp.pdf
+	$(PS2PDF) $< $@
 
 ifeq (@MINGW32@,yes)
 ifeq ($(MAN),none)

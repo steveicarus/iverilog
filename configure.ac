@@ -26,6 +26,7 @@ AC_CHECK_TOOL(WINDRES,windres,false)
 AC_CHECK_PROGS(XGPERF,gperf,none)
 AC_CHECK_PROGS(MAN,man,none)
 AC_CHECK_PROGS(PS2PDF,ps2pdf,none)
+AC_CHECK_PROGS(GROFF,groff,none)
 AC_CHECK_PROGS(GIT,git,none)
 if test "$XGPERF" = "none"
 then
