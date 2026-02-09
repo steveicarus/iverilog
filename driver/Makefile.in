@@ -106,8 +106,8 @@ iverilog.man: $(srcdir)/iverilog.man.in ../version.exe
 	../version.exe `head -1 $<`'\n' > $@
 	tail -n +2 $< >> $@
 
-iverilog.ps: ./iverilog.man
-	$(MAN) -t $< > $@
+iverilog.ps: iverilog.man
+	$(MAN) -t ./$< > $@
 
 iverilog.pdf: iverilog.ps
 	$(PS2PDF) $< $@

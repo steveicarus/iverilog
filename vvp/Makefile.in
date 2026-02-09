@@ -189,8 +189,8 @@ vvp.man: $(srcdir)/vvp.man.in ../version.exe
 	../version.exe `head -1 $<`'\n' > $@
 	tail -n +2 $< >> $@
 
-vvp.ps: ./vvp.man
-	$(MAN) -t $< > $@
+vvp.ps: vvp.man
+	$(MAN) -t ./$< > $@
 
 vvp.pdf: vvp.ps
 	$(PS2PDF) $< $@

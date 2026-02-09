@@ -282,8 +282,8 @@ iverilog-vpi.man: $(srcdir)/iverilog-vpi.man.in version.exe
 	./version.exe `head -1 $<`'\n' > $@
 	tail -n +2 $< >> $@
 
-iverilog-vpi.ps: ./iverilog-vpi.man
-	$(MAN) -t $< > $@
+iverilog-vpi.ps: iverilog-vpi.man
+	$(MAN) -t ./$< > $@
 
 iverilog-vpi.pdf: iverilog-vpi.ps
 	$(PS2PDF) $< $@
@@ -291,7 +291,7 @@ iverilog-vpi.pdf: iverilog-vpi.ps
 iverilog_man.ps: driver/iverilog.man vvp/vvp.man iverilog-vpi.man
 	$(GROFF) -man -rC1 -rD1 -T ps $^ > $@
 
-iverilog_man.pdf: iverilog_man.ps ./version.exe
+iverilog_man.pdf: iverilog_man.ps version.exe
 	$(PS2PDF) $< $@
 	cp $@ iverilog_man_`./version.exe %M_%n`.pdf
 
