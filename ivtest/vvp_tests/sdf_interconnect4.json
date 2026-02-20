@@ -1,5 +1,5 @@
 {
-    "type"          : "normal",
+    "type"          : "EF",
     "source"        : "sdf_interconnect4.v",
     "iverilog-args" : [ "-Ttyp", "-ginterconnect", "-gspecify" ],
     "gold"   : "sdf_interconnect4",
