@@ -7,7 +7,7 @@ module tb;
   top dut(out, in);
 
   initial begin
-    $monitor("%.3f: %b %b %b",$realtime,out,dut.int,in);
+    $monitor("%.3f: %b %b %b",$realtime,out,dut.intv,in);
     $sdf_annotate("ivltests/br_gh1248.sdf");
     #1;
     in = 1'b0;
@@ -20,12 +20,12 @@ module tb;
 endmodule
 
 module top(output wire out, input wire in);
-  wire [2:0] int;
+  wire [2:0] intv;
 
-  assign int[0] = in;
-  buff i1 (.Y(int[1]), .A(int[0]));
-  buff i2 (.Y(int[2]), .A(int[1]));
-  assign out = int[2];
+  assign intv[0] = in;
+  buff i1 (.Y(intv[1]), .A(intv[0]));
+  buff i2 (.Y(intv[2]), .A(intv[1]));
+  assign out = intv[2];
 endmodule
 
 `celldefine
