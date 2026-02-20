@@ -1,0 +1,10 @@
+{
+    "type"          : "normal",
+    "source"        : "br_gh1248.v",
+    "iverilog-args" : [ "-Ttyp", "-ginterconnect", "-gspecify" ],
+    "gold"   : "br_gh1248",
+    "vlog95" : {
+        "__comment" : "The buffer module output is not connected.",
+	"type"      : "TE"
+    }
+}

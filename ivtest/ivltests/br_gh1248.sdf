@@ -1,0 +1,40 @@
+(DELAYFILE
+ (SDFVERSION "3.0")
+ (DESIGN "br_gh1248")
+ (DATE "Thu Feb 19 22:00:00 2026")
+ (VENDOR "Custom")
+ (PROGRAM "Custom")
+ (VERSION "1.0.0")
+ (DIVIDER /)
+ (VOLTAGE 1.200)
+ (PROCESS "1.000")
+ (TEMPERATURE 25.000)
+ (TIMESCALE 1ns)
+ (CELL
+  (CELLTYPE "top")
+  (INSTANCE dut)
+  (DELAY
+   (ABSOLUTE
+    (INTERCONNECT i1/Y i2/A (0.010))
+   )
+  )
+ )
+ (CELL
+  (CELLTYPE "buff")
+  (INSTANCE dut/i1)
+  (DELAY
+   (ABSOLUTE
+    (IOPATH A Y (0.050) (0.070))
+   )
+  )
+ )
+ (CELL
+  (CELLTYPE "buff")
+  (INSTANCE dut/i2)
+  (DELAY
+   (ABSOLUTE
+    (IOPATH A Y (0.060) (0.050))
+   )
+  )
+ )
+)
