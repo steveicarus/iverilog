@@ -35,6 +35,6 @@ module buff(output wire Y, input wire A);
   specify
     (A => Y) = 0;
   endspecify
- 
+
 endmodule
 `endcelldefine

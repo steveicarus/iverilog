@@ -1636,7 +1636,7 @@ tuple<bool, vvp_net_ptr_t, bool> check_connected_to_concat8(vvp_net_ptr_t cur, v
 		  auto res = check_connected_to_concat8(cur.ptr()->out_, net2, cur);
 		  if (get<0>(res)) {
 			if (!get<1>(res).ptr() && dynamic_cast<vvp_fun_part_sa*>(parent.ptr()->fun)) {
-			      // `parent` is the last part_sa node in front of our destination 
+			      // `parent` is the last part_sa node in front of our destination
 			      // We want to place the intermod node here
 			      return {true, prev.ptr() ? prev : parent, prev.ptr() == nullptr};
 			}
