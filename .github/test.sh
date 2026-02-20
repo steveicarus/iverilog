@@ -8,6 +8,7 @@ cd ivtest
 status=0
 
 perl vvp_reg.pl || status=1
+mv log vvp_log
 
 if [ "x$1" = "xno-pli1" ] ; then
     perl vpi_reg.pl || status=1
