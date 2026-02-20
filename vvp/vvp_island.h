@@ -165,7 +165,7 @@ class vvp_island_port  : public vvp_net_fun_t {
 
 inline vvp_vector8_t island_get_value(vvp_net_t*net)
 {
-      vvp_island_port*fun = dynamic_cast<vvp_island_port*>(net->fun);
+      const vvp_island_port*fun = dynamic_cast<vvp_island_port*>(net->fun);
       const vvp_wire_vec8*fil = dynamic_cast<vvp_wire_vec8*>(net->fil);
 
       if (fil == 0) {
