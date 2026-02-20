@@ -1591,34 +1591,66 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
       return out;
 }
 
-// Check if net2 is connected to current_net through a net of vvp_fun_concat8s
-bool check_connected_to_concat8(vvp_net_t* current_net, vvp_net_t* net2)
-{
-      if (!dynamic_cast<vvp_fun_concat8*>(current_net->fun)) return false;
+// Return tuple {x1, x2, x3} with:
+// x1: True when cur and net2 are connected
+// x2: Ptr to previous node
+// x3: True when net is connected to output of previous node
+tuple<bool, vvp_net_ptr_t, bool> check_connected_to_concat8_and_part_sa(vvp_net_ptr_t cur, vvp_net_t* net2, vvp_net_ptr_t parent) {
 
-      vvp_net_ptr_t cur = current_net->out_;
+      vvp_net_ptr_t prev = vvp_net_ptr_t(nullptr, 0);
 
-	// For everything connected
       while (cur.ptr()) {
-	      // Check if it's a concat8
-	    if (dynamic_cast<vvp_fun_concat8*>(cur.ptr()->fun)) {
+	    if (cur.ptr() == net2 && dynamic_cast<vvp_fun_part_sa*>(parent.ptr()->fun)) {
 		    // Pass on the return value if found
-		  if (check_connected_to_concat8(cur.ptr(), net2)) {
-			return true;
+		  return {true, prev.ptr() ? prev : parent, prev.ptr() == nullptr};
+	    } else if (dynamic_cast<vvp_fun_concat8*>(cur.ptr()->fun) || dynamic_cast<vvp_fun_part_sa*>(cur.ptr()->fun) || dynamic_cast<vvp_fun_concat*>(cur.ptr()->fun)) {
+		  auto res = check_connected_to_concat8_and_part_sa(cur.ptr()->out_, net2, cur);
+		  if (get<0>(res)) {
+			return res;
 		  }
 	    }
 
-	      // net2 is connected
-	    if (cur.ptr() == net2) {
-		  return true;
-	    }
-
 	      // Next net in linked list
+	    prev = cur;
 	    cur = cur.ptr()->port[cur.port()];
       }
 
 	// net2 is not connected to this concat8
-      return false;
+      return {false, vvp_net_ptr_t(nullptr, 0), false};
+}
+
+// Check if net2 is connected to current_net through a net of vvp_fun_concat8s
+// Return tuple {x1, x2, x3} with:
+// x1: True when cur and net2 are connected with concats and part_sas
+// x2: Ptr to previous node
+// x3: True when net is connected to output of x2
+tuple<bool, vvp_net_ptr_t, bool> check_connected_to_concat8(vvp_net_ptr_t cur, vvp_net_t* net2, vvp_net_ptr_t parent)
+{
+      vvp_net_ptr_t prev = vvp_net_ptr_t(nullptr, 0);
+	// For everything connected
+      while (cur.ptr()) {
+	      // Check if it's a concat8
+	    if (cur.ptr() == net2) {
+		  return {true, vvp_net_ptr_t(nullptr, 0), false};
+	    } else if (dynamic_cast<vvp_fun_concat8*>(cur.ptr()->fun) || dynamic_cast<vvp_fun_part_sa*>(cur.ptr()->fun) || dynamic_cast<vvp_fun_concat*>(cur.ptr()->fun)) {
+		  auto res = check_connected_to_concat8(cur.ptr()->out_, net2, cur);
+		  if (get<0>(res)) {
+			if (!get<1>(res).ptr() && dynamic_cast<vvp_fun_part_sa*>(parent.ptr()->fun)) {
+			      // `parent` is the last part_sa node in front of our destination 
+			      // We want to place the intermod node here
+			      return {true, prev.ptr() ? prev : parent, prev.ptr() == nullptr};
+			}
+			return res;
+		  }
+	    }
+
+	      // Next net in linked list
+	    prev = cur;
+	    cur = cur.ptr()->port[cur.port()];
+      }
+
+	// net2 is not connected to this concat8
+      return {false, vvp_net_ptr_t(nullptr, 0), false};
 }
 
 // Used to get intermodpath for two ports
@@ -1766,13 +1798,30 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
 	      // Either port2 is directly connected to port1
 	      // Or in the second case port2 is indirectly connected
 	      // to port1 through a net of concat8s
-	    if ( (!port2_has_index && cur.ptr() == net2) ||
-	         ( port2_has_index && check_connected_to_concat8(cur.ptr(), net2))) {
+	    bool is_connected, is_output;
+	    vvp_net_ptr_t previous_node;
+	    tie(is_connected, previous_node, is_output) = port2_has_index
+		  ? check_connected_to_concat8(cur, net2, vvp_net_ptr_t(net1, 0))
+		  : check_connected_to_concat8_and_part_sa(cur, net2, vvp_net_ptr_t(net1, 0));
+	    if ( (!port2_has_index && cur.ptr() == net2) || is_connected ) {
 		  vvp_net_t*new_net = new vvp_net_t;
 
 		    // Create new node with intermodpath and connect port2 to it
 		  int width = 1; // TODO
 		  vvp_fun_intermodpath*obj = new vvp_fun_intermodpath(new_net, width);
+
+		  vvp_net_t* output_net = net1;
+		  if (is_connected) {
+			if (is_output) {
+			      output_net = previous_node.ptr(); // net2 is direct output of part_sa
+			      cur = output_net->out_;
+			      prev = vvp_net_ptr_t(nullptr, 0);
+			} else {
+			      prev = previous_node;
+			      cur = prev.ptr()->port[prev.port()];
+			}
+		  }
+
 		  new_net->fun = obj;
 		  new_net->out_ = cur;
 
@@ -1785,7 +1834,7 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
 		    // Port2 is first in list
 		    // Insert intermodpath before port2 and keep everything else intact
 		  } else {
-			net1->out_ = vvp_net_ptr_t(new_net, 0); // Point to port 0 of vvp_fun_intermodpath
+			output_net->out_ = vvp_net_ptr_t(new_net, 0); // Point to port 0 of vvp_fun_intermodpath
 			new_net->port[0] = cur.ptr()->port[cur.port()]; //  Connect the next net in list
 			cur.ptr()->port[cur.port()] = vvp_net_ptr_t(nullptr, 0); // Only port2 is connected to intermodpath
 		  }
