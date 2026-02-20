@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -131,7 +131,7 @@ Nexus* Link::find_nexus_() const
 {
       assert(next_);
       if (nexus_) return nexus_;
-      for (Link*cur = next_ ; cur != this ; cur = cur->next_) {
+      for (const Link*cur = next_ ; cur != this ; cur = cur->next_) {
 	    if (cur->nexus_) return cur->nexus_;
       }
       return 0;
