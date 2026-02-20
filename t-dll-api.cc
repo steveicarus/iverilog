@@ -2496,8 +2496,8 @@ extern "C" ivl_nexus_t ivl_signal_nex(ivl_signal_t net, unsigned word)
 	    if (net->pins) {
 		return net->pins[word];
 	    } else {
-		// net->pins can be NULL for a virtualized reg array.
-		assert(net->type_ == IVL_SIT_REG);
+		// net->pins can be NULL for a virtualized reg or uwire array.
+		assert(net->type_ == IVL_SIT_REG || net->type_ == IVL_SIT_UWIRE);
 		return NULL;
 	    }
       } else {

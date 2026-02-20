@@ -212,6 +212,7 @@ br_gh477		normal,-g2009		ivltests
 br_gh478		normal,-g2009		ivltests
 br_gh498		normal,-g2009		ivltests
 br_gh508a		normal,-g2009		ivltests
+br_gh521		normal,-g2012		ivltests
 br_gh527		normal,-g2009		ivltests
 br_gh530		CO,-g2009		ivltests
 br_gh540		normal,-g2009		ivltests
@@ -222,16 +223,20 @@ br_gh661a		normal,-g2009		ivltests
 br_gh661b		normal,-g2009		ivltests
 br_gh672		normal,-g2009		ivltests
 br_gh699		CE,-g2009		ivltests
+br_gh716		CE,-g2012		ivltests gold=br_gh716.gold
 br_gh756		normal,-g2009		ivltests
 br_gh782a		normal,-g2009		ivltests gold=br_gh782a.gold
 br_gh782b		normal,-g2009		ivltests gold=br_gh782b.gold
 br_gh800		normal,-g2009		ivltests
 br_gh801		normal,-g2012		ivltests
 br_gh801b		normal,-g2012		ivltests
+br_gh1217		normal,-g2012		ivltests
+br_gh1220		normal,-g2012		ivltests
 br_gh1222		CE,-g2009		ivltests gold=br_gh1222.gold
 br_gh1223a		normal,-g2009		ivltests
 br_gh1223b		normal,-g2009		ivltests
 br_gh1223c		normal,-g2009		ivltests
+br_gh1224		normal,-g2012		ivltests
 br_gh1230		normal,-g2009		ivltests
 br_ml20171017		normal,-g2009		ivltests
 br_ml20180227		CE,-g2009		ivltests
@@ -989,3 +994,9 @@ partsel_real_idx	CE,-g2012		ivltests gold=partsel_real_idx.gold
 ipsdownsel_real_idx	CE,-g2012		ivltests gold=ipsdownsel_real_idx.gold
 ipsupsel_real_idx	CE,-g2012		ivltests gold=ipsupsel_real_idx.gold
 real_edges		CE,-g2012		ivltests gold=real_edges.gold
+br_gh1112		CE,-g2009		ivltests gold=br_gh1112.gold
+br_gh670		normal,-g2009		ivltests
+br_gh1134		normal,-g2012		ivltests
+br_gh1265		normal,-g2012		ivltests
+br_gh1267		normal,-g2012		ivltests
+br_gh1268		normal,-g2012		ivltests

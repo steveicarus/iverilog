@@ -1983,6 +1983,15 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 		  }
 
 	    } else {
+		    // Check if the expression could be resolved. If test_width
+		    // failed to find the identifier, expr_type will be NO_TYPE.
+		  if (expr->expr_type() == IVL_VT_NO_TYPE) {
+			  // Try to elaborate the expression to get a proper error
+			  // message about the undefined identifier.
+			NetExpr *tmp = expr->elaborate_expr(des, scope, (unsigned)1, flags);
+			if (tmp) delete tmp;
+			return 0;
+		  }
 		  use_width = expr->expr_width();
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PECallFunction::elaborate_sfunc_: "
@@ -2380,12 +2389,17 @@ bool calculate_part(const LineInfo*li, Design*des, NetScope*scope,
  * the net is a struct. If that turns out to be the case, and the
  * struct is packed, then return a NetExpr that selects the member out
  * of the variable.
+ *
+ * The word_index parameter is used when the struct is in an unpacked
+ * array - it selects which array word to access before the packed
+ * member selection.
  */
 static NetExpr* check_for_struct_members(const LineInfo*li,
 					 Design*des, NetScope*scope,
 					 NetNet*net,
 					 const list<index_component_t>&base_index,
-					 pform_name_t member_path)
+					 pform_name_t member_path,
+					 NetExpr*word_index = 0)
 {
       const netstruct_t*struct_type = net->struct_type();
       ivl_assert(*li, struct_type);
@@ -2698,7 +2712,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	    packed_base = 0;
       }
 
-      NetESignal*sig = new NetESignal(net);
+      NetESignal*sig = new NetESignal(net, word_index);
       NetExpr   *base = packed_base? packed_base : make_const_val(off);
       NetESelect*sel = new NetESelect(sig, base, use_width, member_type);
 
@@ -2706,11 +2720,57 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	    cerr << li->get_fileline() << ": check_for_struct_member: "
 		 << "Finally, completed_path=" << completed_path
 		 << ", off=" << off << ", use_width=" << use_width
-		 << ", base=" << *base
-		 << endl;
+		 << ", base=" << *base;
+	    if (word_index)
+		  cerr << ", word_index=" << *word_index;
+	    cerr << endl;
       }
 
       return sel;
+}
+
+/*
+ * Helper function to elaborate struct member access in an unpacked array.
+ * This handles separating unpacked indices from packed indices,
+ * computing the word index, and calling check_for_struct_members.
+ */
+static NetExpr* elaborate_struct_member_access(const PExpr*expr,
+					       Design*des, NetScope*scope,
+					       NetNet*net,
+					       const pform_name_t&path_head,
+					       const pform_name_t&path_tail)
+{
+	// Separate unpacked indices from packed indices.
+	// check_for_struct_members expects only packed indices.
+      list<index_component_t> all_index = path_head.back().index;
+      list<index_component_t> unpacked_index;
+      for (unsigned idx = 0 ; idx < net->unpacked_dimensions() ; idx += 1) {
+	    unpacked_index.push_back(all_index.front());
+	    all_index.pop_front();
+      }
+      list<index_component_t>& packed_index = all_index;
+
+	// Compute word index for unpacked array access.
+      NetExpr*word_index = 0;
+      if (net->unpacked_dimensions() > 0) {
+	    list<NetExpr*>unpacked_indices_expr;
+	    list<long> unpacked_indices_const;
+	    indices_flags idx_flags;
+	    indices_to_expressions(des, scope, expr,
+				   unpacked_index, net->unpacked_dimensions(),
+				   false, idx_flags,
+				   unpacked_indices_expr, unpacked_indices_const);
+
+	    if (idx_flags.variable) {
+		  word_index = normalize_variable_unpacked(net, unpacked_indices_expr);
+	    } else if (!idx_flags.invalid && !idx_flags.undefined) {
+		  word_index = normalize_variable_unpacked(net, unpacked_indices_const);
+	    }
+      }
+
+      return check_for_struct_members(expr, des, scope, net,
+				      packed_index,
+				      path_tail, word_index);
 }
 
 static NetExpr* class_static_property_expression(const LineInfo*li,
@@ -4546,9 +4606,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       if (!sr.path_tail.empty()) {
 	    if (net->struct_type()) {
-		  return check_for_struct_members(this, des, scope, net,
-						  sr.path_head.back().index,
-						  sr.path_tail);
+		  return elaborate_struct_member_access(this, des, scope, net,
+							sr.path_head, sr.path_tail);
 	    } else if (dynamic_cast<const netclass_t*>(sr.type)) {
 		  return elaborate_expr_class_field_(des, scope, sr, 0, flags);
 	    }
@@ -4773,9 +4832,8 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 			     << endl;
 		  }
 
-		  return check_for_struct_members(this, des, scope, sr.net,
-						  sr.path_head.back().index,
-						  sr.path_tail);
+		  return elaborate_struct_member_access(this, des, scope, sr.net,
+							sr.path_head, sr.path_tail);
 	    }
 
 	      // If this is an array object, and there are members in
