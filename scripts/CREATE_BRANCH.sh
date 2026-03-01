@@ -14,6 +14,9 @@
 #
 #     git push -u origin v13-branch
 #
+# After this update the master branch to the next version and update
+# vvp/examples/hello.vvp to match the new version.
+#
 
 if [ $# -ne 1 ] ; then
     echo "Usage: CREATE_BRANCH.sh <major-number>"
