@@ -1212,7 +1212,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope)
 
       NetNet*sig = new NetNet(scope, name_, wtype, unpacked_dimensions, type);
 
-      if (wtype == NetNet::WIRE) sig->devirtualize_pins();
+      if (wtype == NetNet::WIRE || wtype == NetNet::UNRESOLVED_WIRE)
+	    sig->devirtualize_pins();
       sig->set_line(*this);
       sig->port_type(port_type_);
       sig->lexical_pos(lexical_pos_);
