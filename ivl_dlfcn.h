@@ -1,7 +1,7 @@
 #ifndef IVL_ivl_dlfcn_H
 #define IVL_ivl_dlfcn_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,7 +21,11 @@
 
 #if defined(__MINGW32__)
 # include <windows.h>
+#if defined(__cplusplus)
 # include <cstdio>
+#else
+# include <stdio.h>
+#endif
 typedef void * ivl_dll_t;
 #elif defined(HAVE_DLFCN_H)
 # include  <dlfcn.h>
@@ -32,7 +36,7 @@ typedef shl_t ivl_dll_t;
 #endif
 
 #if defined(__MINGW32__)
-inline ivl_dll_t ivl_dlopen(const char *name, bool)
+static inline ivl_dll_t ivl_dlopen(const char *name, bool global_flag)
 {
       static char full_name[4096];
       unsigned long length = GetFullPathName(name, sizeof(full_name),
@@ -40,16 +44,18 @@ inline ivl_dll_t ivl_dlopen(const char *name, bool)
       if ((length == 0) || (length > sizeof(full_name)))
             return 0;
 
+      (void)global_flag;
+
       return (void *)LoadLibrary(full_name);
 }
 
-inline void *ivl_dlsym(ivl_dll_t dll, const char *nm)
+static inline void *ivl_dlsym(ivl_dll_t dll, const char *nm)
 { return (void *)GetProcAddress((HINSTANCE)dll,nm);}
 
-inline void ivl_dlclose(ivl_dll_t dll)
+static inline void ivl_dlclose(ivl_dll_t dll)
 { (void)FreeLibrary((HINSTANCE)dll);}
 
-inline const char *dlerror(void)
+static inline const char *dlerror(void)
 {
   static char msg[256];
   unsigned long err = GetLastError();
@@ -66,10 +72,10 @@ inline const char *dlerror(void)
 }
 
 #elif defined(HAVE_DLFCN_H)
-inline ivl_dll_t ivl_dlopen(const char*name, bool global_flag)
+static inline ivl_dll_t ivl_dlopen(const char*name, bool global_flag)
 { return dlopen(name,RTLD_LAZY|(global_flag?RTLD_GLOBAL:0)); }
 
-inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
+static inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
 {
       void*sym = dlsym(dll, nm);
 	/* Not found? try without the leading _ */
@@ -78,24 +84,28 @@ inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
       return sym;
 }
 
-inline void ivl_dlclose(ivl_dll_t dll)
+static inline void ivl_dlclose(ivl_dll_t dll)
 { dlclose(dll); }
 
 #elif defined(HAVE_DL_H)
-inline ivl_dll_t ivl_dlopen(const char*name)
-{ return shl_load(name, BIND_IMMEDIATE, 0); }
+static inline ivl_dll_t ivl_dlopen(const char*name, bool global_flag)
+{
+      (void)global_flag;
 
-inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
+      return shl_load(name, BIND_IMMEDIATE, 0);
+}
+
+static inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
 {
       void*sym;
       int rc = shl_findsym(&dll, nm, TYPE_PROCEDURE, &sym);
       return (rc == 0) ? sym : 0;
 }
 
-inline void ivl_dlclose(ivl_dll_t dll)
+static inline void ivl_dlclose(ivl_dll_t dll)
 { shl_unload(dll); }
 
-inline const char*dlerror(void)
+static inline const char*dlerror(void)
 { return strerror( errno ); }
 #endif
 
