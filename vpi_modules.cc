@@ -21,7 +21,7 @@
 #include "compiler.h"
 #include "vpi_user.h"
 #include "sv_vpi_user.h"
-#include "vvp/ivl_dlfcn.h"
+#include "ivl_dlfcn.h"
 
 using namespace std;
 
