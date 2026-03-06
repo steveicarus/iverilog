@@ -2,7 +2,7 @@
 Reporting Issues
 ================
 
-The developers of and contributers to Icarus Verilog use github to track
+The developers of and contributors to Icarus Verilog use github to track
 issues and to create patches for the product. If you believe you have found a
 problem, use the Issues tracker at the
 `Icarus Verilog github page <https://github.com/steveicarus/iverilog>`__.
@@ -60,7 +60,7 @@ Bug reports with patches/PRs are very welcome. Please also add a new test case i
 
 If you are editing the source, you should be using the latest
 version from git. Please see the developer documentation for more
-detailed instructions -- :doc:`Getting Started as a Contributer <getting_started>` .
+detailed instructions -- :doc:`Getting Started as a Contributor <getting_started>` .
 
 COPYRIGHT ISSUES
 

@@ -8,7 +8,7 @@ source code itself, so that you can find the global parts where you
 can look for even better detail.
 
 The documentation for getting, building and installing Icarus Verilog
-is kept and maintained at :doc:`Getting Started as a Contributer <../getting_started>`
+is kept and maintained at :doc:`Getting Started as a Contributor <../getting_started>`
 
 See the Installation Guide for getting the current source from the git
 repository (and how to use the git repository) and see the Developer Guide
