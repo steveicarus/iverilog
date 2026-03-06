@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Installation Guide &#8212; Icarus Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=cb25574f" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Getting Started With Icarus Verilog" href="getting_started.html" />
+    <link rel="prev" title="Icarus Verilog Usage" href="index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="installation-guide">
+<h1>Installation Guide<a class="headerlink" href="#installation-guide" title="Link to this heading">¶</a></h1>
+<p>Icarus Verilog may be installed from source code (either from <code class="docutils literal notranslate"><span class="pre">git</span></code> or a
+released <cite>tar/zip</cite> file), or from pre-packaged binary distributions. If you
+don’t have a need for the very latest, and prepackaged binaries are available,
+that is the easiest place to start.</p>
+<section id="installation-from-source">
+<h2>Installation From Source<a class="headerlink" href="#installation-from-source" title="Link to this heading">¶</a></h2>
+<p>Icarus is developed for Unix-like environments but can also be compiled on
+Windows systems using the <cite>Cygwin/MSYS2</cite> environments or <cite>MinGW</cite> compilers. The
+following instructions are the common steps for obtaining the Icarus Verilog
+source code, compiling, installing, and checking the compiled code is working
+properly. Note that there are pre-compiled and/or prepackaged versions for a
+variety of systems, so if you find an appropriate packaged version, then that
+is the easiest way to install.</p>
+<p>The source code for Icarus is stored under the <cite>git</cite> source code control
+system. You can use <code class="docutils literal notranslate"><span class="pre">git</span></code> to get the latest development head or the latest of
+a specific branch. Stable releases are placed on branches, and in particular V12
+stable releases are on the branch “v12-branch” To get the development version
+of the code follow these steps:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% git config --global user.name &quot;Your Name Goes Here&quot;
+% git config --global user.email you@yourpublicemail.example.com
+% git clone https://github.com/steveicarus/iverilog.git
+</pre></div>
+</div>
+<p>The first two lines are optional and are used to tell git who you are. This
+information is important if/when you submit a patch. We suggest that you add
+this information now so you don’t forget to do it later. The clone will create
+a directory, named <cite>iverilog</cite>, containing the source tree, and will populate
+that directory with the most current source from the HEAD of the repository.</p>
+<p>Change into this directory using:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% cd iverilog
+</pre></div>
+</div>
+<p>Normally, this is enough as you are now pointing at the most current
+development code, and you have implicitly created a branch <cite>master</cite> that
+tracks the development head. However, If you want to actually be working on
+the <cite>v12-branch</cite> (the branch where the latest V12 patches are) then you
+checkout that branch with the command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% git checkout --track -b v12-branch origin/v12-branch
+</pre></div>
+</div>
+<p>This creates a local branch that tracks the <cite>v12-branch</cite> in the repository, and
+switches you over to your new <cite>v12-branch</cite>. The tracking is important as it
+causes pulls from the repository to re-merge your local branch with the remote
+<cite>v12-branch</cite>. You always work on a local branch, then merge only when you
+push/pull from the remote repository.</p>
+<p>The choice between the development branch and the latest released branch
+depends on your stability requirements. The released branch will only get bug
+fixes. It will not get any enhancements or changes in the compiler output
+format. Unlike many project the development branch is fairly stable with only
+occasional periods of instability. We do most of our big changes in side
+branches and only merge them into the development branch when they are clean.</p>
+<p>Now that you’ve cloned the repository and optionally selected the branch you
+want to work on, your local source tree may later be synced up with the
+development source by using the git command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% git pull
+</pre></div>
+</div>
+<p>The git system remembers the repository that it was cloned from, so you don’t
+need to re-enter it when you pull.</p>
+<p>To build the <cite>configure</cite> script and hash files you need to run the
+following:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% sh autoconf.sh
+% cd ..
+</pre></div>
+</div>
+<p>This is not need for the released <cite>tar/zip</cite> files since they already contain
+these files. You only need to run this once after cloning. If you are missing
+<code class="docutils literal notranslate"><span class="pre">autoconf</span></code> or <code class="docutils literal notranslate"><span class="pre">gperf</span></code> then the script will fail:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Autoconf in root...
+autoconf.sh: 10: autoconf: not found
+Precompiling lexor_keyword.gperf
+autoconf.sh: 13: gperf: not found.
+</pre></div>
+</div>
+<p>You will need to install the <code class="docutils literal notranslate"><span class="pre">autoconf</span></code> and <code class="docutils literal notranslate"><span class="pre">gperf</span></code> tools before you can
+continue.</p>
+<p>The other way to get the source code is to download a released <cite>tar/zip</cite> file:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% tar -xvzf v13_0.tar.gz
+or
+% unzip v13_0.zip
+</pre></div>
+</div>
+<p>See the build instructions for your operation system below to know what to do
+next. Though first determine if there are any extra configuration option you
+may need.</p>
+</section>
+<section id="icarus-specific-configuration-options">
+<h2>Icarus Specific Configuration Options<a class="headerlink" href="#icarus-specific-configuration-options" title="Link to this heading">¶</a></h2>
+<p>Icarus takes many of the standard configuration options and those will not be
+described here. The following are specific to Icarus:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>--enable-suffix[=suffix]
+</pre></div>
+</div>
+<p>This option allows the user to build Icarus with a default suffix or when
+provided a user defined suffix. Older stable releases have this flag on by
+default e.g.(V0.8 by default will build with a “-0.8” suffix). All versions
+have an appropriate default suffix (“-&lt;base_version&gt;”).</p>
+<p>All programs or directories are tagged with this suffix. e.g.(iverilog-0.8,
+vvp-0.8, etc.). The output of iverilog will reference the correct run time
+files and directories. The run time will check that it is running a file with
+a compatible version e.g.(you can not run a V0.9 file with the V0.8 run
+time).:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>--with-valgrind
+</pre></div>
+</div>
+<p>This option adds extra memory cleanup code and pool management code to allow
+better memory leak checking when valgrind is available. This option is not
+needed when checking for basic errors with valgrind and should not be used if
+you just intend to use <code class="docutils literal notranslate"><span class="pre">iverilog</span></code> as a simulator.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>--enable-libvvp
+</pre></div>
+</div>
+<p>The vvp program is built as a small stub linked to a shared library,
+libvvp.so, that may be linked with other programs so that they can host
+a vvp simulation.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>--enable-libveriuser
+</pre></div>
+</div>
+<p>PLI version 1 (the ACC and TF routines) were deprecated in IEEE 1364-2005.
+These are supported in Icarus Verilog by the libveriuser library and cadpli
+module. Starting with V13, these will only be built if this option is used.</p>
+</section>
+<section id="compiling-on-linux-unix">
+<h2>Compiling on Linux/Unix<a class="headerlink" href="#compiling-on-linux-unix" title="Link to this heading">¶</a></h2>
+<p>Note: For a gcc compile you will need to install <code class="docutils literal notranslate"><span class="pre">bison</span></code>, <code class="docutils literal notranslate"><span class="pre">flex</span></code>, <code class="docutils literal notranslate"><span class="pre">g++</span></code>,
+<code class="docutils literal notranslate"><span class="pre">gcc</span></code> and preferably <cite>bz2</cite>, <cite>zlib</cite> and <cite>readline</cite> development packages. The
+<cite>bz2</cite> and <cite>zlib</cite> development packages are required for the non-VCD waveform
+dumpers and the <cite>readline</cite> development package is needed to enable better
+terminal control in the <code class="docutils literal notranslate"><span class="pre">vvp</span></code> interactive mode.</p>
+<p>If you are only compiling one variant then you can compile directly in the
+source tree. If you need multiple variants (optimized, debugging, multiple
+compilers) then it is recommended you compile each in their own directory.</p>
+<p>For multiple variants create a directory for each of the variants you intend
+to create and in each run the following steps, adjusting the options in the
+configure stage to get the functionality you want. For a single build you can
+either build it with the source or in a separate build directory.</p>
+<p>The following is from a Ubuntu 22.04 machine using gcc (version 11.4):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% mkdir gcc
+% cd gcc
+or
+% cd iverilog
+</pre></div>
+</div>
+<p>You can also use <code class="docutils literal notranslate"><span class="pre">clang/clang++</span></code>. I usual build optimized version for
+normal use and reserve debugging options for a valgrind or a separate
+debugging build. Make sure you have <cite>sudo</cite> permission if you are using a
+system prefix area, otherwise you need to use some place you have
+permission to install (e.g. ~/).:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% env CFLAGS=-O2 CXXFLAGS=-O2 LDFLAGS=-s CC=gcc CXX=g++ ../iverilog/configure --enable-suffix=-gcc --prefix=/usr/local
+</pre></div>
+</div>
+<p>This will generate the following (with some inline comments):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>checking build system type... x86_64-pc-linux-gnu
+checking host system type... x86_64-pc-linux-gnu
+checking for gcc... gcc
+checking whether the C compiler works... yes
+...
+checking for gperf... gperf       # required for git builds
+checking for man... man           # you likely want manual pages
+checking for ps2pdf... ps2pdf
+checking for groff... groff
+checking for git... git           # required for git builds
+checking for flex... flex         # required
+checking for bison... bison       # required
+...
+checking for tputs in -ltermcap... yes
+checking for readline in -lreadline... yes
+checking for add_history in -lreadline... yes
+checking for readline/readline.h... yes
+checking for readline/history.h... yes           # you likely want this
+...
+checking for pthread_create in -lpthread... yes
+checking for gzwrite in -lz... yes
+checking for gzwrite in -lz... (cached) yes
+checking for BZ2_bzdopen in -lbz2... yes
+checking for BZ2_bzdopen in -lbz2... (cached) yes     # you want these for fst dumping
+...
+&lt;Create all the parameterized Makefile and header files&gt;
+</pre></div>
+</div>
+<p>Usually if <code class="docutils literal notranslate"><span class="pre">configure</span></code> fails there is some required dependency missing. I
+usually review all the output to make sure it makes sense (e.g. I requested
+<code class="docutils literal notranslate"><span class="pre">gcc</span></code> and that’s what is being used, other things match my expectation). If
+all the waveform dumpers are not enabled there could be a few test failures.</p>
+<p>Next we need to compile the code. Note: make sure you are using GNU make.
+It may be named gmake (e.g. GhostBSD):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% make check &gt;&amp; make.log
+</pre></div>
+</div>
+<p>This is for a tcsh/csh shell. Bash/fish/zsh use <code class="docutils literal notranslate"><span class="pre">&amp;&gt;</span></code> instead of <code class="docutils literal notranslate"><span class="pre">&gt;&amp;</span></code>.
+Once this has completed check the make.log for any errors. There should not
+be any! I also check for warnings. There are often some related to the
+output from bison. For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>From: ./parse.cc
+parse.cc:9462:18: warning: missing initializer for member ‘vlltype::lexical_pos’ [-Wmissing-field-initializers]
+ 9462 |   = { 1, 1, 1, 1 }
+      |                  ^
+parse.cc:9462:18: warning: missing initializer for member ‘vlltype::text’ [-Wmissing-field-initializers]
+</pre></div>
+</div>
+<p>and:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>From: ./vvp/parse.cc
+parse.cc:3242: warning: suspicious sequence in the output: m4_type [-Wother]
+parse.cc:3248: warning: suspicious sequence in the output: m4_type [-Wother]
+</pre></div>
+</div>
+<p>Are common, but benign warnings. Different compilers or compiler versions may
+have other warnings.</p>
+<p>The expected last few lines of the make.log file and these indicate everything
+should be working as expected are:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>...
+driver/iverilog -B. -BMvpi -BPivlpp -tcheck -ocheck.vvp ../iverilog/examples/hello.vl
+vvp/vvp -M- -M./vpi ./check.vvp | grep &#39;Hello, World&#39;
+Hello, World
+</pre></div>
+</div>
+<p>If everything is good to this point and you are installing into a system
+prefix; install using <code class="docutils literal notranslate"><span class="pre">sudo</span></code> as shown below. If you are installing into a
+personal location skip the <code class="docutils literal notranslate"><span class="pre">sudo</span></code>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% sudo make install
+</pre></div>
+</div>
+<p>Now you should verify the regression test suite is working as expected:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% cd ../iverilog/ivtest
+% ./vvp_reg.pl --suffix=-gcc
+</pre></div>
+</div>
+<p>This is the original test script and should give no failures:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Running compiler/VVP tests for Icarus Verilog version: 13, suffix: -gcc.
+----------------------------------------------------------------------------
+            macro_with_args: Passed.
+                       mcl1: Passed.
+                      pr622: Passed.
+                      pr639: Passed.
+                         ...
+                   ssetclr2: Passed.
+                   ssetclr3: Passed.
+           synth_if_no_else: Passed.
+                ufuncsynth1: Passed.
+============================================================================
+Test results:
+  Total=3018, Passed=3013, Failed=0, Not Implemented=2, Expected Fail=3
+</pre></div>
+</div>
+<p>Next run the new test script:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% ./vvp_reg.py --suffix=-gcc
+</pre></div>
+</div>
+<p>This should also give no failures:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Running compiler/VVP tests for Icarus Verilog version: 13, suffix: -gcc
+Using list(s): regress-vvp.list
+----------------------------------------------------------------------------
+                    always4A: Passed - CE.
+                    always4B: Passed - CE.
+                     analog1: Not Implemented.
+                     analog2: Not Implemented.
+                          ...
+              vvp_quiet_mode: Passed.
+             warn_opt_sys_tf: Passed - EF.
+                       wreal: Passed.
+            writemem-invalid: Passed - EF.
+============================================================================
+Test results: Ran 284, Failed 0.
+</pre></div>
+</div>
+<p>Finally you can check that the VPI is working properly using:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% ./vpi_reg.pl --suffix=-gcc
+</pre></div>
+</div>
+<p>The output for this should have no failures:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Running VPI tests for Icarus Verilog version: 13, suffix: -gcc.
+----------------------------------------------------------------------------
+          br_gh59: Passed.
+         br_gh73a: Passed.
+         br_gh73b: Passed.
+         br_gh117: Passed.
+               ...
+ value_change_cb2: Passed.
+ value_change_cb3: Passed.
+ value_change_cb4: Passed.
+      vpi_control: Passed.
+============================================================================
+Test results: Total=77, Passed=77, Failed=0, Not Implemented=0
+</pre></div>
+</div>
+<p>You can uninstall everything using the following. If needed skip the <code class="docutils literal notranslate"><span class="pre">sudo</span></code>
+as described in the install description above.:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% sudo make uninstall
+</pre></div>
+</div>
+<p>You can cleanup the compile directory using:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% make clean
+or
+% make distclean
+</pre></div>
+</div>
+<p>The first just cleans up just the compiled files, etc. The later cleans up
+the compiled file along with all the files generated in the <code class="docutils literal notranslate"><span class="pre">configure</span></code>
+phase.</p>
+<p>Note that “rpm” packages of binaries for Linux are typically configured with
+“–prefix=/usr” per the Linux File System Standard.</p>
+<p>Make sure you have a recent version of flex otherwise you will get an error
+when parsing lexor.lex.</p>
+</section>
+<section id="compiling-on-macintosh-os-x">
+<h2>Compiling on Macintosh OS X<a class="headerlink" href="#compiling-on-macintosh-os-x" title="Link to this heading">¶</a></h2>
+<p>Since Mac OS X is a BSD flavor of Unix, you can install Icarus Verilog from
+source using the procedure described above. You need to install the Xcode
+software, which includes the C and C++ compilers for Mac OS X. The package is
+available for free download from Apple’s developer site. Once Xcode is
+installed, you can build Icarus Verilog in a terminal window just like any
+other Unix install.</p>
+<p>For versions newer than 10.3 the GNU Bison tool (packaged with Xcode) needs to
+be updated to version 3.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>brew install bison
+echo &#39;export PATH=&quot;/usr/local/opt/bison/bin:$PATH&quot;&#39; &gt;&gt; ~/.bash_profile
+</pre></div>
+</div>
+<p>Icarus Verilog is also available through the Homebrew package manager: “brew
+install icarus-verilog”.</p>
+</section>
+<section id="cross-compiling-for-windows">
+<h2>Cross-Compiling for Windows<a class="headerlink" href="#cross-compiling-for-windows" title="Link to this heading">¶</a></h2>
+<p>The <cite>Cygwin</cite> and <cite>MSYS2</cite> environments can compile Icarus Verilog as described
+above for <cite>Linux/Unix</cite>. There is a <cite>MSYS2</cite> build recipe which can be found in
+the <cite>msys2/</cite> directory. The accompanying README file provides further details.
+<cite>MSYS2</cite> is typically preferred over <cite>Cygwin</cite> since <code class="docutils literal notranslate"><span class="pre">GTKWave</span></code> and Icarus
+Verilog are both provided as pre-compiled packages.</p>
+<p>What follows are older instructions for building Icarus Verilog binaries for
+Windows using mingw cross compiler tools on Linux.</p>
+<p>To start with, you need the mingw64-cross-* packages for your linux
+distribution, which gives you the x86_64-w64-mingw32-* commands
+installed on your system. Installing the cross environment is outside
+the scope of this writeup.</p>
+<p>First, configure with this command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ ./configure --host=x86_64-w64-mingw32
+</pre></div>
+</div>
+<p>This generates the Makefiles needed to cross compile everything with
+the mingw32 compiler. The configure script will generate the command
+name paths, so long as commands line x86_64-w64-mingw32-gcc
+et. al. are in your path.</p>
+<p>Next, compile with the command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ make
+</pre></div>
+</div>
+<p>The configure generated the cross compiler flags, but there are a few
+bits that need to be compiled with the native compiler. (version.exe
+for example is used by the build process but is not installed.) The
+configure script should have gotten all that right.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Icarus Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../releases/index.html">Icarus Verilog Release Notes</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="waveform_viewer.html">Viewing Waveforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Icarus Verilog Usage</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Icarus Verilog Usage</a></li>
+      <li>Next: <a href="getting_started.html" title="next chapter">Getting Started With Icarus Verilog</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024-2026, Stephen Williams.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/installation.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
