@@ -1,0 +1,2 @@
+./ivltests/br_gh1112.v:4: error: Unable to bind parameter `value' in `top'
+1 error(s) during elaboration.
