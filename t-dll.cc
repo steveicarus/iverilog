@@ -38,74 +38,6 @@ using namespace std;
 
 struct dll_target dll_target_obj;
 
-#if defined(__WIN32__)
-
-inline ivl_dll_t ivl_dlopen(const char *name)
-{
-      ivl_dll_t res = static_cast<ivl_dll_t>(LoadLibrary(name));
-      return res;
-}
-
-
-inline void * ivl_dlsym(ivl_dll_t dll, const char *nm)
-{
-      return reinterpret_cast<void*>(GetProcAddress((HMODULE)dll, nm));
-}
-
-inline void ivl_dlclose(ivl_dll_t dll)
-{
-      FreeLibrary((HMODULE)dll);
-}
-
-const char *dlerror(void)
-{
-  static char msg[256];
-  unsigned long err = GetLastError();
-  FormatMessage(
-		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL,
-		err,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-		(LPTSTR) &msg,
-		sizeof(msg) - 1,
-		NULL
-		);
-  return msg;
-}
-#elif defined(HAVE_DLFCN_H)
-inline ivl_dll_t ivl_dlopen(const char*name)
-{ return dlopen(name,RTLD_LAZY); }
-
-inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
-{
-      void*sym = dlsym(dll, nm);
-	/* Not found? try without the leading _ */
-      if (sym == 0 && nm[0] == '_')
-	    sym = dlsym(dll, nm+1);
-      return sym;
-}
-
-inline void ivl_dlclose(ivl_dll_t dll)
-{ dlclose(dll); }
-
-#elif defined(HAVE_DL_H)
-inline ivl_dll_t ivl_dlopen(const char*name)
-{ return shl_load(name, BIND_IMMEDIATE, 0); }
-
-inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
-{
-      void*sym;
-      int rc = shl_findsym(&dll, nm, TYPE_PROCEDURE, &sym);
-      return (rc == 0) ? sym : 0;
-}
-
-inline void ivl_dlclose(ivl_dll_t dll)
-{ shl_unload(dll); }
-
-inline const char*dlerror(void)
-{ return strerror( errno ); }
-#endif
-
 ivl_scope_s::ivl_scope_s()
 : func_type(IVL_VT_NO_TYPE)
 {
@@ -667,13 +599,13 @@ bool dll_target::start_design(const Design*des)
 {
       const char*dll_path_ = des->get_flag("DLL");
 
-      dll_ = ivl_dlopen(dll_path_);
+      dll_ = ivl_dlopen(dll_path_, false);
 
       if ((dll_ == 0) && (dll_path_[0] != '/')) {
 	    size_t len = strlen(basedir) + 1 + strlen(dll_path_) + 1;
 	    char*tmp = new char[len];
 	    snprintf(tmp, len, "%s/%s", basedir, dll_path_);
-	    dll_ = ivl_dlopen(tmp);
+	    dll_ = ivl_dlopen(tmp, false);
 	    delete[]tmp;
       }
 
@@ -2852,13 +2784,13 @@ bool dll_target::signal_paths(const NetNet*net)
 
 void dll_target::test_version(const char*target_name)
 {
-      dll_ = ivl_dlopen(target_name);
+      dll_ = ivl_dlopen(target_name, false);
 
       if ((dll_ == 0) && (target_name[0] != '/')) {
 	    size_t len = strlen(basedir) + 1 + strlen(target_name) + 1;
 	    char*tmp = new char[len];
 	    snprintf(tmp, len, "%s/%s", basedir, target_name);
-	    dll_ = ivl_dlopen(tmp);
+	    dll_ = ivl_dlopen(tmp, false);
 	    delete[]tmp;
       }
 

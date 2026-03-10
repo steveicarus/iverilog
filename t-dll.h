@@ -22,23 +22,11 @@
 # include  "target.h"
 # include  "ivl_target.h"
 # include  "ivl_target_priv.h"
+# include  "ivl_dlfcn.h"
 # include  "StringHeap.h"
 # include  "netlist.h"
 # include  <vector>
 # include  <map>
-
-#if defined(__MINGW32__)
-#include <windows.h>
-typedef void *ivl_dll_t;
-#elif defined(HAVE_DLFCN_H)
-# include  <dlfcn.h>
-typedef void* ivl_dll_t;
-#elif defined(HAVE_DL_H)
-# include  <dl.h>
-typedef shl_t ivl_dll_t;
-#else
-# error No DLL stub support for this target.
-#endif
 
 /*
  * The DLL target type loads a named object file to handle the process

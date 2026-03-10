@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -53,7 +53,7 @@ static void thunker_register(void)
 	    strncpy(module, cp, bp-cp);
 	    module[bp-cp] = 0;
 
-	    mod = ivl_dlopen(module);
+	    mod = ivl_dlopen(module, false);
 	    if (mod == 0) {
 		  vpi_printf("%s link: %s\n", vlog_info.argv[idx], dlerror());
 		  free(module);
