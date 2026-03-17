@@ -153,8 +153,8 @@ numbers are not truncated to integer width.
 .B -gstrict-parameter-declaration\fI|\fP-gno-strict-parameter-declaration
 The standards requires that parameters must be declared lexically
 before they are used.  Using \fB\-gno\-strict\-parameter\-declaration\fP
-will allow using a parameter before declaration, e.g., in a port
-declaration, with the parameter declared in the body of the module.
+will allow using a parameter before declaration, with a warning.
+The warning can be suppressed with -Wno-anachronisms.
 .TP 8
 .B -gshared-loop-index\fI|\fP-gno-shared-loop-index
 Enable (default) or disable the exclusion of for-loop control variables

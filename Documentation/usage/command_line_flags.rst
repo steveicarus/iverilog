@@ -135,9 +135,8 @@ These flags affect the general behavior of the compiler.
 
     The standards requires that parameters must be declared lexically
     before they are used.  Using -gno-strict-parameter-declaration
-    will allow using a parameter before declaration, e.g., in a port
-    declaration, with the parameter declared in the body of the
-    module.
+    will allow using a parameter before declaration, with a
+    warning. The warning can be suppressed with -Wno-anachronisms.
 
   * shared-loop-index/no-shared-loop-index
 

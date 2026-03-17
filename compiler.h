@@ -211,8 +211,9 @@ extern bool gn_strict_expr_width_flag;
 extern bool gn_shared_loop_index_flag;
 
 /* If this flag is true (default), then parameters must be declared before
-   use.
-   use `-gno-strict-parameter-declaration` for pre version 13 behaviour.
+   use. `-gno-strict-parameter-declaration` allows to use parameters before
+   declaration, as prior to version 13.
+   A warning is emited with -Wanachronisms (default).
  */
 extern bool gn_strict_parameter_declaration;
 
