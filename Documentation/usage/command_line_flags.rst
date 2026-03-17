@@ -131,6 +131,14 @@ These flags affect the general behavior of the compiler.
     containing an unsized constant number, and unsized constant numbers are
     not truncated to integer width.
 
+  * strict-parameter-declaration/no-strict-parameter-declaration
+
+    The standards requires that parameters must be declared lexically
+    before they are used.  Using -gno-strict-parameter-declaration
+    will allow using a parameter before declaration, e.g., in a port
+    declaration, with the parameter declared in the body of the
+    module.
+
   * shared-loop-index/no-shared-loop-index
 
     Enable or disable the exclusion of for-loop control variables from

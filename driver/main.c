@@ -134,6 +134,7 @@ const char*gen_strict_ca_eval = "no-strict-ca-eval";
 const char*gen_strict_expr_width = "no-strict-expr-width";
 const char*gen_shared_loop_index = "shared-loop-index";
 const char*gen_verilog_ams = "no-verilog-ams";
+const char*gen_strict_parameter_declaration = "strict-parameter-declaration";
 
 /* Boolean: true means use a default include dir, false means don't */
 int gen_std_include = 1;
@@ -815,6 +816,12 @@ static int process_generation(const char*name)
       else if (strcmp(name,"no-verilog-ams") == 0)
 	    gen_verilog_ams = "no-verilog-ams";
 
+      else if (strcmp(name,"strict-parameter-declaration") == 0)
+	    gen_strict_parameter_declaration = "strict-parameter-declaration";
+
+      else if (strcmp(name,"no-strict-parameter-declaration") == 0)
+	    gen_strict_parameter_declaration = "no-strict-parameter-declaration";
+
       else {
 	    fprintf(stderr, "Unknown/Unsupported Language generation "
 		    "%s\n\n", name);
@@ -837,7 +844,8 @@ static int process_generation(const char*name)
 		            "    io-range-error | no-io-range-error\n"
 		            "    strict-ca-eval | no-strict-ca-eval\n"
 		            "    strict-expr-width | no-strict-expr-width\n"
-		            "    shared-loop-index | no-shared-loop-index\n");
+		            "    shared-loop-index | no-shared-loop-index\n"
+		            "    strict-parameter-declaration | no-strict-parameter-declaration\n");
 
 	    return 1;
       }
@@ -1385,6 +1393,7 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "generation:%s\n", gen_strict_expr_width);
       fprintf(iconfig_file, "generation:%s\n", gen_shared_loop_index);
       fprintf(iconfig_file, "generation:%s\n", gen_verilog_ams);
+      fprintf(iconfig_file, "generation:%s\n", gen_strict_parameter_declaration);
       fprintf(iconfig_file, "generation:%s\n", gen_icarus);
       fprintf(iconfig_file, "warnings:%s\n", warning_flags);
       fprintf(iconfig_file, "ignore_missing_modules:%s\n", ignore_missing_modules ? "true" : "false");

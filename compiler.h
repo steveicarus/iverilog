@@ -210,6 +210,12 @@ extern bool gn_strict_expr_width_flag;
    loop. */
 extern bool gn_shared_loop_index_flag;
 
+/* If this flag is true (default), then parameters must be declared before
+   use.
+   use `-gno-strict-parameter-declaration` for pre version 13 behaviour.
+ */
+extern bool gn_strict_parameter_declaration;
+
 static inline bool gn_system_verilog(void)
 {
       if (generation_flag >= GN_VER2005_SV)
