@@ -1,5 +1,13 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT
+m4_define([VER_MAJOR], [14])
+m4_define([VER_MINOR], [0])
+m4_define([VER_EXTRA], [stable])
+AC_INIT([iverilog], [VER_MAJOR.VER_MINOR (VER_EXTRA)])
+AC_SUBST([VERSION_MAJOR], [VER_MAJOR])
+AC_SUBST([VERSION_MINOR], [VER_MINOR])
+AC_SUBST([VERSION_EXTRA], [" (VER_EXTRA)"])
+AC_SUBST([VERSION], ["VER_MAJOR.VER_MINOR (VER_EXTRA)"])
+
 AC_CONFIG_SRCDIR([netlist.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_HEADERS([_pli_types.h])
@@ -366,5 +374,5 @@ then
 AC_MSG_ERROR(cannot configure white space in libdir: $libdir)
 fi
 AC_MSG_RESULT(ok)
-AC_CONFIG_FILES([Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile tgt-blif/Makefile tgt-sizer/Makefile])
+AC_CONFIG_FILES([Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile tgt-blif/Makefile tgt-sizer/Makefile version_base.h])
 AC_OUTPUT
