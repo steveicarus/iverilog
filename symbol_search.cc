@@ -164,12 +164,18 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 
 		  if (NetNet*net = scope->find_signal(path_tail.name)) {
-			if (prefix_scope || (net->lexical_pos() <= lexical_pos)) {
+			bool decl_after_use = !prefix_scope && !(net->lexical_pos() <= lexical_pos);
+			if (!gn_strict_net_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
 			      res->scope = scope;
 			      res->net = net;
 			      res->type = net->net_type();
 			      res->path_head = path;
+			      if (warn_decl_after_use && decl_after_use) {
+				    cerr << li->get_fileline()
+					 << ": warning: net `" << path_tail.name
+					 << "` used before declaration." << endl;
+			      }
 			      return true;
 			} else if (!res->decl_after_use) {
 			      res->decl_after_use = net;
@@ -177,11 +183,17 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 
 		  if (NetEvent*eve = scope->find_event(path_tail.name)) {
-			if (prefix_scope || (eve->lexical_pos() <= lexical_pos)) {
+			bool decl_after_use = !prefix_scope && !(eve->lexical_pos() <= lexical_pos);
+			if (!gn_strict_net_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
 			      res->scope = scope;
 			      res->eve = eve;
 			      res->path_head = path;
+			      if (warn_decl_after_use && decl_after_use) {
+				    cerr << li->get_fileline()
+					 << ": warning: event `" << path_tail.name
+					 << "` used before declaration." << endl;
+			      }
 			      return true;
 			} else if (!res->decl_after_use) {
 			      res->decl_after_use = eve;

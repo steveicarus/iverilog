@@ -131,12 +131,18 @@ These flags affect the general behavior of the compiler.
     containing an unsized constant number, and unsized constant numbers are
     not truncated to integer width.
 
+  * strict-declaration/no-strict-declaration
+
+  * strict-net-declaration/no-net-strict-declaration
+
   * strict-parameter-declaration/no-strict-parameter-declaration
 
-    The standards requires that parameters must be declared lexically
-    before they are used.  Using -gno-strict-parameter-declaration
-    will allow using a parameter before declaration, with a
-    warning. The warning can be suppressed with -Wno-declaration-after-use.
+    The standards requires that nets and parameters must be declared
+    lexically before they are used.  Using -gno-strict-declaration
+    will allow using a net or parameter before declaration, with a
+    warning. The warning can be suppressed with
+    -Wno-declaration-after-use.  The option can be applied for nets
+    and parameters separately.
 
   * shared-loop-index/no-shared-loop-index
 

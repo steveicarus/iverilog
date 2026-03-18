@@ -214,11 +214,18 @@ extern bool gn_strict_expr_width_flag;
 extern bool gn_shared_loop_index_flag;
 
 /* If this flag is true (default), then parameters must be declared before
-   use. `-gno-strict-parameter-declaration` allows to use parameters before
+   use. `-gno-strict[-parameter]-declaration` allows to use parameters before
    declaration, as prior to version 13.
-   A warning is emited with -Wanachronisms (default).
+   A warning is emited with -Wdeclaration-after-use (default).
  */
 extern bool gn_strict_parameter_declaration;
+
+/* If this flag is true (default), then nets must be declared before
+   use. `-gno-strict[-net]-declaration` allows to use nets before
+   declaration, as prior to version 13.
+   A warning is emited with -Wdeclaration-after-use (default).
+ */
+extern bool gn_strict_net_declaration;
 
 static inline bool gn_system_verilog(void)
 {

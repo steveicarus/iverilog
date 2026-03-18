@@ -150,11 +150,16 @@ parameter assignment is evaluated as a lossless expression, as is any
 expression containing an unsized constant number, and unsized constant
 numbers are not truncated to integer width.
 .TP 8
+.B -gstrict-declaration\fI|\fP-gno-strict-declaration
+.TP 8
+.B -gstrict-net-declaration\fI|\fP-gno-strict-net-declaration
+.TP 8
 .B -gstrict-parameter-declaration\fI|\fP-gno-strict-parameter-declaration
-The standards requires that parameters must be declared lexically
-before they are used.  Using \fB\-gno\-strict\-parameter\-declaration\fP
+The standards requires that nets and parameters must be declared lexically
+before they are used.  Using \fB\-gno\-strict\-declaration\fP
 will allow using a parameter before declaration, with a warning.
-The warning can be suppressed with -Wno-declaration-after-use.
+The warning can be suppressed with -Wno-declaration-after-use. The
+option can be applied for nets and parameters separately. 
 .TP 8
 .B -gshared-loop-index\fI|\fP-gno-shared-loop-index
 Enable (default) or disable the exclusion of for-loop control variables
