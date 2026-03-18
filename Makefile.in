@@ -35,6 +35,7 @@ suffix = @install_suffix@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
+abs_builddir=@abs_builddir@
 datarootdir = @datarootdir@
 
 SUBDIRS = ivlpp vhdlpp vvp vpi tgt-null tgt-stub tgt-vvp \
@@ -169,7 +170,7 @@ clean:
 	rm -f ivl.exp iverilog-vpi.man iverilog-vpi.pdf iverilog-vpi.ps
 	rm -f iverilog_man.ps iverilog_man.pdf iverilog_man_`./version.exe %M_%n`.pdf
 	rm -f parse.output syn-rules.output dosify$(BUILDEXT) ivl@EXEEXT@ check.vvp
-	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc
+	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc version_base.h
 	rm -rf dep
 	rm -f version.exe
 
@@ -251,7 +252,10 @@ iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
 	chmod +x $@
 endif
 
-version.exe: $(srcdir)/version.c $(srcdir)/version_base.h version_tag.h
+version_base.h: $(srcdir)/version_base.h.in
+	./config.status $@
+
+version.exe: $(srcdir)/version.c version_base.h version_tag.h
 	$(BUILDCC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o version.exe -I. -I$(srcdir) $(srcdir)/version.c
 
 %.o: %.cc config.h | dep

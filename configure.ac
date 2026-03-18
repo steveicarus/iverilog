@@ -1,6 +1,17 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT
+
 AC_CONFIG_MACRO_DIRS([m4])
+
+dnl Define project version
+m4_define([VER_MAJOR], [14])
+m4_define([VER_MINOR], [0])
+m4_define([VER_EXTRA], [stable])
+
+AC_INIT([iverilog], [VER_MAJOR.VER_MINOR (VER_EXTRA)])
+AC_SUBST([VERSION_MAJOR], [VER_MAJOR])
+AC_SUBST([VERSION_MINOR], [VER_MINOR])
+AC_SUBST([VERSION_EXTRA], [" (VER_EXTRA)"])
+AC_SUBST([VERSION], ["VER_MAJOR.VER_MINOR (VER_EXTRA)"])
 
 AC_CONFIG_SRCDIR([netlist.h])
 AC_CONFIG_HEADERS([config.h])
@@ -408,6 +419,7 @@ AC_CONFIG_FILES([
     tgt-vhdl/Makefile
     tgt-vlog95/Makefile
     tgt-vvp/Makefile
+    version_base.h
     vhdlpp/Makefile
     vpi/Makefile
     vvp/Makefile
