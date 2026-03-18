@@ -189,14 +189,14 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 
 		  if (const NetExpr*par = scope->get_parameter(des, path_tail.name, res->type)) {
-			if (!gn_strict_parameter_declaration || prefix_scope
-			    || (scope->get_parameter_lexical_pos(path_tail.name) <= lexical_pos)) {
+			bool decl_after_use = !prefix_scope
+			      && !(scope->get_parameter_lexical_pos(path_tail.name) <= lexical_pos);
+			if (!gn_strict_parameter_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
 			      res->scope = scope;
 			      res->par_val = par;
 			      res->path_head = path;
-			      if (warn_anachronisms && !prefix_scope
-				  && !(scope->get_parameter_lexical_pos(path_tail.name) <= lexical_pos)) {
+			      if (warn_anachronisms && decl_after_use) {
 				      cerr << li->get_fileline()
 					   << ": warning: parameter `" << path_tail.name
 					   << "` used before declaration." << endl;
