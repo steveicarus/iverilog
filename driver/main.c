@@ -143,7 +143,7 @@ int gen_std_include = 1;
    of the include list. */
 int gen_relative_include = 0;
 
-char warning_flags[17] = "n";
+char warning_flags[18] = "nu";
 
 int separate_compilation_flag = 0;
 
@@ -528,6 +528,7 @@ static void process_warning_switch(const char*name)
 {
       if (strcmp(name,"all") == 0) {
 	    process_warning_switch("anachronisms");
+	    process_warning_switch("declaration-after-use");
 	    process_warning_switch("implicit");
 	    process_warning_switch("implicit-dimensions");
 	    process_warning_switch("macro-replacement");
@@ -538,6 +539,9 @@ static void process_warning_switch(const char*name)
       } else if (strcmp(name,"anachronisms") == 0) {
 	    if (! strchr(warning_flags, 'n'))
 		  strcat(warning_flags, "n");
+      } else if (strcmp(name,"declaration-after-use") == 0) {
+	    if (! strchr(warning_flags, 'u'))
+		  strcat(warning_flags, "u");
       } else if (strcmp(name,"floating-nets") == 0) {
 	    if (! strchr(warning_flags, 'f'))
 		  strcat(warning_flags, "f");
@@ -575,6 +579,12 @@ static void process_warning_switch(const char*name)
 		  strcat(warning_flags, "a");
       } else if (strcmp(name,"no-anachronisms") == 0) {
 	    char*cp = strchr(warning_flags, 'n');
+	    if (cp) while (*cp) {
+		  cp[0] = cp[1];
+		  cp += 1;
+	    }
+      } else if (strcmp(name,"no-declaration-after-use") == 0) {
+	    char*cp = strchr(warning_flags, 'u');
 	    if (cp) while (*cp) {
 		  cp[0] = cp[1];
 		  cp += 1;

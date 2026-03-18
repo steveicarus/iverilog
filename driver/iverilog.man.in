@@ -154,7 +154,7 @@ numbers are not truncated to integer width.
 The standards requires that parameters must be declared lexically
 before they are used.  Using \fB\-gno\-strict\-parameter\-declaration\fP
 will allow using a parameter before declaration, with a warning.
-The warning can be suppressed with -Wno-anachronisms.
+The warning can be suppressed with -Wno-declaration-after-use.
 .TP 8
 .B -gshared-loop-index\fI|\fP-gno-shared-loop-index
 Enable (default) or disable the exclusion of for-loop control variables
@@ -372,6 +372,11 @@ or removed in the selected generation of the Verilog language.
 This enables warnings for creation of implicit declarations. For
 example, if a scalar wire X is used but not declared in the Verilog
 source, this will print a warning at its first use.
+
+.TP 8
+.B declaration-after-use
+This enables warnings for declarations after use, when
+those are not flagged as errors (default).  
 
 .TP 8
 .B macro-redefinition\fI | \fPmacro-replacement

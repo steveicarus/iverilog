@@ -104,6 +104,9 @@ extern bool warn_sens_entire_arr;
 /* Warn about level-appropriate anachronisms. */
 extern bool warn_anachronisms;
 
+/* Warn about declaration after use (unless flaged as errors). */
+extern bool warn_decl_after_use;
+
 /* Warn about nets that are references but not driven. */
 extern bool warn_floating_nets;
 

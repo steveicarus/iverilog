@@ -136,7 +136,7 @@ These flags affect the general behavior of the compiler.
     The standards requires that parameters must be declared lexically
     before they are used.  Using -gno-strict-parameter-declaration
     will allow using a parameter before declaration, with a
-    warning. The warning can be suppressed with -Wno-anachronisms.
+    warning. The warning can be suppressed with -Wno-declaration-after-use.
 
   * shared-loop-index/no-shared-loop-index
 
@@ -267,6 +267,7 @@ These flags affect the general behavior of the compiler.
       -Wanachronisms
       -Wimplicit
       -Wimplicit-dimensions
+      -Wdeclaration-after-use
       -Wmacro-replacement
       -Wportbind
       -Wselect-range
@@ -294,6 +295,11 @@ These flags affect the general behavior of the compiler.
 
     This flag is supported in release 10.1 or master branch snapshots after
     2016-02-06.
+
+  * declaration-after-use
+
+    With -gno-strict-parameter-declaration, issue a warning when a
+    parameter is declared after it is used.
 
   * macro-redefinition
 

@@ -196,7 +196,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			      res->scope = scope;
 			      res->par_val = par;
 			      res->path_head = path;
-			      if (warn_anachronisms && decl_after_use) {
+			      if (warn_decl_after_use && decl_after_use) {
 				      cerr << li->get_fileline()
 					   << ": warning: parameter `" << path_tail.name
 					   << "` used before declaration." << endl;
