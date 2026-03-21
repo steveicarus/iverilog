@@ -1274,6 +1274,7 @@ class NetScope : public Definitions, public Attrib {
       LineInfo get_parameter_line_info(perm_string name) const;
 
       unsigned get_parameter_lexical_pos(perm_string name) const;
+      void set_parameter_lexical_pos(perm_string name, unsigned lexical_pos);
 
 	/* Module instance arrays are collected here for access during
 	   the multiple elaboration passes. */

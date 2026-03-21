@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -175,6 +175,8 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 				    cerr << li->get_fileline()
 					 << ": warning: net `" << path_tail.name
 					 << "` used before declaration." << endl;
+				    // suppress further warnings for this net
+				    net->lexical_pos(lexical_pos);
 			      }
 			      return true;
 			} else if (!res->decl_after_use) {
@@ -193,6 +195,8 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 				    cerr << li->get_fileline()
 					 << ": warning: event `" << path_tail.name
 					 << "` used before declaration." << endl;
+				    // suppress further warnings for this event
+				    eve->lexical_pos(lexical_pos);
 			      }
 			      return true;
 			} else if (!res->decl_after_use) {
@@ -209,9 +213,11 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			      res->par_val = par;
 			      res->path_head = path;
 			      if (warn_decl_after_use && decl_after_use) {
-				      cerr << li->get_fileline()
-					   << ": warning: parameter `" << path_tail.name
-					   << "` used before declaration." << endl;
+				    cerr << li->get_fileline()
+					 << ": warning: parameter `" << path_tail.name
+					 << "` used before declaration." << endl;
+				    // suppress further warnings for this parameter
+				    scope->set_parameter_lexical_pos(path_tail.name, lexical_pos);
 			      }
 			      return true;
 			} else if (!res->decl_after_use) {
