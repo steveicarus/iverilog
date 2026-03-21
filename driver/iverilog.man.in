@@ -124,7 +124,7 @@ to disable extended types if compiling code that clashes with the few
 new keywords used to implement the type system.
 .TP 8
 .B -gio-range-error\fI|\fP-gno-io-range-error
-The standards requires that a vectored port have matching ranges for its
+The standards require that a vectored port have matching ranges for its
 port declaration as well as any net/register declaration. It was common
 practice in the past to only specify the range for the net/register
 declaration and some tools still allow this. By default any mismatch is
@@ -159,7 +159,7 @@ The standards requires that nets and parameters must be declared lexically
 before they are used.  Using \fB\-gno\-strict\-declaration\fP
 will allow using a parameter before declaration, with a warning.
 The warning can be suppressed with -Wno-declaration-after-use. The
-option can be applied for nets and parameters separately. 
+option can be applied for nets and parameters separately.
 .TP 8
 .B -gshared-loop-index\fI|\fP-gno-shared-loop-index
 Enable (default) or disable the exclusion of for-loop control variables
@@ -381,7 +381,7 @@ source, this will print a warning at its first use.
 .TP 8
 .B declaration-after-use
 This enables warnings for declarations after use, when
-those are not flagged as errors (default).  
+those are not flagged as errors (default).
 
 .TP 8
 .B macro-redefinition\fI | \fPmacro-replacement

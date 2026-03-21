@@ -137,7 +137,7 @@ These flags affect the general behavior of the compiler.
 
   * strict-parameter-declaration/no-strict-parameter-declaration
 
-    The standards requires that nets and parameters must be declared
+    The standards require that nets and parameters must be declared
     lexically before they are used.  Using -gno-strict-declaration
     will allow using a net or parameter before declaration, with a
     warning. The warning can be suppressed with
