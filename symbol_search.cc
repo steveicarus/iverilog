@@ -175,6 +175,8 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 				    cerr << li->get_fileline()
 					 << ": warning: net `" << path_tail.name
 					 << "` used before declaration." << endl;
+				    cerr << net->get_fileline()
+					 << ":        : the net is declared here." << endl;
 				    // suppress further warnings for this net
 				    net->lexical_pos(lexical_pos);
 			      }
@@ -195,6 +197,8 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 				    cerr << li->get_fileline()
 					 << ": warning: event `" << path_tail.name
 					 << "` used before declaration." << endl;
+				    cerr << eve->get_fileline()
+					 << ":        : the event is declared here." << endl;
 				    // suppress further warnings for this event
 				    eve->lexical_pos(lexical_pos);
 			      }
@@ -216,6 +220,8 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 				    cerr << li->get_fileline()
 					 << ": warning: parameter `" << path_tail.name
 					 << "` used before declaration." << endl;
+				    cerr << par->get_fileline()
+					 << ":        : the parameter is declared here." << endl;
 				    // suppress further warnings for this parameter
 				    scope->set_parameter_lexical_pos(path_tail.name, lexical_pos);
 			      }
