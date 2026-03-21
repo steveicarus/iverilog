@@ -303,8 +303,12 @@ These flags affect the general behavior of the compiler.
 
   * declaration-after-use
 
-    With -gno-strict-parameter-declaration, issue a warning when a
-    parameter is declared after it is used.
+    This enables warnings for declarations after use, when those are not
+    flagged as errors (enabled by default). Use no-declaration-after-use
+    to disable this.
+
+    This flag was added in version 14.0 or later (and is in the master branch
+    as of 2026-03-21).
 
   * macro-redefinition
 
