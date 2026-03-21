@@ -97,6 +97,12 @@ decl_before_use3		vvp_tests/decl_before_use3.json
 decl_before_use4		vvp_tests/decl_before_use4.json
 decl_before_use5		vvp_tests/decl_before_use5.json
 decl_before_use6		vvp_tests/decl_before_use6.json
+decl_before_use1_warn		vvp_tests/decl_before_use1_warn.json
+decl_before_use2_warn		vvp_tests/decl_before_use2_warn.json
+decl_before_use3_warn		vvp_tests/decl_before_use3_warn.json
+decl_before_use4_warn		vvp_tests/decl_before_use4_warn.json
+decl_before_use5_warn		vvp_tests/decl_before_use5_warn.json
+decl_before_use6_warn		vvp_tests/decl_before_use6_warn.json
 delayed_sfunc			vvp_tests/delayed_sfunc.json
 dffsynth			vvp_tests/dffsynth.json
 dffsynth-S			vvp_tests/dffsynth-S.json

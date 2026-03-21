@@ -1,0 +1,2 @@
+ivltests/decl_before_use2.v:3: warning: net/variable `w` used before declaration.
+ivltests/decl_before_use2.v:10:        : the net/variable is declared here.

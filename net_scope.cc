@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -460,6 +460,14 @@ unsigned NetScope::get_parameter_lexical_pos(perm_string key) const
 
 	// If we get here, assume an enumeration value.
       return 0;
+}
+
+void NetScope::set_parameter_lexical_pos(perm_string key, unsigned lexical_pos)
+{
+      map<perm_string,param_expr_t>::iterator idx;
+
+      idx = parameters.find(key);
+      if (idx != parameters.end()) idx->second.lexical_pos = lexical_pos;
 }
 
 void NetScope::print_type(ostream&stream) const

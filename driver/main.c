@@ -134,6 +134,8 @@ const char*gen_strict_ca_eval = "no-strict-ca-eval";
 const char*gen_strict_expr_width = "no-strict-expr-width";
 const char*gen_shared_loop_index = "shared-loop-index";
 const char*gen_verilog_ams = "no-verilog-ams";
+const char*gen_strict_net_var_declaration = "strict-net-var-declaration";
+const char*gen_strict_parameter_declaration = "strict-parameter-declaration";
 
 /* Boolean: true means use a default include dir, false means don't */
 int gen_std_include = 1;
@@ -142,7 +144,7 @@ int gen_std_include = 1;
    of the include list. */
 int gen_relative_include = 0;
 
-char warning_flags[17] = "n";
+char warning_flags[18] = "nu";
 
 int separate_compilation_flag = 0;
 
@@ -527,6 +529,7 @@ static void process_warning_switch(const char*name)
 {
       if (strcmp(name,"all") == 0) {
 	    process_warning_switch("anachronisms");
+	    process_warning_switch("declaration-after-use");
 	    process_warning_switch("implicit");
 	    process_warning_switch("implicit-dimensions");
 	    process_warning_switch("macro-replacement");
@@ -537,6 +540,9 @@ static void process_warning_switch(const char*name)
       } else if (strcmp(name,"anachronisms") == 0) {
 	    if (! strchr(warning_flags, 'n'))
 		  strcat(warning_flags, "n");
+      } else if (strcmp(name,"declaration-after-use") == 0) {
+	    if (! strchr(warning_flags, 'u'))
+		  strcat(warning_flags, "u");
       } else if (strcmp(name,"floating-nets") == 0) {
 	    if (! strchr(warning_flags, 'f'))
 		  strcat(warning_flags, "f");
@@ -574,6 +580,12 @@ static void process_warning_switch(const char*name)
 		  strcat(warning_flags, "a");
       } else if (strcmp(name,"no-anachronisms") == 0) {
 	    char*cp = strchr(warning_flags, 'n');
+	    if (cp) while (*cp) {
+		  cp[0] = cp[1];
+		  cp += 1;
+	    }
+      } else if (strcmp(name,"no-declaration-after-use") == 0) {
+	    char*cp = strchr(warning_flags, 'u');
 	    if (cp) while (*cp) {
 		  cp[0] = cp[1];
 		  cp += 1;
@@ -815,6 +827,26 @@ static int process_generation(const char*name)
       else if (strcmp(name,"no-verilog-ams") == 0)
 	    gen_verilog_ams = "no-verilog-ams";
 
+      else if (strcmp(name,"strict-declaration") == 0) {
+	    gen_strict_net_var_declaration = "strict-net-var-declaration";
+	    gen_strict_parameter_declaration = "strict-parameter-declaration";
+      }
+      else if (strcmp(name,"no-strict-declaration") == 0) {
+	    gen_strict_net_var_declaration = "no-strict-net-var-declaration";
+	    gen_strict_parameter_declaration = "no-strict-parameter-declaration";
+      }
+      else if (strcmp(name,"strict-net-var-declaration") == 0)
+	    gen_strict_net_var_declaration = "strict-net-var-declaration";
+
+      else if (strcmp(name,"no-strict-net-var-declaration") == 0)
+	    gen_strict_net_var_declaration = "no-strict-net-var-declaration";
+
+      else if (strcmp(name,"strict-parameter-declaration") == 0)
+	    gen_strict_parameter_declaration = "strict-parameter-declaration";
+
+      else if (strcmp(name,"no-strict-parameter-declaration") == 0)
+	    gen_strict_parameter_declaration = "no-strict-parameter-declaration";
+
       else {
 	    fprintf(stderr, "Unknown/Unsupported Language generation "
 		    "%s\n\n", name);
@@ -837,7 +869,9 @@ static int process_generation(const char*name)
 		            "    io-range-error | no-io-range-error\n"
 		            "    strict-ca-eval | no-strict-ca-eval\n"
 		            "    strict-expr-width | no-strict-expr-width\n"
-		            "    shared-loop-index | no-shared-loop-index\n");
+		            "    shared-loop-index | no-shared-loop-index\n"
+		            "    strict-declaration | no-strict-declaration\n"
+		            "    [no-]strict-[net-var|parameter]-declaration\n");
 
 	    return 1;
       }
@@ -1385,6 +1419,8 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "generation:%s\n", gen_strict_expr_width);
       fprintf(iconfig_file, "generation:%s\n", gen_shared_loop_index);
       fprintf(iconfig_file, "generation:%s\n", gen_verilog_ams);
+      fprintf(iconfig_file, "generation:%s\n", gen_strict_net_var_declaration);
+      fprintf(iconfig_file, "generation:%s\n", gen_strict_parameter_declaration);
       fprintf(iconfig_file, "generation:%s\n", gen_icarus);
       fprintf(iconfig_file, "warnings:%s\n", warning_flags);
       fprintf(iconfig_file, "ignore_missing_modules:%s\n", ignore_missing_modules ? "true" : "false");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -164,12 +164,22 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 
 		  if (NetNet*net = scope->find_signal(path_tail.name)) {
-			if (prefix_scope || (net->lexical_pos() <= lexical_pos)) {
+			bool decl_after_use = !prefix_scope && !(net->lexical_pos() <= lexical_pos);
+			if (!gn_strict_net_var_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
 			      res->scope = scope;
 			      res->net = net;
 			      res->type = net->net_type();
 			      res->path_head = path;
+			      if (warn_decl_after_use && decl_after_use) {
+				    cerr << li->get_fileline()
+					 << ": warning: net/variable `" << path_tail.name
+					 << "` used before declaration." << endl;
+				    cerr << net->get_fileline()
+					 << ":        : the net/variable is declared here." << endl;
+				    // suppress further warnings for this net
+				    net->lexical_pos(lexical_pos);
+			      }
 			      return true;
 			} else if (!res->decl_after_use) {
 			      res->decl_after_use = net;
@@ -177,11 +187,21 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 
 		  if (NetEvent*eve = scope->find_event(path_tail.name)) {
-			if (prefix_scope || (eve->lexical_pos() <= lexical_pos)) {
+			bool decl_after_use = !prefix_scope && !(eve->lexical_pos() <= lexical_pos);
+			if (!gn_strict_net_var_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
 			      res->scope = scope;
 			      res->eve = eve;
 			      res->path_head = path;
+			      if (warn_decl_after_use && decl_after_use) {
+				    cerr << li->get_fileline()
+					 << ": warning: event `" << path_tail.name
+					 << "` used before declaration." << endl;
+				    cerr << eve->get_fileline()
+					 << ":        : the event is declared here." << endl;
+				    // suppress further warnings for this event
+				    eve->lexical_pos(lexical_pos);
+			      }
 			      return true;
 			} else if (!res->decl_after_use) {
 			      res->decl_after_use = eve;
@@ -189,11 +209,22 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 
 		  if (const NetExpr*par = scope->get_parameter(des, path_tail.name, res->type)) {
-			if (prefix_scope || (scope->get_parameter_lexical_pos(path_tail.name) <= lexical_pos)) {
+			bool decl_after_use = !prefix_scope
+			      && !(scope->get_parameter_lexical_pos(path_tail.name) <= lexical_pos);
+			if (!gn_strict_parameter_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
 			      res->scope = scope;
 			      res->par_val = par;
 			      res->path_head = path;
+			      if (warn_decl_after_use && decl_after_use) {
+				    cerr << li->get_fileline()
+					 << ": warning: parameter `" << path_tail.name
+					 << "` used before declaration." << endl;
+				    cerr << par->get_fileline()
+					 << ":        : the parameter is declared here." << endl;
+				    // suppress further warnings for this parameter
+				    scope->set_parameter_lexical_pos(path_tail.name, lexical_pos);
+			      }
 			      return true;
 			} else if (!res->decl_after_use) {
 			      res->decl_after_use = par;

@@ -117,6 +117,8 @@ bool gn_strict_ca_eval_flag = false;
 bool gn_strict_expr_width_flag = false;
 bool gn_shared_loop_index_flag = true;
 bool gn_verilog_ams_flag = false;
+bool gn_strict_parameter_declaration = true;
+bool gn_strict_net_var_declaration = true;
 
 /*
  * For some generations we allow a system function to be called
@@ -172,6 +174,7 @@ bool warn_ob_select = false;
 bool warn_sens_entire_vec = false;
 bool warn_sens_entire_arr = false;
 bool warn_anachronisms = false;
+bool warn_decl_after_use = false;
 bool warn_floating_nets = false;
 
 /*
@@ -385,6 +388,18 @@ static void process_generation_flag(const char*gen)
 
       } else if (strcmp(gen,"no-shared-loop-index") == 0) {
 	    gn_shared_loop_index_flag = false;
+
+      } else if (strcmp(gen,"strict-parameter-declaration") == 0) {
+	    gn_strict_parameter_declaration = true;
+
+      } else if (strcmp(gen,"no-strict-parameter-declaration") == 0) {
+	    gn_strict_parameter_declaration = false;
+
+      } else if (strcmp(gen,"strict-net-var-declaration") == 0) {
+	    gn_strict_net_var_declaration = true;
+
+      } else if (strcmp(gen,"no-strict-net-var-declaration") == 0) {
+	    gn_strict_net_var_declaration = false;
 
 	  } else {
       }
@@ -759,6 +774,9 @@ static void read_iconfig_file(const char*ipath)
 			break;
 		      case 'n':
 			warn_anachronisms = true;
+			break;
+		      case 'u':
+			warn_decl_after_use = true;
 			break;
 		      default:
 			break;

@@ -1,0 +1,7 @@
+
+{
+    "type" : "normal",
+    "source" : "decl_before_use3.v",
+    "iverilog-args" : [ "-gno-strict-net-var-declaration" ],
+    "gold" : "decl_before_use3_warn"
+}

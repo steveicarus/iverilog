@@ -131,6 +131,18 @@ These flags affect the general behavior of the compiler.
     containing an unsized constant number, and unsized constant numbers are
     not truncated to integer width.
 
+  * strict-declaration/no-strict-declaration
+
+  * strict-net-var-declaration/no-strict-net-var-declaration
+
+  * strict-parameter-declaration/no-strict-parameter-declaration
+
+    The standards require that nets, variables, and parameters must be
+    declared lexically before they are used.  Using -gno-strict-declaration
+    will allow using a data object before declaration, with a warning. The
+    warning can be suppressed with -Wno-declaration-after-use.  The option
+    can be applied for nets and variables and for parameters separately.
+
   * shared-loop-index/no-shared-loop-index
 
     Enable or disable the exclusion of for-loop control variables from
@@ -260,6 +272,7 @@ These flags affect the general behavior of the compiler.
       -Wanachronisms
       -Wimplicit
       -Wimplicit-dimensions
+      -Wdeclaration-after-use
       -Wmacro-replacement
       -Wportbind
       -Wselect-range
@@ -287,6 +300,15 @@ These flags affect the general behavior of the compiler.
 
     This flag is supported in release 10.1 or master branch snapshots after
     2016-02-06.
+
+  * declaration-after-use
+
+    This enables warnings for declarations after use, when those are not
+    flagged as errors (enabled by default). Use no-declaration-after-use
+    to disable this.
+
+    This flag was added in version 14.0 or later (and is in the master branch
+    as of 2026-03-21).
 
   * macro-redefinition
 

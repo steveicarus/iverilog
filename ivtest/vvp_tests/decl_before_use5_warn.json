@@ -1,0 +1,7 @@
+
+{
+    "type" : "normal",
+    "source" : "decl_before_use5.v",
+    "iverilog-args" : [ "-gno-strict-parameter-declaration" ],
+    "gold" : "decl_before_use5_warn"
+}
