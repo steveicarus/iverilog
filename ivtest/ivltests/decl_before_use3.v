@@ -2,7 +2,7 @@ module test();
 
 initial begin
   ->e;
-  $display("FAILED");
+  $display("used before declaration");
 end
 
 event e;

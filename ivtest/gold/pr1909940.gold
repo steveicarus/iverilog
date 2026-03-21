@@ -1,0 +1,3 @@
+./ivltests/pr1909940.v:4: warning: net/variable `in` used before declaration.
+./ivltests/pr1909940.v:5:        : the net/variable is declared here.
+PASSED

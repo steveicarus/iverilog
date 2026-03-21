@@ -1,0 +1,2 @@
+ivltests/decl_before_use5.v:4: warning: parameter `w` used before declaration.
+ivltests/decl_before_use5.v:8:        : the parameter is declared here.

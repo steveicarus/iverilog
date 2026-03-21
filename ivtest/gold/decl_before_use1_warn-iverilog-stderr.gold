@@ -1,0 +1,2 @@
+ivltests/decl_before_use1.v:4: warning: net/variable `v` used before declaration.
+ivltests/decl_before_use1.v:9:        : the net/variable is declared here.
