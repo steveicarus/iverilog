@@ -165,7 +165,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 
 		  if (NetNet*net = scope->find_signal(path_tail.name)) {
 			bool decl_after_use = !prefix_scope && !(net->lexical_pos() <= lexical_pos);
-			if (!gn_strict_net_declaration || !decl_after_use) {
+			if (!gn_strict_net_var_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
 			      res->scope = scope;
 			      res->net = net;
@@ -173,10 +173,10 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			      res->path_head = path;
 			      if (warn_decl_after_use && decl_after_use) {
 				    cerr << li->get_fileline()
-					 << ": warning: net `" << path_tail.name
+					 << ": warning: net/variable `" << path_tail.name
 					 << "` used before declaration." << endl;
 				    cerr << net->get_fileline()
-					 << ":        : the net is declared here." << endl;
+					 << ":        : the net/variable is declared here." << endl;
 				    // suppress further warnings for this net
 				    net->lexical_pos(lexical_pos);
 			      }
@@ -188,7 +188,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 
 		  if (NetEvent*eve = scope->find_event(path_tail.name)) {
 			bool decl_after_use = !prefix_scope && !(eve->lexical_pos() <= lexical_pos);
-			if (!gn_strict_net_declaration || !decl_after_use) {
+			if (!gn_strict_net_var_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
 			      res->scope = scope;
 			      res->eve = eve;

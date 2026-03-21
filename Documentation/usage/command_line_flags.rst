@@ -133,16 +133,15 @@ These flags affect the general behavior of the compiler.
 
   * strict-declaration/no-strict-declaration
 
-  * strict-net-declaration/no-net-strict-declaration
+  * strict-net-var-declaration/no-strict-net-var-declaration
 
   * strict-parameter-declaration/no-strict-parameter-declaration
 
-    The standards require that nets and parameters must be declared
-    lexically before they are used.  Using -gno-strict-declaration
-    will allow using a net or parameter before declaration, with a
-    warning. The warning can be suppressed with
-    -Wno-declaration-after-use.  The option can be applied for nets
-    and parameters separately.
+    The standards require that nets, variables, and parameters must be
+    declared lexically before they are used.  Using -gno-strict-declaration
+    will allow using a data object before declaration, with a warning. The
+    warning can be suppressed with -Wno-declaration-after-use.  The option
+    can be applied for nets and variables and for parameters separately.
 
   * shared-loop-index/no-shared-loop-index
 

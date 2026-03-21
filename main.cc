@@ -118,7 +118,7 @@ bool gn_strict_expr_width_flag = false;
 bool gn_shared_loop_index_flag = true;
 bool gn_verilog_ams_flag = false;
 bool gn_strict_parameter_declaration = true;
-bool gn_strict_net_declaration = true;
+bool gn_strict_net_var_declaration = true;
 
 /*
  * For some generations we allow a system function to be called
@@ -395,11 +395,11 @@ static void process_generation_flag(const char*gen)
       } else if (strcmp(gen,"no-strict-parameter-declaration") == 0) {
 	    gn_strict_parameter_declaration = false;
 
-      } else if (strcmp(gen,"strict-net-declaration") == 0) {
-	    gn_strict_net_declaration = true;
+      } else if (strcmp(gen,"strict-net-var-declaration") == 0) {
+	    gn_strict_net_var_declaration = true;
 
-      } else if (strcmp(gen,"no-strict-net-declaration") == 0) {
-	    gn_strict_net_declaration = false;
+      } else if (strcmp(gen,"no-strict-net-var-declaration") == 0) {
+	    gn_strict_net_var_declaration = false;
 
 	  } else {
       }

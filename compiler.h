@@ -1,7 +1,7 @@
 #ifndef IVL_compiler_H
 #define IVL_compiler_H
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -220,12 +220,12 @@ extern bool gn_shared_loop_index_flag;
  */
 extern bool gn_strict_parameter_declaration;
 
-/* If this flag is true (default), then nets must be declared before
-   use. `-gno-strict[-net]-declaration` allows to use nets before
-   declaration, as prior to version 13.
+/* If this flag is true (default), then nets and variablesmust be declared
+   before use. `-gno-strict[-net-var]-declaration` allows to use nets and
+   variables before declaration, as prior to version 13.
    A warning is emited with -Wdeclaration-after-use (default).
  */
-extern bool gn_strict_net_declaration;
+extern bool gn_strict_net_var_declaration;
 
 static inline bool gn_system_verilog(void)
 {

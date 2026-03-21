@@ -152,14 +152,14 @@ numbers are not truncated to integer width.
 .TP 8
 .B -gstrict-declaration\fI|\fP-gno-strict-declaration
 .TP 8
-.B -gstrict-net-declaration\fI|\fP-gno-strict-net-declaration
+.B -gstrict-net-var-declaration\fI|\fP-gno-strict-net-var-declaration
 .TP 8
 .B -gstrict-parameter-declaration\fI|\fP-gno-strict-parameter-declaration
-The standards requires that nets and parameters must be declared lexically
-before they are used.  Using \fB\-gno\-strict\-declaration\fP
-will allow using a parameter before declaration, with a warning.
-The warning can be suppressed with -Wno-declaration-after-use. The
-option can be applied for nets and parameters separately.
+The standards require that nets, variables, and parameters are declared
+lexically before they are used.  Using \fB\-gno\-strict\-declaration\fP
+will allow using a data object before declaration, with a warning. The
+warning can be suppressed with -Wno-declaration-after-use. The option
+can be applied for nets and variables and for parameters separately.
 .TP 8
 .B -gshared-loop-index\fI|\fP-gno-shared-loop-index
 Enable (default) or disable the exclusion of for-loop control variables
