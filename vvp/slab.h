@@ -25,8 +25,8 @@
 
 template <size_t SLAB_SIZE, size_t CHUNK_COUNT> class slab_t {
 
-      union item_cell_u {
-	    item_cell_u*next;
+      struct item_cell_s {
+	    item_cell_s*next;
 	    char space[SLAB_SIZE];
       };
 
@@ -44,11 +44,11 @@ template <size_t SLAB_SIZE, size_t CHUNK_COUNT> class slab_t {
       unsigned long pool;
 
     private:
-      item_cell_u*heap_;
-      item_cell_u initial_chunk_[CHUNK_COUNT];
+      item_cell_s*heap_;
+      item_cell_s initial_chunk_[CHUNK_COUNT];
 #ifdef CHECK_WITH_VALGRIND
 	// Each slab needs a pointer to the allocated space.
-      item_cell_u**slab_pool;
+      item_cell_s**slab_pool;
       unsigned slab_pool_count;
 #endif
 };
@@ -73,11 +73,11 @@ template <size_t SLAB_SIZE, size_t CHUNK_COUNT>
 inline void* slab_t<SLAB_SIZE,CHUNK_COUNT>::alloc_slab()
 {
       if (heap_ == 0) {
-	    item_cell_u*chunk = new item_cell_u[CHUNK_COUNT];
+	    item_cell_s*chunk = new item_cell_s[CHUNK_COUNT];
 #ifdef CHECK_WITH_VALGRIND
 	    slab_pool_count += 1;
-	    slab_pool = static_cast<item_cell_u **>(realloc(slab_pool,
-	                slab_pool_count*sizeof(item_cell_u **)));
+	    slab_pool = static_cast<item_cell_s **>(realloc(slab_pool,
+	                slab_pool_count*sizeof(item_cell_s **)));
 	    slab_pool[slab_pool_count-1] = chunk;
 #endif
 	    for (unsigned idx = 0 ; idx < CHUNK_COUNT ; idx += 1) {
@@ -87,15 +87,16 @@ inline void* slab_t<SLAB_SIZE,CHUNK_COUNT>::alloc_slab()
 	    pool += CHUNK_COUNT;
       }
 
-      item_cell_u*cur = heap_;
+      item_cell_s*cur = heap_;
       heap_ = heap_->next;
-      return cur;
+      return cur->space;
 }
 
 template <size_t SLAB_SIZE, size_t CHUNK_COUNT>
 inline void slab_t<SLAB_SIZE,CHUNK_COUNT>::free_slab(void*ptr)
 {
-      item_cell_u*cur = reinterpret_cast<item_cell_u*> (ptr);
+      char*with_header = reinterpret_cast<char*>(ptr) - sizeof(item_cell_s*);
+      item_cell_s*cur = reinterpret_cast<item_cell_s*> (with_header);
       cur->next = heap_;
       heap_ = cur;
 }
