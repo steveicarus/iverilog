@@ -159,11 +159,11 @@ vvp@EXEEXT@: $O main.o
 endif
 endif
 
-%.o: %.cc config.h
+%.o: %.cc config.h | dep
 	$(CXX) $(CPPFLAGS) -DIVL_SUFFIX='"$(suffix)"' $(MDIR1) $(MDIR2) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep/$*.d
 
-%.o: %.c config.h
+%.o: %.c config.h | dep
 	$(CC) $(CPPFLAGS) $(MDIR1) $(MDIR2) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep/$*.d
 
