@@ -69,6 +69,9 @@ const char HELP[] =
 # include  <libiberty.h>
 #endif
 #endif
+#ifdef __APPLE__
+# include  <mach-o/dyld.h>
+#endif
 #include  <fcntl.h>
 
 #ifdef HAVE_GETOPT_H
