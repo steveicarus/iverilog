@@ -108,7 +108,7 @@ enum fstScopeType
     FST_ST_VHDL_GENERATE = 20,
     FST_ST_VHDL_PACKAGE = 21,
 
-    FST_ST_UNPACKED_DIM = 22,
+    FST_ST_SV_ARRAY = 22,
     FST_ST_MAX = 22,
 
     FST_ST_GEN_ATTRBEGIN = 252,
