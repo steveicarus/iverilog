@@ -101,7 +101,7 @@ libveriuser.a: libveriuser.o
 	$(AR) cvq $@ libveriuser.o
 	$(RANLIB) $@
 
-%.o: %.c config.h
+%.o: %.c config.h | dep
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
