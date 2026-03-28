@@ -3204,7 +3204,7 @@ static const char *modtypes[] = {"module",
                                  "vhdl_if_generate",
                                  "vhdl_generate",
                                  "vhdl_package",
-                                 "unpacked"};
+                                 "sv_array"};
 
 static const char *attrtypes[] = {"misc", "array", "enum", "class"};
 
