@@ -14,8 +14,10 @@ jobs:
   mac:
     strategy:
       fail-fast: false
+      matrix:
+        libvvp: [false, true]
     runs-on: macos-15-intel
-    name: '🍏 macOS'
+    name: 🍏 macOS${{ matrix.libvvp && ' +libvvp' || '' }}
     steps:
 
     - uses: actions/checkout@v4
@@ -28,8 +30,12 @@ jobs:
     - name: Build, check and install
       run: |
         export PATH="/usr/local/opt/bison/bin:$PATH"
+        CONFIG_OPTS="--enable-libveriuser"
+        if [ "${{ matrix.libvvp }}" = "true" ]; then
+            CONFIG_OPTS="$CONFIG_OPTS --enable-libvvp"
+        fi
         autoconf
-        ./configure --enable-libveriuser
+        ./configure $CONFIG_OPTS
         make -j$(nproc) check
         sudo make install
 
@@ -41,12 +47,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [
-          '22.04',
-          '24.04'
-        ]
+        os: ['22.04', '24.04']
+        libvvp: [false, true]
     runs-on: ubuntu-${{ matrix.os }}
-    name: '🐧 Ubuntu ${{ matrix.os }}'
+    name: 🐧 Ubuntu ${{ matrix.os }}${{ matrix.libvvp && ' +libvvp' || '' }}
     steps:
 
     - uses: actions/checkout@v4
@@ -58,8 +62,12 @@ jobs:
 
     - name: Build, check and install
       run: |
+        CONFIG_OPTS="--enable-libveriuser"
+        if [ "${{ matrix.libvvp }}" = "true" ]; then
+            CONFIG_OPTS="$CONFIG_OPTS --enable-libvvp"
+        fi
         autoconf
-        ./configure --enable-libveriuser
+        ./configure $CONFIG_OPTS
         make -j$(nproc) check
         sudo make install
 
@@ -76,11 +84,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        msystem: [MINGW64, UCRT64, CLANG64]
+        libvvp: [false, true]
         include:
           - { msystem: MINGW64, env: x86_64 }
           - { msystem: UCRT64,  env: ucrt-x86_64 }
           - { msystem: CLANG64, env: clang-x86_64 }
-    name: 🟪 ${{ matrix.msystem}}
+    name: 🟪 ${{ matrix.msystem }}${{ matrix.libvvp && ' +libvvp' || '' }}
     defaults:
       run:
         shell: msys2 {0}
@@ -110,9 +120,14 @@ jobs:
     - name: Build and check
       run: |
         cd msys2
+        CONFIG_OPTS=""
         if [ ${{ matrix.msystem }} != "CLANG64" ] ; then
-            export IVL_CONFIG_OPTIONS="--enable-libveriuser"
+            CONFIG_OPTS="$CONFIG_OPTS --enable-libveriuser"
         fi
+        if [ "${{ matrix.libvvp }}" = "true" ] ; then
+            CONFIG_OPTS="$CONFIG_OPTS --enable-libvvp"
+        fi
+        export IVL_CONFIG_OPTIONS="$CONFIG_OPTS"
         makepkg-mingw --noconfirm --noprogressbar -sCLf
 
     - name: Install
@@ -128,5 +143,5 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.msystem }}
+        name: 🟪 ${{ matrix.msystem }}${{ matrix.libvvp && ' +libvvp' || '' }}
         path: msys2/*.zst
