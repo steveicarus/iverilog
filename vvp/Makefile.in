@@ -60,7 +60,7 @@ CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ -DICARUS_VPI_CONST=const
 CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @rdynamic@ @LDFLAGS@
-LIBS = @LIBS@ @EXTRALIBS@
+LIBS = @LIBS@ @EXTRALIBS@ @DLLIB@
 
 ifeq (@WIN32@,yes)
 SLDIR=$(bindir)
@@ -69,8 +69,6 @@ else
 SLDIR=$(libdir)
 SLEXT=so
 endif
-
-dllib=@DLLIB@
 
 MDIR1 = -DMODULE_DIR1='"$(libdir)/ivl$(suffix)"'
 
@@ -152,10 +150,10 @@ ifeq (@WIN32@,yes)
 # cocotb to build VPI modules without using our vpi_user.h and libvpi.a.
 # The .def file controls what is exported.
 vvp@EXEEXT@: main.o $O $(srcdir)/vvp.def
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $(LDFLAGS) $(srcdir)/vvp.def main.o $O $(dllib) $(LIBS)
+	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $(LDFLAGS) $(srcdir)/vvp.def main.o $O $(LIBS)
 else
 vvp@EXEEXT@: $O main.o
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o $O $(LIBS) $(dllib)
+	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o $O $(LIBS)
 endif
 endif
 
