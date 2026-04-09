@@ -17,7 +17,7 @@ the "make version" target, or automatically if the version_tag.h
 file doesn't exist at all. This implies that a "make version" is
 something worth doing when you do a "git pull" or create commits.
 
-The files below are now edited by the Makefile and the version.exe program:
+The files below are now edited by the Makefile:
 
 * iverilog-vpi.man    -- The .TH tag has a version string
 * driver/iverilog.man -- The .TH tag has a version string
