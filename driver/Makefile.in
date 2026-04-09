@@ -102,9 +102,8 @@ main.o: main.c globals.h ../version_base.h ../version_tag.h Makefile | dep
 
 cflexor.o: cflexor.c cfparse.h
 
-iverilog.man: $(srcdir)/iverilog.man.in ../version.exe
-	../version.exe `head -1 $<`'\n' > $@
-	tail -n +2 $< >> $@
+iverilog.man: $(srcdir)/iverilog.man.in
+	cd ..; ./config.status --file=driver/$@
 
 iverilog.ps: iverilog.man
 	$(MAN) -t ./$< > $@

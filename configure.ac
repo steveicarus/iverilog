@@ -12,6 +12,8 @@ AC_SUBST([VERSION_MAJOR], [VER_MAJOR])
 AC_SUBST([VERSION_MINOR], [VER_MINOR])
 AC_SUBST([VERSION_EXTRA], [" (VER_EXTRA)"])
 AC_SUBST([VERSION], ["VER_MAJOR.VER_MINOR (VER_EXTRA)"])
+# used in res.rc
+AC_SUBST([PRODUCTVERSION], ["VER_MAJOR,VER_MINOR,0,0"])
 
 AC_CONFIG_SRCDIR([netlist.h])
 AC_CONFIG_HEADERS([config.h])
@@ -405,7 +407,10 @@ AC_CONFIG_FILES([
     Makefile
     cadpli/Makefile
     driver-vpi/Makefile
+    driver-vpi/res.rc
     driver/Makefile
+    driver/iverilog.man
+    iverilog-vpi.man
     ivlpp/Makefile
     libveriuser/Makefile
     tgt-blif/Makefile
@@ -423,5 +428,6 @@ AC_CONFIG_FILES([
     vhdlpp/Makefile
     vpi/Makefile
     vvp/Makefile
+    vvp/vvp.man
 ])
 AC_OUTPUT
