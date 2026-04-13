@@ -48,9 +48,13 @@ unsigned compile_errors = 0;
 
 /*
  * The opcode table lists all the code mnemonics, along with their
- * opcode and operand types. The table is written sorted by mnemonic
- * so that it can be searched by binary search. The opcode_compare
- * function is a helper function for that lookup.
+ * opcode and operand types. The table must be sorted lexicographically
+ * by mnemonic string: compile_code() uses bsearch() on this array.
+ * If the order is wrong, lookup fails and the assembler reports
+ * "Invalid opcode" for otherwise valid instructions (e.g. class
+ * property queue ops must sort among all %delete/*, %qpop/*, %store/*
+ * names, not grouped by feature).
+ * The opcode_compare function is a helper for that lookup.
  */
 
 enum operand_e {
@@ -151,6 +155,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%delayx", of_DELAYX, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%delete/elem",of_DELETE_ELEM,1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
       { "%delete/obj",of_DELETE_OBJ,1,{OA_FUNC_PTR,OA_NONE,  OA_NONE} },
+      { "%delete/prop/elem", of_DELETE_PROP_ELEM, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%delete/prop/obj",  of_DELETE_PROP_OBJ,  1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%delete/tail",of_DELETE_TAIL,2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
       { "%disable",  of_DISABLE, 1, {OA_VPI_PTR,OA_NONE,     OA_NONE} },
       { "%disable/flow", of_DISABLE_FLOW, 1, {OA_VPI_PTR,OA_NONE, OA_NONE} },
@@ -263,6 +269,12 @@ static const struct opcode_table_s opcode_table[] = {
       { "%qpop/f/real",of_QPOP_F_REAL,1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
       { "%qpop/f/str", of_QPOP_F_STR, 1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
       { "%qpop/f/v",   of_QPOP_F_V,   2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
+      { "%qpop/prop/b/r",   of_QPOP_PROP_B_REAL, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%qpop/prop/b/str", of_QPOP_PROP_B_STR, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%qpop/prop/b/v",   of_QPOP_PROP_B_V,    2, {OA_NUMBER, OA_BIT1, OA_NONE} },
+      { "%qpop/prop/f/r",   of_QPOP_PROP_F_REAL, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%qpop/prop/f/str", of_QPOP_PROP_F_STR, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%qpop/prop/f/v",   of_QPOP_PROP_F_V,    2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%release/net",of_RELEASE_NET,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/reg",of_RELEASE_REG,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/wr", of_RELEASE_WR, 2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
@@ -296,14 +308,6 @@ static const struct opcode_table_s opcode_table[] = {
       { "%store/prop/r",  of_STORE_PROP_R,  1, {OA_NUMBER,  OA_NONE, OA_NONE} },
       { "%store/prop/str",of_STORE_PROP_STR,1, {OA_NUMBER,  OA_NONE, OA_NONE} },
       { "%store/prop/v",  of_STORE_PROP_V,  2, {OA_NUMBER,  OA_BIT1, OA_NONE} },
-      { "%qpop/prop/b/r",   of_QPOP_PROP_B_REAL, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
-      { "%qpop/prop/b/str", of_QPOP_PROP_B_STR, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
-      { "%qpop/prop/b/v",   of_QPOP_PROP_B_V,    2, {OA_NUMBER, OA_BIT1, OA_NONE} },
-      { "%qpop/prop/f/r",   of_QPOP_PROP_F_REAL, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
-      { "%qpop/prop/f/str", of_QPOP_PROP_F_STR, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
-      { "%qpop/prop/f/v",   of_QPOP_PROP_F_V,    2, {OA_NUMBER, OA_BIT1, OA_NONE} },
-      { "%delete/prop/elem", of_DELETE_PROP_ELEM, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
-      { "%delete/prop/obj",  of_DELETE_PROP_OBJ,  1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%store/qb/r",   of_STORE_QB_R,    2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
       { "%store/qb/str", of_STORE_QB_STR,  2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
       { "%store/qb/v",   of_STORE_QB_V,    3, {OA_FUNC_PTR, OA_BIT1, OA_BIT2} },
