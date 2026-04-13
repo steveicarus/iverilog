@@ -37,6 +37,7 @@ class NetExpr;
 class NetScope;
 class PPackage;
 struct symbol_search_results;
+class netclass_t;
 
 /*
  * The PExpr class hierarchy supports the description of
@@ -981,7 +982,16 @@ class PECallFunction : public PExpr {
       unsigned elaborate_arguments_(Design*des, NetScope*scope,
                                     const NetFuncDef*def, bool need_const,
                                     std::vector<NetExpr*>&parms,
-                                    unsigned parm_off) const;
+                                    unsigned parm_off,
+                                    const std::vector<named_pexpr_t>*src_parms = nullptr) const;
+
+      NetExpr* elaborate_class_method_net_(Design*des, NetScope*scope,
+					   NetNet*net, const netclass_t*class_type,
+					   perm_string method_name,
+					   const std::vector<named_pexpr_t>*src_parms) const;
+
+      NetExpr* elaborate_expr_method_chained_(Design*des, NetScope*scope,
+					     symbol_search_results&search_results) const;
 };
 
 /*

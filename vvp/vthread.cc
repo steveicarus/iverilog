@@ -3874,6 +3874,35 @@ bool of_LOAD_DAR_VEC4(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %load/prop/dar/vec4 <pid>, <wid>;
+ *   Indexed read of queue/dynamic-array class property; object on stack,
+ *   index in words[3] (same as %load/dar/vec4).
+ */
+bool of_LOAD_PROP_DAR_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+      int64_t adr = thr->words[3].w_int;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t pobj;
+      cobj->get_object(pid, pobj, 0);
+      vvp_darray*darray = pobj.peek<vvp_darray>();
+
+      vvp_vector4_t word;
+      if (darray && (adr >= 0) && (thr->flags[4] == BIT4_0))
+	    darray->get_word(adr, word);
+      else
+	    dq_default(word, wid);
+
+      thr->push_vec4(word);
+      return true;
+}
+
+/*
  * %load/obj <var-label>
  */
 bool of_LOAD_OBJ(vthread_t thr, vvp_code_t cp)
@@ -5979,6 +6008,291 @@ bool of_STORE_PROP_STR(vthread_t thr, vvp_code_t cp)
 bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
 {
       return store_prop<vvp_vector4_t>(thr, cp, cp->bit_idx[0]);
+}
+
+template <class QTYPE>
+static QTYPE* get_queue_prop(vvp_cobject*cobj, size_t pid)
+{
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      QTYPE* queue = qobj.peek<QTYPE>();
+      if (queue == 0) {
+	    queue = new QTYPE;
+	    vvp_object_t val(queue);
+	    cobj->set_object(pid, val, 0);
+      }
+      return queue;
+}
+
+template <typename ELEM, class QTYPE>
+static bool store_prop_qb(vthread_t thr, vvp_code_t cp, unsigned wid)
+{
+      size_t pid = cp->number;
+      ELEM value;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_uint;
+      pop_value(thr, value, wid);
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid);
+      assert(queue);
+      queue->push_back(value, max_size);
+      return true;
+}
+
+template <typename ELEM, class QTYPE>
+static bool store_prop_qf(vthread_t thr, vvp_code_t cp, unsigned wid)
+{
+      size_t pid = cp->number;
+      ELEM value;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_uint;
+      pop_value(thr, value, wid);
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid);
+      assert(queue);
+      queue->push_front(value, max_size);
+      return true;
+}
+
+bool of_STORE_PROP_QB_R(vthread_t thr, vvp_code_t cp)
+{
+      return store_prop_qb<double, vvp_queue_real>(thr, cp, 0);
+}
+
+bool of_STORE_PROP_QB_STR(vthread_t thr, vvp_code_t cp)
+{
+      return store_prop_qb<string, vvp_queue_string>(thr, cp, 0);
+}
+
+bool of_STORE_PROP_QB_V(vthread_t thr, vvp_code_t cp)
+{
+      return store_prop_qb<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
+}
+
+bool of_STORE_PROP_QF_R(vthread_t thr, vvp_code_t cp)
+{
+      return store_prop_qf<double, vvp_queue_real>(thr, cp, 0);
+}
+
+bool of_STORE_PROP_QF_STR(vthread_t thr, vvp_code_t cp)
+{
+      return store_prop_qf<string, vvp_queue_string>(thr, cp, 0);
+}
+
+bool of_STORE_PROP_QF_V(vthread_t thr, vvp_code_t cp)
+{
+      return store_prop_qf<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
+}
+
+template <typename ELEM, class QTYPE>
+static bool qinsert_prop(vthread_t thr, vvp_code_t cp, unsigned wid)
+{
+      int64_t idx = thr->words[3].w_int;
+      ELEM value;
+      size_t pid = cp->number;
+      pop_value(thr, value, wid);
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid);
+      assert(queue);
+      if (idx < 0) {
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot insert at a negative "
+	         << get_queue_type(value)
+	         << " index (" << idx << "). ";
+	    print_queue_value(value);
+	    cerr << " was not added." << endl;
+      } else if (thr->flags[4] != BIT4_0) {
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot insert at an undefined "
+	         << get_queue_type(value) << " index. ";
+	    print_queue_value(value);
+	    cerr << " was not added." << endl;
+      } else {
+	    unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+	    queue->insert(idx, value, max_size);
+      }
+      return true;
+}
+
+bool of_QINSERT_PROP_R(vthread_t thr, vvp_code_t cp)
+{
+      return qinsert_prop<double, vvp_queue_real>(thr, cp, 0);
+}
+
+bool of_QINSERT_PROP_STR(vthread_t thr, vvp_code_t cp)
+{
+      return qinsert_prop<string, vvp_queue_string>(thr, cp, 0);
+}
+
+bool of_QINSERT_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      return qinsert_prop<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
+}
+
+template <typename ELEM, class QTYPE>
+static bool q_pop_prop(vthread_t thr, vvp_code_t cp,
+		       void (*get_val_func)(vvp_queue*, ELEM&),
+		       const char*loc, unsigned wid)
+{
+      size_t pid = cp->number;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid);
+      assert(queue);
+
+      size_t size = queue->get_size();
+
+      ELEM value;
+      if (size) {
+	    get_val_func(queue, value);
+      } else {
+	    dq_default(value, wid);
+	    cerr << thr->get_fileline()
+	         << "Warning: pop_" << loc << "() on empty "
+	         << get_queue_type(value) << "." << endl;
+      }
+
+      push_value(thr, value, wid);
+      return true;
+}
+
+template <typename ELEM, class QTYPE>
+static bool qpop_b_prop(vthread_t thr, vvp_code_t cp, unsigned wid)
+{
+      return q_pop_prop<ELEM, QTYPE>(thr, cp, get_back_value<ELEM>, "back", wid);
+}
+
+template <typename ELEM, class QTYPE>
+static bool qpop_f_prop(vthread_t thr, vvp_code_t cp, unsigned wid)
+{
+      return q_pop_prop<ELEM, QTYPE>(thr, cp, get_front_value<ELEM>, "front", wid);
+}
+
+bool of_QPOP_PROP_B_REAL(vthread_t thr, vvp_code_t cp)
+{
+      return qpop_b_prop<double, vvp_queue_real>(thr, cp, 0);
+}
+
+bool of_QPOP_PROP_B_STR(vthread_t thr, vvp_code_t cp)
+{
+      return qpop_b_prop<string, vvp_queue_string>(thr, cp, 0);
+}
+
+bool of_QPOP_PROP_B_V(vthread_t thr, vvp_code_t cp)
+{
+      return qpop_b_prop<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[0]);
+}
+
+bool of_QPOP_PROP_F_REAL(vthread_t thr, vvp_code_t cp)
+{
+      return qpop_f_prop<double, vvp_queue_real>(thr, cp, 0);
+}
+
+bool of_QPOP_PROP_F_STR(vthread_t thr, vvp_code_t cp)
+{
+      return qpop_f_prop<string, vvp_queue_string>(thr, cp, 0);
+}
+
+bool of_QPOP_PROP_F_V(vthread_t thr, vvp_code_t cp)
+{
+      return qpop_f_prop<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[0]);
+}
+
+bool of_PROP_QUEUE_SIZE(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue* queue = qobj.peek<vvp_queue>();
+
+      size_t sz = queue ? queue->get_size() : 0;
+
+      vvp_vector4_t val(32, BIT4_0);
+      unsigned long ul = sz;
+      for (unsigned idx = 0; idx < 32; idx++) {
+	    if (ul & 1UL)
+		  val.set_bit(idx, BIT4_1);
+	    else
+		  val.set_bit(idx, BIT4_0);
+	    ul >>= 1;
+      }
+      thr->push_vec4(val);
+      return true;
+}
+
+bool of_DELETE_PROP_ELEM(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+
+      int64_t idx_val = thr->words[3].w_int;
+      if (thr->flags[4] == BIT4_1) {
+	    cerr << thr->get_fileline()
+	         << "Warning: skipping queue delete() with undefined index."
+	         << endl;
+	    return true;
+      }
+      if (idx_val < 0) {
+	    cerr << thr->get_fileline()
+	         << "Warning: skipping queue delete() with negative index."
+	         << endl;
+	    return true;
+      }
+      size_t idx = idx_val;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue* queue = qobj.peek<vvp_queue>();
+      if (queue == 0) {
+	    cerr << thr->get_fileline()
+	         << "Warning: skipping delete(" << idx
+	         << ") on empty queue." << endl;
+      } else {
+	    size_t size = queue->get_size();
+	    if (idx >= size) {
+		  cerr << thr->get_fileline()
+		       << "Warning: skipping out of range delete(" << idx
+		       << ") on queue of size " << size << "." << endl;
+	    } else {
+		  queue->erase(idx);
+	    }
+      }
+
+      return true;
+}
+
+bool of_DELETE_PROP_OBJ(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      cobj->set_object(pid, vvp_object_t(), 0);
+
+      return true;
 }
 
 template <typename ELEM, class QTYPE>

@@ -1663,6 +1663,24 @@ static int show_delete_method(ivl_statement_t net)
 	    return 1;
 
       ivl_expr_t parm = ivl_stmt_parm(net, 0);
+      if (ivl_expr_type(parm) == IVL_EX_PROPERTY) {
+	    ivl_signal_t clas = ivl_expr_signal(parm);
+	    unsigned pidx = ivl_expr_property_idx(parm);
+	    ivl_type_t sig_type = ivl_signal_net_type(clas);
+	    ivl_type_t queue_type = ivl_type_prop_type(sig_type, pidx);
+	    assert(ivl_type_base(queue_type) == IVL_VT_QUEUE);
+
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
+	    if (parm_count == 2) {
+		  draw_eval_expr_into_integer(ivl_stmt_parm(net, 1), 3);
+		  fprintf(vvp_out, "    %%delete/prop/elem %u;\n", pidx);
+	    } else {
+		  fprintf(vvp_out, "    %%delete/prop/obj %u;\n", pidx);
+	    }
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    return 0;
+      }
+
       assert(ivl_expr_type(parm) == IVL_EX_SIGNAL);
       ivl_signal_t var = ivl_expr_signal(parm);
 
@@ -1687,6 +1705,47 @@ static int show_insert_method(ivl_statement_t net)
 	    return 1;
 
       ivl_expr_t parm0 = ivl_stmt_parm(net,0);
+      if (ivl_expr_type(parm0) == IVL_EX_PROPERTY) {
+	    ivl_signal_t clas = ivl_expr_signal(parm0);
+	    unsigned pidx = ivl_expr_property_idx(parm0);
+	    ivl_type_t sig_type = ivl_signal_net_type(clas);
+	    ivl_type_t var_type = ivl_type_prop_type(sig_type, pidx);
+	    assert(ivl_type_base(var_type) == IVL_VT_QUEUE);
+
+	    int idx = allocate_word();
+	    assert(idx >= 0);
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
+	    fprintf(vvp_out, "    %%ix/load %d, %u, 0;\n", idx,
+	            ivl_type_queue_max(var_type));
+
+	    ivl_type_t element_type = ivl_type_element(var_type);
+
+	    ivl_expr_t parm1 = ivl_stmt_parm(net,1);
+	    draw_eval_expr_into_integer(parm1, 3);
+	    ivl_expr_t parm2 = ivl_stmt_parm(net,2);
+	    switch (ivl_type_base(element_type)) {
+		case IVL_VT_REAL:
+		  draw_eval_real(parm2);
+		  fprintf(vvp_out, "    %%qinsert/prop/r %u, %d;\n",
+		          pidx, idx);
+		  break;
+		case IVL_VT_STRING:
+		  draw_eval_string(parm2);
+		  fprintf(vvp_out, "    %%qinsert/prop/str %u, %d;\n",
+		          pidx, idx);
+		  break;
+		default:
+		  draw_eval_vec4(parm2);
+		  fprintf(vvp_out, "    %%qinsert/prop/v %u, %d, %u;\n",
+		          pidx, idx,
+		          ivl_type_packed_width(element_type));
+		  break;
+	    }
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    clr_word(idx);
+	    return 0;
+      }
+
       assert(ivl_expr_type(parm0) == IVL_EX_SIGNAL);
       ivl_signal_t var = ivl_expr_signal(parm0);
       ivl_type_t var_type = ivl_signal_net_type(var);
@@ -1740,6 +1799,45 @@ static int show_push_frontback_method(ivl_statement_t net, bool is_front)
 	    return 1;
 
       ivl_expr_t parm0 = ivl_stmt_parm(net,0);
+      if (ivl_expr_type(parm0) == IVL_EX_PROPERTY) {
+	    ivl_signal_t clas = ivl_expr_signal(parm0);
+	    unsigned pidx = ivl_expr_property_idx(parm0);
+	    ivl_type_t sig_type = ivl_signal_net_type(clas);
+	    ivl_type_t var_type = ivl_type_prop_type(sig_type, pidx);
+	    assert(ivl_type_base(var_type) == IVL_VT_QUEUE);
+
+	    int idx = allocate_word();
+	    assert(idx >= 0);
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
+	    fprintf(vvp_out, "    %%ix/load %d, %u, 0;\n", idx,
+	            ivl_type_queue_max(var_type));
+
+	    ivl_type_t element_type = ivl_type_element(var_type);
+
+	    ivl_expr_t parm1 = ivl_stmt_parm(net,1);
+	    switch (ivl_type_base(element_type)) {
+		case IVL_VT_REAL:
+		  draw_eval_real(parm1);
+		  fprintf(vvp_out, "    %%store/prop/%s/r %u, %d;\n",
+		          type_code, pidx, idx);
+		  break;
+		case IVL_VT_STRING:
+		  draw_eval_string(parm1);
+		  fprintf(vvp_out, "    %%store/prop/%s/str %u, %d;\n",
+		          type_code, pidx, idx);
+		  break;
+		default:
+		  draw_eval_vec4(parm1);
+		  fprintf(vvp_out, "    %%store/prop/%s/v %u, %d, %u;\n",
+		          type_code, pidx, idx,
+		          ivl_type_packed_width(element_type));
+		  break;
+	    }
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    clr_word(idx);
+	    return 0;
+      }
+
       assert(ivl_expr_type(parm0) == IVL_EX_SIGNAL);
       ivl_signal_t var = ivl_expr_signal(parm0);
       ivl_type_t var_type = ivl_signal_net_type(var);

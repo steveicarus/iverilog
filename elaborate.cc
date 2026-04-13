@@ -47,6 +47,7 @@
 # include  "netenum.h"
 # include  "netvector.h"
 # include  "netdarray.h"
+# include  "netqueue.h"
 # include  "netparray.h"
 # include  "netscalar.h"
 # include  "netclass.h"
@@ -3683,22 +3684,30 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
  * sys_task_name is the internal system-task name to use.
  */
 NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
-					       NetNet*net,
+					       NetExpr*base_expr,
 					       perm_string method_name,
 					       const char *sys_task_name,
 					       const std::vector<perm_string> &parm_names) const
 {
-      NetESignal*sig = new NetESignal(net);
-      sig->set_line(*this);
+      base_expr->set_line(*this);
 
       unsigned nparms = parms_.size();
 
       vector<NetExpr*>argv (1 + nparms);
-      argv[0] = sig;
+      argv[0] = base_expr;
 
       if (method_name == "delete") {
 	      // The queue delete method takes an optional element.
-	    if (net->queue_type()) {
+	    bool is_queue = false;
+	    if (const NetESignal*ns = dynamic_cast<const NetESignal*>(base_expr)) {
+		  is_queue = ns->sig()->queue_type() != 0;
+	    } else if (const NetEProperty*np = dynamic_cast<const NetEProperty*>(base_expr)) {
+		  const netclass_t*ct = dynamic_cast<const netclass_t*>(np->get_sig()->net_type());
+		  ivl_assert(*this, ct);
+		  ivl_type_t pt = ct->get_prop_type(np->property_idx());
+		  is_queue = pt && pt->base_type() == IVL_VT_QUEUE;
+	    }
+	    if (is_queue) {
 		  if (nparms > 1)  {
 			cerr << get_fileline() << ": error: queue delete() "
 			     << "method takes zero or one argument." << endl;
@@ -3732,13 +3741,25 @@ NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
  * sys_task_name is the internal system-task name to use.
  */
 NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
-					    NetNet*net,
+					    NetExpr*queue_base,
 					    perm_string method_name,
 					    const char *sys_task_name,
 					    const std::vector<perm_string> &parm_names) const
 {
-      NetESignal*sig = new NetESignal(net);
-      sig->set_line(*this);
+      queue_base->set_line(*this);
+
+      const netdarray_t*use_darray = 0;
+      if (const NetESignal*ns = dynamic_cast<const NetESignal*>(queue_base)) {
+	    use_darray = ns->sig()->darray_type();
+      } else if (const NetEProperty*np = dynamic_cast<const NetEProperty*>(queue_base)) {
+	    const netclass_t*ct = dynamic_cast<const netclass_t*>(np->get_sig()->net_type());
+	    ivl_assert(*this, ct);
+	    ivl_type_t pt = ct->get_prop_type(np->property_idx());
+	    use_darray = dynamic_cast<const netdarray_t*>(pt);
+	    ivl_assert(*this, use_darray);
+      } else {
+	    ivl_assert(*this, 0);
+      }
 
       unsigned nparms = parms_.size();
 	// insert() requires two arguments.
@@ -3755,19 +3776,19 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
       }
 
 	// Get the context width if this is a logic type.
-      ivl_variable_type_t base_type = net->darray_type()->element_base_type();
+      ivl_variable_type_t base_type = use_darray->element_base_type();
       int context_width = -1;
       switch (base_type) {
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
-	    context_width = net->darray_type()->element_width();
+	    context_width = use_darray->element_width();
 	    break;
 	  default:
 	    break;
       }
 
       vector<NetExpr*>argv (nparms+1);
-      argv[0] = sig;
+      argv[0] = queue_base;
 
       auto args = map_named_args(des, parm_names, parms_);
       if (method_name != "insert") {
@@ -3811,7 +3832,7 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
  * This is used for array/queue function methods called as tasks.
  */
 NetProc* PCallTask::elaborate_method_func_(NetScope*scope,
-                                           NetNet*net,
+                                           NetExpr*queue_base,
 					   ivl_type_t type,
 					   perm_string method_name,
                                            const char*sys_task_name) const
@@ -3824,9 +3845,8 @@ NetProc* PCallTask::elaborate_method_func_(NetScope*scope,
 	// Generate the function.
       NetESFunc*sys_expr = new NetESFunc(sys_task_name, type, 1);
       sys_expr->set_line(*this);
-      NetESignal*arg = new NetESignal(net);
-      arg->set_line(*net);
-      sys_expr->parm(0, arg);
+      queue_base->set_line(*this);
+      sys_expr->parm(0, queue_base);
 	// Create a L-value that matches the function return type.
       NetNet*tmp;
       tmp = new NetNet(scope, scope->local_symbol(), NetNet::REG, type);
@@ -3886,46 +3906,131 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 		 << net->name() << ".data_type() --> " << net->data_type() << endl;
       }
 
+	// Class handle with one path_tail component: queue/darray property method
+	// e.g.  c.q.push_back(x)  =>  sr.path_tail = {q}, method_name = push_back
+      if (sr.path_tail.size() == 1) {
+	    const netclass_t*cls = dynamic_cast<const netclass_t*>(sr.type);
+	    if (!cls && net->net_type())
+		  cls = dynamic_cast<const netclass_t*>(net->net_type());
+	    if (cls) {
+		  perm_string prop_name = sr.path_tail.front().name;
+		  int pidx = cls->property_idx_from_name(prop_name);
+		  if (pidx >= 0) {
+			ivl_type_t ptype = cls->get_prop_type(pidx);
+			if (ptype && dynamic_cast<const netqueue_t*>(ptype)) {
+			      NetEProperty*prop = new NetEProperty(net, pidx, 0);
+			      prop->set_line(*this);
+			      const netdarray_t*use_darray = dynamic_cast<const netdarray_t*>(ptype);
+			      ivl_assert(*this, use_darray);
+
+			      if (method_name == "push_back") {
+				    static const std::vector<perm_string> parm_names = {
+					  perm_string::literal("item")
+				    };
+				    return elaborate_queue_method_(des, scope, prop, method_name,
+								   "$ivl_queue_method$push_back",
+								   parm_names);
+			      }
+			      if (method_name == "push_front") {
+				    static const std::vector<perm_string> parm_names = {
+					  perm_string::literal("item")
+				    };
+				    return elaborate_queue_method_(des, scope, prop, method_name,
+								   "$ivl_queue_method$push_front",
+								   parm_names);
+			      }
+			      if (method_name == "insert") {
+				    static const std::vector<perm_string> parm_names = {
+					  perm_string::literal("index"),
+					  perm_string::literal("item")
+				    };
+				    return elaborate_queue_method_(des, scope, prop, method_name,
+								   "$ivl_queue_method$insert",
+								   parm_names);
+			      }
+			      if (method_name == "pop_front") {
+				    return elaborate_method_func_(scope, prop,
+								  use_darray->element_type(),
+								  method_name,
+								  "$ivl_queue_method$pop_front");
+			      }
+			      if (method_name == "pop_back") {
+				    return elaborate_method_func_(scope, prop,
+								  use_darray->element_type(),
+								  method_name,
+								  "$ivl_queue_method$pop_back");
+			      }
+			      if (method_name == "size") {
+				    return elaborate_method_func_(scope, prop,
+								  &netvector_t::atom2s32,
+								  method_name, "$size");
+			      }
+			} else if (ptype && ptype->base_type() == IVL_VT_DARRAY) {
+			      NetEProperty*prop = new NetEProperty(net, pidx, 0);
+			      prop->set_line(*this);
+			      if (method_name == "delete") {
+				    static const std::vector<perm_string> parm_names = {
+					  perm_string::literal("index")
+				    };
+				    return elaborate_sys_task_method_(des, scope, prop, method_name,
+								      "$ivl_darray_method$delete",
+								      parm_names);
+			      }
+			      if (method_name == "size") {
+				    return elaborate_method_func_(scope, prop,
+								  &netvector_t::atom2s32,
+								  method_name, "$size");
+			      }
+			}
+		  }
+	    }
+      }
+
       // Is this a method of a "string" type?
       if (dynamic_cast<const netstring_t*>(net->net_type())) {
 	    if (method_name == "itoa") {
 		  static const std::vector<perm_string> parm_names = {
 			perm_string::literal("i")
 		  };
-
-		  return elaborate_sys_task_method_(des, scope, net, method_name,
+		  NetESignal*sig = new NetESignal(net);
+		  sig->set_line(*this);
+		  return elaborate_sys_task_method_(des, scope, sig, method_name,
 						    "$ivl_string_method$itoa",
 						    parm_names);
 	    } else if (method_name == "hextoa") {
 		  static const std::vector<perm_string> parm_names = {
 			perm_string::literal("i")
 		  };
-
-		  return elaborate_sys_task_method_(des, scope, net, method_name,
+		  NetESignal*sig = new NetESignal(net);
+		  sig->set_line(*this);
+		  return elaborate_sys_task_method_(des, scope, sig, method_name,
 						    "$ivl_string_method$hextoa",
 						    parm_names);
 	    } else if (method_name == "octtoa") {
 		  static const std::vector<perm_string> parm_names = {
 			perm_string::literal("i")
 		  };
-
-		  return elaborate_sys_task_method_(des, scope, net, method_name,
+		  NetESignal*sig = new NetESignal(net);
+		  sig->set_line(*this);
+		  return elaborate_sys_task_method_(des, scope, sig, method_name,
 						    "$ivl_string_method$octtoa",
 						    parm_names);
 	    } else if (method_name == "bintoa") {
 		  static const std::vector<perm_string> parm_names = {
 			perm_string::literal("i")
 		  };
-
-		  return elaborate_sys_task_method_(des, scope, net, method_name,
+		  NetESignal*sig = new NetESignal(net);
+		  sig->set_line(*this);
+		  return elaborate_sys_task_method_(des, scope, sig, method_name,
 						    "$ivl_string_method$bintoa",
 						    parm_names);
 	    } else if (method_name == "realtoa") {
 		  static const std::vector<perm_string> parm_names = {
 			perm_string::literal("r")
 		  };
-
-		  return elaborate_sys_task_method_(des, scope, net, method_name,
+		  NetESignal*sig = new NetESignal(net);
+		  sig->set_line(*this);
+		  return elaborate_sys_task_method_(des, scope, sig, method_name,
 						    "$ivl_string_method$realtoa",
 						    parm_names);
 	    }
@@ -3937,13 +4042,16 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 		  static const std::vector<perm_string> parm_names = {
 			perm_string::literal("index")
 		  };
-
-		  return elaborate_sys_task_method_(des, scope, net, method_name,
+		  NetESignal*sig = new NetESignal(net);
+		  sig->set_line(*this);
+		  return elaborate_sys_task_method_(des, scope, sig, method_name,
 		                                    "$ivl_darray_method$delete",
 						    parm_names);
 	    } else if (method_name == "size") {
 		    // This returns an int. It could be removed, but keep for now.
-		  return elaborate_method_func_(scope, net,
+		  NetESignal*sig = new NetESignal(net);
+		  sig->set_line(*this);
+		  return elaborate_method_func_(scope, sig,
 		                                &netvector_t::atom2s32,
 		                                method_name, "$size");
 	    } else if (method_name == "reverse") {
@@ -3975,12 +4083,14 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 
       if (net->queue_type()) {
 	    const netdarray_t*use_darray = net->darray_type();
+	    NetESignal*qs = new NetESignal(net);
+	    qs->set_line(*this);
 	    if (method_name == "push_back") {
 		  static const std::vector<perm_string> parm_names = {
 			perm_string::literal("item")
 		  };
 
-		  return elaborate_queue_method_(des, scope, net, method_name,
+		  return elaborate_queue_method_(des, scope, qs, method_name,
 						 "$ivl_queue_method$push_back",
 						 parm_names);
 	    } else if (method_name == "push_front") {
@@ -3988,7 +4098,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 			perm_string::literal("item")
 		  };
 
-		  return elaborate_queue_method_(des, scope, net, method_name,
+		  return elaborate_queue_method_(des, scope, qs, method_name,
 						 "$ivl_queue_method$push_front",
 						 parm_names);
 	    } else if (method_name == "insert") {
@@ -3997,16 +4107,16 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 			perm_string::literal("item")
 		  };
 
-		  return elaborate_queue_method_(des, scope, net, method_name,
+		  return elaborate_queue_method_(des, scope, qs, method_name,
 						 "$ivl_queue_method$insert",
 						 parm_names);
 	    } else if (method_name == "pop_front") {
-		  return elaborate_method_func_(scope, net,
+		  return elaborate_method_func_(scope, qs,
 		                                use_darray->element_type(),
 		                                method_name,
 		                                "$ivl_queue_method$pop_front");
 	    } else if (method_name == "pop_back") {
-		  return elaborate_method_func_(scope, net,
+		  return elaborate_method_func_(scope, qs,
 		                                use_darray->element_type(),
 		                                method_name,
 		                                "$ivl_queue_method$pop_back");
