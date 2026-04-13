@@ -324,6 +324,10 @@ extern void pform_set_type_referenced(const struct vlltype&loc, const char*name)
 extern PECallFunction* pform_make_call_function(const struct vlltype&loc,
 						const pform_name_t&name,
 						const std::list<named_pexpr_t> &parms);
+extern PECallFunction* pform_make_chained_call_function(const struct vlltype&loc,
+							PExpr*prefix,
+							const pform_name_t&method,
+							const std::list<named_pexpr_t> &parms);
 extern PCallTask* pform_make_call_task(const struct vlltype&loc,
 				       const pform_name_t&name,
 				       const std::list<named_pexpr_t> &parms);

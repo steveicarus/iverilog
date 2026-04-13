@@ -756,7 +756,7 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <spec_optional_args> timeskew_fullskew_opt_remain_active_flag
 
 %type <expr>  assignment_pattern expression expression_opt expr_mintypmax
-%type <expr>  expr_primary_or_typename expr_primary
+%type <expr>  expr_primary_or_typename expr_primary call_chain_expr
 %type <expr>  class_new dynamic_array_new
 %type <expr>  var_decl_initializer_opt initializer_opt
 %type <expr>  inc_or_dec_expression inside_expression lpvalue
@@ -3869,6 +3869,26 @@ expr_primary_or_typename
 
   ;
 
+  /* SystemVerilog: a().b() — call a function, then invoke a method on the
+     returned class handle. Extends with further ".id(args)" as needed. */
+
+call_chain_expr
+  : hierarchy_identifier attribute_list_opt argument_list_parens
+      { PECallFunction*tmp = pform_make_call_function(@1, *$1, *$3);
+	delete $1;
+	delete $2;
+	delete $3;
+	$$ = tmp;
+      }
+  | call_chain_expr '.' hierarchy_identifier attribute_list_opt argument_list_parens
+      { PECallFunction*tmp = pform_make_chained_call_function(@2, $1, *$3, *$5);
+	delete $3;
+	delete $4;
+	delete $5;
+	$$ = tmp;
+      }
+  ;
+
 expr_primary
   : number
       { assert($1);
@@ -3928,6 +3948,11 @@ expr_primary
   /* The hierarchy_identifier rule matches simple identifiers as well as
      indexed arrays and part selects */
 
+  /* SV call chains get_c1().f() — must come before bare hierarchy_identifier
+     so `id (` is not reduced as PEIdent + error. */
+  | call_chain_expr
+      { $$ = $1;
+      }
   | hierarchy_identifier
       { PEIdent*tmp = pform_new_ident(@1, *$1);
 	FILE_NAME(tmp, @1);
@@ -3978,13 +4003,6 @@ expr_primary
      function call. If a system identifier, then a system function
      call. It can also be a call to a class method (function). */
 
-  | hierarchy_identifier attribute_list_opt argument_list_parens
-      { PECallFunction*tmp = pform_make_call_function(@1, *$1, *$3);
-	delete $1;
-	delete $2;
-	delete $3;
-	$$ = tmp;
-      }
   | class_hierarchy_identifier argument_list_parens
       { PECallFunction*tmp = pform_make_call_function(@1, *$1, *$2);
 	delete $1;

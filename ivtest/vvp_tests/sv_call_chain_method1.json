@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_call_chain_method1.v",
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "__comment"     : "Classes are not supported",
+        "type"          : "CE"
+    }
+}

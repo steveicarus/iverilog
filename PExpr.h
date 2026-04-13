@@ -925,7 +925,17 @@ class PECallFunction : public PExpr {
       explicit PECallFunction(const pform_name_t &n, const std::list<named_pexpr_t> &parms);
       explicit PECallFunction(perm_string n, const std::list<named_pexpr_t> &parms);
 
+	// SystemVerilog: prefix().method(args) — prefix elaborates to a class handle.
+      explicit PECallFunction(PExpr* chain_prefix, const pform_name_t &method,
+			      const std::vector<named_pexpr_t> &parms);
+      explicit PECallFunction(PExpr* chain_prefix, const pform_name_t &method,
+			      const std::list<named_pexpr_t> &parms);
+
       ~PECallFunction() override;
+
+	// For chained-call resolution (path is only the final method name).
+      const pform_scoped_name_t& peek_path(void) const { return path_; }
+      const PExpr* peek_chain_prefix(void) const { return chain_prefix_; }
 
       virtual void dump(std::ostream &) const override;
 
@@ -945,6 +955,8 @@ class PECallFunction : public PExpr {
     private:
       pform_scoped_name_t path_;
       std::vector<named_pexpr_t> parms_;
+	// If non-null, this call is prefix().tail_name(...) (SV method chain).
+      PExpr* chain_prefix_ = nullptr;
 
         // For system functions.
       bool is_overridden_;
@@ -990,8 +1002,18 @@ class PECallFunction : public PExpr {
 					   perm_string method_name,
 					   const std::vector<named_pexpr_t>*src_parms) const;
 
+      NetExpr* elaborate_class_method_net_this_(Design*des, NetScope*scope,
+						NetExpr* this_expr,
+						const netclass_t*class_type,
+						perm_string method_name,
+						const std::vector<named_pexpr_t>*src_parms) const;
+
       NetExpr* elaborate_expr_method_chained_(Design*des, NetScope*scope,
 					     symbol_search_results&search_results) const;
+
+      NetExpr* elaborate_expr_chain_(Design*des, NetScope*scope, unsigned flags) const;
+
+      unsigned test_width_chain_(Design*des, NetScope*scope, width_mode_t&mode);
 };
 
 /*
