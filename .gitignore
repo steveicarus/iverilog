@@ -43,6 +43,7 @@ stamp-*-h
 /version_tag.h
 
 # Directories
+/devel/
 autom4te.cache
 dep
 
