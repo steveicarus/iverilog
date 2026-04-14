@@ -931,6 +931,10 @@ class PECallFunction : public PExpr {
       explicit PECallFunction(PExpr* chain_prefix, const pform_name_t &method,
 			      const std::list<named_pexpr_t> &parms);
 
+	// SystemVerilog: q.find with (expr) — iterator "item"/"index" in expr.
+      void set_with_clause(PExpr* with_expr);
+      const PExpr* peek_with_clause(void) const { return with_expr_; }
+
       ~PECallFunction() override;
 
 	// For chained-call resolution (path is only the final method name).
@@ -957,6 +961,7 @@ class PECallFunction : public PExpr {
       std::vector<named_pexpr_t> parms_;
 	// If non-null, this call is prefix().tail_name(...) (SV method chain).
       PExpr* chain_prefix_ = nullptr;
+      PExpr* with_expr_ = nullptr;
 
         // For system functions.
       bool is_overridden_;

@@ -228,6 +228,12 @@ extern void draw_eval_string(ivl_expr_t ex);
  */
 extern int draw_eval_object(ivl_expr_t ex);
 
+/*
+ * Emit vvp for $ivl_queue_method$find* / find*_with when the call appears
+ * as a vector SFUNC (e.g. find_first with (...) returning int).
+ */
+extern int draw_queue_method_find_sfunc(ivl_expr_t expr);
+
 extern int show_stmt_assign(ivl_statement_t net);
 extern void show_stmt_file_line(ivl_statement_t net, const char*desc);
 
