@@ -97,7 +97,7 @@ all: dep vvp@EXEEXT@ vvp.man
 check: all
 ifeq (@WIN32@,yes)
 ifeq (@install_suffix@,)
-	./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
+	./vvp.exe -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
 else
 	# On Windows if we have a suffix we must run the vvp test with
 	# a suffix since it was built/linked that way.
