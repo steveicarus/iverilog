@@ -239,6 +239,7 @@ endif
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" \
+		"$(DESTDIR)$(includedir)" \
 		"$(DESTDIR)$(libdir)" \
 		"$(DESTDIR)$(INSTALL_DOCDIR)" \
 		"$(DESTDIR)$(INSTALL_PDFDIR)"
