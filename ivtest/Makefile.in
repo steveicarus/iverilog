@@ -1,0 +1,91 @@
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    Library General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Library General Public License for more details.
+#
+#    You should have received a copy of the GNU Library General Public
+#    License along with this program; if not, write to the Free
+#    Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+#    Boston, MA 02110-1301, USA.
+#
+SHELL = /bin/sh
+
+abs_builddir=@abs_builddir@
+abs_top_srcdir=@abs_top_srcdir@
+abs_srcdir=@abs_srcdir@
+srcdir=@srcdir@
+suffix = @install_suffix@
+ifeq (@install_suffix@,)
+opts =
+else
+opts = --suffix=$(suffix)
+endif
+
+AX_CONFIGURE_ARGS_NO_PREFIX=@AX_CONFIGURE_ARGS_NO_PREFIX@
+
+all:
+
+check:
+
+build/Makefile:
+	mkdir -p build
+	cd build && $(abs_top_srcdir)/configure $(AX_CONFIGURE_ARGS_NO_PREFIX) --prefix=$(abs_builddir)/install
+	$(MAKE) -C build install
+
+check-full: build/Makefile
+	make -C build/ivtest check-installed
+
+check-vpi: build/Makefile
+	make -C build/ivtest check-installed-vpi
+
+check-vvp: build/Makefile
+	make -C build/ivtest check-installed-vvp
+
+check-vvp-py: build/Makefile
+	make -C build/ivtest check-installed-vvp-py
+
+check-installed:
+	@status=0; \
+	$(MAKE) check-installed-vpi || status=1; \
+	$(MAKE) check-installed-vvp || status=1; \
+	$(MAKE) check-installed-vvp-py || status=1; \
+	exit $$status
+
+check-installed-vpi:
+	@echo "Running vpi_reg.pl"
+ifeq (@LIBVERIUSER@,yes)
+	cd $(abs_srcdir); perl vpi_reg.pl --with-pli1 $(opts)
+else
+	cd $(abs_srcdir); perl vpi_reg.pl $(opts)
+endif
+
+check-installed-vvp:
+	@echo "Running vvp_reg.pl"
+	cd $(abs_srcdir); perl vvp_reg.pl $(opts)
+
+check-installed-vvp-py:
+	@echo "Running vvp_reg.py"
+	cd $(abs_srcdir); python3 vvp_reg.py $(opts)
+
+clean:
+	rm -f *.vpi
+	rm -rf build install
+
+distclean: clean
+	rm -f Makefile
+
+install:
+
+uninstall:
+
+Makefile: $(srcdir)/Makefile.in ../config.status
+	cd ..; ./config.status --file=ivtest/$@
+
+.PHONY: check-full check-vpi check-vvp check-vvp-py check-installed check-installed-vpi check-installed-vvp check-installed-vvp-py

@@ -1,4 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
+AC_CONFIG_MACRO_DIRS([m4])
 m4_define([VER_MAJOR], [14])
 m4_define([VER_MINOR], [0])
 m4_define([VER_EXTRA], [stable])
@@ -30,6 +31,9 @@ AC_CONFIG_HEADERS([libveriuser/config.h])
 AC_CONFIG_HEADERS([tgt-vvp/vvp_config.h])
 AC_CONFIG_HEADERS([tgt-vhdl/vhdl_config.h])
 AC_CONFIG_HEADERS([tgt-pcb/pcb_config.h])
+
+dnl used by ivtest
+AX_CONFIGURE_ARGS_NO_PREFIX
 
 AC_CANONICAL_HOST
 dnl Checks for programs.
@@ -410,5 +414,5 @@ then
 AC_MSG_ERROR(cannot configure white space in libdir: $libdir)
 fi
 AC_MSG_RESULT(ok)
-AC_CONFIG_FILES([Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile tgt-blif/Makefile tgt-sizer/Makefile version_base.h iverilog-vpi.man driver/iverilog.man driver-vpi/res.rc vvp/vvp.man vvp/libvvp.pc])
+AC_CONFIG_FILES([Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile tgt-blif/Makefile tgt-sizer/Makefile ivtest/Makefile version_base.h iverilog-vpi.man driver/iverilog.man driver-vpi/res.rc vvp/vvp.man vvp/libvvp.pc])
 AC_OUTPUT
