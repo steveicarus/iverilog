@@ -1,5 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT
+AC_CONFIG_MACRO_DIRS([m4])
+
 AC_CONFIG_SRCDIR([netlist.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_HEADERS([_pli_types.h])
