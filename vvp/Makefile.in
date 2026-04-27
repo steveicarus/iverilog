@@ -145,17 +145,17 @@ vvp@EXEEXT@: main.o $(srcdir)/vvp.def libvvp$(suffix).$(SLEXT)
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o -L. $(LDFLAGS) -lvvp$(suffix) $(LIBS)
 
 libvvp$(suffix).$(SLEXT): $LIB_OBJ
-	$(CXX) -shared $(LDFLAGS) -o libvvp$(suffix).$(SLEXT) $LIB_OBJ $(LIBS) $(dllib)
+	$(CXX) -shared $(LDFLAGS) -o libvvp$(suffix).$(SLEXT) $^ $(LIBS) $(dllib)
 else
 ifeq (@WIN32@,yes)
 # To support cocotb, we export the VPI functions directly. This allows
 # cocotb to build VPI modules without using our vpi_user.h and libvpi.a.
 # The .def file controls what is exported.
 vvp@EXEEXT@: main.o $LIB_OBJ $(srcdir)/vvp.def
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $(LDFLAGS) $(srcdir)/vvp.def main.o $LIB_OBJ $(LIBS)
+	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $(LDFLAGS) $^ $(LIBS)
 else
 vvp@EXEEXT@: $LIB_OBJ main.o
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o $LIB_OBJ $(LIBS)
+	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $^ $(LIBS)
 endif
 endif
 
