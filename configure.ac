@@ -412,6 +412,7 @@ AC_CONFIG_FILES([
     driver/iverilog.man
     iverilog-vpi.man
     ivlpp/Makefile
+    ivtest/Makefile
     libveriuser/Makefile
     tgt-blif/Makefile
     tgt-fpga/Makefile
