@@ -167,7 +167,7 @@ ifeq (@WIN32@,yes)
 VVP_OBJ += $(srcdir)/vvp.def
 endif
 ifeq (@LIBVVP@,yes)
-VVP_LDFLAGS = -lvvp$(suffix)
+VVP_LDFLAGS = -lvvp$(suffix) -Wl,-rpath,$(libdir)
 VVP_DEPS = $(LIBBUILD)
 else
 VVP_OBJ += $(LIB_OBJ)
@@ -215,8 +215,6 @@ $(LIBBUILD): $(LIB_OBJ)
 	$(LIBPOSTBUILD)
 endif
 
-# To avoid setting LD_LIBRARY_PATH when running vvp from the build tree,
-# add option -Wl,-rpath=`pwd` to the CXX command below.
 vvp@EXEEXT@: $(VVP_OBJ) $(VVP_DEPS)
 	$(CXX) $(LDFLAGS) -o $@ $(VVP_OBJ) -L. $(VVP_LDFLAGS) $(LIBS)
 	$(VVP_POSTBUILD)
