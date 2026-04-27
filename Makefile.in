@@ -75,6 +75,7 @@ mandir = @mandir@
 pdfdir = @docdir@
 
 dllib=@DLLIB@
+ENV_VVP=@ENV_VVP@
 
 # For a cross compile these defines will need to be set accordingly.
 HOSTCC = @CC@
@@ -162,7 +163,7 @@ else
 	rm vvp/vvp$(suffix).exe
 endif
 else
-	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
+	$(ENV_VVP) vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
 endif
 
 clean:
