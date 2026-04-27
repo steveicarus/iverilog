@@ -426,3 +426,4 @@ AC_SUBST([CFLAGS_FOR_BUILD])dnl
 AC_SUBST([CPPFLAGS_FOR_BUILD])dnl
 AC_SUBST([LDFLAGS_FOR_BUILD])dnl
 ])
+m4_include([m4/ax_configure_args_no_prefix.m4])

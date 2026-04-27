@@ -1,5 +1,26 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT
+AC_CONFIG_MACRO_DIRS([m4])
+m4_define([VER_MAJOR], [14])
+m4_define([VER_MINOR], [0])
+m4_define([VER_EXTRA], [stable])
+AC_INIT([iverilog], [VER_MAJOR.VER_MINOR (VER_EXTRA)])
+AC_SUBST([VERSION_MAJOR], [VER_MAJOR])
+AC_SUBST([VERSION_MINOR], [VER_MINOR])
+AC_SUBST([VERSION_EXTRA], [" (VER_EXTRA)"])
+AC_SUBST([VERSION], ["VER_MAJOR.VER_MINOR (VER_EXTRA)"])
+# used in res.rc
+AC_SUBST([PRODUCTVERSION], ["VER_MAJOR,VER_MINOR,0,0"])
+
+# setup libvvp soversion, which depends on abi not package version
+AC_SUBST([LIBVVP_SOVERSION], [1])
+# setup libvvp version
+AC_SUBST([LIBVVP_VERSION], [VER_MAJOR.VER_MINOR])
+
+# setup libvvp soversion, which depends on abi not package version
+AC_SUBST([LIBVVP_SOVERSION], [1])
+# setup libvvp version
+AC_SUBST([LIBVVP_VERSION], [VER_MAJOR.VER_MINOR])
+
 AC_CONFIG_SRCDIR([netlist.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_HEADERS([_pli_types.h])
@@ -10,6 +31,9 @@ AC_CONFIG_HEADERS([libveriuser/config.h])
 AC_CONFIG_HEADERS([tgt-vvp/vvp_config.h])
 AC_CONFIG_HEADERS([tgt-vhdl/vhdl_config.h])
 AC_CONFIG_HEADERS([tgt-pcb/pcb_config.h])
+
+dnl used by ivtest
+AX_CONFIGURE_ARGS_NO_PREFIX
 
 AC_CANONICAL_HOST
 dnl Checks for programs.
@@ -138,6 +162,23 @@ fi
 iverilog_temp_cxxflags="$CXXFLAGS"
 CXXFLAGS="-DHAVE_DECL_BASENAME $CXXFLAGS"
 
+# setup test environment
+VVP_BUILDDIR="$(pwd)/vvp"
+case "$host_os" in
+  linux*)
+    ENV_VVP="LD_LIBRARY_PATH=$VVP_BUILDDIR"
+    ;;
+  darwin*)
+    ENV_VVP="DYLD_LIBRARY_PATH=$VVP_BUILDDIR"
+    ;;
+  *)
+    # Since the libvvp DLL is located in the same directory as the
+    # vvp executable, no action is required here
+    ENV_VVP=""
+    ;;
+esac
+AC_SUBST([ENV_VVP])
+
 AC_CHECK_HEADERS(getopt.h inttypes.h libiberty.h iosfwd sys/wait.h)
 CXXFLAGS="$iverilog_temp_cxxflags"
 
@@ -184,7 +225,14 @@ AC_FUNC_FSEEKO
 # Build VVP as a library and stub
 AC_ARG_ENABLE([libvvp],
     [AS_HELP_STRING([--enable-libvvp], [build VVP as a shared library])],
-    [AC_SUBST(LIBVVP, yes)],[])
+    [enable_libvvp=yes],
+    [enable_libvvp=no])
+
+AC_SUBST([LIBVVP], [$enable_libvvp])
+
+AS_IF([test "x$enable_libvvp" = "xyes"],
+    [AC_MSG_NOTICE([Building with libvvp support enabled])],
+    [AC_MSG_NOTICE([Building with libvvp support disabled])])
 
 AC_ARG_ENABLE([libveriuser],
     [AS_HELP_STRING([--enable-libveriuser], [include support for PLI 1 (deprecated)])],
@@ -366,5 +414,5 @@ then
 AC_MSG_ERROR(cannot configure white space in libdir: $libdir)
 fi
 AC_MSG_RESULT(ok)
-AC_CONFIG_FILES([Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile tgt-blif/Makefile tgt-sizer/Makefile])
+AC_CONFIG_FILES([Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile tgt-blif/Makefile tgt-sizer/Makefile ivtest/Makefile version_base.h iverilog-vpi.man driver/iverilog.man driver-vpi/res.rc vvp/vvp.man vvp/libvvp.pc])
 AC_OUTPUT
