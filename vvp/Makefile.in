@@ -156,33 +156,42 @@ VPI_OBJ = vpi_modules.o vpi_bit.o vpi_callback.o vpi_cobject.o vpi_const.o vpi_d
           vpip_to_dec.o vpip_format.o vvp_vpi.o
 
 LIB_OBJ = $(CORE_OBJ) $(VPI_OBJ)
+LIB_CLEAN = $(LIBNAME)*.$(SLEXT)* libvvp.pc
+
+VVP_OBJ = main.o
+VVP_CLEAN = vvp@EXEEXT@
+ifeq (@WIN32@,yes)
+# To support cocotb, we export the VPI functions directly. This allows
+# cocotb to build VPI modules without using our vpi_user.h and libvpi.a.
+# The .def file controls what is exported.
+VVP_OBJ += $(srcdir)/vvp.def
+endif
+ifeq (@LIBVVP@,yes)
+VVP_LDFLAGS = -lvvp$(suffix)
+VVP_DEPS = $(LIBBUILD)
+else
+VVP_OBJ += $(LIB_OBJ)
+endif
+ifneq (@install_suffix@,)
+VVP_POSTBUILD = ln -sf vvp@EXEEXT@ vvp$(suffix)@EXEEXT@
+VVP_CLEAN += vvp$(suffix)@EXEEXT@
+endif
 
 all: dep vvp@EXEEXT@ vvp.man
 
 check: all
-ifeq (@WIN32@,yes)
-ifeq (@install_suffix@,)
-	./vvp.exe -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
-else
-	# On Windows if we have a suffix we must run the vvp test with
-	# a suffix since it was built/linked that way.
-	ln vvp.exe vvp$(suffix).exe
-	./vvp$(suffix) -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
-	rm -f vvp$(suffix).exe
-endif
-else
-	$(ENV_VVP) ./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
-endif
+	$(ENV_VVP) ./vvp$(suffix)@EXEEXT@ -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
 
 clean:
-	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc $(LIBNAME)*.$(SLEXT)* libvvp.pc
-	rm -rf dep vvp@EXEEXT@ parse.output vvp.man vvp.ps vvp.pdf vvp.exp
+	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc $(LIB_CLEAN)
+	rm -f $(VVP_CLEAN) parse.output vvp.man vvp.ps vvp.pdf vvp.exp
+	rm -rf dep
 
 distclean: clean
 	rm -f Makefile config.log
 	rm -f stamp-config-h config.h
 
-cppcheck: $(O:.o=.cc) draw_tt.c
+cppcheck: $(LIB_OBJ:.o=.cc) draw_tt.c
 	cppcheck --enable=all --std=c99 --std=c++11 -f \
 	         --check-level=exhaustive \
 	         --suppressions-list=$(srcdir)/../cppcheck-global.sup \
@@ -201,28 +210,16 @@ dep:
 	mkdir dep
 
 ifeq (@LIBVVP@,yes)
-
-# To avoid setting LD_LIBRARY_PATH when running vvp from the build tree,
-# add option -Wl,-rpath=`pwd` to the CXX command below.
-
-vvp@EXEEXT@: main.o $(srcdir)/vvp.def $(LIBBUILD)
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o -L. $(LDFLAGS) -lvvp$(suffix) $(LIBS)
-
 $(LIBBUILD): $(LIB_OBJ)
 	$(CXX) $(LDFLAGS_SHARED) $(LIBLINKFLAGS) -o $(LIBTARGET) $^ $(LIBS)
 	$(LIBPOSTBUILD)
-else
-ifeq (@WIN32@,yes)
-# To support cocotb, we export the VPI functions directly. This allows
-# cocotb to build VPI modules without using our vpi_user.h and libvpi.a.
-# The .def file controls what is exported.
-vvp@EXEEXT@: main.o $LIB_OBJ $(srcdir)/vvp.def
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $(LDFLAGS) $^ $(LIBS)
-else
-vvp@EXEEXT@: $LIB_OBJ main.o
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $^ $(LIBS)
 endif
-endif
+
+# To avoid setting LD_LIBRARY_PATH when running vvp from the build tree,
+# add option -Wl,-rpath=`pwd` to the CXX command below.
+vvp@EXEEXT@: $(VVP_OBJ) $(VVP_DEPS)
+	$(CXX) $(LDFLAGS) -o $@ $(VVP_OBJ) -L. $(VVP_LDFLAGS) $(LIBS)
+	$(VVP_POSTBUILD)
 
 %.o: %.cc config.h | dep
 	$(CXX) $(CPPFLAGS) -DIVL_SUFFIX='"$(suffix)"' $(MDIR1) $(MDIR2) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
