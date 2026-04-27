@@ -151,20 +151,8 @@ endif
 check: all
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 	test -r check.conf || cp $(srcdir)/check.conf .
-	driver/iverilog -B. -BMvpi -BPivlpp -tcheck -ocheck.vvp $(srcdir)/examples/hello.vl
-ifeq (@WIN32@,yes)
-ifeq (@install_suffix@,)
-	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
-else
-	# On Windows if we have a suffix we must run the vvp part of
-	# the test with a suffix since it was built/linked that way.
-	ln vvp/vvp.exe vvp/vvp$(suffix).exe
-	vvp/vvp$(suffix) -M- -M./vpi ./check.vvp | grep 'Hello, World'
-	rm vvp/vvp$(suffix).exe
-endif
-else
-	$(ENV_VVP) vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
-endif
+	driver/iverilog@EXEEXT@ -B. -BMvpi -BPivlpp -tcheck -ocheck.vvp $(srcdir)/examples/hello.vl
+	$(ENV_VVP) vvp/vvp$(suffix)@EXEEXT@ -M- -M./vpi ./check.vvp | grep 'Hello, World'
 
 check-full check-vpi check-vvp check-vvp-py check-installed check-installed-vpi check-installed-vvp check-installed-vvp-py:
 	$(MAKE) -C ivtest $@
