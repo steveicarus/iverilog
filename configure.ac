@@ -20,6 +20,10 @@ AX_PROG_CC_FOR_BUILD
 AC_PREREQ([2.62])
 m4_version_prereq([2.70], [], [AC_PROG_CC_C99])
 AC_PROG_CXX
+
+# Require C++11 (avoid newer defaults like C++23 from newer toolchains)
+AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
+
 AC_PROG_RANLIB
 AC_CHECK_TOOL(LD, ld, false)
 AC_CHECK_TOOL(AR, ar, false)
