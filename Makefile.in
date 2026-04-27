@@ -327,8 +327,7 @@ uninstall:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 	for f in ivl@EXEEXT@ include/constants.vams include/disciplines.vams; \
 	    do rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/$$f"; done
-	-rmdir "$(DESTDIR)$(libdir)/ivl$(suffix)/include"
-	-rmdir "$(DESTDIR)$(libdir)/ivl$(suffix)"
+	-rm -rf "$(DESTDIR)$(libdir)/ivl$(suffix)"
 	for f in verilog$(suffix) gverilog$(suffix)@EXEEXT@; \
 	    do rm -f "$(DESTDIR)$(bindir)/$$f"; done
 	for f in ivl_target.h vpi_user.h _pli_types.h sv_vpi_user.h acc_user.h veriuser.h; \
