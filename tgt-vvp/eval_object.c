@@ -173,6 +173,59 @@ static int eval_darray_new(ivl_expr_t ex)
       return errors;
 }
 
+/* Build a dynamic-array object value from an array pattern expression. */
+static int eval_darray_pattern_object(ivl_expr_t ex)
+{
+      int errors = 0;
+      ivl_type_t net_type = ivl_expr_net_type(ex);
+      if (!net_type || ivl_type_base(net_type) != IVL_VT_DARRAY)
+	    return 1;
+
+      ivl_type_t element_type = ivl_type_element(net_type);
+      if (!element_type)
+	    return 1;
+
+      unsigned size_reg = allocate_word();
+      fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", size_reg, ivl_expr_parms(ex));
+      fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+      darray_new(element_type, size_reg);
+
+      switch (ivl_type_base(element_type)) {
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    for (unsigned idx = 0; idx < ivl_expr_parms(ex); idx += 1) {
+		  draw_eval_vec4(ivl_expr_parm(ex, idx));
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%set/dar/obj/vec4 3;\n");
+		  fprintf(vvp_out, "    %%pop/vec4 1;\n");
+	    }
+	    break;
+	  case IVL_VT_REAL:
+	    for (unsigned idx = 0; idx < ivl_expr_parms(ex); idx += 1) {
+		  draw_eval_real(ivl_expr_parm(ex, idx));
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%set/dar/obj/real 3;\n");
+		  fprintf(vvp_out, "    %%pop/real 1;\n");
+	    }
+	    break;
+	  case IVL_VT_STRING:
+	    for (unsigned idx = 0; idx < ivl_expr_parms(ex); idx += 1) {
+		  draw_eval_string(ivl_expr_parm(ex, idx));
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%set/dar/obj/str 3;\n");
+		  fprintf(vvp_out, "    %%pop/str 1;\n");
+	    }
+	    break;
+	  default:
+	    fprintf(vvp_out, "; ERROR: eval_darray_pattern_object: unsupported "
+		             "element type %d\n", ivl_type_base(element_type));
+	    errors += 1;
+	    break;
+      }
+
+      return errors;
+}
+
 static int eval_class_new(ivl_expr_t ex)
 {
       ivl_type_t class_type = ivl_expr_net_type(ex);
@@ -739,6 +792,9 @@ int draw_eval_object(ivl_expr_t ex)
 
 	  case IVL_EX_UFUNC:
 	    return eval_object_ufunc(ex);
+
+	  case IVL_EX_ARRAY_PATTERN:
+	    return eval_darray_pattern_object(ex);
 
 	  case IVL_EX_SFUNC:
 	    /* Queue locator `with` may report IVL_VT_DARRAY in ivl; handle by name. */

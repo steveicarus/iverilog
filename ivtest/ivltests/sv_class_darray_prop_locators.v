@@ -11,14 +11,11 @@ module test;
   endclass
 
   C c;
-  int tmp[];
   int r[$];
 
   initial begin
     c = new;
-    tmp = new[9];
-    tmp = '{4, 7, 2, 5, 7, 1, 6, 3, 1};
-    c.d = tmp;
+    c.d = '{4, 7, 2, 5, 7, 1, 6, 3, 1};
 
     r = c.d.find() with (item > 3);
     `check(r.size, 5);
