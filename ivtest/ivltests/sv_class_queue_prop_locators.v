@@ -15,15 +15,7 @@ module test;
 
   initial begin
     c = new;
-    c.q.push_back(4);
-    c.q.push_back(7);
-    c.q.push_back(2);
-    c.q.push_back(5);
-    c.q.push_back(7);
-    c.q.push_back(1);
-    c.q.push_back(6);
-    c.q.push_back(3);
-    c.q.push_back(1);
+    c.q = '{4, 7, 2, 5, 7, 1, 6, 3, 1};
 
     r = c.q.find() with (item > 3);
     `check(r.size, 5);
