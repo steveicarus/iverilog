@@ -48,3 +48,4 @@ Regression tests (see ivtest/vvp_tests/*.json and regress-vvp.list):
   sv_class_darray_prop_locators.v locator methods on class dynamic-array properties.
   sv_queue_unique_with.v       unique()/unique_index() with predicate on queues.
   sv_darray_unique_with.v      unique()/unique_index() with predicate on dynamic arrays.
+  sv_class_queue_prop_locators.v  locator methods on class queue properties.

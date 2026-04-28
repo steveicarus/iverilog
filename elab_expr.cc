@@ -4050,12 +4050,14 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 				    return sys_expr;
 			      }
 			}
-			if (ptype && ptype->base_type() == IVL_VT_DARRAY) {
+			if (ptype &&
+			    (ptype->base_type() == IVL_VT_DARRAY ||
+			     ptype->base_type() == IVL_VT_QUEUE)) {
 			      NetEProperty*prop = new NetEProperty(search_results.net, pidx, nullptr);
 			      prop->set_line(*this);
 			      perm_string method_name = search_results.path_tail.back().name;
 			      ivl_type_t element_type = ivl_type_element(ptype);
-			      ivl_type_t darray_rtype = ptype;
+			      ivl_type_t array_rtype = ptype;
 			      if (method_name == "size") {
 				    if (parms_.size() != 0) {
 					  cerr << get_fileline() << ": error: size() method "
@@ -4074,7 +4076,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  des->errors += 1;
 				    }
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array unique() for this "
+					  cerr << get_fileline() << ": sorry: array unique() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4089,10 +4091,10 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  }
 					  return elab_queue_locator_with_predicate(
 					      des, scope, *this, with_expr_, prop,
-					      element_type, darray_rtype, method_name);
+					      element_type, array_rtype, method_name);
 				    }
 				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$unique", darray_rtype, 1);
+					"$ivl_queue_method$unique", array_rtype, 1);
 				    sys_expr->set_line(*this);
 				    sys_expr->parm(0, prop);
 				    return sys_expr;
@@ -4104,7 +4106,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  des->errors += 1;
 				    }
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array unique_index() for this "
+					  cerr << get_fileline() << ": sorry: array unique_index() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4132,7 +4134,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "find") {
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array find() for this "
+					  cerr << get_fileline() << ": sorry: array find() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4147,14 +4149,14 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  }
 					  return elab_queue_locator_with_predicate(
 					      des, scope, *this, with_expr_, prop,
-					      element_type, darray_rtype, method_name);
+					      element_type, array_rtype, method_name);
 				    }
 				    NetExpr* cmp = elab_queue_locator_cmp_arg(
 					des, scope, *this, parms_, element_type);
 				    if (!cmp)
 					  return 0;
 				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$find", darray_rtype, 2);
+					"$ivl_queue_method$find", array_rtype, 2);
 				    sys_expr->set_line(*this);
 				    sys_expr->parm(0, prop);
 				    sys_expr->parm(1, cmp);
@@ -4162,7 +4164,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "find_index") {
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array find_index() for this "
+					  cerr << get_fileline() << ": sorry: array find_index() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4195,7 +4197,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "find_first") {
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array find_first() for this "
+					  cerr << get_fileline() << ": sorry: array find_first() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4210,14 +4212,14 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  }
 					  return elab_queue_locator_with_predicate(
 					      des, scope, *this, with_expr_, prop,
-					      element_type, darray_rtype, method_name);
+					      element_type, array_rtype, method_name);
 				    }
 				    NetExpr* cmp = elab_queue_locator_cmp_arg(
 					des, scope, *this, parms_, element_type);
 				    if (!cmp)
 					  return 0;
 				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$find_first", darray_rtype, 2);
+					"$ivl_queue_method$find_first", array_rtype, 2);
 				    sys_expr->set_line(*this);
 				    sys_expr->parm(0, prop);
 				    sys_expr->parm(1, cmp);
@@ -4225,7 +4227,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "find_first_index") {
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array find_first_index() for this "
+					  cerr << get_fileline() << ": sorry: array find_first_index() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4258,7 +4260,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "find_last") {
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array find_last() for this "
+					  cerr << get_fileline() << ": sorry: array find_last() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4273,14 +4275,14 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  }
 					  return elab_queue_locator_with_predicate(
 					      des, scope, *this, with_expr_, prop,
-					      element_type, darray_rtype, method_name);
+					      element_type, array_rtype, method_name);
 				    }
 				    NetExpr* cmp = elab_queue_locator_cmp_arg(
 					des, scope, *this, parms_, element_type);
 				    if (!cmp)
 					  return 0;
 				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$find_last", darray_rtype, 2);
+					"$ivl_queue_method$find_last", array_rtype, 2);
 				    sys_expr->set_line(*this);
 				    sys_expr->parm(0, prop);
 				    sys_expr->parm(1, cmp);
@@ -4288,7 +4290,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "find_last_index") {
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array find_last_index() for this "
+					  cerr << get_fileline() << ": sorry: array find_last_index() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4326,7 +4328,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  des->errors += 1;
 				    }
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array " << method_name
+					  cerr << get_fileline() << ": sorry: array " << method_name
 					       << "() for this element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4341,12 +4343,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  }
 					  return elab_queue_locator_with_predicate(
 					      des, scope, *this, with_expr_, prop,
-					      element_type, darray_rtype, method_name);
+					      element_type, array_rtype, method_name);
 				    }
 				    NetESFunc*sys_expr = new NetESFunc(
 					method_name == "min" ? "$ivl_queue_method$min"
 							     : "$ivl_queue_method$max",
-					darray_rtype, 1);
+					array_rtype, 1);
 				    sys_expr->set_line(*this);
 				    sys_expr->parm(0, prop);
 				    return sys_expr;
