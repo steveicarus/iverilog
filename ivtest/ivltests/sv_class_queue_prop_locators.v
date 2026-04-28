@@ -51,6 +51,8 @@ module test;
 
     c.q = '{2, 3, 4};
     `check(c.q.product(), 24);
+    `check(c.q.sum() with (item + 1), 12);
+    `check(c.q.product() with (item + 1), 60);
 
     if (!failed)
       $display("PASSED");

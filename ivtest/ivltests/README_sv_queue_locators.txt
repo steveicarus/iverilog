@@ -54,10 +54,12 @@ Regression tests (see ivtest/vvp_tests/*.json and regress-vvp.list):
   sv_darray_min_max.v          min() and max() on dynamic array values.
   sv_queue_min_max_with.v      min()/max() with predicate on queue values.
   sv_darray_min_max_with.v     min()/max() with predicate on dynamic arrays.
-  sv_class_darray_prop_locators.v locator methods on class dynamic-array properties.
+  sv_class_darray_prop_locators.v locator methods on class dynamic-array properties
+                                 (including sum/product with expression).
   sv_queue_unique_with.v       unique()/unique_index() with predicate on queues.
   sv_darray_unique_with.v      unique()/unique_index() with predicate on dynamic arrays.
-  sv_class_queue_prop_locators.v  locator methods on class queue properties.
+  sv_class_queue_prop_locators.v  locator methods on class queue properties
+                                 (including sum/product with expression).
   sv_queue_product.v           integral product() reduction on queues.
   sv_darray_product.v          integral product() reduction on dynamic arrays.
   sv_queue_product_with.v      product() with expression on queues.
