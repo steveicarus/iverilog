@@ -41,6 +41,7 @@ HOSTCFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 BUILDCC = @CC_FOR_BUILD@
 BUILDEXT = @BUILD_EXEEXT@
 CXX = @CXX@
+ENV_VVP=@ENV_VVP@
 INSTALL = @INSTALL@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -105,7 +106,7 @@ else
 	rm -f vvp$(suffix).exe
 endif
 else
-	./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
+	$(ENV_VVP) ./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
 endif
 
 clean:
