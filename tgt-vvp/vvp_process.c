@@ -1691,8 +1691,38 @@ static int show_delete_method(ivl_statement_t net)
 	    draw_eval_expr_into_integer(ivl_stmt_parm(net, 1), 3);
 	    fprintf(vvp_out, "    %%delete/elem v%p_0;\n", var);
       } else {
-	    fprintf(vvp_out, "    %%delete/obj v%p_0;\n", var);
+      fprintf(vvp_out, "    %%delete/obj v%p_0;\n", var);
       }
+      return 0;
+}
+
+static int show_reverse_method(ivl_statement_t net)
+{
+      show_stmt_file_line(net, "reverse dynamic array or queue");
+
+      unsigned parm_count = ivl_stmt_parm_count(net);
+      if (parm_count != 1)
+	    return 1;
+
+      ivl_expr_t parm = ivl_stmt_parm(net, 0);
+      if (ivl_expr_type(parm) == IVL_EX_PROPERTY) {
+	    ivl_signal_t clas = ivl_expr_signal(parm);
+	    unsigned pidx = ivl_expr_property_idx(parm);
+	    ivl_type_t sig_type = ivl_signal_net_type(clas);
+	    ivl_type_t arr_type = ivl_type_prop_type(sig_type, pidx);
+	    ivl_variable_type_t bt = ivl_type_base(arr_type);
+	    if (bt != IVL_VT_QUEUE && bt != IVL_VT_DARRAY)
+		  return 1;
+
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
+	    fprintf(vvp_out, "    %%reverse/prop/obj %u;\n", pidx);
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    return 0;
+      }
+
+      assert(ivl_expr_type(parm) == IVL_EX_SIGNAL);
+      ivl_signal_t var = ivl_expr_signal(parm);
+      fprintf(vvp_out, "    %%reverse/obj v%p_0;\n", var);
       return 0;
 }
 
@@ -1880,6 +1910,9 @@ static int show_system_task_call(ivl_statement_t net)
 
       if (strcmp(stmt_name,"$ivl_darray_method$delete") == 0)
 	    return show_delete_method(net);
+
+      if (strcmp(stmt_name,"$ivl_darray_method$reverse") == 0)
+	    return show_reverse_method(net);
 
       if (strcmp(stmt_name,"$ivl_queue_method$insert") == 0)
 	    return show_insert_method(net);

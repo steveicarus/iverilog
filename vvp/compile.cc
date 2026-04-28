@@ -323,6 +323,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%retload/real",of_RETLOAD_REAL,1,{OA_NUMBER,  OA_NONE,OA_NONE} },
       { "%retload/str", of_RETLOAD_STR, 1,{OA_NUMBER,  OA_NONE,OA_NONE} },
       { "%retload/vec4",of_RETLOAD_VEC4,1,{OA_NUMBER,  OA_NONE,OA_NONE} },
+      { "%reverse/obj", of_REVERSE_OBJ, 1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
+      { "%reverse/prop/obj", of_REVERSE_PROP_OBJ, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%scopy",  of_SCOPY,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%set/dar/obj/real",of_SET_DAR_OBJ_REAL,1,{OA_NUMBER,OA_NONE,OA_NONE} },
       { "%set/dar/obj/str", of_SET_DAR_OBJ_STR, 1,{OA_NUMBER,OA_NONE,OA_NONE} },

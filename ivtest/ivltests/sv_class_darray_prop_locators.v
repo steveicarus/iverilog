@@ -62,6 +62,12 @@ module test;
     `check(c.d.sum() with (item + 1), 12);
     `check(c.d.product() with (item + 1), 60);
 
+    c.d = '{1, 2, 3};
+    c.d.reverse();
+    `check(c.d[0], 3);
+    `check(c.d[1], 2);
+    `check(c.d[2], 1);
+
     if (!failed)
       $display("PASSED");
   end

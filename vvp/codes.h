@@ -213,6 +213,8 @@ extern bool of_REPLICATE(vthread_t thr, vvp_code_t code);
 extern bool of_RET_REAL(vthread_t thr, vvp_code_t code);
 extern bool of_RET_STR(vthread_t thr, vvp_code_t code);
 extern bool of_RET_VEC4(vthread_t thr, vvp_code_t code);
+extern bool of_REVERSE_OBJ(vthread_t thr, vvp_code_t code);
+extern bool of_REVERSE_PROP_OBJ(vthread_t thr, vvp_code_t code);
 extern bool of_RETLOAD_REAL(vthread_t thr, vvp_code_t code);
 extern bool of_RETLOAD_STR(vthread_t thr, vvp_code_t code);
 extern bool of_RETLOAD_VEC4(vthread_t thr, vvp_code_t code);

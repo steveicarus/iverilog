@@ -3454,9 +3454,10 @@ bool NetScope::check_synth(ivl_process_type_t pr_type,
 bool NetSTask::check_synth(ivl_process_type_t pr_type,
                            const NetScope* /* scope */) const
 {
-      if (strcmp(name(), "$ivl_darray_method$delete") == 0) {
+      if (strcmp(name(), "$ivl_darray_method$delete") == 0 ||
+          strcmp(name(), "$ivl_darray_method$reverse") == 0) {
 	    cerr << get_fileline() << ": warning: Dynamic array "
-	            "delete method cannot be synthesized "
+	            "ordering/delete method cannot be synthesized "
 	         << get_process_type_as_string(pr_type) << endl;
       } else {
 	    cerr << get_fileline() << ": warning: System task ("

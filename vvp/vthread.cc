@@ -2610,6 +2610,62 @@ bool of_DELETE_OBJ(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/* %reverse/obj <label>
+ * Reverse element order of the queue or dynamic array object at this net.
+ */
+bool of_REVERSE_OBJ(vthread_t /*thr*/, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*>(net->fun);
+      assert(obj);
+
+      vvp_object_t stor = obj->get_object();
+      if (stor.test_nil())
+	    return true;
+
+	/* Match other queue ops: peek queues before vvp_darray so concrete
+	   queue types dispatch reverse_elems() correctly. */
+      if (vvp_queue* queue = stor.peek<vvp_queue>()) {
+	    queue->reverse_elems();
+	    return true;
+      }
+
+      vvp_darray*darray = stor.peek<vvp_darray>();
+      assert(darray);
+      darray->reverse_elems();
+
+      return true;
+}
+
+/* %reverse/prop/obj <property-index>
+ * Reverse queue/darray property storage inside the class object on stack top.
+ */
+bool of_REVERSE_PROP_OBJ(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t arr_obj;
+      cobj->get_object(pid, arr_obj, 0);
+      if (arr_obj.test_nil())
+	    return true;
+
+      if (vvp_queue* queue = arr_obj.peek<vvp_queue>()) {
+	    queue->reverse_elems();
+	    return true;
+      }
+
+      vvp_darray*darray = arr_obj.peek<vvp_darray>();
+      assert(darray);
+      darray->reverse_elems();
+
+      return true;
+}
+
 /* %delete/tail <label>, idx
  *
  * Remove all elements after the one specified.
