@@ -257,6 +257,7 @@ sv_darray_assign_op		vvp_tests/sv_darray_assign_op.json
 sv_darray_find_locators		vvp_tests/sv_darray_find_locators.json
 sv_darray_min_max		vvp_tests/sv_darray_min_max.json
 sv_darray_min_max_with	vvp_tests/sv_darray_min_max_with.json
+sv_darray_sum			vvp_tests/sv_darray_sum.json
 sv_darray_unique		vvp_tests/sv_darray_unique.json
 sv_darray_unique_with	vvp_tests/sv_darray_unique_with.json
 sv_default_port_value1		vvp_tests/sv_default_port_value1.json
@@ -284,6 +285,7 @@ sv_queue_find_locators_ext	vvp_tests/sv_queue_find_locators_ext.json
 sv_queue_find_with		vvp_tests/sv_queue_find_with.json
 sv_queue_min_max		vvp_tests/sv_queue_min_max.json
 sv_queue_min_max_with	vvp_tests/sv_queue_min_max_with.json
+sv_queue_sum			vvp_tests/sv_queue_sum.json
 sv_wildcard_import8		vvp_tests/sv_wildcard_import8.json
 sdf_header			vvp_tests/sdf_header.json
 task_return1			vvp_tests/task_return1.json

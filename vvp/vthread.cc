@@ -6410,6 +6410,63 @@ static vvp_queue_vec4* queue_run_min_max_src(SRC* src, unsigned wid, bool want_m
       return dst;
 }
 
+/* sum() reduction returns the scalar sum (Verilog-style addition per word). */
+template <class SRC>
+static vvp_vector4_t queue_sum_words_src(SRC* src, unsigned wid)
+{
+      vvp_vector4_t acc(wid, BIT4_0);
+      if (!src)
+	    return acc;
+      for (size_t i = 0; i < src->get_size(); i += 1) {
+	    vvp_vector4_t vi(wid);
+	    src->get_word(i, vi);
+	    acc.add(vi);
+      }
+      return acc;
+}
+
+bool of_QUEUE_SUM_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t* net = cp->net;
+      unsigned wid = cp->bit_idx[0];
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_vector4_t sum;
+      if (qsrc)
+	    sum = queue_sum_words_src(qsrc, wid);
+      else if (dsrc)
+	    sum = queue_sum_words_src(dsrc, wid);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    sum = queue_sum_words_src(src, wid);
+      }
+      thr->push_vec4(sum);
+      return true;
+}
+
+bool of_QUEUE_SUM_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_vector4_t sum =
+	    qsrc ? queue_sum_words_src(qsrc, wid)
+		 : queue_sum_words_src(dsrc, wid);
+      thr->push_vec4(sum);
+      return true;
+}
+
 bool of_QUEUE_FIND_V(vthread_t thr, vvp_code_t cp)
 {
       vvp_vector4_t cmp = thr->pop_vec4();
