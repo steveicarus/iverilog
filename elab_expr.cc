@@ -3838,6 +3838,19 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  des->errors += 1;
 					  return 0;
 				    }
+				    if (with_expr_) {
+					  if (!parms_.empty()) {
+						cerr << get_fileline() << ": error: array locator "
+						     << "`with` clause cannot be combined with a "
+						     << "method argument." << endl;
+						des->errors += 1;
+						return 0;
+					  }
+					  return elab_queue_locator_with_predicate(
+					      des, scope, *this, with_expr_, prop,
+					      element_type, static_cast<ivl_type_t>(queue),
+					      method_name);
+				    }
 				    NetESFunc*sys_expr = new NetESFunc(
 					method_name == "min" ? "$ivl_queue_method$min"
 							     : "$ivl_queue_method$max",

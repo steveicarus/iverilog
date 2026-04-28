@@ -49,6 +49,10 @@ module test;
     `check(r[0], 1);
     `check(r[1], 1);
 
+    r = c.q.max() with (item < 7);
+    `check(r.size, 1);
+    `check(r[0], 6);
+
     r = c.q.max();
     `check(r.size, 2);
     `check(r[0], 7);
