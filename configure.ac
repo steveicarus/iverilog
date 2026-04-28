@@ -275,6 +275,24 @@ case "${host}" in
 	;;
 esac
 
+# Setup test environment for running vvp from build directory
+VVP_BUILDDIR="$(pwd)/vvp"
+case "$host_os" in
+  linux*)
+    ENV_VVP="LD_LIBRARY_PATH=$VVP_BUILDDIR"
+    ;;
+  darwin*)
+    ENV_VVP="DYLD_LIBRARY_PATH=$VVP_BUILDDIR"
+    ;;
+  *)
+    # Since the libvvp DLL is located in the same directory as the
+    # vvp executable, no action is required here
+    ENV_VVP=""
+    ;;
+esac
+AC_SUBST([ENV_VVP])
+
+
 # Do some more operating system specific setup. We put the file64_support
 # define in a substitution instead of simply a define because there
 # are source files (namely lxt support files) that don't include any
