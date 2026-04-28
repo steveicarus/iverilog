@@ -105,8 +105,13 @@ static NetExpr* elab_queue_locator_with_predicate(
       index_net->set_line(loc);
       index_net->local_flag(true);
 
-      NetExpr* pred = elab_and_eval(des, ws, with_expr, 1, false, false,
-				    IVL_VT_BOOL);
+      NetExpr* pred = 0;
+      if (method_suffix == "sum")
+	    pred = elab_and_eval(des, ws, with_expr, (int)ew, false, false,
+				 ivl_type_base(element_type));
+      else
+	    pred = elab_and_eval(des, ws, with_expr, 1, false, false,
+				 IVL_VT_BOOL);
       if (!pred)
 	    return 0;
 
@@ -131,6 +136,8 @@ static NetExpr* elab_queue_locator_with_predicate(
 	    sfunc_name = lex_strings.make("$ivl_queue_method$min_with");
       else if (method_suffix == "max")
 	    sfunc_name = lex_strings.make("$ivl_queue_method$max_with");
+      else if (method_suffix == "sum")
+	    sfunc_name = lex_strings.make("$ivl_queue_method$sum_with");
       else
 	    ivl_assert(loc, 0);
 
@@ -3849,10 +3856,16 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  des->errors += 1;
 				    }
 				    if (with_expr_) {
-					  cerr << get_fileline() << ": sorry: queue sum() with a "
-					       << "`with` clause is not yet supported." << endl;
-					  des->errors += 1;
-					  return 0;
+					  if (!parms_.empty()) {
+						cerr << get_fileline() << ": error: array locator "
+						     << "`with` clause cannot be combined with a "
+						     << "method argument." << endl;
+						des->errors += 1;
+						return 0;
+					  }
+					  return elab_queue_locator_with_predicate(
+					      des, scope, *this, with_expr_, prop,
+					      element_type, element_type, method_name);
 				    }
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
 					  cerr << get_fileline() << ": sorry: queue sum() for this "
@@ -4382,10 +4395,16 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  des->errors += 1;
 				    }
 				    if (with_expr_) {
-					  cerr << get_fileline() << ": sorry: array sum() with a "
-					       << "`with` clause is not yet supported." << endl;
-					  des->errors += 1;
-					  return 0;
+					  if (!parms_.empty()) {
+						cerr << get_fileline() << ": error: array locator "
+						     << "`with` clause cannot be combined with a "
+						     << "method argument." << endl;
+						des->errors += 1;
+						return 0;
+					  }
+					  return elab_queue_locator_with_predicate(
+					      des, scope, *this, with_expr_, prop,
+					      element_type, element_type, method_name);
 				    }
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
 					  cerr << get_fileline() << ": sorry: array sum() for this "
@@ -4782,10 +4801,15 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			des->errors += 1;
 		  }
 		  if (with_expr_) {
-			cerr << get_fileline() << ": sorry: dynamic array sum() with a "
-			     << "`with` clause is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
+			if (!parms_.empty()) {
+			      cerr << get_fileline() << ": error: array locator `with` clause "
+				      "cannot be combined with a method argument." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			return elab_queue_locator_with_predicate(
+			    des, scope, *this, with_expr_, sub_expr, element_type,
+			    element_type, method_name);
 		  }
 		  if (!queue_method_element_is_integral_vec4(element_type)) {
 			cerr << get_fileline() << ": sorry: dynamic array sum() for this "
@@ -4953,10 +4977,15 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			des->errors += 1;
 		  }
 		  if (with_expr_) {
-			cerr << get_fileline() << ": sorry: queue sum() with a "
-			     << "`with` clause is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
+			if (!parms_.empty()) {
+			      cerr << get_fileline() << ": error: array locator `with` clause "
+				      "cannot be combined with a method argument." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			return elab_queue_locator_with_predicate(
+			    des, scope, *this, with_expr_, sub_expr, element_type,
+			    element_type, method_name);
 		  }
 		  if (!queue_method_element_is_integral_vec4(element_type)) {
 			cerr << get_fileline() << ": sorry: queue sum() for this "

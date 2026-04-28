@@ -6467,6 +6467,22 @@ bool of_QUEUE_SUM_PROP_V(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_QUEUE_SUM_OBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_object_t src_obj;
+      thr->pop_object(src_obj);
+
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(src_obj, qsrc, dsrc);
+      vvp_vector4_t sum =
+	    qsrc ? queue_sum_words_src(qsrc, wid)
+		 : queue_sum_words_src(dsrc, wid);
+      thr->push_vec4(sum);
+      return true;
+}
+
 bool of_QUEUE_FIND_V(vthread_t thr, vvp_code_t cp)
 {
       vvp_vector4_t cmp = thr->pop_vec4();
