@@ -40,5 +40,8 @@ Regression tests (see ivtest/vvp_tests/*.json and regress-vvp.list):
   sv_queue_find_locators_ext.v Longer queue, compound predicates.
   sv_queue_unique.v            unique / unique_index.
   sv_darray_find_locators.v    Same locator patterns on int[] dynamic array.
+  sv_darray_unique.v           unique() and unique_index() on int[] dynamic array.
   sv_queue_min_max.v           min() and max() on queue values.
   sv_darray_min_max.v          min() and max() on dynamic array values.
+  sv_queue_min_max_with.v      min()/max() with predicate on queue values.
+  sv_darray_min_max_with.v     min()/max() with predicate on dynamic arrays.

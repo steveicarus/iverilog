@@ -6677,6 +6677,25 @@ bool of_QUEUE_MIN_V(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_QUEUE_MIN_OBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_object_t src_obj;
+      thr->pop_object(src_obj);
+
+      vvp_queue_vec4* qsrc = src_obj.peek<vvp_queue_vec4>();
+      vvp_darray* dsrc = 0;
+      if (!qsrc) {
+	    vvp_darray* dany = src_obj.peek<vvp_darray>();
+	    if (dany && dynamic_cast<vvp_queue*>(dany) == 0)
+		  dsrc = dany;
+      }
+      vvp_queue_vec4* dst = qsrc ? queue_run_min_max_src(qsrc, wid, false)
+				 : queue_run_min_max_src(dsrc, wid, false);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
 bool of_QUEUE_MIN_PROP_V(vthread_t thr, vvp_code_t cp)
 {
       size_t pid = cp->number;
@@ -6718,6 +6737,25 @@ bool of_QUEUE_MAX_V(vthread_t thr, vvp_code_t cp)
 	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
 	    dst = queue_run_min_max_src(src, wid, true);
       }
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_MAX_OBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_object_t src_obj;
+      thr->pop_object(src_obj);
+
+      vvp_queue_vec4* qsrc = src_obj.peek<vvp_queue_vec4>();
+      vvp_darray* dsrc = 0;
+      if (!qsrc) {
+	    vvp_darray* dany = src_obj.peek<vvp_darray>();
+	    if (dany && dynamic_cast<vvp_queue*>(dany) == 0)
+		  dsrc = dany;
+      }
+      vvp_queue_vec4* dst = qsrc ? queue_run_min_max_src(qsrc, wid, true)
+				 : queue_run_min_max_src(dsrc, wid, true);
       thr->push_object(vvp_object_t(dst));
       return true;
 }
