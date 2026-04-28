@@ -315,6 +315,26 @@ static int eval_queue_method_unique(ivl_expr_t expr)
 	    return 0;
       }
 
+      if (strcmp(name, "$ivl_queue_method$min") == 0 ||
+	  strcmp(name, "$ivl_queue_method$max") == 0) {
+	    const char* opname = strcmp(name, "$ivl_queue_method$min") == 0
+				     ? "min"
+				     : "max";
+	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
+		  ivl_signal_t cl = ivl_expr_signal(arg);
+		  unsigned pidx = ivl_expr_property_idx(arg);
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
+		  fprintf(vvp_out, "    %%queue/%s/prop/v %u, %u;\n", opname, pidx,
+		          elem_wid);
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    } else {
+		  ivl_signal_t sig = ivl_expr_signal(arg);
+		  fprintf(vvp_out, "    %%queue/%s/v v%p_0, %u;\n", opname, sig,
+		          elem_wid);
+	    }
+	    return 0;
+      }
+
       return 1;
 }
 

@@ -5,7 +5,7 @@ This directory includes regression tests for IEEE 1800 locator methods
 on unpacked queues (int q[$]) and dynamic arrays (int da[]):
 
   find, find_index, find_first, find_first_index, find_last,
-  find_last_index, unique, unique_index
+  find_last_index, min, max, unique, unique_index
 
 Behavior notes (LRM-oriented):
 
@@ -16,6 +16,9 @@ Behavior notes (LRM-oriented):
   * find_first, find_last, find_first_index, and find_last_index return a
     queue with zero or one element; no match yields an empty queue (not a
     scalar sentinel).
+
+  * min() and max() return queues containing all elements equal to the
+    selected extrema.
 
   * For dynamic arrays, runtime support treats storage as vvp_darray (including
     atom-backed integral arrays), not only vvp_queue_vec4. See vvp/vthread.cc:
@@ -37,3 +40,5 @@ Regression tests (see ivtest/vvp_tests/*.json and regress-vvp.list):
   sv_queue_find_locators_ext.v Longer queue, compound predicates.
   sv_queue_unique.v            unique / unique_index.
   sv_darray_find_locators.v    Same locator patterns on int[] dynamic array.
+  sv_queue_min_max.v           min() and max() on queue values.
+  sv_darray_min_max.v          min() and max() on dynamic array values.
