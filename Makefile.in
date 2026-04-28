@@ -160,7 +160,7 @@ else
 	$(ENV_VVP) vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
 endif
 
-check-installed check-installed-vpi check-installed-vvp check-installed-vvp-py:
+check-full check-vpi check-vvp check-vvp-py check-installed check-installed-vpi check-installed-vvp check-installed-vvp-py:
 	$(MAKE) -C ivtest $@
 
 clean:
@@ -337,4 +337,4 @@ uninstall:
 
 -include $(patsubst %.o, dep/%.d, $O)
 
-.PHONY: check-installed check-installed-vpi check-installed-vvp check-installed-vvp-py
+.PHONY: check-full check-vpi check-vvp check-vvp-py check-installed check-installed-vpi check-installed-vvp check-installed-vvp-py

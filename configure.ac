@@ -36,6 +36,9 @@ AC_CONFIG_HEADERS([tgt-vvp/vvp_config.h])
 AC_CONFIG_HEADERS([tgt-vhdl/vhdl_config.h])
 AC_CONFIG_HEADERS([tgt-pcb/pcb_config.h])
 
+dnl used by ivtest
+AX_CONFIGURE_ARGS_NO_PREFIX
+
 AC_CANONICAL_HOST
 dnl Checks for programs.
 AC_PROG_CC

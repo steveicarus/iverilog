@@ -17,6 +17,8 @@
 #
 SHELL = /bin/sh
 
+abs_builddir=@abs_builddir@
+abs_top_srcdir=@abs_top_srcdir@
 abs_srcdir=@abs_srcdir@
 srcdir=@srcdir@
 suffix = @install_suffix@
@@ -26,15 +28,34 @@ else
 opts = --suffix=$(suffix)
 endif
 
+AX_CONFIGURE_ARGS_NO_PREFIX=@AX_CONFIGURE_ARGS_NO_PREFIX@
+
 all:
 
 check:
 
+build/Makefile:
+	mkdir -p build
+	cd build && $(abs_top_srcdir)/configure $(AX_CONFIGURE_ARGS_NO_PREFIX) --prefix=$(abs_builddir)/install
+	$(MAKE) -C build install
+
+check-full: build/Makefile
+	make -C build/ivtest check-installed
+
+check-vpi: build/Makefile
+	make -C build/ivtest check-installed-vpi
+
+check-vvp: build/Makefile
+	make -C build/ivtest check-installed-vvp
+
+check-vvp-py: build/Makefile
+	make -C build/ivtest check-installed-vvp-py
+
 check-installed:
 	@status=0; \
+	$(MAKE) check-installed-vpi || status=1; \
 	$(MAKE) check-installed-vvp || status=1; \
 	$(MAKE) check-installed-vvp-py || status=1; \
-	$(MAKE) check-installed-vpi || status=1; \
 	exit $$status
 
 check-installed-vpi:
@@ -56,6 +77,7 @@ check-installed-vvp-py:
 clean:
 	rm -f $(srcdir)/*.vpi
 	rm -rf $(srcdir)/log $(srcdir)/vpi_log $(srcdir)/work
+	rm -rf build install
 
 distclean: clean
 	rm -f Makefile
@@ -67,4 +89,4 @@ uninstall:
 Makefile: $(srcdir)/Makefile.in ../config.status
 	cd ..; ./config.status --file=ivtest/$@
 
-.PHONY: check-installed check-installed-vpi check-installed-vvp check-installed-vvp-py
+.PHONY: check-full check-vpi check-vvp check-vvp-py check-installed check-installed-vpi check-installed-vvp check-installed-vvp-py
