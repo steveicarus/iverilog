@@ -1758,6 +1758,13 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 		  signed_flag_ = darray->get_signed();
 		  return expr_width_;
 	    }
+	    if (method_name == "product") {
+		  expr_type_   = darray->element_base_type();
+		  expr_width_  = darray->element_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = darray->get_signed();
+		  return expr_width_;
+	    }
 
 	    if (method_name == "find" || method_name == "find_index" ||
 		method_name == "unique" || method_name == "unique_index" ||
@@ -1817,6 +1824,13 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 	    }
 
 	    if (method_name == "sum") {
+		  expr_type_   = darray->element_base_type();
+		  expr_width_  = darray->element_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = darray->get_signed();
+		  return expr_width_;
+	    }
+	    if (method_name == "product") {
 		  expr_type_   = darray->element_base_type();
 		  expr_width_  = darray->element_width();
 		  min_width_   = expr_width_;
@@ -3880,6 +3894,31 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 				    sys_expr->parm(0, prop);
 				    return sys_expr;
 			      }
+			      if (method_name == "product") {
+				    if (parms_.size() != 0) {
+					  cerr << get_fileline() << ": error: product() method "
+					       << "takes no arguments" << endl;
+					  des->errors += 1;
+				    }
+				    if (with_expr_) {
+					  cerr << get_fileline() << ": sorry: queue product() with a "
+					       << "`with` clause is not yet supported." << endl;
+					  des->errors += 1;
+					  return 0;
+				    }
+				    if (!queue_method_element_is_integral_vec4(element_type)) {
+					  cerr << get_fileline() << ": sorry: queue product() for this "
+					       << "element type is not yet supported." << endl;
+					  des->errors += 1;
+					  return 0;
+				    }
+				    NetESFunc*sys_expr = new NetESFunc(
+					"$ivl_queue_method$product",
+					element_type, 1);
+				    sys_expr->set_line(*this);
+				    sys_expr->parm(0, prop);
+				    return sys_expr;
+			      }
 			      if (method_name == "min" || method_name == "max") {
 				    if (parms_.size() != 0) {
 					  cerr << get_fileline() << ": error: " << method_name
@@ -4419,6 +4458,31 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 				    sys_expr->parm(0, prop);
 				    return sys_expr;
 			      }
+			      if (method_name == "product") {
+				    if (parms_.size() != 0) {
+					  cerr << get_fileline() << ": error: product() method "
+					       << "takes no arguments" << endl;
+					  des->errors += 1;
+				    }
+				    if (with_expr_) {
+					  cerr << get_fileline() << ": sorry: array product() with a "
+					       << "`with` clause is not yet supported." << endl;
+					  des->errors += 1;
+					  return 0;
+				    }
+				    if (!queue_method_element_is_integral_vec4(element_type)) {
+					  cerr << get_fileline() << ": sorry: array product() for this "
+					       << "element type is not yet supported." << endl;
+					  des->errors += 1;
+					  return 0;
+				    }
+				    NetESFunc*sys_expr = new NetESFunc(
+					"$ivl_queue_method$product",
+					element_type, 1);
+				    sys_expr->set_line(*this);
+				    sys_expr->parm(0, prop);
+				    return sys_expr;
+			      }
 			      if (method_name == "min" || method_name == "max") {
 				    if (parms_.size() != 0) {
 					  cerr << get_fileline() << ": error: " << method_name
@@ -4824,6 +4888,31 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  sys_expr->parm(0, sub_expr);
 		  return sys_expr;
 	    }
+	    if (method_name == "product") {
+		  if (parms_.size() != 0) {
+			cerr << get_fileline() << ": error: product() method "
+			     << "takes no arguments" << endl;
+			des->errors += 1;
+		  }
+		  if (with_expr_) {
+			cerr << get_fileline() << ": sorry: dynamic array product() with a "
+			     << "`with` clause is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  if (!queue_method_element_is_integral_vec4(element_type)) {
+			cerr << get_fileline() << ": sorry: dynamic array product() for this "
+			     << "element type is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetESFunc*sys_expr = new NetESFunc(
+		      "$ivl_queue_method$product",
+		      element_type, 1);
+		  sys_expr->set_line(*this);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
+	    }
 	    if (method_name == "min" || method_name == "max") {
 		  if (parms_.size() != 0) {
 			cerr << get_fileline() << ": error: " << method_name
@@ -4995,6 +5084,31 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  }
 		  NetESFunc*sys_expr = new NetESFunc(
 		      "$ivl_queue_method$sum",
+		      element_type, 1);
+		  sys_expr->set_line(*this);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
+	    }
+	    if (method_name == "product") {
+		  if (parms_.size() != 0) {
+			cerr << get_fileline() << ": error: product() method "
+			     << "takes no arguments" << endl;
+			des->errors += 1;
+		  }
+		  if (with_expr_) {
+			cerr << get_fileline() << ": sorry: queue product() with a "
+			     << "`with` clause is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  if (!queue_method_element_is_integral_vec4(element_type)) {
+			cerr << get_fileline() << ": sorry: queue product() for this "
+			     << "element type is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetESFunc*sys_expr = new NetESFunc(
+		      "$ivl_queue_method$product",
 		      element_type, 1);
 		  sys_expr->set_line(*this);
 		  sys_expr->parm(0, sub_expr);
@@ -6464,6 +6578,22 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  fun->parm(0, arg);
 		  return fun;
 	    }
+	    if (member_comp.name == "product") {
+		  if (!queue_method_element_is_integral_vec4(element_type)) {
+			cerr << get_fileline() << ": sorry: queue product() for this "
+			     << "element type is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetESFunc*fun = new NetESFunc(
+		      "$ivl_queue_method$product",
+		      element_type, 1);
+		  fun->set_line(*this);
+		  NetESignal*arg = new NetESignal(sr.net);
+		  arg->set_line(*sr.net);
+		  fun->parm(0, arg);
+		  return fun;
+	    }
 	    if (member_comp.name == "min" || member_comp.name == "max") {
 		  if (!queue_method_element_is_integral_vec4(element_type)) {
 			cerr << get_fileline() << ": sorry: queue " << member_comp.name
@@ -6908,11 +7038,22 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 			fun->parm(0, arg);
 			return fun;
 		  } else if (member_comp.name == "product") {
-			cerr << get_fileline() << ": sorry: 'product()' "
-			        "array reduction method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
+			const netdarray_t* dar_sum = sr.net->darray_type();
+			ivl_assert(*this, dar_sum);
+			ivl_type_t element_type = dar_sum->element_type();
+			if (!queue_method_element_is_integral_vec4(element_type)) {
+			      cerr << get_fileline() << ": sorry: dynamic array product() for this "
+				   << "element type is not yet supported." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			NetESFunc*fun = new NetESFunc("$ivl_queue_method$product",
+						      element_type, 1);
+			fun->set_line(*this);
+			NetESignal*arg = new NetESignal(sr.net);
+			arg->set_line(*sr.net);
+			fun->parm(0, arg);
+			return fun;
 // FIXME: Check this is only an integral type.
 		  } else if (member_comp.name == "and") {
 			cerr << get_fileline() << ": sorry: 'and()' "

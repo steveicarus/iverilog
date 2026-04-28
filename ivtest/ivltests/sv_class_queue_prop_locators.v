@@ -49,6 +49,9 @@ module test;
     `check(r.size, 2);
     `check(r[0], 7);
 
+    c.q = '{2, 3, 4};
+    `check(c.q.product(), 24);
+
     if (!failed)
       $display("PASSED");
   end

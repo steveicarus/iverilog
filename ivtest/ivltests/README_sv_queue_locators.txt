@@ -5,7 +5,8 @@ This directory includes regression tests for IEEE 1800 locator methods
 on unpacked queues (int q[$]) and dynamic arrays (int da[]):
 
   find, find_index, find_first, find_first_index, find_last,
-  find_last_index, min, max, unique, unique_index, sum (integral)
+  find_last_index, min, max, unique, unique_index,
+  sum/product (integral)
 
 Behavior notes (LRM-oriented):
 
@@ -23,6 +24,9 @@ Behavior notes (LRM-oriented):
   * sum() returns the scalar reduction sum of elements (integral vector types);
     empty arrays/queues yield 0. `sum() with (expr)` reduces the expression
     result for each item.
+
+  * product() returns the scalar reduction product of elements (integral
+    vector types).
 
   * For dynamic arrays, runtime support treats storage as vvp_darray (including
     atom-backed integral arrays), not only vvp_queue_vec4. See vvp/vthread.cc:
@@ -53,6 +57,8 @@ Regression tests (see ivtest/vvp_tests/*.json and regress-vvp.list):
   sv_queue_unique_with.v       unique()/unique_index() with predicate on queues.
   sv_darray_unique_with.v      unique()/unique_index() with predicate on dynamic arrays.
   sv_class_queue_prop_locators.v  locator methods on class queue properties.
+  sv_queue_product.v           integral product() reduction on queues.
+  sv_darray_product.v          integral product() reduction on dynamic arrays.
   sv_queue_sum.v               integral sum() reduction on queues.
   sv_darray_sum.v              integral sum() reduction on dynamic arrays.
   sv_queue_sum_with.v          sum() with expression on queues.
