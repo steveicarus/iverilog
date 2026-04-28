@@ -290,7 +290,7 @@ static int eval_queue_method_unique(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/unique/prop/v %u, %u;\n", pidx,
 		          elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(arg);
 		  fprintf(vvp_out, "    %%queue/unique/v v%p_0, %u;\n", sig,
@@ -306,7 +306,7 @@ static int eval_queue_method_unique(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/unique/index/prop/v %u, %u;\n",
 		          pidx, elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(arg);
 		  fprintf(vvp_out, "    %%queue/unique/index/v v%p_0, %u;\n",
@@ -326,7 +326,7 @@ static int eval_queue_method_unique(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/%s/prop/v %u, %u;\n", opname, pidx,
 		          elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(arg);
 		  fprintf(vvp_out, "    %%queue/%s/v v%p_0, %u;\n", opname, sig,
@@ -483,7 +483,8 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    fprintf(vvp_out, "T_%u.%u ; loop end (prop)\n", thread_count,
 	            lab_loop_end);
 	    if (mode == 0 || mode == 1) {
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  /* Keep result queue object, drop class object beneath it. */
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else if (mode == 6 || mode == 7) {
 		  fprintf(vvp_out, "    %%queue/%s/obj/v %u;\n",
 			  mode == 6 ? "min" : "max", elem_wid);
@@ -614,7 +615,7 @@ static int eval_queue_method_find(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/find/prop/v %u, %u;\n", pidx,
 		          elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(qarg);
 		  fprintf(vvp_out, "    %%queue/find/v v%p_0, %u;\n", sig,
@@ -630,7 +631,7 @@ static int eval_queue_method_find(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/find/index/prop/v %u, %u;\n",
 		          pidx, elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(qarg);
 		  fprintf(vvp_out, "    %%queue/find/index/v v%p_0, %u;\n",
@@ -646,7 +647,7 @@ static int eval_queue_method_find(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/find_first/prop/v %u, %u;\n", pidx,
 		          elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(qarg);
 		  fprintf(vvp_out, "    %%queue/find_first/v v%p_0, %u;\n", sig,
@@ -661,7 +662,7 @@ static int eval_queue_method_find(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/find_first/index/prop/v %u, %u;\n",
 		          pidx, elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(qarg);
 		  fprintf(vvp_out, "    %%queue/find_first/index/v v%p_0, %u;\n",
@@ -676,7 +677,7 @@ static int eval_queue_method_find(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/find_last/prop/v %u, %u;\n", pidx,
 		          elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(qarg);
 		  fprintf(vvp_out, "    %%queue/find_last/v v%p_0, %u;\n", sig,
@@ -691,7 +692,7 @@ static int eval_queue_method_find(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/find_last/index/prop/v %u, %u;\n",
 		          pidx, elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(qarg);
 		  fprintf(vvp_out, "    %%queue/find_last/index/v v%p_0, %u;\n",
