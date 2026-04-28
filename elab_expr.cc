@@ -106,7 +106,7 @@ static NetExpr* elab_queue_locator_with_predicate(
       index_net->local_flag(true);
 
       NetExpr* pred = 0;
-      if (method_suffix == "sum")
+      if (method_suffix == "sum" || method_suffix == "product")
 	    pred = elab_and_eval(des, ws, with_expr, (int)ew, false, false,
 				 ivl_type_base(element_type));
       else
@@ -138,6 +138,8 @@ static NetExpr* elab_queue_locator_with_predicate(
 	    sfunc_name = lex_strings.make("$ivl_queue_method$max_with");
       else if (method_suffix == "sum")
 	    sfunc_name = lex_strings.make("$ivl_queue_method$sum_with");
+      else if (method_suffix == "product")
+	    sfunc_name = lex_strings.make("$ivl_queue_method$product_with");
       else
 	    ivl_assert(loc, 0);
 
@@ -3901,10 +3903,16 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  des->errors += 1;
 				    }
 				    if (with_expr_) {
-					  cerr << get_fileline() << ": sorry: queue product() with a "
-					       << "`with` clause is not yet supported." << endl;
-					  des->errors += 1;
-					  return 0;
+					  if (!parms_.empty()) {
+						cerr << get_fileline() << ": error: array locator "
+						     << "`with` clause cannot be combined with a "
+						     << "method argument." << endl;
+						des->errors += 1;
+						return 0;
+					  }
+					  return elab_queue_locator_with_predicate(
+					      des, scope, *this, with_expr_, prop,
+					      element_type, element_type, method_name);
 				    }
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
 					  cerr << get_fileline() << ": sorry: queue product() for this "
@@ -4465,10 +4473,16 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  des->errors += 1;
 				    }
 				    if (with_expr_) {
-					  cerr << get_fileline() << ": sorry: array product() with a "
-					       << "`with` clause is not yet supported." << endl;
-					  des->errors += 1;
-					  return 0;
+					  if (!parms_.empty()) {
+						cerr << get_fileline() << ": error: array locator "
+						     << "`with` clause cannot be combined with a "
+						     << "method argument." << endl;
+						des->errors += 1;
+						return 0;
+					  }
+					  return elab_queue_locator_with_predicate(
+					      des, scope, *this, with_expr_, prop,
+					      element_type, element_type, method_name);
 				    }
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
 					  cerr << get_fileline() << ": sorry: array product() for this "
@@ -4895,10 +4909,15 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			des->errors += 1;
 		  }
 		  if (with_expr_) {
-			cerr << get_fileline() << ": sorry: dynamic array product() with a "
-			     << "`with` clause is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
+			if (!parms_.empty()) {
+			      cerr << get_fileline() << ": error: array locator `with` clause "
+				      "cannot be combined with a method argument." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			return elab_queue_locator_with_predicate(
+			    des, scope, *this, with_expr_, sub_expr, element_type,
+			    element_type, method_name);
 		  }
 		  if (!queue_method_element_is_integral_vec4(element_type)) {
 			cerr << get_fileline() << ": sorry: dynamic array product() for this "
@@ -5096,10 +5115,15 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			des->errors += 1;
 		  }
 		  if (with_expr_) {
-			cerr << get_fileline() << ": sorry: queue product() with a "
-			     << "`with` clause is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
+			if (!parms_.empty()) {
+			      cerr << get_fileline() << ": error: array locator `with` clause "
+				      "cannot be combined with a method argument." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			return elab_queue_locator_with_predicate(
+			    des, scope, *this, with_expr_, sub_expr, element_type,
+			    element_type, method_name);
 		  }
 		  if (!queue_method_element_is_integral_vec4(element_type)) {
 			cerr << get_fileline() << ": sorry: queue product() for this "

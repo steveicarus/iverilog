@@ -27,6 +27,7 @@ Behavior notes (LRM-oriented):
 
   * product() returns the scalar reduction product of elements (integral
     vector types).
+    `product() with (expr)` reduces the expression result for each item.
 
   * For dynamic arrays, runtime support treats storage as vvp_darray (including
     atom-backed integral arrays), not only vvp_queue_vec4. See vvp/vthread.cc:
@@ -59,6 +60,8 @@ Regression tests (see ivtest/vvp_tests/*.json and regress-vvp.list):
   sv_class_queue_prop_locators.v  locator methods on class queue properties.
   sv_queue_product.v           integral product() reduction on queues.
   sv_darray_product.v          integral product() reduction on dynamic arrays.
+  sv_queue_product_with.v      product() with expression on queues.
+  sv_darray_product_with.v     product() with expression on dynamic arrays.
   sv_queue_sum.v               integral sum() reduction on queues.
   sv_darray_sum.v              integral sum() reduction on dynamic arrays.
   sv_queue_sum_with.v          sum() with expression on queues.

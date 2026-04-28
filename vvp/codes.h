@@ -252,6 +252,7 @@ extern bool of_PROP_QUEUE_SIZE(vthread_t thr, vvp_code_t code);
 extern bool of_QUEUE_APPEND_WORD_V(vthread_t thr, vvp_code_t code);
 extern bool of_QUEUE_NEW_EMPTY_V(vthread_t thr, vvp_code_t code);
 extern bool of_QUEUE_PRODUCT_PROP_V(vthread_t thr, vvp_code_t code);
+extern bool of_QUEUE_PRODUCT_OBJ_V(vthread_t thr, vvp_code_t code);
 extern bool of_QUEUE_PRODUCT_V(vthread_t thr, vvp_code_t code);
 extern bool of_QUEUE_SIZE_V(vthread_t thr, vvp_code_t code);
 extern bool of_QUEUE_SUM_OBJ_V(vthread_t thr, vvp_code_t code);
