@@ -275,6 +275,8 @@ extern bool of_QUEUE_MIN_V(vthread_t thr, vvp_code_t code);
 extern bool of_QUEUE_MAX_PROP_V(vthread_t thr, vvp_code_t code);
 extern bool of_QUEUE_MAX_OBJ_V(vthread_t thr, vvp_code_t code);
 extern bool of_QUEUE_MAX_V(vthread_t thr, vvp_code_t code);
+extern bool of_QUEUE_UNIQUE_OBJ_V(vthread_t thr, vvp_code_t code);
+extern bool of_QUEUE_UNIQUE_INDEX_OBJ_V(vthread_t thr, vvp_code_t code);
 extern bool of_QUEUE_UNIQUE_INDEX_PROP_V(vthread_t thr, vvp_code_t code);
 extern bool of_QUEUE_UNIQUE_INDEX_V(vthread_t thr, vvp_code_t code);
 extern bool of_QUEUE_UNIQUE_PROP_V(vthread_t thr, vvp_code_t code);

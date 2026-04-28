@@ -38,6 +38,16 @@ module test;
     `check(r.size, 7);
     `check(r[0], 0);
 
+    r = c.d.unique() with (item > 2);
+    `check(r.size, 5);
+    `check(r[0], 4);
+    `check(r[4], 3);
+
+    r = c.d.unique_index() with (item > 2);
+    `check(r.size, 6);
+    `check(r[0], 0);
+    `check(r[5], 7);
+
     r = c.d.min();
     `check(r.size, 2);
     `check(r[0], 1);

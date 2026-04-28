@@ -257,6 +257,7 @@ sv_darray_find_locators		vvp_tests/sv_darray_find_locators.json
 sv_darray_min_max		vvp_tests/sv_darray_min_max.json
 sv_darray_min_max_with	vvp_tests/sv_darray_min_max_with.json
 sv_darray_unique		vvp_tests/sv_darray_unique.json
+sv_darray_unique_with	vvp_tests/sv_darray_unique_with.json
 sv_default_port_value1		vvp_tests/sv_default_port_value1.json
 sv_default_port_value2		vvp_tests/sv_default_port_value2.json
 sv_default_port_value3		vvp_tests/sv_default_port_value3.json

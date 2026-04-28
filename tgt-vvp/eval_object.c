@@ -430,6 +430,10 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    mode = 6;
       else if (strcmp(name, "$ivl_queue_method$max_with") == 0)
 	    mode = 7;
+      else if (strcmp(name, "$ivl_queue_method$unique_with") == 0)
+	    mode = 8;
+      else if (strcmp(name, "$ivl_queue_method$unique_index_with") == 0)
+	    mode = 9;
       else
 	    return 1;
 
@@ -449,7 +453,8 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 	    fprintf(vvp_out, "    %%prop/queue/size %u;\n", pidx);
 	    fprintf(vvp_out, "    %%ix/vec4/s %u;\n", n_reg);
-	    if (mode == 0 || mode == 1 || mode == 6 || mode == 7) {
+	    if (mode == 0 || mode == 1 || mode == 6 || mode == 7 ||
+		mode == 8 || mode == 9) {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
 	    }
 	    if (!reverse) {
@@ -497,6 +502,14 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
 		  fprintf(vvp_out, "    %%queue/append_word/v %u;\n", elem_wid);
 		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
+	    } else if (mode == 8) {
+		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
+		  fprintf(vvp_out, "    %%queue/append_word/v %u;\n", elem_wid);
+		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
+	    } else if (mode == 9) {
+		  fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
+		  fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
+		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
 	    } else if (mode == 2) {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
 		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
@@ -538,6 +551,10 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    if (mode == 0 || mode == 1) {
 		  /* Keep result queue object, drop class object beneath it. */
 		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+	    } else if (mode == 8 || mode == 9) {
+		  fprintf(vvp_out, "    %%queue/unique/obj/v %u;\n",
+			  mode == 9 ? 32 : elem_wid);
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else if (mode == 6 || mode == 7) {
 		  fprintf(vvp_out, "    %%queue/%s/obj/v %u;\n",
 			  mode == 6 ? "min" : "max", elem_wid);
@@ -551,7 +568,8 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    ivl_signal_t sig = ivl_expr_signal(qarg);
 	    fprintf(vvp_out, "    %%queue/size/v v%p_0;\n", sig);
 	    fprintf(vvp_out, "    %%ix/vec4/s %u;\n", n_reg);
-	    if (mode == 0 || mode == 1 || mode == 6 || mode == 7) {
+	    if (mode == 0 || mode == 1 || mode == 6 || mode == 7 ||
+		mode == 8 || mode == 9) {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
 	    }
 	    if (!reverse) {
@@ -599,6 +617,14 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
 		  fprintf(vvp_out, "    %%queue/append_word/v %u;\n", elem_wid);
 		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
+	    } else if (mode == 8) {
+		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
+		  fprintf(vvp_out, "    %%queue/append_word/v %u;\n", elem_wid);
+		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
+	    } else if (mode == 9) {
+		  fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
+		  fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
+		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
 	    } else if (mode == 2) {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
 		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
@@ -632,7 +658,10 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 
 	    fprintf(vvp_out, "T_%u.%u ; loop end (var)\n", thread_count,
 	            lab_loop_end);
-	    if (mode == 6 || mode == 7) {
+	    if (mode == 8 || mode == 9) {
+		  fprintf(vvp_out, "    %%queue/unique/obj/v %u;\n",
+			  mode == 9 ? 32 : elem_wid);
+	    } else if (mode == 6 || mode == 7) {
 		  fprintf(vvp_out, "    %%queue/%s/obj/v %u;\n",
 			  mode == 6 ? "min" : "max", elem_wid);
 	    } else if (mode >= 2) {

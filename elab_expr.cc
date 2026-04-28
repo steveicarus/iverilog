@@ -123,6 +123,10 @@ static NetExpr* elab_queue_locator_with_predicate(
 	    sfunc_name = lex_strings.make("$ivl_queue_method$find_last_with");
       else if (method_suffix == "find_last_index")
 	    sfunc_name = lex_strings.make("$ivl_queue_method$find_last_index_with");
+      else if (method_suffix == "unique")
+	    sfunc_name = lex_strings.make("$ivl_queue_method$unique_with");
+      else if (method_suffix == "unique_index")
+	    sfunc_name = lex_strings.make("$ivl_queue_method$unique_index_with");
       else if (method_suffix == "min")
 	    sfunc_name = lex_strings.make("$ivl_queue_method$min_with");
       else if (method_suffix == "max")
@@ -3769,6 +3773,19 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  des->errors += 1;
 					  return 0;
 				    }
+				    if (with_expr_) {
+					  if (!parms_.empty()) {
+						cerr << get_fileline() << ": error: array locator "
+						     << "`with` clause cannot be combined with a "
+						     << "method argument." << endl;
+						des->errors += 1;
+						return 0;
+					  }
+					  return elab_queue_locator_with_predicate(
+					      des, scope, *this, with_expr_, prop,
+					      element_type, static_cast<ivl_type_t>(queue),
+					      method_name);
+				    }
 				    NetESFunc*sys_expr = new NetESFunc(
 					"$ivl_queue_method$unique",
 					static_cast<ivl_type_t>(queue), 1);
@@ -3787,6 +3804,20 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
+				    }
+				    if (with_expr_) {
+					  if (!parms_.empty()) {
+						cerr << get_fileline() << ": error: array locator "
+						     << "`with` clause cannot be combined with a "
+						     << "method argument." << endl;
+						des->errors += 1;
+						return 0;
+					  }
+					  return elab_queue_locator_with_predicate(
+					      des, scope, *this, with_expr_, prop,
+					      element_type,
+					      static_cast<ivl_type_t>(&ivl_queue_unique_index_ret),
+					      method_name);
 				    }
 				    NetESFunc*sys_expr = new NetESFunc(
 					"$ivl_queue_method$unique_index",
@@ -4049,10 +4080,16 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  return 0;
 				    }
 				    if (with_expr_) {
-					  cerr << get_fileline() << ": sorry: dynamic array unique() with a "
-					       << "`with` clause is not yet supported." << endl;
-					  des->errors += 1;
-					  return 0;
+					  if (!parms_.empty()) {
+						cerr << get_fileline() << ": error: array locator "
+						     << "`with` clause cannot be combined with a "
+						     << "method argument." << endl;
+						des->errors += 1;
+						return 0;
+					  }
+					  return elab_queue_locator_with_predicate(
+					      des, scope, *this, with_expr_, prop,
+					      element_type, darray_rtype, method_name);
 				    }
 				    NetESFunc*sys_expr = new NetESFunc(
 					"$ivl_queue_method$unique", darray_rtype, 1);
@@ -4073,10 +4110,18 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  return 0;
 				    }
 				    if (with_expr_) {
-					  cerr << get_fileline() << ": sorry: dynamic array unique_index() with a "
-					       << "`with` clause is not yet supported." << endl;
-					  des->errors += 1;
-					  return 0;
+					  if (!parms_.empty()) {
+						cerr << get_fileline() << ": error: array locator "
+						     << "`with` clause cannot be combined with a "
+						     << "method argument." << endl;
+						des->errors += 1;
+						return 0;
+					  }
+					  return elab_queue_locator_with_predicate(
+					      des, scope, *this, with_expr_, prop,
+					      element_type,
+					      static_cast<ivl_type_t>(&ivl_queue_unique_index_ret),
+					      method_name);
 				    }
 				    NetESFunc*sys_expr = new NetESFunc(
 					"$ivl_queue_method$unique_index",
@@ -4421,10 +4466,15 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			return 0;
 		  }
 		  if (with_expr_) {
-			cerr << get_fileline() << ": sorry: dynamic array unique() with a "
-			     << "`with` clause is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
+			if (!parms_.empty()) {
+			      cerr << get_fileline() << ": error: array locator `with` clause "
+				      "cannot be combined with a method argument." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			return elab_queue_locator_with_predicate(
+			    des, scope, *this, with_expr_, sub_expr, element_type,
+			    queue_rtype, method_name);
 		  }
 		  NetESFunc*sys_expr = new NetESFunc(
 		      "$ivl_queue_method$unique", queue_rtype, 1);
@@ -4445,10 +4495,16 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			return 0;
 		  }
 		  if (with_expr_) {
-			cerr << get_fileline() << ": sorry: dynamic array unique_index() with a "
-			     << "`with` clause is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
+			if (!parms_.empty()) {
+			      cerr << get_fileline() << ": error: array locator `with` clause "
+				      "cannot be combined with a method argument." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			return elab_queue_locator_with_predicate(
+			    des, scope, *this, with_expr_, sub_expr, element_type,
+			    static_cast<ivl_type_t>(&ivl_queue_unique_index_ret),
+			    method_name);
 		  }
 		  NetESFunc*sys_expr = new NetESFunc(
 		      "$ivl_queue_method$unique_index",
@@ -4734,6 +4790,17 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			des->errors += 1;
 			return 0;
 		  }
+		  if (with_expr_) {
+			if (!parms_.empty()) {
+			      cerr << get_fileline() << ": error: array locator `with` clause "
+				      "cannot be combined with a method argument." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			return elab_queue_locator_with_predicate(
+			    des, scope, *this, with_expr_, sub_expr, element_type,
+			    static_cast<ivl_type_t>(queue), method_name);
+		  }
 		  NetESFunc*sys_expr = new NetESFunc(
 		      "$ivl_queue_method$unique",
 		      static_cast<ivl_type_t>(queue), 1);
@@ -4753,6 +4820,18 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			     << "element type is not yet supported." << endl;
 			des->errors += 1;
 			return 0;
+		  }
+		  if (with_expr_) {
+			if (!parms_.empty()) {
+			      cerr << get_fileline() << ": error: array locator `with` clause "
+				      "cannot be combined with a method argument." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			return elab_queue_locator_with_predicate(
+			    des, scope, *this, with_expr_, sub_expr, element_type,
+			    static_cast<ivl_type_t>(&ivl_queue_unique_index_ret),
+			    method_name);
 		  }
 		  NetESFunc*sys_expr = new NetESFunc(
 		      "$ivl_queue_method$unique_index",

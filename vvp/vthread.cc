@@ -6796,6 +6796,36 @@ bool of_QUEUE_MAX_PROP_V(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_QUEUE_UNIQUE_OBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_object_t src_obj;
+      thr->pop_object(src_obj);
+
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(src_obj, qsrc, dsrc);
+      vvp_queue_vec4* dst = qsrc ? queue_run_unique_src(qsrc, wid, false)
+				 : queue_run_unique_src(dsrc, wid, false);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_UNIQUE_INDEX_OBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_object_t src_obj;
+      thr->pop_object(src_obj);
+
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(src_obj, qsrc, dsrc);
+      vvp_queue_vec4* dst = qsrc ? queue_run_unique_src(qsrc, wid, true)
+				 : queue_run_unique_src(dsrc, wid, true);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
 bool of_QUEUE_UNIQUE_V(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
