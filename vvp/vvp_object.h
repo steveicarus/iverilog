@@ -19,6 +19,7 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+# include  <cstdint>
 # include  <stdlib.h>
 
 /*
@@ -68,6 +69,12 @@ class vvp_object_t {
           { return vvp_object_t(ref_->duplicate()); }
 
       template <class T> T*peek(void) const;
+
+	/* Stable ordering for array-of-handle sort (object identity). */
+      uintptr_t sort_order_key(void) const
+      {
+	    return reinterpret_cast<uintptr_t>(ref_);
+      }
 
     private:
       class vvp_object*ref_;

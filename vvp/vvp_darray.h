@@ -49,6 +49,10 @@ class vvp_darray : public vvp_object {
 
 	/* In-place element order reversal (dynamic arrays and queues). */
       virtual void reverse_elems(void);
+
+	/* sort: ascending if true, descending if false; shuffle randomizes. */
+      virtual void sort_elems(bool ascending);
+      virtual void shuffle_elems(void);
 };
 
 template <class TYPE> class vvp_darray_atom : public vvp_darray {
@@ -59,6 +63,8 @@ template <class TYPE> class vvp_darray_atom : public vvp_darray {
 
       size_t get_size(void) const override;
       void reverse_elems(void) override;
+      void sort_elems(bool ascending) override;
+      void shuffle_elems(void) override;
       void set_word(unsigned adr, const vvp_vector4_t&value) override;
       void get_word(unsigned adr, vvp_vector4_t&value) override;
       void shallow_copy(const vvp_object*obj) override;
@@ -83,6 +89,8 @@ class vvp_darray_vec4 : public vvp_darray {
       vvp_object* duplicate(void) const override;
       vvp_vector4_t get_bitstream(bool as_vec4) override;
       void reverse_elems(void) override;
+      void sort_elems(bool ascending) override;
+      void shuffle_elems(void) override;
 
     private:
       std::vector<vvp_vector4_t> array_;
@@ -98,6 +106,8 @@ class vvp_darray_vec2 : public vvp_darray {
 
       size_t get_size(void) const override;
       void reverse_elems(void) override;
+      void sort_elems(bool ascending) override;
+      void shuffle_elems(void) override;
       void set_word(unsigned adr, const vvp_vector4_t&value) override;
       void get_word(unsigned adr, vvp_vector4_t&value) override;
       void shallow_copy(const vvp_object*obj) override;
@@ -121,6 +131,8 @@ class vvp_darray_real : public vvp_darray {
       vvp_object* duplicate(void) const override;
       vvp_vector4_t get_bitstream(bool as_vec4) override;
       void reverse_elems(void) override;
+      void sort_elems(bool ascending) override;
+      void shuffle_elems(void) override;
 
     private:
       std::vector<double> array_;
@@ -138,6 +150,8 @@ class vvp_darray_string : public vvp_darray {
       void shallow_copy(const vvp_object*obj) override;
       vvp_object* duplicate(void) const override;
       void reverse_elems(void) override;
+      void sort_elems(bool ascending) override;
+      void shuffle_elems(void) override;
 
     private:
       std::vector<std::string> array_;
@@ -151,6 +165,8 @@ class vvp_darray_object : public vvp_darray {
 
       size_t get_size(void) const override;
       void reverse_elems(void) override;
+      void sort_elems(bool ascending) override;
+      void shuffle_elems(void) override;
       void set_word(unsigned adr, const vvp_object_t&value) override;
       void get_word(unsigned adr, vvp_object_t&value) override;
       void shallow_copy(const vvp_object*obj) override;
@@ -206,6 +222,8 @@ class vvp_queue_real : public vvp_queue {
       void erase(unsigned idx) override;
       void erase_tail(unsigned idx) override;
       void reverse_elems(void) override;
+      void sort_elems(bool ascending) override;
+      void shuffle_elems(void) override;
 
     private:
       std::deque<double> queue;
@@ -227,6 +245,8 @@ class vvp_queue_string : public vvp_queue {
       void erase(unsigned idx) override;
       void erase_tail(unsigned idx) override;
       void reverse_elems(void) override;
+      void sort_elems(bool ascending) override;
+      void shuffle_elems(void) override;
 
     private:
       std::deque<std::string> queue;
@@ -248,6 +268,8 @@ class vvp_queue_vec4 : public vvp_queue {
       void erase(unsigned idx) override;
       void erase_tail(unsigned idx) override;
       void reverse_elems(void) override;
+      void sort_elems(bool ascending) override;
+      void shuffle_elems(void) override;
 
     private:
       std::deque<vvp_vector4_t> queue;

@@ -19,10 +19,32 @@
 
 # include  "vvp_darray.h"
 # include  <algorithm>
+# include  <functional>
 # include  <iostream>
+# include  <random>
 # include  <typeinfo>
 
 using namespace std;
+
+namespace {
+
+static std::mt19937& shuffle_rng(void)
+{
+      static std::mt19937 rng(std::random_device{}());
+      return rng;
+}
+
+static bool vec4_lt_unsigned(const vvp_vector4_t&a, const vvp_vector4_t&b)
+{
+      if (a.eeq(b))
+	    return false;
+      vvp_bit4_t gt = compare_gtge(b, a, BIT4_1);
+      if (gt == BIT4_X)
+	    return false;
+      return gt == BIT4_1;
+}
+
+} // namespace
 
 vvp_darray::~vvp_darray()
 {
@@ -31,6 +53,18 @@ vvp_darray::~vvp_darray()
 void vvp_darray::reverse_elems(void)
 {
       cerr << "XXXX reverse_elems() not implemented for "
+           << typeid(*this).name() << endl;
+}
+
+void vvp_darray::sort_elems(bool /*ascending*/)
+{
+      cerr << "XXXX sort_elems() not implemented for "
+           << typeid(*this).name() << endl;
+}
+
+void vvp_darray::shuffle_elems(void)
+{
+      cerr << "XXXX shuffle_elems() not implemented for "
            << typeid(*this).name() << endl;
 }
 
@@ -94,6 +128,19 @@ template <class TYPE> void vvp_darray_atom<TYPE>::reverse_elems(void)
       size_t n = array_.size();
       for (size_t idx = 0 ; idx < n/2 ; idx += 1)
 	    std::swap(array_[idx], array_[n-1-idx]);
+}
+
+template <class TYPE> void vvp_darray_atom<TYPE>::sort_elems(bool ascending)
+{
+      if (ascending)
+	    std::sort(array_.begin(), array_.end());
+      else
+	    std::sort(array_.begin(), array_.end(), std::greater<TYPE>());
+}
+
+template <class TYPE> void vvp_darray_atom<TYPE>::shuffle_elems(void)
+{
+      std::shuffle(array_.begin(), array_.end(), shuffle_rng());
 }
 
 template <class TYPE> void vvp_darray_atom<TYPE>::set_word(unsigned adr, const vvp_vector4_t&value)
@@ -246,11 +293,46 @@ void vvp_darray_vec4::reverse_elems(void)
 	    std::swap(array_[idx], array_[n-1-idx]);
 }
 
+void vvp_darray_vec4::sort_elems(bool ascending)
+{
+      if (ascending) {
+	    std::sort(array_.begin(), array_.end(), vec4_lt_unsigned);
+      } else {
+	    std::sort(array_.begin(), array_.end(),
+		      [](const vvp_vector4_t&a, const vvp_vector4_t&b) {
+			    if (a.eeq(b))
+				  return false;
+			    return vec4_lt_unsigned(b, a);
+		      });
+      }
+}
+
+void vvp_darray_vec4::shuffle_elems(void)
+{
+      std::shuffle(array_.begin(), array_.end(), shuffle_rng());
+}
+
 void vvp_darray_vec2::reverse_elems(void)
 {
       size_t n = array_.size();
       for (size_t idx = 0 ; idx < n/2 ; idx += 1)
 	    std::swap(array_[idx], array_[n-1-idx]);
+}
+
+void vvp_darray_vec2::sort_elems(bool ascending)
+{
+      if (ascending)
+	    std::sort(array_.begin(), array_.end());
+      else
+	    std::sort(array_.begin(), array_.end(),
+		      [](const vvp_vector2_t&a, const vvp_vector2_t&b) {
+			    return b < a;
+		      });
+}
+
+void vvp_darray_vec2::shuffle_elems(void)
+{
+      std::shuffle(array_.begin(), array_.end(), shuffle_rng());
 }
 
 vvp_darray_vec2::~vvp_darray_vec2()
@@ -357,6 +439,26 @@ void vvp_darray_object::reverse_elems(void)
 	    std::swap(array_[idx], array_[n-1-idx]);
 }
 
+void vvp_darray_object::sort_elems(bool ascending)
+{
+      if (ascending) {
+	    std::sort(array_.begin(), array_.end(),
+		      [](const vvp_object_t&a, const vvp_object_t&b) {
+			    return a.sort_order_key() < b.sort_order_key();
+		      });
+      } else {
+	    std::sort(array_.begin(), array_.end(),
+		      [](const vvp_object_t&a, const vvp_object_t&b) {
+			    return a.sort_order_key() > b.sort_order_key();
+		      });
+      }
+}
+
+void vvp_darray_object::shuffle_elems(void)
+{
+      std::shuffle(array_.begin(), array_.end(), shuffle_rng());
+}
+
 vvp_darray_real::~vvp_darray_real()
 {
 }
@@ -398,6 +500,19 @@ void vvp_darray_real::reverse_elems(void)
       size_t n = array_.size();
       for (size_t idx = 0 ; idx < n/2 ; idx += 1)
 	    std::swap(array_[idx], array_[n-1-idx]);
+}
+
+void vvp_darray_real::sort_elems(bool ascending)
+{
+      if (ascending)
+	    std::sort(array_.begin(), array_.end());
+      else
+	    std::sort(array_.begin(), array_.end(), std::greater<double>());
+}
+
+void vvp_darray_real::shuffle_elems(void)
+{
+      std::shuffle(array_.begin(), array_.end(), shuffle_rng());
 }
 
 vvp_object* vvp_darray_real::duplicate(void) const
@@ -477,6 +592,19 @@ void vvp_darray_string::reverse_elems(void)
       size_t n = array_.size();
       for (size_t idx = 0 ; idx < n/2 ; idx += 1)
 	    std::swap(array_[idx], array_[n-1-idx]);
+}
+
+void vvp_darray_string::sort_elems(bool ascending)
+{
+      if (ascending)
+	    std::sort(array_.begin(), array_.end());
+      else
+	    std::sort(array_.begin(), array_.end(), std::greater<string>());
+}
+
+void vvp_darray_string::shuffle_elems(void)
+{
+      std::shuffle(array_.begin(), array_.end(), shuffle_rng());
 }
 
 vvp_object* vvp_darray_string::duplicate(void) const
@@ -828,6 +956,32 @@ void vvp_queue_string::reverse_elems(void)
       std::reverse(queue.begin(), queue.end());
 }
 
+void vvp_queue_real::sort_elems(bool ascending)
+{
+      if (ascending)
+	    std::sort(queue.begin(), queue.end());
+      else
+	    std::sort(queue.begin(), queue.end(), std::greater<double>());
+}
+
+void vvp_queue_real::shuffle_elems(void)
+{
+      std::shuffle(queue.begin(), queue.end(), shuffle_rng());
+}
+
+void vvp_queue_string::sort_elems(bool ascending)
+{
+      if (ascending)
+	    std::sort(queue.begin(), queue.end());
+      else
+	    std::sort(queue.begin(), queue.end(), std::greater<string>());
+}
+
+void vvp_queue_string::shuffle_elems(void)
+{
+      std::shuffle(queue.begin(), queue.end(), shuffle_rng());
+}
+
 void vvp_queue_vec4::copy_elems(vvp_object_t src, unsigned max_size)
 {
       if (vvp_queue*src_queue = src.peek<vvp_queue>())
@@ -939,4 +1093,23 @@ void vvp_queue_vec4::erase_tail(unsigned idx)
 void vvp_queue_vec4::reverse_elems(void)
 {
       std::reverse(queue.begin(), queue.end());
+}
+
+void vvp_queue_vec4::sort_elems(bool ascending)
+{
+      if (ascending) {
+	    std::sort(queue.begin(), queue.end(), vec4_lt_unsigned);
+      } else {
+	    std::sort(queue.begin(), queue.end(),
+		      [](const vvp_vector4_t&a, const vvp_vector4_t&b) {
+			    if (a.eeq(b))
+				  return false;
+			    return vec4_lt_unsigned(b, a);
+		      });
+      }
+}
+
+void vvp_queue_vec4::shuffle_elems(void)
+{
+      std::shuffle(queue.begin(), queue.end(), shuffle_rng());
 }

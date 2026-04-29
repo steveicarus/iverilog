@@ -68,6 +68,12 @@ module test;
     `check(c.d[1], 2);
     `check(c.d[2], 1);
 
+    c.d = '{3, 1, 2};
+    c.d.sort();
+    `check(c.d[0], 1);
+    `check(c.d[1], 2);
+    `check(c.d[2], 3);
+
     if (!failed)
       $display("PASSED");
   end

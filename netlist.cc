@@ -3455,7 +3455,10 @@ bool NetSTask::check_synth(ivl_process_type_t pr_type,
                            const NetScope* /* scope */) const
 {
       if (strcmp(name(), "$ivl_darray_method$delete") == 0 ||
-          strcmp(name(), "$ivl_darray_method$reverse") == 0) {
+          strcmp(name(), "$ivl_darray_method$reverse") == 0 ||
+          strcmp(name(), "$ivl_darray_method$sort") == 0 ||
+          strcmp(name(), "$ivl_darray_method$rsort") == 0 ||
+          strcmp(name(), "$ivl_darray_method$shuffle") == 0) {
 	    cerr << get_fileline() << ": warning: Dynamic array "
 	            "ordering/delete method cannot be synthesized "
 	         << get_process_type_as_string(pr_type) << endl;

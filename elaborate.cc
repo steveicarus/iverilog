@@ -3971,6 +3971,24 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 								      "$ivl_darray_method$reverse",
 								      parm_names);
 			      }
+			      if (method_name == "sort") {
+				    static const std::vector<perm_string> parm_names;
+				    return elaborate_sys_task_method_(des, scope, prop, method_name,
+								      "$ivl_darray_method$sort",
+								      parm_names);
+			      }
+			      if (method_name == "rsort") {
+				    static const std::vector<perm_string> parm_names;
+				    return elaborate_sys_task_method_(des, scope, prop, method_name,
+								      "$ivl_darray_method$rsort",
+								      parm_names);
+			      }
+			      if (method_name == "shuffle") {
+				    static const std::vector<perm_string> parm_names;
+				    return elaborate_sys_task_method_(des, scope, prop, method_name,
+								      "$ivl_darray_method$shuffle",
+								      parm_names);
+			      }
 			} else if (ptype && ptype->base_type() == IVL_VT_DARRAY) {
 			      NetEProperty*prop = new NetEProperty(net, pidx, 0);
 			      prop->set_line(*this);
@@ -3991,6 +4009,24 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 				    static const std::vector<perm_string> parm_names;
 				    return elaborate_sys_task_method_(des, scope, prop, method_name,
 								      "$ivl_darray_method$reverse",
+								      parm_names);
+			      }
+			      if (method_name == "sort") {
+				    static const std::vector<perm_string> parm_names;
+				    return elaborate_sys_task_method_(des, scope, prop, method_name,
+								      "$ivl_darray_method$sort",
+								      parm_names);
+			      }
+			      if (method_name == "rsort") {
+				    static const std::vector<perm_string> parm_names;
+				    return elaborate_sys_task_method_(des, scope, prop, method_name,
+								      "$ivl_darray_method$rsort",
+								      parm_names);
+			      }
+			      if (method_name == "shuffle") {
+				    static const std::vector<perm_string> parm_names;
+				    return elaborate_sys_task_method_(des, scope, prop, method_name,
+								      "$ivl_darray_method$shuffle",
 								      parm_names);
 			      }
 			}
@@ -4073,24 +4109,27 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 		  return elaborate_sys_task_method_(des, scope, sig, method_name,
 						    "$ivl_darray_method$reverse",
 						    parm_names);
-	    } else if (method_name=="sort") {
-		  cerr << get_fileline() << ": sorry: 'sort()' "
-		          "array sorting method is not currently supported."
-		       << endl;
-		  des->errors += 1;
-		  return 0;
-	    } else if (method_name=="rsort") {
-		  cerr << get_fileline() << ": sorry: 'rsort()' "
-		          "array sorting method is not currently supported."
-		       << endl;
-		  des->errors += 1;
-		  return 0;
-	    } else if (method_name=="shuffle") {
-		  cerr << get_fileline() << ": sorry: 'shuffle()' "
-		          "array sorting method is not currently supported."
-		       << endl;
-		  des->errors += 1;
-		  return 0;
+	    } else if (method_name == "sort") {
+		  static const std::vector<perm_string> parm_names;
+		  NetESignal*sig = new NetESignal(net);
+		  sig->set_line(*this);
+		  return elaborate_sys_task_method_(des, scope, sig, method_name,
+						    "$ivl_darray_method$sort",
+						    parm_names);
+	    } else if (method_name == "rsort") {
+		  static const std::vector<perm_string> parm_names;
+		  NetESignal*sig = new NetESignal(net);
+		  sig->set_line(*this);
+		  return elaborate_sys_task_method_(des, scope, sig, method_name,
+						    "$ivl_darray_method$rsort",
+						    parm_names);
+	    } else if (method_name == "shuffle") {
+		  static const std::vector<perm_string> parm_names;
+		  NetESignal*sig = new NetESignal(net);
+		  sig->set_line(*this);
+		  return elaborate_sys_task_method_(des, scope, sig, method_name,
+						    "$ivl_darray_method$shuffle",
+						    parm_names);
 	    }
       }
 

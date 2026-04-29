@@ -6,7 +6,7 @@ on unpacked queues (int q[$]) and dynamic arrays (int da[]):
 
   find, find_index, find_first, find_first_index, find_last,
   find_last_index, min, max, unique, unique_index,
-  sum/product (integral), reverse (ordering)
+  sum/product (integral), reverse (ordering), sort/rsort/shuffle (ordering)
 
 Behavior notes (LRM-oriented):
 
@@ -33,6 +33,14 @@ Behavior notes (LRM-oriented):
     arrays (integral, vector, real, string, and class-handle elements as stored
     by Icarus).
 
+  * sort() and rsort() order elements in ascending or descending order. Packed
+    vector elements use the same unsigned relational rules as min()/max().
+    Class-handle arrays use a stable implementation-defined order
+    (sort_order_key on vvp_object_t).
+
+  * shuffle() permutes elements randomly (std::mt19937); order is not portable
+    across runs.
+
   * For dynamic arrays, runtime support treats storage as vvp_darray (including
     atom-backed integral arrays), not only vvp_queue_vec4. See vvp/vthread.cc:
     get_queue_or_darray_vec4_from_net() and the %queue/* opcodes used for
@@ -44,9 +52,9 @@ Compiler / codegen touchpoints (typical):
     lowering.
   * Code generation: tgt-vvp/eval_object.c — eval_queue_method_find,
     eval_queue_method_find_with; eval_vec4.c for non-with find*;
-    tgt-vvp/vvp_process.c — reverse/delete as system tasks (`%reverse/obj`, …).
+    tgt-vvp/vvp_process.c — ordering/delete as system tasks (`%sort/obj`, …).
   * VVP: vvp/vthread.cc — opcode implementations; vvp/vvp_darray.{h,cc} —
-    reverse_elems(); vvp/compile.cc — opcode tables.
+    sort_elems(), shuffle_elems(), reverse_elems(); vvp/compile.cc — opcode tables.
 
 Regression tests (see ivtest/vvp_tests/*.json and regress-vvp.list):
 
@@ -71,7 +79,9 @@ Regression tests (see ivtest/vvp_tests/*.json and regress-vvp.list):
   sv_queue_product_with.v      product() with expression on queues.
   sv_darray_product_with.v     product() with expression on dynamic arrays.
   sv_darray_reverse.v          reverse() ordering on dynamic arrays.
+  sv_darray_sort.v             sort(), rsort(), shuffle() on dynamic arrays.
   sv_queue_reverse.v           reverse() ordering on queues.
+  sv_queue_sort.v              sort(), rsort(), shuffle() on queues.
   sv_queue_sum.v               integral sum() reduction on queues.
   sv_darray_sum.v              integral sum() reduction on dynamic arrays.
   sv_queue_sum_with.v          sum() with expression on queues.

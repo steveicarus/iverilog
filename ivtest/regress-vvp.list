@@ -260,6 +260,7 @@ sv_darray_min_max_with	vvp_tests/sv_darray_min_max_with.json
 sv_darray_product		vvp_tests/sv_darray_product.json
 sv_darray_product_with	vvp_tests/sv_darray_product_with.json
 sv_darray_reverse		vvp_tests/sv_darray_reverse.json
+sv_darray_sort			vvp_tests/sv_darray_sort.json
 sv_darray_sum			vvp_tests/sv_darray_sum.json
 sv_darray_sum_with		vvp_tests/sv_darray_sum_with.json
 sv_darray_unique		vvp_tests/sv_darray_unique.json
@@ -292,6 +293,7 @@ sv_queue_min_max_with	vvp_tests/sv_queue_min_max_with.json
 sv_queue_product		vvp_tests/sv_queue_product.json
 sv_queue_product_with	vvp_tests/sv_queue_product_with.json
 sv_queue_reverse		vvp_tests/sv_queue_reverse.json
+sv_queue_sort			vvp_tests/sv_queue_sort.json
 sv_queue_sum			vvp_tests/sv_queue_sum.json
 sv_queue_sum_with		vvp_tests/sv_queue_sum_with.json
 sv_wildcard_import8		vvp_tests/sv_wildcard_import8.json

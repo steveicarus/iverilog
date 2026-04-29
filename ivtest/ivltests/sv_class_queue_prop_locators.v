@@ -60,6 +60,12 @@ module test;
     `check(c.q[1], 2);
     `check(c.q[2], 1);
 
+    c.q = '{3, 1, 2};
+    c.q.sort();
+    `check(c.q[0], 1);
+    `check(c.q[1], 2);
+    `check(c.q[2], 3);
+
     if (!failed)
       $display("PASSED");
   end
