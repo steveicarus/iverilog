@@ -81,6 +81,7 @@ BUILDCC = @CC_FOR_BUILD@
 BUILDEXT = @BUILD_EXEEXT@
 CC = @CC@
 CXX = @CXX@
+ENV_VVP=@ENV_VVP@
 INSTALL = @INSTALL@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -159,7 +160,7 @@ else
 	rm vvp/vvp$(suffix).exe
 endif
 else
-	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
+	$(ENV_VVP) vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
 endif
 
 clean:

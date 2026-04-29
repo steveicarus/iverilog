@@ -1,5 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT
+AC_CONFIG_MACRO_DIRS([m4])
+
 AC_CONFIG_SRCDIR([netlist.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_HEADERS([_pli_types.h])
@@ -18,6 +20,10 @@ AX_PROG_CC_FOR_BUILD
 AC_PREREQ([2.62])
 m4_version_prereq([2.70], [], [AC_PROG_CC_C99])
 AC_PROG_CXX
+
+# Require C++11 (avoid newer defaults like C++23 from newer toolchains)
+AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
+
 AC_PROG_RANLIB
 AC_CHECK_TOOL(LD, ld, false)
 AC_CHECK_TOOL(AR, ar, false)
@@ -268,6 +274,24 @@ case "${host}" in
 	esac
 	;;
 esac
+
+# Setup test environment for running vvp from build directory
+VVP_BUILDDIR="$(pwd)/vvp"
+case "$host_os" in
+  linux*)
+    ENV_VVP="LD_LIBRARY_PATH=$VVP_BUILDDIR"
+    ;;
+  darwin*)
+    ENV_VVP="DYLD_LIBRARY_PATH=$VVP_BUILDDIR"
+    ;;
+  *)
+    # Since the libvvp DLL is located in the same directory as the
+    # vvp executable, no action is required here
+    ENV_VVP=""
+    ;;
+esac
+AC_SUBST([ENV_VVP])
+
 
 # Do some more operating system specific setup. We put the file64_support
 # define in a substitution instead of simply a define because there
