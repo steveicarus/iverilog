@@ -134,7 +134,7 @@ O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
     PGate.o PGenerate.o PModport.o PNamedItem.o PPackage.o PScope.o PSpec.o PTimingCheck.o \
     PTask.o PUdp.o PWire.o Statement.o AStatement.o $M $(FF) $(TT)
 
-all: dep config.h _pli_types.h version_tag.h ivl@EXEEXT@ version.exe iverilog-vpi.man
+all: dep config.h _pli_types.h version_tag.h version_base.h ivl@EXEEXT@ iverilog-vpi.man
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 
 # In the windows world, the installer will need a dosify program to
@@ -173,7 +173,6 @@ clean:
 	rm -f parse.output syn-rules.output dosify$(BUILDEXT) ivl@EXEEXT@ check.vvp
 	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc version_base.h
 	rm -rf dep
-	rm -f version.exe
 
 distclean: clean
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
@@ -255,9 +254,6 @@ endif
 
 version_base.h: $(srcdir)/version_base.h.in config.status
 	./config.status --file=$@
-
-version.exe: $(srcdir)/version.c version_base.h version_tag.h
-	$(BUILDCC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o version.exe -I. -I$(srcdir) $(srcdir)/version.c
 
 %.o: %.cc config.h | dep
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
