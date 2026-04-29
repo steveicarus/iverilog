@@ -3,7 +3,7 @@
     "source" : "br_gh710.v",
     "gold"   : "br_gh710b",
     "iverilog-args" : [ "-g2009" ],
-    "vvp-args-extended" : [ "-lxt" ],
+    "_comment" : "Use default VCD dump (not -lxt) so the test passes without libbzip2; the package non-dumpable warning is the same for VCD/LXT.",
     "vlog95" : {
         "__comment" : "packages are translated to modules that can be dumped",
         "gold"   : "br_gh710b-vlog95"
