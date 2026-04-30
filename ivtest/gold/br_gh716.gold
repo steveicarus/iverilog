@@ -1,0 +1,2 @@
+./ivltests/br_gh716.v:11: error: Type of task port 1 is not compatible with the argument type.
+1 error(s) during elaboration.
