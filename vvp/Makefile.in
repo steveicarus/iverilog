@@ -186,9 +186,8 @@ parse%cc parse%h: $(srcdir)/parse%y
 lexor.cc: $(srcdir)/lexor.lex
 	$(LEX) -s -o$@ $<
 
-vvp.man: $(srcdir)/vvp.man.in ../version.exe
-	../version.exe `head -1 $<`'\n' > $@
-	tail -n +2 $< >> $@
+vvp.man: $(srcdir)/vvp.man.in
+	cd ..; ./config.status --file=vvp/$@
 
 vvp.ps: vvp.man
 	$(MAN) -t ./$< > $@

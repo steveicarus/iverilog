@@ -95,9 +95,8 @@ else
 endif
 
 # Windows specific...
-res.rc: $(srcdir)/res.rc.in ../version.exe
-	sed -e 's;@PRODUCTVERSION@;'`../version.exe '%M,%n,0,0'`';' \
-	$(srcdir)/res.rc.in > $@
+res.rc: $(srcdir)/res.rc.in
+	cd ..; ./config.status --file=driver-vpi/$@
 
 res.o: res.rc
 	$(WINDRES) -i res.rc -o res.o
