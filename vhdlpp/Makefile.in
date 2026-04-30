@@ -104,11 +104,11 @@ dep:
 vhdlpp@EXEEXT@: $O
 	$(CXX) -o vhdlpp@EXEEXT@ $(LDFLAGS) $O $(LIBS)
 
-%.o: $(srcdir)/../libmisc/%.cc
+%.o: $(srcdir)/../libmisc/%.cc | dep
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep/$*.d
 
-%.o: %.cc vhdlpp_config.h
+%.o: %.cc vhdlpp_config.h | dep
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep/$*.d
 

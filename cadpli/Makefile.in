@@ -71,7 +71,7 @@ Makefile: $(srcdir)/Makefile.in ../config.status
 dep:
 	mkdir dep
 
-%.o: %.c
+%.o: %.c | dep
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $<
 	mv $*.d dep
 

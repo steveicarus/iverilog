@@ -82,7 +82,7 @@ stamp-pcb_config-h: $(srcdir)/pcb_config.h.in ../config.status
 	cd ..; ./config.status --header=tgt-pcb/pcb_config.h
 pcb_config.h: stamp-pcb_config-h
 
-%.o: %.cc
+%.o: %.cc | dep
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 

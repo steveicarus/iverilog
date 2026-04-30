@@ -92,11 +92,11 @@ cflexor.c: $(srcdir)/cflexor.lex
 cfparse%c cfparse%h: $(srcdir)/cfparse%y
 	$(YACC) --verbose -t -p cf -d -o cfparse.c $<
 
-%.o: %.c
+%.o: %.c | dep
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
-main.o: main.c globals.h $(srcdir)/../version_base.h ../version_tag.h Makefile
+main.o: main.c globals.h $(srcdir)/../version_base.h ../version_tag.h Makefile | dep
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c -DIVL_ROOT='"@libdir@/ivl$(suffix)"' -DIVL_SUFFIX='"$(suffix)"' -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DDLLIB='"@DLLIB@"' -DIVL_INCLUDE_INSTALL_DIR="\"$(realpath $(DESTDIR)/$(includedir))\"" $(srcdir)/main.c
 	mv $*.d dep
 
