@@ -34,7 +34,8 @@ jobs:
         sudo make install
 
     - name: Test
-      run: ./.github/test.sh
+      run: |
+        make check-installed
 
 
   lin:
@@ -64,7 +65,8 @@ jobs:
         sudo make install
 
     - name: Test
-      run: ./.github/test.sh
+      run:
+        make check-installed
 
     - name: Documentation
       run: |
@@ -120,11 +122,7 @@ jobs:
 
     - name: Test
       run: |
-        if [ ${{ matrix.msystem }} = "CLANG64" ] ; then
-            ./.github/test.sh no-pli1
-        else
-            ./.github/test.sh
-        fi
+        make check-installed
 
     - uses: actions/upload-artifact@v4
       with:
