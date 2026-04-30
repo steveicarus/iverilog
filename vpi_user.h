@@ -700,7 +700,7 @@ extern void vpip_count_drivers(vpiHandle ref, unsigned idx,
  */
 
 // Increment the version number any time vpip_routines_s is changed.
-static const PLI_UINT32 vpip_routines_version = 1;
+static const PLI_UINT32 vpip_routines_version = 2;
 
 typedef struct {
     vpiHandle   (*register_cb)(p_cb_data);
@@ -741,6 +741,7 @@ typedef struct {
     s_vpi_vecval(*calc_clog2)(vpiHandle);
     void        (*count_drivers)(vpiHandle, unsigned, unsigned [4]);
     void        (*format_strength)(char*, s_vpi_value*, unsigned);
+    char*       (*format_pretty)(vpiHandle);
     void        (*make_systf_system_defined)(vpiHandle);
     void        (*mcd_rawwrite)(PLI_UINT32, const char*, size_t);
     void        (*set_return_value)(int);
