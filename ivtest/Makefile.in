@@ -32,9 +32,9 @@ check:
 
 check-installed:
 	@status=0; \
-	$(MAKE) check-installed-vpi || status=1; \
 	$(MAKE) check-installed-vvp || status=1; \
 	$(MAKE) check-installed-vvp-py || status=1; \
+	$(MAKE) check-installed-vpi || status=1; \
 	exit $$status
 
 check-installed-vpi:
