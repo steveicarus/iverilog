@@ -344,6 +344,9 @@ class resolv_list_s {
  */
 extern void functor_ref_lookup(vvp_net_t**ref, char*lab);
 
+extern vpiHandle vpip_make_prop_queue_ref(char* class_label, unsigned prop_idx,
+					  unsigned is_queue_flag);
+
 /*
  * This function schedules a lookup of the labeled instruction. The
  * code points to a code structure that points to the instruction

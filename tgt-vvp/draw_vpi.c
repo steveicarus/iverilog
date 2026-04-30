@@ -375,6 +375,20 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  }
 		  break;
 
+		case IVL_EX_PROPERTY:
+		  if (ivl_expr_oper1(expr) == 0 &&
+		      (ivl_expr_value(expr) == IVL_VT_QUEUE ||
+		       ivl_expr_value(expr) == IVL_VT_DARRAY)) {
+			ivl_signal_t clas = ivl_expr_signal(expr);
+			unsigned pidx = ivl_expr_property_idx(expr);
+			unsigned isq = ivl_expr_value(expr) == IVL_VT_QUEUE ? 1U : 0U;
+			snprintf(buffer, sizeof buffer, "&PQ<v%p_0,%u,%u>",
+				 clas, pidx, isq);
+			args[idx].text = strdup(buffer);
+			continue;
+		  }
+		  break;
+
 		case IVL_EX_SIGNAL:
 		case IVL_EX_SELECT:
 		  args[idx].stack = vec4_stack_need;
@@ -402,6 +416,10 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 	    switch (ivl_expr_value(expr)) {
 		case IVL_VT_LOGIC:
 		case IVL_VT_BOOL:
+		case IVL_VT_QUEUE:
+		case IVL_VT_DARRAY:
+		    /* Queue/darray element selects may still carry the
+		     * container ivl_expr_value; evaluate as vec4 like logic. */
 		  draw_eval_vec4(expr);
 		  args[idx].vec_flag = ivl_expr_signed(expr)? 's' : 'u';
 		  args[idx].str_flag = 0;
@@ -433,6 +451,20 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  buffer[0] = 0;
 		  break;
 		default:
+		    /* See eval_vec4.c:draw_eval_vec4 — indexed selects sometimes
+		     * carry an unexpected ivl_expr_value (e.g. NO_TYPE). */
+		  if (ivl_expr_type(expr) == IVL_EX_SELECT &&
+		      ivl_expr_oper2(expr) != 0) {
+			draw_eval_vec4(expr);
+			args[idx].vec_flag = ivl_expr_signed(expr)? 's' : 'u';
+			args[idx].str_flag = 0;
+			args[idx].real_flag = 0;
+			args[idx].stack = vec4_stack_need;
+			args[idx].vec_wid = ivl_expr_width(expr);
+			vec4_stack_need += 1;
+			buffer[0] = 0;
+			break;
+		  }
 		  fprintf(stderr, "%s:%u: Sorry, cannot generate code for argument %u.\n",
 		                  ivl_expr_file(expr), ivl_expr_lineno(expr), idx+1);
 		  fprintf(vvp_out, "\nXXXX Unexpected argument: call_string=<%s>, arg=%u, type=%d\n",

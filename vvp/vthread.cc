@@ -505,6 +505,60 @@ template <class VVP_QUEUE> static vvp_queue*get_queue_object(vthread_t thr, vvp_
 }
 
 /*
+ * Locator and size/word opcodes use the same VVP net for a queue ($) or a
+ * dynamic array ([]). Queues are vvp_queue_vec4; dynamic arrays may be
+ * vvp_darray_vec4, vvp_darray_atom<>, etc. (all vvp_darray, but vvp_queue
+ * also derives from vvp_darray — test queue vec4 first).
+ */
+static void get_queue_or_darray_vec4_from_net(vthread_t thr, vvp_net_t* net,
+					      vvp_queue_vec4*& qsrc,
+					      vvp_darray*& dsrc)
+{
+      vvp_fun_signal_object* obj = dynamic_cast<vvp_fun_signal_object*>(net->fun);
+      assert(obj);
+      vvp_object_t top = obj->get_object();
+      qsrc = top.peek<vvp_queue_vec4>();
+      if (qsrc) {
+	    dsrc = 0;
+	    return;
+      }
+      vvp_darray* dany = top.peek<vvp_darray>();
+      if (dany && dynamic_cast<vvp_queue*>(dany) == 0) {
+	    dsrc = dany;
+	    return;
+      }
+      if (top.test_nil()) {
+	    qsrc = new vvp_queue_vec4();
+	    vvp_object_t val(qsrc);
+	    vvp_net_ptr_t ptr(net, 0);
+	    vvp_send_object(ptr, val, thr->wt_context);
+	    dsrc = 0;
+	    return;
+      }
+      /* e.g. real/string queue — not vec4 queue or plain darray */
+      qsrc = 0;
+      dsrc = 0;
+}
+
+static void get_queue_or_darray_vec4_from_object(vvp_object_t src_obj,
+						 vvp_queue_vec4*& qsrc,
+						 vvp_darray*& dsrc)
+{
+      qsrc = src_obj.peek<vvp_queue_vec4>();
+      if (qsrc) {
+	    dsrc = 0;
+	    return;
+      }
+      vvp_darray* dany = src_obj.peek<vvp_darray>();
+      if (dany && dynamic_cast<vvp_queue*>(dany) == 0) {
+	    dsrc = dany;
+	    return;
+      }
+      qsrc = 0;
+      dsrc = 0;
+}
+
+/*
  * The following are used to allow a common template to be written for
  * queue real/string/vec4 operations
  */
@@ -2556,6 +2610,212 @@ bool of_DELETE_OBJ(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/* %reverse/obj <label>
+ * Reverse element order of the queue or dynamic array object at this net.
+ */
+bool of_REVERSE_OBJ(vthread_t /*thr*/, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*>(net->fun);
+      assert(obj);
+
+      vvp_object_t stor = obj->get_object();
+      if (stor.test_nil())
+	    return true;
+
+	/* Match other queue ops: peek queues before vvp_darray so concrete
+	   queue types dispatch reverse_elems() correctly. */
+      if (vvp_queue* queue = stor.peek<vvp_queue>()) {
+	    queue->reverse_elems();
+	    return true;
+      }
+
+      vvp_darray*darray = stor.peek<vvp_darray>();
+      assert(darray);
+      darray->reverse_elems();
+
+      return true;
+}
+
+/* %reverse/prop/obj <property-index>
+ * Reverse queue/darray property storage inside the class object on stack top.
+ */
+bool of_REVERSE_PROP_OBJ(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t arr_obj;
+      cobj->get_object(pid, arr_obj, 0);
+      if (arr_obj.test_nil())
+	    return true;
+
+      if (vvp_queue* queue = arr_obj.peek<vvp_queue>()) {
+	    queue->reverse_elems();
+	    return true;
+      }
+
+      vvp_darray*darray = arr_obj.peek<vvp_darray>();
+      assert(darray);
+      darray->reverse_elems();
+
+      return true;
+}
+
+/* %sort/obj — ascending sort */
+bool of_SORT_OBJ(vthread_t /*thr*/, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*>(net->fun);
+      assert(obj);
+
+      vvp_object_t stor = obj->get_object();
+      if (stor.test_nil())
+	    return true;
+
+      if (vvp_queue* queue = stor.peek<vvp_queue>()) {
+	    queue->sort_elems(true);
+	    return true;
+      }
+
+      vvp_darray*darray = stor.peek<vvp_darray>();
+      assert(darray);
+      darray->sort_elems(true);
+
+      return true;
+}
+
+/* %sort/prop/obj */
+bool of_SORT_PROP_OBJ(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t arr_obj;
+      cobj->get_object(pid, arr_obj, 0);
+      if (arr_obj.test_nil())
+	    return true;
+
+      if (vvp_queue* queue = arr_obj.peek<vvp_queue>()) {
+	    queue->sort_elems(true);
+	    return true;
+      }
+
+      vvp_darray*darray = arr_obj.peek<vvp_darray>();
+      assert(darray);
+      darray->sort_elems(true);
+
+      return true;
+}
+
+/* %rsort/obj — descending sort */
+bool of_RSORT_OBJ(vthread_t /*thr*/, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*>(net->fun);
+      assert(obj);
+
+      vvp_object_t stor = obj->get_object();
+      if (stor.test_nil())
+	    return true;
+
+      if (vvp_queue* queue = stor.peek<vvp_queue>()) {
+	    queue->sort_elems(false);
+	    return true;
+      }
+
+      vvp_darray*darray = stor.peek<vvp_darray>();
+      assert(darray);
+      darray->sort_elems(false);
+
+      return true;
+}
+
+/* %rsort/prop/obj */
+bool of_RSORT_PROP_OBJ(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t arr_obj;
+      cobj->get_object(pid, arr_obj, 0);
+      if (arr_obj.test_nil())
+	    return true;
+
+      if (vvp_queue* queue = arr_obj.peek<vvp_queue>()) {
+	    queue->sort_elems(false);
+	    return true;
+      }
+
+      vvp_darray*darray = arr_obj.peek<vvp_darray>();
+      assert(darray);
+      darray->sort_elems(false);
+
+      return true;
+}
+
+/* %shuffle/obj */
+bool of_SHUFFLE_OBJ(vthread_t /*thr*/, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*>(net->fun);
+      assert(obj);
+
+      vvp_object_t stor = obj->get_object();
+      if (stor.test_nil())
+	    return true;
+
+      if (vvp_queue* queue = stor.peek<vvp_queue>()) {
+	    queue->shuffle_elems();
+	    return true;
+      }
+
+      vvp_darray*darray = stor.peek<vvp_darray>();
+      assert(darray);
+      darray->shuffle_elems();
+
+      return true;
+}
+
+/* %shuffle/prop/obj */
+bool of_SHUFFLE_PROP_OBJ(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t arr_obj;
+      cobj->get_object(pid, arr_obj, 0);
+      if (arr_obj.test_nil())
+	    return true;
+
+      if (vvp_queue* queue = arr_obj.peek<vvp_queue>()) {
+	    queue->shuffle_elems();
+	    return true;
+      }
+
+      vvp_darray*darray = arr_obj.peek<vvp_darray>();
+      assert(darray);
+      darray->shuffle_elems();
+
+      return true;
+}
+
 /* %delete/tail <label>, idx
  *
  * Remove all elements after the one specified.
@@ -3871,6 +4131,35 @@ bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t cp)
 bool of_LOAD_DAR_VEC4(vthread_t thr, vvp_code_t cp)
 {
       return load_dar<vvp_vector4_t>(thr, cp);
+}
+
+/*
+ * %load/prop/dar/vec4 <pid>, <wid>;
+ *   Indexed read of queue/dynamic-array class property; object on stack,
+ *   index in words[3] (same as %load/dar/vec4).
+ */
+bool of_LOAD_PROP_DAR_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+      int64_t adr = thr->words[3].w_int;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t pobj;
+      cobj->get_object(pid, pobj, 0);
+      vvp_darray*darray = pobj.peek<vvp_darray>();
+
+      vvp_vector4_t word;
+      if (darray && (adr >= 0) && (thr->flags[4] == BIT4_0))
+	    darray->get_word(adr, word);
+      else
+	    dq_default(word, wid);
+
+      thr->push_vec4(word);
+      return true;
 }
 
 /*
@@ -5979,6 +6268,1274 @@ bool of_STORE_PROP_STR(vthread_t thr, vvp_code_t cp)
 bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
 {
       return store_prop<vvp_vector4_t>(thr, cp, cp->bit_idx[0]);
+}
+
+template <class QTYPE>
+static QTYPE* get_queue_prop(vvp_cobject*cobj, size_t pid)
+{
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      QTYPE* queue = qobj.peek<QTYPE>();
+      if (queue == 0) {
+	    queue = new QTYPE;
+	    vvp_object_t val(queue);
+	    cobj->set_object(pid, val, 0);
+      }
+      return queue;
+}
+
+template <typename ELEM, class QTYPE>
+static bool store_prop_qb(vthread_t thr, vvp_code_t cp, unsigned wid)
+{
+      size_t pid = cp->number;
+      ELEM value;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_uint;
+      pop_value(thr, value, wid);
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid);
+      assert(queue);
+      queue->push_back(value, max_size);
+      return true;
+}
+
+template <typename ELEM, class QTYPE>
+static bool store_prop_qf(vthread_t thr, vvp_code_t cp, unsigned wid)
+{
+      size_t pid = cp->number;
+      ELEM value;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_uint;
+      pop_value(thr, value, wid);
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid);
+      assert(queue);
+      queue->push_front(value, max_size);
+      return true;
+}
+
+bool of_STORE_PROP_QB_R(vthread_t thr, vvp_code_t cp)
+{
+      return store_prop_qb<double, vvp_queue_real>(thr, cp, 0);
+}
+
+bool of_STORE_PROP_QB_STR(vthread_t thr, vvp_code_t cp)
+{
+      return store_prop_qb<string, vvp_queue_string>(thr, cp, 0);
+}
+
+bool of_STORE_PROP_QB_V(vthread_t thr, vvp_code_t cp)
+{
+      return store_prop_qb<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
+}
+
+bool of_STORE_PROP_QF_R(vthread_t thr, vvp_code_t cp)
+{
+      return store_prop_qf<double, vvp_queue_real>(thr, cp, 0);
+}
+
+bool of_STORE_PROP_QF_STR(vthread_t thr, vvp_code_t cp)
+{
+      return store_prop_qf<string, vvp_queue_string>(thr, cp, 0);
+}
+
+bool of_STORE_PROP_QF_V(vthread_t thr, vvp_code_t cp)
+{
+      return store_prop_qf<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
+}
+
+template <typename ELEM, class QTYPE>
+static bool qinsert_prop(vthread_t thr, vvp_code_t cp, unsigned wid)
+{
+      int64_t idx = thr->words[3].w_int;
+      ELEM value;
+      size_t pid = cp->number;
+      pop_value(thr, value, wid);
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid);
+      assert(queue);
+      if (idx < 0) {
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot insert at a negative "
+	         << get_queue_type(value)
+	         << " index (" << idx << "). ";
+	    print_queue_value(value);
+	    cerr << " was not added." << endl;
+      } else if (thr->flags[4] != BIT4_0) {
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot insert at an undefined "
+	         << get_queue_type(value) << " index. ";
+	    print_queue_value(value);
+	    cerr << " was not added." << endl;
+      } else {
+	    unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+	    queue->insert(idx, value, max_size);
+      }
+      return true;
+}
+
+bool of_QINSERT_PROP_R(vthread_t thr, vvp_code_t cp)
+{
+      return qinsert_prop<double, vvp_queue_real>(thr, cp, 0);
+}
+
+bool of_QINSERT_PROP_STR(vthread_t thr, vvp_code_t cp)
+{
+      return qinsert_prop<string, vvp_queue_string>(thr, cp, 0);
+}
+
+bool of_QINSERT_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      return qinsert_prop<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
+}
+
+template <typename ELEM, class QTYPE>
+static bool q_pop_prop(vthread_t thr, vvp_code_t cp,
+		       void (*get_val_func)(vvp_queue*, ELEM&),
+		       const char*loc, unsigned wid)
+{
+      size_t pid = cp->number;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid);
+      assert(queue);
+
+      size_t size = queue->get_size();
+
+      ELEM value;
+      if (size) {
+	    get_val_func(queue, value);
+      } else {
+	    dq_default(value, wid);
+	    cerr << thr->get_fileline()
+	         << "Warning: pop_" << loc << "() on empty "
+	         << get_queue_type(value) << "." << endl;
+      }
+
+      push_value(thr, value, wid);
+      return true;
+}
+
+template <typename ELEM, class QTYPE>
+static bool qpop_b_prop(vthread_t thr, vvp_code_t cp, unsigned wid)
+{
+      return q_pop_prop<ELEM, QTYPE>(thr, cp, get_back_value<ELEM>, "back", wid);
+}
+
+template <typename ELEM, class QTYPE>
+static bool qpop_f_prop(vthread_t thr, vvp_code_t cp, unsigned wid)
+{
+      return q_pop_prop<ELEM, QTYPE>(thr, cp, get_front_value<ELEM>, "front", wid);
+}
+
+bool of_QPOP_PROP_B_REAL(vthread_t thr, vvp_code_t cp)
+{
+      return qpop_b_prop<double, vvp_queue_real>(thr, cp, 0);
+}
+
+bool of_QPOP_PROP_B_STR(vthread_t thr, vvp_code_t cp)
+{
+      return qpop_b_prop<string, vvp_queue_string>(thr, cp, 0);
+}
+
+bool of_QPOP_PROP_B_V(vthread_t thr, vvp_code_t cp)
+{
+      return qpop_b_prop<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[0]);
+}
+
+bool of_QPOP_PROP_F_REAL(vthread_t thr, vvp_code_t cp)
+{
+      return qpop_f_prop<double, vvp_queue_real>(thr, cp, 0);
+}
+
+bool of_QPOP_PROP_F_STR(vthread_t thr, vvp_code_t cp)
+{
+      return qpop_f_prop<string, vvp_queue_string>(thr, cp, 0);
+}
+
+bool of_QPOP_PROP_F_V(vthread_t thr, vvp_code_t cp)
+{
+      return qpop_f_prop<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[0]);
+}
+
+static vvp_vector4_t queue_unique_ulong_to_vec4(unsigned long ul, unsigned bits)
+{
+      vvp_vector4_t val(bits, BIT4_0);
+      for (unsigned idx = 0; idx < bits && idx < 8 * sizeof(unsigned long); idx += 1) {
+	    if (ul & 1UL)
+		  val.set_bit(idx, BIT4_1);
+	    else
+		  val.set_bit(idx, BIT4_0);
+	    ul >>= 1;
+      }
+      return val;
+}
+
+template <class SRC> static vvp_queue_vec4* queue_run_unique_src(SRC* src,
+								 unsigned wid,
+								 bool as_index)
+{
+      vvp_queue_vec4* dst = new vvp_queue_vec4();
+      if (!src)
+	    return dst;
+      size_t n = src->get_size();
+      for (size_t i = 0; i < n; i += 1) {
+	    vvp_vector4_t vi(wid);
+	    src->get_word(i, vi);
+	    bool seen = false;
+	    for (size_t j = 0; j < i; j += 1) {
+		  vvp_vector4_t vj(wid);
+		  src->get_word(j, vj);
+		  if (vi.eeq(vj)) {
+			seen = true;
+			break;
+		  }
+	    }
+	    if (seen)
+		  continue;
+	    if (as_index)
+		  dst->push_back(queue_unique_ulong_to_vec4((unsigned long)i, 32), 0);
+	    else
+		  dst->push_back(vi, 0);
+      }
+      return dst;
+}
+
+template <class SRC>
+static vvp_queue_vec4* queue_run_find_matches_src(SRC* src, unsigned wid,
+						  const vvp_vector4_t& cmp,
+						  bool as_index)
+{
+      vvp_queue_vec4* dst = new vvp_queue_vec4();
+      if (!src)
+	    return dst;
+      size_t n = src->get_size();
+      for (size_t i = 0; i < n; i += 1) {
+	    vvp_vector4_t vi(wid);
+	    src->get_word(i, vi);
+	    if (vi.eeq(cmp)) {
+		  if (as_index)
+			dst->push_back(queue_unique_ulong_to_vec4((unsigned long)i, 32), 0);
+		  else
+			dst->push_back(vi, 0);
+	    }
+      }
+      return dst;
+}
+
+/* Array/queue locator methods return a queue with 0 or 1 elements (LRM). */
+template <class SRC>
+static vvp_queue_vec4* queue_find_first_last_to_queue_src(SRC* src,
+							  unsigned wid,
+							  const vvp_vector4_t& cmp,
+							  bool want_first,
+							  bool want_index)
+{
+      vvp_queue_vec4* dst = new vvp_queue_vec4();
+      if (!src || src->get_size() == 0)
+	    return dst;
+      size_t n = src->get_size();
+      if (want_first) {
+	    for (size_t i = 0; i < n; i += 1) {
+		  vvp_vector4_t vi(wid);
+		  src->get_word(i, vi);
+		  if (vi.eeq(cmp)) {
+			if (want_index)
+			      dst->push_back(
+				  queue_unique_ulong_to_vec4((unsigned long)i, 32),
+				  0);
+			else
+			      dst->push_back(vi, 0);
+			return dst;
+		  }
+	    }
+      } else {
+	    for (size_t i = n; i > 0; ) {
+		  i -= 1;
+		  vvp_vector4_t vi(wid);
+		  src->get_word(i, vi);
+		  if (vi.eeq(cmp)) {
+			if (want_index)
+			      dst->push_back(
+				  queue_unique_ulong_to_vec4((unsigned long)i, 32),
+				  0);
+			else
+			      dst->push_back(vi, 0);
+			return dst;
+		  }
+	    }
+      }
+      return dst;
+}
+
+/* min()/max() return all elements equal to the selected extrema. */
+template <class SRC>
+static vvp_queue_vec4* queue_run_min_max_src(SRC* src, unsigned wid, bool want_max)
+{
+      vvp_queue_vec4* dst = new vvp_queue_vec4();
+      if (!src || src->get_size() == 0)
+	    return dst;
+
+      vvp_vector4_t best(wid);
+      src->get_word(0, best);
+      dst->push_back(best, 0);
+
+      size_t n = src->get_size();
+      for (size_t i = 1; i < n; i += 1) {
+	    vvp_vector4_t vi(wid);
+	    src->get_word(i, vi);
+	    if (vi.eeq(best)) {
+		  dst->push_back(vi, 0);
+		  continue;
+	    }
+
+	    vvp_bit4_t ge = compare_gtge(vi, best, BIT4_1);
+	    bool replace = want_max ? (ge == BIT4_1) : (ge == BIT4_0);
+	    if (!replace)
+		  continue;
+
+	    best = vi;
+	    delete dst;
+	    dst = new vvp_queue_vec4();
+	    dst->push_back(best, 0);
+      }
+
+      return dst;
+}
+
+/* sum() reduction returns the scalar sum (Verilog-style addition per word). */
+template <class SRC>
+static vvp_vector4_t queue_sum_words_src(SRC* src, unsigned wid)
+{
+      vvp_vector4_t acc(wid, BIT4_0);
+      if (!src)
+	    return acc;
+      for (size_t i = 0; i < src->get_size(); i += 1) {
+	    vvp_vector4_t vi(wid);
+	    src->get_word(i, vi);
+	    acc.add(vi);
+      }
+      return acc;
+}
+
+template <class SRC>
+static vvp_vector4_t queue_product_words_src(SRC* src, unsigned wid)
+{
+      vvp_vector4_t acc = queue_unique_ulong_to_vec4(1UL, wid);
+      if (!src)
+	    return acc;
+      for (size_t i = 0; i < src->get_size(); i += 1) {
+	    vvp_vector4_t vi(wid);
+	    src->get_word(i, vi);
+	    acc.mul(vi);
+      }
+      return acc;
+}
+
+bool of_QUEUE_PRODUCT_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t* net = cp->net;
+      unsigned wid = cp->bit_idx[0];
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_vector4_t prod;
+      if (qsrc)
+	    prod = queue_product_words_src(qsrc, wid);
+      else if (dsrc)
+	    prod = queue_product_words_src(dsrc, wid);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    prod = queue_product_words_src(src, wid);
+      }
+      thr->push_vec4(prod);
+      return true;
+}
+
+bool of_QUEUE_PRODUCT_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_vector4_t prod =
+	    qsrc ? queue_product_words_src(qsrc, wid)
+		 : queue_product_words_src(dsrc, wid);
+      thr->push_vec4(prod);
+      return true;
+}
+
+bool of_QUEUE_PRODUCT_OBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_object_t src_obj;
+      thr->pop_object(src_obj);
+
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(src_obj, qsrc, dsrc);
+      vvp_vector4_t prod =
+	    qsrc ? queue_product_words_src(qsrc, wid)
+		 : queue_product_words_src(dsrc, wid);
+      thr->push_vec4(prod);
+      return true;
+}
+
+bool of_QUEUE_SUM_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t* net = cp->net;
+      unsigned wid = cp->bit_idx[0];
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_vector4_t sum;
+      if (qsrc)
+	    sum = queue_sum_words_src(qsrc, wid);
+      else if (dsrc)
+	    sum = queue_sum_words_src(dsrc, wid);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    sum = queue_sum_words_src(src, wid);
+      }
+      thr->push_vec4(sum);
+      return true;
+}
+
+bool of_QUEUE_SUM_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_vector4_t sum =
+	    qsrc ? queue_sum_words_src(qsrc, wid)
+		 : queue_sum_words_src(dsrc, wid);
+      thr->push_vec4(sum);
+      return true;
+}
+
+bool of_QUEUE_SUM_OBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_object_t src_obj;
+      thr->pop_object(src_obj);
+
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(src_obj, qsrc, dsrc);
+      vvp_vector4_t sum =
+	    qsrc ? queue_sum_words_src(qsrc, wid)
+		 : queue_sum_words_src(dsrc, wid);
+      thr->push_vec4(sum);
+      return true;
+}
+
+bool of_QUEUE_FIND_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_vector4_t cmp = thr->pop_vec4();
+      unsigned wid = cp->bit_idx[0];
+      assert(cmp.size() == wid);
+      vvp_net_t* net = cp->net;
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_queue_vec4* dst;
+      if (qsrc)
+	    dst = queue_run_find_matches_src(qsrc, wid, cmp, false);
+      else if (dsrc)
+	    dst = queue_run_find_matches_src(dsrc, wid, cmp, false);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    dst = queue_run_find_matches_src(src, wid, cmp, false);
+      }
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_FIND_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_vector4_t cmp = thr->pop_vec4();
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+      assert(cmp.size() == wid);
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_queue_vec4* dst = qsrc ? queue_run_find_matches_src(qsrc, wid, cmp, false)
+				 : queue_run_find_matches_src(dsrc, wid, cmp, false);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_FIND_INDEX_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_vector4_t cmp = thr->pop_vec4();
+      unsigned wid = cp->bit_idx[0];
+      assert(cmp.size() == wid);
+      vvp_net_t* net = cp->net;
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_queue_vec4* dst;
+      if (qsrc)
+	    dst = queue_run_find_matches_src(qsrc, wid, cmp, true);
+      else if (dsrc)
+	    dst = queue_run_find_matches_src(dsrc, wid, cmp, true);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    dst = queue_run_find_matches_src(src, wid, cmp, true);
+      }
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_FIND_INDEX_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_vector4_t cmp = thr->pop_vec4();
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+      assert(cmp.size() == wid);
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_queue_vec4* dst = qsrc ? queue_run_find_matches_src(qsrc, wid, cmp, true)
+				 : queue_run_find_matches_src(dsrc, wid, cmp, true);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_FIND_FIRST_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_vector4_t cmp = thr->pop_vec4();
+      unsigned wid = cp->bit_idx[0];
+      assert(cmp.size() == wid);
+      vvp_net_t* net = cp->net;
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_queue_vec4* dst;
+      if (qsrc)
+	    dst = queue_find_first_last_to_queue_src(qsrc, wid, cmp, true, false);
+      else if (dsrc)
+	    dst = queue_find_first_last_to_queue_src(dsrc, wid, cmp, true, false);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    dst = queue_find_first_last_to_queue_src(src, wid, cmp, true, false);
+      }
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_FIND_FIRST_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_vector4_t cmp = thr->pop_vec4();
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+      assert(cmp.size() == wid);
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_queue_vec4* dst =
+	    qsrc ? queue_find_first_last_to_queue_src(qsrc, wid, cmp, true, false)
+		 : queue_find_first_last_to_queue_src(dsrc, wid, cmp, true, false);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_FIND_FIRST_INDEX_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_vector4_t cmp = thr->pop_vec4();
+      unsigned wid = cp->bit_idx[0];
+      assert(cmp.size() == wid);
+      vvp_net_t* net = cp->net;
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_queue_vec4* dst;
+      if (qsrc)
+	    dst = queue_find_first_last_to_queue_src(qsrc, wid, cmp, true, true);
+      else if (dsrc)
+	    dst = queue_find_first_last_to_queue_src(dsrc, wid, cmp, true, true);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    dst = queue_find_first_last_to_queue_src(src, wid, cmp, true, true);
+      }
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_FIND_FIRST_INDEX_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_vector4_t cmp = thr->pop_vec4();
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+      assert(cmp.size() == wid);
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_queue_vec4* dst =
+	    qsrc ? queue_find_first_last_to_queue_src(qsrc, wid, cmp, true, true)
+		 : queue_find_first_last_to_queue_src(dsrc, wid, cmp, true, true);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_FIND_LAST_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_vector4_t cmp = thr->pop_vec4();
+      unsigned wid = cp->bit_idx[0];
+      assert(cmp.size() == wid);
+      vvp_net_t* net = cp->net;
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_queue_vec4* dst;
+      if (qsrc)
+	    dst = queue_find_first_last_to_queue_src(qsrc, wid, cmp, false, false);
+      else if (dsrc)
+	    dst = queue_find_first_last_to_queue_src(dsrc, wid, cmp, false, false);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    dst = queue_find_first_last_to_queue_src(src, wid, cmp, false, false);
+      }
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_FIND_LAST_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_vector4_t cmp = thr->pop_vec4();
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+      assert(cmp.size() == wid);
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_queue_vec4* dst =
+	    qsrc ? queue_find_first_last_to_queue_src(qsrc, wid, cmp, false, false)
+		 : queue_find_first_last_to_queue_src(dsrc, wid, cmp, false, false);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_FIND_LAST_INDEX_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_vector4_t cmp = thr->pop_vec4();
+      unsigned wid = cp->bit_idx[0];
+      assert(cmp.size() == wid);
+      vvp_net_t* net = cp->net;
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_queue_vec4* dst;
+      if (qsrc)
+	    dst = queue_find_first_last_to_queue_src(qsrc, wid, cmp, false, true);
+      else if (dsrc)
+	    dst = queue_find_first_last_to_queue_src(dsrc, wid, cmp, false, true);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    dst = queue_find_first_last_to_queue_src(src, wid, cmp, false, true);
+      }
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_FIND_LAST_INDEX_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_vector4_t cmp = thr->pop_vec4();
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+      assert(cmp.size() == wid);
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_queue_vec4* dst =
+	    qsrc ? queue_find_first_last_to_queue_src(qsrc, wid, cmp, false, true)
+		 : queue_find_first_last_to_queue_src(dsrc, wid, cmp, false, true);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_MIN_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t* net = cp->net;
+      unsigned wid = cp->bit_idx[0];
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_queue_vec4* dst;
+      if (qsrc)
+	    dst = queue_run_min_max_src(qsrc, wid, false);
+      else if (dsrc)
+	    dst = queue_run_min_max_src(dsrc, wid, false);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    dst = queue_run_min_max_src(src, wid, false);
+      }
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_MIN_OBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_object_t src_obj;
+      thr->pop_object(src_obj);
+
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(src_obj, qsrc, dsrc);
+      vvp_queue_vec4* dst = qsrc ? queue_run_min_max_src(qsrc, wid, false)
+				 : queue_run_min_max_src(dsrc, wid, false);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_MIN_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_queue_vec4* dst = qsrc ? queue_run_min_max_src(qsrc, wid, false)
+				 : queue_run_min_max_src(dsrc, wid, false);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_MAX_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t* net = cp->net;
+      unsigned wid = cp->bit_idx[0];
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_queue_vec4* dst;
+      if (qsrc)
+	    dst = queue_run_min_max_src(qsrc, wid, true);
+      else if (dsrc)
+	    dst = queue_run_min_max_src(dsrc, wid, true);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    dst = queue_run_min_max_src(src, wid, true);
+      }
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_MAX_OBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_object_t src_obj;
+      thr->pop_object(src_obj);
+
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(src_obj, qsrc, dsrc);
+      vvp_queue_vec4* dst = qsrc ? queue_run_min_max_src(qsrc, wid, true)
+				 : queue_run_min_max_src(dsrc, wid, true);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_MAX_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_queue_vec4* dst = qsrc ? queue_run_min_max_src(qsrc, wid, true)
+				 : queue_run_min_max_src(dsrc, wid, true);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_UNIQUE_OBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_object_t src_obj;
+      thr->pop_object(src_obj);
+
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(src_obj, qsrc, dsrc);
+      vvp_queue_vec4* dst = qsrc ? queue_run_unique_src(qsrc, wid, false)
+				 : queue_run_unique_src(dsrc, wid, false);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_UNIQUE_INDEX_OBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_object_t src_obj;
+      thr->pop_object(src_obj);
+
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(src_obj, qsrc, dsrc);
+      vvp_queue_vec4* dst = qsrc ? queue_run_unique_src(qsrc, wid, true)
+				 : queue_run_unique_src(dsrc, wid, true);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_UNIQUE_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+      unsigned wid = cp->bit_idx[0];
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_queue_vec4* dst;
+      if (qsrc)
+	    dst = queue_run_unique_src(qsrc, wid, false);
+      else if (dsrc)
+	    dst = queue_run_unique_src(dsrc, wid, false);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    dst = queue_run_unique_src(src, wid, false);
+      }
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_UNIQUE_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_queue_vec4* dst = qsrc ? queue_run_unique_src(qsrc, wid, false)
+				 : queue_run_unique_src(dsrc, wid, false);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_UNIQUE_INDEX_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+      unsigned wid = cp->bit_idx[0];
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_queue_vec4* dst;
+      if (qsrc)
+	    dst = queue_run_unique_src(qsrc, wid, true);
+      else if (dsrc)
+	    dst = queue_run_unique_src(dsrc, wid, true);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    dst = queue_run_unique_src(src, wid, true);
+      }
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_QUEUE_UNIQUE_INDEX_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_queue_vec4* dst = qsrc ? queue_run_unique_src(qsrc, wid, true)
+				 : queue_run_unique_src(dsrc, wid, true);
+      thr->push_object(vvp_object_t(dst));
+      return true;
+}
+
+bool of_PROP_QUEUE_SIZE(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+
+      size_t sz = qsrc ? qsrc->get_size() : (dsrc ? dsrc->get_size() : 0);
+
+      vvp_vector4_t val(32, BIT4_0);
+      unsigned long ul = sz;
+      for (unsigned idx = 0; idx < 32; idx++) {
+	    if (ul & 1UL)
+		  val.set_bit(idx, BIT4_1);
+	    else
+		  val.set_bit(idx, BIT4_0);
+	    ul >>= 1;
+      }
+      thr->push_vec4(val);
+      return true;
+}
+
+bool of_QUEUE_SIZE_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t* net = cp->net;
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      size_t sz =
+	    qsrc ? qsrc->get_size() : (dsrc ? dsrc->get_size() : 0);
+
+      vvp_vector4_t val(32, BIT4_0);
+      unsigned long ul = sz;
+      for (unsigned idx = 0; idx < 32; idx++) {
+	    if (ul & 1UL)
+		  val.set_bit(idx, BIT4_1);
+	    else
+		  val.set_bit(idx, BIT4_0);
+	    ul >>= 1;
+      }
+      thr->push_vec4(val);
+      return true;
+}
+
+bool of_QUEUE_WORD_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      unsigned ix_reg = cp->bit_idx[1];
+      int64_t adr = thr->words[ix_reg].w_int;
+      if (thr->flags[4] == BIT4_1) {
+	    thr->push_vec4(vvp_vector4_t(wid));
+	    return true;
+      }
+      if (adr < 0) {
+	    thr->push_vec4(vvp_vector4_t(wid));
+	    return true;
+      }
+      vvp_net_t* net = cp->net;
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_vector4_t out(wid);
+      if (qsrc) {
+	    if ((size_t)adr >= qsrc->get_size()) {
+		  thr->push_vec4(out);
+		  return true;
+	    }
+	    qsrc->get_word((unsigned)adr, out);
+      } else if (dsrc) {
+	    if ((size_t)adr >= dsrc->get_size()) {
+		  thr->push_vec4(out);
+		  return true;
+	    }
+	    dsrc->get_word((unsigned)adr, out);
+      } else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    if (!src || (size_t)adr >= src->get_size()) {
+		  thr->push_vec4(out);
+		  return true;
+	    }
+	    src->get_word((unsigned)adr, out);
+      }
+      thr->push_vec4(out);
+      return true;
+}
+
+bool of_QUEUE_WORD_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+      unsigned ix_reg = cp->bit_idx[1];
+      int64_t adr = thr->words[ix_reg].w_int;
+      if (thr->flags[4] == BIT4_1) {
+	    thr->push_vec4(vvp_vector4_t(wid));
+	    return true;
+      }
+      if (adr < 0) {
+	    thr->push_vec4(vvp_vector4_t(wid));
+	    return true;
+      }
+
+      vvp_object_t saved_top;
+      bool popped_top = false;
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      if (cobj == 0) {
+	    // Array-locator with(property) keeps an accumulator queue on top.
+	    // Temporarily pop it to access the class object beneath.
+	    thr->pop_object(saved_top);
+	    popped_top = true;
+	    vvp_object_t& below = thr->peek_object();
+	    cobj = below.peek<vvp_cobject>();
+      }
+      if (cobj == 0) {
+	    if (popped_top)
+		  thr->push_object(saved_top);
+	    thr->push_vec4(vvp_vector4_t(wid));
+	    return true;
+      }
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_vector4_t out(wid);
+      if (qsrc) {
+	    if ((size_t)adr >= qsrc->get_size()) {
+		  thr->push_vec4(out);
+		  return true;
+	    }
+	    qsrc->get_word((unsigned)adr, out);
+      } else if (dsrc) {
+	    if ((size_t)adr >= dsrc->get_size()) {
+		  thr->push_vec4(out);
+		  return true;
+	    }
+	    dsrc->get_word((unsigned)adr, out);
+      } else {
+	    thr->push_vec4(out);
+	    if (popped_top)
+		  thr->push_object(saved_top);
+	    return true;
+      }
+      if (popped_top)
+	    thr->push_object(saved_top);
+      thr->push_vec4(out);
+      return true;
+}
+
+bool of_CMPIX_LTU(vthread_t thr, vvp_code_t cp)
+{
+      unsigned a = cp->number;
+      unsigned b = cp->bit_idx[0];
+      if (thr->words[a].w_uint < thr->words[b].w_uint)
+	    thr->flags[4] = BIT4_1;
+      else
+	    thr->flags[4] = BIT4_0;
+      return true;
+}
+
+bool of_CMPIX_SLT0(vthread_t thr, vvp_code_t cp)
+{
+      unsigned r = cp->number;
+      thr->flags[4] = (thr->words[r].w_int < 0) ? BIT4_1 : BIT4_0;
+      return true;
+}
+
+bool of_PUSH_IX_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      unsigned ix = cp->number;
+      unsigned wid = cp->bit_idx[0];
+      unsigned sgn = cp->bit_idx[1];
+      uint32_t ubits;
+      if (sgn) {
+	    int32_t sv = (int32_t)thr->words[ix].w_int;
+	    ubits = (uint32_t)sv;
+      } else {
+	    ubits = (uint32_t)thr->words[ix].w_uint;
+      }
+      if (wid > 32)
+	    wid = 32;
+      vvp_vector4_t tmp(wid, BIT4_0);
+      for (unsigned idx = 0; idx < wid; idx++) {
+	    if (ubits & 1u)
+		  tmp.set_bit(idx, BIT4_1);
+	    else
+		  tmp.set_bit(idx, BIT4_0);
+	    ubits >>= 1;
+      }
+      thr->push_vec4(tmp);
+      return true;
+}
+
+bool of_QUEUE_NEW_EMPTY_V(vthread_t thr, vvp_code_t)
+{
+      thr->push_object(vvp_object_t(new vvp_queue_vec4()));
+      return true;
+}
+
+bool of_QUEUE_APPEND_WORD_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_vector4_t elem = thr->pop_vec4();
+      assert(elem.size() == wid);
+      vvp_object_t qobj;
+      thr->pop_object(qobj);
+      vvp_queue_vec4* q = qobj.peek<vvp_queue_vec4>();
+      assert(q);
+      q->push_back(elem, 0);
+      thr->push_object(qobj);
+      return true;
+}
+
+bool of_DELETE_PROP_ELEM(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+
+      int64_t idx_val = thr->words[3].w_int;
+      if (thr->flags[4] == BIT4_1) {
+	    cerr << thr->get_fileline()
+	         << "Warning: skipping queue delete() with undefined index."
+	         << endl;
+	    return true;
+      }
+      if (idx_val < 0) {
+	    cerr << thr->get_fileline()
+	         << "Warning: skipping queue delete() with negative index."
+	         << endl;
+	    return true;
+      }
+      size_t idx = idx_val;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue* queue = qobj.peek<vvp_queue>();
+      if (queue == 0) {
+	    cerr << thr->get_fileline()
+	         << "Warning: skipping delete(" << idx
+	         << ") on empty queue." << endl;
+      } else {
+	    size_t size = queue->get_size();
+	    if (idx >= size) {
+		  cerr << thr->get_fileline()
+		       << "Warning: skipping out of range delete(" << idx
+		       << ") on queue of size " << size << "." << endl;
+	    } else {
+		  queue->erase(idx);
+	    }
+      }
+
+      return true;
+}
+
+bool of_DELETE_PROP_OBJ(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      cobj->set_object(pid, vvp_object_t(), 0);
+
+      return true;
 }
 
 template <typename ELEM, class QTYPE>

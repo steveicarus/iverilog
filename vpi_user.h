@@ -641,6 +641,10 @@ extern DLLEXPORT void (*vlog_startup_routines[])(void);
   /* Format a scalar a la %v. The str points to a 4byte character
      buffer. The value must be a vpiStrengthVal. */
 extern void vpip_format_strength(char*str, s_vpi_value*value, unsigned bit);
+  /* Pretty-print a dynamic array or queue (including class property queues)
+   * for %p. Returns a malloc'd string, or NULL if the handle is not
+   * supported. Caller must free the returned pointer when non-NULL. */
+extern char* vpip_format_pretty(vpiHandle ref);
   /* Set the return value to return from the vvp run time. This is
      usually 0 or 1. This is the exit code that the vvp process
      returns, and in distinct from the finish_number that is an

@@ -756,7 +756,7 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <spec_optional_args> timeskew_fullskew_opt_remain_active_flag
 
 %type <expr>  assignment_pattern expression expression_opt expr_mintypmax
-%type <expr>  expr_primary_or_typename expr_primary
+%type <expr>  expr_primary_or_typename expr_primary call_chain_expr
 %type <expr>  class_new dynamic_array_new
 %type <expr>  var_decl_initializer_opt initializer_opt
 %type <expr>  inc_or_dec_expression inside_expression lpvalue
@@ -3869,6 +3869,41 @@ expr_primary_or_typename
 
   ;
 
+  /* SystemVerilog: a().b() — call a function, then invoke a method on the
+     returned class handle. Extends with further ".id(args)" as needed. */
+
+call_chain_expr
+  : hierarchy_identifier attribute_list_opt argument_list_parens
+      { PECallFunction*tmp = pform_make_call_function(@1, *$1, *$3);
+	delete $1;
+	delete $2;
+	delete $3;
+	$$ = tmp;
+      }
+  | call_chain_expr '.' hierarchy_identifier attribute_list_opt argument_list_parens
+      { PECallFunction*tmp = pform_make_chained_call_function(@2, $1, *$3, *$5);
+	delete $3;
+	delete $4;
+	delete $5;
+	$$ = tmp;
+      }
+  | call_chain_expr K_with '(' expression ')'
+      { PECallFunction* cf = dynamic_cast<PECallFunction*>($1);
+	if (cf == 0) {
+	      if (gn_system_verilog())
+		    yyerror(@2, "Error: `with` clause must follow a method call.");
+	      else
+		    yyerror(@2, "Error: Enable SystemVerilog for `with` clause on method calls.");
+	      delete $1;
+	      delete $4;
+	      $$ = 0;
+	} else {
+	      cf->set_with_clause($4);
+	      $$ = cf;
+	}
+      }
+  ;
+
 expr_primary
   : number
       { assert($1);
@@ -3928,6 +3963,20 @@ expr_primary
   /* The hierarchy_identifier rule matches simple identifiers as well as
      indexed arrays and part selects */
 
+  /* SV call chains get_c1().f() — must come before bare hierarchy_identifier
+     so `id (` is not reduced as PEIdent + error. */
+  | call_chain_expr
+      { $$ = $1;
+      }
+  /* SV: q.find with (item == 1) — iterator names item, index */
+  | hierarchy_identifier K_with '(' expression ')'
+      { std::vector<named_pexpr_t> empty;
+	PECallFunction* tmp = new PECallFunction(*$1, empty);
+	FILE_NAME(tmp, @1);
+	tmp->set_with_clause($4);
+	delete $1;
+	$$ = tmp;
+      }
   | hierarchy_identifier
       { PEIdent*tmp = pform_new_ident(@1, *$1);
 	FILE_NAME(tmp, @1);
@@ -3951,14 +4000,6 @@ expr_primary
 	$$ = tmp;
 	delete nm;
       }
-  | hierarchy_identifier '.' K_unique
-      { pform_name_t * nm = $1;
-	nm->push_back(name_component_t(lex_strings.make("unique")));
-	PEIdent*tmp = pform_new_ident(@1, *nm);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-	delete nm;
-      }
   | hierarchy_identifier '.' K_xor
       { pform_name_t * nm = $1;
 	nm->push_back(name_component_t(lex_strings.make("xor")));
@@ -3967,7 +4008,6 @@ expr_primary
 	$$ = tmp;
 	delete nm;
       }
-
   | package_scope hierarchy_identifier
       { lex_in_package_scope(0);
 	$$ = pform_package_ident(@2, $1, $2);
@@ -3978,13 +4018,6 @@ expr_primary
      function call. If a system identifier, then a system function
      call. It can also be a call to a class method (function). */
 
-  | hierarchy_identifier attribute_list_opt argument_list_parens
-      { PECallFunction*tmp = pform_make_call_function(@1, *$1, *$3);
-	delete $1;
-	delete $2;
-	delete $3;
-	$$ = tmp;
-      }
   | class_hierarchy_identifier argument_list_parens
       { PECallFunction*tmp = pform_make_call_function(@1, *$1, *$2);
 	delete $1;
@@ -4472,6 +4505,12 @@ hierarchy_identifier
       { pform_name_t * tmp = $1;
 	tmp->push_back(name_component_t(lex_strings.make($3)));
 	delete[]$3;
+	$$ = tmp;
+      }
+  /* "unique" is a keyword (K_unique) but also a queue/array method name. */
+  | hierarchy_identifier '.' K_unique
+      { pform_name_t * tmp = $1;
+	tmp->push_back(name_component_t(lex_strings.make("unique")));
 	$$ = tmp;
       }
   | hierarchy_identifier '[' expression ']'
