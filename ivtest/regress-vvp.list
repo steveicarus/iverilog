@@ -152,6 +152,7 @@ mix_reset-synth			vvp_tests/mix_reset-synth.json
 module_ordered_list1		vvp_tests/module_ordered_list1.json
 module_ordered_list2		vvp_tests/module_ordered_list2.json
 module_port_array1		vvp_tests/module_port_array1.json
+module_port_array_fail1		vvp_tests/module_port_array_fail1.json
 module_port_array_init1		vvp_tests/module_port_array_init1.json
 monitor4			vvp_tests/monitor4.json
 non-polymorphic-abs		vvp_tests/non-polymorphic-abs.json
