@@ -70,7 +70,7 @@ bindir = @bindir@
 libdir = @libdir@
 # This is actually the directory where we install our own header files.
 # It is a little different from the generic includedir.
-includedir = @includedir@/iverilog$(suffix)
+ivl_includedir = @includedir@/iverilog$(suffix)
 man1dir = @mandir@/man1
 docdir = @docdir@
 
@@ -251,7 +251,7 @@ iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
 	    -e 's;@IVCFLAGS@;$(CFLAGS);' \
 	    -e 's;@IVCXXFLAGS@;$(CXXFLAGS);' \
 	    -e 's;@IVCTARGETFLAGS@;$(CTARGETFLAGS);' \
-	    -e 's;@INCLUDEDIR@;$(includedir);' \
+	    -e 's;@INCLUDEDIR@;$(ivl_includedir);' \
 	    -e 's;@LIBDIR@;@libdir@;' $< > $@
 	chmod +x $@
 endif
@@ -369,16 +369,16 @@ installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ "$(DESTDIR)$(libdir)/ivl$(suffix)/ivl@EXEEXT@"
 	$(INSTALL_DATA) $(srcdir)/constants.vams "$(DESTDIR)$(libdir)/ivl$(suffix)/include/constants.vams"
 	$(INSTALL_DATA) $(srcdir)/disciplines.vams "$(DESTDIR)$(libdir)/ivl$(suffix)/include/disciplines.vams"
-	$(INSTALL_DATA) $(srcdir)/ivl_target.h "$(DESTDIR)$(includedir)/ivl_target.h"
-	$(INSTALL_DATA) ./_pli_types.h "$(DESTDIR)$(includedir)/_pli_types.h"
-	$(INSTALL_DATA) $(srcdir)/sv_vpi_user.h "$(DESTDIR)$(includedir)/sv_vpi_user.h"
-	$(INSTALL_DATA) $(srcdir)/vpi_user.h "$(DESTDIR)$(includedir)/vpi_user.h"
-	$(INSTALL_DATA) $(srcdir)/acc_user.h "$(DESTDIR)$(includedir)/acc_user.h"
-	$(INSTALL_DATA) $(srcdir)/veriuser.h "$(DESTDIR)$(includedir)/veriuser.h"
+	$(INSTALL_DATA) $(srcdir)/ivl_target.h "$(DESTDIR)$(ivl_includedir)/ivl_target.h"
+	$(INSTALL_DATA) ./_pli_types.h "$(DESTDIR)$(ivl_includedir)/_pli_types.h"
+	$(INSTALL_DATA) $(srcdir)/sv_vpi_user.h "$(DESTDIR)$(ivl_includedir)/sv_vpi_user.h"
+	$(INSTALL_DATA) $(srcdir)/vpi_user.h "$(DESTDIR)$(ivl_includedir)/vpi_user.h"
+	$(INSTALL_DATA) $(srcdir)/acc_user.h "$(DESTDIR)$(ivl_includedir)/acc_user.h"
+	$(INSTALL_DATA) $(srcdir)/veriuser.h "$(DESTDIR)$(ivl_includedir)/veriuser.h"
 
 installdirs: $(srcdir)/mkinstalldirs
 	$(srcdir)/mkinstalldirs "$(DESTDIR)$(bindir)" \
-	    "$(DESTDIR)$(includedir)" \
+	    "$(DESTDIR)$(ivl_includedir)" \
 	    "$(DESTDIR)$(libdir)/ivl$(suffix)" \
 	    "$(DESTDIR)$(libdir)/ivl$(suffix)/include" \
 	    "$(DESTDIR)$(docdir)" \
@@ -393,8 +393,8 @@ uninstall:
 	for f in verilog$(suffix) iverilog-vpi$(suffix) gverilog$(suffix)@EXEEXT@; \
 	    do rm -f "$(DESTDIR)$(bindir)/$$f"; done
 	for f in ivl_target.h vpi_user.h _pli_types.h sv_vpi_user.h acc_user.h veriuser.h; \
-	    do rm -f "$(DESTDIR)$(includedir)/$$f"; done
-	-test X$(suffix) = X || rmdir "$(DESTDIR)$(includedir)"
+	    do rm -f "$(DESTDIR)$(ivl_includedir)/$$f"; done
+	-test X$(suffix) = X || rmdir "$(DESTDIR)$(ivl_includedir)"
 	rm -f "$(DESTDIR)$(man1dir)/iverilog-vpi$(suffix).1" \
 	      "$(DESTDIR)$(docdir)/iverilog-vpi$(suffix).pdf"
 

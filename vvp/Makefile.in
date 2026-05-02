@@ -31,7 +31,7 @@ libdir = @libdir@
 mandir = @mandir@
 # This is actually the directory where we install our own header files.
 # It is a little different from the generic includedir.
-includedir = @includedir@/iverilog$(suffix)
+ivl_includedir = @includedir@/iverilog$(suffix)
 pdfdir = @docdir@
 
 # For a cross compile these defines will need to be set accordingly.
@@ -235,7 +235,7 @@ installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
 ifeq (@LIBVVP@,yes)
 	$(INSTALL_PROGRAM) ./libvvp$(suffix).$(SLEXT) "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT)"
-	$(INSTALL_DATA) $(srcdir)/libvvp.h "$(DESTDIR)$(includedir)/libvvp.h"
+	$(INSTALL_DATA) $(srcdir)/libvvp.h "$(DESTDIR)$(ivl_includedir)/libvvp.h"
 endif
 
 installdirs: $(srcdir)/../mkinstalldirs
@@ -250,7 +250,7 @@ uninstall: $(UNINSTALL32)
 	rm -f "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1" "$(DESTDIR)$(pdfdir)/vvp$(suffix).pdf"
 ifeq (@LIBVVP@,yes)
 	rm -f "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT)"
-	rm -f "$(DESTDIR)$(includedir)/libvvp.h"
+	rm -f "$(DESTDIR)$(ivl_includedir)/libvvp.h"
 endif
 
 -include $(patsubst %.o, dep/%.d, $O)
