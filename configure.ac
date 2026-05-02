@@ -407,10 +407,10 @@ AC_CONFIG_FILES([
     Makefile
     cadpli/Makefile
     driver-vpi/Makefile
+    driver-vpi/iverilog-vpi.man
     driver-vpi/res.rc
     driver/Makefile
     driver/iverilog.man
-    iverilog-vpi.man
     ivlpp/Makefile
     ivtest/Makefile
     libveriuser/Makefile
