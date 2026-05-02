@@ -29,8 +29,8 @@ VPATH = $(srcdir)
 bindir = $(exec_prefix)/bin
 libdir = $(exec_prefix)/lib
 includedir = $(prefix)/include
-mandir = @mandir@
-pdfdir = @docdir@
+man1dir = @mandir@/man1
+docdir = @docdir@
 
 dllib=@DLLIB@
 
@@ -111,25 +111,15 @@ iverilog.ps: iverilog.man
 iverilog.pdf: iverilog.ps
 	$(PS2PDF) $< $@
 
+INSTALL_DOC =
+ifneq ($(MAN),none)
+INSTALL_DOC += installman
+ifneq ($(PS2PDF),none)
 ifeq (@MINGW32@,yes)
-ifeq ($(MAN),none)
-INSTALL_DOC = installman
-INSTALL_PDFDIR = $(prefix)
-else
-ifeq ($(PS2PDF),none)
-INSTALL_DOC = installman
-INSTALL_PDFDIR = $(prefix)
-else
-INSTALL_DOC = installpdf installman
-INSTALL_PDFDIR = $(pdfdir)
+INSTALL_DOC += installpdf
 all: iverilog.pdf
 endif
 endif
-INSTALL_DOCDIR = $(mandir)/man1
-else
-INSTALL_DOC = installman
-INSTALL_DOCDIR = $(mandir)/man1
-INSTALL_PDFDIR = $(prefix)
 endif
 
 install: all installdirs installfiles
@@ -138,21 +128,23 @@ F = ./iverilog@EXEEXT@ \
 	$(INSTALL_DOC)
 
 installman: iverilog.man installdirs
-	$(INSTALL_DATA) iverilog.man "$(DESTDIR)$(mandir)/man1/iverilog$(suffix).1"
+	$(INSTALL_DATA) iverilog.man "$(DESTDIR)$(man1dir)/iverilog$(suffix).1"
 
 installpdf: iverilog.pdf installdirs
-	$(INSTALL_DATA) iverilog.pdf "$(DESTDIR)$(pdfdir)/iverilog$(suffix).pdf"
+	$(INSTALL_DATA) iverilog.pdf "$(DESTDIR)$(docdir)/iverilog$(suffix).pdf"
 
 installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./iverilog@EXEEXT@ "$(DESTDIR)$(bindir)/iverilog$(suffix)@EXEEXT@"
 
 installdirs: $(srcdir)/../mkinstalldirs
-	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" \
-		"$(DESTDIR)$(INSTALL_DOCDIR)" \
-		"$(DESTDIR)$(INSTALL_PDFDIR)"
+	$(srcdir)/../mkinstalldirs \
+	    "$(DESTDIR)$(bindir)" \
+	    "$(DESTDIR)$(docdir)" \
+	    "$(DESTDIR)$(man1dir)"
 
 uninstall:
 	rm -f "$(DESTDIR)$(bindir)/iverilog$(suffix)@EXEEXT@"
-	rm -f "$(DESTDIR)$(mandir)/man1/iverilog$(suffix).1" "$(DESTDIR)$(pdfdir)/iverilog$(suffix).pdf"
+	rm -f "$(DESTDIR)$(man1dir)/iverilog$(suffix).1" \
+	      "$(DESTDIR)$(docdir)/iverilog$(suffix).pdf"
 
 -include $(patsubst %.o, dep/%.d, $O)

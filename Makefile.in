@@ -71,8 +71,8 @@ libdir = @libdir@
 # This is actually the directory where we install our own header files.
 # It is a little different from the generic includedir.
 includedir = @includedir@/iverilog$(suffix)
-mandir = @mandir@
-pdfdir = @docdir@
+man1dir = @mandir@/man1
+docdir = @docdir@
 
 dllib=@DLLIB@
 
@@ -325,25 +325,14 @@ version_tag.h version:
 	    echo '#define VERSION_TAG ""' > version_tag.h; \
 	fi
 
+INSTALL_DOC =
+ifneq ($(MAN),none)
+INSTALL_DOC += installman
+ifneq ($(PS2PDF),none)
 ifeq (@MINGW32@,yes)
-ifeq ($(MAN),none)
-INSTALL_DOC = installman
-INSTALL_PDFDIR = $(prefix)
-else
-ifeq ($(PS2PDF),none)
-INSTALL_DOC = installman
-INSTALL_PDFDIR = $(prefix)
-else
-INSTALL_DOC = installpdf installman
-INSTALL_PDFDIR = $(pdfdir)
-all: dep iverilog-vpi.pdf
+INSTALL_DOC += installpdf
+all: iverilog-vpi.pdf
 endif
-endif
-INSTALL_DOCDIR = $(mandir)/man1
-else
-INSTALL_DOC = installman
-INSTALL_DOCDIR = $(mandir)/man1
-INSTALL_PDFDIR = $(prefix)
 endif
 
 ifeq (@MINGW32@,yes)
@@ -392,8 +381,8 @@ installdirs: $(srcdir)/mkinstalldirs
 	    "$(DESTDIR)$(includedir)" \
 	    "$(DESTDIR)$(libdir)/ivl$(suffix)" \
 	    "$(DESTDIR)$(libdir)/ivl$(suffix)/include" \
-	    "$(DESTDIR)$(INSTALL_DOCDIR)" \
-	    "$(DESTDIR)$(INSTALL_PDFDIR)"
+	    "$(DESTDIR)$(docdir)" \
+	    "$(DESTDIR)$(man1dir)"
 
 uninstall:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
@@ -406,8 +395,8 @@ uninstall:
 	for f in ivl_target.h vpi_user.h _pli_types.h sv_vpi_user.h acc_user.h veriuser.h; \
 	    do rm -f "$(DESTDIR)$(includedir)/$$f"; done
 	-test X$(suffix) = X || rmdir "$(DESTDIR)$(includedir)"
-	rm -f "$(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1" \
-	      "$(DESTDIR)$(pdfdir)/iverilog-vpi$(suffix).pdf"
+	rm -f "$(DESTDIR)$(man1dir)/iverilog-vpi$(suffix).1" \
+	      "$(DESTDIR)$(docdir)/iverilog-vpi$(suffix).pdf"
 
 
 -include $(patsubst %.o, dep/%.d, $O)
