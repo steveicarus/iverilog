@@ -1202,6 +1202,17 @@ void elaborate_unpacked_port(Design *des, NetScope *scope, NetNet *port_net,
 			     PExpr *expr, NetNet::PortType port_type,
 			     const Module *mod, unsigned int port_idx)
 {
+      if (port_type == NetNet::POUTPUT && !dynamic_cast<PEIdent*> (expr)) {
+	    perm_string port_name = mod->get_port_name(port_idx);
+	    cerr << expr->get_fileline() << ": error: Output port expression"
+	            " must support a continuous assignment." << endl;
+	    cerr << expr->get_fileline() << ":      : Port "
+	         << port_idx + 1 << " (" << port_name << ") of "
+	         << mod->mod_name() << " is connected to " << *expr << endl;
+	    des->errors += 1;
+	    return;
+      }
+
       NetNet *expr_net = elaborate_unpacked_array(des, scope, *expr, port_net,
 						  expr);
       if (!expr_net) {
