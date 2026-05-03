@@ -4954,14 +4954,14 @@ module_item
   /* This form doesn't have the range, but does have strengths. This
      gives strength to the assignment drivers. */
 
-  | attribute_list_opt net_type data_type_or_implicit drive_strength net_decl_assigns ';'
-      { data_type_t*data_type = $3;
-        pform_check_net_data_type(@2, $2, $3);
+  | attribute_list_opt net_type drive_strength data_type_or_implicit net_decl_assigns ';'
+      { data_type_t*data_type = $4;
+        pform_check_net_data_type(@2, $2, $4);
 	if (data_type == 0) {
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
 	      FILE_NAME(data_type, @2);
 	}
-	pform_makewire(@2, 0, $4, $5, $2, data_type, $1);
+	pform_makewire(@2, 0, $3, $5, $2, data_type, $1);
 	delete $1;
       }
 
