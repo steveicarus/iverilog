@@ -118,6 +118,7 @@ dffsynth8			vvp_tests/dffsynth8.json
 dffsynth9			vvp_tests/dffsynth9.json
 dffsynth10			vvp_tests/dffsynth10.json
 dffsynth11			vvp_tests/dffsynth11.json
+drive_strength4			vvp_tests/drive_strength4.json
 dumpfile			vvp_tests/dumpfile.json
 early_sig_elab1			vvp_tests/early_sig_elab1.json
 early_sig_elab2			vvp_tests/early_sig_elab2.json
