@@ -51,11 +51,7 @@ else
 NOTUSED += libveriuser cadpli
 endif
 
-ifeq (@MINGW32@,yes)
 SUBDIRS += driver-vpi
-else
-NOTUSED += driver-vpi
-endif
 
 # To get the version headers to build correctly we only want to look
 # for C++ files in the source directory. All other files will require
@@ -70,9 +66,7 @@ bindir = @bindir@
 libdir = @libdir@
 # This is actually the directory where we install our own header files.
 # It is a little different from the generic includedir.
-includedir = @includedir@/iverilog$(suffix)
-mandir = @mandir@
-pdfdir = @docdir@
+ivl_includedir = @includedir@/iverilog$(suffix)
 
 dllib=@DLLIB@
 
@@ -135,7 +129,7 @@ O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
     PGate.o PGenerate.o PModport.o PNamedItem.o PPackage.o PScope.o PSpec.o PTimingCheck.o \
     PTask.o PUdp.o PWire.o Statement.o AStatement.o $M $(FF) $(TT)
 
-all: dep config.h _pli_types.h version_tag.h version_base.h ivl@EXEEXT@ iverilog-vpi.man
+all: dep config.h _pli_types.h version_tag.h version_base.h ivl@EXEEXT@
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 
 # In the windows world, the installer will need a dosify program to
@@ -172,7 +166,7 @@ check-installed check-installed-vpi check-installed-vvp check-installed-vvp-py:
 clean:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 	rm -f *.o parse.cc parse.h lexor.cc
-	rm -f ivl.exp iverilog-vpi.man iverilog-vpi.pdf iverilog-vpi.ps
+	rm -f ivl.exp
 	rm -f iverilog_man.ps iverilog_man.pdf iverilog_man_$(VERSION_MAJOR)_$(VERSION_MINOR).pdf
 	rm -f parse.output syn-rules.output dosify$(BUILDEXT) ivl@EXEEXT@ check.vvp
 	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc version_base.h
@@ -239,23 +233,6 @@ ivl@EXEEXT@: $O
 	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ $O $(dllib)
 endif
 
-ifeq (@MINGW32@,no)
-all: iverilog-vpi
-
-iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
-	sed -e 's;@SHARED@;@shared@;' -e 's;@PIC@;@PICFLAG@;' \
-	    -e 's;@ENABLE_PLI1@;@LIBVERIUSER@;' \
-	    -e 's;@SUFFIX@;$(suffix);' \
-	    -e 's;@IVCC@;$(CC);' \
-	    -e 's;@IVCXX@;$(CXX);' \
-	    -e 's;@IVCFLAGS@;$(CFLAGS);' \
-	    -e 's;@IVCXXFLAGS@;$(CXXFLAGS);' \
-	    -e 's;@IVCTARGETFLAGS@;$(CTARGETFLAGS);' \
-	    -e 's;@INCLUDEDIR@;$(includedir);' \
-	    -e 's;@LIBDIR@;@libdir@;' $< > $@
-	chmod +x $@
-endif
-
 version_base.h: $(srcdir)/version_base.h.in config.status
 	./config.status --file=$@
 
@@ -285,16 +262,7 @@ lexor_keyword.o: lexor_keyword.cc parse.h
 lexor_keyword.cc: $(srcdir)/lexor_keyword.gperf
 	gperf -o -i 7 -C -k 1-4,6,9,$$ -H keyword_hash -N check_identifier -t $< > $@ || (rm -f $@ ; false)
 
-iverilog-vpi.man: $(srcdir)/iverilog-vpi.man.in config.status
-	./config.status --file=$@
-
-iverilog-vpi.ps: iverilog-vpi.man
-	$(MAN) -t ./$< > $@
-
-iverilog-vpi.pdf: iverilog-vpi.ps
-	$(PS2PDF) $< $@
-
-iverilog_man.ps: driver/iverilog.man vvp/vvp.man iverilog-vpi.man
+iverilog_man.ps: driver/iverilog.man vvp/vvp.man driver-vpi/iverilog-vpi.man
 	$(GROFF) -man -rC1 -rD1 -T ps $^ > $@
 
 iverilog_man.pdf: iverilog_man.ps
@@ -325,33 +293,6 @@ version_tag.h version:
 	    echo '#define VERSION_TAG ""' > version_tag.h; \
 	fi
 
-ifeq (@MINGW32@,yes)
-ifeq ($(MAN),none)
-INSTALL_DOC = installman
-INSTALL_PDFDIR = $(prefix)
-else
-ifeq ($(PS2PDF),none)
-INSTALL_DOC = installman
-INSTALL_PDFDIR = $(prefix)
-else
-INSTALL_DOC = installpdf installman
-INSTALL_PDFDIR = $(pdfdir)
-all: dep iverilog-vpi.pdf
-endif
-endif
-INSTALL_DOCDIR = $(mandir)/man1
-else
-INSTALL_DOC = installman
-INSTALL_DOCDIR = $(mandir)/man1
-INSTALL_PDFDIR = $(prefix)
-endif
-
-ifeq (@MINGW32@,yes)
-WIN32_INSTALL =
-else
-WIN32_INSTALL = installwin32
-endif
-
 install: all installdirs installfiles
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 
@@ -363,37 +304,24 @@ F = ./ivl@EXEEXT@ \
 	$(srcdir)/sv_vpi_user.h \
 	$(srcdir)/vpi_user.h \
 	$(srcdir)/acc_user.h \
-	$(srcdir)/veriuser.h \
-	$(INSTALL_DOC) \
-	$(WIN32_INSTALL)
-
-installwin32: ./iverilog-vpi installdirs
-	$(INSTALL_SCRIPT) ./iverilog-vpi "$(DESTDIR)$(bindir)/iverilog-vpi$(suffix)"
-
-installman: iverilog-vpi.man installdirs
-	$(INSTALL_DATA) iverilog-vpi.man "$(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1"
-
-installpdf: iverilog-vpi.pdf installdirs
-	$(INSTALL_DATA) iverilog-vpi.pdf "$(DESTDIR)$(pdfdir)/iverilog-vpi$(suffix).pdf"
+	$(srcdir)/veriuser.h
 
 installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ "$(DESTDIR)$(libdir)/ivl$(suffix)/ivl@EXEEXT@"
 	$(INSTALL_DATA) $(srcdir)/constants.vams "$(DESTDIR)$(libdir)/ivl$(suffix)/include/constants.vams"
 	$(INSTALL_DATA) $(srcdir)/disciplines.vams "$(DESTDIR)$(libdir)/ivl$(suffix)/include/disciplines.vams"
-	$(INSTALL_DATA) $(srcdir)/ivl_target.h "$(DESTDIR)$(includedir)/ivl_target.h"
-	$(INSTALL_DATA) ./_pli_types.h "$(DESTDIR)$(includedir)/_pli_types.h"
-	$(INSTALL_DATA) $(srcdir)/sv_vpi_user.h "$(DESTDIR)$(includedir)/sv_vpi_user.h"
-	$(INSTALL_DATA) $(srcdir)/vpi_user.h "$(DESTDIR)$(includedir)/vpi_user.h"
-	$(INSTALL_DATA) $(srcdir)/acc_user.h "$(DESTDIR)$(includedir)/acc_user.h"
-	$(INSTALL_DATA) $(srcdir)/veriuser.h "$(DESTDIR)$(includedir)/veriuser.h"
+	$(INSTALL_DATA) $(srcdir)/ivl_target.h "$(DESTDIR)$(ivl_includedir)/ivl_target.h"
+	$(INSTALL_DATA) ./_pli_types.h "$(DESTDIR)$(ivl_includedir)/_pli_types.h"
+	$(INSTALL_DATA) $(srcdir)/sv_vpi_user.h "$(DESTDIR)$(ivl_includedir)/sv_vpi_user.h"
+	$(INSTALL_DATA) $(srcdir)/vpi_user.h "$(DESTDIR)$(ivl_includedir)/vpi_user.h"
+	$(INSTALL_DATA) $(srcdir)/acc_user.h "$(DESTDIR)$(ivl_includedir)/acc_user.h"
+	$(INSTALL_DATA) $(srcdir)/veriuser.h "$(DESTDIR)$(ivl_includedir)/veriuser.h"
 
 installdirs: $(srcdir)/mkinstalldirs
 	$(srcdir)/mkinstalldirs "$(DESTDIR)$(bindir)" \
-	    "$(DESTDIR)$(includedir)" \
+	    "$(DESTDIR)$(ivl_includedir)" \
 	    "$(DESTDIR)$(libdir)/ivl$(suffix)" \
-	    "$(DESTDIR)$(libdir)/ivl$(suffix)/include" \
-	    "$(DESTDIR)$(INSTALL_DOCDIR)" \
-	    "$(DESTDIR)$(INSTALL_PDFDIR)"
+	    "$(DESTDIR)$(libdir)/ivl$(suffix)/include"
 
 uninstall:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
@@ -401,13 +329,11 @@ uninstall:
 	    do rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/$$f"; done
 	-rmdir "$(DESTDIR)$(libdir)/ivl$(suffix)/include"
 	-rmdir "$(DESTDIR)$(libdir)/ivl$(suffix)"
-	for f in verilog$(suffix) iverilog-vpi$(suffix) gverilog$(suffix)@EXEEXT@; \
+	for f in verilog$(suffix) gverilog$(suffix)@EXEEXT@; \
 	    do rm -f "$(DESTDIR)$(bindir)/$$f"; done
 	for f in ivl_target.h vpi_user.h _pli_types.h sv_vpi_user.h acc_user.h veriuser.h; \
-	    do rm -f "$(DESTDIR)$(includedir)/$$f"; done
-	-test X$(suffix) = X || rmdir "$(DESTDIR)$(includedir)"
-	rm -f "$(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1" \
-	      "$(DESTDIR)$(pdfdir)/iverilog-vpi$(suffix).pdf"
+	    do rm -f "$(DESTDIR)$(ivl_includedir)/$$f"; done
+	-test X$(suffix) = X || rmdir "$(DESTDIR)$(ivl_includedir)"
 
 
 -include $(patsubst %.o, dep/%.d, $O)

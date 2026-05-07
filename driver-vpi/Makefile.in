@@ -31,7 +31,11 @@ suffix = @install_suffix@
 bindir = $(exec_prefix)/bin
 libdir = $(exec_prefix)/lib
 includedir = $(prefix)/include
-mandir = @mandir@
+# This is actually the directory where we install our own header files.
+# It is a little different from the generic includedir.
+ivl_includedir = @includedir@/iverilog$(suffix)
+man1dir = @mandir@/man1
+docdir = @docdir@
 
 dllib=@DLLIB@
 
@@ -39,8 +43,11 @@ CC = @CC@
 HOSTCC := @CC@
 WINDRES = @WINDRES@
 INSTALL = @INSTALL@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
+MAN = @MAN@
+PS2PDF = @PS2PDF@
 
 ifeq (@srcdir@,.)
 INCLUDE_PATH = -I. -I..
@@ -48,19 +55,36 @@ else
 INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
 endif
 
-CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@
+CPPFLAGS = @DEFS@ $(INCLUDE_PATH) @CPPFLAGS@
 CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
-LDFLAGS = @LDFLAGS@
+PICFLAGS = @PICFLAG@
+LDFLAGS = @rdynamic@ @LDFLAGS@
 
 O = main.o res.o
 
+ifeq (@MINGW32@,yes)
 all: iverilog-vpi@EXEEXT@
+else
+all: iverilog-vpi
+endif
+
+INSTALL_DOC =
+ifneq ($(MAN),none)
+INSTALL_DOC += installman
+ifneq ($(PS2PDF),none)
+ifeq (@MINGW32@,yes)
+INSTALL_DOC += installpdf
+all: iverilog-vpi.pdf
+endif
+endif
+endif
 
 check: all
 
 clean:
-	rm -f *.o config.h iverilog-vpi@EXEEXT@ res.rc
+	rm -f *.o config.h iverilog-vpi@EXEEXT@ iverilog-vpi \
+	      iverilog-vpi.man iverilog-vpi.ps iverilog-vpi.pdf res.rc
 
 distclean: clean
 	rm -f Makefile config.log
@@ -75,8 +99,24 @@ cppcheck: main.c config.h
 Makefile: $(srcdir)/Makefile.in ../config.status
 	cd ..; ./config.status --file=driver-vpi/$@
 
+ifeq (@MINGW32@,yes)
 iverilog-vpi@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o iverilog-vpi@EXEEXT@ @EXTRALIBS@
+endif
+ifeq (@MINGW32@,no)
+iverilog-vpi: $(srcdir)/iverilog-vpi.sh ../config.status
+	sed -e 's;@SHARED@;@shared@;' -e 's;@PIC@;@PICFLAG@;' \
+	    -e 's;@ENABLE_PLI1@;@LIBVERIUSER@;' \
+	    -e 's;@SUFFIX@;$(suffix);' \
+	    -e 's;@IVCC@;$(CC);' \
+	    -e 's;@IVCXX@;@CXX@;' \
+	    -e 's;@IVCFLAGS@;$(CFLAGS);' \
+	    -e 's;@IVCXXFLAGS@;$(CXXFLAGS);' \
+	    -e 's;@IVCTARGETFLAGS@;@CTARGETFLAGS@;' \
+	    -e 's;@INCLUDEDIR@;$(ivl_includedir);' \
+	    -e 's;@LIBDIR@;@libdir@;' $< > $@
+	chmod +x $@
+endif
 
 main.o: $(srcdir)/main.c config.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/main.c
@@ -102,12 +142,32 @@ res.o: res.rc
 	$(WINDRES) -i res.rc -o res.o
 #
 
+iverilog-vpi.man: $(srcdir)/iverilog-vpi.man.in ../config.status
+	cd ..; ./config.status --file=driver-vpi/$@
+
+iverilog-vpi.ps: iverilog-vpi.man
+	$(MAN) -t ./$< > $@
+
+iverilog-vpi.pdf: iverilog-vpi.ps
+	$(PS2PDF) $< $@
+
 install: all installdirs installfiles
 
-F = ./iverilog-vpi@EXEEXT@
+F = $(INSTALL_DOC)
+ifeq (@MINGW32@,yes)
+F += ./iverilog-vpi@EXEEXT@
+endif
+ifeq (@MINGW32@,no)
+F += ./iverilog-vpi
+endif
 
 installfiles: $(F) | installdirs
+ifeq (@MINGW32@,yes)
 	$(INSTALL_PROGRAM) ./iverilog-vpi@EXEEXT@ "$(DESTDIR)$(bindir)/iverilog-vpi$(suffix)@EXEEXT@"
+endif
+ifeq (@MINGW32@,no)
+	$(INSTALL_SCRIPT) ./iverilog-vpi "$(DESTDIR)$(bindir)/iverilog-vpi$(suffix)"
+endif
 ifeq (@WIN32@,yes)
 ifneq ($(HOSTCC),$(CC))
 	$(INSTALL_PROGRAM) $(shell $(HOSTCC) --print-file-name=libwinpthread-1.dll) "$(DESTDIR)$(bindir)"
@@ -116,8 +176,24 @@ ifneq ($(HOSTCC),$(CC))
 endif
 endif
 
+installman: iverilog-vpi.man installdirs
+	$(INSTALL_DATA) iverilog-vpi.man "$(DESTDIR)$(man1dir)/iverilog-vpi$(suffix).1"
+
+installpdf: iverilog-vpi.pdf installdirs
+	$(INSTALL_DATA) iverilog-vpi.pdf "$(DESTDIR)$(docdir)/iverilog-vpi$(suffix).pdf"
+
 installdirs: $(srcdir)/../mkinstalldirs
-	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)"
+	$(srcdir)/../mkinstalldirs \
+	    "$(DESTDIR)$(bindir)" \
+	    "$(DESTDIR)$(docdir)" \
+	    "$(DESTDIR)$(man1dir)"
 
 uninstall:
+ifeq (@MINGW32@,yes)
 	rm -f $(DESTDIR)$(bindir)/iverilog-vpi$(suffix)@EXEEXT@
+endif
+ifeq (@MINGW32@,no)
+	rm -f $(DESTDIR)$(bindir)/iverilog-vpi$(suffix)
+endif
+	rm -f "$(DESTDIR)$(man1dir)/iverilog-vpi$(suffix).1" \
+	      "$(DESTDIR)$(docdir)/iverilog-vpi$(suffix).pdf"
