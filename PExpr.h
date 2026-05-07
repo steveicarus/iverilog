@@ -690,12 +690,16 @@ class PEString : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode) override;
 
-      virtual NetEConst*elaborate_expr(Design*des, NetScope*scope,
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				       ivl_type_t type, unsigned flags) const override;
 
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				       unsigned expr_wid, unsigned) const override;
 
+      NetExpr *elaborate_expr_uarray_(Design *des, NetScope *scope,
+				      const netuarray_t *uarray_type,
+				      const std::vector<netrange_t> &dims,
+				      unsigned int cur_dim) const;
     private:
       char*text_;
 };
