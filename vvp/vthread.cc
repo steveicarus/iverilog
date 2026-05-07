@@ -4491,13 +4491,9 @@ bool of_NAND(vthread_t thr, vvp_code_t)
       vvp_vector4_t valr = thr->pop_vec4();
       vvp_vector4_t&vall = thr->peek_vec4();
       assert(vall.size() == valr.size());
-      unsigned wid = vall.size();
 
-      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
-	    vvp_bit4_t lb = vall.value(idx);
-	    vvp_bit4_t rb = valr.value(idx);
-	    vall.set_bit(idx, ~(lb&rb));
-      }
+      vall &= valr;
+      vall.invert();
 
       return true;
 }
@@ -4755,13 +4751,9 @@ bool of_NOR(vthread_t thr, vvp_code_t)
       vvp_vector4_t valr = thr->pop_vec4();
       vvp_vector4_t&vall = thr->peek_vec4();
       assert(vall.size() == valr.size());
-      unsigned wid = vall.size();
 
-      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
-	    vvp_bit4_t lb = vall.value(idx);
-	    vvp_bit4_t rb = valr.value(idx);
-	    vall.set_bit(idx, ~(lb|rb));
-      }
+      vall |= valr;
+      vall.invert();
 
       return true;
 }
@@ -6564,14 +6556,9 @@ bool of_XNOR(vthread_t thr, vvp_code_t)
       vvp_vector4_t valr = thr->pop_vec4();
       vvp_vector4_t&vall = thr->peek_vec4();
       assert(vall.size() == valr.size());
-      unsigned wid = vall.size();
 
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-
-	    vvp_bit4_t lb = vall.value(idx);
-	    vvp_bit4_t rb = valr.value(idx);
-	    vall.set_bit(idx, ~(lb ^ rb));
-      }
+      vall ^= valr;
+      vall.invert();
 
       return true;
 }
@@ -6584,14 +6571,8 @@ bool of_XOR(vthread_t thr, vvp_code_t)
       vvp_vector4_t valr = thr->pop_vec4();
       vvp_vector4_t&vall = thr->peek_vec4();
       assert(vall.size() == valr.size());
-      unsigned wid = vall.size();
 
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-
-	    vvp_bit4_t lb = vall.value(idx);
-	    vvp_bit4_t rb = valr.value(idx);
-	    vall.set_bit(idx, lb ^ rb);
-      }
+      vall ^= valr;
 
       return true;
 }

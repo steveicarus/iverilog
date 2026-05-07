@@ -1964,6 +1964,30 @@ vvp_vector4_t& vvp_vector4_t::operator |= (const vvp_vector4_t&that)
       return *this;
 }
 
+vvp_vector4_t& vvp_vector4_t::operator ^= (const vvp_vector4_t&that)
+{
+	// The truth table is:
+	//     00 01 11 10
+	//  00 00 01 11 11
+	//  01 01 00 11 11
+	//  11 11 11 11 11
+	//  10 11 11 11 11
+      if (size_ <= BITS_PER_WORD) {
+	    unsigned long bval = bbits_val_ | that.bbits_val_;
+	    bbits_val_ = bval;
+	    abits_val_ = (abits_val_ ^ that.abits_val_) | bval;
+      } else {
+	    unsigned words = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
+	    for (unsigned idx = 0; idx < words ; idx += 1) {
+		  unsigned long bval = bbits_ptr_[idx] | that.bbits_ptr_[idx];
+		  bbits_ptr_[idx] = bval;
+		  abits_ptr_[idx] = (abits_ptr_[idx] ^ that.abits_ptr_[idx]) | bval;
+	    }
+      }
+
+      return *this;
+}
+
 /*
 * Add an integer to the vvp_vector4_t in place, bit by bit so that
 * there is no size limitations.

@@ -323,6 +323,7 @@ class vvp_vector4_t {
       void invert();
       vvp_vector4_t& operator &= (const vvp_vector4_t&that);
       vvp_vector4_t& operator |= (const vvp_vector4_t&that);
+      vvp_vector4_t& operator ^= (const vvp_vector4_t&that);
       vvp_vector4_t& operator += (int64_t);
 
     private:
