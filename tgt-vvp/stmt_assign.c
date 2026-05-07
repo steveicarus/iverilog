@@ -1364,15 +1364,16 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  fprintf(vvp_out, "    %%store/prop/str %d;\n", prop_idx);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
-	    } else if (ivl_type_base(prop_type) == IVL_VT_DARRAY) {
+	    } else if (ivl_type_base(prop_type) == IVL_VT_DARRAY
+		       || ivl_type_base(prop_type) == IVL_VT_QUEUE) {
 
 		  int idx = 0;
 
-		    /* The property is a darray, and there is no mux
-		       expression to the assignment is of an entire
-		       array object. */
+		    /* The property is a darray or queue, and there is no mux
+		       expression so the assignment is of an entire
+		       array/queue object. */
 		  errors += draw_eval_object(rval);
-		  fprintf(vvp_out, "    %%store/prop/obj %d, %d; IVL_VT_DARRAY\n", prop_idx, idx);
+		  fprintf(vvp_out, "    %%store/prop/obj %d, %d; IVL_VT_DARRAY or QUEUE\n", prop_idx, idx);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_CLASS) {

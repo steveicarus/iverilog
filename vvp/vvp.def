@@ -43,6 +43,7 @@ vpi_vprintf
 vpip_calc_clog2
 vpip_count_drivers
 vpip_format_strength
+vpip_format_pretty
 vpip_make_systf_system_defined
 vpip_mcd_rawwrite
 vpip_set_return_value

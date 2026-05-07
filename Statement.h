@@ -257,17 +257,17 @@ class PCallTask  : public Statement {
       NetProc*elaborate_build_call_(Design*des, NetScope*scope,
 				    NetScope*task, NetExpr*use_this) const;
       NetProc*elaborate_sys_task_method_(Design*des, NetScope*scope,
-					 NetNet*net,
+					 NetExpr*base_expr,
 					 perm_string method_name,
 					 const char *sys_task_name,
 				         const std::vector<perm_string> &parm_names = {}) const;
       NetProc*elaborate_queue_method_(Design*des, NetScope*scope,
-				      NetNet*net,
+				      NetExpr*queue_base,
 				      perm_string method_name,
 				      const char *sys_task_name,
 				      const std::vector<perm_string> &parm_names) const;
       NetProc*elaborate_method_func_(NetScope*scope,
-				     NetNet*net,
+				     NetExpr*queue_base,
 				     ivl_type_t type,
 				     perm_string method_name,
 				     const char*sys_task_name) const;

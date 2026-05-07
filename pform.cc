@@ -938,6 +938,24 @@ PECallFunction* pform_make_call_function(const struct vlltype&loc,
       return tmp;
 }
 
+PECallFunction* pform_make_chained_call_function(const struct vlltype&loc,
+						 PExpr*prefix,
+						 const pform_name_t&method,
+						 const list<named_pexpr_t> &parms)
+{
+      if (!gn_system_verilog()) {
+	    pform_requires_sv(loc, "Chained calls like a().b()");
+	    delete prefix;
+	    return new PECallFunction(method, parms);
+      }
+
+      check_potential_imports(loc, method.front().name, true);
+
+      PECallFunction*tmp = new PECallFunction(prefix, method, parms);
+      FILE_NAME(tmp, loc);
+      return tmp;
+}
+
 PCallTask* pform_make_call_task(const struct vlltype&loc,
 				const pform_name_t&name,
 				const list<named_pexpr_t> &parms)

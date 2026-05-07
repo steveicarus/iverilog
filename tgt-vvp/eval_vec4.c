@@ -917,6 +917,28 @@ static void draw_property_vec4(ivl_expr_t expr)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
       unsigned pidx = ivl_expr_property_idx(expr);
+	/* Queue/dynamic-array property with index: index is oper1 (see
+	 * dll_target::expr_property). */
+      ivl_expr_t index_ex = ivl_expr_oper1(expr);
+
+      if (index_ex) {
+	    ivl_type_t cls_type = ivl_signal_net_type(sig);
+	    ivl_type_t ptype = ivl_type_prop_type(cls_type, pidx);
+	    if (ptype) {
+		  ivl_variable_type_t pbase = ivl_type_base(ptype);
+		  if (pbase == IVL_VT_QUEUE || pbase == IVL_VT_DARRAY) {
+			unsigned wid = ivl_expr_width(expr);
+			draw_eval_expr_into_integer(index_ex, 3);
+			fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+			fprintf(vvp_out, "    %%load/prop/dar/vec4 %u, %u;\n",
+			        pidx, wid);
+			fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+			if (ivl_expr_value(expr) == IVL_VT_BOOL)
+			      fprintf(vvp_out, "    %%cast2;\n");
+			return;
+		  }
+	    }
+      }
 
       fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
       fprintf(vvp_out, "    %%prop/v %u;\n", pidx);
@@ -948,7 +970,30 @@ static void draw_select_vec4(ivl_expr_t expr)
 	    return;
       }
 
-      if (ivl_expr_value(subexpr)==IVL_VT_DARRAY) {
+	/* Class property that is a queue or dynamic array: c.q[idx] */
+      if (ivl_expr_type(subexpr) == IVL_EX_PROPERTY) {
+	    ivl_signal_t clas = ivl_expr_signal(subexpr);
+	    unsigned pidx = ivl_expr_property_idx(subexpr);
+	    ivl_type_t cls_type = ivl_signal_net_type(clas);
+	    ivl_type_t ptype = ivl_type_prop_type(cls_type, pidx);
+	    if (ptype) {
+		  ivl_variable_type_t pbase = ivl_type_base(ptype);
+		  if (pbase == IVL_VT_QUEUE || pbase == IVL_VT_DARRAY) {
+			assert(base);
+			draw_eval_expr_into_integer(base, 3);
+			fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
+			fprintf(vvp_out, "    %%load/prop/dar/vec4 %u, %u;\n",
+			        pidx, wid);
+			fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+			if (ivl_expr_value(expr) == IVL_VT_BOOL)
+			      fprintf(vvp_out, "    %%cast2;\n");
+			return;
+		  }
+	    }
+      }
+
+      if (ivl_expr_value(subexpr)==IVL_VT_DARRAY ||
+	  ivl_expr_value(subexpr)==IVL_VT_QUEUE) {
 	    ivl_signal_t sig = ivl_expr_signal(subexpr);
 	    assert(sig);
 	    assert( (ivl_signal_data_type(sig)==IVL_VT_DARRAY)
@@ -1001,12 +1046,6 @@ static void draw_select_pad_vec4(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%pad/u %u;\n", wid);
 }
 
-/*
- * This function handles the special case of a call to the internal
- * functions $ivl_queue_method$pop_back et al. The first (and only)
- * argument is the signal that represents a dynamic queue. Generate a
- * %qpop instruction to pop a value and push it to the vec4 stack.
- */
 static void draw_darray_pop(ivl_expr_t expr)
 {
       const char*fb;
@@ -1017,6 +1056,16 @@ static void draw_darray_pop(ivl_expr_t expr)
 	    fb = "f";
 
       ivl_expr_t arg = ivl_expr_parm(expr, 0);
+      if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
+	    ivl_signal_t clas = ivl_expr_signal(arg);
+	    unsigned pidx = ivl_expr_property_idx(arg);
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
+	    fprintf(vvp_out, "    %%qpop/prop/%s/v %u, %u;\n", fb, pidx,
+	             ivl_expr_width(expr));
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    return;
+      }
+
       assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
 
       fprintf(vvp_out, "    %%qpop/%s/v v%p_0, %u;\n", fb, ivl_expr_signal(arg),
@@ -1046,6 +1095,49 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
       }
       if (strcmp(ivl_expr_name(expr),"$ivl_queue_method$pop_front")==0) {
 	    draw_darray_pop(expr);
+	    return;
+      }
+
+	/* find*_with has four parameters and is lowered in eval_object.c */
+      if (parm_count == 4 &&
+	  strncmp(ivl_expr_name(expr), "$ivl_queue_method$",
+		  sizeof("$ivl_queue_method$") - 1) == 0 &&
+	  strstr(ivl_expr_name(expr), "_with") != 0) {
+	    if (draw_queue_method_find_sfunc(expr) == 0)
+		  return;
+      }
+
+      if (strcmp(ivl_expr_name(expr), "$size")==0 && parm_count==1) {
+	    ivl_expr_t arg = ivl_expr_parm(expr, 0);
+	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
+		  ivl_signal_t sig = ivl_expr_signal(arg);
+		  unsigned pidx = ivl_expr_property_idx(arg);
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+		  fprintf(vvp_out, "    %%prop/queue/size %u;\n", pidx);
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  return;
+	    }
+      }
+
+      if ((strcmp(ivl_expr_name(expr), "$ivl_queue_method$sum") == 0 ||
+	   strcmp(ivl_expr_name(expr), "$ivl_queue_method$product") == 0) &&
+	  parm_count == 1) {
+	    ivl_expr_t arg = ivl_expr_parm(expr, 0);
+	    unsigned wid = ivl_expr_width(expr);
+	    const char* op = strcmp(ivl_expr_name(expr), "$ivl_queue_method$product") == 0
+			       ? "product"
+			       : "sum";
+	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
+		  ivl_signal_t clas = ivl_expr_signal(arg);
+		  unsigned pidx = ivl_expr_property_idx(arg);
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
+		  fprintf(vvp_out, "    %%queue/%s/prop/v %u, %u;\n", op, pidx, wid);
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  return;
+	    }
+	    assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
+	    fprintf(vvp_out, "    %%queue/%s/v v%p_0, %u;\n",
+	            op, ivl_expr_signal(arg), wid);
 	    return;
       }
 
@@ -1357,7 +1449,9 @@ void draw_eval_vec4(ivl_expr_t expr)
       }
 
       assert(ivl_expr_value(expr) == IVL_VT_BOOL ||
-	     ivl_expr_value(expr) == IVL_VT_VECTOR);
+	     ivl_expr_value(expr) == IVL_VT_VECTOR ||
+	     (ivl_expr_type(expr) == IVL_EX_SELECT && ivl_expr_oper2(expr) != 0) ||
+	     ivl_expr_type(expr) == IVL_EX_PROPERTY);
 
       switch (ivl_expr_type(expr)) {
 	  case IVL_EX_BINARY:

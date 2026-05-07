@@ -890,32 +890,38 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
       if (tmp == 0) return 0;
 
       if ((cast_type != IVL_VT_NO_TYPE) && (cast_type != tmp->expr_type())) {
-            switch (tmp->expr_type()) {
-                case IVL_VT_BOOL:
-                case IVL_VT_LOGIC:
-                case IVL_VT_REAL:
-                  break;
-                default:
-                  cerr << tmp->get_fileline() << ": error: "
-                          "The expression '" << *pe << "' cannot be implicitly "
-                          "cast to the target type." << endl;
-                  des->errors += 1;
-                  delete tmp;
-                  return 0;
-            }
-            switch (cast_type) {
-                case IVL_VT_REAL:
-                  tmp = cast_to_real(tmp);
-                  break;
-                case IVL_VT_BOOL:
-                  tmp = cast_to_int2(tmp, pos_context_width);
-                  break;
-                case IVL_VT_LOGIC:
-                  tmp = cast_to_int4(tmp, pos_context_width);
-                  break;
-                default:
-                  break;
-            }
+	    bool qdar_mix =
+		  (cast_type == IVL_VT_QUEUE || cast_type == IVL_VT_DARRAY) &&
+		  (tmp->expr_type() == IVL_VT_QUEUE ||
+		   tmp->expr_type() == IVL_VT_DARRAY);
+	    if (!qdar_mix) {
+		  switch (tmp->expr_type()) {
+		      case IVL_VT_BOOL:
+		      case IVL_VT_LOGIC:
+		      case IVL_VT_REAL:
+			break;
+		      default:
+			cerr << tmp->get_fileline() << ": error: "
+				"The expression '" << *pe << "' cannot be implicitly "
+				"cast to the target type." << endl;
+			des->errors += 1;
+			delete tmp;
+			return 0;
+		  }
+		  switch (cast_type) {
+		      case IVL_VT_REAL:
+			tmp = cast_to_real(tmp);
+			break;
+		      case IVL_VT_BOOL:
+			tmp = cast_to_int2(tmp, pos_context_width);
+			break;
+		      case IVL_VT_LOGIC:
+			tmp = cast_to_int4(tmp, pos_context_width);
+			break;
+		      default:
+			break;
+		  }
+	    }
       }
 
       eval_expr(tmp, context_width);
@@ -958,11 +964,22 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 		  compatible = lv_net_type->type_compatible(tmp->net_type());
 	    else
 		  compatible = false;
+      } else if ((cast_type == IVL_VT_QUEUE || cast_type == IVL_VT_DARRAY) &&
+		 (expr_type == IVL_VT_QUEUE || expr_type == IVL_VT_DARRAY)) {
+	    if (tmp->net_type())
+		  compatible = lv_net_type->type_compatible(tmp->net_type());
+	    else
+		  compatible = cast_type == expr_type;
       } else if (cast_type == IVL_VT_NO_TYPE) {
 	    compatible = true;
       } else {
 	    compatible = cast_type == expr_type;
       }
+
+	/* R-value may report a coarse expr_type while net_type matches (e.g.
+	 * queue locators); prefer structural compatibility when available. */
+      if (!compatible && tmp->net_type())
+	    compatible = lv_net_type->type_compatible(tmp->net_type());
 
       if (!compatible) {
 	      // Catch some special cases.
