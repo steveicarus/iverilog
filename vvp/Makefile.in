@@ -28,11 +28,11 @@ VPATH = $(srcdir)
 
 bindir = @bindir@
 libdir = @libdir@
-mandir = @mandir@
+man1dir = @mandir@/man1
+docdir = @docdir@
 # This is actually the directory where we install our own header files.
 # It is a little different from the generic includedir.
 ivl_includedir = @includedir@/iverilog$(suffix)
-pdfdir = @docdir@
 
 # For a cross compile these defines will need to be set accordingly.
 HOSTCC = @CC@
@@ -195,25 +195,15 @@ vvp.ps: vvp.man
 vvp.pdf: vvp.ps
 	$(PS2PDF) $< $@
 
+INSTALL_DOC =
+ifneq ($(MAN),none)
+INSTALL_DOC += installman
+ifneq ($(PS2PDF),none)
 ifeq (@MINGW32@,yes)
-ifeq ($(MAN),none)
-INSTALL_DOC = installman
-INSTALL_PDFDIR = $(prefix)
-else
-ifeq ($(PS2PDF),none)
-INSTALL_DOC = installman
-INSTALL_PDFDIR = $(prefix)
-else
-INSTALL_DOC = installpdf installman
-INSTALL_PDFDIR = $(pdfdir)
+INSTALL_DOC += installpdf
 all: vvp.pdf
 endif
 endif
-INSTALL_DOCDIR = $(mandir)/man1
-else
-INSTALL_DOC = installman
-INSTALL_DOCDIR = $(mandir)/man1
-INSTALL_PDFDIR = $(prefix)
 endif
 
 stamp-config-h: $(srcdir)/config.h.in ../config.status
@@ -226,10 +216,10 @@ install: all installdirs installfiles
 F = ./vvp@EXEEXT@ $(srcdir)/libvvp.h $(INSTALL_DOC)
 
 installman: vvp.man installdirs
-	$(INSTALL_DATA) vvp.man "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1"
+	$(INSTALL_DATA) vvp.man "$(DESTDIR)$(man1dir)/vvp$(suffix).1"
 
 installpdf: vvp.pdf installdirs
-	$(INSTALL_DATA) vvp.pdf "$(DESTDIR)$(pdfdir)/vvp$(suffix).pdf"
+	$(INSTALL_DATA) vvp.pdf "$(DESTDIR)$(docdir)/vvp$(suffix).pdf"
 
 installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
@@ -241,13 +231,14 @@ endif
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" \
 		"$(DESTDIR)$(libdir)" \
-		"$(DESTDIR)$(INSTALL_DOCDIR)" \
-		"$(DESTDIR)$(INSTALL_PDFDIR)"
+		"$(DESTDIR)$(docdir)" \
+		"$(DESTDIR)$(man1dir)"
 
 
 uninstall: $(UNINSTALL32)
 	rm -f "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
-	rm -f "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1" "$(DESTDIR)$(pdfdir)/vvp$(suffix).pdf"
+	rm -f "$(DESTDIR)$(man1dir)/vvp$(suffix).1" \
+	      "$(DESTDIR)$(docdir)/vvp$(suffix).pdf"
 ifeq (@LIBVVP@,yes)
 	rm -f "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT)"
 	rm -f "$(DESTDIR)$(ivl_includedir)/libvvp.h"
