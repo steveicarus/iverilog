@@ -1283,22 +1283,24 @@ constraint_set /* IEEE1800-2005 A.1.9 */
   ;
 
 data_declaration /* IEEE1800-2005: A.2.1.3 */
-   : attribute_list_opt K_const_opt data_type list_of_variable_decl_assignments ';'
-      { data_type_t *data_type = $3;
-	if (!data_type) {
-	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
-	      FILE_NAME(data_type, @3);
-	}
-	pform_makewire(@3, 0, str_strength, $4, NetNet::IMPLICIT_REG, data_type,
-		       $1, $2);
-      }
-  | attribute_list_opt K_const_opt K_var data_type_or_implicit list_of_variable_decl_assignments ';'
+   : attribute_list_opt K_const_opt variable_lifetime_opt data_type list_of_variable_decl_assignments ';'
       { data_type_t *data_type = $4;
 	if (!data_type) {
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @4);
+	}
+	pform_makewire(@4, 0, str_strength, $5, NetNet::IMPLICIT_REG, data_type,
+		       $1, $2);
+	var_lifetime = LexicalScope::INHERITED;
+      }
+  | attribute_list_opt K_const_opt K_var variable_lifetime_opt data_type_or_implicit list_of_variable_decl_assignments ';'
+      { data_type_t *data_type = $5;
+	if (!data_type) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
 	      FILE_NAME(data_type, @3);
 	}
-	pform_make_var(@3, $5, data_type, $1, $2);
+	pform_make_var(@3, $6, data_type, $1, $2);
+	var_lifetime = LexicalScope::INHERITED;
       }
   | attribute_list_opt K_event event_variable_list ';'
       { if ($3) pform_make_events(@2, $3);
@@ -2705,10 +2707,16 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
 
 variable_lifetime_opt
   : lifetime
-      { if (pform_requires_sv(@1, "Overriding default variable lifetime") &&
-	    $1 != pform_peek_scope()->default_lifetime) {
-	      yyerror(@1, "sorry: Overriding the default variable lifetime "
-			  "is not yet supported.");
+      { LexicalScope*scope = pform_peek_scope();
+	if (dynamic_cast<PPackage*>(scope)) {
+	      if ($1 == LexicalScope::AUTOMATIC) {
+		    yyerror(@1, "error: automatic lifetime is not allowed for "
+				"variables declared in packages.");
+	      }
+	} else if (pform_requires_sv(@1, "Overriding default variable lifetime") &&
+		   $1 != scope->default_lifetime) {
+	      yyerror(@1, "sorry: Overriding the default variable "
+			  "lifetime is not yet supported.");
 	}
 	var_lifetime = $1;
       }
