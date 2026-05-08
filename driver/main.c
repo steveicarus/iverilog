@@ -38,7 +38,7 @@ const char NOTICE[] =
 ;
 
 const char HELP[] =
-"Usage: iverilog [-EiRSuvV] [-B[IMPV] base] [-c cmdfile|-f cmdfile]\n"
+"Usage: iverilog [-EiRSuvV] [-B[IMPVt] base] [-c cmdfile|-f cmdfile]\n"
 "                [-g1995|-g2001|-g2005|-g2005-sv|-g2009|-g2012|-g2017|-g2023] [-g<feature>]\n"
 "                [-D macro[=defn]] [-I includedir] [-L moduledir]\n"
 "                [-M [mode=]depfile] [-m module]\n"
@@ -112,6 +112,7 @@ extern void cfreset(FILE*fd, const char*path);
 
 const char*base = 0;
 const char*vpi_dir = 0;
+const char*tconfig_dir = 0;
 const char*ivl_dir = 0;
 const char*ivlpp_dir = 0;
 const char*vhdlpp_dir= 0;
@@ -1237,6 +1238,9 @@ int main(int argc, char **argv)
 		      case 'V': /* Path for the vhdlpp VHDL processor */
 			vhdlpp_dir = optarg+1;
 			break;
+		      case 't': /* Path to target.conf for the -ttarget option */
+			tconfig_dir = optarg+1;
+			break;
 		      default: /* Otherwise, this is a default base. */
 			base=optarg;
 			break;
@@ -1383,6 +1387,8 @@ int main(int argc, char **argv)
 	    ivl_dir = base;
       if (vhdlpp_dir == 0)
 	    vhdlpp_dir = base;
+      if (tconfig_dir == 0)
+	    tconfig_dir = base;
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
@@ -1392,7 +1398,7 @@ int main(int argc, char **argv)
 
 	/* Make a common conf file path to reflect the target. */
       snprintf(iconfig_common_path, sizeof iconfig_common_path, "%s%c%s%s.conf",
-	      base, sep, targ, synth_flag? "-s" : "");
+	      tconfig_dir, sep, targ, synth_flag? "-s" : "");
 
 	/* Write values to the iconfig file. */
       fprintf(iconfig_file, "basedir:%s\n", base);

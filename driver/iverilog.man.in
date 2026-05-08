@@ -4,7 +4,7 @@ iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[\-EiRSuVv] [\-B[IMPV]path] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
+[\-EiRSuVv] [\-B[IMPVt]path] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
 [\-Pparameter=value] [\-pflag=value] [\-dname]
 [\-g1995\:|\-g2001\:|\-g2005\:|\-g2005-sv\:|\-g2009\:|\-g2012\:|\-g2017\:|\-g2023\:|\-g<feature>]
 [\-Iincludedir] [\-Lmoduledir] [\-mmodule] [\-M[mode=]file] [\-Nfile]
@@ -45,6 +45,11 @@ Directory for the \fIivlpp\fP preprocessor.
 .TP
 .BI \-BV path
 Directory for the \fIvhdlpp\fP VHDL preprocessor.
+.TP
+.BI \-Bt path
+Directory used to locate target configuration files for the
+\fB\-t\fP\fItarget\fP option. The configuration file name is
+\fItarget\fP.conf.
 .RE
 .TP 8
 .B -c\fIfile\fP -f\fIfile\fP
