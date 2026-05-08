@@ -23,6 +23,7 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
 datarootdir = @datarootdir@
+abs_builddir = @abs_builddir@
 
 VPATH = $(srcdir)
 
@@ -33,6 +34,7 @@ mandir = @mandir@
 # It is a little different from the generic includedir.
 ivl_includedir = @includedir@/iverilog$(suffix)
 pdfdir = @docdir@
+pkgconfigdir = $(libdir)/pkgconfig
 
 # For a cross compile these defines will need to be set accordingly.
 HOSTCC = @CC@
@@ -58,66 +60,138 @@ INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
 endif
 
 CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ -DICARUS_VPI_CONST=const
-CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
-CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
-LDFLAGS = @rdynamic@ @LDFLAGS@
-LIBS = @LIBS@ @EXTRALIBS@
+CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@ @PICFLAG@
+CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@ @PICFLAG@
+LDFLAGS = @rdynamic@ @LDFLAGS@ @PICFLAG@
+LIBS = @LIBS@ @EXTRALIBS@ @DLLIB@
 
-ifeq (@WIN32@,yes)
+LIBVVP_VERSION = @LIBVVP_VERSION@
+LIBVVP_SOVERSION = @LIBVVP_SOVERSION@
+LIBBASENAME=vvp$(suffix)
+LDFLAGS_SHARED = @rdynamic@ @shared@ @LDFLAGS@
+
+ifeq (@MINGW32@,yes)
 SLDIR=$(bindir)
 SLEXT=dll
+IMPEXT=dll.a
+LIBPREFIX=lib
+LIBNAME=$(LIBPREFIX)$(LIBBASENAME)
+LIBSONAME=$(LIBNAME).$(SLEXT).$(LIBVVP_SOVERSION)
+LIBREALNAME=$(LIBNAME).$(SLEXT).$(LIBVVP_VERSION)
+LIBLINKNAME=$(LIBNAME).$(SLEXT)
+LIBTARGET=$(LIBNAME)-$(LIBVVP_SOVERSION).$(SLEXT)
+LIBBUILD=$(LIBTARGET)
+LIBLINKFLAGS=-Wl,--out-implib,$(LIBNAME).$(IMPEXT) -Wl,--no-undefined
+LIBPOSTBUILD=@true
+LIBINSTALL=$(LIBTARGET)
+LIBDEVELINSTALL=$(LIBNAME).$(IMPEXT)
+else ifeq (@WIN32@,yes)
+SLDIR=$(bindir)
+SLEXT=dll
+IMPEXT=lib
+LIBPREFIX=
+LIBNAME=$(LIBPREFIX)$(LIBBASENAME)
+LIBSONAME=$(LIBNAME).$(SLEXT).$(LIBVVP_SOVERSION)
+LIBREALNAME=$(LIBNAME).$(SLEXT).$(LIBVVP_VERSION)
+LIBLINKNAME=$(LIBNAME).$(SLEXT)
+LIBTARGET=$(LIBLINKNAME)
+LIBBUILD=$(LIBLINKNAME)
+LIBLINKFLAGS=
+LIBPOSTBUILD=@true
+LIBINSTALL=$(LIBTARGET)
+LIBDEVELINSTALL=
+else ifneq (,$(findstring darwin,@host_os@))
+SLDIR=$(libdir)
+SLEXT=dylib
+LIBPREFIX=lib
+LIBNAME=$(LIBPREFIX)$(LIBBASENAME)
+LIBSONAME=$(LIBNAME).$(LIBVVP_SOVERSION).$(SLEXT)
+LIBREALNAME=$(LIBNAME).$(LIBVVP_VERSION).$(SLEXT)
+LIBLINKNAME=$(LIBNAME).$(SLEXT)
+LIBTARGET=$(LIBREALNAME)
+LIBBUILD=$(LIBTARGET)
+LDFLAGS_SHARED=-dynamiclib
+LIBLINKFLAGS= \
+  -Wl,-install_name,$(libdir)/$(LIBSONAME) \
+  -Wl,-compatibility_version,$(LIBVVP_SOVERSION) \
+  -Wl,-current_version,$(LIBVVP_VERSION)
+LIBPOSTBUILD= \
+  ln -sf $(LIBREALNAME) $(LIBSONAME) && \
+  ln -sf $(LIBSONAME) $(LIBLINKNAME)
+LIBINSTALL=$(LIBTARGET)
+LIBDEVELINSTALL=
 else
 SLDIR=$(libdir)
 SLEXT=so
+LIBPREFIX=lib
+LIBNAME=$(LIBPREFIX)$(LIBBASENAME)
+LIBSONAME=$(LIBNAME).$(SLEXT).$(LIBVVP_SOVERSION)
+LIBREALNAME=$(LIBNAME).$(SLEXT).$(LIBVVP_VERSION)
+LIBLINKNAME=$(LIBNAME).$(SLEXT)
+LIBTARGET=$(LIBREALNAME)
+LIBBUILD=$(LIBLINKNAME)
+LIBLINKFLAGS=-Wl,-soname,$(LIBSONAME)
+LIBPOSTBUILD=ln -sf $(LIBREALNAME) $(LIBSONAME) && ln -sf $(LIBSONAME) $(LIBLINKNAME)
+LIBINSTALL=$(LIBTARGET)
+LIBDEVELINSTALL=
 endif
-
-dllib=@DLLIB@
 
 MDIR1 = -DMODULE_DIR1='"$(libdir)/ivl$(suffix)"'
 
-VPI = vpi_modules.o vpi_bit.o vpi_callback.o vpi_cobject.o vpi_const.o vpi_darray.o \
-      vpi_event.o vpi_iter.o vpi_mcd.o \
-      vpi_priv.o vpi_scope.o vpi_real.o vpi_signal.o vpi_string.o vpi_tasks.o vpi_time.o \
-      vpi_vthr_vector.o vpip_bin.o vpip_hex.o vpip_oct.o \
-      vpip_to_dec.o vpip_format.o vvp_vpi.o
+CORE_OBJ = lib_main.o \
+           parse.o parse_misc.o lexor.o arith.o array_common.o array.o bufif.o compile.o \
+           concat.o dff.o class_type.o enum_type.o extend.o file_line.o latch.o npmos.o part.o \
+           permaheap.o reduce.o resolv.o \
+           sfunc.o stop.o \
+           substitute.o \
+           symbols.o ufunc.o codes.o vthread.o schedule.o \
+           statistics.o tables.o udp.o vvp_island.o vvp_net.o vvp_net_sig.o \
+           vvp_object.o vvp_cobject.o vvp_darray.o event.o logic.o delay.o \
+           words.o island_tran.o
 
-O = lib_main.o \
-    parse.o parse_misc.o lexor.o arith.o array_common.o array.o bufif.o compile.o \
-    concat.o dff.o class_type.o enum_type.o extend.o file_line.o latch.o npmos.o part.o \
-    permaheap.o reduce.o resolv.o \
-    sfunc.o stop.o \
-    substitute.o \
-    symbols.o ufunc.o codes.o vthread.o schedule.o \
-    statistics.o tables.o udp.o vvp_island.o vvp_net.o vvp_net_sig.o \
-    vvp_object.o vvp_cobject.o vvp_darray.o event.o logic.o delay.o \
-    words.o island_tran.o $(VPI)
+VPI_OBJ = vpi_modules.o vpi_bit.o vpi_callback.o vpi_cobject.o vpi_const.o vpi_darray.o \
+          vpi_event.o vpi_iter.o vpi_mcd.o \
+          vpi_priv.o vpi_scope.o vpi_real.o vpi_signal.o vpi_string.o vpi_tasks.o vpi_time.o \
+          vpi_vthr_vector.o vpip_bin.o vpip_hex.o vpip_oct.o \
+          vpip_to_dec.o vpip_format.o vvp_vpi.o
+
+LIB_OBJ = $(CORE_OBJ) $(VPI_OBJ)
+LIB_CLEAN = $(LIBNAME)*.$(SLEXT)* libvvp.pc
+
+VVP_OBJ = main.o
+VVP_CLEAN = vvp@EXEEXT@
+ifeq (@WIN32@,yes)
+# To support cocotb, we export the VPI functions directly. This allows
+# cocotb to build VPI modules without using our vpi_user.h and libvpi.a.
+# The .def file controls what is exported.
+VVP_OBJ += $(srcdir)/vvp.def
+endif
+ifeq (@LIBVVP@,yes)
+VVP_LDFLAGS = -lvvp$(suffix) -Wl,-rpath,$(libdir)
+VVP_DEPS = $(LIBBUILD)
+else
+VVP_OBJ += $(LIB_OBJ)
+endif
+ifneq (@install_suffix@,)
+VVP_POSTBUILD = ln -sf vvp@EXEEXT@ vvp$(suffix)@EXEEXT@
+VVP_CLEAN += vvp$(suffix)@EXEEXT@
+endif
 
 all: dep vvp@EXEEXT@ vvp.man
 
 check: all
-ifeq (@WIN32@,yes)
-ifeq (@install_suffix@,)
-	./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
-else
-	# On Windows if we have a suffix we must run the vvp test with
-	# a suffix since it was built/linked that way.
-	ln vvp.exe vvp$(suffix).exe
-	./vvp$(suffix) -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
-	rm -f vvp$(suffix).exe
-endif
-else
-	$(ENV_VVP) ./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
-endif
+	$(ENV_VVP) ./vvp$(suffix)@EXEEXT@ -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
 
 clean:
-	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc libvvp$(suffix).$(SLEXT)
-	rm -rf dep vvp@EXEEXT@ parse.output vvp.man vvp.ps vvp.pdf vvp.exp
+	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc $(LIB_CLEAN)
+	rm -f $(VVP_CLEAN) parse.output vvp.man vvp.ps vvp.pdf vvp.exp
+	rm -rf dep
 
 distclean: clean
 	rm -f Makefile config.log
 	rm -f stamp-config-h config.h
 
-cppcheck: $(O:.o=.cc) draw_tt.c
+cppcheck: $(LIB_OBJ:.o=.cc) draw_tt.c
 	cppcheck --enable=all --std=c99 --std=c++11 -f \
 	         --check-level=exhaustive \
 	         --suppressions-list=$(srcdir)/../cppcheck-global.sup \
@@ -136,29 +210,14 @@ dep:
 	mkdir dep
 
 ifeq (@LIBVVP@,yes)
-
-CPPFLAGS+= -fpic
-
-# To avoid setting LD_LIBRARY_PATH when running vvp from the build tree,
-# add option -Wl,-rpath=`pwd` to the CXX command below.
-
-vvp@EXEEXT@: main.o $(srcdir)/vvp.def libvvp$(suffix).$(SLEXT)
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o -L. $(LDFLAGS) -lvvp$(suffix) $(LIBS)
-
-libvvp$(suffix).$(SLEXT): $O
-	$(CXX) -shared $(LDFLAGS) -o libvvp$(suffix).$(SLEXT) $O $(LIBS) $(dllib)
-else
-ifeq (@WIN32@,yes)
-# To support cocotb, we export the VPI functions directly. This allows
-# cocotb to build VPI modules without using our vpi_user.h and libvpi.a.
-# The .def file controls what is exported.
-vvp@EXEEXT@: main.o $O $(srcdir)/vvp.def
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $(LDFLAGS) $(srcdir)/vvp.def main.o $O $(dllib) $(LIBS)
-else
-vvp@EXEEXT@: $O main.o
-	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o $O $(LIBS) $(dllib)
+$(LIBBUILD): $(LIB_OBJ)
+	$(CXX) $(LDFLAGS_SHARED) $(LIBLINKFLAGS) -o $(LIBTARGET) $^ $(LIBS)
+	$(LIBPOSTBUILD)
 endif
-endif
+
+vvp@EXEEXT@: $(VVP_OBJ) $(VVP_DEPS)
+	$(CXX) $(LDFLAGS) -o $@ $(VVP_OBJ) -L. $(VVP_LDFLAGS) $(LIBS)
+	$(VVP_POSTBUILD)
 
 %.o: %.cc config.h | dep
 	$(CXX) $(CPPFLAGS) -DIVL_SUFFIX='"$(suffix)"' $(MDIR1) $(MDIR2) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
@@ -221,7 +280,7 @@ stamp-config-h: $(srcdir)/config.h.in ../config.status
 	cd ..; ./config.status --header=vvp/config.h
 config.h: stamp-config-h
 
-install: all installdirs installfiles
+install: all installdirs installfiles installpkgconfig
 
 F = ./vvp@EXEEXT@ $(srcdir)/libvvp.h $(INSTALL_DOC)
 
@@ -234,23 +293,46 @@ installpdf: vvp.pdf installdirs
 installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
 ifeq (@LIBVVP@,yes)
-	$(INSTALL_PROGRAM) ./libvvp$(suffix).$(SLEXT) "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT)"
+	$(INSTALL_PROGRAM) ./$(LIBINSTALL) "$(DESTDIR)$(SLDIR)/$(LIBINSTALL)"
+ifeq (@WIN32@,yes)
+ifneq ($(LIBDEVELINSTALL),)
+	$(INSTALL_PROGRAM) ./$(LIBDEVELINSTALL) "$(DESTDIR)$(libdir)/$(LIBDEVELINSTALL)"
+endif
+else
+	# Install real library
+	ln -sf $(LIBREALNAME) "$(DESTDIR)$(SLDIR)/$(LIBSONAME)"
+	ln -sf $(LIBSONAME) "$(DESTDIR)$(SLDIR)/$(LIBLINKNAME)"
+endif
 	$(INSTALL_DATA) $(srcdir)/libvvp.h "$(DESTDIR)$(ivl_includedir)/libvvp.h"
 endif
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" \
+		"$(DESTDIR)$(ivl_includedir)" \
 		"$(DESTDIR)$(libdir)" \
 		"$(DESTDIR)$(INSTALL_DOCDIR)" \
 		"$(DESTDIR)$(INSTALL_PDFDIR)"
 
+installpkgconfig:
+	$(INSTALL) -d "$(DESTDIR)$(pkgconfigdir)"
+	$(INSTALL_DATA) libvvp.pc "$(DESTDIR)$(pkgconfigdir)/libvvp$(suffix).pc"
 
 uninstall: $(UNINSTALL32)
 	rm -f "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
 	rm -f "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1" "$(DESTDIR)$(pdfdir)/vvp$(suffix).pdf"
 ifeq (@LIBVVP@,yes)
-	rm -f "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT)"
+	rm -f "$(DESTDIR)$(SLDIR)/$(LIBINSTALL)"
+ifeq (@WIN32@,yes)
+ifneq ($(LIBDEVELINSTALL),)
+	rm -f "$(DESTDIR)$(libdir)/$(LIBDEVELINSTALL)"
+endif
+else
+	rm -f "$(DESTDIR)$(SLDIR)/$(LIBLINKNAME)"
+	rm -f "$(DESTDIR)$(SLDIR)/$(LIBSONAME)"
+	rm -f "$(DESTDIR)$(SLDIR)/$(LIBREALNAME)"
+endif
+	rm -f "$(DESTDIR)$(pkgconfigdir)/libvvp$(suffix).pc"
 	rm -f "$(DESTDIR)$(ivl_includedir)/libvvp.h"
 endif
 
--include $(patsubst %.o, dep/%.d, $O)
+-include $(patsubst %.o, dep/%.d, $LIB_OBJ)

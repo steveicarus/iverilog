@@ -15,6 +15,16 @@ AC_SUBST([VERSION], ["VER_MAJOR.VER_MINOR (VER_EXTRA)"])
 # used in res.rc
 AC_SUBST([PRODUCTVERSION], ["VER_MAJOR,VER_MINOR,0,0"])
 
+# setup libvvp soversion, which depends on abi not package version
+AC_SUBST([LIBVVP_SOVERSION], [1])
+# setup libvvp version
+AC_SUBST([LIBVVP_VERSION], [VER_MAJOR.VER_MINOR])
+
+# setup libvvp soversion, which depends on abi not package version
+AC_SUBST([LIBVVP_SOVERSION], [1])
+# setup libvvp version
+AC_SUBST([LIBVVP_VERSION], [VER_MAJOR.VER_MINOR])
+
 AC_CONFIG_SRCDIR([netlist.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_HEADERS([_pli_types.h])
@@ -25,6 +35,9 @@ AC_CONFIG_HEADERS([libveriuser/config.h])
 AC_CONFIG_HEADERS([tgt-vvp/vvp_config.h])
 AC_CONFIG_HEADERS([tgt-vhdl/vhdl_config.h])
 AC_CONFIG_HEADERS([tgt-pcb/pcb_config.h])
+
+dnl used by ivtest
+AX_CONFIGURE_ARGS_NO_PREFIX
 
 AC_CANONICAL_HOST
 dnl Checks for programs.
@@ -203,7 +216,14 @@ AC_FUNC_FSEEKO
 # Build VVP as a library and stub
 AC_ARG_ENABLE([libvvp],
     [AS_HELP_STRING([--enable-libvvp], [build VVP as a shared library])],
-    [AC_SUBST(LIBVVP, yes)],[])
+    [enable_libvvp=yes],
+    [enable_libvvp=no])
+
+AC_SUBST([LIBVVP], [$enable_libvvp])
+
+AS_IF([test "x$enable_libvvp" = "xyes"],
+    [AC_MSG_NOTICE([Building with libvvp support enabled])],
+    [AC_MSG_NOTICE([Building with libvvp support disabled])])
 
 AC_ARG_ENABLE([libveriuser],
     [AS_HELP_STRING([--enable-libveriuser], [include support for PLI 1 (deprecated)])],
@@ -429,6 +449,7 @@ AC_CONFIG_FILES([
     vhdlpp/Makefile
     vpi/Makefile
     vvp/Makefile
+    vvp/libvvp.pc
     vvp/vvp.man
 ])
 AC_OUTPUT
