@@ -1905,6 +1905,105 @@ void vvp_vector4_t::invert()
       }
 }
 
+#define BIT_MASK(n) ((n) ? ((~0UL) >> (BITS_PER_WORD - (n))) : ~0UL)
+
+vvp_bit4_t vvp_vector4_t::reduce_or() const
+{
+      unsigned long mask = BIT_MASK(size_ % BITS_PER_WORD);
+      vvp_bit4_t res = BIT4_0;
+
+      if (size_ <= BITS_PER_WORD) {
+	    if ((abits_val_ & ~bbits_val_ & mask) != 0UL)
+		  return BIT4_1;
+	    if ((bbits_val_ & mask) != 0UL)
+		  return BIT4_X;
+      } else {
+	    unsigned words = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
+	    unsigned idx;
+	    for (idx = 0; idx < words - 1; idx += 1) {
+		  if ((abits_ptr_[idx] & ~bbits_ptr_[idx]) != 0UL)
+			return BIT4_1;
+		  if (bbits_ptr_[idx] != 0UL)
+			res = BIT4_X;
+	    }
+	    if ((abits_ptr_[idx] & ~bbits_ptr_[idx] & mask) != 0UL)
+		  return BIT4_1;
+	    if ((bbits_ptr_[idx] & mask) != 0UL)
+		  res = BIT4_X;
+      }
+
+      return res;
+}
+
+vvp_bit4_t vvp_vector4_t::reduce_and() const
+{
+      unsigned long mask = BIT_MASK(size_ % BITS_PER_WORD);
+      vvp_bit4_t res = BIT4_1;
+
+      if (size_ <= BITS_PER_WORD) {
+	    if ((abits_val_ | bbits_val_ | ~mask) != ~0UL)
+		  return BIT4_0;
+	    if ((bbits_val_ & mask) != 0UL)
+		  return BIT4_X;
+	} else {
+	    unsigned words = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
+	    unsigned idx;
+	    for (idx = 0; idx < words - 1; idx += 1) {
+		  if ((abits_ptr_[idx] | bbits_ptr_[idx]) != ~0UL)
+			return BIT4_0;
+		  if (bbits_ptr_[idx] != 0UL)
+			res = BIT4_X;
+	    }
+	    if ((abits_ptr_[idx] | bbits_ptr_[idx] | ~mask) != ~0UL)
+		  return BIT4_0;
+	    if ((bbits_ptr_[idx] & mask) != 0UL)
+		  res = BIT4_X;
+      }
+
+      return res;
+}
+
+static unsigned long parity(unsigned long val)
+{
+#if defined(__GNUC__)
+      // The compiler builtin can use target-specific CPU instructions.
+      return __builtin_parityl(val);
+#else
+#if ULONG_MAX > 0xffffffffUL
+	val ^= val >> 32;
+#endif
+	val ^= val >> 16;
+	val ^= val >> 8;
+	val ^= val >> 4;
+
+      return (0x6996 >> (val & 0xf)) & 1;
+#endif
+}
+
+vvp_bit4_t vvp_vector4_t::reduce_xor() const
+{
+      unsigned long mask = BIT_MASK(size_ % BITS_PER_WORD);
+
+      if (size_ <= BITS_PER_WORD) {
+	    if ((bbits_val_ & mask) != 0UL)
+		  return BIT4_X;
+	    return parity(abits_val_ & mask) ? BIT4_1 : BIT4_0;
+      } else {
+	    unsigned words = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
+	    unsigned long val_a = 0UL;
+	    unsigned idx;
+	    for (idx = 0; idx < words - 1; idx += 1) {
+		  if (bbits_ptr_[idx] != 0UL)
+			return BIT4_X;
+		  val_a ^= abits_ptr_[idx];
+	    }
+	    if ((bbits_ptr_[idx] & mask) != 0UL)
+		  return BIT4_X;
+	    val_a ^= abits_ptr_[idx] & mask;
+	    return parity(val_a) ? BIT4_1 : BIT4_0;
+      }
+}
+
 vvp_vector4_t& vvp_vector4_t::operator &= (const vvp_vector4_t&that)
 {
 	// The truth table is:
