@@ -169,7 +169,7 @@ clean:
 	rm -f ivl.exp
 	rm -f iverilog_man.ps iverilog_man.pdf iverilog_man_$(VERSION_MAJOR)_$(VERSION_MINOR).pdf
 	rm -f parse.output syn-rules.output dosify$(BUILDEXT) ivl@EXEEXT@ check.vvp
-	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc version_base.h
+	rm -f lexor_keyword.cc libivl.a libvpi.a syn-rules.cc version_base.h
 	rm -rf dep
 
 distclean: clean
