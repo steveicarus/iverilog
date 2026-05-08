@@ -267,7 +267,7 @@ iverilog_man.ps: driver/iverilog.man vvp/vvp.man driver-vpi/iverilog-vpi.man
 
 iverilog_man.pdf: iverilog_man.ps
 	$(PS2PDF) $< $@
-	cp $@ iverilog-vpi.man_$(VERSION_MAJOR)_$(VERSION_MINOR).pdf
+	cp $@ iverilog_man_$(VERSION_MAJOR)_$(VERSION_MINOR).pdf
 
 # For VERSION_TAG in driver/main.c, first try git-describe, then look for a
 # release_tag.h file in the source tree (included in snapshots and releases),
