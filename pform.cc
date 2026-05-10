@@ -1386,6 +1386,33 @@ Module::port_t* pform_module_port_reference(const struct vlltype&loc,
       return ptmp;
 }
 
+Module::port_t* pform_module_interface_port_reference(
+					  const struct vlltype&loc,
+					  perm_string interface_type,
+					  perm_string modport_name,
+					  perm_string name)
+{
+      Module::port_t*ptmp = new Module::port_t;
+
+      ptmp->port_kind = Module::port_t::P_INTERFACE;
+      ptmp->name = name;
+      ptmp->interface_type = interface_type;
+      ptmp->modport_name = modport_name;
+      ptmp->lexical_pos = loc.lexical_pos;
+
+      return ptmp;
+}
+
+void pform_module_define_interface_port(const struct vlltype&loc,
+					Module::port_t*port,
+					list<named_pexpr_t>*attr)
+{
+      ivl_assert(loc, port);
+      ivl_assert(loc, port->is_interface_port());
+
+      delete attr;
+}
+
 void pform_module_set_ports(vector<Module::port_t*>*ports)
 {
       assert(! pform_cur_module.empty());

@@ -28,6 +28,11 @@ using namespace std;
 
 list<Module::named_expr_t> Module::user_defparms;
 
+Module::port_t::port_t()
+: port_kind(P_SIGNAL), default_value(0), lexical_pos(0)
+{
+}
+
 /* n is a permallocated string. */
 Module::Module(LexicalScope*parent, perm_string n)
 : PScopeExtra(n, parent)
@@ -63,10 +68,16 @@ const vector<PEIdent*>& Module::get_port(unsigned idx) const
       ivl_assert(*this, idx < ports.size());
       static const vector<PEIdent*> zero;
 
-      if (ports[idx])
+      if (ports[idx] && !ports[idx]->is_interface_port())
 	    return ports[idx]->expr;
       else
 	    return zero;
+}
+
+const Module::port_t* Module::get_port_info(unsigned idx) const
+{
+      ivl_assert(*this, idx < ports.size());
+      return ports[idx];
 }
 
 unsigned Module::find_port(const char*name) const

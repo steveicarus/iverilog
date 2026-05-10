@@ -812,6 +812,37 @@ const NetScope* NetScope::child(const hname_t&name) const
 	    return cur->second;
 }
 
+void NetScope::add_interface_port_alias(perm_string formal_name,
+					NetScope*actual_scope,
+					const PModport*modport)
+{
+      ivl_assert(*this, actual_scope);
+      interface_port_aliases_[formal_name] = interface_port_alias_t(actual_scope, modport);
+}
+
+const NetScope::interface_port_alias_t*
+NetScope::find_interface_port_alias(perm_string formal_name) const
+{
+      map<perm_string,interface_port_alias_t>::const_iterator cur;
+      cur = interface_port_aliases_.find(formal_name);
+      if (cur == interface_port_aliases_.end())
+	    return 0;
+
+      return &cur->second;
+}
+
+NetScope* NetScope::find_interface_port_alias_scope(perm_string formal_name) const
+{
+      const interface_port_alias_t*cur = find_interface_port_alias(formal_name);
+      return cur? cur->actual_scope : 0;
+}
+
+const PModport* NetScope::find_interface_port_modport(perm_string formal_name) const
+{
+      const interface_port_alias_t*cur = find_interface_port_alias(formal_name);
+      return cur? cur->modport : 0;
+}
+
 /* Helper function to see if the given scope is defined in a class and if
  * so return the class scope. */
 const NetScope* NetScope::get_class_scope() const
@@ -866,6 +897,8 @@ bool NetScope::symbol_exists(perm_string sym)
       if (typedefs_.find(sym) != typedefs_.end())
           return true;
       if (find_event(sym))
+          return true;
+      if (find_interface_port_alias(sym))
           return true;
 
       return false;

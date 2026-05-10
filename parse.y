@@ -461,6 +461,29 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
       return port;
 }
 
+Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
+					      char *modport, char *id,
+					      std::list<named_pexpr_t> *attributes)
+{
+      pform_requires_sv(loc, "Interface port declaration");
+
+      Module::port_t *port = pform_module_interface_port_reference(
+	    loc, lex_strings.make(type), lex_strings.make(modport),
+	    lex_strings.make(id));
+
+      delete[] type;
+      delete[] modport;
+      delete[] id;
+
+      pform_module_define_interface_port(loc, port, attributes);
+
+      port_declaration_context.port_type = NetNet::NOT_A_PORT;
+      port_declaration_context.port_net_type = NetNet::NONE;
+      port_declaration_context.data_type = nullptr;
+
+      return port;
+}
+
 %}
 
 %union {
@@ -4603,10 +4626,20 @@ list_of_port_declarations
       { std::vector<Module::port_t*> *ports = $1;
 
 	Module::port_t* port;
-	port = module_declare_port(@4, $4, port_declaration_context.port_type,
-				   port_declaration_context.port_net_type,
-				   port_declaration_context.data_type,
-				   $5, $6, $3);
+	if (port_declaration_context.port_type == NetNet::NOT_A_PORT) {
+	      yyerror(@4, "error: Incomplete interface port declaration.");
+	      delete[]$4;
+	      delete $5;
+	      delete $6;
+	      delete $3;
+	      port = 0;
+	} else {
+	      port = module_declare_port(@4, $4,
+					 port_declaration_context.port_type,
+					 port_declaration_context.port_net_type,
+					 port_declaration_context.data_type,
+					 $5, $6, $3);
+	}
 	ports->push_back(port);
 	$$ = ports;
       }
@@ -4621,6 +4654,9 @@ list_of_port_declarations
 port_declaration
   : attribute_list_opt port_direction net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
       { $$ = module_declare_port(@5, $5, $2, $3, $4, $6, $7, $1);
+      }
+  | attribute_list_opt IDENTIFIER '.' IDENTIFIER IDENTIFIER
+      { $$ = module_declare_interface_port(@5, $2, $4, $5, $1);
       }
   | attribute_list_opt net_type_or_var data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
       { pform_requires_sv(@4, "Partial ANSI port declaration");
@@ -5714,6 +5750,10 @@ parameter_value_byname_list
 port
   : port_reference
       { $$ = $1; }
+
+  | IDENTIFIER '.' IDENTIFIER IDENTIFIER
+      { $$ = module_declare_interface_port(@4, $1, $3, $4, 0);
+      }
 
   /* This syntax attaches an external name to the port reference so
      that the caller can bind by name to non-trivial port

@@ -4747,6 +4747,9 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 	// If the identifier names a signal (a variable or a net)
 	// then create a NetESignal node to handle it.
       if (sr.net != 0) {
+	    if (!check_interface_modport_access(this, des, sr, false))
+		  return 0;
+
             if (NEED_CONST & flags) {
                   cerr << get_fileline() << ": error: A reference to a net "
                           "or variable (`" << path_ << "') is not allowed in "

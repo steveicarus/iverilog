@@ -79,6 +79,7 @@ class NetEvWait;
 class PClass;
 class PExpr;
 class PFunction;
+class PModport;
 class PPackage;
 class PTaskFunc;
 class PWire;
@@ -1043,6 +1044,26 @@ class NetScope : public Definitions, public Attrib {
       const NetScope* parent() const { return up_; }
       const NetScope* child(const hname_t&name) const;
 
+      struct interface_port_alias_t {
+	    interface_port_alias_t() : actual_scope(0), modport(0) { }
+	    interface_port_alias_t(NetScope*actual, const PModport*mp)
+	    : actual_scope(actual), modport(mp) { }
+
+	    NetScope*actual_scope;
+	    const PModport*modport;
+      };
+
+	/* Interface-typed module formals are represented as aliases to
+	   concrete interface instance scopes. These are deliberately kept
+	   out of the real child-scope map; only alias-aware lookup paths
+	   should traverse them. */
+      void add_interface_port_alias(perm_string formal_name,
+				    NetScope*actual_scope,
+				    const PModport*modport);
+      const interface_port_alias_t* find_interface_port_alias(perm_string formal_name) const;
+      NetScope* find_interface_port_alias_scope(perm_string formal_name) const;
+      const PModport* find_interface_port_modport(perm_string formal_name) const;
+
 	/* A helper function to find the enclosing class scope. */
       const NetScope* get_class_scope() const;
 
@@ -1347,6 +1368,7 @@ class NetScope : public Definitions, public Attrib {
       NetScope*unit_;
       NetScope*up_;
       std::map<hname_t,NetScope*> children_;
+      std::map<perm_string,interface_port_alias_t> interface_port_aliases_;
 
       unsigned lcounter_;
       bool need_const_func_, is_const_func_, is_auto_, is_cell_, calls_stask_;

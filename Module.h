@@ -65,9 +65,24 @@ class Module : public PScopeExtra, public PNamedItem {
 	   default value. */
     public:
       struct port_t {
+	    enum port_kind_t { P_SIGNAL, P_INTERFACE };
+
+	    port_t();
+
+	    port_kind_t port_kind;
 	    perm_string name;
 	    std::vector<PEIdent*> expr;
 	    PExpr*default_value;
+
+	      /* Interface formal port metadata. For signal ports these
+		 fields are empty/zero. The modport name is optional in the
+		 representation, although the parser initially only accepts
+		 the explicit interface_type.modport form. */
+	    perm_string interface_type;
+	    perm_string modport_name;
+	    unsigned lexical_pos;
+
+	    bool is_interface_port() const { return port_kind == P_INTERFACE; }
       };
 
     public:
@@ -148,6 +163,7 @@ class Module : public PScopeExtra, public PNamedItem {
 
       unsigned port_count() const;
       const std::vector<PEIdent*>& get_port(unsigned idx) const;
+      const port_t* get_port_info(unsigned idx) const;
       unsigned find_port(const char*name) const;
 
       // Return port name ("" for undeclared port)

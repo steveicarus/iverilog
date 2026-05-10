@@ -50,6 +50,9 @@ struct symbol_search_results {
 	    type = 0;
 	    eve = 0;
 	    decl_after_use = 0;
+	    interface_alias_scope = 0;
+	    interface_alias_target = 0;
+	    interface_alias_modport = 0;
       }
 
       inline bool is_scope() const {
@@ -76,6 +79,10 @@ struct symbol_search_results {
 	    return "nothing found";
       }
 
+      inline bool through_interface_alias() const {
+	    return interface_alias_target != 0;
+      }
+
 	// Scope where symbol was located. This is set in all cases,
 	// assuming the search succeeded.
       NetScope*scope;
@@ -92,6 +99,14 @@ struct symbol_search_results {
 	// stored here. If more than one such symbol is found, the first
 	// one is retained.
       const LineInfo*decl_after_use;
+
+	// If lookup traversed an interface-typed formal port alias, these
+	// fields describe the alias edge. The resolved object remains in the
+	// normal scope/net/parameter/event fields.
+      NetScope*interface_alias_scope;
+      perm_string interface_alias_name;
+      NetScope*interface_alias_target;
+      const PModport*interface_alias_modport;
 
         // Store bread crumbs of the search here. The path_tail is the parts
         // of the original path that were not found, or are after an object
@@ -127,6 +142,10 @@ extern bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 extern bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 			  const pform_scoped_name_t &path, unsigned lexical_pos,
 			  struct symbol_search_results*res);
+
+extern bool check_interface_modport_access(const LineInfo *li, Design *des,
+					   const symbol_search_results &res,
+					   bool is_write);
 
 /*
  * This function transforms an expression by either zero or sign extending
