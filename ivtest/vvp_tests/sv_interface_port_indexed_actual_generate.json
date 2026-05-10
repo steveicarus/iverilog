@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_interface_port_indexed_actual_generate.v",
+    "iverilog-args" : [ "-g2012" ]
+}

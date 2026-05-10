@@ -1061,6 +1061,13 @@ class NetScope : public Definitions, public Attrib {
 				    NetScope*actual_scope,
 				    const PModport*modport);
       const interface_port_alias_t* find_interface_port_alias(perm_string formal_name) const;
+      void add_interface_port_alias_element(perm_string formal_name,
+					    long index,
+					    NetScope*actual_scope,
+					    const PModport*modport);
+      const interface_port_alias_t* find_interface_port_alias_element(perm_string formal_name,
+								      long index) const;
+      const std::map<long,interface_port_alias_t>* find_interface_port_alias_array(perm_string formal_name) const;
 
 	/* A helper function to find the enclosing class scope. */
       const NetScope* get_class_scope() const;
@@ -1367,6 +1374,7 @@ class NetScope : public Definitions, public Attrib {
       NetScope*up_;
       std::map<hname_t,NetScope*> children_;
       std::map<perm_string,interface_port_alias_t> interface_port_aliases_;
+      std::map<perm_string,std::map<long,interface_port_alias_t> > interface_port_alias_arrays_;
 
       unsigned lcounter_;
       bool need_const_func_, is_const_func_, is_auto_, is_cell_, calls_stask_;

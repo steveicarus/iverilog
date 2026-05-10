@@ -1390,7 +1390,8 @@ Module::port_t* pform_module_interface_port_reference(
 					  const struct vlltype&loc,
 					  perm_string interface_type,
 					  perm_string modport_name,
-					  perm_string name)
+					  perm_string name,
+					  list<pform_range_t>*udims)
 {
       Module::port_t*ptmp = new Module::port_t;
 
@@ -1398,6 +1399,7 @@ Module::port_t* pform_module_interface_port_reference(
       ptmp->name = name;
       ptmp->interface_type = interface_type;
       ptmp->modport_name = modport_name;
+      ptmp->interface_unpacked_dimensions = udims;
       ptmp->lexical_pos = loc.lexical_pos;
 
       return ptmp;

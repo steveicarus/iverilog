@@ -1333,6 +1333,48 @@ struct interface_actual_scope_t {
       perm_string display_name;
 };
 
+struct interface_actual_array_t {
+      std::map<long,NetScope::interface_port_alias_t> elements;
+      perm_string display_name;
+};
+
+static long interface_array_index(unsigned idx, long left, long right)
+{
+      long low = left < right ? left : right;
+      long high = left < right ? right : left;
+      return low < high ? low + idx : low - idx;
+}
+
+static bool interface_formal_range(const Module::port_t*port,
+				   Design*des, NetScope*scope,
+				   const LineInfo*li,
+				   long&left, long&right,
+				   unsigned&count)
+{
+      if (!port->interface_unpacked_dimensions) {
+	    left = 0;
+	    right = 0;
+	    count = 1;
+	    return true;
+      }
+
+      if (port->interface_unpacked_dimensions->size() != 1) {
+	    cerr << li->get_fileline() << ": sorry: Interface port `"
+		 << port->name << "' uses a multidimensional array, which "
+		    "is not supported." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      if (!evaluate_range(des, scope, li,
+			  port->interface_unpacked_dimensions->front(),
+			  left, right))
+	    return false;
+
+      count = left > right ? left - right + 1 : right - left + 1;
+      return true;
+}
+
 static bool resolve_interface_actual_scope(const PExpr*actual,
 					   NetScope*parent_scope,
 					   Design*des,
@@ -1343,11 +1385,50 @@ static bool resolve_interface_actual_scope(const PExpr*actual,
       const PEIdent*actual_ident = dynamic_cast<const PEIdent*>(actual);
       if (!actual_ident || actual_ident->path().package ||
 	  actual_ident->path().name.size() != 1 ||
-	  !actual_ident->path().name.front().index.empty()) {
+	  actual_ident->path().name.front().index.size() > 1) {
 	    return false;
       }
 
-      res.display_name = actual_ident->path().name.front().name;
+      const name_component_t&comp = actual_ident->path().name.front();
+      res.display_name = comp.name;
+
+      if (!comp.index.empty()) {
+	    if (comp.index.front().sel != index_component_t::SEL_BIT) {
+		  cerr << actual->get_fileline() << ": sorry: Interface array "
+		       << "slice actuals are not supported." << endl;
+		  des->errors += 1;
+		  return true;
+	    }
+
+	    bool error_flag = false;
+	    hname_t actual_name = eval_path_component(des, parent_scope,
+						      comp, error_flag);
+	    if (error_flag)
+		  return true;
+
+	    if (NetScope*child = parent_scope->child(actual_name))
+		  res.scope = child;
+	    else if (actual_name.has_numbers()) {
+		  const NetScope::interface_port_alias_t*alias =
+			parent_scope->find_interface_port_alias_element(
+			      comp.name, actual_name.peek_number(0));
+		  if (alias) {
+			res.scope = alias->actual_scope;
+			res.modport = alias->modport;
+		  }
+	    }
+
+	    if (!res.scope) {
+		  symbol_search_results sr;
+		  symbol_search(actual, des, parent_scope, actual_ident->path(),
+				actual_ident->lexical_pos(), &sr);
+		  res.scope = sr.scope;
+		  if (sr.through_interface_alias())
+			res.modport = sr.interface_alias_modport;
+	    }
+
+	    return true;
+      }
 
       symbol_search_results sr;
       symbol_search(actual, des, parent_scope, actual_ident->path(),
@@ -1365,6 +1446,49 @@ static bool resolve_interface_actual_scope(const PExpr*actual,
       }
 
       return true;
+}
+
+static bool resolve_interface_actual_array(const PExpr*actual,
+					   NetScope*parent_scope,
+					   interface_actual_array_t&res)
+{
+      res = interface_actual_array_t();
+
+      const PEIdent*actual_ident = dynamic_cast<const PEIdent*>(actual);
+      if (!actual_ident || actual_ident->path().package ||
+	  actual_ident->path().name.size() != 1 ||
+	  !actual_ident->path().name.front().index.empty())
+	    return false;
+
+      perm_string name = actual_ident->path().name.front().name;
+      res.display_name = name;
+
+      for (NetScope*scope = parent_scope ; scope ; scope = scope->parent()) {
+	    map<perm_string,NetScope::scope_vec_t>::const_iterator arr =
+		  scope->instance_arrays.find(name);
+	    if (arr != scope->instance_arrays.end()) {
+		  for (unsigned idx = 0 ; idx < arr->second.size() ; idx += 1) {
+			NetScope*inst = arr->second[idx];
+			if (!inst)
+			      return false;
+			hname_t hname = inst->fullname();
+			if (!hname.has_numbers())
+			      return false;
+			res.elements[hname.peek_number(0)] =
+			      NetScope::interface_port_alias_t(inst, 0);
+		  }
+		  return true;
+	    }
+
+	    const map<long,NetScope::interface_port_alias_t>*alias_arr =
+		  scope->find_interface_port_alias_array(name);
+	    if (alias_arr) {
+		  res.elements = *alias_arr;
+		  return true;
+	    }
+      }
+
+      return false;
 }
 
 bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
@@ -1389,6 +1513,94 @@ bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
 		  continue;
 	    }
 
+	    long formal_left = 0;
+	    long formal_right = 0;
+	    unsigned formal_count = 1;
+	    if (!interface_formal_range(port, des, instance_scope, pins[idx],
+					formal_left, formal_right, formal_count)) {
+		  flag = false;
+		  continue;
+	    }
+	    bool formal_is_array = port->interface_unpacked_dimensions != 0;
+
+	    interface_formal_port_t formal;
+	    resolve_interface_formal_port(pins[idx], des, port, formal, false);
+	    if (!formal.module)
+		  continue;
+
+	    if (formal_is_array) {
+		  interface_actual_array_t actual_array;
+		  if (!resolve_interface_actual_array(pins[idx], parent_scope, actual_array)) {
+			cerr << pins[idx]->get_fileline() << ": error: Interface "
+			     << "array port `" << port->name << "' must be "
+				"connected to an interface instance array." << endl;
+			des->errors += 1;
+			flag = false;
+			continue;
+		  }
+
+		  if (actual_array.elements.size() != formal_count) {
+			cerr << pins[idx]->get_fileline() << ": error: Interface "
+			     << "array port `" << port->name << "' expects "
+			     << formal_count << " element(s) but actual `"
+			     << actual_array.display_name << "' has "
+			     << actual_array.elements.size() << " element(s)." << endl;
+			des->errors += 1;
+			flag = false;
+			continue;
+		  }
+
+		  unsigned pos = 0;
+		  bool array_ok = true;
+		  for (map<long,NetScope::interface_port_alias_t>::const_iterator cur =
+			     actual_array.elements.begin()
+			 ; cur != actual_array.elements.end() ; ++cur, ++pos) {
+			NetScope*actual_scope = cur->second.actual_scope;
+			if (!actual_scope || !actual_scope->is_interface()) {
+			      cerr << pins[idx]->get_fileline() << ": error: Actual "
+				   << "element for interface array port `"
+				   << port->name << "' is not an interface instance." << endl;
+			      des->errors += 1;
+			      array_ok = false;
+			      continue;
+			}
+
+			if (actual_scope->module_name() != formal.module->mod_name()) {
+			      cerr << pins[idx]->get_fileline() << ": error: Interface "
+				   << "array port `" << port->name
+				   << "' expects interface type `" << port->interface_type
+				   << "' but actual `" << actual_array.display_name
+				   << "' has element type `" << actual_scope->module_name()
+				   << "'." << endl;
+			      des->errors += 1;
+			      array_ok = false;
+			      continue;
+			}
+
+			if (cur->second.modport && formal.modport &&
+			    cur->second.modport->name() != formal.modport->name()) {
+			      cerr << pins[idx]->get_fileline() << ": error: Interface "
+				   << "array port `" << port->name
+				   << "' cannot forward actual `" << actual_array.display_name
+				   << "' restricted by modport `" << cur->second.modport->name()
+				   << "' to formal modport `" << formal.modport->name()
+				   << "'." << endl;
+			      des->errors += 1;
+			      array_ok = false;
+			      continue;
+			}
+
+			const PModport*modport = formal.modport?
+			      formal.modport : cur->second.modport;
+			long formal_index = interface_array_index(pos, formal_left, formal_right);
+			instance_scope->add_interface_port_alias_element(
+			      port->name, formal_index, actual_scope, modport);
+		  }
+
+		  flag = flag && array_ok;
+		  continue;
+	    }
+
 	    interface_actual_scope_t actual;
 	    if (!resolve_interface_actual_scope(pins[idx], parent_scope, des, actual)) {
 		  cerr << pins[idx]->get_fileline() << ": error: Interface port `"
@@ -1407,11 +1619,6 @@ bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
 		  flag = false;
 		  continue;
 	    }
-
-	    interface_formal_port_t formal;
-	    resolve_interface_formal_port(pins[idx], des, port, formal, false);
-	    if (!formal.module)
-		  continue;
 
 	    if (actual.scope->module_name() != formal.module->mod_name()) {
 		  cerr << pins[idx]->get_fileline() << ": error: Interface port `"

@@ -32,7 +32,7 @@ using namespace std;
 list<Module::named_expr_t> Module::user_defparms;
 
 Module::port_t::port_t()
-: port_kind(P_SIGNAL), default_value(0), lexical_pos(0)
+: port_kind(P_SIGNAL), default_value(0), interface_unpacked_dimensions(0), lexical_pos(0)
 {
 }
 

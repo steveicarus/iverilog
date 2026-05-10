@@ -81,6 +81,7 @@ class Module : public PScopeExtra, public PNamedItem {
 		 the explicit interface_type.modport form. */
 	    perm_string interface_type;
 	    perm_string modport_name;
+	    std::list<pform_range_t>*interface_unpacked_dimensions;
 	    unsigned lexical_pos;
 
 	    bool is_interface_port() const { return port_kind == P_INTERFACE; }

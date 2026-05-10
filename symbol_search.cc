@@ -331,6 +331,31 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 
 			return true;
 		  }
+	    } else {
+		  bool flag = false;
+		  hname_t path_item = eval_path_component(des, start_scope, path_tail, flag);
+		  if (!flag && path_item.has_numbers() == 1) {
+			if (const NetScope::interface_port_alias_t*alias =
+			    scope->find_interface_port_alias_element(path_tail.name,
+								     path_item.peek_number(0))) {
+			      path.push_back(path_tail);
+			      res->scope = alias->actual_scope;
+			      res->path_head = path;
+			      res->interface_alias_scope = scope;
+			      res->interface_alias_name = path_tail.name;
+			      res->interface_alias_target = alias->actual_scope;
+			      res->interface_alias_modport = alias->modport;
+
+			      if (debug_scopes || debug_elaborate) {
+				    cerr << li->get_fileline() << ": symbol_search: "
+					 << "Interface alias " << path_tail.name
+					 << "[" << path_item.peek_number(0) << "]"
+					 << " -> " << scope_path(alias->actual_scope) << endl;
+			      }
+
+			      return true;
+			}
+		  }
 	    }
 
 	    // Don't scan up if we are searching within a prefixed scope.

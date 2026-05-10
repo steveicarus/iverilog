@@ -463,6 +463,7 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 
 Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 					      char *modport, char *id,
+					      std::list<pform_range_t> *udims,
 					      std::list<named_pexpr_t> *attributes)
 {
       pform_requires_sv(loc, "Interface port declaration");
@@ -470,7 +471,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
       Module::port_t *port = pform_module_interface_port_reference(
 	    loc, lex_strings.make(type),
 	    modport ? lex_strings.make(modport) : perm_string(),
-	    lex_strings.make(id));
+	    lex_strings.make(id), udims);
 
       delete[] type;
       if (modport)
@@ -4657,11 +4658,11 @@ port_declaration
   : attribute_list_opt port_direction net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
       { $$ = module_declare_port(@5, $5, $2, $3, $4, $6, $7, $1);
       }
-  | attribute_list_opt IDENTIFIER '.' IDENTIFIER IDENTIFIER
-      { $$ = module_declare_interface_port(@5, $2, $4, $5, $1);
+  | attribute_list_opt IDENTIFIER '.' IDENTIFIER IDENTIFIER dimensions_opt
+      { $$ = module_declare_interface_port(@5, $2, $4, $5, $6, $1);
       }
-  | attribute_list_opt IDENTIFIER IDENTIFIER
-      { $$ = module_declare_interface_port(@3, $2, 0, $3, $1);
+  | attribute_list_opt IDENTIFIER IDENTIFIER dimensions_opt
+      { $$ = module_declare_interface_port(@3, $2, 0, $3, $4, $1);
       }
   | attribute_list_opt net_type_or_var data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
       { pform_requires_sv(@4, "Partial ANSI port declaration");
@@ -5756,12 +5757,12 @@ port
   : port_reference
       { $$ = $1; }
 
-  | IDENTIFIER '.' IDENTIFIER IDENTIFIER
-      { $$ = module_declare_interface_port(@4, $1, $3, $4, 0);
+  | IDENTIFIER '.' IDENTIFIER IDENTIFIER dimensions_opt
+      { $$ = module_declare_interface_port(@4, $1, $3, $4, $5, 0);
       }
 
-  | IDENTIFIER IDENTIFIER
-      { $$ = module_declare_interface_port(@2, $1, 0, $2, 0);
+  | IDENTIFIER IDENTIFIER dimensions_opt
+      { $$ = module_declare_interface_port(@2, $1, 0, $2, $3, 0);
       }
 
   /* This syntax attaches an external name to the port reference so

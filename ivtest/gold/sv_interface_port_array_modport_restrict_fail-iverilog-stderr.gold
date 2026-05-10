@@ -1,0 +1,2 @@
+ivltests/sv_interface_port_array_modport_restrict_fail.v:10: error: Cannot assign to input modport member `value' through interface port `bus'.
+1 error(s) during elaboration.
