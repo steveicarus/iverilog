@@ -831,18 +831,6 @@ NetScope::find_interface_port_alias(perm_string formal_name) const
       return &cur->second;
 }
 
-NetScope* NetScope::find_interface_port_alias_scope(perm_string formal_name) const
-{
-      const interface_port_alias_t*cur = find_interface_port_alias(formal_name);
-      return cur? cur->actual_scope : 0;
-}
-
-const PModport* NetScope::find_interface_port_modport(perm_string formal_name) const
-{
-      const interface_port_alias_t*cur = find_interface_port_alias(formal_name);
-      return cur? cur->modport : 0;
-}
-
 /* Helper function to see if the given scope is defined in a class and if
  * so return the class scope. */
 const NetScope* NetScope::get_class_scope() const

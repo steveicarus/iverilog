@@ -21,8 +21,11 @@
 
 # include  "Module.h"
 # include  "PGate.h"
+# include  "PModport.h"
 # include  "PWire.h"
+# include  "parse_api.h"
 # include  "ivl_assert.h"
+# include  <iostream>
 
 using namespace std;
 
@@ -31,6 +34,50 @@ list<Module::named_expr_t> Module::user_defparms;
 Module::port_t::port_t()
 : port_kind(P_SIGNAL), default_value(0), lexical_pos(0)
 {
+}
+
+bool resolve_interface_formal_port(const LineInfo*li, Design*des,
+				   const Module::port_t*port,
+				   interface_formal_port_t&res,
+				   bool emit_errors)
+{
+      ivl_assert(*li, port);
+      ivl_assert(*li, port->is_interface_port());
+
+      res = interface_formal_port_t();
+
+      map<perm_string,Module*>::const_iterator mod =
+	    pform_modules.find(port->interface_type);
+      if (mod == pform_modules.end() || !mod->second->is_interface) {
+	    if (emit_errors) {
+		  cerr << li->get_fileline() << ": error: Interface port "
+		       << port->name << " uses unknown interface type `"
+		       << port->interface_type << "'." << endl;
+		  des->errors += 1;
+	    }
+	    return false;
+      }
+
+      res.module = mod->second;
+
+      if (port->modport_name.str()) {
+	    map<perm_string,PModport*>::const_iterator mp =
+		  mod->second->modports.find(port->modport_name);
+	    if (mp == mod->second->modports.end()) {
+		  if (emit_errors) {
+			cerr << li->get_fileline() << ": error: Interface port "
+			     << port->name << " uses unknown modport `"
+			     << port->modport_name << "' of interface `"
+			     << port->interface_type << "'." << endl;
+			des->errors += 1;
+		  }
+		  return false;
+	    }
+
+	    res.modport = mp->second;
+      }
+
+      return true;
 }
 
 /* n is a permallocated string. */

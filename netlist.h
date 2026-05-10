@@ -1061,8 +1061,6 @@ class NetScope : public Definitions, public Attrib {
 				    NetScope*actual_scope,
 				    const PModport*modport);
       const interface_port_alias_t* find_interface_port_alias(perm_string formal_name) const;
-      NetScope* find_interface_port_alias_scope(perm_string formal_name) const;
-      const PModport* find_interface_port_modport(perm_string formal_name) const;
 
 	/* A helper function to find the enclosing class scope. */
       const NetScope* get_class_scope() const;

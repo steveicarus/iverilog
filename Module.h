@@ -43,6 +43,7 @@ class PFunction;
 class PWire;
 class PProcess;
 class Design;
+class LineInfo;
 class NetScope;
 
 /*
@@ -196,5 +197,17 @@ class Module : public PScopeExtra, public PNamedItem {
       Module(const Module&);
       Module& operator= (const Module&);
 };
+
+struct interface_formal_port_t {
+      interface_formal_port_t() : module(0), modport(0) { }
+
+      const Module*module;
+      const PModport*modport;
+};
+
+extern bool resolve_interface_formal_port(const LineInfo*li, Design*des,
+					  const Module::port_t*port,
+					  interface_formal_port_t&res,
+					  bool emit_errors);
 
 #endif /* IVL_Module_H */

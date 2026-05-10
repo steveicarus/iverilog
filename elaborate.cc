@@ -1325,6 +1325,48 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
       return true;
 }
 
+struct interface_actual_scope_t {
+      interface_actual_scope_t() : scope(0), modport(0) { }
+
+      NetScope*scope;
+      const PModport*modport;
+      perm_string display_name;
+};
+
+static bool resolve_interface_actual_scope(const PExpr*actual,
+					   NetScope*parent_scope,
+					   Design*des,
+					   interface_actual_scope_t&res)
+{
+      res = interface_actual_scope_t();
+
+      const PEIdent*actual_ident = dynamic_cast<const PEIdent*>(actual);
+      if (!actual_ident || actual_ident->path().package ||
+	  actual_ident->path().name.size() != 1 ||
+	  !actual_ident->path().name.front().index.empty()) {
+	    return false;
+      }
+
+      res.display_name = actual_ident->path().name.front().name;
+
+      symbol_search_results sr;
+      symbol_search(actual, des, parent_scope, actual_ident->path(),
+		    actual_ident->lexical_pos(), &sr);
+
+      res.scope = sr.scope;
+      if (sr.through_interface_alias())
+	    res.modport = sr.interface_alias_modport;
+      else if (NetScope*child = parent_scope->child(hname_t(res.display_name)))
+	    res.scope = child;
+      else if (const NetScope::interface_port_alias_t*alias =
+	       parent_scope->find_interface_port_alias(res.display_name)) {
+	    res.scope = alias->actual_scope;
+	    res.modport = alias->modport;
+      }
+
+      return true;
+}
+
 bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
 				     NetScope*parent_scope,
 				     NetScope*instance_scope,
@@ -1347,10 +1389,8 @@ bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
 		  continue;
 	    }
 
-	    const PEIdent*actual_ident = dynamic_cast<const PEIdent*>(pins[idx]);
-	    if (!actual_ident || actual_ident->path().package ||
-	        actual_ident->path().name.size() != 1 ||
-	        !actual_ident->path().name.front().index.empty()) {
+	    interface_actual_scope_t actual;
+	    if (!resolve_interface_actual_scope(pins[idx], parent_scope, des, actual)) {
 		  cerr << pins[idx]->get_fileline() << ": error: Interface port `"
 		       << port->name << "' must be connected to a simple "
 		          "interface instance name." << endl;
@@ -1359,19 +1399,7 @@ bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
 		  continue;
 	    }
 
-	    perm_string actual_name = actual_ident->path().name.front().name;
-	    NetScope*actual_scope = parent_scope->child(hname_t(actual_name));
-	    const PModport*actual_modport = 0;
-	    if (!actual_scope) {
-		  const NetScope::interface_port_alias_t*actual_alias =
-			parent_scope->find_interface_port_alias(actual_name);
-		  if (actual_alias) {
-			actual_scope = actual_alias->actual_scope;
-			actual_modport = actual_alias->modport;
-		  }
-	    }
-
-	    if (!actual_scope || !actual_scope->is_interface()) {
+	    if (!actual.scope || !actual.scope->is_interface()) {
 		  cerr << pins[idx]->get_fileline() << ": error: Actual for "
 		          "interface port `" << port->name
 		       << "' is not an interface instance." << endl;
@@ -1380,40 +1408,35 @@ bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
 		  continue;
 	    }
 
-	    if (actual_scope->module_name() != port->interface_type) {
+	    interface_formal_port_t formal;
+	    resolve_interface_formal_port(pins[idx], des, port, formal, false);
+	    if (!formal.module)
+		  continue;
+
+	    if (actual.scope->module_name() != formal.module->mod_name()) {
 		  cerr << pins[idx]->get_fileline() << ": error: Interface port `"
 		       << port->name << "' expects interface type `"
-		       << port->interface_type << "' but actual `" << actual_name
-		       << "' has type `" << actual_scope->module_name() << "'." << endl;
+		       << port->interface_type << "' but actual `" << actual.display_name
+		       << "' has type `" << actual.scope->module_name() << "'." << endl;
 		  des->errors += 1;
 		  flag = false;
 		  continue;
 	    }
 
-	    map<perm_string,Module*>::const_iterator mod =
-		  pform_modules.find(port->interface_type);
-	    const PModport*formal_modport = 0;
-	    if (port->modport_name.str() && mod != pform_modules.end()) {
-		  map<perm_string,PModport*>::const_iterator mp =
-			mod->second->modports.find(port->modport_name);
-		  if (mp != mod->second->modports.end())
-			formal_modport = mp->second;
-	    }
-
-	    if (actual_modport && formal_modport &&
-		actual_modport->name() != formal_modport->name()) {
+	    if (actual.modport && formal.modport &&
+		actual.modport->name() != formal.modport->name()) {
 		  cerr << pins[idx]->get_fileline() << ": error: Interface port `"
-		       << port->name << "' cannot forward actual `" << actual_name
-		       << "' restricted by modport `" << actual_modport->name()
-		       << "' to formal modport `" << formal_modport->name()
+		       << port->name << "' cannot forward actual `" << actual.display_name
+		       << "' restricted by modport `" << actual.modport->name()
+		       << "' to formal modport `" << formal.modport->name()
 		       << "'." << endl;
 		  des->errors += 1;
 		  flag = false;
 		  continue;
 	    }
 
-	    const PModport*modport = formal_modport? formal_modport : actual_modport;
-	    instance_scope->add_interface_port_alias(port->name, actual_scope,
+	    const PModport*modport = formal.modport? formal.modport : actual.modport;
+	    instance_scope->add_interface_port_alias(port->name, actual.scope,
 						    modport);
       }
 

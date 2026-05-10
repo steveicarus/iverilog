@@ -300,24 +300,8 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 		  continue;
 
 	    if (pp->is_interface_port()) {
-		  map<perm_string,Module*>::const_iterator mod =
-			pform_modules.find(pp->interface_type);
-		  if (mod == pform_modules.end() || !mod->second->is_interface) {
-			cerr << get_fileline() << ": error: Interface port "
-			     << pp->name << " uses unknown interface type `"
-			     << pp->interface_type << "'." << endl;
-			des->errors += 1;
-			continue;
-		  }
-
-		  if (pp->modport_name.str() &&
-		      mod->second->modports.find(pp->modport_name) == mod->second->modports.end()) {
-			cerr << get_fileline() << ": error: Interface port "
-			     << pp->name << " uses unknown modport `"
-			     << pp->modport_name << "' of interface `"
-			     << pp->interface_type << "'." << endl;
-			des->errors += 1;
-		  }
+		  interface_formal_port_t formal;
+		  resolve_interface_formal_port(this, des, pp, formal, true);
 		  continue;
 	    }
 
