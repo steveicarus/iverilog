@@ -1,10 +1,10 @@
 // cppcheck is wrong this is correct usage
-syntaxError:main.c:405
-syntaxError:main.c:408
+syntaxError:main.c:410
+syntaxError:main.c:413
 
 // cppcheck is missing the code adds a \0 at the previous location.
-knownConditionTrueFalse:main.c:1086
-redundantAssignment:main.c:1085
+knownConditionTrueFalse:main.c:1123
+redundantAssignment:main.c:1122
 
 // Skip all memory issues since they should be handled by ivl_alloc.h
 memleakOnRealloc
@@ -21,6 +21,7 @@ constVariablePointer:cfparse.c
 knownConditionTrueFalse:cfparse.c
 sizeofwithnumericparameter:cfparse.c
 constVariablePointer:<stdout>
+duplicateBreak:<stdout>
 nullPointer:<stdout>
 redundantInitialization:<stdout>
 staticFunction:<stdout>

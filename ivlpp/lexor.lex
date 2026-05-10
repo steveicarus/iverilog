@@ -1692,7 +1692,6 @@ static void expand_using_args(void)
     char* head;
     char* tail;
     char* dest;
-    int arg;
     int length;
 
     if (def_argc > cur_macro->argc) {
@@ -1721,7 +1720,7 @@ static void expand_using_args(void)
 	if (*tail != ARG_MARK) {
 	    tail++;
 	} else {
-	    arg = tail[1]; assert(arg < def_argc);
+	    int arg = tail[1]; assert(arg < def_argc);
 
 	    const char*use_argv;
 	    int  use_argl;

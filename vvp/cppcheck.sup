@@ -37,8 +37,8 @@ useInitializationList:delay.cc:513
 constParameterPointer:vpi_priv.cc:1458
 
 // Operator new/delete are static so cannot override
-duplInheritedMember:vvp_net.h:1476
-duplInheritedMember:vvp_net.h:1477
+duplInheritedMember:vvp_net.h:1481
+duplInheritedMember:vvp_net.h:1482
 duplInheritedMember:vvp_net_sig.h:187
 duplInheritedMember:vvp_net_sig.h:188
 duplInheritedMember:vvp_net_sig.h:253
@@ -154,10 +154,10 @@ redundantAssignment:vpi_modules.cc:117
 invalidScanfArgType_int:compile.cc:597
 invalidScanfArgType_int:compile.cc:603
 invalidScanfArgType_int:compile.cc:609
-invalidScanfArgType_int:vthread.cc:4545
-invalidScanfArgType_int:vthread.cc:4548
-invalidScanfArgType_int:vthread.cc:4551
-invalidScanfArgType_int:vthread.cc:4554
+invalidScanfArgType_int:vthread.cc:4541
+invalidScanfArgType_int:vthread.cc:4544
+invalidScanfArgType_int:vthread.cc:4547
+invalidScanfArgType_int:vthread.cc:4550
 
 // The new() operator is always used to allocate space for this class and
 // pool is defined there.
@@ -227,14 +227,15 @@ unusedFunction:vvp_net.cc:1752
 // as_string()
 unusedFunction:vvp_net.cc:1855
 // fully_featured_resolv_()
-unusedFunction:vvp_net.cc:3581
+unusedFunction:vvp_net.cc:3704
 // words()
-unusedFunction:vvp_net.h:595
+unusedFunction:vvp_net.h:600
 // force_vec8()
 unusedFunction:vvp_net_sig.cc:128
 
 // Unused functions from the lexor
 duplicateBreak:lexor.lex
+duplicateBreak:lexor.cc
 unusedStructMember:lexor.lex
 constVariablePointer:lexor.cc
 cstyleCast:lexor.cc

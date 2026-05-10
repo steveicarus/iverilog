@@ -10,13 +10,14 @@ nullPointerOutOfMemory
 ctuuninitvar:parse_misc.cc:61
 
 // Skip strdup() not constant.
-constVariablePointer:main.cc:400
-constVariablePointer:main.cc:404
-constVariablePointer:main.cc:654
+constVariablePointer:main.cc:415
+constVariablePointer:main.cc:419
+constVariablePointer:main.cc:669
 
 // const auto should be const
 constVariablePointer:elab_expr.cc:344
-constVariablePointer:elab_expr.cc:413
+constVariablePointer:elab_expr.cc:347
+constVariablePointer:elab_expr.cc:416
 
 // The reference cannot be const since it is updated in the calling function.
 constParameterReference:net_udp.cc:37
@@ -31,26 +32,27 @@ functionStatic:net_link.cc:193
 functionStatic:libmisc/StringHeap.cc
 
 // Skip not initialized in the constructor for target scope
+uninitMemberVar:t-dll.cc:41
 uninitMemberVar:t-dll.cc:109
 
 // By convention we put statics at the top scope.
 variableScope:pform.cc:3461
 
 // These are correct and are used to find the base (zero) pin.
-thisSubtraction:netlist.h:5309
-thisSubtraction:netlist.h:5318
+thisSubtraction:netlist.h:5310
+thisSubtraction:netlist.h:5319
 
 // This is used when running a debugger
 // debugger_release
-knownConditionTrueFalse:main.cc:931
+knownConditionTrueFalse:main.cc:949
 
 // These should be checked, but are not real issues
-knownConditionTrueFalse:elaborate.cc:7621
+knownConditionTrueFalse:elaborate.cc:7633
 knownConditionTrueFalse:elab_sig.cc:271
 knownConditionTrueFalse:elab_sig.cc:338
 
 // Yes, it's a duplicate
-duplicateCondition:elaborate.cc:7672
+duplicateCondition:elaborate.cc:7684
 
 // To complicated to use std::find_if()
 useStlAlgorithm:map_named_args.cc:38
@@ -59,7 +61,7 @@ useStlAlgorithm:map_named_args.cc:38
 derefInvalidIterator:netmisc.cc:420
 
 // By convention we put statics at the top scope.
-variableScope:t-dll.cc:2377
+variableScope:t-dll.cc:2309
 
 // We check memory allocation with valgrind
 unsafeClassCanLeak:libmisc/StringHeap.h:79
@@ -720,7 +722,7 @@ unusedFunction:Statement.h:192
 // chain_args()
 unusedFunction:Statement.h:341
 // gn_modules_nest()
-unusedFunction:compiler.h:228
+unusedFunction:compiler.h:245
 // driven_mask()
 unusedFunction:link_const.cc:275
 // find_root_scope()
@@ -732,7 +734,7 @@ unusedFunction:net_link.cc:689
 // get_def_fileline()
 unusedFunction:net_scope.cc:201
 // get_module_port_info()
-unusedFunction:net_scope.cc:591
+unusedFunction:net_scope.cc:599
 // find_link_signal()
 unusedFunction:netlist.cc:111
 // find_link()
@@ -756,13 +758,14 @@ unusedFunction:t-dll-expr.cc:55
 // mul_expr_by_const_()
 unusedFunction:t-dll-expr.cc:91
 // net_assign()
-unusedFunction:t-dll.cc:2368
+unusedFunction:t-dll.cc:2300
 // is_before()
 unusedFunction:verinum.cc:588
 
 // Errors/limitations in the generated yacc and lex files
 constVariablePointer:<stdout>
 cstyleCast:<stdout>
+duplicateBreak:<stdout>
 nullPointer:<stdout>
 redundantInitialization:<stdout>
 syntaxError:<stdout>

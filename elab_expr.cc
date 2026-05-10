@@ -344,7 +344,7 @@ NetExpr* PEAssignPattern::elaborate_expr_uarray_(Design *des, NetScope *scope,
 	    if (const auto ap = dynamic_cast<PEAssignPattern*>(parms_[idx])) {
 		  expr = ap->elaborate_expr_uarray_(des, scope, uarray_type,
 						    dims, cur_dim, need_const);
-	    } else if (auto s = dynamic_cast<PEString*>(parms_[idx])) {
+	    } else if (const auto s = dynamic_cast<PEString*>(parms_[idx])) {
 		  expr = s->elaborate_expr_uarray_(des, scope, uarray_type,
 						   dims, cur_dim);
 	    } else if (dynamic_cast<PEConcat*>(parms_[idx])) {

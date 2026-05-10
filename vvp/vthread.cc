@@ -6139,7 +6139,7 @@ bool of_STORE_STRA(vthread_t thr, vvp_code_t cp)
 bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_ptr_t ptr(cp->net, 0);
-      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
+      const vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
       unsigned off_index = cp->bit_idx[0];
       unsigned int wid = cp->bit_idx[1];
 

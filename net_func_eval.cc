@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -525,7 +525,7 @@ bool NetBlock::evaluate_function(const LineInfo&loc,
       map<perm_string,LocalVar>&use_context_map = use_local_context_map? local_context_map : context_map;
 
       bool flag = true;
-      NetProc*cur = last_;
+      const NetProc*cur = last_;
       do {
 	    cur = cur->next_;
 	    if (debug_eval_tree) {
