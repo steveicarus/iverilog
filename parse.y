@@ -468,11 +468,13 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
       pform_requires_sv(loc, "Interface port declaration");
 
       Module::port_t *port = pform_module_interface_port_reference(
-	    loc, lex_strings.make(type), lex_strings.make(modport),
+	    loc, lex_strings.make(type),
+	    modport ? lex_strings.make(modport) : perm_string(),
 	    lex_strings.make(id));
 
       delete[] type;
-      delete[] modport;
+      if (modport)
+	    delete[] modport;
       delete[] id;
 
       pform_module_define_interface_port(loc, port, attributes);
@@ -4658,6 +4660,9 @@ port_declaration
   | attribute_list_opt IDENTIFIER '.' IDENTIFIER IDENTIFIER
       { $$ = module_declare_interface_port(@5, $2, $4, $5, $1);
       }
+  | attribute_list_opt IDENTIFIER IDENTIFIER
+      { $$ = module_declare_interface_port(@3, $2, 0, $3, $1);
+      }
   | attribute_list_opt net_type_or_var data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
       { pform_requires_sv(@4, "Partial ANSI port declaration");
 	$$ = module_declare_port(@4, $4, port_declaration_context.port_type,
@@ -5753,6 +5758,10 @@ port
 
   | IDENTIFIER '.' IDENTIFIER IDENTIFIER
       { $$ = module_declare_interface_port(@4, $1, $3, $4, 0);
+      }
+
+  | IDENTIFIER IDENTIFIER
+      { $$ = module_declare_interface_port(@2, $1, 0, $2, 0);
       }
 
   /* This syntax attaches an external name to the port reference so

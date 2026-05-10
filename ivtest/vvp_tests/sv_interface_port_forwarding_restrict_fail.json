@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_interface_port_forwarding_restrict_fail.v",
+    "gold"          : "sv_interface_port_forwarding_restrict_fail",
+    "iverilog-args" : [ "-g2012" ]
+}

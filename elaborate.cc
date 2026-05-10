@@ -51,6 +51,7 @@
 # include  "netscalar.h"
 # include  "netclass.h"
 # include  "netmisc.h"
+# include  "PModport.h"
 # include  "util.h"
 # include  "parse_api.h"
 # include  "compiler.h"
@@ -1261,12 +1262,14 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
 		  if (pins_[idx].name[0] == '*') {
 			for (unsigned j = 0 ; j < nexp ; j += 1) {
 			      if (rmod->ports[j] && !pins[j] && !pins_is_explicitly_not_connected[j]) {
-				    pins_fromwc[j] = true;
 				    pform_name_t path_;
 				    path_.push_back(name_component_t(rmod->ports[j]->name));
 				    symbol_search_results sr;
 				    symbol_search(this, des, scope, path_, UINT_MAX, &sr);
-				    if (sr.net != 0) {
+				    if (sr.net != 0 ||
+					(rmod->ports[j]->is_interface_port() &&
+					 sr.scope != 0 && sr.scope->is_interface())) {
+					  pins_fromwc[j] = true;
 					  pins[j] = new PEIdent(rmod->ports[j]->name, UINT_MAX, true);
 					  pins[j]->set_lineno(get_lineno());
 					  pins[j]->set_file(get_file());
@@ -1326,7 +1329,7 @@ bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
 				     NetScope*parent_scope,
 				     NetScope*instance_scope,
 				     const vector<PExpr*>&pins,
-				     const vector<bool>&pins_fromwc) const
+				     const vector<bool>&) const
 {
       bool flag = true;
 
@@ -1334,15 +1337,6 @@ bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
 	    const Module::port_t*port = rmod->get_port_info(idx);
 	    if (!port || !port->is_interface_port())
 		  continue;
-
-	    if (pins_fromwc[idx]) {
-		  cerr << get_fileline() << ": sorry: Wildcard connection "
-		          "to interface port `" << port->name
-		       << "' is not yet supported." << endl;
-		  des->errors += 1;
-		  flag = false;
-		  continue;
-	    }
 
 	    if (!pins[idx]) {
 		  cerr << get_fileline() << ": error: Interface port `"
@@ -1367,8 +1361,15 @@ bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
 
 	    perm_string actual_name = actual_ident->path().name.front().name;
 	    NetScope*actual_scope = parent_scope->child(hname_t(actual_name));
-	    if (!actual_scope)
-		  actual_scope = parent_scope->find_interface_port_alias_scope(actual_name);
+	    const PModport*actual_modport = 0;
+	    if (!actual_scope) {
+		  const NetScope::interface_port_alias_t*actual_alias =
+			parent_scope->find_interface_port_alias(actual_name);
+		  if (actual_alias) {
+			actual_scope = actual_alias->actual_scope;
+			actual_modport = actual_alias->modport;
+		  }
+	    }
 
 	    if (!actual_scope || !actual_scope->is_interface()) {
 		  cerr << pins[idx]->get_fileline() << ": error: Actual for "
@@ -1391,14 +1392,27 @@ bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
 
 	    map<perm_string,Module*>::const_iterator mod =
 		  pform_modules.find(port->interface_type);
-	    const PModport*modport = 0;
-	    if (mod != pform_modules.end()) {
+	    const PModport*formal_modport = 0;
+	    if (port->modport_name.str() && mod != pform_modules.end()) {
 		  map<perm_string,PModport*>::const_iterator mp =
 			mod->second->modports.find(port->modport_name);
 		  if (mp != mod->second->modports.end())
-			modport = mp->second;
+			formal_modport = mp->second;
 	    }
 
+	    if (actual_modport && formal_modport &&
+		actual_modport->name() != formal_modport->name()) {
+		  cerr << pins[idx]->get_fileline() << ": error: Interface port `"
+		       << port->name << "' cannot forward actual `" << actual_name
+		       << "' restricted by modport `" << actual_modport->name()
+		       << "' to formal modport `" << formal_modport->name()
+		       << "'." << endl;
+		  des->errors += 1;
+		  flag = false;
+		  continue;
+	    }
+
+	    const PModport*modport = formal_modport? formal_modport : actual_modport;
 	    instance_scope->add_interface_port_alias(port->name, actual_scope,
 						    modport);
       }

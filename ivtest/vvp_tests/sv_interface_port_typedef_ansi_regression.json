@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_interface_port_typedef_ansi_regression.v",
+    "iverilog-args" : [ "-g2012" ]
+}
