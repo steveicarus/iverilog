@@ -4231,20 +4231,6 @@ NetExpr* PEIdent::calculate_up_do_base_(Design*des, NetScope*scope,
 
 unsigned PEIdent::test_width_parameter_(const NetExpr *par, width_mode_t&mode)
 {
-	// The width of an enumeration literal is the width of the
-	// enumeration base.
-      if (const NetEConstEnum*par_enum = dynamic_cast<const NetEConstEnum*> (par)) {
-	    const netenum_t*use_enum = par_enum->enumeration();
-	    ivl_assert(*this, use_enum != 0);
-
-	    expr_type_   = use_enum->base_type();
-	    expr_width_  = use_enum->packed_width();
-	    min_width_   = expr_width_;
-	    signed_flag_ = par_enum->has_sign();
-
-	    return expr_width_;
-      }
-
       expr_type_   = par->expr_type();
       expr_width_  = par->expr_width();
       min_width_   = expr_width_;
