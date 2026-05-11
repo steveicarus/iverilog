@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -133,11 +133,13 @@ NetAssign_* PEConcat::elaborate_lval(Design*des,
 		 the compiler catch more errors. */
 	    if (tmp == 0) continue;
 
-	    if (tmp->expr_type() == IVL_VT_REAL) {
+	    ivl_type_t tmp_type = tmp->net_type();
+	    if (tmp_type && !tmp_type->packed()) {
 		  cerr << parms_[idx]->get_fileline() << ": error: "
-		       << "concatenation operand can not be real: "
+		       << "concatenation operand must be packed: "
 		       << *parms_[idx] << endl;
 		  des->errors += 1;
+		  delete tmp;
 		  continue;
 	    }
 
