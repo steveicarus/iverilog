@@ -2,5 +2,5 @@
     "type"          : "CE",
     "source"        : "sv_interface_port_modport_input_write_fail.v",
     "gold"          : "sv_interface_port_modport_input_write_fail",
-    "iverilog-args" : [ "-g2012" ]
+    "iverilog-args" : [ "-g2005-sv" ]
 }

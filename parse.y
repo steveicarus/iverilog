@@ -606,7 +606,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
       enum typedef_t::basic_type typedef_basic_type;
 };
 
-%token <text>      IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
+%token <text>      IDENTIFIER INTERFACE_IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
 %token <type_identifier> TYPE_IDENTIFIER
 %token <package>   PACKAGE_IDENTIFIER
 %token <discipline> DISCIPLINE_IDENTIFIER
@@ -4658,10 +4658,10 @@ port_declaration
   : attribute_list_opt port_direction net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
       { $$ = module_declare_port(@5, $5, $2, $3, $4, $6, $7, $1);
       }
-  | attribute_list_opt IDENTIFIER '.' IDENTIFIER IDENTIFIER dimensions_opt
+  | attribute_list_opt INTERFACE_IDENTIFIER '.' IDENTIFIER IDENTIFIER dimensions_opt
       { $$ = module_declare_interface_port(@5, $2, $4, $5, $6, $1);
       }
-  | attribute_list_opt IDENTIFIER IDENTIFIER dimensions_opt
+  | attribute_list_opt INTERFACE_IDENTIFIER IDENTIFIER dimensions_opt
       { $$ = module_declare_interface_port(@3, $2, 0, $3, $4, $1);
       }
   | attribute_list_opt net_type_or_var data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
@@ -5207,8 +5207,22 @@ module_item
 		  delete[]$2;
       }
 
+  | attribute_list_opt
+	  INTERFACE_IDENTIFIER parameter_value_opt gate_instance_list ';'
+      { perm_string tmp1 = lex_strings.make($2);
+		  pform_make_modgates(@2, tmp1, $3, $4, $1);
+		  delete[]$2;
+      }
+
         | attribute_list_opt
 	  IDENTIFIER parameter_value_opt error ';'
+      { yyerror(@2, "error: Invalid module instantiation");
+		  delete[]$2;
+		  if ($1) delete $1;
+      }
+
+        | attribute_list_opt
+	  INTERFACE_IDENTIFIER parameter_value_opt error ';'
       { yyerror(@2, "error: Invalid module instantiation");
 		  delete[]$2;
 		  if ($1) delete $1;
@@ -5756,14 +5770,6 @@ parameter_value_byname_list
 port
   : port_reference
       { $$ = $1; }
-
-  | IDENTIFIER '.' IDENTIFIER IDENTIFIER dimensions_opt
-      { $$ = module_declare_interface_port(@4, $1, $3, $4, $5, 0);
-      }
-
-  | IDENTIFIER IDENTIFIER dimensions_opt
-      { $$ = module_declare_interface_port(@2, $1, 0, $2, $3, 0);
-      }
 
   /* This syntax attaches an external name to the port reference so
      that the caller can bind by name to non-trivial port

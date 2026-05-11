@@ -417,6 +417,13 @@ TU [munpf]
 	    }
       }
 
+	/* If this identifier names a previously declared interface, then
+	   return this as an INTERFACE_IDENTIFIER instead. */
+      if (rc == IDENTIFIER && gn_system_verilog()) {
+	    if (pform_test_interface_identifier(yylval.text))
+		  rc = INTERFACE_IDENTIFIER;
+      }
+
 	/* If this identifier names a previously declared type, then
 	   return this as a TYPE_IDENTIFIER instead. */
       if (rc == IDENTIFIER && gn_system_verilog()) {
@@ -441,6 +448,10 @@ TU [munpf]
 		  yylval.package = pkg;
 		  return PACKAGE_IDENTIFIER;
 	    }
+      }
+      if (gn_system_verilog()) {
+	    if (pform_test_interface_identifier(yylval.text))
+		  return INTERFACE_IDENTIFIER;
       }
       if (gn_system_verilog()) {
 	    if (typedef_t*type = pform_test_type_identifier(yylloc, yylval.text)) {

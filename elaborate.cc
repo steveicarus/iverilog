@@ -1255,13 +1255,19 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
 				   vector<bool>&pins_fromwc,
 				   vector<bool>&pins_is_explicitly_not_connected) const
 {
+	// If the instance has a pins_ member, then we know we are
+	// binding by name. Therefore, make up a pins array that
+	// reflects the positions of the named ports.
       if (pins_) {
 	    unsigned nexp = rmod->port_count();
 
+	      // Scan the bindings, matching them with port names.
 	    for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
+		    // Handle wildcard named port.
 		  if (pins_[idx].name[0] == '*') {
 			for (unsigned j = 0 ; j < nexp ; j += 1) {
 			      if (rmod->ports[j] && !pins[j] && !pins_is_explicitly_not_connected[j]) {
+				    pins_fromwc[j] = true;
 				    pform_name_t path_;
 				    path_.push_back(name_component_t(rmod->ports[j]->name));
 				    symbol_search_results sr;
@@ -1269,7 +1275,6 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
 				    if (sr.net != 0 ||
 					(rmod->ports[j]->is_interface_port() &&
 					 sr.scope != 0 && sr.scope->is_interface())) {
-					  pins_fromwc[j] = true;
 					  pins[j] = new PEIdent(rmod->ports[j]->name, UINT_MAX, true);
 					  pins[j]->set_lineno(get_lineno());
 					  pins[j]->set_file(get_file());
@@ -1279,7 +1284,13 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
 			continue;
 		  }
 
+		    // Given a binding, look at the module port names
+		    // for the position that matches the binding name.
 		  unsigned pidx = rmod->find_port(pins_[idx].name);
+
+		    // If the port name doesn't exist, the find_port
+		    // method will return the port count. Detect that
+		    // as an error.
 		  if (pidx == nexp) {
 			cerr << get_fileline() << ": error: port ``" <<
 			      pins_[idx].name << "'' is not a port of "
@@ -1288,10 +1299,16 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
 			continue;
 		  }
 
+		    // If I am overriding a wildcard port, delete and
+		    // override it.
 		  if (pins_fromwc[pidx]) {
 			delete pins[pidx];
 			pins_fromwc[pidx] = false;
 
+		    // If I already explicitly bound something to
+		    // this port, then the pins array will already
+		    // have a pointer value where I want to place this
+		    // expression.
 		  } else if (pins[pidx]) {
 			cerr << get_fileline() << ": error: port ``" <<
 			      pins_[idx].name << "'' already bound." <<
@@ -1300,16 +1317,26 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
 			continue;
 		  }
 
+		    // OK, do the binding by placing the expression in
+		    // the right place.
 		  pins[pidx] = pins_[idx].parm;
 		  if (!pins[pidx])
 			pins_is_explicitly_not_connected[pidx] = true;
 	    }
 
       } else if (pin_count() == 0) {
+	      /* Handle the special case that no ports are
+		 connected. It is possible that this is an empty
+		 connect-by-name list, so we'll allow it and assume
+		 that is the case. */
 	    for (unsigned idx = 0 ;  idx < rmod->port_count() ;  idx += 1)
 		  pins[idx] = 0;
 
       } else {
+	      /* Otherwise, this is a positional list of port
+		 connections. Use as many ports as provided. Trailing
+		 missing ports will be left unconnect or use the default
+		 value if one is available. */
 	    if (pin_count() > rmod->port_count()) {
 		  cerr << get_fileline() << ": error: Wrong number "
 			"of ports. Expecting at most " << rmod->port_count() <<
@@ -1326,7 +1353,7 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
 }
 
 struct interface_actual_scope_t {
-      interface_actual_scope_t() : scope(0), modport(0) { }
+      interface_actual_scope_t() : scope(nullptr), modport(nullptr) { }
 
       NetScope*scope;
       const PModport*modport;
@@ -1464,8 +1491,7 @@ static bool resolve_interface_actual_array(const PExpr*actual,
       res.display_name = name;
 
       for (NetScope*scope = parent_scope ; scope ; scope = scope->parent()) {
-	    map<perm_string,NetScope::scope_vec_t>::const_iterator arr =
-		  scope->instance_arrays.find(name);
+	    auto arr = scope->instance_arrays.find(name);
 	    if (arr != scope->instance_arrays.end()) {
 		  for (unsigned idx = 0 ; idx < arr->second.size() ; idx += 1) {
 			NetScope*inst = arr->second[idx];
@@ -1475,7 +1501,7 @@ static bool resolve_interface_actual_array(const PExpr*actual,
 			if (!hname.has_numbers())
 			      return false;
 			res.elements[hname.peek_number(0)] =
-			      NetScope::interface_port_alias_t(inst, 0);
+			      NetScope::interface_port_alias_t(inst, nullptr);
 		  }
 		  return true;
 	    }
@@ -1521,7 +1547,7 @@ bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
 		  flag = false;
 		  continue;
 	    }
-	    bool formal_is_array = port->interface_unpacked_dimensions != 0;
+	    bool formal_is_array = port->interface_unpacked_dimensions != nullptr;
 
 	    interface_formal_port_t formal;
 	    resolve_interface_formal_port(pins[idx], des, port, formal, false);
@@ -1552,8 +1578,7 @@ bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
 
 		  unsigned pos = 0;
 		  bool array_ok = true;
-		  for (map<long,NetScope::interface_port_alias_t>::const_iterator cur =
-			     actual_array.elements.begin()
+		  for (auto cur = actual_array.elements.begin()
 			 ; cur != actual_array.elements.end() ; ++cur, ++pos) {
 			NetScope*actual_scope = cur->second.actual_scope;
 			if (!actual_scope || !actual_scope->is_interface()) {

@@ -4,6 +4,13 @@
 // This file is placed into the Public Domain, for any use, without
 // warranty.
 
+interface bus_if ();
+   logic value;
+   logic hidden;
+
+   modport consumer(input value);
+endinterface
+
 module test;
    bus_if bus();
    parent dut(.bus(bus));
@@ -22,10 +29,3 @@ module child(
 
    assign sample = bus.hidden;
 endmodule
-
-interface bus_if ();
-   logic value;
-   logic hidden;
-
-   modport consumer(input value);
-endinterface

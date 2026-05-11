@@ -93,6 +93,11 @@ extern typedef_t* pform_test_type_identifier(const YYLTYPE&loc, const char*txt);
 extern typedef_t* pform_test_type_identifier(PPackage*pkg, const char*txt);
 
 /*
+ * Test if this identifier is a previously declared interface name.
+ */
+extern bool pform_test_interface_identifier(const char*txt);
+
+/*
  * Test if this identifier is a package name. The pform needs to help
  * the lexor here because the parser detects packages and saves them.
  */

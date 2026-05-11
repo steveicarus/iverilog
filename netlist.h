@@ -1045,7 +1045,7 @@ class NetScope : public Definitions, public Attrib {
       const NetScope* child(const hname_t&name) const;
 
       struct interface_port_alias_t {
-	    interface_port_alias_t() : actual_scope(0), modport(0) { }
+	    interface_port_alias_t() : actual_scope(nullptr), modport(nullptr) { }
 	    interface_port_alias_t(NetScope*actual, const PModport*mp)
 	    : actual_scope(actual), modport(mp) { }
 

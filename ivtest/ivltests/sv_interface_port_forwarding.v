@@ -4,6 +4,14 @@
 // This file is placed into the Public Domain, for any use, without
 // warranty.
 
+interface bus_if ();
+   logic value;
+   logic mirror;
+   logic hidden;
+
+   modport consumer(input value, output mirror);
+endinterface
+
 module test;
    bus_if bus();
 
@@ -31,11 +39,3 @@ module child(
 );
    assign bus.mirror = bus.value;
 endmodule
-
-interface bus_if ();
-   logic value;
-   logic mirror;
-   logic hidden;
-
-   modport consumer(input value, output mirror);
-endinterface

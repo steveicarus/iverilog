@@ -845,13 +845,11 @@ const NetScope::interface_port_alias_t*
 NetScope::find_interface_port_alias_element(perm_string formal_name,
 					    long index) const
 {
-      map<perm_string,map<long,interface_port_alias_t> >::const_iterator arr;
-      arr = interface_port_alias_arrays_.find(formal_name);
+      auto arr = interface_port_alias_arrays_.find(formal_name);
       if (arr == interface_port_alias_arrays_.end())
 	    return 0;
 
-      map<long,interface_port_alias_t>::const_iterator cur;
-      cur = arr->second.find(index);
+      auto cur = arr->second.find(index);
       if (cur == arr->second.end())
 	    return 0;
 
@@ -861,8 +859,7 @@ NetScope::find_interface_port_alias_element(perm_string formal_name,
 const map<long,NetScope::interface_port_alias_t>*
 NetScope::find_interface_port_alias_array(perm_string formal_name) const
 {
-      map<perm_string,map<long,interface_port_alias_t> >::const_iterator cur;
-      cur = interface_port_alias_arrays_.find(formal_name);
+      auto cur = interface_port_alias_arrays_.find(formal_name);
       if (cur == interface_port_alias_arrays_.end())
 	    return 0;
 

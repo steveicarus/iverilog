@@ -331,7 +331,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 
 			return true;
 		  }
-	    } else {
+	    } else if (scope->find_interface_port_alias_array(path_tail.name)) {
 		  bool flag = false;
 		  hname_t path_item = eval_path_component(des, start_scope, path_tail, flag);
 		  if (!flag && path_item.has_numbers() == 1) {

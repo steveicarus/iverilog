@@ -135,10 +135,6 @@ Makefile: $(srcdir)/Makefile.in
 dep:
 	mkdir dep
 
-# Older dependency files may refer to ivl_dlfcn.h from before the
-# shared dlopen wrapper was moved to the top-level source directory.
-ivl_dlfcn.h: $(srcdir)/../ivl_dlfcn.h
-
 ifeq (@LIBVVP@,yes)
 
 CPPFLAGS+= -fpic
