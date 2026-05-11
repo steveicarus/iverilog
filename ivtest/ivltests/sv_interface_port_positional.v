@@ -3,13 +3,6 @@
 // This file is placed into the Public Domain, for any use, without
 // warranty.
 
-interface bus_if ();
-   logic value;
-   logic sample;
-
-   modport consumer(input value, output sample);
-endinterface
-
 module test;
    bus_if bus();
 
@@ -31,3 +24,10 @@ module bus_user(
 );
    assign bus.sample = bus.value;
 endmodule
+
+interface bus_if ();
+   logic value;
+   logic sample;
+
+   modport consumer(input value, output sample);
+endinterface

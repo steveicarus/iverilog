@@ -1,2 +1,2 @@
-ivltests/sv_interface_port_positional_unconnected_fail.v:13: error: Interface port `bus' of module bus_user is not connected.
+ivltests/sv_interface_port_positional_unconnected_fail.v:7: error: Interface port `bus' of module bus_user is not connected.
 Elaboration failed

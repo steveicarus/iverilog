@@ -4,12 +4,6 @@
 // This file is placed into the Public Domain, for any use, without
 // warranty.
 
-interface bus_if ();
-   logic [7:0] lhs;
-   logic [7:0] rhs;
-   logic [8:0] sum;
-endinterface
-
 module test;
    logic [7:0] lhs;
    logic [7:0] rhs;
@@ -38,3 +32,9 @@ module add_if(
 );
    assign bus.sum = bus.lhs + bus.rhs;
 endmodule
+
+interface bus_if ();
+   logic [7:0] lhs;
+   logic [7:0] rhs;
+   logic [8:0] sum;
+endinterface

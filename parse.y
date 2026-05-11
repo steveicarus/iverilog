@@ -4781,9 +4781,11 @@ module
         port_declaration_context_init(); }
     module_package_import_list_opt
     module_parameter_port_list_opt
+      { lex_in_module_port_list(true); }
     module_port_list_opt
+      { lex_in_module_port_list(false); }
     module_attribute_foreign ';'
-      { pform_module_set_ports($8); }
+      { pform_module_set_ports($9); }
     timeunits_declaration_opt
       { pform_set_scope_timescale(@2); }
     module_item_list_opt
@@ -4806,16 +4808,16 @@ module
 	}
 	  // Check that program/endprogram and module/endmodule
 	  // keywords match.
-	if ($2 != $15) {
+	if ($2 != $17) {
 	      switch ($2) {
 		  case K_module:
-		    yyerror(@15, "error: module not closed by endmodule.");
+		    yyerror(@17, "error: module not closed by endmodule.");
 		    break;
 		  case K_program:
-		    yyerror(@15, "error: program not closed by endprogram.");
+		    yyerror(@17, "error: program not closed by endprogram.");
 		    break;
 		  case K_interface:
-		    yyerror(@15, "error: interface not closed by endinterface.");
+		    yyerror(@17, "error: interface not closed by endinterface.");
 		    break;
 		  default:
 		    break;
@@ -4831,13 +4833,13 @@ module
 	// module.
 	switch ($2) {
 	    case K_module:
-	      check_end_label(@17, "module", $4, $17);
+	      check_end_label(@19, "module", $4, $19);
 	      break;
 	    case K_program:
-	      check_end_label(@17, "program", $4, $17);
+	      check_end_label(@19, "program", $4, $19);
 	      break;
 	    case K_interface:
-	      check_end_label(@17, "interface", $4, $17);
+	      check_end_label(@19, "interface", $4, $19);
 	      break;
 	    default:
 	      break;
