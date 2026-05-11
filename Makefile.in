@@ -169,7 +169,7 @@ clean:
 	rm -f ivl.exp
 	rm -f iverilog_man.ps iverilog_man.pdf iverilog_man_$(VERSION_MAJOR)_$(VERSION_MINOR).pdf
 	rm -f parse.output syn-rules.output dosify$(BUILDEXT) ivl@EXEEXT@ check.vvp
-	rm -f lexor_keyword.cc libivl.a libvpi.a syn-rules.cc version_base.h
+	rm -f lexor_keyword.cc libivl.a libvpi.a syn-rules.cc
 	rm -rf dep
 
 distclean: clean
@@ -178,6 +178,7 @@ distclean: clean
 	rm -f Makefile config.status config.log config.cache
 	rm -f stamp-config-h config.h
 	rm -f stamp-_pli_types-h _pli_types.h
+	rm -f stamp-version_base-h version_base.h
 ifneq (@srcdir@,.)
 	rm -f version_tag.h check.conf
 	rmdir $(SUBDIRS) $(NOTUSED)
@@ -214,6 +215,11 @@ stamp-_pli_types-h: $(srcdir)/_pli_types.h.in config.status
 	@rm -f $@
 	./config.status _pli_types.h
 _pli_types.h: stamp-_pli_types-h
+
+stamp-version_base-h: $(srcdir)/version_base.h.in config.status
+	@rm -f $@
+	./config.status version_base.h
+version_base.h: stamp-version_base-h
 
 $(srcdir)/configure: $(srcdir)/configure.ac $(srcdir)/aclocal.m4
 	cd $(srcdir) && autoconf
