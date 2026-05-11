@@ -153,6 +153,15 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  if (path_tail.name == "#") {
 			if (NetNet *net = scope->find_signal(perm_string::literal(THIS_TOKEN))) {
 			      const netclass_t *class_type = dynamic_cast<const netclass_t*>(net->net_type());
+			      ivl_assert(*li, class_type);
+			      if (!class_type->get_super()) {
+				    cerr << li->get_fileline() << ": error: "
+					 << "Class " << class_type->get_name()
+					 << " uses `super` without a base class."
+					 << endl;
+				    des->errors += 1;
+				    return false;
+			      }
 			      path.push_back(path_tail);
 			      res->scope = scope;
 			      res->net = net;
