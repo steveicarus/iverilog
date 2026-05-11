@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_lval_concat_class_fail2.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
