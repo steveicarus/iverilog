@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -509,8 +509,15 @@ void indices_to_expressions(Design*des, NetScope*scope,
 
 	    NetExpr*word_index = elab_and_eval(des, scope, cur->msb, -1, need_const);
 
-	    if (word_index == 0)
+	    if (!word_index) {
 		  flags.invalid = true;
+	    } else if (word_index->expr_type() == IVL_VT_REAL) {
+		  cerr << cur->msb->get_fileline() << ": error: "
+		       << "Array index expression cannot be a real value."
+		       << endl;
+		  des->errors += 1;
+		  flags.invalid = true;
+	    }
 
 	      // Track if we detect any non-constant expressions
 	      // here. This may allow for a special case.
