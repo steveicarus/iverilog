@@ -98,6 +98,22 @@ AC_SUBST(EXEEXT)
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
 
+# detect msys shell
+AC_MSG_CHECKING([whether the shell is an MSYS2 runtime shell])
+
+AS_CASE([$host_os:$MSYSTEM],
+  [*mingw*:UCRT64|*mingw*:MINGW64|*mingw*:MINGW32|*mingw*:CLANG64], [
+    MSYS_SHELL=true
+    msys_shell_result=yes
+  ],
+  [
+    MSYS_SHELL=false
+    msys_shell_result=no
+  ]
+)
+AC_MSG_RESULT([$msys_shell_result])
+AC_SUBST([MSYS_SHELL])
+
 # Check to see if we are using the Sun compiler. If so then configure
 # some of the flags to match the Sun compiler syntax. This is also used
 # in the aclocal.m4 file to configure the flags used to build and link

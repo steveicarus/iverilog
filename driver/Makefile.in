@@ -17,12 +17,18 @@
 #
 SHELL = /bin/sh
 
+EXEEXT = @EXEEXT@
+ENV_VVP=@ENV_VVP@
+MSYS_SHELL=@MSYS_SHELL@
+
 suffix = @install_suffix@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
 datarootdir = @datarootdir@
+builddir=@builddir@
+top_builddir=@top_builddir@
 
 VPATH = $(srcdir)
 
@@ -58,11 +64,25 @@ O = main.o substit.o cflexor.o cfparse.o
 all: dep iverilog@EXEEXT@ iverilog.man
 
 check: all
+	@if $(MSYS_SHELL); then \
+		echo "iverilog: execution from a build directory not suppported for this runtime"; \
+	else \
+		echo "iverilog: create .vpp from .v file and run it"; \
+		$(builddir)/iverilog@EXEEXT@ \
+			-B$(top_builddir)/tgt-vvp \
+			-BI$(top_builddir) \
+			-BM$(top_builddir)/vpi \
+			-BP$(top_builddir)/ivlpp \
+			-Bt$(top_builddir)/tgt-vvp \
+			$(verbose) -o top.vvp -s top $(srcdir)/hello_world.v; \
+		$(ENV_VVP) $(top_builddir)/vvp/vvp$(suffix)@EXEEXT@ top.vvp; \
+	fi
 
 clean:
 	rm -f *.o cflexor.c cfparse.c cfparse.h cfparse.output
 	rm -f iverilog@EXEEXT@ iverilog.man iverilog.pdf iverilog.ps
 	rm -rf dep
+	rm -f test.conf top.vvp
 
 distclean: clean
 	rm -f Makefile config.log
