@@ -156,6 +156,9 @@ module_port_array1		vvp_tests/module_port_array1.json
 module_port_array_fail1		vvp_tests/module_port_array_fail1.json
 module_port_array_init1		vvp_tests/module_port_array_init1.json
 monitor4			vvp_tests/monitor4.json
+named_event_edge_fail		vvp_tests/named_event_edge_fail.json
+named_event_negedge_fail	vvp_tests/named_event_negedge_fail.json
+named_event_posedge_fail	vvp_tests/named_event_posedge_fail.json
 non-polymorphic-abs		vvp_tests/non-polymorphic-abs.json
 partsel_invalid_idx1		vvp_tests/partsel_invalid_idx1.json
 partsel_invalid_idx2		vvp_tests/partsel_invalid_idx2.json

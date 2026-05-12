@@ -1,0 +1,4 @@
+{
+    "type"   : "CE",
+    "source" : "named_event_posedge_fail.v"
+}
