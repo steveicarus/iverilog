@@ -239,9 +239,6 @@ ivl@EXEEXT@: $O
 	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ $O $(dllib)
 endif
 
-version_base.h: $(srcdir)/version_base.h.in config.status
-	./config.status --file=$@
-
 %.o: %.cc config.h | dep
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep/$*.d

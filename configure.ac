@@ -16,6 +16,12 @@ AC_SUBST([VERSION], ["VER_MAJOR.VER_MINOR (VER_EXTRA)"])
 AC_SUBST([PRODUCTVERSION], ["VER_MAJOR,VER_MINOR,0,0"])
 
 AC_CONFIG_SRCDIR([netlist.h])
+# Need a stamp file like the other header files
+AC_CONFIG_FILES([version_base.h],[
+_config_header=version_base.h
+_stamp_name=stamp-`expr //$_config_header : '.*/\([[^./]]*\)\.[[^./]]*$'`-h
+echo "timestamp for $_config_header" > `AS_DIRNAME(["$_config_header"])`/[]$_stamp_name
+])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_HEADERS([_pli_types.h])
 AC_CONFIG_HEADERS([vhdlpp/vhdlpp_config.h])
@@ -425,7 +431,6 @@ AC_CONFIG_FILES([
     tgt-vhdl/Makefile
     tgt-vlog95/Makefile
     tgt-vvp/Makefile
-    version_base.h
     vhdlpp/Makefile
     vpi/Makefile
     vvp/Makefile
