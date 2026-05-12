@@ -1547,8 +1547,14 @@ int main(int argc, char **argv)
 	/* Write the preprocessor command needed to preprocess a
 	   single file. This may be used to preprocess library
 	   files. */
-      fprintf(iconfig_file, "ivlpp:%s%civlpp %s -L -F\"%s\" -P\"%s\"\n",
-	      ivlpp_dir, sep,
+      char ivlpp_prefix[1024];
+      if (strcmp(ivlpp_dir, base) != 0)
+	    snprintf(ivlpp_prefix, sizeof(ivlpp_prefix), "%s%c", ivlpp_dir, sep);
+      else
+	    *ivlpp_prefix = '\0';
+
+      fprintf(iconfig_file, "ivlpp:%sivlpp %s -L -F\"%s\" -P\"%s\"\n",
+	          ivlpp_prefix,
               strchr(warning_flags, 'r') ? "-Wredef-all" :
               strchr(warning_flags, 'R') ? "-Wredef-chg" : "",
               defines_path, compiled_defines_path
