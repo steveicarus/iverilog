@@ -1374,6 +1374,13 @@ int main(int argc, char **argv)
 	    }
       }
 
+      if (version_flag) {
+	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
+	    printf("%s\n\n", COPYRIGHT);
+	    puts(NOTICE);
+	    return 0;
+      }
+
       if (strcmp(gen_verilog_ams,"verilog-ams") == 0)
 	    fprintf(defines_file, "D:__VAMS_ENABLE__=1\n");
       if (synth_flag)
@@ -1389,12 +1396,6 @@ int main(int argc, char **argv)
 	    vhdlpp_dir = base;
       if (tconfig_dir == 0)
 	    tconfig_dir = base;
-
-      if (version_flag || verbose_flag) {
-	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
-	    printf("%s\n\n", COPYRIGHT);
-	    puts(NOTICE);
-      }
 
 	/* Make a common conf file path to reflect the target. */
       snprintf(iconfig_common_path, sizeof iconfig_common_path, "%s%c%s%s.conf",
