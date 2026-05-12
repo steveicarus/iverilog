@@ -4975,6 +4975,9 @@ cerr << endl;
 				  case PEEvent::NEGEDGE:
 				    cerr << "negedge";
 				    break;
+				  case PEEvent::EDGE:
+				    cerr << "edge";
+				    break;
 				  default:
 				    cerr << "unknown edge type!";
 				    ivl_assert(*this, 0);
