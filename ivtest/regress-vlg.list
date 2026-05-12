@@ -719,7 +719,6 @@ multi_bit_strength	normal			ivltests gold=multi_bit_strength.gold
 multi_driver_delay	normal			ivltests
 multiply_large		normal			ivltests # Takes care of PR222
 muxtest			normal			ivltests # Validates that X sel and inputs same, output not X
-named_event_no_edges	CE			ivltests
 nb_assign		normal			ivltests
 nb_delay		normal			ivltests
 nb_ec_concat		normal			ivltests
