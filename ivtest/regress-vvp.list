@@ -288,6 +288,7 @@ sv_package_lifetime		vvp_tests/sv_package_lifetime.json
 sv_package_lifetime_fail	vvp_tests/sv_package_lifetime_fail.json
 sv_parameter_type		vvp_tests/sv_parameter_type.json
 sv_queue_assign_op		vvp_tests/sv_queue_assign_op.json
+sv_super_member_fail		vvp_tests/sv_super_member_fail.json
 sv_wildcard_import8		vvp_tests/sv_wildcard_import8.json
 sdf_header			vvp_tests/sdf_header.json
 task_return1			vvp_tests/task_return1.json
