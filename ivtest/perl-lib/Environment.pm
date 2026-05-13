@@ -108,7 +108,7 @@ sub get_ivl_version {
 # is redirected to a log file.
 #
 sub run_program {
-    my ($cmd, $log_mode, $log_file) = @_;
+    my ($cmd, $log_mode, $log_file, $verbose) = @_;
 
     my $ret;
     if ($log_mode) {
@@ -121,6 +121,9 @@ sub run_program {
         open(STDERR, '>&OLDERR');
     } else {
         $ret = system($cmd);
+    }
+    if ($verbose) {
+        print "running: '$cmd' -> $ret\n";
     }
     $ret;
 }

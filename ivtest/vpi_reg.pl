@@ -13,9 +13,11 @@ use Getopt::Long;
 $sfx = "";  # Default suffix.
 $with_pli1 = 0;  # Default PLI 1 support (keep this off).
 $with_valg = 0;  # Default valgrind usage (keep this off).
+$verbose = 0;    # Verbose mode
 if (!GetOptions("suffix=s" => \$sfx,
                 "with-pli1" => \$with_pli1,
                 "with-valgrind" => \$with_valg,
+                "verbose" => \$verbose,
                 "help" => \&usage)) {
     die "Error: Invalid argument(s).\n";
 }
@@ -27,6 +29,8 @@ sub usage {
          "  --with-pli1        # Include the PLI 1 tests, " .
          "default \"off\".\n" .
          "  --with-valgrind    # Run the test suite with valgrind, " .
+         "default \"off\".\n" .
+         "  --verbose          # Be verbose when running commands, " .
          "default \"off\".\n" .
          "  <regression file>  # The regression file, " .
          "default \"./vpi_regress.list\".\n\n";
@@ -157,6 +161,15 @@ sub read_regression_list {
     close (REGRESS_LIST);
 }
 
+sub print_log {
+    my ($filename) = @_;
+    open(my $fh, '<', $filename) or die $!;
+    my $content = do { local $/; <$fh> };
+    close($fh);
+    open(my $fh, '<', $filename) or die "Datei '$filename' konnte nicht geöffnet werden: $!";
+    print "content of '$filename': $content";
+}
+
 #
 #  execute_regression sequentially compiles and executes each test in
 #  the regression. It then checks that the output matched the gold file.
@@ -198,16 +211,19 @@ sub execute_regression {
 
         $cmd = "iverilog-vpi$sfx --name=$tname $cargs{$tname} " .
                "vpi/$ccode{$tname}";
-        if (run_program($cmd, '>', "vpi_log/$tname.log")) {
+        if (run_program($cmd, '>', "vpi_log/$tname.log", $verbose)) {
             print "==> Failed - running iverilog-vpi.\n";
+            print_log("vpi_log/$tname.log");
             $failed++;
             next;
         }
 
+        $vflag = $verbose ? " -v" : "";
         $cmd = $with_valg ? "valgrind --trace-children=yes " : "";
-        $cmd .= "iverilog$sfx $args{$tname} -L . -m $tname -o vsim vpi/$tname.v";
-        if (run_program($cmd, '>>', "vpi_log/$tname.log")) {
+        $cmd .= "iverilog$sfx $vflag  $args{$tname} -L . -m $tname -o vsim vpi/$tname.v";
+        if (run_program($cmd, '>>', "vpi_log/$tname.log", $verbose)) {
             print "==> Failed - running iverilog.\n";
+            print_log("vpi_log/$tname.log");
             $failed++;
             next;
         }
@@ -215,14 +231,16 @@ sub execute_regression {
         $cmd = $with_valg ? "valgrind --leak-check=full " .
                             "--show-reachable=yes " : "";
         $cmd .= "vvp$sfx vsim";
-        if (run_program($cmd, '>>', "vpi_log/$tname.log")) {
+        if (run_program($cmd, '>>', "vpi_log/$tname.log", $verbose)) {
             print "==> Failed - running vvp.\n";
+            print_log("vpi_log/$tname.log");
             $failed++;
             next;
         }
 
         if (diff("vpi_gold/$goldfile{$tname}", "vpi_log/$tname.log")) {
             print "==> Failed - output does not match gold file.\n";
+            print_log("vpi_log/$tname.log");
             $failed++;
             next;
         }
@@ -237,7 +255,7 @@ sub execute_regression {
         if ($tname ne "" and $ccode{$tname} ne "") {
             my $doto = $ccode{$tname};
             $doto =~ s/\.(c|cc|cpp)$/.o/;
-            run_program("rm -f $doto $tname.vpi vsim") and
+            run_program("rm -f $doto $tname.vpi vsim", '', '', $verbose) and
                 die "Error: failed to remove temporary files.\n";
         }
     }
