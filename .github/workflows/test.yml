@@ -18,7 +18,7 @@ jobs:
     name: '🍏 macOS'
     steps:
 
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
     - name: Install dependencies
       run: |
@@ -49,7 +49,7 @@ jobs:
     name: '🐧 Ubuntu ${{ matrix.os }}'
     steps:
 
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
     - name: Install dependencies
       run: |
@@ -97,7 +97,7 @@ jobs:
     - run: git config --global core.autocrlf input
       shell: bash
 
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
     - uses: msys2/setup-msys2@v2
       with:
@@ -109,7 +109,7 @@ jobs:
           python-pip
           mingw-w64-${{ matrix.env }}-perl
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: '>=3.5'
 
@@ -128,7 +128,7 @@ jobs:
       run: |
         make check-installed
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: ${{ matrix.msystem }}
         path: msys2/*.zst
