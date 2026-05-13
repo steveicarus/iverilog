@@ -73,6 +73,17 @@ highlight_language = 'none'
 
 # -- Options for HTML output -------------------------------------------------
 
+# A dictionary of values to pass into the template engine's context for all pages.
+#
+html_context = {
+    # Edit this page
+    "source_type": "github",
+    "source_user": "steveicarus",
+    "source_repo": "iverilog",
+    "source_version": "master",
+    "source_docs_path": "/Documentation/",
+}
+
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
