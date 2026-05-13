@@ -18,7 +18,7 @@ jobs:
     name: '🍏 macOS'
     steps:
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: Install dependencies
       run: |
@@ -49,7 +49,7 @@ jobs:
     name: '🐧 Ubuntu ${{ matrix.os }}'
     steps:
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: Install dependencies
       run: |
@@ -97,7 +97,7 @@ jobs:
     - run: git config --global core.autocrlf input
       shell: bash
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - uses: msys2/setup-msys2@v2
       with:
