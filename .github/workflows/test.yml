@@ -14,9 +14,9 @@ jobs:
   mac:
     strategy:
       fail-fast: false
-    # matrix:
-    #   libvvp: [false, true]
-    #   suffix: [false, true]
+      matrix:
+        libvvp: [true]
+        suffix: [true]
     runs-on: macos-15-intel
     name: 🍏 macOS${{ matrix.libvvp && ' +libvvp' || '' }}${{ matrix.suffix && ' +suffix' || '' }}
     steps:
