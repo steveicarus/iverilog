@@ -8,6 +8,10 @@
 *.swp
 *~
 
+# Virtual environments
+.conda/
+.venv/
+
 # Top level generic files
 tags
 TAGS
