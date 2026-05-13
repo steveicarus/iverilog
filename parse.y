@@ -486,8 +486,6 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 
       ivl_discipline_t discipline;
 
-      hname_t*hier;
-
       std::list<std::string>*strings;
 
       struct str_pair_t drive;
@@ -540,7 +538,6 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
       struct_type_t*struct_type;
 
       data_type_t*data_type;
-      class_type_t*class_type;
       real_type_t::type_t real_type;
       property_qualifier_t property_qualifier;
       PPackage*package;
@@ -570,8 +567,6 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
       verireal* realtime;
 
       PSpecPath* specpath;
-      std::list<index_component_t> *dimensions;
-
       PTimingCheck::event_t* timing_check_event;
       PTimingCheck::optional_args_t* spec_optional_args;
 
