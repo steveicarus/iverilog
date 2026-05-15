@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -671,7 +671,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 	    switch (ivl_statement_type(net)) {
 
 		case IVL_ST_CASE:
-		  fprintf(vvp_out, "    %%cmp/u;\n");
+		  fprintf(vvp_out, "    %%cmp/e;\n");
 		  fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 6;\n",
 			  thread_count, local_base+idx);
 		  break;
