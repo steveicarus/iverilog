@@ -323,7 +323,7 @@ extern void pform_set_typedef(const struct vlltype&loc, perm_string name,
 			      data_type_t*data_type,
 			      std::list<pform_range_t>*unp_ranges = nullptr);
 extern void pform_forward_typedef(const struct vlltype&loc, perm_string name,
-			      enum typedef_t::basic_type basic_type);
+			      type_restrict_t basic_type);
 
 extern void pform_set_type_referenced(const struct vlltype&loc, const char*name);
 
@@ -412,6 +412,7 @@ extern LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 extern void pform_set_parameter(const struct vlltype&loc,
                                 perm_string name,
                                 bool is_local, bool is_type,
+                                type_restrict_t type_restrict,
                                 data_type_t*data_type, const std::list<pform_range_t>*udims,
                                 PExpr*expr, LexicalScope::range_t*value_range);
 extern void pform_set_specparam(const struct vlltype&loc,

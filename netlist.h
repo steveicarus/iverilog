@@ -1279,6 +1279,8 @@ class NetScope : public Definitions, public Attrib {
 	    bool overridable = false;
 	    // Is it a type parameter
 	    bool type_flag = false;
+	    // Type restriction for a type parameter
+	    type_restrict_t type_restrict;
 	    // The lexical position of the declaration
 	    unsigned lexical_pos = 0;
 	    // range constraints

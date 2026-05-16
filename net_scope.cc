@@ -281,6 +281,7 @@ void NetScope::set_parameter(perm_string key, bool is_annotatable,
       ref.local_flag = param.local_flag;
       ref.overridable = param.overridable;
       ref.type_flag = param.type_flag;
+      ref.type_restrict = param.type_restrict;
       ref.lexical_pos = param.lexical_pos;
       ivl_assert(param, !ref.range);
       ref.range = range_list;
