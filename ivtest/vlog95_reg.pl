@@ -4,7 +4,7 @@
 #
 # This script is based on code with the following Copyright.
 #
-# Copyright (c) 1999-2025 Guy Hutchison (ghutchis@pacbell.net)
+# Copyright (c) 1999-2026 Guy Hutchison (ghutchis@pacbell.net)
 #
 #    This source code is free software; you can redistribute it
 #    and/or modify it in source code form under the terms of the GNU
@@ -183,6 +183,8 @@ sub execute_regression {
         $args{$tname} =~ s/-g2005(-sv)?//g;
         $args{$tname} =~ s/-g2009//g;
         $args{$tname} =~ s/-g2012//g;
+        $args{$tname} =~ s/-g2017//g;
+        $args{$tname} =~ s/-g2023//g;
         $args{$tname} =~ s/-gverilog-ams//g;
         $cmd = "iverilog$sfx -o vsim $gen_flag $args{$tname}";
         $cmd .= " -s $testmod{$tname}" if ($testmod{$tname} ne "");

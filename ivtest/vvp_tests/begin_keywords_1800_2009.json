@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "begin_keywords_1800_2009.v",
+    "iverilog-args" : [ "-g2009" ]
+}
