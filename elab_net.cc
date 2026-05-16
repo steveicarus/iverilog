@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
