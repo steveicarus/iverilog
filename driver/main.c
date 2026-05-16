@@ -39,7 +39,7 @@ const char NOTICE[] =
 
 const char HELP[] =
 "Usage: iverilog [-EiRSuvV] [-B base] [-c cmdfile|-f cmdfile]\n"
-"                [-g1995|-g2001|-g2005|-g2005-sv|-g2009|-g2012] [-g<feature>]\n"
+"                [-g1995|-g2001|-g2005|-g2005-sv|-g2009|-g2012|-g2017|-g2023] [-g<feature>]\n"
 "                [-D macro[=defn]] [-I includedir] [-L moduledir]\n"
 "                [-M [mode=]depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
@@ -740,6 +740,12 @@ static int process_generation(const char*name)
       else if (strcmp(name,"2012") == 0)
 	    generation = "2012";
 
+      else if (strcmp(name,"2017") == 0)
+	    generation = "2017";
+
+      else if (strcmp(name,"2023") == 0)
+	    generation = "2023";
+
       else if (strcmp(name,"1") == 0) { /* Deprecated: use 1995 */
 	    generation = "1995";
 	    gen_xtypes = "no-xtypes";
@@ -860,6 +866,8 @@ static int process_generation(const char*name)
 		            "    2005-sv -- IEEE1800-2005\n"
 		            "    2009    -- IEEE1800-2009\n"
 		            "    2012    -- IEEE1800-2012\n"
+		            "    2017    -- IEEE1800-2017\n"
+		            "    2023    -- IEEE1800-2023\n"
 		            "Other generation flags:\n"
 		            "    assertions | supported-assertions | no-assertions\n"
 		            "    specify | no-specify\n"
@@ -1388,11 +1396,13 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "module:%s%cvhdl_sys.vpi\n", vpi_dir, sep);
       fprintf(iconfig_file, "module:%s%cvhdl_textio.vpi\n", vpi_dir, sep);
 
-	/* If verilog-2005/09/12 is enabled or icarus-misc or verilog-ams,
+	/* If verilog-2005/09/12/17/23 is enabled or icarus-misc or verilog-ams,
 	 * then include the v2005_math library. */
       if (strcmp(generation, "2005") == 0 ||
           strcmp(generation, "2009") == 0 ||
           strcmp(generation, "2012") == 0 ||
+          strcmp(generation, "2017") == 0 ||
+          strcmp(generation, "2023") == 0 ||
           strcmp(gen_icarus, "icarus-misc") == 0 ||
           strcmp(gen_verilog_ams, "verilog-ams") == 0) {
 	    fprintf(iconfig_file, "module:%s%cv2005_math.vpi\n", vpi_dir, sep);
@@ -1407,7 +1417,9 @@ int main(int argc, char **argv)
          v2009 module. */
       if (strcmp(generation, "2005-sv") == 0 ||
           strcmp(generation, "2009") == 0 ||
-          strcmp(generation, "2012") == 0) {
+          strcmp(generation, "2012") == 0 ||
+          strcmp(generation, "2017") == 0 ||
+          strcmp(generation, "2023") == 0) {
 	    fprintf(iconfig_file, "module:%s%cv2009.vpi\n", vpi_dir, sep);
       }
 

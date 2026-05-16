@@ -64,7 +64,7 @@ def process_overrides(group: str, it_dict: dict, it_opts: dict):
 
 def force_gen(it_opts: dict):
     '''Remove the current generation and force it to the latest.'''
-    generations = ['-g2012', '-g2009', '-g2005-sv',
+    generations = ['-g2023', '-g2017', '-g2012', '-g2009', '-g2005-sv',
                    '-g2005', '-g2001-noconfig', '-g2001', '-g1995',
                    '-g2', '-g1']
     for gen in generations:
@@ -75,7 +75,7 @@ def force_gen(it_opts: dict):
         idx_to_replace = it_opts['iverilog_args'].index('-g2x')
         it_opts[idx_to_replace] = '-gicarus-misc'
 
-    it_opts['iverilog_args'].insert(0, '-g2012')
+    it_opts['iverilog_args'].insert(0, '-g2023')
 
 
 def process_test(item: list, cfg: list) -> str:

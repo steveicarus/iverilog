@@ -789,7 +789,9 @@ TU [munpf]
 		                |GN_KEYWORDS_1364_2005
 		                |GN_KEYWORDS_1800_2005
 		                |GN_KEYWORDS_1800_2009;
-      } else if (strcmp(word,"1800-2012") == 0) {
+      } else if (strcmp(word,"1800-2012") == 0
+              || strcmp(word,"1800-2017") == 0
+              || strcmp(word,"1800-2023") == 0) {
 	    lexor_keyword_mask = GN_KEYWORDS_1364_1995
 		                |GN_KEYWORDS_1364_2001
 		                |GN_KEYWORDS_1364_2001_CONFIG
