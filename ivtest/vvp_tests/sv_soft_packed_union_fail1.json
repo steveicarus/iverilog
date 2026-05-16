@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_soft_packed_union_fail1.v",
+    "iverilog-args" : [ "-g2023" ]
+}
