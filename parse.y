@@ -706,7 +706,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <flag>    from_exclude block_item_decls_opt
 %type <number>  number pos_neg_number
 %type <flag>    signing unsigned_signed_opt signed_unsigned_opt
-%type <flag>    import_export
+%type <flag>    import_export union_soft_opt
 %type <flag>    K_genvar_opt K_static_opt K_virtual_opt K_const_opt
 %type <flag>    udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
@@ -1356,7 +1356,7 @@ packed_array_data_type /* IEEE1800-2005: A.2.2.1 */
   : enum_data_type
       { $$ = $1; }
   | struct_data_type
-      { if (!$1->packed_flag) {
+      { if (!$1->packed_flag && !($1->union_flag && $1->soft_flag)) {
 	      yyerror(@1, "sorry: Unpacked structs not supported.");
         }
 	$$ = $1;
@@ -3013,6 +3013,13 @@ packed_signing /* IEEE 1800-2012 A.2.2.1 */
       }
   ;
 
+union_soft_opt
+  : K_soft
+      { $$ = true; }
+  |
+      { $$ = false; }
+  ;
+
 struct_data_type /* IEEE 1800-2012 A.2.2.1 */
   : K_struct packed_signing '{' struct_union_member_list '}'
       { struct_type_t*tmp = new struct_type_t;
@@ -3020,16 +3027,20 @@ struct_data_type /* IEEE 1800-2012 A.2.2.1 */
 	tmp->packed_flag = $2.packed_flag;
 	tmp->signed_flag = $2.signed_flag;
 	tmp->union_flag = false;
-	tmp->members .reset($4);
+	tmp->soft_flag = false;
+	tmp->members.reset($4);
 	$$ = tmp;
       }
-  | K_union packed_signing '{' struct_union_member_list '}'
-      { struct_type_t*tmp = new struct_type_t;
+  | K_union union_soft_opt packed_signing '{' struct_union_member_list '}'
+      { if ($2 && generation_flag < GN_VER2023)
+	      yyerror(@1, "error: Soft packed unions require SystemVerilog 2023 or later.");
+	struct_type_t*tmp = new struct_type_t;
 	FILE_NAME(tmp, @1);
-	tmp->packed_flag = $2.packed_flag;
-	tmp->signed_flag = $2.signed_flag;
+	tmp->packed_flag = $3.packed_flag;
+	tmp->signed_flag = $3.signed_flag;
 	tmp->union_flag = true;
-	tmp->members .reset($4);
+	tmp->soft_flag = $2;
+	tmp->members.reset($5);
 	$$ = tmp;
       }
   | K_struct packed_signing '{' error '}'
@@ -3040,16 +3051,20 @@ struct_data_type /* IEEE 1800-2012 A.2.2.1 */
 	tmp->packed_flag = $2.packed_flag;
 	tmp->signed_flag = $2.signed_flag;
 	tmp->union_flag = false;
+	tmp->soft_flag = false;
 	$$ = tmp;
       }
-  | K_union packed_signing '{' error '}'
-      { yyerror(@3, "error: Errors in union member list.");
+  | K_union union_soft_opt packed_signing '{' error '}'
+      { if ($2 && generation_flag < GN_VER2023)
+	      yyerror(@1, "error: Soft packed unions require SystemVerilog 2023 or later.");
+	yyerror(@4, "error: Errors in union member list.");
 	yyerrok;
 	struct_type_t*tmp = new struct_type_t;
 	FILE_NAME(tmp, @1);
-	tmp->packed_flag = $2.packed_flag;
-	tmp->signed_flag = $2.signed_flag;
+	tmp->packed_flag = $3.packed_flag;
+	tmp->signed_flag = $3.signed_flag;
 	tmp->union_flag = true;
+	tmp->soft_flag = $2;
 	$$ = tmp;
       }
   ;
