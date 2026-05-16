@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -83,16 +83,22 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    }
 
 	    if (nets[idx] == 0) {
-                  errors += 1;
-            } else if (nets[idx]->data_type() == IVL_VT_REAL) {
-		  cerr << parms_[idx]->get_fileline() << ": error: "
-		       << "concatenation operand can no be real: "
-		       << *parms_[idx] << endl;
 		  errors += 1;
-		  continue;
 	    } else {
-                  width += nets[idx]->vector_width();
-            }
+		  ivl_type_t tmp_type = nets[idx]->array_type();
+		  if (!tmp_type)
+			tmp_type = nets[idx]->net_type();
+
+		  if (tmp_type && !tmp_type->packed()) {
+			cerr << parms_[idx]->get_fileline() << ": error: "
+			     << "concatenation operand must be packed: "
+			     << *parms_[idx] << endl;
+			errors += 1;
+			continue;
+		  }
+
+		  width += nets[idx]->vector_width();
+	    }
       }
 
       if (errors) {
