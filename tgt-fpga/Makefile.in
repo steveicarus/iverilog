@@ -23,6 +23,7 @@ suffix = @install_suffix@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
+datarootdir = @datarootdir
 man1dir = @mandir@/man1
 docdir = @docdir@
 
