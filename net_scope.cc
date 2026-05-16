@@ -812,6 +812,60 @@ const NetScope* NetScope::child(const hname_t&name) const
 	    return cur->second;
 }
 
+void NetScope::add_interface_port_alias(perm_string formal_name,
+					NetScope*actual_scope,
+					const PModport*modport)
+{
+      ivl_assert(*this, actual_scope);
+      interface_port_aliases_[formal_name] = interface_port_alias_t(actual_scope, modport);
+}
+
+const NetScope::interface_port_alias_t*
+NetScope::find_interface_port_alias(perm_string formal_name) const
+{
+      map<perm_string,interface_port_alias_t>::const_iterator cur;
+      cur = interface_port_aliases_.find(formal_name);
+      if (cur == interface_port_aliases_.end())
+	    return 0;
+
+      return &cur->second;
+}
+
+void NetScope::add_interface_port_alias_element(perm_string formal_name,
+						long index,
+						NetScope*actual_scope,
+						const PModport*modport)
+{
+      ivl_assert(*this, actual_scope);
+      interface_port_alias_arrays_[formal_name][index] =
+	    interface_port_alias_t(actual_scope, modport);
+}
+
+const NetScope::interface_port_alias_t*
+NetScope::find_interface_port_alias_element(perm_string formal_name,
+					    long index) const
+{
+      auto arr = interface_port_alias_arrays_.find(formal_name);
+      if (arr == interface_port_alias_arrays_.end())
+	    return 0;
+
+      auto cur = arr->second.find(index);
+      if (cur == arr->second.end())
+	    return 0;
+
+      return &cur->second;
+}
+
+const map<long,NetScope::interface_port_alias_t>*
+NetScope::find_interface_port_alias_array(perm_string formal_name) const
+{
+      auto cur = interface_port_alias_arrays_.find(formal_name);
+      if (cur == interface_port_alias_arrays_.end())
+	    return 0;
+
+      return &cur->second;
+}
+
 /* Helper function to see if the given scope is defined in a class and if
  * so return the class scope. */
 const NetScope* NetScope::get_class_scope() const
@@ -866,6 +920,10 @@ bool NetScope::symbol_exists(perm_string sym)
       if (typedefs_.find(sym) != typedefs_.end())
           return true;
       if (find_event(sym))
+          return true;
+      if (find_interface_port_alias(sym))
+          return true;
+      if (find_interface_port_alias_array(sym))
           return true;
 
       return false;

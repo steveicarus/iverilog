@@ -25,6 +25,7 @@
 # include  "compiler.h"
 # include  "PPackage.h"
 # include  "PWire.h"
+# include  "PModport.h"
 # include  "ivl_assert.h"
 
 using namespace std;
@@ -74,6 +75,25 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 				      res, start_scope, prefix_scope);
 	    if (! flag)
 		  return false;
+
+	    if (res->net && res->path_tail.empty() && !res->path_head.empty()) {
+		  name_component_t prefix_tail = res->path_head.back();
+		  if (prefix_tail.index.empty() &&
+		      res->scope->child_byname(prefix_tail.name)) {
+			bool eval_flag = false;
+			hname_t path_item = eval_path_component(des, start_scope,
+								prefix_tail, eval_flag);
+			if (eval_flag) {
+			      cerr << li->get_fileline() << ": XXXXX: Errors evaluating scope index" << endl;
+			} else if (NetScope*chld = res->scope->child(path_item)) {
+			      if (chld->is_interface()) {
+				    res->scope = chld;
+				    res->net = 0;
+				    res->type = 0;
+			      }
+			}
+		  }
+	    }
 
 	    // The prefix is found to be something besides a scope. Put the
 	    // tail into the path_tail of the result, and return success. The
@@ -301,6 +321,52 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 	    }
 
+	    if (path_tail.index.empty()) {
+		  if (const NetScope::interface_port_alias_t*alias =
+		      scope->find_interface_port_alias(path_tail.name)) {
+			path.push_back(path_tail);
+			res->scope = alias->actual_scope;
+			res->path_head = path;
+			res->interface_alias_scope = scope;
+			res->interface_alias_name = path_tail.name;
+			res->interface_alias_target = alias->actual_scope;
+			res->interface_alias_modport = alias->modport;
+
+			if (debug_scopes || debug_elaborate) {
+			      cerr << li->get_fileline() << ": symbol_search: "
+				   << "Interface alias " << path_tail.name
+				   << " -> " << scope_path(alias->actual_scope) << endl;
+			}
+
+			return true;
+		  }
+	    } else if (scope->find_interface_port_alias_array(path_tail.name)) {
+		  bool flag = false;
+		  hname_t path_item = eval_path_component(des, start_scope, path_tail, flag);
+		  if (!flag && path_item.has_numbers() == 1) {
+			if (const NetScope::interface_port_alias_t*alias =
+			    scope->find_interface_port_alias_element(path_tail.name,
+								     path_item.peek_number(0))) {
+			      path.push_back(path_tail);
+			      res->scope = alias->actual_scope;
+			      res->path_head = path;
+			      res->interface_alias_scope = scope;
+			      res->interface_alias_name = path_tail.name;
+			      res->interface_alias_target = alias->actual_scope;
+			      res->interface_alias_modport = alias->modport;
+
+			      if (debug_scopes || debug_elaborate) {
+				    cerr << li->get_fileline() << ": symbol_search: "
+					 << "Interface alias " << path_tail.name
+					 << "[" << path_item.peek_number(0) << "]"
+					 << " -> " << scope_path(alias->actual_scope) << endl;
+			      }
+
+			      return true;
+			}
+		  }
+	    }
+
 	    // Don't scan up if we are searching within a prefixed scope.
 	    if (prefix_scope)
 		  break;
@@ -395,4 +461,35 @@ bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 
       return symbol_search(li, des, search_scope, path.name, lexical_pos,
 			   res, search_scope, prefix_scope);
+}
+
+bool check_interface_modport_access(const LineInfo *li, Design *des,
+				    const symbol_search_results &res,
+				    bool is_write)
+{
+      if (!res.through_interface_alias() || !res.interface_alias_modport || !res.net)
+	    return true;
+
+      const PModport *modport = res.interface_alias_modport;
+      perm_string member = res.net->name();
+      map<perm_string,PModport::simple_port_t>::const_iterator cur =
+	    modport->simple_ports.find(member);
+
+      if (cur == modport->simple_ports.end()) {
+	    cerr << li->get_fileline() << ": error: Interface member `"
+		 << member << "' is not listed in modport `"
+		 << modport->name() << "'." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      if (is_write && cur->second.first == NetNet::PINPUT) {
+	    cerr << li->get_fileline() << ": error: Cannot assign to input "
+		    "modport member `" << member << "' through interface port `"
+		 << res.interface_alias_name << "'." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      return true;
 }

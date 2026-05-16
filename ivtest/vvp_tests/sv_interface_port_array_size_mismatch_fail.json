@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_interface_port_array_size_mismatch_fail.v",
+    "gold"          : "sv_interface_port_array_size_mismatch_fail",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

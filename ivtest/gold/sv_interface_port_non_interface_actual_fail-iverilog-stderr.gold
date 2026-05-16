@@ -1,0 +1,2 @@
+ivltests/sv_interface_port_non_interface_actual_fail.v:9: error: Actual for interface port `bus' is not an interface instance.
+Elaboration failed

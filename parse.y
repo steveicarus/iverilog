@@ -461,6 +461,32 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
       return port;
 }
 
+Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
+					      char *modport, char *id,
+					      std::list<pform_range_t> *udims,
+					      std::list<named_pexpr_t> *attributes)
+{
+      pform_requires_sv(loc, "Interface port declaration");
+
+      Module::port_t *port = pform_module_interface_port_reference(
+	    loc, lex_strings.make(type),
+	    modport ? lex_strings.make(modport) : perm_string(),
+	    lex_strings.make(id), udims);
+
+      delete[] type;
+      if (modport)
+	    delete[] modport;
+      delete[] id;
+
+      pform_module_define_interface_port(loc, port, attributes);
+
+      port_declaration_context.port_type = NetNet::NOT_A_PORT;
+      port_declaration_context.port_net_type = NetNet::NONE;
+      port_declaration_context.data_type = nullptr;
+
+      return port;
+}
+
 %}
 
 %union {
@@ -575,7 +601,7 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
       enum typedef_t::basic_type typedef_basic_type;
 };
 
-%token <text>      IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
+%token <text>      IDENTIFIER INTERFACE_IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
 %token <type_identifier> TYPE_IDENTIFIER
 %token <package>   PACKAGE_IDENTIFIER
 %token <discipline> DISCIPLINE_IDENTIFIER
@@ -4598,10 +4624,20 @@ list_of_port_declarations
       { std::vector<Module::port_t*> *ports = $1;
 
 	Module::port_t* port;
-	port = module_declare_port(@4, $4, port_declaration_context.port_type,
-				   port_declaration_context.port_net_type,
-				   port_declaration_context.data_type,
-				   $5, $6, $3);
+	if (port_declaration_context.port_type == NetNet::NOT_A_PORT) {
+	      yyerror(@4, "error: Incomplete interface port declaration.");
+	      delete[]$4;
+	      delete $5;
+	      delete $6;
+	      delete $3;
+	      port = 0;
+	} else {
+	      port = module_declare_port(@4, $4,
+					 port_declaration_context.port_type,
+					 port_declaration_context.port_net_type,
+					 port_declaration_context.data_type,
+					 $5, $6, $3);
+	}
 	ports->push_back(port);
 	$$ = ports;
       }
@@ -4616,6 +4652,12 @@ list_of_port_declarations
 port_declaration
   : attribute_list_opt port_direction net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
       { $$ = module_declare_port(@5, $5, $2, $3, $4, $6, $7, $1);
+      }
+  | attribute_list_opt INTERFACE_IDENTIFIER '.' IDENTIFIER IDENTIFIER dimensions_opt
+      { $$ = module_declare_interface_port(@5, $2, $4, $5, $6, $1);
+      }
+  | attribute_list_opt INTERFACE_IDENTIFIER IDENTIFIER dimensions_opt
+      { $$ = module_declare_interface_port(@3, $2, 0, $3, $4, $1);
       }
   | attribute_list_opt net_type_or_var data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
       { pform_requires_sv(@4, "Partial ANSI port declaration");
@@ -4734,9 +4776,11 @@ module
         port_declaration_context_init(); }
     module_package_import_list_opt
     module_parameter_port_list_opt
+      { lex_in_module_port_list(true); }
     module_port_list_opt
+      { lex_in_module_port_list(false); }
     module_attribute_foreign ';'
-      { pform_module_set_ports($8); }
+      { pform_module_set_ports($9); }
     timeunits_declaration_opt
       { pform_set_scope_timescale(@2); }
     module_item_list_opt
@@ -4759,16 +4803,16 @@ module
 	}
 	  // Check that program/endprogram and module/endmodule
 	  // keywords match.
-	if ($2 != $15) {
+	if ($2 != $17) {
 	      switch ($2) {
 		  case K_module:
-		    yyerror(@15, "error: module not closed by endmodule.");
+		    yyerror(@17, "error: module not closed by endmodule.");
 		    break;
 		  case K_program:
-		    yyerror(@15, "error: program not closed by endprogram.");
+		    yyerror(@17, "error: program not closed by endprogram.");
 		    break;
 		  case K_interface:
-		    yyerror(@15, "error: interface not closed by endinterface.");
+		    yyerror(@17, "error: interface not closed by endinterface.");
 		    break;
 		  default:
 		    break;
@@ -4784,13 +4828,13 @@ module
 	// module.
 	switch ($2) {
 	    case K_module:
-	      check_end_label(@17, "module", $4, $17);
+	      check_end_label(@19, "module", $4, $19);
 	      break;
 	    case K_program:
-	      check_end_label(@17, "program", $4, $17);
+	      check_end_label(@19, "program", $4, $19);
 	      break;
 	    case K_interface:
-	      check_end_label(@17, "interface", $4, $17);
+	      check_end_label(@19, "interface", $4, $19);
 	      break;
 	    default:
 	      break;
@@ -5160,8 +5204,22 @@ module_item
 		  delete[]$2;
       }
 
+  | attribute_list_opt
+	  INTERFACE_IDENTIFIER parameter_value_opt gate_instance_list ';'
+      { perm_string tmp1 = lex_strings.make($2);
+		  pform_make_modgates(@2, tmp1, $3, $4, $1);
+		  delete[]$2;
+      }
+
         | attribute_list_opt
 	  IDENTIFIER parameter_value_opt error ';'
+      { yyerror(@2, "error: Invalid module instantiation");
+		  delete[]$2;
+		  if ($1) delete $1;
+      }
+
+        | attribute_list_opt
+	  INTERFACE_IDENTIFIER parameter_value_opt error ';'
       { yyerror(@2, "error: Invalid module instantiation");
 		  delete[]$2;
 		  if ($1) delete $1;

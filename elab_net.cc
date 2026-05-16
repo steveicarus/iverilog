@@ -563,6 +563,9 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      if (!check_interface_modport_access(this, des, sr, true))
+	    return 0;
+
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": " << __func__ << ": "
 		 << "Found l-value path_=" << path_

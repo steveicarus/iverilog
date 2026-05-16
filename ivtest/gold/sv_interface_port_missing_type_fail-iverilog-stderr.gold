@@ -1,0 +1,2 @@
+ivltests/sv_interface_port_missing_type_fail.v:7: error: Interface port bus uses unknown interface type `missing_if'.
+1 error(s) during elaboration.

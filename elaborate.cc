@@ -51,6 +51,7 @@
 # include  "netscalar.h"
 # include  "netclass.h"
 # include  "netmisc.h"
+# include  "PModport.h"
 # include  "util.h"
 # include  "parse_api.h"
 # include  "compiler.h"
@@ -1248,6 +1249,432 @@ void elaborate_unpacked_port(Design *des, NetScope *scope, NetNet *port_net,
 	    assign_unpacked_with_bufz(des, scope, port_net, port_net, expr_net);
 }
 
+bool PGModule::match_module_ports_(Design*des, const Module*rmod,
+				   NetScope*scope,
+				   vector<PExpr*>&pins,
+				   vector<bool>&pins_fromwc,
+				   vector<bool>&pins_is_explicitly_not_connected) const
+{
+	// If the instance has a pins_ member, then we know we are
+	// binding by name. Therefore, make up a pins array that
+	// reflects the positions of the named ports.
+      if (pins_) {
+	    unsigned nexp = rmod->port_count();
+
+	      // Scan the bindings, matching them with port names.
+	    for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
+		    // Handle wildcard named port.
+		  if (pins_[idx].name[0] == '*') {
+			for (unsigned j = 0 ; j < nexp ; j += 1) {
+			      if (rmod->ports[j] && !pins[j] && !pins_is_explicitly_not_connected[j]) {
+				    pins_fromwc[j] = true;
+				    pform_name_t path_;
+				    path_.push_back(name_component_t(rmod->ports[j]->name));
+				    symbol_search_results sr;
+				    symbol_search(this, des, scope, path_, UINT_MAX, &sr);
+				    if (sr.net != 0 ||
+					(rmod->ports[j]->is_interface_port() &&
+					 sr.scope != 0 && sr.scope->is_interface())) {
+					  pins[j] = new PEIdent(rmod->ports[j]->name, UINT_MAX, true);
+					  pins[j]->set_lineno(get_lineno());
+					  pins[j]->set_file(get_file());
+				    }
+			      }
+			}
+			continue;
+		  }
+
+		    // Given a binding, look at the module port names
+		    // for the position that matches the binding name.
+		  unsigned pidx = rmod->find_port(pins_[idx].name);
+
+		    // If the port name doesn't exist, the find_port
+		    // method will return the port count. Detect that
+		    // as an error.
+		  if (pidx == nexp) {
+			cerr << get_fileline() << ": error: port ``" <<
+			      pins_[idx].name << "'' is not a port of "
+			     << get_name() << "." << endl;
+			des->errors += 1;
+			continue;
+		  }
+
+		    // If I am overriding a wildcard port, delete and
+		    // override it.
+		  if (pins_fromwc[pidx]) {
+			delete pins[pidx];
+			pins_fromwc[pidx] = false;
+
+		    // If I already explicitly bound something to
+		    // this port, then the pins array will already
+		    // have a pointer value where I want to place this
+		    // expression.
+		  } else if (pins[pidx]) {
+			cerr << get_fileline() << ": error: port ``" <<
+			      pins_[idx].name << "'' already bound." <<
+			      endl;
+			des->errors += 1;
+			continue;
+		  }
+
+		    // OK, do the binding by placing the expression in
+		    // the right place.
+		  pins[pidx] = pins_[idx].parm;
+		  if (!pins[pidx])
+			pins_is_explicitly_not_connected[pidx] = true;
+	    }
+
+      } else if (pin_count() == 0) {
+	      /* Handle the special case that no ports are
+		 connected. It is possible that this is an empty
+		 connect-by-name list, so we'll allow it and assume
+		 that is the case. */
+	    for (unsigned idx = 0 ;  idx < rmod->port_count() ;  idx += 1)
+		  pins[idx] = 0;
+
+      } else {
+	      /* Otherwise, this is a positional list of port
+		 connections. Use as many ports as provided. Trailing
+		 missing ports will be left unconnect or use the default
+		 value if one is available. */
+	    if (pin_count() > rmod->port_count()) {
+		  cerr << get_fileline() << ": error: Wrong number "
+			"of ports. Expecting at most " << rmod->port_count() <<
+			", got " << pin_count() << "."
+		       << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+
+	    std::copy(get_pins().begin(), get_pins().end(), pins.begin());
+      }
+
+      return true;
+}
+
+struct interface_actual_scope_t {
+      interface_actual_scope_t() : scope(nullptr), modport(nullptr) { }
+
+      NetScope*scope;
+      const PModport*modport;
+      perm_string display_name;
+};
+
+struct interface_actual_array_t {
+      std::map<long,NetScope::interface_port_alias_t> elements;
+      perm_string display_name;
+};
+
+static long interface_array_index(unsigned idx, long left, long right)
+{
+      long low = left < right ? left : right;
+      long high = left < right ? right : left;
+      return low < high ? low + idx : low - idx;
+}
+
+static bool interface_formal_range(const Module::port_t*port,
+				   Design*des, NetScope*scope,
+				   const LineInfo*li,
+				   long&left, long&right,
+				   unsigned&count)
+{
+      if (!port->interface_unpacked_dimensions) {
+	    left = 0;
+	    right = 0;
+	    count = 1;
+	    return true;
+      }
+
+      if (port->interface_unpacked_dimensions->size() != 1) {
+	    cerr << li->get_fileline() << ": sorry: Interface port `"
+		 << port->name << "' uses a multidimensional array, which "
+		    "is not supported." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      if (!evaluate_range(des, scope, li,
+			  port->interface_unpacked_dimensions->front(),
+			  left, right))
+	    return false;
+
+      count = left > right ? left - right + 1 : right - left + 1;
+      return true;
+}
+
+static bool resolve_interface_actual_scope(const PExpr*actual,
+					   NetScope*parent_scope,
+					   Design*des,
+					   interface_actual_scope_t&res)
+{
+      res = interface_actual_scope_t();
+
+      const PEIdent*actual_ident = dynamic_cast<const PEIdent*>(actual);
+      if (!actual_ident || actual_ident->path().package ||
+	  actual_ident->path().name.size() != 1 ||
+	  actual_ident->path().name.front().index.size() > 1) {
+	    return false;
+      }
+
+      const name_component_t&comp = actual_ident->path().name.front();
+      res.display_name = comp.name;
+
+      if (!comp.index.empty()) {
+	    if (comp.index.front().sel != index_component_t::SEL_BIT) {
+		  cerr << actual->get_fileline() << ": sorry: Interface array "
+		       << "slice actuals are not supported." << endl;
+		  des->errors += 1;
+		  return true;
+	    }
+
+	    bool error_flag = false;
+	    hname_t actual_name = eval_path_component(des, parent_scope,
+						      comp, error_flag);
+	    if (error_flag)
+		  return true;
+
+	    if (NetScope*child = parent_scope->child(actual_name))
+		  res.scope = child;
+	    else if (actual_name.has_numbers()) {
+		  const NetScope::interface_port_alias_t*alias =
+			parent_scope->find_interface_port_alias_element(
+			      comp.name, actual_name.peek_number(0));
+		  if (alias) {
+			res.scope = alias->actual_scope;
+			res.modport = alias->modport;
+		  }
+	    }
+
+	    if (!res.scope) {
+		  symbol_search_results sr;
+		  symbol_search(actual, des, parent_scope, actual_ident->path(),
+				actual_ident->lexical_pos(), &sr);
+		  res.scope = sr.scope;
+		  if (sr.through_interface_alias())
+			res.modport = sr.interface_alias_modport;
+	    }
+
+	    return true;
+      }
+
+      symbol_search_results sr;
+      symbol_search(actual, des, parent_scope, actual_ident->path(),
+		    actual_ident->lexical_pos(), &sr);
+
+      res.scope = sr.scope;
+      if (sr.through_interface_alias())
+	    res.modport = sr.interface_alias_modport;
+      else if (NetScope*child = parent_scope->child(hname_t(res.display_name)))
+	    res.scope = child;
+      else if (const NetScope::interface_port_alias_t*alias =
+	       parent_scope->find_interface_port_alias(res.display_name)) {
+	    res.scope = alias->actual_scope;
+	    res.modport = alias->modport;
+      }
+
+      return true;
+}
+
+static bool resolve_interface_actual_array(const PExpr*actual,
+					   NetScope*parent_scope,
+					   interface_actual_array_t&res)
+{
+      res = interface_actual_array_t();
+
+      const PEIdent*actual_ident = dynamic_cast<const PEIdent*>(actual);
+      if (!actual_ident || actual_ident->path().package ||
+	  actual_ident->path().name.size() != 1 ||
+	  !actual_ident->path().name.front().index.empty())
+	    return false;
+
+      perm_string name = actual_ident->path().name.front().name;
+      res.display_name = name;
+
+      for (NetScope*scope = parent_scope ; scope ; scope = scope->parent()) {
+	    auto arr = scope->instance_arrays.find(name);
+	    if (arr != scope->instance_arrays.end()) {
+		  for (unsigned idx = 0 ; idx < arr->second.size() ; idx += 1) {
+			NetScope*inst = arr->second[idx];
+			if (!inst)
+			      return false;
+			hname_t hname = inst->fullname();
+			if (!hname.has_numbers())
+			      return false;
+			res.elements[hname.peek_number(0)] =
+			      NetScope::interface_port_alias_t(inst, nullptr);
+		  }
+		  return true;
+	    }
+
+	    const map<long,NetScope::interface_port_alias_t>*alias_arr =
+		  scope->find_interface_port_alias_array(name);
+	    if (alias_arr) {
+		  res.elements = *alias_arr;
+		  return true;
+	    }
+      }
+
+      return false;
+}
+
+bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
+				     NetScope*parent_scope,
+				     NetScope*instance_scope,
+				     const vector<PExpr*>&pins,
+				     const vector<bool>&) const
+{
+      bool flag = true;
+
+      for (unsigned idx = 0 ; idx < rmod->port_count() ; idx += 1) {
+	    const Module::port_t*port = rmod->get_port_info(idx);
+	    if (!port || !port->is_interface_port())
+		  continue;
+
+	    if (!pins[idx]) {
+		  cerr << get_fileline() << ": error: Interface port `"
+		       << port->name << "' of module " << rmod->mod_name()
+		       << " is not connected." << endl;
+		  des->errors += 1;
+		  flag = false;
+		  continue;
+	    }
+
+	    long formal_left = 0;
+	    long formal_right = 0;
+	    unsigned formal_count = 1;
+	    if (!interface_formal_range(port, des, instance_scope, pins[idx],
+					formal_left, formal_right, formal_count)) {
+		  flag = false;
+		  continue;
+	    }
+	    bool formal_is_array = port->interface_unpacked_dimensions != nullptr;
+
+	    interface_formal_port_t formal;
+	    resolve_interface_formal_port(pins[idx], des, port, formal, false);
+	    if (!formal.module)
+		  continue;
+
+	    if (formal_is_array) {
+		  interface_actual_array_t actual_array;
+		  if (!resolve_interface_actual_array(pins[idx], parent_scope, actual_array)) {
+			cerr << pins[idx]->get_fileline() << ": error: Interface "
+			     << "array port `" << port->name << "' must be "
+				"connected to an interface instance array." << endl;
+			des->errors += 1;
+			flag = false;
+			continue;
+		  }
+
+		  if (actual_array.elements.size() != formal_count) {
+			cerr << pins[idx]->get_fileline() << ": error: Interface "
+			     << "array port `" << port->name << "' expects "
+			     << formal_count << " element(s) but actual `"
+			     << actual_array.display_name << "' has "
+			     << actual_array.elements.size() << " element(s)." << endl;
+			des->errors += 1;
+			flag = false;
+			continue;
+		  }
+
+		  unsigned pos = 0;
+		  bool array_ok = true;
+		  for (auto cur = actual_array.elements.begin()
+			 ; cur != actual_array.elements.end() ; ++cur, ++pos) {
+			NetScope*actual_scope = cur->second.actual_scope;
+			if (!actual_scope || !actual_scope->is_interface()) {
+			      cerr << pins[idx]->get_fileline() << ": error: Actual "
+				   << "element for interface array port `"
+				   << port->name << "' is not an interface instance." << endl;
+			      des->errors += 1;
+			      array_ok = false;
+			      continue;
+			}
+
+			if (actual_scope->module_name() != formal.module->mod_name()) {
+			      cerr << pins[idx]->get_fileline() << ": error: Interface "
+				   << "array port `" << port->name
+				   << "' expects interface type `" << port->interface_type
+				   << "' but actual `" << actual_array.display_name
+				   << "' has element type `" << actual_scope->module_name()
+				   << "'." << endl;
+			      des->errors += 1;
+			      array_ok = false;
+			      continue;
+			}
+
+			if (cur->second.modport && formal.modport &&
+			    cur->second.modport->name() != formal.modport->name()) {
+			      cerr << pins[idx]->get_fileline() << ": error: Interface "
+				   << "array port `" << port->name
+				   << "' cannot forward actual `" << actual_array.display_name
+				   << "' restricted by modport `" << cur->second.modport->name()
+				   << "' to formal modport `" << formal.modport->name()
+				   << "'." << endl;
+			      des->errors += 1;
+			      array_ok = false;
+			      continue;
+			}
+
+			const PModport*modport = formal.modport?
+			      formal.modport : cur->second.modport;
+			long formal_index = interface_array_index(pos, formal_left, formal_right);
+			instance_scope->add_interface_port_alias_element(
+			      port->name, formal_index, actual_scope, modport);
+		  }
+
+		  flag = flag && array_ok;
+		  continue;
+	    }
+
+	    interface_actual_scope_t actual;
+	    if (!resolve_interface_actual_scope(pins[idx], parent_scope, des, actual)) {
+		  cerr << pins[idx]->get_fileline() << ": error: Interface port `"
+		       << port->name << "' must be connected to a simple "
+		          "interface instance name." << endl;
+		  des->errors += 1;
+		  flag = false;
+		  continue;
+	    }
+
+	    if (!actual.scope || !actual.scope->is_interface()) {
+		  cerr << pins[idx]->get_fileline() << ": error: Actual for "
+		          "interface port `" << port->name
+		       << "' is not an interface instance." << endl;
+		  des->errors += 1;
+		  flag = false;
+		  continue;
+	    }
+
+	    if (actual.scope->module_name() != formal.module->mod_name()) {
+		  cerr << pins[idx]->get_fileline() << ": error: Interface port `"
+		       << port->name << "' expects interface type `"
+		       << port->interface_type << "' but actual `" << actual.display_name
+		       << "' has type `" << actual.scope->module_name() << "'." << endl;
+		  des->errors += 1;
+		  flag = false;
+		  continue;
+	    }
+
+	    if (actual.modport && formal.modport &&
+		actual.modport->name() != formal.modport->name()) {
+		  cerr << pins[idx]->get_fileline() << ": error: Interface port `"
+		       << port->name << "' cannot forward actual `" << actual.display_name
+		       << "' restricted by modport `" << actual.modport->name()
+		       << "' to formal modport `" << formal.modport->name()
+		       << "'." << endl;
+		  des->errors += 1;
+		  flag = false;
+		  continue;
+	    }
+
+	    const PModport*modport = formal.modport? formal.modport : actual.modport;
+	    instance_scope->add_interface_port_alias(port->name, actual.scope,
+						    modport);
+      }
+
+      return flag;
+}
+
 /*
  * Instantiate a module by recursively elaborating it. Set the path of
  * the recursive elaboration so that signal names get properly
@@ -1274,103 +1701,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
       vector<bool>pins_fromwc (rmod->port_count(), false);
       vector<bool>pins_is_explicitly_not_connected (rmod->port_count(), false);
 
-	// If the instance has a pins_ member, then we know we are
-	// binding by name. Therefore, make up a pins array that
-	// reflects the positions of the named ports.
-      if (pins_) {
-	    unsigned nexp = rmod->port_count();
-
-	      // Scan the bindings, matching them with port names.
-	    for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
-
-		    // Handle wildcard named port
-		  if (pins_[idx].name[0] == '*') {
-			for (unsigned j = 0 ; j < nexp ; j += 1) {
-			      if (rmod->ports[j] && !pins[j] && !pins_is_explicitly_not_connected[j]) {
-				    pins_fromwc[j] = true;
-				    pform_name_t path_;
-				    path_.push_back(name_component_t(rmod->ports[j]->name));
-				    symbol_search_results sr;
-				    symbol_search(this, des, scope, path_, UINT_MAX, &sr);
-				    if (sr.net != 0) {
-					  pins[j] = new PEIdent(rmod->ports[j]->name, UINT_MAX, true);
-					  pins[j]->set_lineno(get_lineno());
-					  pins[j]->set_file(get_file());
-				    }
-			      }
-			}
-			continue;
-		  }
-
-		    // Given a binding, look at the module port names
-		    // for the position that matches the binding name.
-		  unsigned pidx = rmod->find_port(pins_[idx].name);
-
-		    // If the port name doesn't exist, the find_port
-		    // method will return the port count. Detect that
-		    // as an error.
-		  if (pidx == nexp) {
-			cerr << get_fileline() << ": error: port ``" <<
-			      pins_[idx].name << "'' is not a port of "
-			     << get_name() << "." << endl;
-			des->errors += 1;
-			continue;
-		  }
-
-		    // If I am overriding a wildcard port, delete and
-		    // override it
-		  if (pins_fromwc[pidx]) {
-			delete pins[pidx];
-			pins_fromwc[pidx] = false;
-
-		    // If I already explicitly bound something to
-		    // this port, then the pins array will already
-		    // have a pointer value where I want to place this
-		    // expression.
-		  } else if (pins[pidx]) {
-			cerr << get_fileline() << ": error: port ``" <<
-			      pins_[idx].name << "'' already bound." <<
-			      endl;
-			des->errors += 1;
-			continue;
-		  }
-
-		    // OK, do the binding by placing the expression in
-		    // the right place.
-		  pins[pidx] = pins_[idx].parm;
-		  if (!pins[pidx])
-			pins_is_explicitly_not_connected[pidx] = true;
-	    }
-
-
-      } else if (pin_count() == 0) {
-
-	      /* Handle the special case that no ports are
-		 connected. It is possible that this is an empty
-		 connect-by-name list, so we'll allow it and assume
-		 that is the case. */
-
-	    for (unsigned idx = 0 ;  idx < rmod->port_count() ;  idx += 1)
-		  pins[idx] = 0;
-
-      } else {
-
-	      /* Otherwise, this is a positional list of port
-		 connections. Use as many ports as provided. Trailing
-		 missing ports will be left unconnect or use the default
-		 value if one is available */
-
-	    if (pin_count() > rmod->port_count()) {
-		  cerr << get_fileline() << ": error: Wrong number "
-			"of ports. Expecting at most " << rmod->port_count() <<
-			", got " << pin_count() << "."
-		       << endl;
-		  des->errors += 1;
-		  return;
-	    }
-
-	    std::copy(get_pins().begin(), get_pins().end(), pins.begin());
-      }
+      if (!match_module_ports_(des, rmod, scope, pins, pins_fromwc,
+			       pins_is_explicitly_not_connected))
+	    return;
 
 	// Elaborate these instances of the module. The recursive
 	// elaboration causes the module to generate a netlist with
@@ -1403,6 +1736,13 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    bool using_default = false;
 
 	    perm_string port_name = rmod->get_port_name(idx);
+	    const Module::port_t*port_info = rmod->get_port_info(idx);
+	    if (port_info && port_info->is_interface_port()) {
+		  for (unsigned inst = 0 ;  inst < instance.size() ;  inst += 1)
+			instance[inst]->add_module_port_info(idx, port_name,
+							    PortType::PIMPLICIT, 0);
+		  continue;
+	    }
 
 	      // If the port is unconnected, substitute the default
 	      // value. The parser ensures that a default value only

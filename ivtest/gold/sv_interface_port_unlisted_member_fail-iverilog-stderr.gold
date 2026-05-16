@@ -1,0 +1,3 @@
+ivltests/sv_interface_port_unlisted_member_fail.v:24: error: Interface member `hidden' is not listed in modport `consumer'.
+ivltests/sv_interface_port_unlisted_member_fail.v:24: error: Unable to elaborate r-value: bus.hidden
+2 error(s) during elaboration.
