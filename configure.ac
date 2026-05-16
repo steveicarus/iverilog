@@ -7,6 +7,9 @@ m4_define([VER_MAJOR], [14])
 m4_define([VER_MINOR], [0])
 m4_define([VER_EXTRA], [devel])
 
+dnl define libvvp ABI version
+m4_define([LIBVVP_SOVERSION], [1])
+
 AC_INIT([iverilog], [VER_MAJOR.VER_MINOR (VER_EXTRA)])
 AC_SUBST([VERSION_MAJOR], [VER_MAJOR])
 AC_SUBST([VERSION_MINOR], [VER_MINOR])
@@ -14,6 +17,11 @@ AC_SUBST([VERSION_EXTRA], [" (VER_EXTRA)"])
 AC_SUBST([VERSION], ["VER_MAJOR.VER_MINOR (VER_EXTRA)"])
 # used in res.rc
 AC_SUBST([PRODUCTVERSION], ["VER_MAJOR,VER_MINOR,0,0"])
+
+# setup libvvp soversion, which depends on abi not package version
+AC_SUBST([LIBVVP_SOVERSION], [LIBVVP_SOVERSION])
+# setup libvvp version
+AC_SUBST([LIBVVP_VERSION], [LIBVVP_SOVERSION.VER_MAJOR.VER_MINOR])
 
 AC_CONFIG_SRCDIR([netlist.h])
 # Need a stamp file like the other header files
@@ -209,7 +217,14 @@ AC_FUNC_FSEEKO
 # Build VVP as a library and stub
 AC_ARG_ENABLE([libvvp],
     [AS_HELP_STRING([--enable-libvvp], [build VVP as a shared library])],
-    [AC_SUBST(LIBVVP, yes)],[])
+    [enable_libvvp=yes],
+    [enable_libvvp=no])
+
+AC_SUBST([LIBVVP], [$enable_libvvp])
+
+AS_IF([test "x$enable_libvvp" = "xyes"],
+    [AC_MSG_NOTICE([Building with libvvp support enabled])],
+    [AC_MSG_NOTICE([Building with libvvp support disabled])])
 
 AC_ARG_ENABLE([libveriuser],
     [AS_HELP_STRING([--enable-libveriuser], [include support for PLI 1 (deprecated)])],
@@ -434,6 +449,7 @@ AC_CONFIG_FILES([
     vhdlpp/Makefile
     vpi/Makefile
     vvp/Makefile
+    vvp/libvvp.pc
     vvp/vvp.man
 ])
 AC_OUTPUT
