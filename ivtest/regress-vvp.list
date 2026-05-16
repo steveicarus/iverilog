@@ -14,6 +14,16 @@ array_slice_concat		vvp_tests/array_slice_concat.json
 automatic_error11		vvp_tests/automatic_error11.json
 automatic_error12		vvp_tests/automatic_error12.json
 automatic_error13		vvp_tests/automatic_error13.json
+begin_keywords_1364_1995	vvp_tests/begin_keywords_1364_1995.json
+begin_keywords_1364_2001	vvp_tests/begin_keywords_1364_2001.json
+begin_keywords_1364_2001_noconfig	vvp_tests/begin_keywords_1364_2001_noconfig.json
+begin_keywords_1364_2005	vvp_tests/begin_keywords_1364_2005.json
+begin_keywords_1800_2005	vvp_tests/begin_keywords_1800_2005.json
+begin_keywords_1800_2009	vvp_tests/begin_keywords_1800_2009.json
+begin_keywords_1800_2012	vvp_tests/begin_keywords_1800_2012.json
+begin_keywords_1800_2017	vvp_tests/begin_keywords_1800_2017.json
+begin_keywords_1800_2023	vvp_tests/begin_keywords_1800_2023.json
+begin_keywords_vams_2_3	vvp_tests/begin_keywords_vams_2_3.json
 bits4				vvp_tests/bits4.json
 bitsel11			vvp_tests/bitsel11.json
 br_gh13a			vvp_tests/br_gh13a.json

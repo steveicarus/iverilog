@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "begin_keywords_vams_2_3.v",
+    "iverilog-args" : [ "-g2005-sv", "-gverilog-ams" ]
+}
