@@ -1,7 +1,7 @@
 #ifndef IVL_netstruct_H
 #define IVL_netstruct_H
 /*
- * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,14 +39,15 @@ class netstruct_t : public LineInfo, public ivl_type_s {
       };
 
     public:
-      netstruct_t();
+      netstruct_t() = default;
       ~netstruct_t() override;
 
 	// If this is a union (instead of struct) then this flag is
 	// set. We handle union and struct together because they are
 	// so similar.
-      void union_flag(bool);
+      void union_flag(bool, bool soft = false);
       bool union_flag(void) const;
+      bool soft_union(void) const;
 
       void packed(bool flag);
       bool packed(void) const override;
@@ -81,13 +82,15 @@ class netstruct_t : public LineInfo, public ivl_type_s {
       bool test_equivalence(ivl_type_t that) const override;
 
     private:
-      bool union_;
-      bool packed_;
-      bool signed_;
+      bool union_ = false;
+      bool soft_union_ = false;
+      bool packed_ = false;
+      bool signed_ = false;
       std::vector<member_t>members_;
 };
 
 inline bool netstruct_t::union_flag(void) const { return union_; }
+inline bool netstruct_t::soft_union(void) const { return soft_union_; }
 inline bool netstruct_t::packed(void) const { return packed_; }
 
 #endif /* IVL_netstruct_H */

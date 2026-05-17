@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -220,11 +220,13 @@ ivl_type_t struct_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 
       res->set_line(*this);
 
-      res->packed(packed_flag);
+      bool is_packed = packed_flag || (union_flag && soft_flag);
+      res->packed(is_packed);
       res->set_signed(signed_flag);
 
-      if (union_flag)
-	    res->union_flag(true);
+      if (union_flag) {
+	    res->union_flag(true, soft_flag);
+      }
 
       for (list<struct_member_t*>::iterator cur = members->begin()
 		 ; cur != members->end() ; ++ cur) {
@@ -242,7 +244,7 @@ ivl_type_t struct_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 		       ; cur_name != curp->names->end() ;  ++ cur_name) {
 		  decl_assignment_t*namep = *cur_name;
 
-		  if (packed_flag && namep->expr) {
+		  if (is_packed && namep->expr) {
 			cerr << namep->expr->get_fileline() << " error: "
 			     << "Packed structs must not have default member values."
 			     << endl;
