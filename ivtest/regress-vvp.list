@@ -242,6 +242,8 @@ sv_array_assign_single_fail1	vvp_tests/sv_array_assign_single_fail1.json
 sv_array_cassign6		vvp_tests/sv_array_cassign6.json
 sv_array_cassign7		vvp_tests/sv_array_cassign7.json
 sv_array_cassign8		vvp_tests/sv_array_cassign8.json
+sv_array_cassign9		vvp_tests/sv_array_cassign9.json
+sv_array_cassign10		vvp_tests/sv_array_cassign10.json
 sv_array_cassign_single	vvp_tests/sv_array_cassign_single.json
 sv_array_cassign_single_fail1	vvp_tests/sv_array_cassign_single_fail1.json
 sv_automatic_2state		vvp_tests/sv_automatic_2state.json
