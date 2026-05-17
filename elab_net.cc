@@ -625,6 +625,9 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       // array word assignment.
       bool widx_flag = false;
 
+      // Whether the signal is an array
+      const bool sig_is_array = sig->unpacked_dimensions() > 0;
+
       // Detect the net is a structure and there was a method path
       // detected. We have already broken the path_ into the path to
       // the net, and the path of member names. For example, if the
@@ -760,7 +763,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  }
 	    }
 
-      } else if (gn_system_verilog() && sig->unpacked_dimensions() > 0 && path_tail.index.empty()) {
+      } else if (gn_system_verilog() && sig_is_array && path_tail.index.empty()) {
 
 	      // In this case, we are doing a continuous assignment to
 	      // an unpacked array. The NetNet representation is a
@@ -770,15 +773,14 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	      // This can come up from code like this:
 	      //   logic [...] data [0:3];
 	      //   assign data = ...;
-	      // In this case, "sig" is "data", and sig->pin_count()
-	      // is 4 to account for the unpacked size.
+	      // In this case, "sig" is "data".
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
 		       << "Net assign to unpacked array \"" << sig->name()
 		       << "\" with " << sig->pin_count() << " elements." << endl;
 	    }
 
-      } else if (sig->unpacked_dimensions() > 0) {
+      } else if (sig_is_array) {
 
 	    list<long> unpacked_indices_const;
 
@@ -940,7 +942,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    }
       }
 
-      if (sig->pin_count() > 1 && widx_flag) {
+      if (sig_is_array && widx_flag) {
 	    if (widx < 0 || widx >= (long) sig->pin_count())
 		  return 0;
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
@@ -950,7 +952,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    connect(sig->pin(widx), tmp->pin(0));
 	    sig = tmp;
 
-      } else if (sig->pin_count() > 1) {
+      } else if (sig_is_array) {
 
 	      // If this turns out to be an l-value unpacked array,
 	      // then let the caller handle it. It will probably be
