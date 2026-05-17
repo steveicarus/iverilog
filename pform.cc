@@ -49,6 +49,10 @@
 
 using namespace std;
 
+static void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
+			        std::vector<PWire*> *wires,
+			        list<named_pexpr_t>*attr, bool is_const = false);
+
 /*
  * The "// synthesis translate_on/off" meta-comments cause this flag
  * to be turned off or on. The pform_make_behavior and similar
@@ -2709,22 +2713,24 @@ void pform_makewire(const struct vlltype&li,
 	    wires->push_back(wire);
       }
 
-      pform_set_data_type(li, data_type, wires, type, attr, is_const);
+      pform_set_data_type(li, data_type, wires, attr, is_const);
 
       while (! assign_list->empty()) {
 	    decl_assignment_t*first = assign_list->front();
 	    assign_list->pop_front();
-            if (PExpr*expr = first->expr.release()) {
-                  if (type == NetNet::REG || type == NetNet::IMPLICIT_REG) {
-                        pform_make_var_init(li, first->name, expr);
-                  } else {
-		        PEIdent*lval = new PEIdent(first->name.first,
+	    if (PExpr*expr = first->expr.release()) {
+		  if (type == NetNet::REG || type == NetNet::IMPLICIT_REG) {
+			pform_make_var_init(li, first->name, expr);
+		  } else {
+			PEIdent*lval = new PEIdent(first->name.first,
 						   first->name.second);
-		        FILE_NAME(lval, li);
-		        PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);
-		        FILE_NAME(ass, li);
-                  }
-            }
+			FILE_NAME(lval, li);
+			PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);
+			FILE_NAME(ass, li);
+		  }
+	    } else if (delay) {
+		  VLerror(li, "sorry: net delays not supported.");
+	    }
 	    delete first;
       }
 }
@@ -3272,9 +3278,9 @@ void pform_set_port_type(const struct vlltype&li,
  * This function detects the derived class for the given type and
  * dispatches the type to the proper subtype function.
  */
-void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
-			 std::vector<PWire*> *wires, NetNet::Type net_type,
-			 list<named_pexpr_t>*attr, bool is_const)
+static void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
+			        std::vector<PWire*> *wires,
+			        list<named_pexpr_t>*attr, bool is_const)
 {
       if (data_type == 0) {
 	    VLerror(li, "internal error: data_type==0.");
@@ -3288,11 +3294,6 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
 	    PWire *wire = *it;
 
 	    pform_set_net_range(wire, vec_type);
-
-	    // If these fail there is a bug somewhere else. pform_set_data_type()
-	    // is only ever called on a fresh wire that already exists.
-	    bool rc = wire->set_wire_type(net_type);
-	    ivl_assert(li, rc);
 
 	    wire->set_data_type(data_type);
 	    wire->set_const(is_const);
