@@ -233,12 +233,17 @@ sv_ap_uarray5			vvp_tests/sv_ap_uarray5.json
 sv_ap_uarray6			vvp_tests/sv_ap_uarray6.json
 sv_ap_uarray_fail1		vvp_tests/sv_ap_uarray_fail1.json
 sv_ap_uarray_fail2		vvp_tests/sv_ap_uarray_fail2.json
+sv_ap_uarray_single1		vvp_tests/sv_ap_uarray_single1.json
+sv_ap_uarray_single2		vvp_tests/sv_ap_uarray_single2.json
 sv_argumentless_func		vvp_tests/sv_argumentless_func.json
 sv_array_assign_fail1	vvp_tests/sv_array_assign_fail1.json
 sv_array_assign_fail2	vvp_tests/sv_array_assign_fail2.json
+sv_array_assign_single_fail1	vvp_tests/sv_array_assign_single_fail1.json
 sv_array_cassign6		vvp_tests/sv_array_cassign6.json
 sv_array_cassign7		vvp_tests/sv_array_cassign7.json
 sv_array_cassign8		vvp_tests/sv_array_cassign8.json
+sv_array_cassign_single	vvp_tests/sv_array_cassign_single.json
+sv_array_cassign_single_fail1	vvp_tests/sv_array_cassign_single_fail1.json
 sv_automatic_2state		vvp_tests/sv_automatic_2state.json
 sv_byte_array_string1		vvp_tests/sv_byte_array_string1.json
 sv_byte_array_string2		vvp_tests/sv_byte_array_string2.json
@@ -321,6 +326,8 @@ sv_lval_concat_string_fail1	vvp_tests/sv_lval_concat_string_fail1.json
 sv_lval_concat_string_fail2	vvp_tests/sv_lval_concat_string_fail2.json
 sv_lval_concat_string_fail3	vvp_tests/sv_lval_concat_string_fail3.json
 sv_lval_concat_string_fail4	vvp_tests/sv_lval_concat_string_fail4.json
+sv_lval_concat_uarray1		vvp_tests/sv_lval_concat_uarray1.json
+sv_lval_concat_uarray2		vvp_tests/sv_lval_concat_uarray2.json
 sv_lval_concat_uarray_fail1	vvp_tests/sv_lval_concat_uarray_fail1.json
 sv_lval_concat_uarray_fail2	vvp_tests/sv_lval_concat_uarray_fail2.json
 sv_lval_concat_uarray_fail3	vvp_tests/sv_lval_concat_uarray_fail3.json
