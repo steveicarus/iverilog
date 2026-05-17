@@ -1,5 +1,9 @@
 {
     "type"          : "normal",
     "source"        : "sv_interface_port_positional.v",
-    "iverilog-args" : [ "-g2005-sv" ]
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Interfaces are not supported",
+        "type"          : "TE"
+    }
 }
