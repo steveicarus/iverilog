@@ -315,6 +315,9 @@ case "$host_os" in
   linux*)
     ENV_VVP="LD_LIBRARY_PATH=$VVP_BUILDDIR"
     ;;
+  *bsd*)
+    ENV_VVP="LD_LIBRARY_PATH=$VVP_BUILDDIR"
+    ;;
   darwin*)
     ENV_VVP="DYLD_LIBRARY_PATH=$VVP_BUILDDIR"
     ;;
