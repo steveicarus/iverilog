@@ -2714,17 +2714,17 @@ void pform_makewire(const struct vlltype&li,
       while (! assign_list->empty()) {
 	    decl_assignment_t*first = assign_list->front();
 	    assign_list->pop_front();
-            if (PExpr*expr = first->expr.release()) {
-                  if (type == NetNet::REG || type == NetNet::IMPLICIT_REG) {
-                        pform_make_var_init(li, first->name, expr);
-                  } else {
-		        PEIdent*lval = new PEIdent(first->name.first,
+	    if (PExpr*expr = first->expr.release()) {
+		  if (type == NetNet::REG || type == NetNet::IMPLICIT_REG) {
+			pform_make_var_init(li, first->name, expr);
+		  } else {
+			PEIdent*lval = new PEIdent(first->name.first,
 						   first->name.second);
-		        FILE_NAME(lval, li);
-		        PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);
-		        FILE_NAME(ass, li);
-                  }
-            }
+			FILE_NAME(lval, li);
+			PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);
+			FILE_NAME(ass, li);
+		  }
+	    }
 	    delete first;
       }
 }
