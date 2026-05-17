@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,6 +19,8 @@
 
 
 # include  "pform_types.h"
+# include  "netclass.h"
+# include  "netenum.h"
 
 data_type_t::~data_type_t()
 {
@@ -55,34 +57,59 @@ bool typedef_t::set_data_type(data_type_t *t)
       return true;
 }
 
-bool typedef_t::set_basic_type(enum basic_type bt)
+bool typedef_t::set_basic_type(type_restrict_t type)
 {
-      if (bt == ANY)
+      return basic_type.merge(type);
+}
+
+bool type_restrict_t::merge(type_restrict_t other)
+{
+      if (other.type == ANY)
 	    return true;
-      if (basic_type != ANY && bt != basic_type)
+      if (this->type != ANY && other.type != this->type)
 	    return false;
 
-      basic_type = bt;
+      this->type = other.type;
 
       return true;
 }
 
-std::ostream& operator<< (std::ostream&out, enum typedef_t::basic_type bt)
+bool type_restrict_t::matches(ivl_type_t ivl_type) const
 {
-	switch (bt) {
-	case typedef_t::ANY:
+      switch (this->type) {
+      case ENUM:
+	    return dynamic_cast<const netenum_t *>(ivl_type);
+      case STRUCT: {
+	    const netstruct_t *struct_type = dynamic_cast<const netstruct_t *>(ivl_type);
+	    return struct_type && !struct_type->union_flag();
+      }
+      case UNION: {
+	    const netstruct_t *struct_type = dynamic_cast<const netstruct_t *>(ivl_type);
+	    return struct_type && struct_type->union_flag();
+      }
+      case CLASS:
+	    return dynamic_cast<const netclass_t *>(ivl_type);
+      default:
+	    return true;
+      }
+}
+
+std::ostream& operator<< (std::ostream&out, const type_restrict_t& type)
+{
+	switch (type.type) {
+	case type_restrict_t::ANY:
 		out << "any";
 		break;
-	case typedef_t::ENUM:
+	case type_restrict_t::ENUM:
 		out << "enum";
 		break;
-	case typedef_t::STRUCT:
+	case type_restrict_t::STRUCT:
 		out << "struct";
 		break;
-	case typedef_t::UNION:
+	case type_restrict_t::UNION:
 		out << "union";
 		break;
-	case typedef_t::CLASS:
+	case type_restrict_t::CLASS:
 		out << "class";
 		break;
 	}

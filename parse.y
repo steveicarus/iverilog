@@ -45,6 +45,7 @@ extern void lex_end_table();
 static data_type_t* param_data_type = 0;
 static bool param_is_local = false;
 static bool param_is_type = false;
+static type_restrict_t param_type_restrict;
 static bool in_gen_region = false;
 static std::list<pform_range_t>* specparam_active_range = 0;
 
@@ -598,7 +599,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 
       LexicalScope::lifetime_t lifetime;
 
-      enum typedef_t::basic_type typedef_basic_type;
+      enum type_restrict_t::type_t type_restrict;
 };
 
 %token <text>      IDENTIFIER INTERFACE_IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
@@ -858,7 +859,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 
 %type <letter> compressed_operator
 
-%type <typedef_basic_type> typedef_basic_type
+%type <type_restrict> forward_type forward_type_without_enum
 
 %token K_TAND
 %nonassoc K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
@@ -2882,11 +2883,16 @@ block_item_decls_opt
    * `typedef enum <TYPE_IDENTIFIER>` can either be the start of a enum forward
    * declaration or a enum type declaration with a type identifier as its base
    * type. And this abmiguity can not be resolved if we reduce the K_enum to
-   * typedef_basic_type. */
-typedef_basic_type
-  : K_struct { $$ = typedef_t::STRUCT; }
-  | K_union { $$ = typedef_t::UNION; }
-  | K_class { $$ = typedef_t::CLASS; }
+   * forward_type_without_enum. */
+forward_type_without_enum
+  : K_struct { $$ = type_restrict_t::STRUCT; }
+  | K_union { $$ = type_restrict_t::UNION; }
+  | K_class { $$ = type_restrict_t::CLASS; }
+  ;
+
+forward_type
+  : K_enum { $$ = type_restrict_t::ENUM; }
+  | forward_type_without_enum
   ;
 
   /* Type declarations are parsed here. The rule actions call pform
@@ -2902,17 +2908,17 @@ type_declaration
 
   | K_typedef identifier_name ';'
       { perm_string name = lex_strings.make($2);
-	pform_forward_typedef(@2, name, typedef_t::ANY);
+	pform_forward_typedef(@2, name, type_restrict_t::ANY);
 	delete[]$2;
       }
-  | K_typedef typedef_basic_type identifier_name ';'
+  | K_typedef forward_type_without_enum identifier_name ';'
       { perm_string name = lex_strings.make($3);
 	pform_forward_typedef(@3, name, $2);
 	delete[]$3;
       }
   | K_typedef K_enum identifier_name ';'
       { perm_string name = lex_strings.make($3);
-	pform_forward_typedef(@3, name, typedef_t::ENUM);
+	pform_forward_typedef(@3, name, type_restrict_t::ENUM);
 	delete[]$3;
       }
   | K_typedef error ';'
@@ -4924,7 +4930,16 @@ module_parameter_port_list_opt
   ;
 
 type_param
-  : K_type { param_is_type = true; }
+  : K_type
+      { param_is_type = true;
+	param_type_restrict = {};
+      }
+  | K_type forward_type
+      { if (generation_flag < GN_VER2023)
+	      yyerror(@1, "error: Restricted type parameters require SystemVerilog 2023 or later.");
+	param_is_type = true;
+	param_type_restrict = $2;
+      }
   ;
 
 module_parameter
@@ -4940,6 +4955,7 @@ module_parameter_port_list
       { param_data_type = $1;
         param_is_local = false;
         param_is_type = false;
+	param_type_restrict = {};
       }
     parameter_assign
       { pform_requires_sv(@3, "Omitting initial `parameter` in parameter port "
@@ -4955,6 +4971,7 @@ module_parameter_port_list
 				    "data type in parameter port list");
 	      param_data_type = $3;
 	      param_is_type = false;
+	      param_type_restrict = {};
         }
       }
     parameter_assign
@@ -5598,6 +5615,7 @@ param_type
   : data_type_or_implicit
       { param_is_type = false;
         param_data_type = $1;
+	param_type_restrict = {};
       }
   | type_param
 
@@ -5632,7 +5650,8 @@ parameter_assign_list
 parameter_assign
   : IDENTIFIER dimensions_opt initializer_opt parameter_value_ranges_opt
       { pform_set_parameter(@1, lex_strings.make($1), param_is_local,
-			    param_is_type, param_data_type, $2, $3, $4);
+			    param_is_type, param_type_restrict,
+			    param_data_type, $2, $3, $4);
 	delete[]$1;
       }
   ;

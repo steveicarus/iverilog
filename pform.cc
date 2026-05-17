@@ -841,7 +841,7 @@ static typedef_t *pform_get_typedef(const struct vlltype&loc, perm_string name)
 }
 
 void pform_forward_typedef(const struct vlltype&loc, perm_string name,
-			   enum typedef_t::basic_type basic_type)
+			   type_restrict_t basic_type)
 {
       typedef_t *td = pform_get_typedef(loc, name);
 
@@ -2948,6 +2948,7 @@ static void pform_set_type_parameter(const struct vlltype&loc, perm_string name,
 
 void pform_set_parameter(const struct vlltype&loc,
 			 perm_string name, bool is_local, bool is_type,
+			 type_restrict_t type_restrict,
 			 data_type_t*data_type, const list<pform_range_t>*udims,
 			 PExpr*expr, LexicalScope::range_t*value_range)
 {
@@ -3020,6 +3021,7 @@ void pform_set_parameter(const struct vlltype&loc,
       parm->local_flag = is_local;
       parm->overridable = overridable;
       parm->type_flag = is_type;
+      parm->type_restrict = type_restrict;
       parm->lexical_pos = loc.lexical_pos;
 
       scope->parameters[name] = parm;
