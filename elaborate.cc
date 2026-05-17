@@ -135,7 +135,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 	// If this turns out to be an assignment to an unpacked array,
 	// then handle that special case elsewhere.
-      if (lval->pin_count() > 1) {
+      if (lval->unpacked_dimensions() > 0) {
 	    elaborate_unpacked_array_(des, scope, lval);
 	    return;
       }
