@@ -32,6 +32,7 @@ class PExpr;
 class PUdp;
 class Module;
 struct delay_exprs_t;
+struct drive_strength_t;
 
 /*
  * A PGate represents a Verilog gate. The gate has a name and other
@@ -129,7 +130,9 @@ class PGAssign  : public PGate {
       virtual void elaborate(Design*des, NetScope*scope) const override;
 
     private:
-      void elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval) const;
+      void elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval,
+				     const drive_strength_t &drive,
+				     const delay_exprs_t &delays) const;
 };
 
 

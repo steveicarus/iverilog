@@ -133,7 +133,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	// If this turns out to be an assignment to an unpacked array,
 	// then handle that special case elsewhere.
       if (lval->unpacked_dimensions() > 0) {
-	    elaborate_unpacked_array_(des, scope, lval);
+	    elaborate_unpacked_array_(des, scope, lval, drive, delays);
 	    return;
       }
 
@@ -311,11 +311,14 @@ NetNet *elaborate_unpacked_array(Design *des, NetScope *scope, const LineInfo &l
       return expr_net;
 }
 
-void PGAssign::elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval) const
+void PGAssign::elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval,
+					 const drive_strength_t &drive,
+					 const delay_exprs_t &delays) const
 {
       NetNet *rval_net = elaborate_unpacked_array(des, scope, *this, lval, pin(1));
       if (rval_net)
-	    assign_unpacked_with_bufz(des, scope, lval, lval, rval_net);
+	    assign_unpacked_with_bufz(des, scope, lval, lval, rval_net, drive,
+				      delays);
 }
 
 void PGBuiltin::calculate_gate_and_lval_count_(unsigned&gate_count,

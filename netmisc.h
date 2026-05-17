@@ -492,7 +492,11 @@ extern NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
 
 extern void assign_unpacked_with_bufz(Design*des, NetScope*scope,
 				      const LineInfo*loc,
-				      NetNet*lval, NetNet*rval);
+				      NetNet*lval, NetNet*rval,
+				      const drive_strength_t &drive =
+					    drive_strength_t(),
+				      const delay_exprs_t &delays =
+					    delay_exprs_t());
 
 extern NetPartSelect* detect_partselect_lval(Link&pin);
 
