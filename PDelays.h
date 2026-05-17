@@ -1,7 +1,7 @@
 #ifndef IVL_PDelays_H
 #define IVL_PDelays_H
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -27,6 +27,7 @@ class Design;
 class NetScope;
 class NetExpr;
 class PExpr;
+struct delay_exprs_t;
 
 /*
  * Various PForm objects can carry delays. These delays include rise,
@@ -46,10 +47,7 @@ class PDelays {
 
       unsigned delay_count() const;
 
-      void eval_delays(Design*des, NetScope*scope,
-		       NetExpr*&rise_time,
-		       NetExpr*&fall_time,
-		       NetExpr*&decay_time,
+      void eval_delays(Design*des, NetScope*scope, delay_exprs_t &delays,
 		       bool as_nets_flag =false) const;
 
       void dump_delays(std::ostream&out) const;

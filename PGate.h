@@ -31,6 +31,7 @@
 class PExpr;
 class PUdp;
 class Module;
+struct delay_exprs_t;
 
 /*
  * A PGate represents a Verilog gate. The gate has a name and other
@@ -66,10 +67,7 @@ class PGate : public PNamedItem {
 
 	// This evaluates the delays as far as possible, but returns
 	// an expression, and do not signal errors.
-      void eval_delays(Design*des, NetScope*scope,
-		       NetExpr*&rise_time,
-		       NetExpr*&fall_time,
-		       NetExpr*&decay_time,
+      void eval_delays(Design*des, NetScope*scope, delay_exprs_t &delays,
 		       bool as_net_flag =false) const;
 
       unsigned delay_count() const;
@@ -77,11 +75,9 @@ class PGate : public PNamedItem {
       unsigned pin_count() const { return pins_.size(); }
       PExpr*pin(unsigned idx) const { return pins_[idx]; }
 
-      ivl_drive_t strength0() const;
-      ivl_drive_t strength1() const;
+      drive_strength_t strength() const;
 
-      void strength0(ivl_drive_t);
-      void strength1(ivl_drive_t);
+      void strength(const drive_strength_t &str);
 
       std::map<perm_string,PExpr*> attributes;
 
@@ -109,7 +105,7 @@ class PGate : public PNamedItem {
 
       std::list<pform_range_t>*ranges_;
 
-      ivl_drive_t str0_, str1_;
+      drive_strength_t strength_;
 
       void set_pins_(std::list<PExpr*>*pins);
 

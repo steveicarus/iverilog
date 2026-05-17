@@ -115,19 +115,16 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 {
       ivl_assert(*this, scope);
 
-      NetExpr* rise_time, *fall_time, *decay_time;
-      eval_delays(des, scope, rise_time, fall_time, decay_time, true);
-
-      ivl_drive_t drive0 = strength0();
-      ivl_drive_t drive1 = strength1();
+      drive_strength_t drive = strength();
+      delay_exprs_t delays;
+      eval_delays(des, scope, delays, true);
 
       ivl_assert(*this, pin(0));
       ivl_assert(*this, pin(1));
 
 	/* Elaborate the l-value. */
         // A continuous assignment can drive a variable if the default strength is used.
-      bool var_allowed_in_sv = (drive0 == IVL_DR_STRONG &&
-                                drive1 == IVL_DR_STRONG) ? true : false;
+      bool var_allowed_in_sv = !drive.has_drive();
       NetNet*lval = pin(0)->elaborate_lnet(des, scope, var_allowed_in_sv);
       if (lval == 0) {
 	    return;
@@ -214,7 +211,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	/* When we are given a non-default strength value and if the drive
 	 * source is a bit, part, indexed select or a concatenation we need
 	 * to add a driver (BUFZ) to convey the strength information. */
-      if ((drive0 != IVL_DR_STRONG || drive1 != IVL_DR_STRONG) &&
+      if (drive.has_drive() &&
           ((dynamic_cast<NetESelect*>(rval_expr)) ||
 	   (dynamic_cast<NetEConcat*>(rval_expr)))) {
 	    need_driver_flag = true;
@@ -242,11 +239,11 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 	/* Set the drive and delays for the r-val. */
 
-      if (drive0 != IVL_DR_STRONG || drive1 != IVL_DR_STRONG)
-	    rval->pin(0).drivers_drive(drive0, drive1);
+      if (drive.has_drive())
+	    rval->pin(0).drivers_drive(drive);
 
-      if (rise_time || fall_time || decay_time)
-	    rval->pin(0).drivers_delays(rise_time, fall_time, decay_time);
+      if (delays.has_delay())
+	    rval->pin(0).drivers_delays(delays);
 
       connect(lval->pin(0), rval->pin(0));
 
@@ -826,8 +823,9 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	   values are given, they are taken as specified. */
 
       if (check_delay_count(des)) return;
-      NetExpr* rise_time, *fall_time, *decay_time;
-      eval_delays(des, scope, rise_time, fall_time, decay_time, true);
+      delay_exprs_t delays;
+      eval_delays(des, scope, delays, true);
+      drive_strength_t drive = strength();
 
       struct attrib_list_t*attrib_list;
       unsigned attrib_list_n = 0;
@@ -859,12 +857,8 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 				      attrib_list[adx].val);
 
 	      /* Set the delays and drive strength for all built in gates. */
-	    cur[idx]->rise_time(rise_time);
-	    cur[idx]->fall_time(fall_time);
-	    cur[idx]->decay_time(decay_time);
-
-	    cur[idx]->pin(0).drive0(strength0());
-	    cur[idx]->pin(0).drive1(strength1());
+	    cur[idx]->delay_times(delays);
+	    cur[idx]->pin(0).drive(drive);
 
 	    cur[idx]->set_line(*this);
 	    des->add_node(cur[idx]);
@@ -2457,7 +2451,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 {
-      NetExpr*rise_expr =0, *fall_expr =0, *decay_expr =0;
+      delay_exprs_t delays;
 
       perm_string my_name = get_name();
       if (my_name == 0)
@@ -2474,8 +2468,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    } else {
 		  PDelays tmp_del;
 		  tmp_del.set_delays(overrides_, false);
-		  tmp_del.eval_delays(des, scope, rise_expr, fall_expr,
-		                      decay_expr, true);
+		  tmp_del.eval_delays(des, scope, delays, true);
 	    }
       }
 
@@ -2494,9 +2487,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
       ivl_assert(*this, udp);
       NetUDP*net = new NetUDP(scope, my_name, udp->ports.size(), udp);
       net->set_line(*this);
-      net->rise_time(rise_expr);
-      net->fall_time(fall_expr);
-      net->decay_time(decay_expr);
+      net->delay_times(delays);
 
       struct attrib_list_t*attrib_list;
       unsigned attrib_list_n = 0;

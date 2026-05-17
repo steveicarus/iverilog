@@ -2260,8 +2260,7 @@ static void pform_makegate(PGBuiltin::Type type,
 	// pform_bind_attributes function to keep the attr object.
       pform_bind_attributes(cur->attributes, attr, true);
 
-      cur->strength0(str.str0);
-      cur->strength1(str.str1);
+      cur->strength(drive_strength_t(str.str0, str.str1));
       cur->set_line(info);
 
       if (pform_cur_generate) {
@@ -2483,8 +2482,7 @@ static PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
       else
 	    cur = new PGAssign(wires, del);
 
-      cur->strength0(str.str0);
-      cur->strength1(str.str1);
+      cur->strength(drive_strength_t(str.str0, str.str1));
 
       if (pform_cur_generate)
 	    pform_cur_generate->add_gate(cur);

@@ -1197,8 +1197,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope)
 	    pull = new NetLogic(scope, scope->local_symbol(),
 				1, pull_type, wid);
 	    pull->set_line(*this);
-	    pull->pin(0).drive0(IVL_DR_SUPPLY);
-	    pull->pin(0).drive1(IVL_DR_SUPPLY);
+	    pull->pin(0).drive(drive_strength_t(IVL_DR_SUPPLY,
+						 IVL_DR_SUPPLY));
 	    des->add_node(pull);
 	    wtype = NetNet::WIRE;
       }

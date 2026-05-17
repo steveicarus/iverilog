@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -741,7 +741,7 @@ void PGate::dump(ostream&out, unsigned ind) const
 void PGAssign::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";
-      out << "assign (" << strength0() << "0 " << strength1() << "1) ";
+      out << "assign (" << strength() << ") ";
       dump_delays(out);
       out << " " << *pin(0) << " = " << *pin(1) << ";" << endl;
 }
@@ -787,7 +787,7 @@ void PGBuiltin::dump(ostream&out, unsigned ind) const
 	    out << "builtin gate ";
       }
 
-      out << "(" << strength0() << "0 " << strength1() << "1) ";
+      out << "(" << strength() << ") ";
       dump_delays(out);
       out << " " << get_name();
       dump_ranges(out);
