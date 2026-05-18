@@ -4,7 +4,7 @@ iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[\-EiRSuVv] [\-B[MPV]path] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
+[\-EiRSuVv] [\-B[IMPV]path] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
 [\-Pparameter=value] [\-pflag=value] [\-dname]
 [\-g1995\:|\-g2001\:|\-g2005\:|\-g2005-sv\:|\-g2009\:|\-g2012\:|\-g2017\:|\-g2023\:|\-g<feature>]
 [\-Iincludedir] [\-Lmoduledir] [\-mmodule] [\-M[mode=]file] [\-Nfile]
@@ -33,6 +33,9 @@ VPI modules.
 Specialized forms of this option may be used to override individual
 tool paths:
 .RS
+.TP
+.BI \-BI path
+Directory for the \fIivl\fP parser.
 .TP
 .BI \-BM path
 Directory for VPI modules.

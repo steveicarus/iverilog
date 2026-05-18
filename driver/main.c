@@ -38,7 +38,7 @@ const char NOTICE[] =
 ;
 
 const char HELP[] =
-"Usage: iverilog [-EiRSuvV] [-B[MPV] base] [-c cmdfile|-f cmdfile]\n"
+"Usage: iverilog [-EiRSuvV] [-B[IMPV] base] [-c cmdfile|-f cmdfile]\n"
 "                [-g1995|-g2001|-g2005|-g2005-sv|-g2009|-g2012|-g2017|-g2023] [-g<feature>]\n"
 "                [-D macro[=defn]] [-I includedir] [-L moduledir]\n"
 "                [-M [mode=]depfile] [-m module]\n"
@@ -112,6 +112,7 @@ extern void cfreset(FILE*fd, const char*path);
 
 const char*base = 0;
 const char*vpi_dir = 0;
+const char*ivl_dir = 0;
 const char*ivlpp_dir = 0;
 const char*vhdlpp_dir= 0;
 const char*vhdlpp_work = 0;
@@ -340,7 +341,7 @@ static int t_version_only(void)
       }
 
       fflush(0);
-      snprintf(tmp, sizeof tmp, "%s%civl -V -C\"%s\" -C\"%s\"", base, sep,
+      snprintf(tmp, sizeof tmp, "%s%civl -V -C\"%s\" -C\"%s\"", ivl_dir, sep,
 	       iconfig_path, iconfig_common_path);
       rc = system(tmp);
       if (rc != 0) {
@@ -447,7 +448,7 @@ static int t_compile(void)
 #endif
 
 	/* Build the ivl command. */
-      snprintf(tmp, sizeof tmp, "%s%civl", base, sep);
+      snprintf(tmp, sizeof tmp, "%s%civl", ivl_dir, sep);
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
       strcpy(cmd+ncmd, tmp);
@@ -1224,6 +1225,9 @@ int main(int argc, char **argv)
 		       character of the path indicates which path the
 		       user is specifying. */
 		  switch (optarg[0]) {
+		      case 'I': /* Path for the ivl parser */
+			ivl_dir = optarg+1;
+			break;
 		      case 'M': /* Path for the VPI modules */
 			vpi_dir = optarg+1;
 			break;
@@ -1375,6 +1379,8 @@ int main(int argc, char **argv)
 	    vpi_dir = base;
       if (ivlpp_dir == 0)
 	    ivlpp_dir = base;
+      if (ivl_dir == 0)
+	    ivl_dir = base;
       if (vhdlpp_dir == 0)
 	    vhdlpp_dir = base;
 
