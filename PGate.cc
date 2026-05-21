@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,29 +41,23 @@ void PGate::set_pins_(list<PExpr*>*pins)
 }
 
 PGate::PGate(perm_string name, list<PExpr*>*pins, const list<PExpr*>*del)
-: name_(name), pins_(pins? pins->size() : 0), ranges_(0)
+: name_(name), pins_(pins? pins->size() : 0), ranges_(nullptr)
 {
       if (pins) set_pins_(pins);
       if (del) delay_.set_delays(del);
-      str0_ = IVL_DR_STRONG;
-      str1_ = IVL_DR_STRONG;
 }
 
 PGate::PGate(perm_string name, list<PExpr*>*pins, PExpr*del)
-: name_(name), pins_(pins? pins->size() : 0), ranges_(0)
+: name_(name), pins_(pins? pins->size() : 0), ranges_(nullptr)
 {
       if (pins) set_pins_(pins);
       if (del) delay_.set_delay(del);
-      str0_ = IVL_DR_STRONG;
-      str1_ = IVL_DR_STRONG;
 }
 
 PGate::PGate(perm_string name, list<PExpr*>*pins)
-: name_(name), pins_(pins? pins->size() : 0), ranges_(0)
+: name_(name), pins_(pins? pins->size() : 0), ranges_(nullptr)
 {
       if (pins) set_pins_(pins);
-      str0_ = IVL_DR_STRONG;
-      str1_ = IVL_DR_STRONG;
 }
 
 PGate::~PGate()
@@ -76,24 +70,14 @@ void PGate::set_ranges(list<pform_range_t>*ranges)
       ranges_ = ranges;
 }
 
-ivl_drive_t PGate::strength0() const
+drive_strength_t PGate::strength() const
 {
-      return str0_;
+      return strength_;
 }
 
-void PGate::strength0(ivl_drive_t s)
+void PGate::strength(const drive_strength_t &str)
 {
-      str0_ = s;
-}
-
-ivl_drive_t PGate::strength1() const
-{
-      return str1_;
-}
-
-void PGate::strength1(ivl_drive_t s)
-{
-      str1_ = s;
+      strength_ = str;
 }
 
 void PGate::elaborate_scope(Design*, NetScope*) const
@@ -109,15 +93,10 @@ void PGate::elaborate_scope(Design*, NetScope*) const
  * numbers of expressions.
  */
 
-void PGate::eval_delays(Design*des, NetScope*scope,
-			NetExpr*&rise_expr,
-			NetExpr*&fall_expr,
-			NetExpr*&decay_expr,
+void PGate::eval_delays(Design*des, NetScope*scope, delay_exprs_t &delays,
 			bool as_net_flag) const
 {
-      delay_.eval_delays(des, scope,
-			 rise_expr, fall_expr, decay_expr,
-			 as_net_flag);
+      delay_.eval_delays(des, scope, delays, as_net_flag);
 }
 
 unsigned PGate::delay_count() const

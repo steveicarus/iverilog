@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -130,10 +130,11 @@ static NetExpr* make_delay_nets(Design*des, NetScope*scope, NetExpr*expr)
       return expr;
 }
 
-static NetExpr* calc_decay_time(NetExpr *rise, NetExpr *fall)
+static const NetExpr *calc_decay_time(const NetExpr *rise,
+				      const NetExpr *fall)
 {
-      const NetEConst *c_rise = dynamic_cast<NetEConst*>(rise);
-      const NetEConst *c_fall = dynamic_cast<NetEConst*>(fall);
+      const NetEConst *c_rise = dynamic_cast<const NetEConst*>(rise);
+      const NetEConst *c_fall = dynamic_cast<const NetEConst*>(fall);
       if (c_rise && c_fall) {
 	    if (c_rise->value() < c_fall->value()) return rise;
 	    else return fall;
@@ -142,44 +143,43 @@ static NetExpr* calc_decay_time(NetExpr *rise, NetExpr *fall)
       return 0;
 }
 
-void PDelays::eval_delays(Design*des, NetScope*scope,
-			  NetExpr*&rise_time,
-			  NetExpr*&fall_time,
-			  NetExpr*&decay_time,
+void PDelays::eval_delays(Design*des, NetScope*scope, delay_exprs_t &delays,
 			  bool as_nets_flag) const
 {
       assert(scope);
 
-
       if (delay_[0]) {
-	    rise_time = calculate_val(des, scope, delay_[0]);
+	    NetExpr *rise = calculate_val(des, scope, delay_[0]);
 	    if (as_nets_flag)
-		  rise_time = make_delay_nets(des, scope, rise_time);
+		  rise = make_delay_nets(des, scope, rise);
+	    delays.rise = rise;
 
 	    if (delay_[1]) {
-		  fall_time = calculate_val(des, scope, delay_[1]);
+		  NetExpr *fall = calculate_val(des, scope, delay_[1]);
 		  if (as_nets_flag)
-			fall_time = make_delay_nets(des, scope, fall_time);
+			fall = make_delay_nets(des, scope, fall);
+		  delays.fall = fall;
 
 		  if (delay_[2]) {
-			decay_time = calculate_val(des, scope, delay_[2]);
+			NetExpr *decay = calculate_val(des, scope, delay_[2]);
 			if (as_nets_flag)
-			      decay_time = make_delay_nets(des, scope,
-			                                   decay_time);
+			      decay = make_delay_nets(des, scope, decay);
+			delays.decay = decay;
 
 		  } else {
 			// If this is zero then we need to do the min()
 			// at run time.
-			decay_time = calc_decay_time(rise_time, fall_time);
+			delays.decay = calc_decay_time(delays.rise,
+						       delays.fall);
 		  }
 	    } else {
 		  assert(delay_[2] == 0);
-		  fall_time = rise_time;
-		  decay_time = rise_time;
+		  delays.fall = delays.rise;
+		  delays.decay = delays.rise;
 	    }
       } else {
-	    rise_time = 0;
-	    fall_time = 0;
-	    decay_time = 0;
+	    delays.rise = nullptr;
+	    delays.fall = nullptr;
+	    delays.decay = nullptr;
       }
 }

@@ -164,25 +164,26 @@ Link::DIR Link::get_dir() const
       return dir_;
 }
 
-void Link::drivers_delays(const NetExpr*rise, const NetExpr*fall, const NetExpr*decay)
+void Link::drivers_delays(const delay_exprs_t &delays)
 {
-      find_nexus_()->drivers_delays(rise, fall, decay);
+      find_nexus_()->drivers_delays(delays);
 }
 
-void Link::drivers_drive(ivl_drive_t drive0__, ivl_drive_t drive1__)
+void Link::drivers_drive(const drive_strength_t &drive)
 {
-      find_nexus_()->drivers_drive(drive0__, drive1__);
+      find_nexus_()->drivers_drive(drive);
 }
 
 
-void Link::drive0(ivl_drive_t str)
+void Link::drive(const drive_strength_t &drive)
 {
-      drive0_ = str;
+      drive0_ = drive.drive0;
+      drive1_ = drive.drive1;
 }
 
-void Link::drive1(ivl_drive_t str)
+drive_strength_t Link::drive() const
 {
-      drive1_ = str;
+      return drive_strength_t(drive0_, drive1_);
 }
 
 ivl_drive_t Link::drive0() const
@@ -358,7 +359,7 @@ bool Nexus::drivers_present() const
       return false;
 }
 
-void Nexus::drivers_delays(const NetExpr*rise, const NetExpr*fall, const NetExpr*decay)
+void Nexus::drivers_delays(const delay_exprs_t &delays)
 {
       for (Link*cur = first_nlink() ; cur ; cur = cur->next_nlink()) {
 	    if (cur->get_dir() != Link::OUTPUT)
@@ -368,20 +369,17 @@ void Nexus::drivers_delays(const NetExpr*rise, const NetExpr*fall, const NetExpr
 	    if (obj == 0)
 		  continue;
 
-	    obj->rise_time(rise);
-	    obj->fall_time(fall);
-	    obj->decay_time(decay);
+	    obj->delay_times(delays);
       }
 }
 
-void Nexus::drivers_drive(ivl_drive_t drive0, ivl_drive_t drive1)
+void Nexus::drivers_drive(const drive_strength_t &drive)
 {
       for (Link*cur = first_nlink() ; cur ; cur = cur->next_nlink()) {
 	    if (cur->get_dir() != Link::OUTPUT)
 		  continue;
 
-	    cur->drive0(drive0);
-	    cur->drive1(drive1);
+	    cur->drive(drive);
       }
 }
 
