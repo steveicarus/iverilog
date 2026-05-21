@@ -82,7 +82,7 @@ clean:
 	rm -f *.o cflexor.c cfparse.c cfparse.h cfparse.output
 	rm -f iverilog@EXEEXT@ iverilog.man iverilog.pdf iverilog.ps
 	rm -rf dep
-	rm -f test.conf top.vvp
+	rm -f top.vvp
 
 distclean: clean
 	rm -f Makefile config.log
