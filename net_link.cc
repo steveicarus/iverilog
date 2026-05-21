@@ -169,16 +169,16 @@ void Link::drivers_delays(const delay_exprs_t &delays)
       find_nexus_()->drivers_delays(delays);
 }
 
-void Link::drivers_drive(const drive_strength_t &drive)
+void Link::drivers_drive(const drive_strength_t &drive_i)
 {
-      find_nexus_()->drivers_drive(drive);
+      find_nexus_()->drivers_drive(drive_i);
 }
 
 
-void Link::drive(const drive_strength_t &drive)
+void Link::drive(const drive_strength_t &drive_i)
 {
-      drive0_ = drive.drive0;
-      drive1_ = drive.drive1;
+      drive0_ = drive_i.drive0;
+      drive1_ = drive_i.drive1;
 }
 
 drive_strength_t Link::drive() const

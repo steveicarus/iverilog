@@ -1679,7 +1679,7 @@ bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
  * the parameters. This is done with BUFZ gates so that they look just
  * like continuous assignment connections.
  */
-void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
+void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) const
 {
 
       ivl_assert(*this, scope);

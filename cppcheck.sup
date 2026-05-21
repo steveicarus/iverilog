@@ -10,9 +10,9 @@ nullPointerOutOfMemory
 ctuuninitvar:parse_misc.cc:61
 
 // Skip strdup() not constant.
-constVariablePointer:main.cc:415
-constVariablePointer:main.cc:419
-constVariablePointer:main.cc:669
+constVariablePointer:main.cc:421
+constVariablePointer:main.cc:425
+constVariablePointer:main.cc:675
 
 // const auto should be const
 constVariablePointer:elab_expr.cc:344
@@ -24,9 +24,9 @@ constParameterReference:net_udp.cc:37
 
 // These cannot be static since they access object data
 functionStatic:net_link.cc:178
-functionStatic:net_link.cc:183
-functionStatic:net_link.cc:188
-functionStatic:net_link.cc:193
+functionStatic:net_link.cc:184
+functionStatic:net_link.cc:189
+functionStatic:net_link.cc:194
 
 // This cannot be static when checking with valgrind
 functionStatic:libmisc/StringHeap.cc
@@ -36,23 +36,23 @@ uninitMemberVar:t-dll.cc:41
 uninitMemberVar:t-dll.cc:109
 
 // By convention we put statics at the top scope.
-variableScope:pform.cc:3461
+variableScope:pform.cc:3499
 
 // These are correct and are used to find the base (zero) pin.
-thisSubtraction:netlist.h:5310
-thisSubtraction:netlist.h:5319
+thisSubtraction:netlist.h:5376
+thisSubtraction:netlist.h:5385
 
 // This is used when running a debugger
 // debugger_release
-knownConditionTrueFalse:main.cc:949
+knownConditionTrueFalse:main.cc:955
 
 // These should be checked, but are not real issues
-knownConditionTrueFalse:elaborate.cc:7633
-knownConditionTrueFalse:elab_sig.cc:271
-knownConditionTrueFalse:elab_sig.cc:338
+knownConditionTrueFalse:elaborate.cc:7970
+knownConditionTrueFalse:elab_sig.cc:272
+knownConditionTrueFalse:elab_sig.cc:345
 
 // Yes, it's a duplicate
-duplicateCondition:elaborate.cc:7684
+duplicateCondition:elaborate.cc:8021
 
 // To complicated to use std::find_if()
 useStlAlgorithm:map_named_args.cc:38
@@ -722,31 +722,33 @@ unusedFunction:Statement.h:192
 // chain_args()
 unusedFunction:Statement.h:341
 // gn_modules_nest()
-unusedFunction:compiler.h:245
+unusedFunction:compiler.h:247
 // driven_mask()
 unusedFunction:link_const.cc:275
 // find_root_scope()
 unusedFunction:net_design.cc:121
 // assign_lval()
-unusedFunction:net_link.cc:282
+unusedFunction:net_link.cc:283
 // intersect()
-unusedFunction:net_link.cc:689
+unusedFunction:net_link.cc:687
 // get_def_fileline()
 unusedFunction:net_scope.cc:201
 // get_module_port_info()
-unusedFunction:net_scope.cc:599
+unusedFunction:net_scope.cc:600
 // find_link_signal()
-unusedFunction:netlist.cc:111
+unusedFunction:netlist.cc:113
 // find_link()
-unusedFunction:netlist.cc:297
+unusedFunction:netlist.cc:304
 // set_module_port_index()
-unusedFunction:netlist.cc:651
+unusedFunction:netlist.cc:658
 // width_a()
-unusedFunction:netlist.cc:1678
+unusedFunction:netlist.cc:1685
 // width_b()
-unusedFunction:netlist.cc:1683
+unusedFunction:netlist.cc:1690
 // result_sig()
-unusedFunction:netlist.cc:2184
+unusedFunction:netlist.cc:2191
+// soft_union()
+unusedFunction:netstruct.h:93
 // test_protected()
 unusedFunction:property_qual.h:50
 // test_rand()

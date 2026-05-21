@@ -239,16 +239,16 @@ void NetScope::add_typedefs(const map<perm_string,typedef_t*>*typedefs)
 	    typedefs_ = *typedefs;
 }
 
-NetScope*NetScope::find_typedef_scope(const Design*des, const typedef_t*type)
+NetScope*NetScope::find_typedef_scope(const Design*des, const typedef_t*type_i)
 {
-      ivl_assert(*this, type);
+      ivl_assert(*this, type_i);
 
       NetScope *cur_scope = this;
       while (cur_scope) {
-	    auto it = cur_scope->typedefs_.find(type->name);
-	    if (it != cur_scope->typedefs_.end() && it->second == type)
+	    auto it = cur_scope->typedefs_.find(type_i->name);
+	    if (it != cur_scope->typedefs_.end() && it->second == type_i)
 		  return cur_scope;
-	    NetScope*import_scope = cur_scope->find_import(des, type->name);
+	    NetScope*import_scope = cur_scope->find_import(des, type_i->name);
 	    if (import_scope)
 		  cur_scope = import_scope;
 	    else if (cur_scope == unit_)

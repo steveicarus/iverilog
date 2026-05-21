@@ -280,6 +280,8 @@ unusedFunction:fastlz.c:418
 // lz4.c from GTKWave
 bitwiseOnBoolean:lz4.c
 constVariablePointer:lz4.c
+invalidPrintfArgType_sint:lz4.c
+invalidPrintfArgType_uint:lz4.c
 staticFunction:lz4.c
 syntaxError:lz4.c
 unusedStructMember:lz4.c
@@ -359,6 +361,8 @@ variableScope:sys_random.c:47
 variableScope:sys_random.c:70
 variableScope:sys_random.c:93
 variableScope:sys_random.c:148
+// Also a comparison warning.
+compareValueOutOfTypeRangeError:sys_random.c:195
 
 // Issues in Lex/Yacc files
 allocaCalled:sdf_parse.c

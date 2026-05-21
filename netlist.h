@@ -167,12 +167,12 @@ class Link {
 	// A link has a drive strength for 0 and 1 values. The drive0
 	// strength is for when the link has the value 0, and drive1
 	// strength is for when the link has a value 1.
-      void drive(const drive_strength_t &drive);
+      void drive(const drive_strength_t &drive_i);
       drive_strength_t drive() const;
 
 	// This sets the drives for all drivers of this link, and not
 	// just the current link.
-      void drivers_drive(const drive_strength_t &drive);
+      void drivers_drive(const drive_strength_t &drive_i);
 
       ivl_drive_t drive0() const;
       ivl_drive_t drive1() const;
@@ -308,7 +308,7 @@ class NetObj  : public NetPins, public Attrib {
       const NetExpr *rise_time() const { return delays_.rise; }
       const NetExpr *fall_time() const { return delays_.fall; }
       const NetExpr *decay_time() const { return delays_.decay; }
-      delay_exprs_t delay_times() const
+      const delay_exprs_t &delay_times() const
       {
 	    return delays_;
       }
@@ -1007,7 +1007,7 @@ class NetScope : public Definitions, public Attrib {
       void add_typedefs(const std::map<perm_string,typedef_t*>*typedefs);
 
         /* Search the scope hierarchy for the scope where 'type' was defined. */
-      NetScope*find_typedef_scope(const Design*des, const typedef_t*type);
+      NetScope*find_typedef_scope(const Design*des, const typedef_t*type_i);
 
 	/* Parameters exist within a scope, and these methods allow
 	   one to manipulate the set. In these cases, the name is the

@@ -1,7 +1,7 @@
 #ifndef IVL_device_H
 #define IVL_device_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -72,6 +72,6 @@ struct device_s {
  * This function is used if the user specifies the architecture
  * explicitly, with the -parch=name flag.
  */
-extern device_t device_from_arch(const char*arch);
+extern device_t device_from_arch(const char*arch_i);
 
 #endif /* IVL_device_H */

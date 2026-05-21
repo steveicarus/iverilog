@@ -235,7 +235,7 @@ class PGModule  : public PGate {
       unsigned nparms_;
 
       friend class delayed_elaborate_scope_mod_instances;
-      void elaborate_mod_(Design*, Module*mod, NetScope*scope) const;
+      void elaborate_mod_(Design*, const Module*mod, NetScope*scope) const;
       void elaborate_udp_(Design*, PUdp  *udp, NetScope*scope) const;
       void elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const;
       void elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*sc) const;

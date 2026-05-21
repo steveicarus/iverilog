@@ -10,7 +10,9 @@ unusedFunction:pcb.cc:84
 // Errors/limitations in the generated yacc and lex files
 duplicateBreak:fp.lex
 constParameterPointer:fp.cc
+invalidPrintfArgType_sint:fp.cc
 knownConditionTrueFalse:fp.cc
+unsignedPositive:fp.cc
 constVariablePointer:fp_lex.cc
 cstyleCast:fp_lex.cc
 duplicateBreak:fp_lex.cc

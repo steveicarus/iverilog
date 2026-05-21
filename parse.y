@@ -2925,17 +2925,17 @@ type_declaration
 
   | K_typedef identifier_name ';'
       { perm_string name = lex_strings.make($2);
-	pform_forward_typedef(@2, name, type_restrict_t::ANY);
+	pform_forward_typedef(@2, name, type_restrict_t(type_restrict_t::ANY));
 	delete[]$2;
       }
   | K_typedef forward_type_without_enum identifier_name ';'
       { perm_string name = lex_strings.make($3);
-	pform_forward_typedef(@3, name, $2);
+	pform_forward_typedef(@3, name, type_restrict_t($2));
 	delete[]$3;
       }
   | K_typedef K_enum identifier_name ';'
       { perm_string name = lex_strings.make($3);
-	pform_forward_typedef(@3, name, type_restrict_t::ENUM);
+	pform_forward_typedef(@3, name, type_restrict_t(type_restrict_t::ENUM));
 	delete[]$3;
       }
   | K_typedef error ';'
@@ -4955,7 +4955,7 @@ type_param
       { if (generation_flag < GN_VER2023)
 	      yyerror(@1, "error: Restricted type parameters require SystemVerilog 2023 or later.");
 	param_is_type = true;
-	param_type_restrict = $2;
+	param_type_restrict = type_restrict_t($2);
       }
   ;
 

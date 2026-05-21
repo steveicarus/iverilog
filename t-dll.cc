@@ -401,13 +401,13 @@ static void scope_add_switch(ivl_scope_t scope, ivl_switch_t net)
       scope->switches.push_back(net);
 }
 
-ivl_parameter_t dll_target::scope_find_param(ivl_scope_t scope,
+ivl_parameter_t dll_target::scope_find_param(ivl_scope_t scope_i,
 					     const char*name)
 {
       unsigned idx = 0;
-      while (idx < scope->param.size()) {
-	    if (strcmp(name, scope->param[idx].basename) == 0)
-		  return &scope->param[idx];
+      while (idx < scope_i->param.size()) {
+	    if (strcmp(name, scope_i->param[idx].basename) == 0)
+		  return &scope_i->param[idx];
 
 	    idx += 1;
       }

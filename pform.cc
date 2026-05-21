@@ -1418,7 +1418,7 @@ Module::port_t* pform_module_interface_port_reference(
 }
 
 void pform_module_define_interface_port(const struct vlltype&loc,
-					Module::port_t*port,
+					const Module::port_t*port,
 					list<named_pexpr_t>*attr)
 {
       ivl_assert(loc, port);

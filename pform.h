@@ -174,7 +174,7 @@ extern Module::port_t* pform_module_interface_port_reference(
 						   perm_string name,
 						   std::list<pform_range_t>*udims = 0);
 extern void pform_module_define_interface_port(const struct vlltype&loc,
-					       Module::port_t*port,
+                                               const Module::port_t*port,
 					       std::list<named_pexpr_t>*attr);
 extern void pform_endmodule(const char*, bool inside_celldefine,
                             Module::UCDriveType uc_drive_def);

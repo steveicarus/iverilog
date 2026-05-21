@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2014 Stephen Williams (steve at icarus.com)
+ * Copyright (c) 2003-2026 Stephen Williams (steve at icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,80 +26,80 @@
 # include  <assert.h>
 # include  "ivl_alloc.h"
 
-edif_cell_t xilinx_cell_buf(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_buf(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell) return cell;
 
-      cell = edif_xcell_create(xlib, "BUF", 2);
+      cell = edif_xcell_create(xlib_i, "BUF", 2);
       edif_cell_portconfig(cell, BUF_O, "O", IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, BUF_I, "I", IVL_SIP_INPUT);
       return cell;
 }
 
-edif_cell_t xilinx_cell_bufe(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_bufe(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell) return cell;
 
-      cell = edif_xcell_create(xlib, "BUFE", 3);
+      cell = edif_xcell_create(xlib_i, "BUFE", 3);
       edif_cell_portconfig(cell, BUF_O, "O", IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, BUF_I, "I", IVL_SIP_INPUT);
       edif_cell_portconfig(cell, BUF_T, "E", IVL_SIP_INPUT);
       return cell;
 }
 
-edif_cell_t xilinx_cell_bufg(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_bufg(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell) return cell;
 
-      cell = edif_xcell_create(xlib, "BUFG", 2);
+      cell = edif_xcell_create(xlib_i, "BUFG", 2);
       edif_cell_portconfig(cell, BUF_O, "O", IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, BUF_I, "I", IVL_SIP_INPUT);
       return cell;
 }
 
-edif_cell_t xilinx_cell_buft(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_buft(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell) return cell;
 
-      cell = edif_xcell_create(xlib, "BUFT", 3);
+      cell = edif_xcell_create(xlib_i, "BUFT", 3);
       edif_cell_portconfig(cell, BUF_O, "O", IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, BUF_I, "I", IVL_SIP_INPUT);
       edif_cell_portconfig(cell, BUF_T, "T", IVL_SIP_INPUT);
       return cell;
 }
 
-edif_cell_t xilinx_cell_ibuf(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_ibuf(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell) return cell;
 
-      cell = edif_xcell_create(xlib, "IBUF", 2);
+      cell = edif_xcell_create(xlib_i, "IBUF", 2);
       edif_cell_portconfig(cell, BUF_O, "O", IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, BUF_I, "I", IVL_SIP_INPUT);
       return cell;
 }
 
-edif_cell_t xilinx_cell_inv(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_inv(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell) return cell;
 
-      cell = edif_xcell_create(xlib, "INV", 2);
+      cell = edif_xcell_create(xlib_i, "INV", 2);
       edif_cell_portconfig(cell, BUF_O, "O", IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, BUF_I, "I", IVL_SIP_INPUT);
       return cell;
 }
 
-edif_cell_t xilinx_cell_muxf5(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_muxf5(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell) return cell;
 
-      cell = edif_xcell_create(xlib, "MUXF5", 4);
+      cell = edif_xcell_create(xlib_i, "MUXF5", 4);
       edif_cell_portconfig(cell, MUXF_O,  "O",  IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, MUXF_I0, "I0", IVL_SIP_INPUT);
       edif_cell_portconfig(cell, MUXF_I1, "I1", IVL_SIP_INPUT);
@@ -107,12 +107,12 @@ edif_cell_t xilinx_cell_muxf5(edif_xlibrary_t xlib)
       return cell;
 }
 
-edif_cell_t xilinx_cell_muxf6(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_muxf6(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell) return cell;
 
-      cell = edif_xcell_create(xlib, "MUXF6", 4);
+      cell = edif_xcell_create(xlib_i, "MUXF6", 4);
       edif_cell_portconfig(cell, MUXF_O,  "O",  IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, MUXF_I0, "I0", IVL_SIP_INPUT);
       edif_cell_portconfig(cell, MUXF_I1, "I1", IVL_SIP_INPUT);
@@ -120,36 +120,36 @@ edif_cell_t xilinx_cell_muxf6(edif_xlibrary_t xlib)
       return cell;
 }
 
-edif_cell_t xilinx_cell_obuf(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_obuf(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell) return cell;
 
-      cell = edif_xcell_create(xlib, "OBUF", 2);
+      cell = edif_xcell_create(xlib_i, "OBUF", 2);
       edif_cell_portconfig(cell, BUF_O, "O", IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, BUF_I, "I", IVL_SIP_INPUT);
       return cell;
 }
 
 
-edif_cell_t xilinx_cell_lut2(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_lut2(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell != 0) return cell;
 
-      cell = edif_xcell_create(xlib, "LUT2", 3);
+      cell = edif_xcell_create(xlib_i, "LUT2", 3);
       edif_cell_portconfig(cell, LUT_O,  "O",  IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, LUT_I0, "I0", IVL_SIP_INPUT);
       edif_cell_portconfig(cell, LUT_I1, "I1", IVL_SIP_INPUT);
       return cell;
 }
 
-edif_cell_t xilinx_cell_lut3(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_lut3(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell != 0) return cell;
 
-      cell = edif_xcell_create(xlib, "LUT3", 4);
+      cell = edif_xcell_create(xlib_i, "LUT3", 4);
       edif_cell_portconfig(cell, LUT_O,  "O",  IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, LUT_I0, "I0", IVL_SIP_INPUT);
       edif_cell_portconfig(cell, LUT_I1, "I1", IVL_SIP_INPUT);
@@ -157,12 +157,12 @@ edif_cell_t xilinx_cell_lut3(edif_xlibrary_t xlib)
       return cell;
 }
 
-edif_cell_t xilinx_cell_lut4(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_lut4(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell != 0) return cell;
 
-      cell = edif_xcell_create(xlib, "LUT4", 5);
+      cell = edif_xcell_create(xlib_i, "LUT4", 5);
       edif_cell_portconfig(cell, LUT_O,  "O",  IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, LUT_I0, "I0", IVL_SIP_INPUT);
       edif_cell_portconfig(cell, LUT_I1, "I1", IVL_SIP_INPUT);
@@ -172,12 +172,12 @@ edif_cell_t xilinx_cell_lut4(edif_xlibrary_t xlib)
 }
 
 
-edif_cell_t xilinx_cell_fdce(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_fdce(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell != 0) return cell;
 
-      cell = edif_xcell_create(xlib, "FDCE", 5);
+      cell = edif_xcell_create(xlib_i, "FDCE", 5);
       edif_cell_portconfig(cell, FDCE_Q,  "Q",   IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, FDCE_D,  "D",   IVL_SIP_INPUT);
       edif_cell_portconfig(cell, FDCE_C,  "C",   IVL_SIP_INPUT);
@@ -186,12 +186,12 @@ edif_cell_t xilinx_cell_fdce(edif_xlibrary_t xlib)
       return cell;
 }
 
-edif_cell_t xilinx_cell_fdcpe(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_fdcpe(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell != 0) return cell;
 
-      cell = edif_xcell_create(xlib, "FDCPE", 6);
+      cell = edif_xcell_create(xlib_i, "FDCPE", 6);
       edif_cell_portconfig(cell, FDCE_Q,  "Q",   IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, FDCE_D,  "D",   IVL_SIP_INPUT);
       edif_cell_portconfig(cell, FDCE_C,  "C",   IVL_SIP_INPUT);
@@ -201,12 +201,12 @@ edif_cell_t xilinx_cell_fdcpe(edif_xlibrary_t xlib)
       return cell;
 }
 
-edif_cell_t xilinx_cell_fdre(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_fdre(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell != 0) return cell;
 
-      cell = edif_xcell_create(xlib, "FDRE", 5);
+      cell = edif_xcell_create(xlib_i, "FDRE", 5);
       edif_cell_portconfig(cell, FDCE_Q,  "Q",   IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, FDCE_D,  "D",   IVL_SIP_INPUT);
       edif_cell_portconfig(cell, FDCE_C,  "C",   IVL_SIP_INPUT);
@@ -216,24 +216,24 @@ edif_cell_t xilinx_cell_fdre(edif_xlibrary_t xlib)
 }
 
 
-edif_cell_t xilinx_cell_mult_and(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_mult_and(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell != 0) return cell;
 
-      cell = edif_xcell_create(xlib, "MULT_AND", 3);
+      cell = edif_xcell_create(xlib_i, "MULT_AND", 3);
       edif_cell_portconfig(cell, MULT_AND_LO, "LO", IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, MULT_AND_I0, "I0", IVL_SIP_INPUT);
       edif_cell_portconfig(cell, MULT_AND_I1, "I1", IVL_SIP_INPUT);
       return cell;
 }
 
-edif_cell_t xilinx_cell_muxcy(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_muxcy(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell != 0) return cell;
 
-      cell = edif_xcell_create(xlib, "MUXCY", 4);
+      cell = edif_xcell_create(xlib_i, "MUXCY", 4);
       edif_cell_portconfig(cell, MUXCY_O,  "O",  IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, MUXCY_DI, "DI", IVL_SIP_INPUT);
       edif_cell_portconfig(cell, MUXCY_CI, "CI", IVL_SIP_INPUT);
@@ -241,12 +241,12 @@ edif_cell_t xilinx_cell_muxcy(edif_xlibrary_t xlib)
       return cell;
 }
 
-edif_cell_t xilinx_cell_muxcy_l(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_muxcy_l(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell != 0) return cell;
 
-      cell = edif_xcell_create(xlib, "MUXCY_L", 4);
+      cell = edif_xcell_create(xlib_i, "MUXCY_L", 4);
       edif_cell_portconfig(cell, MUXCY_O,  "LO", IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, MUXCY_DI, "DI", IVL_SIP_INPUT);
       edif_cell_portconfig(cell, MUXCY_CI, "CI", IVL_SIP_INPUT);
@@ -254,12 +254,12 @@ edif_cell_t xilinx_cell_muxcy_l(edif_xlibrary_t xlib)
       return cell;
 }
 
-edif_cell_t xilinx_cell_xorcy(edif_xlibrary_t xlib)
+edif_cell_t xilinx_cell_xorcy(edif_xlibrary_t xlib_i)
 {
       static edif_cell_t cell = 0;
       if (cell != 0) return cell;
 
-      cell = edif_xcell_create(xlib, "XORCY", 3);
+      cell = edif_xcell_create(xlib_i, "XORCY", 3);
       edif_cell_portconfig(cell, XORCY_O,  "O",  IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, XORCY_CI, "CI", IVL_SIP_INPUT);
       edif_cell_portconfig(cell, XORCY_LI, "LI", IVL_SIP_INPUT);

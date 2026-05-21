@@ -59,7 +59,7 @@ struct type_restrict_t {
       };
 
       type_restrict_t() = default;
-      type_restrict_t(type_t kind) : type(kind) { }
+      explicit type_restrict_t(type_t kind) : type(kind) { }
 
       bool merge(type_restrict_t other);
       bool matches(ivl_type_t type) const;

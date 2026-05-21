@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2025 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2008-2026 Stephen Williams <steve@icarus.com>
  * Copyright (c) 2002 Larry Doolittle (larry@doolittle.boa.org)
  *
  *    This source code is free software; you can redistribute it
@@ -58,6 +58,11 @@
 #define B_ISX(x)  ((x) == 2)
 #define B_ISZ(x)  ((x) == 3)
 
+/* Jump through some hoops so we don't have to malloc/free valv
+ * on every call, and implement an optional malloc-less version. */
+static unsigned long *valv=NULL;
+static unsigned int vlen_alloc=0;
+
 /* The program works by building a base BASE representation of the number
  * in the valv array.  BBITS bits of the number can be put in at a time.
  * Previous values of each valv element are always less than BASE, the
@@ -68,7 +73,7 @@
  * less than or equal to 2^BBITS.  BBITS and BASE are configured above
  * to depend on the "unsigned long" length of the host, for efficiency.
  */
-static inline void shift_in(unsigned long *valv, unsigned int vlen, unsigned long val)
+static inline void shift_in(unsigned int vlen, unsigned long val)
 {
 	unsigned int i;
 	/* printf("shift in %u\n",val); */
@@ -102,11 +107,6 @@ static inline int write_digits(unsigned long v, char **buf,
 	}
 	return zero_suppress;
 }
-
-/* Jump through some hoops so we don't have to malloc/free valv
- * on every call, and implement an optional malloc-less version. */
-static unsigned long *valv=NULL;
-static unsigned int vlen_alloc=0;
 
 #ifdef CHECK_WITH_VALGRIND
 void dec_str_delete(void)
@@ -179,7 +179,7 @@ unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
 	    if ((mbits-idx-1)%BBITS==0) {
 		    /* make negative 2's complement, not 1's complement */
 		  if (comp && idx==mbits-1) ++val;
-		  shift_in(valv,vlen,val);
+		  shift_in(vlen,val);
 		  val=0;
 	    } else {
 		  val=val+val;
