@@ -4,7 +4,7 @@ iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[\-EiRSuVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
+[\-EiRSuVv] [\-B[IMPVt]path] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
 [\-Pparameter=value] [\-pflag=value] [\-dname]
 [\-g1995\:|\-g2001\:|\-g2005\:|\-g2005-sv\:|\-g2009\:|\-g2012\:|\-g2017\:|\-g2023\:|\-g<feature>]
 [\-Iincludedir] [\-Lmoduledir] [\-mmodule] [\-M[mode=]file] [\-Nfile]
@@ -21,13 +21,36 @@ further processing. The main target is \fIvvp\fP for simulation.
 .SH OPTIONS
 \fIiverilog\fP accepts the following options:
 .TP 8
-.B -B\fIbase\fP
+.BI \-B path
 The \fIiverilog\fP program uses external programs and configuration
-files to preprocess and compile the Verilog source. Normally, the path
-used to locate these tools is built into the \fIiverilog\fP
-program. However, the \fB\-B\fP switch allows the user to select a
-different set of programs. The path given is used to locate
-\fIivlpp\fP, \fIivl\fP, code generators and the VPI modules.
+files to preprocess and compile Verilog source files. Normally, the
+paths used to locate these tools are built into the
+\fIiverilog\fP executable. The \fB\-B\fP option allows the user to
+override these paths.
+The specified path is used as the default base directory for locating
+\fIivlpp\fP, \fIivl\fP, code generators, configuration files, and
+VPI modules.
+Specialized forms of this option may be used to override individual
+tool paths:
+.RS
+.TP
+.BI \-BI path
+Directory for the \fIivl\fP parser.
+.TP
+.BI \-BM path
+Directory for VPI modules.
+.TP
+.BI \-BP path
+Directory for the \fIivlpp\fP preprocessor.
+.TP
+.BI \-BV path
+Directory for the \fIvhdlpp\fP VHDL preprocessor.
+.TP
+.BI \-Bt path
+Directory used to locate target configuration files for the
+\fB\-t\fP\fItarget\fP option. The configuration file name is
+\fItarget\fP.conf.
+.RE
 .TP 8
 .B -c\fIfile\fP -f\fIfile\fP
 These flags specify an input file that contains a list of Verilog
