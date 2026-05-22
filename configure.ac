@@ -98,21 +98,19 @@ AC_SUBST(EXEEXT)
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
 
-# detect msys shell
-AC_MSG_CHECKING([whether the shell is an MSYS2 runtime shell])
+# Detect which directory/file separator to use
+AC_MSG_CHECKING([for directory/file separator])
 
 AS_CASE([$host_os:$MSYSTEM],
-  [*mingw*:UCRT64|*mingw*:MINGW64|*mingw*:MINGW32|*mingw*:CLANG64], [
-    MSYS_SHELL=true
-    msys_shell_result=yes
+  [*mingw*:UCRT64|*mingw*:MINGW64|*mingw*:MINGW32|*mingw*:CLANG64|*mingw*:CLANGARM64], [
+    PATH_SEP=\\\\
   ],
   [
-    MSYS_SHELL=false
-    msys_shell_result=no
+    PATH_SEP=/
   ]
 )
-AC_MSG_RESULT([$msys_shell_result])
-AC_SUBST([MSYS_SHELL])
+AC_MSG_RESULT([$PATH_SEP])
+AC_SUBST([PATH_SEP])
 
 # Check to see if we are using the Sun compiler. If so then configure
 # some of the flags to match the Sun compiler syntax. This is also used

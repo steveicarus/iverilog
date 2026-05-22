@@ -140,12 +140,13 @@ dosify$(BUILDEXT): $(srcdir)/dosify.c
 	$(BUILDCC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o dosify$(BUILDEXT) $(srcdir)/dosify.c
 endif
 
-# This rule rules the compiler in the trivial hello.vl program to make
-# sure the basics were compiled properly.
+# This rule runs the compiler using the trivial hello.vl program to make sure
+# the base programs are compiled properly.
 check: all
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
+	rm -f check.vvp
 	test -r check.conf || cp $(srcdir)/check.conf .
-	driver/iverilog@EXEEXT@ -B. -BMvpi -BPivlpp -tcheck -ocheck.vvp $(srcdir)/examples/hello.vl
+	driver/iverilog@EXEEXT@ -B. -BMvpi -BPivlpp -tcheck -ocheck.vvp $(srcdir)/examples/hello.vl && \
 	$(ENV_VVP) vvp/vvp$(suffix)@EXEEXT@ -M- -M./vpi ./check.vvp | grep 'Hello, World'
 
 check-installed check-installed-vpi check-installed-vvp check-installed-vvp-py:
