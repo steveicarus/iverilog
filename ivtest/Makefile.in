@@ -40,9 +40,9 @@ check-installed:
 check-installed-vpi:
 	@echo "Running vpi_reg.pl"
 ifeq (@LIBVERIUSER@,yes)
-	cd $(abs_srcdir); perl vpi_reg.pl --with-pli1 $(opts)
+	cd $(abs_srcdir); perl vpi_reg.pl --with-pli1 $(opts) --verbose
 else
-	cd $(abs_srcdir); perl vpi_reg.pl $(opts)
+	cd $(abs_srcdir); perl vpi_reg.pl $(opts) --verbose
 endif
 
 check-installed-vvp:

@@ -23,6 +23,8 @@
 #include "sv_vpi_user.h"
 #include "ivl_dlfcn.h"
 
+#include <string.h>
+
 using namespace std;
 
 /* The only VPI routines that can be legally called when the functions in
@@ -241,11 +243,27 @@ typedef void (*vlog_startup_routines_t)(void);
 
 bool load_vpi_module(const char*path)
 {
-    ivl_dll_t dll = ivl_dlopen(path, false);
-    if (dll == 0) {
-	cerr << "error: Failed to open '" << path << "' because:" << endl;
-        cerr << "     : " << dlerror() << endl;
-	return false;
+    ivl_dll_t dll = NULL;;
+    if (strchr(path, '/') != NULL || strchr(path, '\\') != NULL) {
+        dll = ivl_dlopen(path, false);
+        if (dll == 0) {
+            cerr << "error: Failed to open +++'" << path << "' because:" << endl;
+            cerr << "     : " << dlerror() << endl;
+            return false;
+        }
+    } else {
+        const char *suffix = ".vpi";
+	    size_t len = strlen(basedir) + 1 + strlen(path) + strlen(suffix) + 1;
+	    char*tmp = new char[len];
+	    snprintf(tmp, len, "%s/%s%s", basedir, path, suffix);
+        dll = ivl_dlopen(tmp, false);
+        if (dll == 0) {
+            cerr << "error: Failed to open ---'" << tmp << "' because:" << endl;
+            cerr << "     : " << dlerror() << endl;
+            delete[] tmp;
+            return false;
+        }
+        delete[] tmp;
     }
 
 #if defined(__MINGW32__) || defined (__CYGWIN__)
