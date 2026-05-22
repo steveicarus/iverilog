@@ -45,6 +45,7 @@ config.h
 stamp-*-h
 /version.h
 /version_tag.h
+/version_base.h
 
 # Directories
 autom4te.cache
@@ -94,6 +95,7 @@ dep
 
 /vvp/dump.*
 /vvp/lexor.cc
+/vvp/libvvp.pc
 /vvp/parse.cc
 /vvp/parse.h
 /vvp/parse.output
@@ -103,6 +105,7 @@ dep
 
 /iverilog-vpi.man
 /driver-vpi/res.rc
+/driver-vpi/iverilog-vpi.man
 /driver/iverilog.man
 /vvp/vvp.man
 
