@@ -247,7 +247,6 @@ sv_array_cassign10		vvp_tests/sv_array_cassign10.json
 sv_array_cassign_single	vvp_tests/sv_array_cassign_single.json
 sv_array_cassign_single_fail1	vvp_tests/sv_array_cassign_single_fail1.json
 sv_automatic_2state		vvp_tests/sv_automatic_2state.json
-sv_call_chain_method1		vvp_tests/sv_call_chain_method1.json
 sv_byte_array_string1		vvp_tests/sv_byte_array_string1.json
 sv_byte_array_string2		vvp_tests/sv_byte_array_string2.json
 sv_byte_array_string3		vvp_tests/sv_byte_array_string3.json
@@ -257,6 +256,7 @@ sv_byte_array_string_fail2	vvp_tests/sv_byte_array_string_fail2.json
 sv_byte_array_string_fail3	vvp_tests/sv_byte_array_string_fail3.json
 sv_byte_array_string_fail4	vvp_tests/sv_byte_array_string_fail4.json
 sv_byte_array_string_fail5	vvp_tests/sv_byte_array_string_fail5.json
+sv_call_chain_method1		vvp_tests/sv_call_chain_method1.json
 sv_chained_constructor1		vvp_tests/sv_chained_constructor1.json
 sv_chained_constructor2		vvp_tests/sv_chained_constructor2.json
 sv_chained_constructor3		vvp_tests/sv_chained_constructor3.json
@@ -365,7 +365,6 @@ sv_package_lifetime		vvp_tests/sv_package_lifetime.json
 sv_package_lifetime_fail	vvp_tests/sv_package_lifetime_fail.json
 sv_parameter_type		vvp_tests/sv_parameter_type.json
 sv_queue_assign_op		vvp_tests/sv_queue_assign_op.json
-sv_queue_unique			vvp_tests/sv_queue_unique.json
 sv_queue_find			vvp_tests/sv_queue_find.json
 sv_queue_find_locators_ext	vvp_tests/sv_queue_find_locators_ext.json
 sv_queue_find_with		vvp_tests/sv_queue_find_with.json
@@ -377,6 +376,7 @@ sv_queue_reverse		vvp_tests/sv_queue_reverse.json
 sv_queue_sort			vvp_tests/sv_queue_sort.json
 sv_queue_sum			vvp_tests/sv_queue_sum.json
 sv_queue_sum_with		vvp_tests/sv_queue_sum_with.json
+sv_queue_unique			vvp_tests/sv_queue_unique.json
 sv_soft_packed_union		vvp_tests/sv_soft_packed_union.json
 sv_soft_packed_union_fail1	vvp_tests/sv_soft_packed_union_fail1.json
 sv_super_member_fail		vvp_tests/sv_super_member_fail.json
