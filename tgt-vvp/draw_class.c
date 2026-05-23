@@ -63,6 +63,7 @@ static void show_prop_type(ivl_type_t ptype)
 	    show_prop_type_vector(ptype);
 	    break;
 	  case IVL_VT_DARRAY:
+	  case IVL_VT_QUEUE:
 	  case IVL_VT_CLASS:
 	    fprintf(vvp_out, "\"o\"");
 	    if (packed_dimensions > 0) {
