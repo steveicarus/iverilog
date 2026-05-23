@@ -12,6 +12,7 @@
 # PARTICULAR PURPOSE.
 
 m4_ifndef([AC_CONFIG_MACRO_DIRS], [m4_defun([_AM_CONFIG_MACRO_DIRS], [])m4_defun([AC_CONFIG_MACRO_DIRS], [_AM_CONFIG_MACRO_DIRS($@)])])
+m4_include([m4/_ac_am_config_header_hook.m4])
 m4_include([m4/_ax_c_underscores_match_if.m4])
 m4_include([m4/ax_c99_strtod.m4])
 m4_include([m4/ax_c_picflag.m4])

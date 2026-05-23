@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -87,6 +87,30 @@ ostream& operator << (ostream&o, ivl_drive_t str)
 	  default:
 	    assert(0);
       }
+      return o;
+}
+
+ostream &operator << (ostream &o, const drive_strength_t &strength)
+{
+      o << strength.drive0 << "0 " << strength.drive1 << "1";
+      return o;
+}
+
+static void dump_delay_expr(ostream &o, const NetExpr *expr)
+{
+      if (expr)
+	    o << *expr;
+      else
+	    o << "0";
+}
+
+ostream &operator << (ostream &o, const delay_exprs_t &delays)
+{
+      dump_delay_expr(o, delays.rise);
+      o << ",";
+      dump_delay_expr(o, delays.fall);
+      o << ",";
+      dump_delay_expr(o, delays.decay);
       return o;
 }
 
@@ -454,8 +478,7 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
       o << " (eref=" << peek_eref() << ", lref=" << peek_lref() << ")";
       if (scope())
 	    o << " scope=" << scope_path(scope());
-      o << " #(" << rise_time() << "," << fall_time() << ","
-	<<  decay_time() << ") vector_width=" << vector_width()
+      o << " #(" << delay_times() << ") vector_width=" << vector_width()
 	<< " pin_count=" << pin_count();
       if (pins_are_virtual()) {
 	    o << " pins_are_virtual" << endl;
@@ -486,8 +509,7 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 void NetNode::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "node: ";
-      o << typeid(*this).name() << " #(" << rise_time()
-	<< "," << fall_time() << "," << decay_time() << ") " << name()
+      o << typeid(*this).name() << " #(" << delay_times() << ") " << name()
 	<< endl;
 
       dump_node_pins(o, ind+4);
@@ -518,8 +540,7 @@ void NetPins::dump_node_pins(ostream&o, unsigned ind, const char**pin_names) con
 		  break;
 	    }
 
-	    o << " (" << pin(idx).drive0() << "0 "
-	      << pin(idx).drive1() << "1): ";
+	    o << " (" << pin(idx).drive() << "): ";
 
 	    if (pin(idx).is_linked()) {
 		  const Nexus*nex = pin(idx).nexus();
@@ -622,11 +643,7 @@ void NetConcat::dump_node(ostream&o, unsigned ind) const
 	    o << setw(ind) << "" << "NetConcat: ";
       o << name();
 
-      if (rise_time())
-	    o << " #(" << *rise_time()
-	      << "," << *fall_time() << "," << *decay_time() << ")";
-      else
-	    o << " #(0,0,0)";
+      o << " #(" << delay_times() << ")";
       o << " scope=" << scope_path(scope())
 	<< " width=" << width_ << endl;
       dump_node_pins(o, ind+4);
@@ -651,14 +668,7 @@ void NetPow::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_POW (NetPow): " << name()
 	<< " scope=" << scope_path(scope())
-	<< " delay=(";
-      if (rise_time())
-	    o << *rise_time() << "," << *fall_time() << ","
-	      <<  *decay_time();
-      else
-	    o << "0,0,0";
-
-      o << ")"  << endl;
+	<< " delay=(" << delay_times() << ")" << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -676,8 +686,7 @@ void NetBUFZ::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "NetBUFZ: " << name()
 	<< " scope=" << scope_path(scope())
-	<< " delay=(" << rise_time() << "," << fall_time() << "," <<
-	    decay_time() << ") width=" << width()
+	<< " delay=(" << delay_times() << ") width=" << width()
 	<< (transparent()? " " : " non-") << "transparent" << endl;
       dump_node_pins(o, ind+4);
 }
@@ -693,10 +702,8 @@ void NetConst::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "constant " << value_;
       o << ": " << name();
-      if (rise_time())
-	    o << " #(" << *rise_time()
-	      << "," << *fall_time()
-	      << "," << *decay_time() << ")";
+      if (delay_times().has_delay())
+	    o << " #(" << delay_times() << ")";
       else
 	    o << " #(.,.,.)";
       o << endl;
@@ -729,10 +736,8 @@ void NetLiteral::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "constant real " << real_
 	<< ": " << name();
-      if (rise_time())
-	    o << " #(" << *rise_time()
-	      << "," << *fall_time()
-	      << "," << *decay_time() << ")";
+      if (delay_times().has_delay())
+	    o << " #(" << delay_times() << ")";
       else
 	    o << " #(.,.,.)";
       o << endl;
@@ -810,8 +815,7 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
 	    o << "xor";
 	    break;
       }
-      o << " #(" << rise_time()
-	<< "," << fall_time() << "," << decay_time() << ") " << name()
+      o << " #(" << delay_times() << ") " << name()
 	<< " scope=" << scope_path(scope())
 	<< endl;
 
@@ -839,10 +843,8 @@ void NetPartSelect::dump_node(ostream&o, unsigned ind) const
       }
       o << setw(ind) << "" << "NetPartSelect(" << pt << "): "
 	<< name();
-      if (rise_time())
-	    o << " #(" << *rise_time()
-	      << "," << *fall_time()
-	      << "," << *decay_time() << ")";
+      if (delay_times().has_delay())
+	    o << " #(" << delay_times() << ")";
       else
 	    o << " #(.,.,.)";
       o << " off=" << off_ << " wid=" << wid_ <<endl;
@@ -854,10 +856,8 @@ void NetSubstitute::dump_node(ostream&fd, unsigned ind) const
 {
       fd << setw(ind) << "" << "NetSubstitute: "
 	 << name();
-      if (rise_time())
-	    fd << " #(" << *rise_time()
-	       << "," << *fall_time()
-	       << "," << *decay_time() << ")";
+      if (delay_times().has_delay())
+	    fd << " #(" << delay_times() << ")";
       else
 	    fd << " #(.,.,.)";
       fd << " width=" << wid_ << " base=" << off_ <<endl;
@@ -877,10 +877,8 @@ void NetReplicate::dump_node(ostream&o, unsigned ind) const
 void NetSignExtend::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "NetSignExtend: " << name();
-      if (rise_time())
-	    o << " #(" << *rise_time()
-	      << "," << *fall_time()
-	      << "," << *decay_time() << ")";
+      if (delay_times().has_delay())
+	    o << " #(" << delay_times() << ")";
       else
 	    o << " #(.,.,.)";
       o << " output width=" << width_ << endl;
@@ -914,8 +912,7 @@ void NetUReduce::dump_node(ostream&o, unsigned ind) const
 	    o << "xnor";
 	    break;
       }
-      o << " #(" << rise_time()
-	<< "," << fall_time() << "," << decay_time() << ") " << name()
+      o << " #(" << delay_times() << ") " << name()
 	<< " scope=" << scope_path(scope())
 	<< endl;
 
@@ -935,10 +932,8 @@ void NetUserFunc::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "USER FUNC: "
 	<< scope_path(def_);
-      if (rise_time())
-	    o << " #(" <<*rise_time()
-	      <<","<<*fall_time()
-	      << "," <<*decay_time() << ")";
+      if (delay_times().has_delay())
+	    o << " #(" << delay_times() << ")";
       o << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
@@ -986,14 +981,7 @@ void NetTran::dump_node(ostream&o, unsigned ind) const
 	      << " part=" << part_width()
 	      << " offset=" << part_offset();
       }
-      o << " delay=(";
-      if (rise_time())
-	    o << *rise_time() << "," << *fall_time() << ","
-	      << *decay_time();
-      else
-	    o << "0,0,0";
-
-      o << ")" << endl;
+      o << " delay=(" << delay_times() << ")" << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -1001,8 +989,7 @@ void NetTran::dump_node(ostream&o, unsigned ind) const
 void NetUDP::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "UDP (" << udp_name() << "): ";
-      o << " #(" << rise_time() << "," << fall_time() << "," << decay_time() <<
-	    ") " << name() << endl;
+      o << " #(" << delay_times() << ") " << name() << endl;
 
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);

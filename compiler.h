@@ -165,6 +165,8 @@ enum generation_t {
       GN_VER2005_SV  = 5,
       GN_VER2009  = 6,
       GN_VER2012  = 7,
+      GN_VER2017  = 8,
+      GN_VER2023  = 9,
       GN_DEFAULT  = 4
 };
 

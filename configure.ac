@@ -1,8 +1,35 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT
+
 AC_CONFIG_MACRO_DIRS([m4])
 
+dnl Define project version
+m4_define([VER_MAJOR], [14])
+m4_define([VER_MINOR], [0])
+m4_define([VER_EXTRA], [devel])
+
+dnl define libvvp ABI version
+m4_define([LIBVVP_SOVERSION], [1])
+
+AC_INIT([iverilog], [VER_MAJOR.VER_MINOR (VER_EXTRA)])
+AC_SUBST([VERSION_MAJOR], [VER_MAJOR])
+AC_SUBST([VERSION_MINOR], [VER_MINOR])
+AC_SUBST([VERSION_EXTRA], [" (VER_EXTRA)"])
+AC_SUBST([VERSION], ["VER_MAJOR.VER_MINOR (VER_EXTRA)"])
+# used in res.rc
+AC_SUBST([PRODUCTVERSION], ["VER_MAJOR,VER_MINOR,0,0"])
+
+# setup libvvp soversion, which depends on abi not package version
+AC_SUBST([LIBVVP_SOVERSION], [LIBVVP_SOVERSION])
+# setup libvvp version
+AC_SUBST([LIBVVP_VERSION], [LIBVVP_SOVERSION.VER_MAJOR.VER_MINOR])
+
 AC_CONFIG_SRCDIR([netlist.h])
+# Need a stamp file like the other header files
+AC_CONFIG_FILES([version_base.h],[
+_config_header=version_base.h
+_stamp_name=stamp-`expr //$_config_header : '.*/\([[^./]]*\)\.[[^./]]*$'`-h
+echo "timestamp for $_config_header" > `AS_DIRNAME(["$_config_header"])`/[]$_stamp_name
+])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_HEADERS([_pli_types.h])
 AC_CONFIG_HEADERS([vhdlpp/vhdlpp_config.h])
@@ -70,6 +97,20 @@ AC_SUBST(EXEEXT)
 
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
+
+# Detect which directory/file separator to use
+AC_MSG_CHECKING([for directory/file separator])
+
+AS_CASE([$host_os:$MSYSTEM],
+  [*mingw*:UCRT64|*mingw*:MINGW64|*mingw*:MINGW32|*mingw*:CLANG64|*mingw*:CLANGARM64], [
+    PATH_SEP=\\\\
+  ],
+  [
+    PATH_SEP=/
+  ]
+)
+AC_MSG_RESULT([$PATH_SEP])
+AC_SUBST([PATH_SEP])
 
 # Check to see if we are using the Sun compiler. If so then configure
 # some of the flags to match the Sun compiler syntax. This is also used
@@ -190,7 +231,14 @@ AC_FUNC_FSEEKO
 # Build VVP as a library and stub
 AC_ARG_ENABLE([libvvp],
     [AS_HELP_STRING([--enable-libvvp], [build VVP as a shared library])],
-    [AC_SUBST(LIBVVP, yes)],[])
+    [enable_libvvp=yes],
+    [enable_libvvp=no])
+
+AC_SUBST([LIBVVP], [$enable_libvvp])
+
+AS_IF([test "x$enable_libvvp" = "xyes"],
+    [AC_MSG_NOTICE([Building with libvvp support enabled])],
+    [AC_MSG_NOTICE([Building with libvvp support disabled])])
 
 AC_ARG_ENABLE([libveriuser],
     [AS_HELP_STRING([--enable-libveriuser], [include support for PLI 1 (deprecated)])],
@@ -279,6 +327,9 @@ esac
 VVP_BUILDDIR="$(pwd)/vvp"
 case "$host_os" in
   linux*)
+    ENV_VVP="LD_LIBRARY_PATH=$VVP_BUILDDIR"
+    ;;
+  *bsd*)
     ENV_VVP="LD_LIBRARY_PATH=$VVP_BUILDDIR"
     ;;
   darwin*)
@@ -390,5 +441,32 @@ then
 AC_MSG_ERROR(cannot configure white space in libdir: $libdir)
 fi
 AC_MSG_RESULT(ok)
-AC_CONFIG_FILES([Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile tgt-blif/Makefile tgt-sizer/Makefile])
+AC_CONFIG_FILES([
+    Makefile
+    cadpli/Makefile
+    driver-vpi/Makefile
+    driver-vpi/iverilog-vpi.man
+    driver-vpi/res.rc
+    driver/Makefile
+    driver/iverilog.man
+    ivlpp/Makefile
+    ivtest/Makefile
+    libveriuser/Makefile
+    tgt-blif/Makefile
+    tgt-fpga/Makefile
+    tgt-null/Makefile
+    tgt-pal/Makefile
+    tgt-pcb/Makefile
+    tgt-sizer/Makefile
+    tgt-stub/Makefile
+    tgt-verilog/Makefile
+    tgt-vhdl/Makefile
+    tgt-vlog95/Makefile
+    tgt-vvp/Makefile
+    vhdlpp/Makefile
+    vpi/Makefile
+    vvp/Makefile
+    vvp/libvvp.pc
+    vvp/vvp.man
+])
 AC_OUTPUT

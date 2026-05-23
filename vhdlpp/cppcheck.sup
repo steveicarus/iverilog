@@ -24,6 +24,7 @@ useStlAlgorithm
 // Errors/limitations in the generated yacc and lex files
 cstyleCast:lexor.cc
 constVariablePointer:lexor.cc
+duplicateBreak:lexor.cc
 redundantInitialization:lexor.cc
 unusedFunction:lexor.cc
 unusedStructMember:lexor.cc
@@ -32,7 +33,9 @@ duplicateBreak:lexor.lex
 redundantInitialization:lexor.lex
 uselessAssignmentPtrArg:lexor.lex
 constParameterPointer:parse.cc
+invalidPrintfArgType_sint:parse.cc
 knownConditionTrueFalse:parse.cc
+unsignedPositive:parse.cc
 
 // Unused functions
 unusedFunction:LineInfo.h

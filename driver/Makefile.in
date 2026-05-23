@@ -17,20 +17,26 @@
 #
 SHELL = /bin/sh
 
+EXEEXT = @EXEEXT@
+ENV_VVP=@ENV_VVP@
+PATH_SEP=@PATH_SEP@
+
 suffix = @install_suffix@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
 datarootdir = @datarootdir@
+builddir=@builddir@
+top_builddir=@top_builddir@
 
 VPATH = $(srcdir)
 
 bindir = $(exec_prefix)/bin
 libdir = $(exec_prefix)/lib
 includedir = $(prefix)/include
-mandir = @mandir@
-pdfdir = @docdir@
+man1dir = @mandir@/man1
+docdir = @docdir@
 
 dllib=@DLLIB@
 
@@ -58,11 +64,22 @@ O = main.o substit.o cflexor.o cfparse.o
 all: dep iverilog@EXEEXT@ iverilog.man
 
 check: all
+	@echo "driver/iverilog: create a vvp file and then run it."
+	@rm -f top.vvp
+	@$(builddir)/iverilog@EXEEXT@ \
+	    -B$(top_builddir)$(PATH_SEP)tgt-vvp \
+	    -BI$(top_builddir) \
+	    -BM$(top_builddir)$(PATH_SEP)vpi \
+	    -BP$(top_builddir)$(PATH_SEP)ivlpp \
+	    -Bt$(top_builddir)$(PATH_SEP)tgt-vvp \
+	    $(verbose) -o top.vvp -s top $(srcdir)/hello_world.v && \
+	$(ENV_VVP) $(top_builddir)/vvp/vvp$(suffix)@EXEEXT@ top.vvp
 
 clean:
 	rm -f *.o cflexor.c cfparse.c cfparse.h cfparse.output
 	rm -f iverilog@EXEEXT@ iverilog.man iverilog.pdf iverilog.ps
 	rm -rf dep
+	rm -f top.vvp
 
 distclean: clean
 	rm -f Makefile config.log
@@ -96,15 +113,14 @@ cfparse%c cfparse%h: $(srcdir)/cfparse%y
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
-main.o: main.c globals.h $(srcdir)/../version_base.h ../version_tag.h Makefile | dep
+main.o: main.c globals.h ../version_base.h ../version_tag.h Makefile | dep
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c -DIVL_ROOT='"@libdir@/ivl$(suffix)"' -DIVL_SUFFIX='"$(suffix)"' -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DDLLIB='"@DLLIB@"' -DIVL_INCLUDE_INSTALL_DIR="\"$(realpath $(DESTDIR)/$(includedir))\"" $(srcdir)/main.c
 	mv $*.d dep
 
 cflexor.o: cflexor.c cfparse.h
 
-iverilog.man: $(srcdir)/iverilog.man.in ../version.exe
-	../version.exe `head -1 $<`'\n' > $@
-	tail -n +2 $< >> $@
+iverilog.man: $(srcdir)/iverilog.man.in ../config.status
+	cd ..; ./config.status --file=driver/$@
 
 iverilog.ps: iverilog.man
 	$(MAN) -t ./$< > $@
@@ -112,25 +128,15 @@ iverilog.ps: iverilog.man
 iverilog.pdf: iverilog.ps
 	$(PS2PDF) $< $@
 
+INSTALL_DOC =
+ifneq ($(MAN),none)
+INSTALL_DOC += installman
+ifneq ($(PS2PDF),none)
 ifeq (@MINGW32@,yes)
-ifeq ($(MAN),none)
-INSTALL_DOC = installman
-INSTALL_PDFDIR = $(prefix)
-else
-ifeq ($(PS2PDF),none)
-INSTALL_DOC = installman
-INSTALL_PDFDIR = $(prefix)
-else
-INSTALL_DOC = installpdf installman
-INSTALL_PDFDIR = $(pdfdir)
+INSTALL_DOC += installpdf
 all: iverilog.pdf
 endif
 endif
-INSTALL_DOCDIR = $(mandir)/man1
-else
-INSTALL_DOC = installman
-INSTALL_DOCDIR = $(mandir)/man1
-INSTALL_PDFDIR = $(prefix)
 endif
 
 install: all installdirs installfiles
@@ -139,21 +145,23 @@ F = ./iverilog@EXEEXT@ \
 	$(INSTALL_DOC)
 
 installman: iverilog.man installdirs
-	$(INSTALL_DATA) iverilog.man "$(DESTDIR)$(mandir)/man1/iverilog$(suffix).1"
+	$(INSTALL_DATA) iverilog.man "$(DESTDIR)$(man1dir)/iverilog$(suffix).1"
 
 installpdf: iverilog.pdf installdirs
-	$(INSTALL_DATA) iverilog.pdf "$(DESTDIR)$(pdfdir)/iverilog$(suffix).pdf"
+	$(INSTALL_DATA) iverilog.pdf "$(DESTDIR)$(docdir)/iverilog$(suffix).pdf"
 
 installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./iverilog@EXEEXT@ "$(DESTDIR)$(bindir)/iverilog$(suffix)@EXEEXT@"
 
 installdirs: $(srcdir)/../mkinstalldirs
-	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" \
-		"$(DESTDIR)$(INSTALL_DOCDIR)" \
-		"$(DESTDIR)$(INSTALL_PDFDIR)"
+	$(srcdir)/../mkinstalldirs \
+	    "$(DESTDIR)$(bindir)" \
+	    "$(DESTDIR)$(docdir)" \
+	    "$(DESTDIR)$(man1dir)"
 
 uninstall:
 	rm -f "$(DESTDIR)$(bindir)/iverilog$(suffix)@EXEEXT@"
-	rm -f "$(DESTDIR)$(mandir)/man1/iverilog$(suffix).1" "$(DESTDIR)$(pdfdir)/iverilog$(suffix).pdf"
+	rm -f "$(DESTDIR)$(man1dir)/iverilog$(suffix).1" \
+	      "$(DESTDIR)$(docdir)/iverilog$(suffix).pdf"
 
 -include $(patsubst %.o, dep/%.d, $O)

@@ -499,6 +499,9 @@ NetExpr* PEAssignPattern::elaborate_expr_uarray_(Design *des, NetScope *scope,
 	    if (const auto ap = dynamic_cast<PEAssignPattern*>(parms_[idx])) {
 		  expr = ap->elaborate_expr_uarray_(des, scope, uarray_type,
 						    dims, cur_dim, need_const);
+	    } else if (const auto s = dynamic_cast<PEString*>(parms_[idx])) {
+		  expr = s->elaborate_expr_uarray_(des, scope, uarray_type,
+						   dims, cur_dim);
 	    } else if (dynamic_cast<PEConcat*>(parms_[idx])) {
 		  cerr << get_fileline() << ": sorry: "
 		       << "Array concatenation is not yet supported."
@@ -6186,20 +6189,6 @@ NetExpr* PEIdent::calculate_up_do_base_(Design*des, NetScope*scope,
 
 unsigned PEIdent::test_width_parameter_(const NetExpr *par, width_mode_t&mode)
 {
-	// The width of an enumeration literal is the width of the
-	// enumeration base.
-      if (const NetEConstEnum*par_enum = dynamic_cast<const NetEConstEnum*> (par)) {
-	    const netenum_t*use_enum = par_enum->enumeration();
-	    ivl_assert(*this, use_enum != 0);
-
-	    expr_type_   = use_enum->base_type();
-	    expr_width_  = use_enum->packed_width();
-	    min_width_   = expr_width_;
-	    signed_flag_ = par_enum->has_sign();
-
-	    return expr_width_;
-      }
-
       expr_type_   = par->expr_type();
       expr_width_  = par->expr_width();
       min_width_   = expr_width_;
@@ -6827,6 +6816,9 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 	// If the identifier names a signal (a variable or a net)
 	// then create a NetESignal node to handle it.
       if (sr.net != 0) {
+	    if (!check_interface_modport_access(this, des, sr, false))
+		  return 0;
+
             if (NEED_CONST & flags) {
                   cerr << get_fileline() << ": error: A reference to a net "
                           "or variable (`" << path_ << "') is not allowed in "
@@ -8816,19 +8808,8 @@ NetExpr* PENewArray::elaborate_expr(Design*des, NetScope*scope,
       NetExpr*size = size_->elaborate_expr(des, scope, use_wid, flags);
       NetExpr*init_val = 0;
 
-      if (dynamic_cast<PEAssignPattern*> (init_)) {
-	      // Special case: the initial value expression is an
-	      // array_pattern. Elaborate the expression like the
-	      // r-value to an assignment to array.
+      if (init_) {
 	    init_val = init_->elaborate_expr(des, scope, ntype, flags);
-
-      } else if (init_) {
-	      // Regular case: The initial value is an
-	      // expression. Elaborate the expression as an element
-	      // type. The run-time will assign this value to each element.
-	    const netarray_t*array_type = dynamic_cast<const netarray_t*> (ntype);
-
-	    init_val = init_->elaborate_expr(des, scope, array_type, flags);
       }
 
       NetENew*tmp = new NetENew(ntype, size, init_val);
@@ -9151,13 +9132,86 @@ unsigned PEString::test_width(Design*, NetScope*, width_mode_t&)
       return expr_width_;
 }
 
-NetEConst* PEString::elaborate_expr(Design*, NetScope*, ivl_type_t, unsigned) const
+NetExpr* PEString::elaborate_expr_uarray_(Design *des, NetScope *,
+					  const netuarray_t *uarray_type,
+					  const std::vector<netrange_t> &dims,
+					  unsigned int cur_dim) const
 {
-      NetECString*tmp = new NetECString(value());
-      tmp->cast_signed(signed_flag_);
-      tmp->set_line(*this);
+      // This is a special case. The LRM allows string literals to be
+      // assigned to unpacked arrays of bytes.
+      const auto element_type = uarray_type->element_type();
 
-      return tmp;
+      if (dims.size() - 1 != cur_dim || !element_type->packed() ||
+          element_type->base_type() != IVL_VT_BOOL ||
+	  element_type->packed_width() != 8 || !element_type->get_signed()) {
+	    cerr << get_fileline() << ": error: "
+		 << "String literal can not be implicitly cast to the target type."
+		 << endl;
+	    des->errors++;
+	    return nullptr;
+      }
+
+
+      // The size doesn't have to match. Elements are copied left aligned, which
+      // is different from assignments of string literals to packed arrays where
+      // they are copied right aligned.
+
+      vector<NetExpr*> elem_exprs(dims[cur_dim].width());
+      bool asc = dims[cur_dim].get_msb() < dims[cur_dim].get_lsb();
+      unsigned int elem_idx = asc ? 0 : elem_exprs.size() - 1;
+
+      verinum text_val(text_);
+
+      if (text_val.len() > elem_exprs.size() * 8) {
+	    cerr << get_fileline() << ": warning: "
+	         << "Target array smaller than assigned value. "
+		 << "Value will be truncated." << endl;
+      }
+
+      for (unsigned int i = 0; i < min((size_t)text_val.len() / 8, elem_exprs.size()); i++) {
+	    verinum val(text_val >> (text_val.len() - 8 - i * 8), 8);
+	    val.has_sign(true);
+
+	    elem_exprs[elem_idx] = new NetEConst(element_type, val);
+
+	    if (asc)
+		  elem_idx++;
+	    else
+		  elem_idx--;
+      }
+
+      // Add padding if necessary
+      for (unsigned int i = text_val.len() / 8; i < elem_exprs.size(); i++) {
+	    verinum val(verinum::V0, 8);
+	    val.has_sign(true);
+
+	    elem_exprs[elem_idx] = new NetEConst(element_type, val);
+
+	    if (asc)
+		  elem_idx++;
+	    else
+		  elem_idx--;
+      }
+
+      return new NetEArrayPattern(uarray_type, elem_exprs);
+}
+
+NetExpr* PEString::elaborate_expr(Design *des, NetScope *scope, ivl_type_t type, unsigned) const
+{
+      NetExpr *expr;
+
+      auto uarray_type = dynamic_cast<const netuarray_t*>(type);
+      if (uarray_type) {
+	    expr = elaborate_expr_uarray_(des, scope, uarray_type,
+					  uarray_type->static_dimensions(), 0);
+      } else {
+	    expr = new NetECString(value());
+	    expr->cast_signed(signed_flag_);
+      }
+
+      if (expr)
+	    expr->set_line(*this);
+      return expr;
 }
 
 /*

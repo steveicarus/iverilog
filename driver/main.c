@@ -38,8 +38,8 @@ const char NOTICE[] =
 ;
 
 const char HELP[] =
-"Usage: iverilog [-EiRSuvV] [-B base] [-c cmdfile|-f cmdfile]\n"
-"                [-g1995|-g2001|-g2005|-g2005-sv|-g2009|-g2012] [-g<feature>]\n"
+"Usage: iverilog [-EiRSuvV] [-B[IMPVt] base] [-c cmdfile|-f cmdfile]\n"
+"                [-g1995|-g2001|-g2005|-g2005-sv|-g2009|-g2012|-g2017|-g2023] [-g<feature>]\n"
 "                [-D macro[=defn]] [-I includedir] [-L moduledir]\n"
 "                [-M [mode=]depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
@@ -112,6 +112,8 @@ extern void cfreset(FILE*fd, const char*path);
 
 const char*base = 0;
 const char*vpi_dir = 0;
+const char*tconfig_dir = 0;
+const char*ivl_dir = 0;
 const char*ivlpp_dir = 0;
 const char*vhdlpp_dir= 0;
 const char*vhdlpp_work = 0;
@@ -340,7 +342,7 @@ static int t_version_only(void)
       }
 
       fflush(0);
-      snprintf(tmp, sizeof tmp, "%s%civl -V -C\"%s\" -C\"%s\"", base, sep,
+      snprintf(tmp, sizeof tmp, "%s%civl -V -C\"%s\" -C\"%s\"", ivl_dir, sep,
 	       iconfig_path, iconfig_common_path);
       rc = system(tmp);
       if (rc != 0) {
@@ -447,7 +449,7 @@ static int t_compile(void)
 #endif
 
 	/* Build the ivl command. */
-      snprintf(tmp, sizeof tmp, "%s%civl", base, sep);
+      snprintf(tmp, sizeof tmp, "%s%civl", ivl_dir, sep);
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
       strcpy(cmd+ncmd, tmp);
@@ -740,6 +742,12 @@ static int process_generation(const char*name)
       else if (strcmp(name,"2012") == 0)
 	    generation = "2012";
 
+      else if (strcmp(name,"2017") == 0)
+	    generation = "2017";
+
+      else if (strcmp(name,"2023") == 0)
+	    generation = "2023";
+
       else if (strcmp(name,"1") == 0) { /* Deprecated: use 1995 */
 	    generation = "1995";
 	    gen_xtypes = "no-xtypes";
@@ -860,6 +868,8 @@ static int process_generation(const char*name)
 		            "    2005-sv -- IEEE1800-2005\n"
 		            "    2009    -- IEEE1800-2009\n"
 		            "    2012    -- IEEE1800-2012\n"
+		            "    2017    -- IEEE1800-2017\n"
+		            "    2023    -- IEEE1800-2023\n"
 		            "Other generation flags:\n"
 		            "    assertions | supported-assertions | no-assertions\n"
 		            "    specify | no-specify\n"
@@ -1216,6 +1226,9 @@ int main(int argc, char **argv)
 		       character of the path indicates which path the
 		       user is specifying. */
 		  switch (optarg[0]) {
+		      case 'I': /* Path for the ivl parser */
+			ivl_dir = optarg+1;
+			break;
 		      case 'M': /* Path for the VPI modules */
 			vpi_dir = optarg+1;
 			break;
@@ -1224,6 +1237,9 @@ int main(int argc, char **argv)
 			break;
 		      case 'V': /* Path for the vhdlpp VHDL processor */
 			vhdlpp_dir = optarg+1;
+			break;
+		      case 't': /* Path to target.conf for the -ttarget option */
+			tconfig_dir = optarg+1;
 			break;
 		      default: /* Otherwise, this is a default base. */
 			base=optarg;
@@ -1367,8 +1383,12 @@ int main(int argc, char **argv)
 	    vpi_dir = base;
       if (ivlpp_dir == 0)
 	    ivlpp_dir = base;
+      if (ivl_dir == 0)
+	    ivl_dir = base;
       if (vhdlpp_dir == 0)
 	    vhdlpp_dir = base;
+      if (tconfig_dir == 0)
+	    tconfig_dir = base;
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
@@ -1378,7 +1398,7 @@ int main(int argc, char **argv)
 
 	/* Make a common conf file path to reflect the target. */
       snprintf(iconfig_common_path, sizeof iconfig_common_path, "%s%c%s%s.conf",
-	      base, sep, targ, synth_flag? "-s" : "");
+	      tconfig_dir, sep, targ, synth_flag? "-s" : "");
 
 	/* Write values to the iconfig file. */
       fprintf(iconfig_file, "basedir:%s\n", base);
@@ -1388,11 +1408,13 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "module:%s%cvhdl_sys.vpi\n", vpi_dir, sep);
       fprintf(iconfig_file, "module:%s%cvhdl_textio.vpi\n", vpi_dir, sep);
 
-	/* If verilog-2005/09/12 is enabled or icarus-misc or verilog-ams,
+	/* If verilog-2005/09/12/17/23 is enabled or icarus-misc or verilog-ams,
 	 * then include the v2005_math library. */
       if (strcmp(generation, "2005") == 0 ||
           strcmp(generation, "2009") == 0 ||
           strcmp(generation, "2012") == 0 ||
+          strcmp(generation, "2017") == 0 ||
+          strcmp(generation, "2023") == 0 ||
           strcmp(gen_icarus, "icarus-misc") == 0 ||
           strcmp(gen_verilog_ams, "verilog-ams") == 0) {
 	    fprintf(iconfig_file, "module:%s%cv2005_math.vpi\n", vpi_dir, sep);
@@ -1407,7 +1429,9 @@ int main(int argc, char **argv)
          v2009 module. */
       if (strcmp(generation, "2005-sv") == 0 ||
           strcmp(generation, "2009") == 0 ||
-          strcmp(generation, "2012") == 0) {
+          strcmp(generation, "2012") == 0 ||
+          strcmp(generation, "2017") == 0 ||
+          strcmp(generation, "2023") == 0) {
 	    fprintf(iconfig_file, "module:%s%cv2009.vpi\n", vpi_dir, sep);
       }
 

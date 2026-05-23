@@ -172,13 +172,15 @@ sub read_regression_list {
         $nameidx{$tname} = @testlist - 1;
 
         # The generation to use is passed if it does not match
-        # the default. To make sure the tests are protable we
+        # the default. To make sure the tests are portable we
         # use the force SV flag to force all tests to be run
         # as the latest SystemVerilog generation. This assumes
         # the correct `begin_keywords has been added to the
         # various files.
         if ($force_sv) {
-            my $fsv_flags = "-g2012";
+            my $fsv_flags = "-g2023";
+            $args{$tname} =~ s/-g2023//;
+            $args{$tname} =~ s/-g2017//;
             $args{$tname} =~ s/-g2012//;
             $args{$tname} =~ s/-g2009//;
             $args{$tname} =~ s/-g2005-sv//;

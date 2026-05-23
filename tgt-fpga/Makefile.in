@@ -23,8 +23,9 @@ suffix = @install_suffix@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
-mandir = @mandir@
-datarootdir = @datarootdir@
+datarootdir = @datarootdir
+man1dir = @mandir@/man1
+docdir = @docdir@
 
 VPATH = $(srcdir)
 
@@ -94,13 +95,15 @@ iverilog-fpga.ps: $(srcdir)/iverilog-fpga.man
 iverilog-fpga.pdf: iverilog-fpga.ps
 	ps2pdf iverilog-fpga.ps iverilog-fpga.pdf
 
-ifeq (@WIN32@,yes)
-INSTALL_DOC = installpdf installman
-INSTALL_DOCDIR = $(mandir)/man1
+INSTALL_DOC =
+ifneq ($(MAN),none)
+INSTALL_DOC += installman
+ifneq ($(PS2PDF),none)
+ifeq (@MINGW32@,yes)
+INSTALL_DOC += installpdf
 all: iverilog-fpga.pdf
-else
-INSTALL_DOC = installman
-INSTALL_DOCDIR = $(mandir)/man1
+endif
+endif
 endif
 
 install: all installdirs installfiles
@@ -111,10 +114,10 @@ F = ./fpga.tgt \
 	$(INSTALL_DOC)
 
 installman: $(srcdir)/iverilog-fpga.man installdirs
-	$(INSTALL_DATA) $(srcdir)/iverilog-fpga.man "$(DESTDIR)$(mandir)/man1/iverilog-fpga$(suffix).1"
+	$(INSTALL_DATA) $(srcdir)/iverilog-fpga.man "$(DESTDIR)$(man1dir)/iverilog-fpga$(suffix).1"
 
 installpdf: iverilog-fpga.pdf installdirs
-	$(INSTALL_DATA) iverilog-fpga.pdf "$(DESTDIR)$(prefix)/iverilog-fpga$(suffix).pdf"
+	$(INSTALL_DATA) iverilog-fpga.pdf "$(DESTDIR)$(docdir)/iverilog-fpga$(suffix).pdf"
 
 installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./fpga.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga.tgt"
@@ -126,7 +129,7 @@ installdirs: $(srcdir)/../mkinstalldirs
 
 uninstall:
 	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga.tgt"
-	rm -f "$(DESTDIR)$(prefix)/iverilog-fpga$(suffix).pdf" "$(DESTDIR)$(mandir)/man1/iverilog-fpga$(suffix).1"
+	rm -f "$(DESTDIR)$(docdir)/iverilog-fpga$(suffix).pdf" "$(DESTDIR)$(man1dir)/iverilog-fpga$(suffix).1"
 	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga-s.conf"
 	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/fpga.conf"
 

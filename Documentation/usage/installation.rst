@@ -373,7 +373,5 @@ Next, compile with the command::
 
   $ make
 
-The configure generated the cross compiler flags, but there are a few
-bits that need to be compiled with the native compiler. (version.exe
-for example is used by the build process but is not installed.) The
+The configure generated the cross compiler flags. The
 configure script should have gotten all that right.

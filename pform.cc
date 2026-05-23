@@ -49,6 +49,10 @@
 
 using namespace std;
 
+static void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
+			        std::vector<PWire*> *wires,
+			        list<named_pexpr_t>*attr, bool is_const = false);
+
 /*
  * The "// synthesis translate_on/off" meta-comments cause this flag
  * to be turned off or on. The pform_make_behavior and similar
@@ -841,7 +845,7 @@ static typedef_t *pform_get_typedef(const struct vlltype&loc, perm_string name)
 }
 
 void pform_forward_typedef(const struct vlltype&loc, perm_string name,
-			   enum typedef_t::basic_type basic_type)
+			   type_restrict_t basic_type)
 {
       typedef_t *td = pform_get_typedef(loc, name);
 
@@ -924,6 +928,14 @@ typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
       } while (cur_scope);
 
       return 0;
+}
+
+bool pform_test_interface_identifier(const char*txt)
+{
+      perm_string name = lex_strings.make(txt);
+      map<perm_string,Module*>::const_iterator cur = pform_modules.find(name);
+
+      return cur != pform_modules.end() && cur->second->is_interface;
 }
 
 PECallFunction* pform_make_call_function(const struct vlltype&loc,
@@ -1402,6 +1414,35 @@ Module::port_t* pform_module_port_reference(const struct vlltype&loc,
       ptmp->default_value = 0;
 
       return ptmp;
+}
+
+Module::port_t* pform_module_interface_port_reference(
+					  const struct vlltype&loc,
+					  perm_string interface_type,
+					  perm_string modport_name,
+					  perm_string name,
+					  list<pform_range_t>*udims)
+{
+      Module::port_t*ptmp = new Module::port_t;
+
+      ptmp->port_kind = Module::port_t::P_INTERFACE;
+      ptmp->name = name;
+      ptmp->interface_type = interface_type;
+      ptmp->modport_name = modport_name;
+      ptmp->interface_unpacked_dimensions = udims;
+      ptmp->lexical_pos = loc.lexical_pos;
+
+      return ptmp;
+}
+
+void pform_module_define_interface_port(const struct vlltype&loc,
+					const Module::port_t*port,
+					list<named_pexpr_t>*attr)
+{
+      ivl_assert(loc, port);
+      ivl_assert(loc, port->is_interface_port());
+
+      delete attr;
 }
 
 void pform_module_set_ports(vector<Module::port_t*>*ports)
@@ -2237,8 +2278,7 @@ static void pform_makegate(PGBuiltin::Type type,
 	// pform_bind_attributes function to keep the attr object.
       pform_bind_attributes(cur->attributes, attr, true);
 
-      cur->strength0(str.str0);
-      cur->strength1(str.str1);
+      cur->strength(drive_strength_t(str.str0, str.str1));
       cur->set_line(info);
 
       if (pform_cur_generate) {
@@ -2460,8 +2500,7 @@ static PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
       else
 	    cur = new PGAssign(wires, del);
 
-      cur->strength0(str.str0);
-      cur->strength1(str.str1);
+      cur->strength(drive_strength_t(str.str0, str.str1));
 
       if (pform_cur_generate)
 	    pform_cur_generate->add_gate(cur);
@@ -2690,22 +2729,24 @@ void pform_makewire(const struct vlltype&li,
 	    wires->push_back(wire);
       }
 
-      pform_set_data_type(li, data_type, wires, type, attr, is_const);
+      pform_set_data_type(li, data_type, wires, attr, is_const);
 
       while (! assign_list->empty()) {
 	    decl_assignment_t*first = assign_list->front();
 	    assign_list->pop_front();
-            if (PExpr*expr = first->expr.release()) {
-                  if (type == NetNet::REG || type == NetNet::IMPLICIT_REG) {
-                        pform_make_var_init(li, first->name, expr);
-                  } else {
-		        PEIdent*lval = new PEIdent(first->name.first,
+	    if (PExpr*expr = first->expr.release()) {
+		  if (type == NetNet::REG || type == NetNet::IMPLICIT_REG) {
+			pform_make_var_init(li, first->name, expr);
+		  } else {
+			PEIdent*lval = new PEIdent(first->name.first,
 						   first->name.second);
-		        FILE_NAME(lval, li);
-		        PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);
-		        FILE_NAME(ass, li);
-                  }
-            }
+			FILE_NAME(lval, li);
+			PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);
+			FILE_NAME(ass, li);
+		  }
+	    } else if (delay) {
+		  VLerror(li, "sorry: net delays not supported.");
+	    }
 	    delete first;
       }
 }
@@ -2929,6 +2970,7 @@ static void pform_set_type_parameter(const struct vlltype&loc, perm_string name,
 
 void pform_set_parameter(const struct vlltype&loc,
 			 perm_string name, bool is_local, bool is_type,
+			 type_restrict_t type_restrict,
 			 data_type_t*data_type, const list<pform_range_t>*udims,
 			 PExpr*expr, LexicalScope::range_t*value_range)
 {
@@ -3001,6 +3043,7 @@ void pform_set_parameter(const struct vlltype&loc,
       parm->local_flag = is_local;
       parm->overridable = overridable;
       parm->type_flag = is_type;
+      parm->type_restrict = type_restrict;
       parm->lexical_pos = loc.lexical_pos;
 
       scope->parameters[name] = parm;
@@ -3251,9 +3294,9 @@ void pform_set_port_type(const struct vlltype&li,
  * This function detects the derived class for the given type and
  * dispatches the type to the proper subtype function.
  */
-void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
-			 std::vector<PWire*> *wires, NetNet::Type net_type,
-			 list<named_pexpr_t>*attr, bool is_const)
+static void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
+			        std::vector<PWire*> *wires,
+			        list<named_pexpr_t>*attr, bool is_const)
 {
       if (data_type == 0) {
 	    VLerror(li, "internal error: data_type==0.");
@@ -3267,11 +3310,6 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
 	    PWire *wire = *it;
 
 	    pform_set_net_range(wire, vec_type);
-
-	    // If these fail there is a bug somewhere else. pform_set_data_type()
-	    // is only ever called on a fresh wire that already exists.
-	    bool rc = wire->set_wire_type(net_type);
-	    ivl_assert(li, rc);
 
 	    wire->set_data_type(data_type);
 	    wire->set_const(is_const);

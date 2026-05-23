@@ -63,7 +63,6 @@ constParameterPointer:fstapi.c
 constVariablePointer:fstapi.c
 duplicateConditionalAssign:fstapi.c
 knownConditionTrueFalse:fstapi.c
-memleak:fstapi.c
 missingInclude:fst_win_unistd.h:50
 nullPointer:fstapi.c
 shiftTooManyBits:fstapi.c
@@ -75,85 +74,85 @@ uselessAssignmentPtrArg:fstapi.c
 variableScope:fstapi.c
 // These functions are not used by Icarus
 // fstReaderClrFacProcessMask()
-unusedFunction:fstapi.c:3513
+unusedFunction:fstapi.c:3514
 // fstReaderClrFacProcessMaskAll()
-unusedFunction:fstapi.c:3533
+unusedFunction:fstapi.c:3534
 // fstReaderGetAliasCount()
-unusedFunction:fstapi.c:3578
+unusedFunction:fstapi.c:3579
 // fstReaderGetCurrentFlatScope()
-unusedFunction:fstapi.c:3392
+unusedFunction:fstapi.c:3393
 // fstReaderGetCurrentScopeLen()
-unusedFunction:fstapi.c:3465
+unusedFunction:fstapi.c:3466
 // fstReaderGetCurrentScopeUserInfo()
-unusedFunction:fstapi.c:3401
+unusedFunction:fstapi.c:3402
 // fstReaderGetDateString()
-unusedFunction:fstapi.c:3598
+unusedFunction:fstapi.c:3599
 // fstReaderGetDoubleEndianMatchState()
-unusedFunction:fstapi.c:3588
+unusedFunction:fstapi.c:3589
 // fstReaderGetDumpActivityChangeTime()
-unusedFunction:fstapi.c:3618
+unusedFunction:fstapi.c:3619
 // fstReaderGetDumpActivityChangeValue()
-unusedFunction:fstapi.c:3627
+unusedFunction:fstapi.c:3628
 // fstReaderGetEndTime()
-unusedFunction:fstapi.c:3553
+unusedFunction:fstapi.c:3554
 // fstReaderGetFacProcessMask()
-unusedFunction:fstapi.c:3486
+unusedFunction:fstapi.c:3487
 // fstReaderGetFileType()
-unusedFunction:fstapi.c:3603
+unusedFunction:fstapi.c:3604
 // fstReaderGetFseekFailed()
-unusedFunction:fstapi.c:3474
+unusedFunction:fstapi.c:3475
 // fstReaderGetMaxHandle()
-unusedFunction:fstapi.c:3573
+unusedFunction:fstapi.c:3574
 // fstReaderGetMemoryUsedByWriter()
-unusedFunction:fstapi.c:3558
+unusedFunction:fstapi.c:3559
 // fstReaderGetNumberDumpActivityChanges()
-unusedFunction:fstapi.c:3613
+unusedFunction:fstapi.c:3614
 // fstReaderGetScopeCount()
-unusedFunction:fstapi.c:3563
+unusedFunction:fstapi.c:3564
 // fstReaderGetStartTime()
-unusedFunction:fstapi.c:3548
+unusedFunction:fstapi.c:3549
 // fstReaderGetTimescale()
-unusedFunction:fstapi.c:3543
+unusedFunction:fstapi.c:3544
 // fstReaderGetTimezero()
-unusedFunction:fstapi.c:3608
+unusedFunction:fstapi.c:3609
 // fstReaderGetValueChangeSectionCount()
-unusedFunction:fstapi.c:3583
+unusedFunction:fstapi.c:3584
 // fstReaderGetValueFromHandleAtTime()
-unusedFunction:fstapi.c:5952
+unusedFunction:fstapi.c:5953
 // fstReaderGetVarCount()
-unusedFunction:fstapi.c:3568
+unusedFunction:fstapi.c:3569
 // fstReaderGetVersionString()
-unusedFunction:fstapi.c:3593
+unusedFunction:fstapi.c:3594
 // fstReaderIterBlocks()
-unusedFunction:fstapi.c:4832
+unusedFunction:fstapi.c:4833
 // fstReaderIterBlocksSetNativeDoublesOnCallback()
-unusedFunction:fstapi.c:3659
+unusedFunction:fstapi.c:3660
 // fstReaderIterateHier()
-unusedFunction:fstapi.c:3872
+unusedFunction:fstapi.c:3873
 // fstReaderIterateHierRewind()
-unusedFunction:fstapi.c:3856
+unusedFunction:fstapi.c:3857
 // fstReaderOpen()
-unusedFunction:fstapi.c:4728
+unusedFunction:fstapi.c:4729
 // fstReaderOpenForUtilitiesOnly()
-unusedFunction:fstapi.c:4721
+unusedFunction:fstapi.c:4722
 // fstReaderPushScope()
-unusedFunction:fstapi.c:3435
+unusedFunction:fstapi.c:3436
 // fstReaderResetScope()
-unusedFunction:fstapi.c:3427
+unusedFunction:fstapi.c:3428
 // fstReaderSetFacProcessMask()
-unusedFunction:fstapi.c:3500
+unusedFunction:fstapi.c:3501
 // fstReaderSetFacProcessMaskAll()
-unusedFunction:fstapi.c:3526
+unusedFunction:fstapi.c:3527
 // fstReaderSetLimitTimeRange()
-unusedFunction:fstapi.c:3636
+unusedFunction:fstapi.c:3637
 // fstReaderSetUnlimitedTimeRange()
-unusedFunction:fstapi.c:3645
+unusedFunction:fstapi.c:3646
 // fstReaderSetVcdExtensions()
-unusedFunction:fstapi.c:3652
+unusedFunction:fstapi.c:3653
 // fstUtilityExtractEnumTableFromString()
-unusedFunction:fstapi.c:6930
+unusedFunction:fstapi.c:6931
 // fstUtilityFreeEnumTable()
-unusedFunction:fstapi.c:6995
+unusedFunction:fstapi.c:6996
 // fstWriterCreateEnumTable()
 unusedFunction:fstapi.c:2715
 // fstWriterCreateVar2()
@@ -281,6 +280,8 @@ unusedFunction:fastlz.c:418
 // lz4.c from GTKWave
 bitwiseOnBoolean:lz4.c
 constVariablePointer:lz4.c
+invalidPrintfArgType_sint:lz4.c
+invalidPrintfArgType_uint:lz4.c
 staticFunction:lz4.c
 syntaxError:lz4.c
 unusedStructMember:lz4.c
@@ -360,6 +361,8 @@ variableScope:sys_random.c:47
 variableScope:sys_random.c:70
 variableScope:sys_random.c:93
 variableScope:sys_random.c:148
+// Also a comparison warning.
+compareValueOutOfTypeRangeError:sys_random.c:195
 
 // Issues in Lex/Yacc files
 allocaCalled:sdf_parse.c

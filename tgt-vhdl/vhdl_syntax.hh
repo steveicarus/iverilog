@@ -360,7 +360,7 @@ public:
 
    void add_stmt(vhdl_seq_stmt *stmt);
    void move_stmts_from(stmt_container *other);
-   void emit(std::ostream &of, int level, bool newline=true) const;
+   void emit(std::ostream &of, int level, bool trailing_newln=true) const;
    bool empty() const { return stmts_.empty(); }
    void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
 

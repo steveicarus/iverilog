@@ -323,6 +323,12 @@ static void process_generation_flag(const char*gen)
       } else if (strcmp(gen,"2012") == 0) {
 	    generation_flag = GN_VER2012;
 
+      } else if (strcmp(gen,"2017") == 0) {
+	    generation_flag = GN_VER2017;
+
+      } else if (strcmp(gen,"2023") == 0) {
+	    generation_flag = GN_VER2023;
+
       } else if (strcmp(gen,"icarus-misc") == 0) {
 	    gn_icarus_misc_flag = true;
 
@@ -1058,6 +1064,8 @@ int main(int argc, char*argv[])
 
       lexor_keyword_mask = 0;
       switch (generation_flag) {
+        case GN_VER2023:
+        case GN_VER2017:
         case GN_VER2012:
 	  lexor_keyword_mask |= GN_KEYWORDS_1800_2012;
 	  // fallthrough
@@ -1112,6 +1120,12 @@ int main(int argc, char*argv[])
 		  break;
 		case GN_VER2012:
 		  cout << "IEEE1800-2012";
+		  break;
+		case GN_VER2017:
+		  cout << "IEEE1800-2017";
+		  break;
+		case GN_VER2023:
+		  cout << "IEEE1800-2023";
 		  break;
 	    }
 

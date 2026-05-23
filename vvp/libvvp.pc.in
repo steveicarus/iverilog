@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libvvp@install_suffix@
+Version: @VERSION_MAJOR@.@VERSION_MINOR@
+Description: Icarus Verilog VVP runtime library
+Libs: -L${libdir} -lvvp@install_suffix@
+Cflags: -I${includedir}/iverilog@install_suffix@

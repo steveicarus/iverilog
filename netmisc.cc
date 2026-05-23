@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -509,8 +509,15 @@ void indices_to_expressions(Design*des, NetScope*scope,
 
 	    NetExpr*word_index = elab_and_eval(des, scope, cur->msb, -1, need_const);
 
-	    if (word_index == 0)
+	    if (!word_index) {
 		  flags.invalid = true;
+	    } else if (word_index->expr_type() == IVL_VT_REAL) {
+		  cerr << cur->msb->get_fileline() << ": error: "
+		       << "Array index expression cannot be a real value."
+		       << endl;
+		  des->errors += 1;
+		  flags.invalid = true;
+	    }
 
 	      // Track if we detect any non-constant expressions
 	      // here. This may allow for a special case.
@@ -1629,6 +1636,8 @@ NetExpr*collapse_array_indices(Design*des, NetScope*scope, const NetNet*net,
 static void assign_unpacked_with_bufz_dim(Design *des, NetScope *scope,
 					  const LineInfo *loc,
 					  NetNet *lval, NetNet *rval,
+					  const drive_strength_t &drive,
+					  const delay_exprs_t &delays,
 					  const std::vector<long> &stride,
 					  unsigned int dim = 0,
 					  unsigned int idx_l = 0,
@@ -1671,11 +1680,19 @@ static void assign_unpacked_with_bufz_dim(Design *des, NetScope *scope,
 		  driver->set_line(*loc);
 		  des->add_node(driver);
 
-		  connect(lval->pin(idx_l), driver->pin(0));
 		  connect(driver->pin(1), rval->pin(idx_r));
+
+		  if (drive.has_drive())
+			driver->pin(0).drive(drive);
+
+		  if (delays.has_delay())
+			driver->delay_times(delays);
+
+		  connect(lval->pin(idx_l), driver->pin(0));
 	    } else {
 		  assign_unpacked_with_bufz_dim(des, scope, loc, lval, rval,
-						stride, dim + 1, idx_l, idx_r);
+						drive, delays, stride,
+						dim + 1, idx_l, idx_r);
 	    }
 
 	    idx_l += inc_l;
@@ -1685,7 +1702,9 @@ static void assign_unpacked_with_bufz_dim(Design *des, NetScope *scope,
 
 void assign_unpacked_with_bufz(Design*des, NetScope*scope,
 			       const LineInfo*loc,
-			       NetNet*lval, NetNet*rval)
+			       NetNet*lval, NetNet*rval,
+			       const drive_strength_t &drive,
+			       const delay_exprs_t &delays)
 {
       ivl_assert(*loc, lval->pin_count()==rval->pin_count());
 
@@ -1693,7 +1712,8 @@ void assign_unpacked_with_bufz(Design*des, NetScope*scope,
       vector<long> stride(dims.size());
 
       make_strides(dims, stride);
-      assign_unpacked_with_bufz_dim(des, scope, loc, lval, rval, stride);
+      assign_unpacked_with_bufz_dim(des, scope, loc, lval, rval, drive,
+				    delays, stride);
 }
 
 /*

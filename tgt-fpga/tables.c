@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,14 +40,14 @@ const struct device_table_s {
       { 0, 0 }
 };
 
-device_t device_from_arch(const char*arch)
+device_t device_from_arch(const char*arch_i)
 {
       unsigned idx;
 
-      assert(arch);
+      assert(arch_i);
 
       for (idx = 0 ;  device_table[idx].name ;  idx += 1) {
-	    if (strcmp(arch, device_table[idx].name) == 0)
+	    if (strcmp(arch_i, device_table[idx].name) == 0)
 		  return device_table[idx].driver;
 
       }

@@ -286,9 +286,9 @@ void stmt_container::find_vars(vhdl_var_set_t& read,
       (*it)->find_vars(read, write);
 }
 
-void stmt_container::emit(std::ostream &of, int level, bool newline) const
+void stmt_container::emit(std::ostream &of, int level, bool trailing_newln) const
 {
-   emit_children<vhdl_seq_stmt>(of, stmts_, level, "", newline);
+   emit_children<vhdl_seq_stmt>(of, stmts_, level, "", trailing_newln);
 }
 
 vhdl_comp_inst::vhdl_comp_inst(const char *inst_name, const char *comp_name)

@@ -360,7 +360,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    return false;
       }
 
-      NetNet*lsig = lval_->sig();
+      const NetNet*lsig = lval_->sig();
       if (!lsig) {
 	    cerr << get_fileline() << ": error: "
 		    "NetAssignBase::synth_async on unsupported lval ";

@@ -1,0 +1,2 @@
+ivltests/sv_interface_port_wrong_type_fail.v:9: error: Interface port `bus' expects interface type `bus_if' but actual `bus' has type `other_if'.
+Elaboration failed

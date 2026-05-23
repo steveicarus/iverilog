@@ -44,6 +44,7 @@
 # include  "netqueue.h"
 # include  "netscalar.h"
 # include  "util.h"
+# include  "parse_api.h"
 # include  "ivl_assert.h"
 
 using namespace std;
@@ -298,6 +299,12 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 	    if (pp == 0)
 		  continue;
 
+	    if (pp->is_interface_port()) {
+		  interface_formal_port_t formal;
+		  resolve_interface_formal_port(this, des, pp, formal, true);
+		  continue;
+	    }
+
 	      // The port has a name and an array of expressions. The
 	      // expression are all identifiers that should reference
 	      // wires within the scope.
@@ -451,6 +458,12 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 
       NetScope::scope_vec_t instance = scope->instance_arrays[get_name()];
 
+      vector<PExpr*>pins (rmod->port_count());
+      vector<bool>pins_fromwc (rmod->port_count(), false);
+      vector<bool>pins_is_explicitly_not_connected (rmod->port_count(), false);
+      flag &= match_module_ports_(des, rmod, scope, pins, pins_fromwc,
+				  pins_is_explicitly_not_connected);
+
       for (unsigned idx = 0 ;  idx < instance.size() ;  idx += 1) {
 	      // I know a priori that the elaborate_scope created the scope
 	      // already, so just look it up as a child of the current scope.
@@ -465,6 +478,9 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 		       << endl;
 	    }
 	    ivl_assert(*this, my_scope->parent() == scope);
+
+	    if (!bind_interface_ports_(des, rmod, scope, my_scope, pins, pins_fromwc))
+		  flag = false;
 
 	    if (! rmod->elaborate_sig(des, my_scope))
 		  flag = false;
@@ -1176,8 +1192,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope)
 	    pull = new NetLogic(scope, scope->local_symbol(),
 				1, pull_type, wid);
 	    pull->set_line(*this);
-	    pull->pin(0).drive0(IVL_DR_SUPPLY);
-	    pull->pin(0).drive1(IVL_DR_SUPPLY);
+	    pull->pin(0).drive(drive_strength_t(IVL_DR_SUPPLY,
+						 IVL_DR_SUPPLY));
 	    des->add_node(pull);
 	    wtype = NetNet::WIRE;
       }

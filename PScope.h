@@ -1,7 +1,7 @@
 #ifndef IVL_PScope_H
 #define IVL_PScope_H
 /*
- * Copyright (c) 2008-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -121,6 +121,8 @@ class LexicalScope {
 	    bool overridable;
 	      // Whether the parameter is a type parameter
 	    bool type_flag = false;
+	      // Type restriction for a type parameter
+	    type_restrict_t type_restrict;
 	      // The lexical position of the declaration
 	    unsigned lexical_pos = 0;
 

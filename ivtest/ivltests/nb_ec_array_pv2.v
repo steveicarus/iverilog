@@ -84,6 +84,16 @@ module top;
       pass = 1'b0;
     end
 
+    // These should execute as if there was no event control
+    result[j][i+:4] <= repeat(0) @(posedge clk) 4'h3;
+    result[j][i+4+:4] <= repeat(-1) @(posedge clk) 4'h4;
+    #1
+    if ($simtime != 171 || result[j] !== 8'h43) begin
+      $display("Failed @ at %0t, expected 8'h43, got %h",
+               $simtime, result[j]);
+      pass = 1'b0;
+    end
+
     if (pass) $display("PASSED");
     $finish;
   end

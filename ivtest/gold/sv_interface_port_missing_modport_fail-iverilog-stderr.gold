@@ -1,0 +1,2 @@
+ivltests/sv_interface_port_missing_modport_fail.v:18: error: Interface port bus uses unknown modport `consumer' of interface `bus_if'.
+1 error(s) during elaboration.

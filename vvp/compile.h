@@ -242,13 +242,13 @@ extern __vpiModPath* compile_modpath(char*label,
 				     struct symb_s drv,
 				     struct symb_s dest);
 extern void compile_modpath_src(__vpiModPath*dst,
-				char edge,
+				char edge_c,
 				const struct symb_s&src,
 				struct numbv_s&vals,
 				const struct symb_s&condit_src,
 				const struct symb_s&path_term_in);
 extern void compile_modpath_src(__vpiModPath*dst,
-				char edge,
+				char edge_c,
 				const struct symb_s&src,
 				struct numbv_s&vals,
 				int condit_src, /* match with '0' */

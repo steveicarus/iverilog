@@ -1642,7 +1642,7 @@ struct __vpiModPath* compile_modpath(char*label, unsigned width,
 }
 
 static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
-					       char edge,
+					       char edge_c,
 					       const struct symb_s&src,
 					       struct numbv_s&vals,
 					       bool ifnone)
@@ -1660,12 +1660,12 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
       vvp_fun_modpath_src*obj = 0;
 
       int vpi_edge = vpiNoEdge;
-      if (edge == 0) {
+      if (edge_c == 0) {
 	    obj = new vvp_fun_modpath_src(use_delay);
 
       } else {
 	    bool posedge, negedge;
-	    switch (edge) {
+	    switch (edge_c) {
 		case '+':
 		  vpi_edge = vpiPosedge;
 		  posedge = true;
@@ -1685,8 +1685,8 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
 		default:
 		  posedge = false;
 		  negedge = false;
-		  fprintf(stderr, "Unknown edge identifier %c(%d).\n", edge,
-		          edge);
+		  fprintf(stderr, "Unknown edge identifier %c(%d).\n", edge_c,
+		          edge_c);
 		  assert(0);
 	    }
 	    obj = new vvp_fun_modpath_edge(use_delay, posedge, negedge);
@@ -1705,19 +1705,19 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
       return srcobj;
 }
 
-void compile_modpath_src(struct __vpiModPath*dst, char edge,
+void compile_modpath_src(struct __vpiModPath*dst, char edge_c,
 			 const struct symb_s&src,
 			 struct numbv_s&vals,
 			 const struct symb_s&condit_src,
 			 const struct symb_s&path_term_in)
 {
       struct __vpiModPathSrc*obj =
-	    make_modpath_src(dst, edge, src, vals, false);
+	    make_modpath_src(dst, edge_c, src, vals, false);
       input_connect(obj->net, 1, condit_src.text);
       compile_vpi_lookup(&obj->path_term_in.expr, path_term_in.text);
 }
 
-void compile_modpath_src(struct __vpiModPath*dst, char edge,
+void compile_modpath_src(struct __vpiModPath*dst, char edge_c,
 			 const struct symb_s&src,
 			 struct numbv_s&vals,
 			 int condit_src,
@@ -1726,7 +1726,7 @@ void compile_modpath_src(struct __vpiModPath*dst, char edge,
 {
       assert(condit_src == 0);
       struct __vpiModPathSrc*obj =
-	    make_modpath_src(dst, edge, src, vals, ifnone);
+	    make_modpath_src(dst, edge_c, src, vals, ifnone);
       compile_vpi_lookup(&obj->path_term_in.expr, path_term_in.text);
 }
 

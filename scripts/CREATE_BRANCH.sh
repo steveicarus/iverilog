@@ -5,10 +5,10 @@
 #
 # 1. It creates a new branch with the proper name.
 #
-# 2. It then updates the version_base.h to match this version. It likely
+# 2. It then updates the configure.ac to match this version. It likely
 #    already does, but it is incorrectly marked as devel instead of stable.
 #
-# 3. It updates the default suffix in aclocal.m4 to match the branch.
+# 3. It updates the default suffix in m4/ax_enable_suffix.m4 to match the branch.
 #
 # Now manually push the new branch to the master repository.
 #
@@ -27,7 +27,8 @@ case $1 in
 esac
 
 major=$1
-
+minor=0
+extra="stable"
 branch="v${major}-branch"
 
 branch_exists=`git ls-remote --heads origin $branch`
@@ -39,16 +40,17 @@ fi
 echo "Creating branch $branch"
 git checkout -b $branch
 
-echo "Updating version_base.h..."
-sed -i -E "s/(define\s+VERSION_MAJOR\s+).*/\1$major/" version_base.h
-sed -i -E "s/(define\s+VERSION_MINOR\s+).*/\10/" version_base.h
-sed -i -E "s/(define\s+VERSION_EXTRA\s+).*/\1\" \(stable\)\"/" version_base.h
+file=configure.ac
+echo "Updating $file..."
+sed -i -E "s/(m4_define\(\[VER_MAJOR\],[[:space:]]*\[)[^]]*(\]\))/\1$major\2/" $file
+sed -i -E "s/(m4_define\(\[VER_MINOR\],[[:space:]]*\[)[^]]*(\]\))/\1$minor\2/" $file
+sed -i -E "s/(m4_define\(\[VER_EXTRA\],[[:space:]]*\[)[^]]*(\]\))/\1$extra\2/" $file
 
-echo "Updating aclocal.m4..."
-sed -i -E "s/(install_suffix='-)dev/\1$major/" aclocal.m4
+echo "Updating m4/ax_enable_suffix.m4..."
+sed -i -E "s/(install_suffix='-)dev/\1$major/" m4/ax_enable_suffix.m4
 
 echo "Adding updated files to the new branch..."
-git add version_base.h aclocal.m4
+git add configure.ac m4/ax_enable_suffix.m4
 git commit -m "Creating new branch $branch"
 
 echo "Done"

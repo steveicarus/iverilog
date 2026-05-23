@@ -1,7 +1,7 @@
 #ifndef IVL_parse_misc_H
 #define IVL_parse_misc_H
 /*
- * Copyright (c) 1998-2024 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -84,6 +84,13 @@ extern UCDriveType uc_drive;
 extern void lex_in_package_scope(PPackage*pkg);
 
 /*
+ * The parser signals when the lexor is scanning a module/interface/program
+ * port list so that ambiguous SystemVerilog interface formals can be
+ * tokenized without depending on declaration order.
+ */
+extern void lex_in_module_port_list(bool flag);
+
+/*
  * Test if this identifier is a type identifier in the current
  * context. The pform code needs to help the lexor here because the
  * parser detects typedefs and marks the typedef'ed identifiers as
@@ -91,6 +98,11 @@ extern void lex_in_package_scope(PPackage*pkg);
  */
 extern typedef_t* pform_test_type_identifier(const YYLTYPE&loc, const char*txt);
 extern typedef_t* pform_test_type_identifier(PPackage*pkg, const char*txt);
+
+/*
+ * Test if this identifier is a previously declared interface name.
+ */
+extern bool pform_test_interface_identifier(const char*txt);
 
 /*
  * Test if this identifier is a package name. The pform needs to help

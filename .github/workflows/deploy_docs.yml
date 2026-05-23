@@ -19,10 +19,15 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update -qq
-        sudo apt install -y make autoconf python3-sphinx
+        sudo apt install -y make autoconf python3-venv
+        python3 -m venv .venv
+        . .venv/bin/activate
+        pip install --upgrade pip
+        pip install -r Documentation/requirements.txt
 
     - name: Make Documentation
       run: |
+        . .venv/bin/activate
         cd Documentation
         make html
 

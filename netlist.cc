@@ -40,6 +40,8 @@
 
 using namespace std;
 
+const drive_strength_t drive_strength_t::hiz(IVL_DR_HiZ, IVL_DR_HiZ);
+
 ostream& operator<< (ostream&o, NetNet::Type t)
 {
       switch (t) {
@@ -237,7 +239,7 @@ bool NetPins::is_linked(void) const
 }
 
 NetObj::NetObj(NetScope*s, perm_string n, unsigned np)
-: NetPins(np), scope_(s), name_(n), delay1_(0), delay2_(0), delay3_(0)
+: NetPins(np), scope_(s), name_(n), delays_()
 {
       /* Don't
       ivl_assert(*this, np > 0);
@@ -258,6 +260,11 @@ NetScope* NetObj::scope()
 const NetScope* NetObj::scope() const
 {
       return scope_;
+}
+
+void NetObj::delay_times(const delay_exprs_t &delays)
+{
+      delays_ = delays;
 }
 
 NetNode::NetNode(NetScope*s, perm_string n, unsigned npins)

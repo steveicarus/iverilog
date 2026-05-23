@@ -34,4 +34,5 @@ tmp_blif.vvp
 dump.vcd
 dump.lxt
 dump.lx2
+dump.fst
 foo.vcd
