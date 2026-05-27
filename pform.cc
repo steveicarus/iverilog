@@ -1042,12 +1042,11 @@ void pform_make_foreach_declarations(const struct vlltype&loc,
 }
 
 PForeach* pform_make_foreach(const struct vlltype&loc,
-			     char*name,
+			     PEIdent*array_ident,
 			     list<perm_string>*loop_vars,
 			     Statement*stmt)
 {
-      perm_string use_name = lex_strings.make(name);
-      delete[]name;
+      unique_ptr<PEIdent> array_var(array_ident);
 
       if (loop_vars==0 || loop_vars->empty()) {
 	    cerr << loc.get_fileline() << ": error: "
@@ -1056,12 +1055,12 @@ PForeach* pform_make_foreach(const struct vlltype&loc,
       }
 
       ivl_assert(loc, loop_vars);
-      PForeach*fe = new PForeach(use_name, *loop_vars, stmt);
-      FILE_NAME(fe, loc);
+      auto foreach_stmt = new PForeach(std::move(array_var), *loop_vars, stmt);
+      FILE_NAME(foreach_stmt, loc);
 
       delete loop_vars;
 
-      return fe;
+      return foreach_stmt;
 }
 
 static void pform_put_behavior_in_scope(PProcess*pp)

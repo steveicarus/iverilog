@@ -1107,7 +1107,7 @@ void PForce::dump(ostream&out, unsigned ind) const
 void PForeach::dump(ostream&fd, unsigned ind) const
 {
       fd << setw(ind) << "" << "foreach "
-	 << "variable=" << array_var_
+	 << "variable=" << *array_var_
 	 << ", indices=[";
       for (size_t idx = 0 ; idx < index_vars_.size() ; idx += 1) {
 	    if (idx > 0) fd << ",";

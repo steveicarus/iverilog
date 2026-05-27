@@ -331,8 +331,10 @@ PForce::~PForce()
       delete expr_;
 }
 
-PForeach::PForeach(perm_string av, const list<perm_string>&ix, Statement*s)
-: array_var_(av), index_vars_(ix.begin(), ix.end()), statement_(s)
+PForeach::PForeach(unique_ptr<PEIdent> array_var,
+		   const list<perm_string>&indices, Statement*statement)
+: array_var_(std::move(array_var)),
+  index_vars_(indices.begin(), indices.end()), statement_(statement)
 {
 }
 

@@ -22,6 +22,7 @@
 # include  <string>
 # include  <vector>
 # include  <list>
+# include  <memory>
 # include  "ivl_target.h"
 # include  "StringHeap.h"
 # include  "PDelays.h"
@@ -536,7 +537,9 @@ class PForce  : public Statement {
 
 class PForeach : public Statement {
     public:
-      explicit PForeach(perm_string var, const std::list<perm_string>&ix, Statement*stmt);
+      explicit PForeach(std::unique_ptr<PEIdent> array_var,
+			const std::list<perm_string>&indices,
+			Statement*statement);
       ~PForeach() override;
 
       PForeach(const PForeach&) = delete;
@@ -552,7 +555,7 @@ class PForeach : public Statement {
 				       const netranges_t&dims) const;
 
     private:
-      perm_string array_var_;
+      std::unique_ptr<PEIdent> array_var_;
       std::vector<perm_string> index_vars_;
       Statement*statement_;
 };
