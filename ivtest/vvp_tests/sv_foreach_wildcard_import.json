@@ -1,0 +1,8 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_foreach_wildcard_import.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}

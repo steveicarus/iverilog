@@ -1,0 +1,10 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_foreach_decl_before_use.v",
+    "iverilog-args" : [ "-g2005-sv", "-Wno-anachronisms" ],
+    "vlog95" : {
+        "__comment"     : "Generate scopes are not translated",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}
