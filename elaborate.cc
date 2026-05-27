@@ -35,6 +35,8 @@
 # include  <iostream>
 # include  <sstream>
 # include  <list>
+# include  <map>
+# include  <set>
 # include  "pform.h"
 # include  "PClass.h"
 # include  "PEvent.h"
@@ -7672,6 +7674,89 @@ static void check_ff_sensitivity(const NetProc* statement)
       }
 }
 
+bool Design::check_always_ff_lvals()
+{
+      bool result = false;
+      map<const Nexus*, const NetProcTop*> always_ff_lvals;
+
+      for (NetProcTop*pr = procs_ ; pr ; pr = pr->next_) {
+	    if (pr->type() != IVL_PR_ALWAYS_FF)
+		  continue;
+
+	    NexusSet outputs;
+	    pr->statement()->nex_output(outputs);
+
+	    set<const Nexus*> seen_outputs;
+	    for (unsigned idx = 0 ; idx < outputs.size() ; idx += 1) {
+		  const NexusSet::elem_t&output = outputs[idx];
+		  const Nexus*nexus = output.lnk.nexus();
+		  if (! seen_outputs.insert(nexus).second)
+			continue;
+
+		  auto cur = always_ff_lvals.find(nexus);
+		  if (cur == always_ff_lvals.end()) {
+			always_ff_lvals[nexus] = pr;
+			continue;
+		  }
+
+		  if (cur->second == pr)
+			continue;
+
+		  const char*name = nexus->name();
+		  cerr << cur->second->get_fileline() << ": error: "
+			  "variable '" << name << "' written in an "
+			  "always_ff process may not be written by any "
+			  "other process." << endl;
+		  cerr << pr->get_fileline() << ":      : "
+			  "process also writes variable '" << name
+		       << "'." << endl;
+		  result = true;
+		  errors += 1;
+	    }
+      }
+
+      if (always_ff_lvals.empty())
+	    return result;
+
+      for (NetProcTop*pr = procs_ ; pr ; pr = pr->next_) {
+	    if (pr->type() == IVL_PR_ALWAYS_FF)
+		  continue;
+
+	    if ((pr->type() == IVL_PR_INITIAL) &&
+	        (pr->attribute(perm_string::literal("_ivl_schedule_init"))
+	           .as_ulong() != 0))
+		  continue;
+
+	    NexusSet outputs;
+	    pr->statement()->nex_output(outputs);
+
+	    set<const Nexus*> seen_outputs;
+	    for (unsigned idx = 0 ; idx < outputs.size() ; idx += 1) {
+		  const NexusSet::elem_t&output = outputs[idx];
+		  const Nexus*nexus = output.lnk.nexus();
+		  if (! seen_outputs.insert(nexus).second)
+			continue;
+
+		  auto cur = always_ff_lvals.find(nexus);
+		  if (cur == always_ff_lvals.end())
+			continue;
+
+		  const char*name = nexus->name();
+		  cerr << cur->second->get_fileline() << ": error: "
+			  "variable '" << name << "' written in an "
+			  "always_ff process may not be written by any "
+			  "other process." << endl;
+		  cerr << pr->get_fileline() << ":      : "
+			  "process also writes variable '" << name
+		       << "'." << endl;
+		  result = true;
+		  errors += 1;
+	    }
+      }
+
+      return result;
+}
+
 /*
  * Check to see if the always_* processes only contain synthesizable
  * constructs.
@@ -8097,6 +8182,10 @@ Design* elaborate(list<perm_string>roots)
 	// Check to see if the always_comb/ff/latch processes only have
 	// synthesizable constructs
       has_failure |= des->check_proc_synth();
+
+	// Check that always_ff l-values are not also written by another
+	// process.
+      has_failure |= des->check_always_ff_lvals();
 
       if (debug_elaborate) {
                cerr << "<toplevel>" << ": debug: "

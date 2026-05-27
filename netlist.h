@@ -5236,6 +5236,7 @@ class Design {
       void delete_process(NetProcTop*);
       bool check_proc_delay() const;
       bool check_proc_synth() const;
+      bool check_always_ff_lvals();
 
       NetNet* find_discipline_reference(ivl_discipline_t dis, NetScope*scope);
 
