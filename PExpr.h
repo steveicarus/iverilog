@@ -486,6 +486,8 @@ class PEIdent : public PExpr {
                                    index_component_t::ctype_t,
 				   bool need_const_idx, bool is_force) const;
       NetAssign_*elaborate_lval_net_class_member_(Design*, NetScope*,
+						   bool is_force,
+						   bool is_cassign,
 						   const netclass_t *class_type,
 						   NetNet*,
 						   pform_name_t) const;
