@@ -295,7 +295,9 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 	// net_class_member_ method.
       const netclass_t *class_type = dynamic_cast<const netclass_t *>(data_type);
       if (class_type && !tail_path.empty() && gn_system_verilog())
-	    return elaborate_lval_net_class_member_(des, scope, class_type, reg, tail_path);
+	    return elaborate_lval_net_class_member_(des, scope, is_force,
+						   is_cassign, class_type,
+						   reg, tail_path);
 
 
 	// Past this point, we should have taken care of the cases
@@ -1076,6 +1078,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
  * obj, and member_path=base.x.
  */
 NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
+				    bool is_force, bool is_cassign,
 				    const netclass_t *class_type, NetNet*sig,
 				    pform_name_t member_path) const
 {
@@ -1142,8 +1145,8 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 			return nullptr;
 		  }
 
-		  lv = new NetAssign_(psig);
-		  return lv;
+		  return elaborate_lval_var_(des, scope, is_force, is_cassign,
+					     psig, psig->net_type(), pform_name_t());
 
 	    } else if (qual.test_const()) {
 		 auto method_scope = find_method_containing_scope(*this, scope);

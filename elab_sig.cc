@@ -416,8 +416,17 @@ void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 		       << "." << endl;
 	    }
 
+	    ivl_type_t sig_type = use_type;
+	    netranges_t unpacked_dimensions;
+	    while (auto atype = dynamic_cast<const netuarray_t*> (sig_type)) {
+		  unpacked_dimensions.insert(unpacked_dimensions.begin(),
+					     atype->static_dimensions().begin(),
+					     atype->static_dimensions().end());
+		  sig_type = atype->element_type();
+	    }
+
 	    auto sig = new NetNet(class_scope_, cur->first, NetNet::REG,
-				  use_type);
+				  unpacked_dimensions, sig_type);
 	    sig->set_line(cur->second);
 	    sig->set_const(cur->second.qual.test_const());
 

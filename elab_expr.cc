@@ -3126,17 +3126,6 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
       return sel;
 }
 
-static NetExpr* class_static_property_expression(const LineInfo*li,
-						 const netclass_t*class_type,
-						 perm_string name)
-{
-      NetNet*sig = class_type->find_static_property(name);
-      ivl_assert(*li, sig);
-      NetESignal*expr = new NetESignal(sig);
-      expr->set_line(*li);
-      return expr;
-}
-
 NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
 					      const symbol_search_results &sr,
 					      unsigned expr_wid,
@@ -3193,8 +3182,11 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
 
       if (qual.test_static()) {
 	    perm_string prop_name = lex_strings.make(class_type->get_prop_name(pidx));
-	    return class_static_property_expression(this, class_type,
-						    prop_name);
+	    NetNet*sig = class_type->find_static_property(prop_name);
+	    ivl_assert(*this, sig);
+
+	    return elaborate_expr_net(des, scope, sig, sig->scope(),
+				      expr_wid, flags);
       }
 
       NetExpr *canon_index = nullptr;
