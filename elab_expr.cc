@@ -3209,15 +3209,18 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
 		       << " got " << comp.index.size() << " indices." << endl;
 	    }
 
-	    if (dims.size() != comp.index.size()) {
-		  cerr << get_fileline() << ": error: "
-		       << "Got " << comp.index.size() << " indices, "
-		       << "expecting " << dims.size()
-		       << " to index the property " << class_type->get_prop_name(pidx) << "." << endl;
-		  des->errors++;
-	    } else {
-		  canon_index = make_canonical_index(des, scope, this,
-						     comp.index, tmp_ua, false);
+	    if (!comp.index.empty() || !(WHOLE_VARIABLE & flags)) {
+		  if (dims.size() != comp.index.size()) {
+			cerr << get_fileline() << ": error: "
+			     << "Got " << comp.index.size() << " indices, "
+			     << "expecting " << dims.size()
+			     << " to index the property "
+			     << class_type->get_prop_name(pidx) << "." << endl;
+			des->errors++;
+		  } else {
+			canon_index = make_canonical_index(des, scope, this,
+						   comp.index, tmp_ua, false);
+		  }
 	    }
       } else if (dynamic_cast<const netdarray_t*>(tmp_type)) {
 	      /* Queue or dynamic-array property: optional index, e.g. c.q[i]
@@ -5663,6 +5666,15 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       return expr_width_;
 }
 
+unique_ptr<NetExpr> PEIdent::elaborate_variable(Design*des, NetScope*scope)
+{
+      width_mode_t mode = SIZED;
+      test_width(des, scope, mode);
+
+      return unique_ptr<NetExpr>(
+	    elaborate_expr_(des, scope, expr_width_, WHOLE_VARIABLE));
+}
+
 
 NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 				 ivl_type_t ntype, unsigned flags) const
@@ -7302,12 +7314,13 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 		 << endl;
       }
 
-	// Special case: This is the entire array, and we are a direct
-	// argument of a system task.
-      if (name_tail.index.empty() && (SYS_TASK_ARG & flags)) {
-	    NetESignal*res = new NetESignal(net, 0);
-	    res->set_line(*this);
-	    return res;
+	// Special case: This is the entire array, and the elaboration context
+	// permits references to complete unpacked arrays.
+      if (name_tail.index.empty()
+	  && ((SYS_TASK_ARG | WHOLE_VARIABLE) & flags)) {
+	    auto result = new NetESignal(net, 0);
+	    result->set_line(*this);
+	    return result;
       }
 
       if (name_tail.index.empty()) {

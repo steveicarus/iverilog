@@ -63,6 +63,7 @@ class PExpr : public LineInfo {
       static const unsigned NEED_CONST   = 0x1;
       static const unsigned SYS_TASK_ARG = 0x2;
       static const unsigned ANNOTATABLE  = 0x4;
+      static const unsigned WHOLE_VARIABLE = 0x8;
 
 	// Convert width mode to human-readable form.
       static const char*width_mode_name(width_mode_t mode);
@@ -412,6 +413,11 @@ class PEIdent : public PExpr {
 	// method only applies to Ident expressions because only Ident
 	// expressions can can be unpacked arrays.
       NetNet* elaborate_unpacked_net(Design*des, NetScope*sc) const;
+
+	// Elaborate a reference to the complete variable without applying an
+	// expression width context.
+      std::unique_ptr<NetExpr> elaborate_variable(Design*des,
+					  NetScope*scope);
 
       virtual bool is_collapsible_net(Design*des, NetScope*scope,
                                       NetNet::PortType port_type) const override;

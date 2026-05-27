@@ -1092,6 +1092,8 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
       PExpr*expr;
       std::list<PExpr*>*exprs;
 
+      PEIdent*identifier;
+
       PEEvent*event_expr;
       std::vector<PEEvent*>*event_exprs;
 
@@ -1391,6 +1393,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <statement> compressed_statement
 %type <statement> loop_statement for_step for_step_opt jump_statement
 %type <statement> for_statement foreach_statement
+%type <identifier> foreach_array_identifier
 %type <statement> concurrent_assertion_statement
 %type <statement> deferred_immediate_assertion_statement
 %type <statement> simple_immediate_assertion_statement
@@ -2494,10 +2497,19 @@ foreach_statement_start
       }
   ;
 
+foreach_array_identifier
+  : IDENTIFIER
+      { pform_name_t name;
+	name.emplace_back(lex_strings.make($1));
+	$$ = pform_new_ident(@1, name);
+	delete[]$1;
+      }
+  ;
+
 foreach_statement
       // When matching a foreach loop, implicitly create a named block
       // to hold the definitions for the index variables.
-  : foreach_statement_start '(' IDENTIFIER '[' loop_variables ']' ')'
+  : foreach_statement_start '(' foreach_array_identifier '[' loop_variables ']' ')'
       { if (!$1.label) {
 	      static unsigned foreach_counter = 0;
 	      char for_block_name[64];
@@ -2514,8 +2526,9 @@ foreach_statement
 	$$ = pform_finish_labeled_statement(tmp_for, $1.label, $1.attributes, true);
       }
 
-  | foreach_statement_start '(' IDENTIFIER '[' error ']' ')' statement_or_null
-      { $$ = pform_finish_labeled_statement(nullptr, $1.label, $1.attributes);
+  | foreach_statement_start '(' foreach_array_identifier '[' error ']' ')' statement_or_null
+      { delete $3;
+	$$ = pform_finish_labeled_statement(nullptr, $1.label, $1.attributes);
 	yyerror(@4, "error: Errors in foreach loop variables list.");
       }
   ;

@@ -35,6 +35,7 @@
 # include  <iostream>
 # include  <sstream>
 # include  <list>
+# include  <memory>
 # include  "pform.h"
 # include  "PClass.h"
 # include  "PEvent.h"
@@ -6015,20 +6016,6 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
       return dev;
 }
 
-static void find_property_in_class(const LineInfo&loc, const NetScope*scope, perm_string name, const netclass_t*&found_in, int&property)
-{
-      found_in = find_class_containing_scope(loc, scope);
-      property = -1;
-
-      if (found_in==0) return;
-
-      property = found_in->property_idx_from_name(name);
-      if (property < 0) {
-	    found_in = 0;
-	    return;
-      }
-}
-
 /*
  * The foreach statement can be written as a for statement like so:
  *
@@ -6040,85 +6027,40 @@ static void find_property_in_class(const LineInfo&loc, const NetScope*scope, per
  */
 NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
 {
-	// Locate the signal for the array variable
-      pform_name_t array_name;
-      array_name.push_back(name_component_t(array_var_));
-      NetNet*array_sig = des->find_signal(scope, array_name);
+      auto array_scope = scope->parent();
+      ivl_assert(*this, array_scope);
 
-	// And if necessary, look for the class property that is
-	// referenced.
-      const netclass_t*class_scope = 0;
-      int class_property = -1;
-      if (array_sig == 0)
-	    find_property_in_class(*this, scope, array_var_, class_scope, class_property);
+      auto array_expr = array_var_->elaborate_variable(des, array_scope);
+      if (!array_expr) return nullptr;
 
-      if (debug_elaborate && array_sig) {
-	    cerr << get_fileline() << ": PForeach::elaborate: "
-		 << "Found array_sig in " << scope_path(array_sig->scope()) << "." << endl;
-      }
-
-      if (debug_elaborate && class_scope) {
-	    cerr << get_fileline() << ": PForeach::elaborate: "
-		 << "Found array_sig property (" << class_property
-		 << ") in class " << class_scope->get_name()
-		 << " as " << *class_scope->get_prop_type(class_property) << "." << endl;
-      }
-
-      if (class_scope!=0 && class_property >= 0) {
-	    ivl_type_t ptype = class_scope->get_prop_type(class_property);
-	    const netsarray_t*atype = dynamic_cast<const netsarray_t*> (ptype);
-	    if (atype == 0) {
-		  cerr << get_fileline() << ": error: "
-		       << "I can't handle the type of " << array_var_
-		       << " as a foreach loop." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    const netranges_t&dims = atype->static_dimensions();
-	    if (dims.size() < index_vars_.size()) {
-		  cerr << get_fileline() << ": error: "
-		       << "class " << class_scope->get_name()
-		       << " property " << array_var_
-		       << " has too few dimensions for foreach dimension list." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    return elaborate_static_array_(des, scope, dims);
-      }
-
-      if (array_sig == 0) {
-	    cerr << get_fileline() << ": error:"
-		 << " Unable to find foreach array " << array_name
-		 << " in scope " << scope_path(scope)
-		 << "." << endl;
+      ivl_type_t array_type = array_expr->net_type();
+      if (!array_type) {
+	    cerr << get_fileline() << ": error: I can't handle the type of "
+		 << *array_var_ << " as a foreach loop." << endl;
 	    des->errors += 1;
-	    return 0;
+	    return nullptr;
       }
-
-      ivl_assert(*this, array_sig);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PForeach::elaborate: "
-		 << "Scan array " << array_sig->name()
-		 << " of " << array_sig->data_type()
-		 << " with " << array_sig->unpacked_dimensions() << " unpacked"
-		 << " and " << array_sig->packed_dimensions()
-		 << " packed dimensions." << endl;
+		 << "Scan array " << *array_var_ << " of type "
+		 << *array_type << "." << endl;
       }
 
-      netranges_t dims = array_sig->unpacked_dims();
-      if (array_sig->packed_dimensions() > 0) {
-            dims.insert(dims.end(), array_sig->packed_dims().begin(), array_sig->packed_dims().end());
+      netranges_t dims;
+      ivl_type_t element_type = array_type;
+      while (auto unpacked = dynamic_cast<const netuarray_t*>(element_type)) {
+	    const netranges_t&unpacked_dims = unpacked->static_dimensions();
+	    dims.insert(dims.end(), unpacked_dims.begin(), unpacked_dims.end());
+	    element_type = unpacked->element_type();
       }
 
-	// Classic arrays are processed this way.
-      if (array_sig->data_type()==IVL_VT_BOOL)
-	    return elaborate_static_array_(des, scope, dims);
-      if (array_sig->data_type()==IVL_VT_LOGIC)
-	    return elaborate_static_array_(des, scope, dims);
-      if (array_sig->unpacked_dimensions() >= index_vars_.size())
+      netranges_t packed_dims = element_type->slice_dimensions();
+      dims.insert(dims.end(), packed_dims.begin(), packed_dims.end());
+
+      const bool dynamic_array = dynamic_cast<const netdarray_t*>(array_type)
+	    || (dims.empty() && array_type->base_type() == IVL_VT_STRING);
+      if (!dynamic_array)
 	    return elaborate_static_array_(des, scope, dims);
 
 	// At this point, we know that the array is dynamic so we
@@ -6136,10 +6078,6 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
       NetNet*idx_sig = des->find_signal(scope, index_name);
       ivl_assert(*this, idx_sig);
 
-      NetESignal*array_exp = new NetESignal(array_sig);
-      array_exp->set_line(*this);
-      auto high_array_expr = array_exp->dup_expr();
-
       NetESignal*idx_exp = new NetESignal(idx_sig);
       idx_exp->set_line(*this);
 
@@ -6149,7 +6087,9 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
 	// Make an initialization expression for the index.
       NetESFunc*init_expr = new NetESFunc("$low", &netvector_t::atom2s32, 1);
       init_expr->set_line(*this);
-      init_expr->parm(0, array_exp);
+
+      NetExpr*high_array_expr = array_expr->dup_expr();
+      init_expr->parm(0, array_expr.release());
 
 	// Make a condition expression: idx <= $high(array)
       NetESFunc*high_exp = new NetESFunc("$high", &netvector_t::atom2s32, 1);
