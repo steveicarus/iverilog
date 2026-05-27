@@ -365,6 +365,7 @@ sv_class_prop_nest_real1	vvp_tests/sv_class_prop_nest_real1.json
 sv_class_prop_nest_str1		vvp_tests/sv_class_prop_nest_str1.json
 sv_class_prop_nest_vec1		vvp_tests/sv_class_prop_nest_vec1.json
 sv_class_queue_prop_methods	vvp_tests/sv_class_queue_prop_methods.json
+sv_class_static_array		vvp_tests/sv_class_static_array.json
 sv_class_task_expr_fail	vvp_tests/sv_class_task_expr_fail.json
 sv_const1			vvp_tests/sv_const1.json
 sv_const2			vvp_tests/sv_const2.json
