@@ -4101,7 +4101,8 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
 	    des->errors += 1;
       }
       ivl_type_t element_type = net->queue_type()->element_type();
-      vector<NetExpr*>argv (nparms+1);
+      unsigned expected_nparms = method_name == "insert" ? 2 : 1;
+      vector<NetExpr*>argv (expected_nparms+1);
       argv[0] = sig;
 
       auto args = map_named_args(des, parm_names, parms_);
