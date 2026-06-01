@@ -39,6 +39,11 @@ extern void verify_version(char *ivl_ver, char* commit);
 extern void set_delay_selection(const char* sel);
 
 /*
+ * Set runtime warning classes embedded in the VVP input file.
+ */
+extern void set_warning_flags(const char* sel);
+
+/*
  * various functions shared by the lexor and the parser.
  */
 extern int yylex(void);

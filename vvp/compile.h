@@ -47,6 +47,7 @@ extern void compile_init(void);
 extern void compile_cleanup(void);
 
 extern bool verbose_flag;
+extern bool warn_array_write_oob;
 
 /*
  * If this file opened, then write debug information to this

@@ -749,6 +749,8 @@ static void read_iconfig_file(const char*ipath)
 		  roots.push_back(lex_strings.make(cp));
 
 	    } else if (strcmp(buf,"warnings") == 0) {
+		  free(reinterpret_cast<void*>(const_cast<char*>(flags["warnings"])));
+		  flags["warnings"] = strdup(cp);
 		    /* Scan the warnings enable string for warning flags. */
 		  for ( ;  *cp ;  cp += 1) switch (*cp) {
 		      case 'f':

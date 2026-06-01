@@ -162,6 +162,7 @@ int target_design(ivl_design_t des)
 	 * printed for procedural statements. (e.g. -pfileline=1).
 	 * The default is no file/line information will be included. */
       const char*fileline = ivl_design_flag(des, "fileline");
+      const char*warnings = ivl_design_flag(des, "warnings");
 
       const char*debug_flags = ivl_design_flag(des, "debug_flags");
       process_debug_string(debug_flags);
@@ -210,6 +211,8 @@ int target_design(ivl_design_t des)
 
       fprintf(vvp_out, ":ivl_delay_selection \"%s\";\n",
                        ivl_design_delay_sel(des));
+      if (warnings && *warnings)
+	    fprintf(vvp_out, ":ivl_warnings \"%s\";\n", warnings);
 
       { int pre = ivl_design_time_precision(des);
 	char sign = '+';

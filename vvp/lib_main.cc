@@ -53,6 +53,7 @@ extern "C" const char*optarg;
 #endif
 
 bool verbose_flag = false;
+bool warn_array_write_oob = false;
 static int vvp_return_value = 0;
 static int vvp_used = 0;
 
@@ -211,6 +212,12 @@ void set_delay_selection(const char* sel)
 	    vpi_mcd_printf(1, "Error: Unknown delay selection \"%s\"!", sel);
 	    exit(1);
       }
+      delete[] sel;
+}
+
+void set_warning_flags(const char* sel)
+{
+      warn_array_write_oob = strchr(sel, 's') != 0;
       delete[] sel;
 }
 
