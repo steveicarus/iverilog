@@ -535,7 +535,24 @@ NetFuncDef* NetScope::func_def()
 
 bool NetScope::in_func() const
 {
-      return (type_ == FUNC) ? true : false;
+      if (type_ == FUNC)
+	    return true;
+
+      if (type_ == BEGIN_END || type_ == FORK_JOIN || type_ == GENBLOCK)
+	    return up_ ? up_->in_func() : false;
+
+      return false;
+}
+
+bool NetScope::in_final() const
+{
+      if (in_final_)
+	    return true;
+
+      if (type_ == BEGIN_END || type_ == FORK_JOIN || type_ == GENBLOCK)
+	    return up_ ? up_->in_final() : false;
+
+      return false;
 }
 
 const NetFuncDef* NetScope::func_def() const
