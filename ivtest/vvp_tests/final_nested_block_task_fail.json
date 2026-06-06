@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "final_nested_block_task_fail.v",
+    "iverilog-args" : [ "-g2009" ]
+}

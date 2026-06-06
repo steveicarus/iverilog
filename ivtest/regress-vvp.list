@@ -137,9 +137,11 @@ early_sig_elab3			vvp_tests/early_sig_elab3.json
 eofmt_percent			vvp_tests/eofmt_percent.json
 fdisplay3			vvp_tests/fdisplay3.json
 final3				vvp_tests/final3.json
+final_nested_block_task_fail	vvp_tests/final_nested_block_task_fail.json
 fmonitor1			vvp_tests/fmonitor1.json
 fmonitor2			vvp_tests/fmonitor2.json
 fread-error			vvp_tests/fread-error.json
+func_nested_block_nb_fail	vvp_tests/func_nested_block_nb_fail.json
 line_directive			vvp_tests/line_directive.json
 localparam_type			vvp_tests/localparam_type.json
 macro_str_esc			vvp_tests/macro_str_esc.json
