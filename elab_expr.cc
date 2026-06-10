@@ -5381,11 +5381,11 @@ static void warn_param_ob(long par_msv, long par_lsv, bool defined,
       }
 }
 
-NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
+NetExpr* PEIdent::elaborate_expr_param_idx_up_do_(Design*des, NetScope*scope,
 					       const NetExpr*par,
 					       const NetScope*found_in,
 					       ivl_type_t par_type,
-                                               bool need_const) const
+					       bool up, bool need_const) const
 {
       const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
       ivl_assert(*this, par_ex);
@@ -5404,12 +5404,14 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: Calculate part select "
-		 << name << "[" << *base << "+:" << wid << "] from range "
+		 << name << "[" << *base << (up ? "+:" : "-:") << wid
+		 << "] from range "
 		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
 
       if (base->expr_type() == IVL_VT_REAL) {
 	    cerr << get_fileline() << ": error: Indexed part select base "
-	            "expression for " << name << "[" << *base << "+:" << wid
+	            "expression for " << name << "[" << *base
+	         << (up ? "+:" : "-:") << wid
 	         << "] cannot be a real value." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -5424,107 +5426,23 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 		  ex->set_line(*this);
 		  if (warn_ob_select) {
 			cerr << get_fileline() << ": warning: " << name
-			     << "['bx+:" << wid
+			     << "['bx" << (up ? "+" : "-") << ":" << wid
 			     << "] is always outside vector." << endl;
 		  }
 		  return ex;
 	    }
 	    long lsv = base_c->value().as_long();
 	    long par_base = par_lsv;
-
-	      // Watch out for reversed bit numbering. We're making
-	      // the part select from LSB to MSB.
-	    if (par_msv < par_lsv) {
-		  par_base = lsv;
-		  lsv = par_lsv - wid + 1;
-	    }
-
-	    if (warn_ob_select) {
-                  bool defined = true;
-		    // Check to see if the parameter has a defined range.
-                  if (par_type == 0) {
-			defined = false;
-                  }
-		    // Get the parameter values width.
-                  long pwid = -1;
-                  if (par_ex->has_width()) pwid = par_ex->expr_width()-1;
-                  warn_param_ob(par_msv, par_lsv, defined, lsv-par_base, wid,
-                                pwid, this, name, true);
-	    }
-	    verinum result = param_part_select_bits(par_ex->value(), wid,
-						    lsv-par_base);
-	    NetEConst*result_ex = new NetEConst(result);
-	    result_ex->set_line(*this);
-	    return result_ex;
-      }
-
-      base = normalize_variable_base(base, par_msv, par_lsv, wid, true);
-
-	/* Create a parameter reference for the variable select. */
-      NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
-      ptmp->set_line(found_in->get_parameter_line_info(name));
-
-      NetExpr*tmp = new NetESelect(ptmp, base, wid, IVL_SEL_IDX_UP);
-      tmp->set_line(*this);
-      return tmp;
-}
-
-NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
-					       const NetExpr*par,
-					       const NetScope*found_in,
-					       ivl_type_t par_type,
-                                               bool need_const) const
-{
-      const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
-      ivl_assert(*this, par_ex);
-
-      long par_msv, par_lsv;
-      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
-				 par_ex->value().len())) return 0;
-
-      NetExpr*base = calculate_up_do_base_(des, scope, need_const);
-      if (base == 0) return 0;
-
-	// Use the part select width already calculated by test_width().
-      unsigned long wid = min_width_;
-
-      perm_string name = peek_tail_name(path_);
-
-      if (debug_elaborate)
-	    cerr << get_fileline() << ": debug: Calculate part select "
-		 << name << "[" << *base << "-:" << wid << "] from range "
-		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
-
-      if (base->expr_type() == IVL_VT_REAL) {
-	    cerr << get_fileline() << ": error: Indexed part select base "
-	            "expression for " << name << "[" << *base << "-:" << wid
-	         << "] cannot be a real value." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-	// Handle the special case that the base is constant. In this
-	// case, just precalculate the entire constant result.
-      if (const NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
-	    if (! base_c->value().is_defined()) {
-		  NetEConst *ex;
-		  ex = new NetEConst(verinum(verinum::Vx, wid, true));
-		  ex->set_line(*this);
-		  if (warn_ob_select) {
-			cerr << get_fileline() << ": warning: " << name
-			     << "['bx-:" << wid
-			     << "] is always outside vector." << endl;
-		  }
-		  return ex;
-	    }
-	    long lsv = base_c->value().as_long();
-	    long par_base = par_lsv + wid - 1;
+	    if (!up)
+		  par_base += wid - 1;
 
 	      // Watch out for reversed bit numbering. We're making
 	      // the part select from LSB to MSB.
 	    if (par_msv < par_lsv) {
 		  par_base = lsv;
 		  lsv = par_lsv;
+		  if (up)
+			lsv -= wid - 1;
 	    }
 
 	    if (warn_ob_select) {
@@ -5537,7 +5455,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
                   long pwid = -1;
                   if (par_ex->has_width()) pwid = par_ex->expr_width()-1;
                   warn_param_ob(par_msv, par_lsv, defined, lsv-par_base, wid,
-                                pwid, this, name, false);
+                                pwid, this, name, up);
 	    }
 
 	    verinum result = param_part_select_bits(par_ex->value(), wid,
@@ -5547,13 +5465,13 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 	    return result_ex;
       }
 
-      base = normalize_variable_base(base, par_msv, par_lsv, wid, false);
+      base = normalize_variable_base(base, par_msv, par_lsv, wid, up);
 
 	/* Create a parameter reference for the variable select. */
       NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
       ptmp->set_line(found_in->get_parameter_line_info(name));
 
-      NetExpr*tmp = new NetESelect(ptmp, base, wid, IVL_SEL_IDX_DOWN);
+      NetExpr*tmp = new NetESelect(ptmp, base, wid, up ? IVL_SEL_IDX_UP : IVL_SEL_IDX_DOWN);
       tmp->set_line(*this);
       return tmp;
 }
@@ -5633,12 +5551,12 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 					      par_type, expr_wid);
 
       if (use_sel == index_component_t::SEL_IDX_UP)
-	    return elaborate_expr_param_idx_up_(des, scope, par, found_in,
-						par_type, need_const);
+	    return elaborate_expr_param_idx_up_do_(des, scope, par, found_in,
+						par_type, true, need_const);
 
       if (use_sel == index_component_t::SEL_IDX_DO)
-	    return elaborate_expr_param_idx_do_(des, scope, par, found_in,
-						par_type, need_const);
+	    return elaborate_expr_param_idx_up_do_(des, scope, par, found_in,
+						par_type, false, need_const);
 
       NetExpr*tmp = 0;
 
@@ -5803,12 +5721,12 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
                                             expr_wid);
 
       if (word_sel == index_component_t::SEL_IDX_UP)
-	    return elaborate_expr_net_idx_up_(des, scope, res, found_in,
-                                              need_const);
+	    return elaborate_expr_net_idx_up_do_(des, scope, res, found_in,
+                                              true, need_const);
 
       if (word_sel == index_component_t::SEL_IDX_DO)
-	    return elaborate_expr_net_idx_do_(des, scope, res, found_in,
-                                              need_const);
+	    return elaborate_expr_net_idx_up_do_(des, scope, res, found_in,
+                                              false, need_const);
 
       if (word_sel == index_component_t::SEL_BIT)
 	    return elaborate_expr_net_bit_(des, scope, res, found_in,
@@ -5962,10 +5880,11 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 }
 
 /*
- * Part select indexed up, i.e. net[<m> +: <l>]
+ * Part select indexed up or down, i.e. net[<m> +: <l>]
  */
-NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
+NetExpr* PEIdent::elaborate_expr_net_idx_up_do_(Design*des, NetScope*scope,
 				             NetESignal*net, NetScope*,
+					     bool up,
                                              bool need_const) const
 {
       if (net->sig()->data_type() == IVL_VT_STRING) {
@@ -5984,13 +5903,15 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
       if (!base)
 	    return nullptr;
 
+
 	// Use the part select width already calculated by test_width().
       unsigned long wid = min_width_;
+      const char *op = up ? "+" : "-";
 
       if (base->expr_type() == IVL_VT_REAL) {
 	    cerr << get_fileline() << ": error: Indexed part select base "
 	            "expression for " << net->sig()->name() << "[" << *base
-	         << "+:" << wid << "] cannot be a real value." << endl;
+	         << op << ":" << wid << "] cannot be a real value." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -6001,13 +5922,13 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
       if (const NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
 	    NetExpr*ex;
 	    if (base_c->value().is_defined()) {
-		  long lsv = base_c->value().as_long();
+		  long msv = base_c->value().as_long();
 		  long rel_base = 0;
 
 		    // Check whether an unsigned base fits in a 32 bit int.
 		    // This ensures correct results for the vlog95 target, and
 		    // for the vvp target on LLP64 platforms (Microsoft Windows).
-		  if (!base_c->has_sign() && (int32_t)lsv < 0) {
+		  if (!base_c->has_sign() && (int32_t)msv < 0) {
 			  // Return 'bx for a wrapped around base.
 			ex = new NetEConst(verinum(verinum::Vx, wid, true));
 			ex->set_line(*this);
@@ -6015,7 +5936,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 			if (warn_ob_select) {
 			      cerr << get_fileline() << ": warning: " << net->name();
 			      if (net->word_index()) cerr << "[]";
-			      cerr << "[" << (unsigned long)lsv << "+:" << wid
+			      cerr << "[" << (unsigned long)msv << op << ":" << wid
 				   << "] is always outside vector." << endl;
 			}
 			return ex;
@@ -6031,12 +5952,17 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 			ivl_assert(*this, swid > 0);
 			long loff, moff;
 			unsigned long lwid, mwid;
+			long lsv = msv;
+			if (up)
+				lsv += (wid/swid)-1;
+			else
+				lsv -= (wid/swid)-1;
 			bool lrc, mrc;
-			mrc = net->sig()->sb_to_slice(prefix_indices, lsv, moff, mwid);
-			lrc = net->sig()->sb_to_slice(prefix_indices, lsv+(wid/swid)-1, loff, lwid);
+			mrc = net->sig()->sb_to_slice(prefix_indices, msv, moff, mwid);
+			lrc = net->sig()->sb_to_slice(prefix_indices, lsv, loff, lwid);
 			if (!mrc || !lrc) {
 			      cerr << get_fileline() << ": error: ";
-			      cerr << "Part-select [" << lsv << "+:" << (wid/swid);
+			      cerr << "Part-select [" << msv << op << ":" << (wid/swid);
 			      cerr << "] exceeds the declared bounds for ";
 			      cerr << net->sig()->name();
 			      if (net->sig()->unpacked_dimensions() > 0) cerr << "[]";
@@ -6056,10 +5982,10 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 		        long offset = 0;
 		          // We want the last range, which is where we work.
 		        const netrange_t&rng = packed.back();
-		        if (rng.get_msb() < rng.get_lsb()) {
+		        if ((rng.get_msb() > rng.get_lsb()) ^ up) {
 			      offset = -wid + 1;
 		        }
-		        rel_base = net->sig()->sb_to_idx(prefix_indices, lsv) + offset;
+		        rel_base = net->sig()->sb_to_idx(prefix_indices, msv) + offset;
 		  }
 
 		    // If the part select covers exactly the entire
@@ -6070,7 +5996,6 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 			net->cast_signed(false);
 			return net;
 		  }
-
 		    // Otherwise, make a part select that covers the right
 		    // range.
 		  ex = new NetEConst(verinum(rel_base));
@@ -6079,14 +6004,14 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 			      cerr << get_fileline() << ": warning: "
 			           << net->name();
 			      if (net->word_index()) cerr << "[]";
-			      cerr << "[" << lsv << "+:" << wid
+			      cerr << "[" << msv << op << ":" << wid
 			           << "] is selecting before vector." << endl;
 			}
 			if (rel_base + wid > net->vector_width()) {
 			      cerr << get_fileline() << ": warning: "
 			           << net->name();
 			      if (net->word_index()) cerr << "[]";
-			      cerr << "[" << lsv << "+:" << wid
+			      cerr << "[" << msv << op << ":" << wid
 			           << "] is selecting after vector." << endl;
 			}
 		  }
@@ -6098,7 +6023,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 		  if (warn_ob_select) {
 			cerr << get_fileline() << ": warning: " << net->name();
 			if (net->word_index()) cerr << "[]";
-			cerr << "['bx+:" << wid
+			cerr << "['bx" << op << ":" << wid
 			     << "] is always outside vector." << endl;
 		  }
 		  return ex;
@@ -6115,175 +6040,9 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 
 	// Convert the non-constant part select index expression into
 	// an expression that returns a canonical base.
-      base = normalize_variable_part_base(prefix_indices, base, net->sig(), wid, true);
+      base = normalize_variable_part_base(prefix_indices, base, net->sig(), wid, up);
 
-      NetESelect*ss = new NetESelect(net, base, wid, IVL_SEL_IDX_UP);
-      ss->set_line(*this);
-
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: Elaborate part "
-		 << "select base="<< *base << ", wid="<< wid << endl;
-      }
-
-      return ss;
-}
-
-/*
- * Part select indexed down, i.e. net[<m> -: <l>]
- */
-NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
-					     NetESignal*net, NetScope*,
-                                             bool need_const) const
-{
-      if (net->sig()->data_type() == IVL_VT_STRING) {
-	    cerr << get_fileline() << ": error: Cannot take the index part "
-	            "select of a string ('" << net->name() << "')." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-      list<long>prefix_indices;
-      bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
-      if (!rc)
-	    return 0;
-
-      NetExpr*base = calculate_up_do_base_(des, scope, need_const);
-      if (!base)
-	    return nullptr;
-
-	// Use the part select width already calculated by test_width().
-      unsigned long wid = min_width_;
-
-      if (base->expr_type() == IVL_VT_REAL) {
-	    cerr << get_fileline() << ": error: Indexed part select base "
-	            "expression for " << net->sig()->name() << "[" << *base
-	         << "-:" << wid << "] cannot be a real value." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-	// Handle the special case that the base is constant as
-	// well. In this case it can be converted to a conventional
-	// part select.
-      if (const NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
-	    NetExpr*ex;
-	    if (base_c->value().is_defined()) {
-		  long lsv = base_c->value().as_long();
-		  long rel_base = 0;
-
-		    // Check whether an unsigned base fits in a 32 bit int.
-		    // This ensures correct results for the vlog95 target, and
-		    // for the vvp target on LLP64 platforms (Microsoft Windows).
-		  if (!base_c->has_sign() && (int32_t)lsv < 0) {
-			  // Return 'bx for a wrapped around base.
-			ex = new NetEConst(verinum(verinum::Vx, wid, true));
-			ex->set_line(*this);
-			delete base;
-			if (warn_ob_select) {
-			      cerr << get_fileline() << ": warning: " << net->name();
-			      if (net->word_index()) cerr << "[]";
-			      cerr << "[" << (unsigned long)lsv << "-:" << wid
-				   << "] is always outside vector." << endl;
-			}
-			return ex;
-		  }
-
-		    // Get the signal range.
-		  const netranges_t&packed = net->sig()->packed_dims();
-		  if (prefix_indices.size()+1 < net->sig()->packed_dims().size()) {
-			  // Here we are selecting one or more sub-arrays.
-			  // Make this work by finding the indexed sub-arrays and
-			  // creating a generated slice that spans the whole range.
-			unsigned long swid = net->sig()->slice_width(prefix_indices.size()+1);
-			ivl_assert(*this, swid > 0);
-			long loff, moff;
-			unsigned long lwid, mwid;
-			bool lrc, mrc;
-			mrc = net->sig()->sb_to_slice(prefix_indices, lsv, moff, mwid);
-			lrc = net->sig()->sb_to_slice(prefix_indices, lsv-(wid/swid)+1, loff, lwid);
-			if (!mrc || !lrc) {
-			      cerr << get_fileline() << ": error: ";
-			      cerr << "Part-select [" << lsv << "-:" << (wid/swid);
-			      cerr << "] exceeds the declared bounds for ";
-			      cerr << net->sig()->name();
-			      if (net->sig()->unpacked_dimensions() > 0) cerr << "[]";
-			      cerr << "." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			ivl_assert(*this, mwid == swid);
-			ivl_assert(*this, lwid == swid);
-
-			if (moff > loff) {
-			      rel_base = loff;
-			} else {
-			      rel_base = moff;
-			}
-		  } else {
-		        long offset = 0;
-		          // We want the last range, which is where we work.
-		        const netrange_t&rng = packed.back();
-		        if (rng.get_msb() > rng.get_lsb()) {
-			      offset = -wid + 1;
-		        }
-		        rel_base = net->sig()->sb_to_idx(prefix_indices, lsv) + offset;
-                  }
-
-		    // If the part select covers exactly the entire
-		    // vector, then do not bother with it. Return the
-		    // signal itself.
-		  if (rel_base == (long)(wid-1) && wid == net->vector_width()) {
-			delete base;
-			net->cast_signed(false);
-			return net;
-		  }
-
-		    // Otherwise, make a part select that covers the right
-		    // range.
-		  ex = new NetEConst(verinum(rel_base));
-		  if (warn_ob_select) {
-			if (rel_base < 0) {
-			      cerr << get_fileline() << ": warning: "
-			           << net->name();
-			      if (net->word_index()) cerr << "[]";
-			      cerr << "[" << lsv << "-:" << wid
-			           << "] is selecting before vector." << endl;
-			}
-			if (rel_base + wid > net->vector_width()) {
-			      cerr << get_fileline() << ": warning: "
-			           << net->name();
-			      if (net->word_index()) cerr << "[]";
-			      cerr << "[" << lsv << "-:" << wid
-			           << "] is selecting after vector." << endl;
-			}
-		  }
-	    } else {
-		    // Return 'bx for an undefined base.
-		  ex = new NetEConst(verinum(verinum::Vx, wid, true));
-		  ex->set_line(*this);
-		  delete base;
-		  if (warn_ob_select) {
-			cerr << get_fileline() << ": warning: " << net->name();
-			if (net->word_index()) cerr << "[]";
-			cerr << "['bx-:" << wid
-			     << "] is always outside vector." << endl;
-		  }
-		  return ex;
-	    }
-	    NetESelect*ss = new NetESelect(net, ex, wid);
-	    ss->set_line(*this);
-
-	    delete base;
-	    return ss;
-      }
-
-      ivl_assert(*this, prefix_indices.size()+1 == net->sig()->packed_dims().size());
-
-	// Convert the non-constant part select index expression into
-	// an expression that returns a canonical base.
-      base = normalize_variable_part_base(prefix_indices, base, net->sig(), wid, false);
-
-      NetESelect*ss = new NetESelect(net, base, wid, IVL_SEL_IDX_DOWN);
+      NetESelect*ss = new NetESelect(net, base, wid, up ? IVL_SEL_IDX_UP : IVL_SEL_IDX_DOWN);
       ss->set_line(*this);
 
       if (debug_elaborate) {
@@ -6602,12 +6361,12 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
                                             expr_wid);
 
       if (use_sel == index_component_t::SEL_IDX_UP)
-	    return elaborate_expr_net_idx_up_(des, scope, node, found_in,
-                                              need_const);
+	    return elaborate_expr_net_idx_up_do_(des, scope, node, found_in,
+                                              true, need_const);
 
       if (use_sel == index_component_t::SEL_IDX_DO)
-	    return elaborate_expr_net_idx_do_(des, scope, node, found_in,
-                                              need_const);
+	    return elaborate_expr_net_idx_up_do_(des, scope, node, found_in,
+                                              false, need_const);
 
       if (use_sel == index_component_t::SEL_BIT)
 	    return elaborate_expr_net_bit_(des, scope, node, found_in,
