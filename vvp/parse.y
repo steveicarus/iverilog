@@ -105,7 +105,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_VAR_S K_VAR_STR K_VAR_I K_VAR_R K_VAR_2S K_VAR_2U
 %token K_vpi_call K_vpi_call_w K_vpi_call_i
 %token K_vpi_func K_vpi_func_r K_vpi_func_s
-%token K_ivl_version K_ivl_delay_selection
+%token K_ivl_version K_ivl_delay_selection K_ivl_warnings
 %token K_vpi_module K_vpi_time_precision K_file_names K_file_line
 %token K_PORT_INPUT K_PORT_OUTPUT K_PORT_INOUT K_PORT_MIXED K_PORT_NODIR
 
@@ -153,6 +153,8 @@ header_line
 		{ verify_version($2, $3); }
 	| K_ivl_delay_selection T_STRING ';'
 		{ set_delay_selection($2); }
+	| K_ivl_warnings T_STRING ';'
+		{ set_warning_flags($2); }
 	| K_vpi_module T_STRING ';'
 		{ compile_load_vpi_module($2); }
 	| K_vpi_time_precision '+' T_NUMBER ';'

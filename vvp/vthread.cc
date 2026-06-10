@@ -20,6 +20,7 @@
 # include  "config.h"
 # include  "vthread.h"
 # include  "codes.h"
+# include  "compile.h"
 # include  "schedule.h"
 # include  "ufunc.h"
 # include  "event.h"
@@ -1076,6 +1077,42 @@ bool of_ADD_WR(vthread_t thr, vvp_code_t)
       return true;
 }
 
+static set<vvp_code_t> warned_array_write_oob;
+
+static void maybe_warn_array_write_oob(vthread_t thr, vvp_code_t cp,
+				       int64_t adr)
+{
+      if (!warn_array_write_oob)
+	    return;
+
+      assert(cp->array);
+
+      bool index_undef = thr->flags[4] == BIT4_1;
+      if (!index_undef && adr >= 0 && (uint64_t) adr < cp->array->get_size())
+	    return;
+
+      if (!warned_array_write_oob.insert(cp).second)
+	    return;
+
+      int left = cp->array->swap_addr ? cp->array->last_addr.get_value()
+				      : cp->array->first_addr.get_value();
+      int right = cp->array->swap_addr ? cp->array->first_addr.get_value()
+				       : cp->array->last_addr.get_value();
+
+      cerr << thr->get_fileline();
+      if (index_undef) {
+	    cerr << "Warning: undefined unpacked array write index for '";
+      } else {
+	    int64_t source_index = adr
+		  + (int64_t) cp->array->first_addr.get_value();
+	    cerr << "Warning: out-of-bounds unpacked array write index "
+		 << source_index << " for '";
+      }
+
+      cerr << cp->array->name << "[" << left << ":" << right
+	   << "]'; write ignored." << endl;
+}
+
 /* %assign/ar <array>, <delay>
  * Generate an assignment event to a real array. Index register 3
  * contains the canonical address of the word in the memory. <delay>
@@ -1087,6 +1124,11 @@ bool of_ASSIGN_AR(vthread_t thr, vvp_code_t cp)
       long adr = thr->words[3].w_int;
       unsigned delay = cp->bit_idx[0];
       double value = thr->pop_real();
+
+      maybe_warn_array_write_oob(thr, cp, adr);
+
+      if (thr->flags[4] == BIT4_1)
+	    return true;
 
       if (adr >= 0) {
 	    schedule_assign_array_word(cp->array, adr, value, delay);
@@ -1104,6 +1146,11 @@ bool of_ASSIGN_ARD(vthread_t thr, vvp_code_t cp)
 {
       long adr = thr->words[3].w_int;
       double value = thr->pop_real();
+
+      maybe_warn_array_write_oob(thr, cp, adr);
+
+      if (thr->flags[4] == BIT4_1)
+	    return true;
 
       if (adr >= 0) {
 	    vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_uint;
@@ -1124,6 +1171,11 @@ bool of_ASSIGN_ARE(vthread_t thr, vvp_code_t cp)
 {
       long adr = thr->words[3].w_int;
       double value = thr->pop_real();
+
+      maybe_warn_array_write_oob(thr, cp, adr);
+
+      if (thr->flags[4] == BIT4_1)
+	    return true;
 
       if (adr >= 0) {
 	    if (thr->ecount == 0) {
@@ -1210,6 +1262,8 @@ bool of_ASSIGN_VEC4_A_D(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t val = thr->pop_vec4();
 
+      maybe_warn_array_write_oob(thr, cp, adr);
+
 	// Abort if flags[4] is set. This can happen if the calculation
 	// into an index register failed.
       if (thr->flags[4] == BIT4_1)
@@ -1235,6 +1289,8 @@ bool of_ASSIGN_VEC4_A_E(vthread_t thr, vvp_code_t cp)
       long     adr = thr->words[adr_idx].w_int;
 
       vvp_vector4_t val = thr->pop_vec4();
+
+      maybe_warn_array_write_oob(thr, cp, adr);
 
 	// Abort if flags[4] is set. This can happen if the calculation
 	// into an index register failed.
@@ -5770,6 +5826,11 @@ bool of_STORE_OBJA(vthread_t thr, vvp_code_t cp)
       vvp_object_t val;
       thr->pop_object(val);
 
+      maybe_warn_array_write_oob(thr, cp, adr);
+
+      if (thr->flags[4] == BIT4_1)
+	    return true;
+
       cp->array->set_word(adr, val);
 
       return true;
@@ -6089,8 +6150,10 @@ static bool storea(vthread_t thr, vvp_code_t cp)
       ELEM val;
       pop_value(thr, val, 0);
 
+      unsigned adr = thr->words[idx].w_int;
+      maybe_warn_array_write_oob(thr, cp, adr);
+
       if (thr->flags[4] != BIT4_1) {
-	    unsigned adr = thr->words[idx].w_int;
 	    cp->array->set_word(adr, val);
       }
 
@@ -6190,6 +6253,8 @@ bool of_STORE_VEC4A(vthread_t thr, vvp_code_t cp)
 
       long adr = adr_index? thr->words[adr_index].w_int : 0;
       int64_t off = off_index ? thr->words[off_index].w_int : 0;
+
+      maybe_warn_array_write_oob(thr, cp, adr);
 
 	// Suppress action if flags-4 is true.
       if (thr->flags[4] == BIT4_1) {

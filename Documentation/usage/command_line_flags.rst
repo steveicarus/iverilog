@@ -342,9 +342,9 @@ These flags affect the general behavior of the compiler.
 
   * select-range
 
-    This enables warnings for constant out-of-bound selects. This includes
-    partial or fully out-of-bound select as well as a select containing a 'bx
-    or 'bz in the index.
+    This enables warnings for constant and runtime out-of-bound selects. This
+    includes partial or fully out-of-bound select as well as a select containing
+    a 'bx or 'bz in the index.
 
   * timescale
 

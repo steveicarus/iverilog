@@ -77,6 +77,7 @@ inline uint64_t strtouint64(const char*str, char**endptr, int base)
   /* These are some special header/footer keywords. */
 ^":ivl_version" { return K_ivl_version; }
 ^":ivl_delay_selection" { return K_ivl_delay_selection; }
+^":ivl_warnings" { return K_ivl_warnings; }
 ^":vpi_module" { return K_vpi_module; }
 ^":vpi_time_precision" { return K_vpi_time_precision; }
 ^":file_names" { return K_file_names; }

@@ -1,0 +1,6 @@
+{
+    "type"          : "normal",
+    "source"        : "unpacked_array_oob_write_warn.v",
+    "iverilog-args" : [ "-g2005-sv", "-pfileline=1" ],
+    "gold"          : "unpacked_array_oob_write_nowarn"
+}

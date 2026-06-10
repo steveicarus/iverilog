@@ -1,0 +1,7 @@
+ivltests/unpacked_array_oob_write_warn.v:21: Warning: out-of-bounds unpacked array write index 4 for 'a[0:3]'; write ignored.
+ivltests/unpacked_array_oob_write_warn.v:24: Warning: out-of-bounds unpacked array write index -1 for 'a[0:3]'; write ignored.
+ivltests/unpacked_array_oob_write_warn.v:27: Warning: out-of-bounds unpacked array write index 5 for 'a[0:3]'; write ignored.
+ivltests/unpacked_array_oob_write_warn.v:30: Warning: out-of-bounds unpacked array write index 3 for 'r[0:1]'; write ignored.
+ivltests/unpacked_array_oob_write_warn.v:33: Warning: undefined unpacked array write index for 'a[0:3]'; write ignored.
+ivltests/unpacked_array_oob_write_warn.v:36: Warning: undefined unpacked array write index for 'a[0:3]'; write ignored.
+ivltests/unpacked_array_oob_write_warn.v:39: Warning: undefined unpacked array write index for 'r[0:1]'; write ignored.
