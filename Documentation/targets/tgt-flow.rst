@@ -9,9 +9,10 @@ assignments read and drive which nets), so that IDEs and analysis tools
 can render dataflow panels, browse the elaborated hierarchy, and trace
 input-to-output continuity across the design.
 
-The emitted schema (``flowtracer1.merged.v0``) is shared with the GHDL
-``--flow`` exporter, so a single consumer works across Verilog (via this
-target) and VHDL (via GHDL) designs.
+The emitted schema (``flowtracer1.verilog.v0``) is the Verilog companion
+to the GHDL ``--flow`` exporter (``flowtracer1.vhdl.v0``), so a single
+consumer works across Verilog (via this target) and VHDL (via GHDL)
+designs.
 
 
 USAGE
@@ -34,7 +35,7 @@ OUTPUT
 The output is a single JSON object with these top-level fields:
 
 ``schema``
-    Always ``"flowtracer1.merged.v0"``.
+    Always ``"flowtracer1.verilog.v0"``.
 
 ``top``
     The basename of the root module instance.
@@ -59,6 +60,28 @@ The output is a single JSON object with these top-level fields:
     ``cells`` are the processes, gates, LPM devices, and constants (with
     ``drives``/``reads`` referring to net ids, plus ``clocked`` and
     ``clock_net``).
+
+
+POSITIONS
+---------
+
+Every ``pos`` / ``inst_pos`` is a compact string of byte offsets,
+``"start:begin:end"``, to help source-scanning consumers (such as Perl
+lexers) locate constructs:
+
+* *start* -- byte offset of the construct (first non-blank character of
+  its line);
+* *begin* -- byte offset of the ``begin`` keyword that opens a
+  procedural or generate block -- empty when there is none;
+* *end* -- byte offset of the closing ``end``/``endmodule`` keyword or
+  the terminating ``;`` -- empty for a plain point.
+
+So a port or signal is ``"start::"``, a module is ``"start::end"``
+(``module`` .. ``endmodule``), an instance is ``"start::end"`` (.. ``;``),
+and an ``always``/``initial`` block or generate frame is
+``"start:begin:end"``.  Because the ``ivl_target`` API exposes only line
+numbers, the exporter reads the source files and scans them (comment- and
+string-aware) to recover these byte offsets and spans.
 
 
 LIMITATIONS

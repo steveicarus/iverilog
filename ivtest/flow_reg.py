@@ -1,7 +1,7 @@
 ''' Regression runner for the flow (-tflow) dataflow exporter target.
 
     For each test named in flow.list, this compiles flow/<name>.v with
-    `iverilog -tflow` and validates the resulting flowtracer1.merged.v0
+    `iverilog -tflow` and validates the resulting flowtracer1.verilog.v0
     JSON: every output must be well-formed and carry the expected schema,
     a top, and a non-empty module/hierarchy set; per-test checks then
     assert the dataflow facts the exporter is meant to capture (clocked
@@ -135,15 +135,37 @@ def run_test(test_name: str) -> bool:
         return False
 
     # Invariants common to every well-formed output.
-    if doc.get("schema") != "flowtracer1.merged.v0":
+    if doc.get("schema") != "flowtracer1.verilog.v0":
         return False
     if not doc.get("top") or not doc.get("modules") or not doc.get("hierarchy"):
+        return False
+    # Every position is the compact "start:begin:end" byte-offset string.
+    if not _positions_well_formed(doc):
         return False
 
     check = CHECKS.get(test_name)
     if check:
         ok, _msg = check(doc)
         return ok
+    return True
+
+
+_POS_RE = re.compile(r"^[0-9]*:[0-9]*:[0-9]*$")
+
+
+def _positions_well_formed(node) -> bool:
+    '''Every "pos"/"inst_pos" value, anywhere in the document, must be the
+       compact "start:begin:end" byte-offset string (parts may be empty).'''
+    if isinstance(node, dict):
+        for key, val in node.items():
+            if key in ("pos", "inst_pos"):
+                if not (isinstance(val, str) and _POS_RE.match(val)):
+                    return False
+            elif not _positions_well_formed(val):
+                return False
+        return True
+    if isinstance(node, list):
+        return all(_positions_well_formed(x) for x in node)
     return True
 
 

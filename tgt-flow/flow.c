@@ -20,10 +20,12 @@
 /*
  * tgt-flow: a dataflow exporter target module for Icarus Verilog.
  *
- * Emits a `.flow` JSON dataflow database that is schema-compatible
- * (flowtracer1.merged.v0) with the GHDL `--flow` exporter, so a single
- * IDE / consumer (vpi_flowtracer's dftrace) works across Verilog and
- * VHDL designs.
+ * Emits a `.flow` JSON dataflow database (schema flowtracer1.verilog.v0,
+ * the Verilog companion to GHDL's flowtracer1.vhdl.v0), so a single IDE /
+ * consumer (vpi_flowtracer's dftrace) works across Verilog and VHDL
+ * designs.  Source positions are the compact "start:begin:end" byte-offset
+ * form; since the ivl_target API exposes only line numbers, the byte
+ * offsets and begin/end spans are recovered by scanning the source files.
  *
  * PHASE 1: structural skeleton (envelope, modules[], hierarchy[],
  *          port_map[] resolved through the shared nexus).
@@ -50,6 +52,7 @@
 # include  <stdio.h>
 # include  <stdint.h>
 # include  <inttypes.h>
+# include  <ctype.h>
 # include  "ivl_target.h"
 
 static const char*version_string =
@@ -196,6 +199,7 @@ struct cell_ent {
       const char*kind;
       char label[64];
       const char*path;
+      const char*file;
       unsigned line;
       int clocked;
       int clock_net;
@@ -220,7 +224,8 @@ static void proclist_push(ivl_process_t p)
       proclist.items[proclist.count++] = p;
 }
 
-static struct cell_ent* cell_new(const char*kind, const char*path, unsigned line)
+static struct cell_ent* cell_new(const char*kind, const char*path,
+				 const char*file, unsigned line)
 {
       struct cell_ent*c;
       if (cells.count == cells.cap) {
@@ -234,6 +239,7 @@ static struct cell_ent* cell_new(const char*kind, const char*path, unsigned line
       memset(c, 0, sizeof *c);
       c->kind = kind;
       c->path = path ? path : "";
+      c->file = file ? file : "";
       c->line = line;
       c->clock_net = 0;
       return c;
@@ -450,6 +456,7 @@ static int build_process(ivl_process_t proc, void*cd)
       }
 
       c = cell_new("process", ivl_scope_name(scope),
+		   st ? ivl_stmt_file(st) : ivl_scope_file(scope),
 		   st ? ivl_stmt_lineno(st) : ivl_scope_lineno(scope));
       if (!c)
 	    return 0;
@@ -468,7 +475,7 @@ static void build_logic(ivl_net_logic_t log)
       unsigned np = ivl_logic_pins(log);
       unsigned i;
       struct cell_ent*c = cell_new("gate", ivl_scope_name(ivl_logic_scope(log)),
-				   ivl_logic_lineno(log));
+				   ivl_logic_file(log), ivl_logic_lineno(log));
       if (!c)
 	    return;
       snprintf(c->label, sizeof c->label, "%s", ivl_logic_basename(log)
@@ -535,7 +542,7 @@ static void build_lpm(ivl_lpm_t lpm)
       unsigned ni = lpm_input_nexuses(lpm, ins, 64), i;
 
       c = cell_new("lpm", ivl_scope_name(ivl_lpm_scope(lpm)),
-		   ivl_lpm_lineno(lpm));
+		   ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
       if (!c)
 	    return;
       snprintf(c->label, sizeof c->label, "%s", ivl_lpm_basename(lpm)
@@ -559,7 +566,7 @@ static void build_lpm(ivl_lpm_t lpm)
 static void build_const(ivl_net_const_t con)
 {
       struct cell_ent*c = cell_new("const", ivl_scope_name(ivl_const_scope(con)),
-				   ivl_const_lineno(con));
+				   ivl_const_file(con), ivl_const_lineno(con));
       if (!c)
 	    return;
       snprintf(c->label, sizeof c->label, "const");
@@ -626,9 +633,264 @@ static void put_jstr(const char*s)
       putc('"', out);
 }
 
-static void put_pos(unsigned line)
+/* ================================================================== */
+/* Source-file cache + a tiny comment/string-aware scanner.           */
+/*                                                                    */
+/* The ivl_target API only exposes line numbers, so to report byte    */
+/* offsets (and begin/end spans) the exporter reads each source file  */
+/* and scans it directly.                                             */
+/* ================================================================== */
+
+struct src_file {
+      char*name;
+      char*buf;
+      size_t len;
+      long*line_off;   /* line_off[L] = byte offset of 1-based line L */
+      unsigned nlines;
+};
+static struct { struct src_file*items; size_t count, cap; } srcs = {NULL,0,0};
+
+/* Load (and cache) FILE; return NULL if it cannot be read. */
+static struct src_file* src_get(const char*name)
 {
-      fprintf(out, "{\"off\": 0, \"line\": %u, \"col\": 0}", line);
+      size_t i;
+      FILE*fp;
+      long sz;
+      struct src_file*s;
+      unsigned ln;
+      size_t k;
+
+      if (!name || !name[0])
+	    return NULL;
+      for (i = 0 ; i < srcs.count ; i += 1)
+	    if (strcmp(srcs.items[i].name, name) == 0)
+		  return srcs.items[i].buf ? &srcs.items[i] : NULL;
+
+      if (srcs.count == srcs.cap) {
+	    size_t nc = srcs.cap ? srcs.cap * 2 : 8;
+	    struct src_file*g = (struct src_file*)
+		  realloc(srcs.items, nc * sizeof(struct src_file));
+	    if (!g) { flow_errors += 1; return NULL; }
+	    srcs.items = g; srcs.cap = nc;
+      }
+      s = &srcs.items[srcs.count++];
+      memset(s, 0, sizeof *s);
+      s->name = strdup(name);
+
+      fp = fopen(name, "rb");
+      if (!fp)
+	    return NULL;          /* cached as a negative entry (buf == NULL) */
+      fseek(fp, 0, SEEK_END);
+      sz = ftell(fp);
+      fseek(fp, 0, SEEK_SET);
+      if (sz < 0) { fclose(fp); return NULL; }
+      s->buf = (char*)malloc((size_t)sz + 1);
+      if (!s->buf) { fclose(fp); flow_errors += 1; return NULL; }
+      s->len = fread(s->buf, 1, (size_t)sz, fp);
+      s->buf[s->len] = 0;
+      fclose(fp);
+
+      /* Build the 1-based line table. */
+      s->nlines = 1;
+      for (k = 0 ; k < s->len ; k += 1)
+	    if (s->buf[k] == '\n') s->nlines += 1;
+      s->line_off = (long*)malloc((s->nlines + 2) * sizeof(long));
+      if (!s->line_off) { flow_errors += 1; return s; }
+      ln = 1;
+      s->line_off[1] = 0;
+      for (k = 0 ; k < s->len ; k += 1)
+	    if (s->buf[k] == '\n') { ln += 1; s->line_off[ln] = (long)(k + 1); }
+      return s;
+}
+
+/* Byte offset of the first non-blank character on 1-based LINE. */
+static long src_line_start(struct src_file*s, unsigned line)
+{
+      long off;
+      if (!s || !s->line_off || line == 0 || line > s->nlines)
+	    return -1;
+      off = s->line_off[line];
+      while ((size_t)off < s->len && (s->buf[off] == ' ' || s->buf[off] == '\t'))
+	    off += 1;
+      return off;
+}
+
+/* If P starts a // or /​* *​/ comment or a "string", return the offset
+   just past it; otherwise return P unchanged. */
+static long src_skip_cs(const struct src_file*s, long p)
+{
+      if (p + 1 < (long)s->len && s->buf[p] == '/' && s->buf[p+1] == '/') {
+	    p += 2;
+	    while ((size_t)p < s->len && s->buf[p] != '\n') p += 1;
+	    return p;
+      }
+      if (p + 1 < (long)s->len && s->buf[p] == '/' && s->buf[p+1] == '*') {
+	    p += 2;
+	    while (p + 1 < (long)s->len && !(s->buf[p]=='*' && s->buf[p+1]=='/'))
+		  p += 1;
+	    return (p + 1 < (long)s->len) ? p + 2 : (long)s->len;
+      }
+      if (s->buf[p] == '"') {
+	    p += 1;
+	    while ((size_t)p < s->len && s->buf[p] != '"') {
+		  if (s->buf[p] == '\\') p += 1;
+		  p += 1;
+	    }
+	    return ((size_t)p < s->len) ? p + 1 : (long)s->len;
+      }
+      return p;
+}
+
+/* Whole-word keyword match at offset P. */
+static int src_kw_at(const struct src_file*s, long p, const char*kw)
+{
+      size_t kl = strlen(kw);
+      char c;
+      if (p < 0 || (size_t)p + kl > s->len) return 0;
+      if (memcmp(s->buf + p, kw, kl) != 0) return 0;
+      if (p > 0) {
+	    c = s->buf[p-1];
+	    if (isalnum((unsigned char)c) || c == '_' || c == '$') return 0;
+      }
+      c = ((size_t)p + kl < s->len) ? s->buf[p+kl] : 0;
+      if (isalnum((unsigned char)c) || c == '_' || c == '$') return 0;
+      return 1;
+}
+
+/* Offset of the terminating ';' at bracket depth 0, from FROM. */
+static long src_scan_semi(const struct src_file*s, long from)
+{
+      long p = from;
+      int depth = 0;
+      while ((size_t)p < s->len) {
+	    long q = src_skip_cs(s, p);
+	    if (q != p) { p = q; continue; }
+	    switch (s->buf[p]) {
+		case '(': case '[': case '{': depth += 1; break;
+		case ')': case ']': case '}': if (depth>0) depth -= 1; break;
+		case ';': if (depth == 0) return p; break;
+		default: break;
+	    }
+	    p += 1;
+      }
+      return -1;
+}
+
+/* From FROM, the first depth-0 'begin' keyword or ';'.  Sets *IS_BEGIN. */
+static long src_scan_begin_or_semi(const struct src_file*s, long from,
+				   int*is_begin)
+{
+      long p = from;
+      int depth = 0;
+      *is_begin = 0;
+      while ((size_t)p < s->len) {
+	    long q = src_skip_cs(s, p);
+	    if (q != p) { p = q; continue; }
+	    switch (s->buf[p]) {
+		case '(': case '[': case '{': depth += 1; p += 1; continue;
+		case ')': case ']': case '}': if (depth>0) depth -= 1; p += 1;
+		      continue;
+		default: break;
+	    }
+	    if (depth == 0) {
+		  if (s->buf[p] == ';') return p;
+		  if (src_kw_at(s, p, "begin")) { *is_begin = 1; return p; }
+	    }
+	    p += 1;
+      }
+      return -1;
+}
+
+/* Matching 'end' of the 'begin' at BEGIN_OFF (nested begin/end aware). */
+static long src_scan_matching_end(const struct src_file*s, long begin_off)
+{
+      long p = begin_off;
+      int depth = 0;
+      while ((size_t)p < s->len) {
+	    long q = src_skip_cs(s, p);
+	    if (q != p) { p = q; continue; }
+	    if (src_kw_at(s, p, "begin")) { depth += 1; p += 5; continue; }
+	    if (src_kw_at(s, p, "end")) {
+		  depth -= 1;
+		  if (depth == 0) return p;
+		  p += 3; continue;
+	    }
+	    p += 1;
+      }
+      return -1;
+}
+
+/* First whole-word KW at or after FROM. */
+static long src_scan_kw(const struct src_file*s, long from, const char*kw)
+{
+      long p = from;
+      while ((size_t)p < s->len) {
+	    long q = src_skip_cs(s, p);
+	    if (q != p) { p = q; continue; }
+	    if (src_kw_at(s, p, kw)) return p;
+	    p += 1;
+      }
+      return -1;
+}
+
+/* ================================================================== */
+/* Position emission: the compact "start:begin:end" byte-offset form.  */
+/* Missing parts are left empty ("S::", "S::E").                       */
+/* ================================================================== */
+
+static void put_pos3(long start, long begin, long end)
+{
+      putc('"', out);
+      if (start >= 0) fprintf(out, "%ld", start);
+      putc(':', out);
+      if (begin >= 0) fprintf(out, "%ld", begin);
+      putc(':', out);
+      if (end   >= 0) fprintf(out, "%ld", end);
+      putc('"', out);
+}
+
+/* A plain point: "start::". */
+static void put_point(const char*file, unsigned line)
+{
+      struct src_file*s = src_get(file);
+      put_pos3(src_line_start(s, line), -1, -1);
+}
+
+/* A span ending at keyword END_KW (no begin): "start::end".  Used for a
+   module definition ("module" .. "endmodule"). */
+static void put_span_kw(const char*file, unsigned line, const char*end_kw)
+{
+      struct src_file*s = src_get(file);
+      long st = src_line_start(s, line);
+      long en = (s && st >= 0) ? src_scan_kw(s, st, end_kw) : -1;
+      put_pos3(st, -1, en);
+}
+
+/* A span ending at the terminating ';' (no begin): "start::end".  Used
+   for instances and continuous assignments. */
+static void put_span_semi(const char*file, unsigned line)
+{
+      struct src_file*s = src_get(file);
+      long st = src_line_start(s, line);
+      long en = (s && st >= 0) ? src_scan_semi(s, st) : -1;
+      put_pos3(st, -1, en);
+}
+
+/* A procedural/generate block span: "start:begin:end" when wrapped in a
+   begin..end block, else "start::end" with end at the ';' of the single
+   statement. */
+static void put_block_span(const char*file, unsigned line)
+{
+      struct src_file*s = src_get(file);
+      long st = src_line_start(s, line);
+      long bg = -1, en = -1;
+      if (s && st >= 0) {
+	    int is_begin = 0;
+	    long hit = src_scan_begin_or_semi(s, st, &is_begin);
+	    if (hit >= 0 && is_begin) { bg = hit; en = src_scan_matching_end(s, hit); }
+	    else if (hit >= 0)        { en = hit; }
+      }
+      put_pos3(st, bg, en);
 }
 
 static void put_int_array(const int*a, size_t n)
@@ -1032,13 +1294,15 @@ static void emit_processes(ivl_scope_t scope)
 	    ivl_statement_t st;
 	    struct nameset reads = {0,0,0}, drives = {0,0,0}, sens = {0,0,0};
 	    const char*tname;
+	    const char*file;
 	    unsigned line;
 	    char label[64];
 
 	    if (owning_module(pscope) != scope)
 		  continue;
 	    st = ivl_process_stmt(proc);
-	    line = st ? ivl_stmt_lineno(st) : ivl_scope_lineno(scope);
+	    line = st ? ivl_stmt_lineno(st) : ivl_scope_lineno(pscope);
+	    file = st ? ivl_stmt_file(st) : ivl_scope_file(pscope);
 	    switch (ivl_process_type(proc)) {
 		case IVL_PR_INITIAL:      tname = "initial";      break;
 		case IVL_PR_FINAL:        tname = "final";        break;
@@ -1054,7 +1318,7 @@ static void emit_processes(ivl_scope_t scope)
 	    if (!first) fputs(", ", out);
 	    first = 0;
 	    fputs("{\"label\": ", out);        put_jstr(label);
-	    fputs(", \"pos\": ", out);         put_pos(line);
+	    fputs(", \"pos\": ", out);         put_block_span(file, line);
 	    fputs(", \"sensitivity\": ", out); put_name_array(&sens);
 	    fputs(", \"drives\": ", out);      put_name_array(&drives);
 	    fputs(", \"reads\": ", out);       put_name_array(&reads);
@@ -1145,7 +1409,8 @@ static void emit_assigns_rec(ivl_scope_t scope, int*first)
 	    *first = 0;
 	    fputs("{\"target\": ", out);  put_jstr(name);
 	    fputs(", \"reads\": ", out);  put_name_array(&reads);
-	    fputs(", \"pos\": ", out);    put_pos(ivl_signal_lineno(sig));
+	    fputs(", \"pos\": ", out);
+	    put_point(ivl_signal_file(sig), ivl_signal_lineno(sig));
 	    putc('}', out);
 	    free(reads.items);
       }
@@ -1177,7 +1442,8 @@ static void emit_ports(ivl_scope_t scope)
 	    fputs("{\"name\": ", out);  put_jstr(ivl_signal_basename(sig));
 	    fputs(", \"dir\": ", out);  put_jstr(dir_str(ivl_signal_port(sig)));
 	    fputs(", \"type\": ", out); put_sig_type(sig);
-	    fputs(", \"pos\": ", out);  put_pos(ivl_signal_lineno(sig));
+	    fputs(", \"pos\": ", out);
+	    put_point(ivl_signal_file(sig), ivl_signal_lineno(sig));
 	    putc('}', out);
       }
 }
@@ -1192,7 +1458,8 @@ static void emit_generics(ivl_scope_t scope)
 	    first = 0;
 	    fputs("{\"name\": ", out);  put_jstr(ivl_parameter_basename(par));
 	    fputs(", \"type\": ", out); put_jstr("parameter");
-	    fputs(", \"pos\": ", out);  put_pos(ivl_parameter_lineno(par));
+	    fputs(", \"pos\": ", out);
+	    put_point(ivl_parameter_file(par), ivl_parameter_lineno(par));
 	    putc('}', out);
       }
 }
@@ -1210,7 +1477,8 @@ static void emit_signals(ivl_scope_t scope)
 	    fputs("{\"name\": ", out);   put_jstr(ivl_signal_basename(sig));
 	    fputs(", \"type\": ", out);  put_sig_type(sig);
 	    fputs(", \"skind\": ", out); put_jstr("signal");
-	    fputs(", \"pos\": ", out);   put_pos(ivl_signal_lineno(sig));
+	    fputs(", \"pos\": ", out);
+	    put_point(ivl_signal_file(sig), ivl_signal_lineno(sig));
 	    putc('}', out);
       }
 }
@@ -1221,7 +1489,7 @@ static void emit_instance_obj(ivl_scope_t child, int first)
       fputs("\n        {\"label\": ", out);  put_jstr(ivl_scope_basename(child));
       fputs(", \"module\": ", out);          put_jstr(ivl_scope_tname(child));
       fputs(", \"is_module_inst\": true, \"pos\": ", out);
-      put_pos(ivl_scope_lineno(child));
+      put_span_semi(ivl_scope_file(child), ivl_scope_lineno(child));
       fputs(", \"generic_map\": [", out);  emit_generic_map(child);
       fputs("], \"port_map\": [", out);    emit_port_map(child);
       fputs("]}", out);
@@ -1248,8 +1516,11 @@ static void emit_module(ivl_scope_t scope, int first)
       fputs("\n    {\"name\": ", out);  put_jstr(ivl_scope_tname(scope));
       fputs(", \"kind\": ", out);       put_jstr("module");
       fputs(", \"lang\": ", out);       put_jstr("verilog");
-      fputs(", \"file\": ", out);       put_jstr(ivl_scope_file(scope));
-      fputs(", \"pos\": ", out);        put_pos(ivl_scope_lineno(scope));
+      fputs(", \"file\": ", out);       put_jstr(ivl_scope_def_file(scope));
+      /* module definition span: "module" .. "endmodule" (no begin). */
+      fputs(", \"pos\": ", out);
+      put_span_kw(ivl_scope_def_file(scope), ivl_scope_def_lineno(scope),
+		  "endmodule");
       fputs(", \"arch\": ", out);       put_jstr("");
       fputs(",\n      \"ports\": [", out);     emit_ports(scope);
       fputs("],\n      \"generics\": [", out); emit_generics(scope);
@@ -1302,7 +1573,8 @@ static void emit_frame_node(ivl_scope_t scope, unsigned indent, int first)
       if (!first) fputs(",", out);
       fprintf(out, "\n%*s{\"name\": ", indent, "");
       put_jstr(bn);
-      fputs(", \"inst_pos\": ", out);  put_pos(ivl_scope_lineno(scope));
+      fputs(", \"inst_pos\": ", out);
+      put_block_span(ivl_scope_file(scope), ivl_scope_lineno(scope));
       fputs(", \"scope\": true, \"generate\": {\"kind\": ", out);
       if (lb) {
 	    /* for-generate: "<label>[<index>]" */
@@ -1330,7 +1602,8 @@ static void emit_hier_node(ivl_scope_t scope, unsigned indent, int first)
       fputs(", \"module\": ", out);                  put_jstr(ivl_scope_tname(scope));
       fputs(", \"arch\": ", out);                    put_jstr("");
       fputs(", \"instance_label\": ", out);          put_jstr(ivl_scope_basename(scope));
-      fputs(", \"inst_pos\": ", out);                put_pos(ivl_scope_lineno(scope));
+      fputs(", \"inst_pos\": ", out);
+      put_point(ivl_scope_file(scope), ivl_scope_lineno(scope));
       fputs(", \"generics\": [], \"generic_map\": [", out);  emit_generic_map(scope);
       fputs("], \"port_map\": [", out);                      emit_port_map(scope);
       fputs("], \"children\": [", out);
@@ -1377,7 +1650,9 @@ static void emit_cells(void)
 	    fputs(", \"kind\": ", out);      put_jstr(c->kind);
 	    fputs(", \"label\": ", out);     put_jstr(c->label);
 	    fputs(", \"path\": ", out);      put_jstr(c->path);
-	    fputs(", \"pos\": ", out);       put_pos(c->line);
+	    fputs(", \"pos\": ", out);
+	    if (strcmp(c->kind, "process") == 0) put_block_span(c->file, c->line);
+	    else                                 put_point(c->file, c->line);
 	    fputs(", \"clocked\": ", out);   fputs(c->clocked ? "true" : "false", out);
 	    fputs(", \"clock_net\": ", out); fprintf(out, "%d", c->clock_net);
 	    fputs(", \"drives\": ", out);    put_int_array(c->drives, c->nd);
@@ -1442,7 +1717,7 @@ int target_design(ivl_design_t des)
 
       /* ---- envelope ---- */
       fputs("{\n", out);
-      fputs("  \"schema\": \"flowtracer1.merged.v0\",\n", out);
+      fputs("  \"schema\": \"flowtracer1.verilog.v0\",\n", out);
       fputs("  \"generated_by\": \"iverilog -tflow (native)\",\n", out);
       fputs("  \"iverilog\": {\"version\": ", out);  put_jstr(VERSION);
       fputs(", \"hash\": ", out);                    put_jstr(VERSION_TAG);
