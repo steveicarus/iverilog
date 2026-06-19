@@ -21,3 +21,4 @@ Icarus Verilog. The code generator is selected by the "-t" command line flag.
    tgt-sizer
    tgt-verilog
    tgt-blif
+   tgt-flow
