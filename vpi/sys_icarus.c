@@ -172,35 +172,8 @@ void sys_special_register(void)
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
-      tf_data.tfname      = "$dumpports";
-      tf_data.user_data   = "$dumpports";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$dumpportsoff";
-      tf_data.user_data   = "$dumpportsoff";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$dumpportson";
-      tf_data.user_data   = "$dumpportson";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$dumpportsall";
-      tf_data.user_data   = "$dumpportsall";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$dumpportslimit";
-      tf_data.user_data   = "$dumpportslimit";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$dumpportsflush";
-      tf_data.user_data   = "$dumpportsflush";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
+	/* The $dumpports* extended-VCD task family is implemented in
+	   sys_evcd.c (registered via sys_evcd_register); no stubs here. */
 
 	/* The following optional system tasks/functions are not implemented
 	 * in Icarus Verilog (from Annex C 1364-2005). */

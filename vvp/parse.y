@@ -717,13 +717,18 @@ statement
 
   /* Port information for scopes... currently this is just meta-data for VPI queries */
 
+	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING T_SYMBOL T_SYMBOL ';'
+		{ compile_port_info( $2 /* port_index */, $3, $4 /* width */,
+		                     $5 /*&name */, $6 /* low conn */,
+		                     $7 /* high conn */ ); }
+
 	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING T_SYMBOL ';'
 		{ compile_port_info( $2 /* port_index */, $3, $4 /* width */,
-		                     $5 /*&name */, $6 /* buffer */ ); }
+		                     $5 /*&name */, $6 /* low conn */ ); }
 
 	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING ';'
 		{ compile_port_info( $2 /* port_index */, $3, $4 /* width */,
-		                     $5 /*&name */, nullptr /* buffer */ ); }
+		                     $5 /*&name */, nullptr /* low conn */ ); }
 
 	|         K_TIMESCALE T_NUMBER T_NUMBER';'
 		{ compile_timescale($2, $3); }

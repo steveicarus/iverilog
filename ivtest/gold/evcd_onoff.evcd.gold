@@ -1,0 +1,47 @@
+$date
+	Fri Jun 19 15:35:20 2026
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1s
+$end
+$scope module evcd_onoff.u $end
+$var port 1 <0 clk $end
+$var port 1 <1 d $end
+$var port 1 <2 q $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpports
+pD 6 0 <0
+pD 6 0 <1
+pX 6 6 <2
+$end
+#5
+pU 0 6 <0
+pL 6 0 <2
+#7
+pU 0 6 <1
+#10
+pD 6 0 <0
+#13
+pN 6 6 <0
+pN 6 6 <1
+pX 6 6 <2
+#25
+pU 0 6 <0
+pD 6 0 <1
+pH 0 6 <2
+pL 6 0 <2
+#30
+pD 6 0 <0
+#35
+pD 6 0 <0
+pD 6 0 <1
+pL 6 0 <2
+pU 0 6 <0
+#40
+pD 6 0 <0
+#40

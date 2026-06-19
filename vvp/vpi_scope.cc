@@ -666,7 +666,8 @@ vpiPortInfo::vpiPortInfo( __vpiScope *parent,
               int vpi_direction,
               unsigned width,
               const char *name,
-              char* buffer) :
+              char* buffer,
+              char* buffer_high) :
       parent_(parent),
       index_(index),
       direction_(vpi_direction),
@@ -675,6 +676,8 @@ vpiPortInfo::vpiPortInfo( __vpiScope *parent,
 {
       if (buffer != nullptr) functor_ref_lookup(&ref_, buffer);
       else ref_ = nullptr;
+      if (buffer_high != nullptr) functor_ref_lookup(&ref_high_, buffer_high);
+      else ref_high_ = nullptr;
 }
 
 vpiPortInfo::~vpiPortInfo()
@@ -718,6 +721,24 @@ char *vpiPortInfo::vpi_get_str(int code)
 }
 
 
+/* Find the signal handle in `scope` whose underlying net is `net`. This
+   recovers the port-connection signal that a vpiPort's low/high
+   connection refers to, so VPI consumers (e.g. the extended-VCD writer)
+   can read its value and register value-change callbacks. The low
+   connection's signal lives in the module's own scope; the high
+   connection's signal lives in the instantiating (parent) scope. */
+static vpiHandle port_conn(__vpiScope*scope, vvp_net_t*net)
+{
+      if (scope == 0 || net == 0)
+	    return 0;
+      for (size_t idx = 0 ; idx < scope->intern.size() ; idx += 1) {
+	    __vpiSignal*sig = dynamic_cast<__vpiSignal*>(scope->intern[idx]);
+	    if (sig && sig->node == net)
+		  return sig;
+      }
+      return 0;
+}
+
 vpiHandle vpiPortInfo::vpi_handle(int code)
 {
 
@@ -727,6 +748,17 @@ vpiHandle vpiPortInfo::vpi_handle(int code)
           case vpiScope:
           case vpiModule:
             return parent_;
+          case vpiLowConn:
+	      // The low (inner) connection of the port is the formal
+	      // net inside the module. compile_port_info() resolved that
+	      // net into ref_; recover its signal handle by matching the
+	      // net against the signals declared in this scope.
+            return port_conn(parent_, ref_);
+          case vpiHighConn:
+	      // The high (outer) connection is the actual net in the
+	      // instantiating scope (parent_->scope), resolved into
+	      // ref_high_. Returns 0 for an unconnected or top-level port.
+            return port_conn(parent_ ? parent_->scope : 0, ref_high_);
           default :
             break;
       }
@@ -807,10 +839,10 @@ int vpiPortBitInfo::vpi_get(int code)
  * code-generators etc.  There are no actual nets corresponding to instances of module ports
  * as elaboration directly connects nets connected through module ports.
  */
-void compile_port_info( unsigned index, int vpi_direction, unsigned width, const char *name, char* buffer )
+void compile_port_info( unsigned index, int vpi_direction, unsigned width, const char *name, char* buffer, char* buffer_high )
 {
       vpiPortInfo* obj = new vpiPortInfo( vpip_peek_current_scope(),
-                                          index, vpi_direction, width, name, buffer );
+                                          index, vpi_direction, width, name, buffer, buffer_high );
       vpip_attach_to_current_scope(obj);
 
 	// Create vpiPortBit objects

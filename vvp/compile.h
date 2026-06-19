@@ -518,7 +518,7 @@ extern void compile_var_queue(char*label, char*name, unsigned size);
  * nets connected through module ports.
  */
 
-extern void compile_port_info( unsigned index, int vpi_port_type, unsigned width, const char *name, char* buffer );
+extern void compile_port_info( unsigned index, int vpi_port_type, unsigned width, const char *name, char* buffer, char* buffer_high = nullptr );
 
 
 /*

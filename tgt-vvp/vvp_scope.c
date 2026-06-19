@@ -2321,6 +2321,69 @@ static const char *vvp_port_info_type_str(ivl_signal_port_t ptype)
       }
 }
 
+/* Emit the low (inner/formal) and, when present, high (outer/actual)
+   connection nets of a module port into a .port_info record, so that VPI
+   consumers can reach them via vpiLowConn / vpiHighConn. The two nets are
+   the signals that share the port's nexus in the module's own scope and
+   in the instantiating (parent) scope respectively. */
+static void emit_mod_port_conns(ivl_scope_t mod, unsigned idx, const char*pname)
+{
+      ivl_net_logic_t buffer = ivl_scope_mod_module_port_buffer(mod, idx);
+      ivl_scope_t parent = ivl_scope_parent(mod);
+      ivl_nexus_t port_nex = ivl_scope_mod_port(mod, idx);
+      ivl_signal_t inner = 0, outer = 0;
+      unsigned sigs, si;
+      int have_low = 0;
+
+	/* The formal (inner) signal is the port signal of this scope with
+	   the port's name. Its nexus is shared with the actual net in the
+	   instantiating scope (the same collapsing the netlist uses for
+	   port connections), so the high connection is found there. */
+      sigs = ivl_scope_sigs(mod);
+      for (si = 0 ; si < sigs ; si += 1) {
+	    ivl_signal_t s = ivl_scope_sig(mod, si);
+	    if (ivl_signal_port(s) == IVL_SIP_NONE)
+		  continue;
+	    if (pname && strcmp(ivl_signal_basename(s), pname) == 0) {
+		  inner = s;
+		  break;
+	    }
+      }
+
+      if (inner) {
+	    ivl_nexus_t nex = ivl_signal_nex(inner, 0);
+	    if (nex) {
+		  unsigned k, np = ivl_nexus_ptrs(nex);
+		  for (k = 0 ; k < np ; k += 1) {
+			ivl_signal_t s = ivl_nexus_ptr_sig(ivl_nexus_ptr(nex, k));
+			if (s && parent && ivl_signal_scope(s) == parent) {
+			      outer = s;
+			      break;
+			}
+		  }
+	    }
+      }
+
+	/* Low (inner) connection: prefer an explicit port buffer, then the
+	   formal signal, then any signal on the module-port nexus. */
+      if (buffer) {
+	    fprintf(vvp_out, " L_%p", buffer);
+	    have_low = 1;
+      } else if (inner) {
+	    fprintf(vvp_out, " v%p_0", (void*)inner);
+	    have_low = 1;
+      } else if (port_nex) {
+	    fprintf(vvp_out, " %s", draw_input_from_net(port_nex));
+	    have_low = 1;
+      }
+
+	/* High (outer) connection, only meaningful alongside a low one. */
+      if (have_low && outer)
+	    fprintf(vvp_out, " v%p_0", (void*)outer);
+
+      fprintf(vvp_out, ";\n");
+}
+
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
@@ -2401,14 +2464,15 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 		  const char *name =  ivl_scope_mod_module_port_name(net,idx);
 		  ivl_signal_port_t ptype = ivl_scope_mod_module_port_type(net,idx);
 		  unsigned width = ivl_scope_mod_module_port_width(net,idx);
-		  ivl_net_logic_t buffer = ivl_scope_mod_module_port_buffer(net,idx);
 		  if( name == 0 )
 			name = "";
 		  fprintf( vvp_out, "    .port_info %u %s %u \"%s\"",
 		           idx, vvp_port_info_type_str(ptype), width,
 		           vvp_mangle_name(name) );
-		  if (buffer) fprintf( vvp_out, " L_%p;\n", buffer);
-		  else fprintf( vvp_out, ";\n");
+		    /* Emit the port's low (formal, inside) and high (actual,
+		       outside) connection nets so VPI consumers can reach them
+		       via vpiLowConn / vpiHighConn. */
+		  emit_mod_port_conns(net, idx, name);
 	    }
       }
 

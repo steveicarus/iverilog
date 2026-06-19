@@ -443,7 +443,8 @@ class vpiPortInfo  : public __vpiHandle {
                     int vpi_direction,
                     unsigned width,
                     const char *name,
-                    char* buffer );
+                    char* buffer,
+                    char* buffer_high = nullptr );
       ~vpiPortInfo() override;
 
       int get_type_code(void) const override { return vpiPort; }
@@ -466,7 +467,8 @@ class vpiPortInfo  : public __vpiHandle {
       int       direction_;
       unsigned  width_;
       const char *name_;
-      vvp_net_t *ref_;
+      vvp_net_t *ref_;       // low (inner) connection: the formal net
+      vvp_net_t *ref_high_;  // high (outer) connection: the actual net
 };
 
 class vpiPortBitInfo  : public __vpiHandle {
