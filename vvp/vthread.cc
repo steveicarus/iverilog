@@ -4289,6 +4289,15 @@ bool of_MOD_WR(vthread_t thr, vvp_code_t)
 }
 
 /*
+ * %neg/wr
+ */
+bool of_NEG_WR(vthread_t thr, vvp_code_t)
+{
+      thr->poke_real(0, -thr->peek_real(0));
+      return true;
+}
+
+/*
  * %pad/s <wid>
  */
 bool of_PAD_S(vthread_t thr, vvp_code_t cp)
