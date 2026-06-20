@@ -1009,6 +1009,23 @@ class NetScope : public Definitions, public Attrib {
         /* Search the scope hierarchy for the scope where 'type' was defined. */
       NetScope*find_typedef_scope(const Design*des, const typedef_t*type_i);
 
+	/* Continuous assignments (the `assign lhs = rhs;` form) are lowered
+	   to gates/LPM during elaboration. We keep a faithful record of each
+	   one here so the target API can present them as vpiContAssign
+	   objects with their l-value, r-value and source location. */
+      struct cont_assign_t {
+	    NetNet*lval;
+	    NetNet*rval;
+	    perm_string file;
+	    unsigned lineno;
+	    ivl_drive_t drive0;
+	    ivl_drive_t drive1;
+      };
+      void add_cont_assign(NetNet*lval, NetNet*rval, perm_string file,
+			   unsigned lineno, ivl_drive_t drive0, ivl_drive_t drive1);
+      const std::vector<cont_assign_t>& cont_assigns() const { return cont_assigns_; }
+      const std::map<hname_t,NetScope*>& children() const { return children_; }
+
 	/* Parameters exist within a scope, and these methods allow
 	   one to manipulate the set. In these cases, the name is the
 	   *simple* name of the parameter, the hierarchy is implicit in
@@ -1411,6 +1428,7 @@ class NetScope : public Definitions, public Attrib {
       NetScope*unit_;
       NetScope*up_;
       std::map<hname_t,NetScope*> children_;
+      std::vector<cont_assign_t> cont_assigns_;
       std::map<perm_string,interface_port_alias_t> interface_port_aliases_;
       std::map<perm_string,std::map<long,interface_port_alias_t> > interface_port_alias_arrays_;
 

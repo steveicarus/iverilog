@@ -53,6 +53,7 @@ static const char*units_names[] = { "s", "ms", "us", "ns", "ps", "fs" };
 /* One tracked port. */
 struct evcd_port {
       vpiHandle net;          /* value net (vpiLowConn of the port) */
+      vpiHandle inst;         /* the dumped instance scope (module side) */
       int       dir;          /* vpiInput / vpiOutput / vpiInout */
       unsigned  width;
       int       id;           /* EVCD identifier integer */
@@ -103,6 +104,126 @@ static void evcd_strengths(int logic, int*s0, int*s1)
       }
 }
 
+/* Map (input-side value, output-side value) to the IEEE 1364-2005 18.4.3
+   extended-VCD state character for an inout (unknown-direction) port. Value
+   codes are 0, 1, 2=X, 3=Z, where Z means that side is not driving. A side
+   that is hi-Z lets the other side determine the input/output mnemonic; both
+   driving give the agreement (0/1) or conflict (A/a/B/b/C/c) characters. */
+static char evcd_inout_char(int in_v, int out_v)
+{
+      static const char tab[4][4] = {
+	    /* out=  0    1    X    Z   */
+	    /*in0*/ {'0', 'A', 'a', 'D'},
+	    /*in1*/ {'B', '1', 'b', 'U'},
+	    /*inX*/ {'C', 'c', '?', 'N'},
+	    /*inZ*/ {'L', 'H', 'X', 'F'}
+      };
+      return tab[in_v & 3][out_v & 3];
+}
+
+/* Reduce a vpi logic value to the 0/1/2=X/3=Z code used above. */
+static int evcd_vcode(int logic)
+{
+      switch (logic) {
+	  case vpi0: case vpiL: return 0;
+	  case vpi1: case vpiH: return 1;
+	  case vpiZ:            return 3;
+	  default:              return 2;
+      }
+}
+
+/* Combine a new driver value into one side's accumulated value. Z means the
+   driver is not contributing; two real drivers that disagree make X. */
+static int evcd_side_combine(int acc, int v)
+{
+      if (v == 3)   return acc;
+      if (acc == 3) return v;
+      if (acc == v) return acc;
+      return 2;
+}
+
+/* The drive strength level (0..7) encoded in a vpi strength bitmask
+   (1<<level). Per IEEE 1364-2005 18.4.3.2, levels 5..7 are "strong" and
+   1..4 are "weak"; this distinction selects the d/u/l/h conflict states. */
+static int evcd_strlevel(unsigned mask)
+{
+      int lvl = 0;
+      while (mask > 1) { mask >>= 1; lvl += 1; }
+      return lvl;
+}
+
+/* Non-zero if scope `s` is the instance `inst` or nested within it. */
+static int evcd_scope_within(vpiHandle s, vpiHandle inst)
+{
+      int guard = 0;
+      while (s && guard < 4096) {
+	    if (vpi_compare_objects(s, inst)) return 1;
+	    s = vpi_handle(vpiScope, s);
+	    guard += 1;
+      }
+      return 0;
+}
+
+/* For a scalar inout port, separate the external (input-side) and module
+   (output-side) drives by walking the net's vpiDriver objects and
+   classifying each by whether its scope lies inside the dumped instance,
+   then map the pair to the EVCD state character. s0 and s1 receive the
+   resolved strengths. Returns 0 when the net exposes no drivers (the caller
+   then falls back to the plain resolved-value encoding). */
+static char evcd_inout_state(struct evcd_port*p, int*s0, int*s1)
+{
+      vpiHandle it = vpi_iterate(vpiDriver, p->net);
+      vpiHandle d;
+      int in_v = 3, out_v = 3;        /* side values: 0,1,2=X,3=Z */
+      int in_lvl = 0, out_lvl = 0;    /* strongest level seen per side */
+      int any = 0;
+      char c;
+      s_vpi_value rv;
+
+      if (it == NULL) return 0;
+
+      while ((d = vpi_scan(it))) {
+	    s_vpi_value val;
+	    vpiHandle dscope = vpi_handle(vpiScope, d);
+	    int v, lvl;
+	    any = 1;
+	    val.format = vpiStrengthVal;
+	    vpi_get_value(d, &val);
+	    v = evcd_vcode((int)val.value.strength[0].logic);
+	      /* Strength of the driven rail (s1 for a 1, s0 otherwise). */
+	    lvl = evcd_strlevel((v == 1) ? val.value.strength[0].s1
+				         : val.value.strength[0].s0);
+	    if (dscope && evcd_scope_within(dscope, p->inst)) {
+		  out_v = evcd_side_combine(out_v, v);
+		  if (lvl > out_lvl) out_lvl = lvl;
+	    } else {
+		  in_v = evcd_side_combine(in_v, v);
+		  if (lvl > in_lvl) in_lvl = lvl;
+	    }
+      }
+
+      if (!any) return 0;
+
+      rv.format = vpiStrengthVal;
+      vpi_get_value(p->net, &rv);
+      evcd_strengths((int)rv.value.strength[0].logic, s0, s1);
+
+      c = evcd_inout_char(in_v, out_v);
+
+	/* When both sides drive the same level (0 or 1) but with different
+	   strength ranges, the IEEE state is d/u (input stronger) or l/h
+	   (output stronger) rather than the plain agreement 0/1. */
+      if (in_v == out_v && (in_v == 0 || in_v == 1)) {
+	    int in_strong  = in_lvl  >= 5;
+	    int out_strong = out_lvl >= 5;
+	    if (in_strong && !out_strong)
+		  c = (in_v == 0) ? 'd' : 'u';
+	    else if (!in_strong && out_strong)
+		  c = (in_v == 0) ? 'l' : 'h';
+      }
+      return c;
+}
+
 /* Emit one value record for a port:
 
      scalar  -> p<state> <s0> <s1> <<id>
@@ -122,6 +243,19 @@ static void evcd_emit_value(struct evcd_port*p)
       if (p->width <= 1) {
 	    logic = (int)val.value.strength[0].logic;
 	    evcd_strengths(logic, &s0, &s1);
+	      /* For an inout, separate the two drive sides so genuine
+		 conflicts become the IEEE conflict-state characters
+		 (A/a/B/b/C/c) rather than a generic '?'. Falls back to the
+		 resolved-value encoding when no per-driver info exists. */
+	    if (p->dir == vpiInout) {
+		  int cs0 = s0, cs1 = s1;
+		  char cc = evcd_inout_state(p, &cs0, &cs1);
+		  if (cc) {
+			fprintf(evcd_file, "p%c %d %d <%d\n",
+				cc, cs0, cs1, p->id);
+			return;
+		  }
+	    }
 	    fprintf(evcd_file, "p%c %d %d <%d\n",
 		    evcd_state_char(logic, p->dir), s0, s1, p->id);
 	    return;
@@ -243,6 +377,7 @@ static void evcd_scan_scope(vpiHandle scope)
 
 	    p = (struct evcd_port*)calloc(1, sizeof *p);
 	    p->net   = net;
+	    p->inst  = scope;
 	    p->dir   = dir;
 	    p->width = width;
 	    p->id    = evcd_next_id++;

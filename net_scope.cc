@@ -174,6 +174,20 @@ NetScope::~NetScope()
 	/* name_ and module_name_ are perm-allocated. */
 }
 
+void NetScope::add_cont_assign(NetNet*lval, NetNet*rval, perm_string file,
+			       unsigned lineno, ivl_drive_t drive0,
+			       ivl_drive_t drive1)
+{
+      cont_assign_t rec;
+      rec.lval = lval;
+      rec.rval = rval;
+      rec.file = file;
+      rec.lineno = lineno;
+      rec.drive0 = drive0;
+      rec.drive1 = drive1;
+      cont_assigns_.push_back(rec);
+}
+
 void NetScope::set_line(const LineInfo*info)
 {
       file_ = info->get_file();

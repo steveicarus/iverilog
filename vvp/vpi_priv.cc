@@ -376,6 +376,12 @@ const char* vpi_type_as_string(PLI_INT32 code)
 	    return "vpiMemoryWord";
 	  case vpiModule:
 	    return "vpiModule";
+	  case vpiAlways:
+	    return "vpiAlways";
+	  case vpiInitial:
+	    return "vpiInitial";
+	  case vpiFinal:
+	    return "vpiFinal";
 	  case vpiNamedBegin:
 	    return "vpiNamedBegin";
 	  case vpiNamedEvent:

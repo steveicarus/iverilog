@@ -114,6 +114,9 @@ extern void compile_functor(char*label, char*type, unsigned width,
 extern void compile_resolver(char*label, char*type,
 			     unsigned argc, struct symb_s*argv);
 
+extern void compile_resolv_drv(char*resolver,
+			       unsigned argc, struct symb_s*argv);
+
 extern void compile_concat(char*label, unsigned w0, unsigned w1,
 			   unsigned w2, unsigned w3,
 			   unsigned argc, struct symb_s*argv);
@@ -492,6 +495,32 @@ extern void compile_scope_recall(char*sym);
  * the start instruction, and must already be defined.
  */
 extern void compile_thread(char*start_sym, char*flag);
+
+/*
+ * The parser uses this to record an always/initial/final process as a
+ * vpiProcess object on the current scope. type is 0=initial, 1=always,
+ * 2=final; file_idx/lineno locate the process statement in the source.
+ */
+extern void compile_process(long type, long file_idx, long lineno);
+
+/*
+ * The parser uses this to record a continuous assignment as a vpiContAssign
+ * on the current scope. lhs/rhs are the l-value and r-value signal symbols
+ * (resolved by deferred lookup); ownership of both strings passes to this
+ * function.
+ */
+extern void compile_contassign(long file_idx, long lineno,
+                               char*lhs, char*rhs);
+
+/*
+ * The parser uses this to record a gate/switch/UDP primitive as a
+ * vpiPrimitive object on the current scope. primtype is the vpiPrimType
+ * subtype code, npins the terminal count (pin 0 is the output), file_idx and
+ * lineno locate the gate, and name is its base name (parser-owned, freed
+ * here).
+ */
+extern void compile_primitive(long primtype, long npins,
+                              long file_idx, long lineno, char*name);
 
 /*
  * This function is called to create a var vector with the given name.

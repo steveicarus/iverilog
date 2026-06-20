@@ -933,6 +933,57 @@ static void draw_equiv_impl_in_scope(ivl_net_logic_t lptr)
       fprintf(vvp_out, "L_%p .functor %s 1, %s, %s, C4<0>, C4<0>;\n", lptr, ltype, lval, rval);
 }
 
+/* Map an Icarus gate type to the IEEE 1364 vpiPrimType subtype code, so the
+   runtime can answer vpi_get(vpiPrimType, prim_handle). Returns 0 for gate
+   types that have no 1364 primitive subtype. The numeric codes match the
+   vpi*Prim values in vpi_user.h. */
+static int vpi_prim_type_code(ivl_logic_t t)
+{
+      switch (t) {
+	  case IVL_LO_AND:      return 1;   /* vpiAndPrim */
+	  case IVL_LO_NAND:     return 2;   /* vpiNandPrim */
+	  case IVL_LO_NOR:      return 3;   /* vpiNorPrim */
+	  case IVL_LO_OR:       return 4;   /* vpiOrPrim */
+	  case IVL_LO_XOR:      return 5;   /* vpiXorPrim */
+	  case IVL_LO_XNOR:     return 6;   /* vpiXnorPrim */
+	  case IVL_LO_BUF:
+	  case IVL_LO_BUFZ:
+	  case IVL_LO_BUFT:     return 7;   /* vpiBufPrim */
+	  case IVL_LO_NOT:      return 8;   /* vpiNotPrim */
+	  case IVL_LO_BUFIF0:   return 9;   /* vpiBufif0Prim */
+	  case IVL_LO_BUFIF1:   return 10;  /* vpiBufif1Prim */
+	  case IVL_LO_NOTIF0:   return 11;  /* vpiNotif0Prim */
+	  case IVL_LO_NOTIF1:   return 12;  /* vpiNotif1Prim */
+	  case IVL_LO_NMOS:     return 13;  /* vpiNmosPrim */
+	  case IVL_LO_PMOS:     return 14;  /* vpiPmosPrim */
+	  case IVL_LO_CMOS:     return 15;  /* vpiCmosPrim */
+	  case IVL_LO_RNMOS:    return 16;  /* vpiRnmosPrim */
+	  case IVL_LO_RPMOS:    return 17;  /* vpiRpmosPrim */
+	  case IVL_LO_RCMOS:    return 18;  /* vpiRcmosPrim */
+	  case IVL_LO_PULLUP:   return 25;  /* vpiPullupPrim */
+	  case IVL_LO_PULLDOWN: return 26;  /* vpiPulldownPrim */
+	  case IVL_LO_UDP:      return 28;  /* vpiCombPrim (Icarus UDPs) */
+	  default:              return 0;
+      }
+}
+
+/* Emit a structural .primitive record for one gate so the runtime exposes it
+   as a vpiPrimitive on its scope (one-to-many from the module per 1364
+   26.6.1/26.6.13). This is independent of the simulation functor that
+   draw_logic_in_scope() draws; it carries the gate subtype, the number of
+   terminals (pin 0 is the output, the rest are inputs), the source location
+   and the gate's base name. */
+static void draw_primitive_in_scope(ivl_net_logic_t lptr)
+{
+      const char*bn = ivl_logic_basename(lptr);
+      fprintf(vvp_out, "    .primitive %d %u %u %u, \"%s\";\n",
+	      vpi_prim_type_code(ivl_logic_type(lptr)),
+	      ivl_logic_pins(lptr),
+	      ivl_file_table_index(ivl_logic_file(lptr)),
+	      ivl_logic_lineno(lptr),
+	      bn ? vvp_mangle_name(bn) : "");
+}
+
 static void draw_logic_in_scope(ivl_net_logic_t lptr)
 {
       unsigned pdx;
@@ -2548,6 +2599,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
       for (idx = 0 ;  idx < ivl_scope_logs(net) ;  idx += 1) {
 	    ivl_net_logic_t lptr = ivl_scope_log(net, idx);
+	    draw_primitive_in_scope(lptr);
 	    draw_logic_in_scope(lptr);
       }
 
@@ -2581,6 +2633,28 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       for (idx = 0 ; idx < ivl_scope_switches(net) ; idx += 1) {
 	    ivl_switch_t sw = ivl_scope_switch(net, idx);
 	    draw_switch_in_scope(sw);
+      }
+
+	/* Emit the preserved continuous assignments so the runtime can
+	   expose them as vpiContAssign objects on this scope, each with its
+	   l-value and r-value nets (by signal label, word 0) and source
+	   location. */
+      for (idx = 0 ; idx < ivl_scope_cassigns(net) ; idx += 1) {
+	    ivl_cont_assign_t ca = ivl_scope_cassign(net, idx);
+	    ivl_signal_t lval = ivl_cassign_lval(ca);
+	    ivl_signal_t rval = ivl_cassign_rval(ca);
+	      /* Only reference signals that are actually emitted as named
+		 vpi objects. Local (synthesised/elided) nets have no
+		 lookupable label, so skip a local l-value entirely and omit
+		 a local r-value (vpiRhs is then null). */
+	    if (ivl_signal_local(lval))
+		  continue;
+	    fprintf(vvp_out, "    .contassign %u %u, v%p_0",
+		    ivl_file_table_index(ivl_cassign_file(ca)),
+		    ivl_cassign_lineno(ca), lval);
+	    if (rval && !ivl_signal_local(rval))
+		  fprintf(vvp_out, ", v%p_0", rval);
+	    fprintf(vvp_out, ";\n");
       }
 
       if (ivl_scope_type(net) == IVL_SCT_TASK)

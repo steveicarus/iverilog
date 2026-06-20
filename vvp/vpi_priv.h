@@ -1000,6 +1000,17 @@ vpiHandle vpip_make_real_const(double value);
 vpiHandle vpip_make_real_param(const char*name, double value, bool local_flag,
                                long file_idx, long lineno);
 
+/* Make a vpiProcess object (always/initial/final). type is the encoding
+   emitted by tgt-vvp: 0=initial, 1=always, 2=final. */
+vpiHandle vpip_make_process(long type, unsigned file_idx, unsigned lineno);
+
+/* Make a vpiPrimitive object (gate/switch/UDP). primtype is the vpiPrimType
+   subtype code, npins the terminal count (pin 0 = output). The name is copied
+   (interned); the caller retains ownership of the passed string. */
+vpiHandle vpip_make_primitive(int primtype, unsigned npins,
+                              unsigned file_idx, unsigned lineno,
+                              const char*name);
+
 class __vpiNullConst : public __vpiHandle {
     public:
       explicit __vpiNullConst();

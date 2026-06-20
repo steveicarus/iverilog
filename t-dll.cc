@@ -233,6 +233,54 @@ ivl_signal_t dll_target::find_signal(ivl_design_s &des, const NetNet*net)
       return 0;
 }
 
+ivl_signal_t dll_target::find_signal_opt(ivl_design_s &des, const NetNet*net)
+{
+      if (net == 0 || net->scope() == 0)
+	    return 0;
+
+      perm_string nname = net->name();
+      if (nname.str() == 0)            // unnamed net (e.g. some array elements)
+	    return 0;
+
+      ivl_scope_t scop = find_scope(des, net->scope());
+      if (scop == 0)
+	    return 0;
+
+      for (unsigned idx = 0 ;  idx < scop->sigs_.size() ;  idx += 1) {
+	    const char*sn = scop->sigs_[idx]->name_.str();
+	    if (sn && strcmp(sn, nname.str()) == 0)
+		  return scop->sigs_[idx];
+      }
+      return 0;
+}
+
+void dll_target::add_cont_assigns(const NetScope*ns)
+{
+      ivl_scope_t scope = find_scope(des_, ns);
+      const std::vector<NetScope::cont_assign_t>&list = ns->cont_assigns();
+      for (unsigned idx = 0 ;  idx < list.size() ;  idx += 1) {
+	    ivl_signal_t lhs = find_signal_opt(des_, list[idx].lval);
+	    ivl_signal_t rhs = find_signal_opt(des_, list[idx].rval);
+	    if (scope == 0 || lhs == 0)
+		  continue;     // need at least the l-value net
+	    // rhs may be 0 for an expression r-value (no single net).
+
+	    ivl_cont_assign_t obj = new struct ivl_cont_assign_s;
+	    obj->scope_  = scope;
+	    obj->lhs_    = lhs;
+	    obj->rhs_    = rhs;
+	    obj->file    = list[idx].file;
+	    obj->lineno  = list[idx].lineno;
+	    obj->drive0  = list[idx].drive0;
+	    obj->drive1  = list[idx].drive1;
+	    scope->cassigns_.push_back(obj);
+      }
+
+      for (std::map<hname_t,NetScope*>::const_iterator it = ns->children().begin()
+		 ; it != ns->children().end() ; ++ it)
+	    add_cont_assigns(it->second);
+}
+
 static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
 {
       ivl_nexus_t tmp = new struct ivl_nexus_s;
@@ -658,10 +706,18 @@ bool dll_target::start_design(const Design*des)
  * Here ivl is telling us that the design is scanned completely, and
  * here is where we call the API to process the constructed design.
  */
-int dll_target::end_design(const Design*)
+int dll_target::end_design(const Design*des)
 {
       int rc;
       if (errors == 0) {
+	      /* All scopes and signals exist now, so attach the preserved
+		 continuous assignments to their ivl_scope objects before
+		 handing the design to the code-generator target. */
+	    std::list<NetScope*>roots = des->find_root_scopes();
+	    for (std::list<NetScope*>::const_iterator it = roots.begin()
+		       ; it != roots.end() ; ++ it)
+		  add_cont_assigns(*it);
+
 	    if (verbose_flag) {
 		  cout << " ... invoking target_design" << endl;
 	    }

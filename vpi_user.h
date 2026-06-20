@@ -333,6 +333,66 @@ typedef struct t_vpi_delay  {
 
 #define vpiGenScope   134
 
+/******** Structural-connectivity object/relationship codes (Icarus) *********
+
+   These IEEE 1364/1800 object, relationship and property codes were not
+   previously implemented by Icarus. Standard values are used where they do
+   not collide with Icarus's existing numbering; where the standard value is
+   already taken by an unrelated Icarus object code (noted inline) an
+   Icarus-local value continues the 13x extension block used above for
+   vpiHighConn/vpiLowConn. The flowtracer-style single-source plugins guard
+   these with #ifndef, so they pick up whatever value each simulator's header
+   defines. */
+#define vpiContAssign   8     /* continuous assignment (standard) */
+#define vpiProcess      99    /* always/initial/final process (standard) */
+#define vpiPrimitive    103   /* gate/switch/UDP primitive (standard) */
+#define vpiPrimTerm     46    /* primitive terminal (standard) */
+#define vpiInitial      24    /* initial process (standard) */
+#define vpiAlways       137   /* always process (std 1 == vpiType; Icarus-local) */
+#define vpiFinal        138   /* final process (no 1364 value; Icarus-local) */
+/* Relationships / one-to-one navigations */
+#define vpiStmt         104   /* statement of a process (standard) */
+#define vpiLhs          77    /* left-hand side of an assignment (standard) */
+#define vpiRhs          82    /* right-hand side of an assignment (standard) */
+#define vpiDriver       91    /* driver of a net (standard) */
+#define vpiLoad         93    /* load on a net or reg (standard) */
+/* vpiPrimType is a property (additional type code) of a vpiPrimitive. The
+   standard value 33 is taken by vpiNamedBegin in Icarus, so this is an
+   Icarus-local value. Its *result* values (vpiAndPrim ... vpiCombPrim) are
+   the standard 1364 ones; they live in the additional-type-code namespace
+   and so legitimately share integer values with unrelated object/property
+   codes (exactly as the 1364 reference header does). */
+#define vpiPrimType     139   /* primitive subtype (std 33 == vpiNamedBegin) */
+#define vpiTermIndex    140   /* primitive terminal index (std 30 == vpiMemoryWord) */
+#define vpiAndPrim        1
+#define vpiNandPrim       2
+#define vpiNorPrim        3
+#define vpiOrPrim         4
+#define vpiXorPrim        5
+#define vpiXnorPrim       6
+#define vpiBufPrim        7
+#define vpiNotPrim        8
+#define vpiBufif0Prim     9
+#define vpiBufif1Prim    10
+#define vpiNotif0Prim    11
+#define vpiNotif1Prim    12
+#define vpiNmosPrim      13
+#define vpiPmosPrim      14
+#define vpiCmosPrim      15
+#define vpiRnmosPrim     16
+#define vpiRpmosPrim     17
+#define vpiRcmosPrim     18
+#define vpiRtranPrim     19
+#define vpiRtranif0Prim  20
+#define vpiRtranif1Prim  21
+#define vpiTranPrim      22
+#define vpiTranif0Prim   23
+#define vpiTranif1Prim   24
+#define vpiPullupPrim    25
+#define vpiPulldownPrim  26
+#define vpiSeqPrim       27
+#define vpiCombPrim      28
+
 /* PROPERTIES */
 #define vpiUndefined   (-1)
 #define vpiType           1

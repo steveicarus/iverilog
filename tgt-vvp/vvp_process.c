@@ -2375,6 +2375,22 @@ int draw_process(ivl_process_t net, void*x)
       local_count = 0;
       fprintf(vvp_out, "    .scope S_%p;\n", scope);
 
+	/* Emit a structural record so the runtime can expose this process
+	   as a vpiProcess (always/initial/final) object on its scope, with
+	   the source file/line of the process statement. The type code is
+	   0=initial, 1=always(any flavour), 2=final. */
+      {
+	    unsigned ptype;
+	    switch (ivl_process_type(net)) {
+		case IVL_PR_INITIAL:  ptype = 0; break;
+		case IVL_PR_FINAL:    ptype = 2; break;
+		default:              ptype = 1; break; /* always / always_* */
+	    }
+	    fprintf(vvp_out, "    .process %u %u %u;\n", ptype,
+	            ivl_file_table_index(ivl_stmt_file(stmt)),
+	            ivl_stmt_lineno(stmt));
+      }
+
 	/* Generate the entry label. Just give the thread a number so
 	   that we are certain the label is unique. */
       fprintf(vvp_out, "T_%u ;\n", thread_count);

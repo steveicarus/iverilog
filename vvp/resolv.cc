@@ -122,6 +122,23 @@ resolv_tri::~resolv_tri()
       delete[] val_;
 }
 
+__vpiScope* resolv_core::driver_scope(unsigned idx) const
+{
+      if (idx < driver_scopes_.size())
+	    return driver_scopes_[idx];
+      return 0;
+}
+
+bool resolv_tri::driver_value(unsigned idx, vvp_vector8_t&val) const
+{
+      if (idx >= nports_)
+	    return false;
+      if (val_[idx].size() == 0)
+	    return false;
+      val = val_[idx];
+      return true;
+}
+
 void resolv_tri::recv_vec4_(unsigned port, const vvp_vector4_t&bit)
 {
       recv_vec8_(port, vvp_vector8_t(bit, 6,6 /* STRONG */));
@@ -212,6 +229,18 @@ resolv_wired_logic::resolv_wired_logic(unsigned nports, vvp_net_t*net)
 resolv_wired_logic::~resolv_wired_logic()
 {
       delete[] val_;
+}
+
+bool resolv_wired_logic::driver_value(unsigned idx, vvp_vector8_t&val) const
+{
+      if (idx >= nports_)
+	    return false;
+      if (val_[idx].size() == 0)
+	    return false;
+	/* Wired-logic drivers carry plain 4-state values; present them as
+	   strong for the per-driver view. */
+      val = vvp_vector8_t(val_[idx], 6, 6);
+      return true;
 }
 
 void resolv_wired_logic::recv_vec4_(unsigned port, const vvp_vector4_t&bit)

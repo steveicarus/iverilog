@@ -114,6 +114,16 @@ static void delete_sub_scopes(__vpiScope *scope)
 		case vpiPortBit:
 		  port_bit_delete(item);
 		  break;
+		case vpiAlways:
+		case vpiInitial:
+		case vpiFinal:
+		    /* __vpiProcess holds no sub-objects of its own. */
+		  delete item;
+		  break;
+		case vpiContAssign:
+		    /* __vpiContAssign references signals it does not own. */
+		  delete item;
+		  break;
 		case vpiStringVar:
 		  string_delete(item);
 		  break;
@@ -287,6 +297,12 @@ static int compare_types(int code, int type)
 	     type == vpiPackage) )
 	    return 1;
 
+      if ( code == vpiProcess &&
+	    (type == vpiAlways ||
+	     type == vpiInitial ||
+	     type == vpiFinal) )
+	    return 1;
+
       if ( code == vpiVariables &&
 	     (type == vpiIntegerVar  ||
 	      type == vpiBitVar      ||
@@ -335,6 +351,303 @@ static vpiHandle module_iter(int code, vpiHandle obj)
       assert(ref);
 
       return make_subset_iterator_(code, ref->intern);
+}
+
+/*
+ * vpiProcess: an always/initial/final process. It is attached to its scope
+ * (via vpip_attach_to_current_scope) so that vpi_iterate(vpiProcess, scope)
+ * enumerates the processes of a module. The object reports its kind through
+ * vpiType (vpiAlways / vpiInitial / vpiFinal) and carries the source
+ * file/line of the process statement.
+ */
+class __vpiProcess : public __vpiHandle {
+    public:
+      __vpiProcess(int type_code, unsigned file_idx, unsigned lineno)
+      : type_code_(type_code), scope_(vpip_peek_current_scope()),
+        file_idx_(file_idx), lineno_(lineno) { }
+
+      int get_type_code(void) const override { return type_code_; }
+      int vpi_get(int code) override;
+      char* vpi_get_str(int code) override;
+      vpiHandle vpi_handle(int code) override;
+
+    private:
+      int type_code_;
+      __vpiScope* scope_;
+      unsigned file_idx_;
+      unsigned lineno_;
+};
+
+int __vpiProcess::vpi_get(int code)
+{
+      switch (code) {
+	  case vpiType:
+	    return type_code_;
+	  case vpiLineNo:
+	    return (int)lineno_;
+	  case vpiAutomatic:
+	    return 0;
+	  default:
+	    return vpiUndefined;
+      }
+}
+
+char* __vpiProcess::vpi_get_str(int code)
+{
+      switch (code) {
+	  case vpiType:
+	    switch (type_code_) {
+		case vpiAlways:  return simple_set_rbuf_str("vpiAlways");
+		case vpiInitial: return simple_set_rbuf_str("vpiInitial");
+		case vpiFinal:   return simple_set_rbuf_str("vpiFinal");
+		default:         return 0;
+	    }
+	  case vpiFile:
+	    if (file_idx_ < file_names.size())
+		  return simple_set_rbuf_str(file_names[file_idx_]);
+	    return 0;
+	  default:
+	    return 0;
+      }
+}
+
+vpiHandle __vpiProcess::vpi_handle(int code)
+{
+      switch (code) {
+	  case vpiScope:
+	  case vpiModule:
+	    return scope_;
+	  default:
+	    return 0;
+      }
+}
+
+vpiHandle vpip_make_process(long type, unsigned file_idx, unsigned lineno)
+{
+      int tc;
+      switch (type) {
+	  case 0:  tc = vpiInitial; break;
+	  case 2:  tc = vpiFinal;   break;
+	  default: tc = vpiAlways;  break;
+      }
+      return new __vpiProcess(tc, file_idx, lineno);
+}
+
+/*
+ * vpiPrimitive (gate/switch/UDP) and its vpiPrimTerm terminals, per 1364
+ * 26.6.13. The primitive is attached to its scope so vpi_iterate(vpiPrimitive,
+ * scope) enumerates the gates of a module. vpiSize is the number of inputs
+ * (terminal count minus the single output, pin 0). Each terminal reports
+ * vpiDirection (pin 0 output, the rest inputs) and vpiTermIndex.
+ */
+class __vpiPrimitive;
+
+class __vpiPrimTerm : public __vpiHandle {
+    public:
+      __vpiPrimTerm(__vpiPrimitive*prim, unsigned index)
+      : prim_(prim), index_(index) { }
+      int get_type_code(void) const override { return vpiPrimTerm; }
+      int vpi_get(int code) override;
+      vpiHandle vpi_handle(int code) override;
+    private:
+      __vpiPrimitive*prim_;
+      unsigned index_;
+};
+
+class __vpiPrimitive : public __vpiHandle {
+    public:
+      __vpiPrimitive(int primtype, unsigned npins, unsigned file_idx,
+                     unsigned lineno, const char*name)
+      : primtype_(primtype), npins_(npins), scope_(vpip_peek_current_scope()),
+        file_idx_(file_idx), lineno_(lineno)
+      {
+	    name_ = vpip_name_string(name ? name : "");
+	    terms_ = npins_ ? new __vpiPrimTerm*[npins_] : 0;
+	    for (unsigned i = 0 ; i < npins_ ; i += 1)
+		  terms_[i] = new __vpiPrimTerm(this, i);
+      }
+      ~__vpiPrimitive()
+      {
+	    for (unsigned i = 0 ; i < npins_ ; i += 1) delete terms_[i];
+	    delete[] terms_;
+      }
+      int get_type_code(void) const override { return vpiPrimitive; }
+      int vpi_get(int code) override;
+      char* vpi_get_str(int code) override;
+      vpiHandle vpi_handle(int code) override;
+      vpiHandle vpi_iterate(int code) override;
+    private:
+      int primtype_;
+      unsigned npins_;
+      __vpiScope*scope_;
+      unsigned file_idx_;
+      unsigned lineno_;
+      const char*name_;
+      __vpiPrimTerm**terms_;
+};
+
+int __vpiPrimitive::vpi_get(int code)
+{
+      switch (code) {
+	  case vpiPrimType:
+	    return primtype_;
+	  case vpiSize:
+	    return (int)(npins_ ? npins_ - 1 : 0); /* number of inputs */
+	  case vpiLineNo:
+	    return (int)lineno_;
+	  default:
+	    return vpiUndefined;
+      }
+}
+
+char* __vpiPrimitive::vpi_get_str(int code)
+{
+      switch (code) {
+	  case vpiName:
+	  case vpiDefName:
+	    return simple_set_rbuf_str(name_);
+	  case vpiFullName: {
+		char buf[4096];
+		buf[0] = 0;
+		if (scope_) {
+		      construct_scope_fullname(scope_, buf);
+		      strcat(buf, ".");
+		}
+		strcat(buf, name_);
+		return simple_set_rbuf_str(buf);
+	  }
+	  case vpiFile:
+	    if (file_idx_ < file_names.size())
+		  return simple_set_rbuf_str(file_names[file_idx_]);
+	    return 0;
+	  default:
+	    return 0;
+      }
+}
+
+vpiHandle __vpiPrimitive::vpi_handle(int code)
+{
+      switch (code) {
+	  case vpiScope:
+	  case vpiModule:
+	    return scope_;
+	  default:
+	    return 0;
+      }
+}
+
+vpiHandle __vpiPrimitive::vpi_iterate(int code)
+{
+      if (code == vpiPrimTerm && npins_ > 0) {
+	    vpiHandle*args = (vpiHandle*)calloc(npins_, sizeof(vpiHandle));
+	    for (unsigned i = 0 ; i < npins_ ; i += 1) args[i] = terms_[i];
+	    return vpip_make_iterator(npins_, args, true);
+      }
+      return 0;
+}
+
+int __vpiPrimTerm::vpi_get(int code)
+{
+      switch (code) {
+	  case vpiTermIndex:
+	    return (int)index_;
+	  case vpiDirection:
+	    return index_ == 0 ? vpiOutput : vpiInput;
+	  default:
+	    return vpiUndefined;
+      }
+}
+
+vpiHandle __vpiPrimTerm::vpi_handle(int code)
+{
+      switch (code) {
+	  case vpiParent:
+	  case vpiPrimitive:
+	    return prim_;
+	  default:
+	    return 0;
+      }
+}
+
+vpiHandle vpip_make_primitive(int primtype, unsigned npins, unsigned file_idx,
+                              unsigned lineno, const char*name)
+{
+      return new __vpiPrimitive(primtype, npins, file_idx, lineno, name);
+}
+
+/*
+ * vpiContAssign: a continuous assignment (`assign lhs = rhs;`), preserved
+ * through elaboration and attached to its scope so vpi_iterate(vpiContAssign,
+ * scope) enumerates them. vpiLhs / vpiRhs navigate to the l-value and r-value
+ * nets; vpiSize is the l-value width; vpiLineNo/vpiFile give the location.
+ */
+class __vpiContAssign : public __vpiHandle {
+    public:
+      __vpiContAssign(unsigned file_idx, unsigned lineno)
+      : lhs_(0), rhs_(0), scope_(vpip_peek_current_scope()),
+        file_idx_(file_idx), lineno_(lineno) { }
+
+      int get_type_code(void) const override { return vpiContAssign; }
+      int vpi_get(int code) override;
+      char* vpi_get_str(int code) override;
+      vpiHandle vpi_handle(int code) override;
+
+	// Filled in by the deferred vpi-handle lookup in compile_contassign.
+      vpiHandle lhs_;
+      vpiHandle rhs_;
+    private:
+      __vpiScope*scope_;
+      unsigned file_idx_;
+      unsigned lineno_;
+};
+
+int __vpiContAssign::vpi_get(int code)
+{
+      switch (code) {
+	  case vpiLineNo:
+	    return (int)lineno_;
+	  case vpiSize:
+	    return lhs_ ? lhs_->vpi_get(vpiSize) : 0;
+	  default:
+	    return vpiUndefined;
+      }
+}
+
+char* __vpiContAssign::vpi_get_str(int code)
+{
+      switch (code) {
+	  case vpiFile:
+	    if (file_idx_ < file_names.size())
+		  return simple_set_rbuf_str(file_names[file_idx_]);
+	    return 0;
+	  default:
+	    return 0;
+      }
+}
+
+vpiHandle __vpiContAssign::vpi_handle(int code)
+{
+      switch (code) {
+	  case vpiLhs:    return lhs_;
+	  case vpiRhs:    return rhs_;
+	  case vpiScope:
+	  case vpiModule: return scope_;
+	  default:        return 0;
+      }
+}
+
+void compile_contassign(long file_idx, long lineno, char*lhs, char*rhs)
+{
+      __vpiContAssign*obj = new __vpiContAssign((unsigned)file_idx,
+						(unsigned)lineno);
+      vpip_attach_to_current_scope(obj);
+	/* The l-value and r-value signals may be defined later in the file,
+	   so resolve them through the deferred vpi-handle lookup, which
+	   takes ownership of the label strings. The r-value is absent when
+	   the assignment's r-value is an expression with no single net. */
+      compile_vpi_lookup(&obj->lhs_, lhs);
+      if (rhs)
+	    compile_vpi_lookup(&obj->rhs_, rhs);
 }
 
 
