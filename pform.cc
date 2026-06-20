@@ -2079,10 +2079,18 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	    for (unsigned idx = 0 ;  idx < pins.size() ;  idx += 1)
 		  udp->ports[idx] = pins[idx]->basename();
 
-	    process_udp_table(udp, table, loc);
-	    udp->initial  = init;
+	    if (table) {
+		  process_udp_table(udp, table, loc);
+		  udp->initial  = init;
 
-	    pform_primitives[name] = udp;
+		  pform_primitives[name] = udp;
+	    } else {
+		  ostringstream msg;
+		  msg << "error: Invalid table for UDP primitive " << name
+		      << ".";
+		  VLerror(loc, msg.str().c_str(), "");
+		  delete udp;
+	    }
       }
 
 
@@ -2172,7 +2180,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	    } else {
 		  ostringstream msg;
 		  msg << "error: Invalid table for UDP primitive " << name
-		      << "." << endl;
+		      << ".";
 		    // Some compilers warn if there is just a single C string.
 		  VLerror(loc, msg.str().c_str(), "");
 	    }
