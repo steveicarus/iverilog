@@ -594,7 +594,7 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 	    unsigned base, wid;
 	    size_t n = 0;
 	    char ss[32];
-	    if (2 == sscanf(label(), "W<%u,%[r]>%zn", &base, ss, &n)
+	    if (2 == sscanf(label(), "W<%u,%31[r]>%zn", &base, ss, &n)
 		       && n == strlen(label())) {
 
 		  val.ptr = vpip_make_vthr_word(base, ss);
@@ -606,7 +606,7 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 		  val.ptr = vpip_make_vthr_str_stack(base);
 		  sym_set_value(sym_vpi, label(), val);
 
-	    } else if (3 == sscanf(label(), "S<%u,vec4,%[su]%u>%zn", &base, ss, &wid, &n)
+	    } else if (3 == sscanf(label(), "S<%u,vec4,%31[su]%u>%zn", &base, ss, &wid, &n)
 		       && n == strlen(label())) {
 
 		  bool signed_flag = false;
