@@ -3410,6 +3410,14 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  return 0;
 	    }
 
+	    if (method->type() != NetScope::FUNC) {
+		  cerr << get_fileline() << ": error: Method " << method_name
+		       << " of class " << class_type->get_name()
+		       << " is not a function." << endl;
+		  des->errors++;
+		  return nullptr;
+	    }
+
 	    const NetFuncDef*def = method->func_def();
 	    ivl_assert(*this, def);
 
