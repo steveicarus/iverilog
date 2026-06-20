@@ -1138,7 +1138,7 @@ void NetAssignNB::dump(ostream&o, unsigned ind) const
       if (rval())
 	    o << *rval() << ";" << endl;
       else
-	    o << "rval elaboration error>;" << endl;
+	    o << "<rval elaboration error>;" << endl;
 
 }
 
