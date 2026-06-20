@@ -1,0 +1,5 @@
+{
+    "type"   : "CE",
+    "source" : "udp_empty_table_fail.v",
+    "gold"   : "udp_empty_table_fail"
+}

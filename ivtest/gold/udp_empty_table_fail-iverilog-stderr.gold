@@ -1,0 +1,2 @@
+ivltests/udp_empty_table_fail.v:7: error: Empty UDP table.
+ivltests/udp_empty_table_fail.v:3: error: Invalid table for UDP primitive udp_empty_table_fail.
