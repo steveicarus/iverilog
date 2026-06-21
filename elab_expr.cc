@@ -3474,10 +3474,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    }
 
 	    if (method_name == "substr") {
-		  if (parms_.size() != 2)
+		  if (parms_.size() != 2) {
 			cerr << get_fileline() << ": error: Method `substr()`"
 			     << " requires 2 arguments, got " << parms_.size()
 			     << "." << endl;
+			des->errors += 1;
+		  }
 
 		  static const std::vector<perm_string> parm_names = {
 			perm_string::literal("i"),
@@ -3493,8 +3495,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  sys_expr->parm(0, sub_expr);
 
 		  for (int i = 0; i < 2; i++) {
-			if (!args[i])
+			if (!args[i]) {
+			      NetEConst*expr = make_const_0(32);
+			      expr->set_line(*this);
+			      sys_expr->parm(i + 1, expr);
 			      continue;
+			}
 
 			auto expr = elaborate_rval_expr(des, scope,
 						        &netvector_t::atom2u32,
