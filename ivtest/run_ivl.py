@@ -129,6 +129,10 @@ def run_cmd(cmd: list) -> subprocess.CompletedProcess:
     res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
     return res
 
+def is_execution_error(returncode: int) -> bool:
+    '''Check if a command failed due to an execution error.'''
+    return returncode < 0 or returncode >= 128
+
 
 # pylint: disable-next=invalid-name
 def run_CE(options: dict, cfg: dict) -> list:
@@ -154,10 +158,12 @@ def run_CE(options: dict, cfg: dict) -> list:
 
     if res.returncode == 0:
         return [1, "Failed - CE (no error reported)."]
-    if res.returncode >= 256:
+    if is_execution_error(res.returncode):
         return [1, "Failed - CE (execution error)."]
-    if options['gold'] is not None and not check_gold(options, log_list):
-        return [1, "Failed - CE (Gold file doesn't match output)."]
+    if options['gold'] is not None:
+        gold_rtn = check_gold(options, log_list)
+        if gold_rtn[0]:
+            return [1, "Failed - CE (Gold file doesn't match output)."]
     return [0, "Passed - CE."]
 
 
@@ -248,6 +254,8 @@ def options_to_pass(options: dict) -> list:
 
 def build_ivl_return(translation_fail: bool, res: subprocess.CompletedProcess) -> list:
     '''Generate the return for the iverilog run.'''
+    if is_execution_error(res.returncode):
+        return [1, "Failed - iverilog execution error."]
     if translation_fail:
         if res.returncode != 0:
             return [0, "Passed - TE."]
@@ -258,11 +266,11 @@ def build_ivl_return(translation_fail: bool, res: subprocess.CompletedProcess) -
 
 def build_vvp_return(expected_fail: bool, res: subprocess.CompletedProcess) -> list:
     '''Generate the return for the vvp run.'''
+    if is_execution_error(res.returncode):
+        return [1, "Failed - vvp execution error"]
     if res.returncode != 0 and expected_fail:
         return [0, "Passed - EF."]
-    if res.returncode >= 256:
-        return [1, "Failed - vvp execution error"]
-    if res.returncode > 0 and res.returncode < 256 and not expected_fail:
+    if res.returncode > 0 and not expected_fail:
         return [1, "Failed - vvp error, but expected to succeed"]
     return []
 
