@@ -298,6 +298,15 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 	// Past this point, we should have taken care of the cases
 	// where the name is a member/method of a struct/class.
 	// XXXX ivl_assert(*this, method_name.nil());
+      if (!tail_path.empty()) {
+	    cerr << get_fileline() << ": error: Variable "
+		 << reg->name()
+		 << " does not have a field named: "
+		 << tail_path << "." << endl;
+	    des->errors += 1;
+	    return nullptr;
+      }
+
       ivl_assert(*this, tail_path.empty());
 
       bool need_const_idx = is_cassign || is_force;
