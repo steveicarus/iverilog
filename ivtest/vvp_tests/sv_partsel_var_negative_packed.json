@@ -1,0 +1,8 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_partsel_var_negative_packed.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}
