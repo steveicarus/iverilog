@@ -26,10 +26,12 @@
 # include  <list>
 # include  <map>
 # include  <valarray>
+# include  <vector>
 # include  "pform_types.h"
 
 class Design;
 class NetScope;
+class PClass;
 class PExpr;
 class PFunction;
 class PProcess;
@@ -92,9 +94,11 @@ class PGenerate : public PNamedItem, public LexicalScope {
       std::list<PGate*> gates;
       void add_gate(PGate*);
 
-	// Tasks instantiated within this scheme.
+	// Definitions instantiated within this scheme.
       std::map<perm_string,PTask*> tasks;
       std::map<perm_string,PFunction*>funcs;
+      std::map<perm_string,PClass*> classes;
+      std::vector<PClass*> classes_lexical;
 
 	// Generate schemes can contain further generate schemes.
       std::list<PGenerate*> generate_schemes;

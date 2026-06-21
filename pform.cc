@@ -449,6 +449,11 @@ static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
       return scopex;
 }
 
+static PGenerate* current_generate_scope()
+{
+      return lexical_scope == pform_cur_generate ? pform_cur_generate : nullptr;
+}
+
 static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*item)
 {
       assert(scope);
@@ -585,12 +590,16 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
       ivl_assert(loc, scopex);
-      ivl_assert(loc, !pform_cur_generate);
 
       pform_set_scope_timescale(class_scope, scopex);
 
-      scopex->classes[name] = class_scope;
-      scopex->classes_lexical .push_back(class_scope);
+      if (auto generate_scope = current_generate_scope()) {
+	    generate_scope->classes[name] = class_scope;
+	    generate_scope->classes_lexical.push_back(class_scope);
+      } else {
+	    scopex->classes[name] = class_scope;
+	    scopex->classes_lexical.push_back(class_scope);
+      }
 
       lexical_scope = class_scope;
       return class_scope;
@@ -632,9 +641,9 @@ PTask* pform_push_task_scope(const struct vlltype&loc, const char*name,
 
       pform_set_scope_timescale(task, scopex);
 
-      if (pform_cur_generate) {
-	    add_local_symbol(pform_cur_generate, task_name, task);
-	    pform_cur_generate->tasks[task_name] = task;
+      if (auto generate_scope = current_generate_scope()) {
+	    add_local_symbol(generate_scope, task_name, task);
+	    generate_scope->tasks[task_name] = task;
       } else {
 	    add_local_symbol(scopex, task_name, task);
 	    scopex->tasks[task_name] = task;
@@ -667,9 +676,9 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 
       pform_set_scope_timescale(func, scopex);
 
-      if (pform_cur_generate) {
-	    add_local_symbol(pform_cur_generate, func_name, func);
-	    pform_cur_generate->funcs[func_name] = func;
+      if (auto generate_scope = current_generate_scope()) {
+	    add_local_symbol(generate_scope, func_name, func);
+	    generate_scope->funcs[func_name] = func;
 
       } else {
 	    add_local_symbol(scopex, func_name, func);

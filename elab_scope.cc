@@ -1324,6 +1324,8 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 
       elaborate_scope_enumerations(des, scope, enum_sets);
 
+      elaborate_scope_classes(des, scope, classes_lexical);
+
 	// Run through the defparams for this scope and save the result
 	// in a table for later final override.
 

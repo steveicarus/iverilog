@@ -607,6 +607,7 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
 
       elaborate_sig_funcs(des, scope, funcs);
       elaborate_sig_tasks(des, scope, tasks);
+      elaborate_sig_classes(des, scope, classes);
 
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()
