@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_string_method_substr_too_few_arg_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
