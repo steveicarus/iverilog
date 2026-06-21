@@ -7228,6 +7228,7 @@ bool PGenerate::elaborate_(Design*des, NetScope*scope) const
       if (result_flag) {
 	    elaborate_functions(des, scope, funcs);
 	    elaborate_tasks(des, scope, tasks);
+	    elaborate_classes(des, scope, classes);
 
 	    for (const auto gt : gates) gt->elaborate(des, scope);
 
