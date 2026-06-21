@@ -254,6 +254,7 @@ sv_array_cassign10		vvp_tests/sv_array_cassign10.json
 sv_array_cassign_single	vvp_tests/sv_array_cassign_single.json
 sv_array_cassign_single_fail1	vvp_tests/sv_array_cassign_single_fail1.json
 sv_automatic_2state		vvp_tests/sv_automatic_2state.json
+sv_bad_member_lval_proc_fail	vvp_tests/sv_bad_member_lval_proc_fail.json
 sv_byte_array_string1		vvp_tests/sv_byte_array_string1.json
 sv_byte_array_string2		vvp_tests/sv_byte_array_string2.json
 sv_byte_array_string3		vvp_tests/sv_byte_array_string3.json
