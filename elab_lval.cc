@@ -883,8 +883,10 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       calculate_up_do_width_(des, scope, wid);
 
       NetExpr*base = elab_and_eval(des, scope, index_tail.msb, -1);
+      if (!base)
+	    return false;
 
-      if (base && base->expr_type() == IVL_VT_REAL) {
+      if (base->expr_type() == IVL_VT_REAL) {
 	    cerr << get_fileline() << ": error: Indexed part select base "
 	            "expression for ";
 	    cerr << lv->sig()->name() << "[" << *base;
