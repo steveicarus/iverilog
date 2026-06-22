@@ -453,9 +453,8 @@ static void draw_unary_real(ivl_expr_t expr)
       }
 
       if (ivl_expr_opcode(expr) == '-') {
-	    fprintf(vvp_out, "    %%pushi/real 0, 0; load 0.0\n");
 	    draw_eval_real(sube);
-	    fprintf(vvp_out, "    %%sub/wr;\n");
+	    fprintf(vvp_out, "    %%neg/wr;\n");
 	    return;
       }
 
