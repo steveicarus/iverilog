@@ -92,6 +92,7 @@ case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json
 case2-S				vvp_tests/case2-S.json
 case3				vvp_tests/case3.json
+case_mux_array_word		vvp_tests/case_mux_array_word.json
 casex_synth			vvp_tests/casex_synth.json
 cast_int_ams			vvp_tests/cast_int_ams.json
 cast_real_invalid1		vvp_tests/cast_real_invalid1.json

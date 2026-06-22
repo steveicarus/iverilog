@@ -25,8 +25,13 @@
 void draw_lpm_substitute(ivl_lpm_t net)
 {
       unsigned swidth = width_of_nexus(ivl_lpm_data(net,1));
+      /* draw_net_input() can emit helper statements, for example for
+	 array words. Emit those before starting the .substitute line. */
+      const char*input0 = draw_net_input(ivl_lpm_data(net,0));
+      const char*input1 = draw_net_input(ivl_lpm_data(net,1));
+
       fprintf(vvp_out, "L_%p .substitute %u, %u %u",
 	      net, ivl_lpm_width(net), ivl_lpm_base(net), swidth);
-      fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,0)));
-      fprintf(vvp_out, ", %s;\n", draw_net_input(ivl_lpm_data(net,1)));
+      fprintf(vvp_out, ", %s", input0);
+      fprintf(vvp_out, ", %s;\n", input1);
 }
