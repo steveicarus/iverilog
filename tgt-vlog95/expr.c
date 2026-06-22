@@ -26,7 +26,8 @@
 ivl_parameter_t emitting_param = 0;
 
 /*
- * Data type used to signify if a $signed or $unsigned should be emitted.
+ * Data type used to signify whether to emit $signed() or wrap the
+ * expression in a concatenation for an unsigned self-determined context.
  */
 typedef enum expr_sign_e {
       NO_SIGN = 0,
@@ -77,7 +78,7 @@ static expr_sign_t expr_get_binary_sign_type(ivl_expr_t expr)
 	    break;
       }
 
-	/* Check to see if a $signed() or $unsigned() is needed. */
+	/* Check to see if the expression sign needs to be forced. */
       if (expr_sign && ! opr_sign) rtn = NEED_SIGNED;
       if (! expr_sign && opr_sign) rtn = NEED_UNSIGNED;
 
@@ -97,11 +98,11 @@ static expr_sign_t expr_get_select_sign_type(ivl_expr_t expr,
 	    ivl_expr_t oper1 = ivl_expr_oper1(expr);
 	    opr_sign = ivl_expr_signed(oper1);
 	      /* If the expression being padded is not a signal then don't
-	       * skip a soft $unsigned() (from the binary operator). */
+	       * skip the soft unsigned context from the binary operator. */
 	    if (ivl_expr_type(oper1) != IVL_EX_SIGNAL) can_skip_unsigned -= 1;
       }
 
-	/* Check to see if a $signed() or $unsigned() is needed. */
+	/* Check to see if the expression sign needs to be forced. */
       if (expr_sign && ! opr_sign) rtn = NEED_SIGNED;
       if (! expr_sign && opr_sign && ! can_skip_unsigned) rtn = NEED_UNSIGNED;
 
@@ -115,7 +116,7 @@ static expr_sign_t expr_get_signal_sign_type(ivl_expr_t expr,
       int expr_sign = ivl_expr_signed(expr);
       expr_sign_t rtn = NO_SIGN;
 
-	/* Check to see if a $signed() or $unsigned() is needed. */
+	/* Check to see if the expression sign needs to be forced. */
       if (expr_sign && ! opr_sign) rtn = NEED_SIGNED;
       if (! expr_sign && opr_sign && ! can_skip_unsigned) rtn = NEED_UNSIGNED;
 
@@ -210,10 +211,10 @@ static unsigned expr_is_binary_self_det(ivl_expr_t expr)
 }
 
 /*
- * Determine if a $signed() or $unsigned() system function is needed to get
+ * Determine if $signed() or a single-element concatenation is needed to get
  * the expression sign information correct. can_skip_unsigned may be set for
- * the binary/ternary operators if one of the operands will implicitly cast
- * the expression to unsigned. See calc_can_skip_unsigned() for the details.
+ * the binary/ternary operators if one of the operands will implicitly make
+ * the expression unsigned. See calc_can_skip_unsigned() for the details.
  */
 static expr_sign_t expr_get_sign_type(ivl_expr_t expr, unsigned wid,
                                       unsigned can_skip_unsigned,
@@ -399,8 +400,8 @@ static unsigned calc_can_skip_unsigned(ivl_expr_t oper1, ivl_expr_t oper2)
       oper2_signed |= (ivl_expr_type(oper2) == IVL_EX_SELECT) &&
                       (! ivl_expr_oper2(oper2)) &&
                       (ivl_expr_signed(ivl_expr_oper1(oper2)));
-	/* If either operand is a hard unsigned skip adding an explicit
-	 * $unsigned() since it will be added implicitly. */
+	/* If either operand is hard unsigned, the operator result is already
+	 * unsigned so skip adding an explicit unsigned context. */
       return ! oper1_signed || ! oper2_signed;
 }
 
@@ -1145,7 +1146,7 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
       sign_type = expr_get_sign_type(expr, wid, can_skip_unsigned,
                                      is_full_prec);
 
-	/* Check to see if a $signed() or $unsigned() needs to be emitted
+	/* Check to see if a $signed() or concatenation needs to be emitted
 	 * before the expression. */
       if (sign_type == NEED_SIGNED) {
 	    fprintf(vlog_out, "$signed(");
@@ -1161,14 +1162,8 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 	    is_full_prec = 0;
       }
       if (sign_type == NEED_UNSIGNED) {
-	    fprintf(vlog_out, "$unsigned(");
-	    if (! allow_signed) {
-		  fprintf(stderr, "%s:%u: vlog95 error: $unsigned() is not "
-		                  "supported.\n",
-		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
-		  vlog_errors += 1;
-	    }
-	      /* A $unsigned() creates a self-determined context. */
+	    fprintf(vlog_out, "{");
+	      /* A `{x}` creates a self-determined context. */
 	    wid = 0;
 	      /* It also clears the full precision flag. */
 	    is_full_prec = 0;
@@ -1276,6 +1271,15 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 	    vlog_errors += 1;
 	    break;
       }
-	/* Close the $signed() or $unsigned() if need. */
-      if (sign_type != NO_SIGN) fprintf(vlog_out, ")");
+	/* Close the $signed() or concatenation if needed. */
+      switch (sign_type) {
+	case NEED_SIGNED:
+	    fprintf(vlog_out, ")");
+	    break;
+	case NEED_UNSIGNED:
+	    fprintf(vlog_out, "}");
+	    break;
+	default:
+	    break;
+      }
 }
