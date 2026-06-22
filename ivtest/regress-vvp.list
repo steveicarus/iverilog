@@ -207,6 +207,7 @@ pv_wr_fn_vec2			vvp_tests/pv_wr_fn_vec2.json
 pv_wr_fn_vec4			vvp_tests/pv_wr_fn_vec4.json
 queue_fail			vvp_tests/queue_fail.json
 readmem-invalid			vvp_tests/readmem-invalid.json
+real_negative_zero		vvp_tests/real_negative_zero.json
 scaled_real			vvp_tests/scaled_real.json
 scan-invalid			vvp_tests/scan-invalid.json
 sdf_interconnect1		vvp_tests/sdf_interconnect1.json
