@@ -558,15 +558,24 @@ NetEConst* NetEBComp::eval_eqeq_(bool ne_flag, const NetExpr*le, const NetExpr*r
       const NetEConst*rc = dynamic_cast<const NetEConst*>(re);
       if (lc == 0 || rc == 0) return 0;
 
-      const verinum&lv = lc->value();
-      const verinum&rv = rc->value();
+      verinum lv = lc->value();
+      verinum rv = rc->value();
 
       const verinum::V eq_res = ne_flag? verinum::V0 : verinum::V1;
       const verinum::V ne_res = ne_flag? verinum::V1 : verinum::V0;
 
       verinum::V res = eq_res;
 
-	// The two expressions should already be padded to the same size.
+	// The operands should already be padded to the same width, but unequal-length
+	// string literals (e.g. comparing a `string` parameter to a string constant of a
+	// different length) can reach here unpadded. Pad the narrower to the wider -- the
+	// resize constructor zero-extends unsigned / sign-extends signed -- so e.g.
+	// "a" == "abc" folds to false instead of tripping the assert below.
+      if (lv.len() != rv.len()) {
+	    unsigned w = lv.len() > rv.len()? lv.len() : rv.len();
+	    if (lv.len() != w) lv = verinum(lv, w);
+	    if (rv.len() != w) rv = verinum(rv, w);
+      }
       ivl_assert(*this, lv.len() == rv.len());
 
       for (unsigned idx = 0 ;  idx < lv.len() ;  idx += 1) {
