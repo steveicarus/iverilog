@@ -510,4 +510,9 @@ extern std::ostream& operator<< (std::ostream&out, const name_component_t&that);
 extern std::ostream& operator<< (std::ostream&out, const index_component_t&that);
 extern std::ostream& operator<< (std::ostream&out, const type_restrict_t& type);
 
+struct pform_port_list {
+      std::list<pform_port_t> *ports;
+      data_type_t *type;
+};
+
 #endif /* IVL_pform_types_H */
