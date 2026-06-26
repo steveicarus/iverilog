@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_type_identifier_task_function_argument_name.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Typedefs and task/function arguments are SystemVerilog",
+        "type"          : "CE"
+    }
+}
