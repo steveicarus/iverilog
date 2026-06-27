@@ -747,7 +747,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <text> block_identifier_opt
 %type <text> identifier_name
 %type <identifiers> event_variable_list
-%type <identifiers> list_of_identifiers
+%type <identifiers> genvar_identifier_list list_of_identifiers
 %type <perm_strings> loop_variables
 %type <port_list> list_of_port_identifiers list_of_variable_port_identifiers
 
@@ -1688,27 +1688,27 @@ function_declaration /* IEEE1800-2005: A.2.6 */
   ;
 
 genvar_iteration /* IEEE1800-2012: A.4.2 */
-  : IDENTIFIER '=' expression
+  : identifier_name '=' expression
       { $$.text = $1;
         $$.expr = $3;
       }
-  | IDENTIFIER compressed_operator expression
+  | identifier_name compressed_operator expression
       { $$.text = $1;
         $$.expr = pform_genvar_compressed(@1, $1, $2, $3);;
       }
-  | IDENTIFIER K_INCR
+  | identifier_name K_INCR
       { $$.text = $1;
         $$.expr = pform_genvar_inc_dec(@1, $1, true);
       }
-  | IDENTIFIER K_DECR
+  | identifier_name K_DECR
       { $$.text = $1;
         $$.expr = pform_genvar_inc_dec(@1, $1, false);
       }
-  | K_INCR IDENTIFIER
+  | K_INCR identifier_name
       { $$.text = $2;
         $$.expr = pform_genvar_inc_dec(@1, $2, true);
       }
-  | K_DECR IDENTIFIER
+  | K_DECR identifier_name
       { $$.text = $2;
         $$.expr = pform_genvar_inc_dec(@1, $2, false);
       }
@@ -2010,7 +2010,7 @@ variable_decl_assignment /* IEEE1800-2005 A.2.3 */
 
 
 loop_variables /* IEEE1800-2005: A.6.8 */
-  : loop_variables ',' IDENTIFIER
+  : loop_variables ',' identifier_name
       { std::list<perm_string>*tmp = $1;
 	tmp->push_back(lex_strings.make($3));
 	delete[]$3;
@@ -2021,7 +2021,7 @@ loop_variables /* IEEE1800-2005: A.6.8 */
 	tmp->push_back(perm_string());
 	$$ = tmp;
       }
-  | IDENTIFIER
+  | identifier_name
       { std::list<perm_string>*tmp = new std::list<perm_string>;
 	tmp->push_back(lex_strings.make($1));
 	delete[]$1;
@@ -2058,7 +2058,7 @@ modport_item_list
   ;
 
 modport_item
-  : IDENTIFIER
+  : identifier_name
       { pform_start_modport_item(@1, $1); }
     '(' modport_ports_list ')'
       { pform_end_modport_item(@1); }
@@ -2087,7 +2087,7 @@ modport_ports_list
       { if (last_modport_port.type != MP_TF)
 	      yyerror(@3, "error: task/function declaration not allowed here.");
       }
-  | modport_ports_list ',' IDENTIFIER
+  | modport_ports_list ',' identifier_name
       { if (last_modport_port.type == MP_SIMPLE) {
 	      pform_add_modport_port(@3, last_modport_port.direction,
 				     lex_strings.make($3), 0);
@@ -2101,7 +2101,7 @@ modport_ports_list
   ;
 
 modport_ports_declaration
-  : attribute_list_opt port_direction IDENTIFIER
+  : attribute_list_opt port_direction identifier_name
       { last_modport_port.type = MP_SIMPLE;
 	last_modport_port.direction = $2;
 	pform_add_modport_port(@3, $2, lex_strings.make($3), 0);
@@ -2115,7 +2115,7 @@ modport_ports_declaration
 	delete $3;
 	delete $1;
       }
-  | attribute_list_opt import_export IDENTIFIER
+  | attribute_list_opt import_export identifier_name
       { last_modport_port.type = MP_TF;
 	last_modport_port.is_import = $2;
 	yyerror(@3, "sorry: modport task/function ports are not yet supported.");
@@ -2128,7 +2128,7 @@ modport_ports_declaration
 	yyerror(@3, "sorry: modport task/function ports are not yet supported.");
 	delete $1;
       }
-  | attribute_list_opt K_clocking IDENTIFIER
+  | attribute_list_opt K_clocking identifier_name
       { last_modport_port.type = MP_CLOCKING;
 	last_modport_port.direction = NetNet::NOT_A_PORT;
 	yyerror(@3, "sorry: modport clocking declaration is not yet supported.");
@@ -2197,15 +2197,10 @@ package_import_declaration /* IEEE1800-2005 A.2.1.3 */
   ;
 
 package_import_item
-  : package_scope IDENTIFIER
+  : package_scope identifier_name
       { lex_in_package_scope(0);
 	pform_package_import(@1, $1, $2);
 	delete[]$2;
-      }
-  | package_scope TYPE_IDENTIFIER
-      { lex_in_package_scope(0);
-	pform_package_import(@1, $1, $2.text);
-	delete[]$2.text;
       }
   | package_scope '*'
       { lex_in_package_scope(0);
@@ -2224,13 +2219,9 @@ package_export_declaration /* IEEE1800-2017 A.2.1.3 */
   ;
 
 package_export_item
-  : PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER
+  : PACKAGE_IDENTIFIER K_SCOPE_RES identifier_name
       { pform_package_export(@2, $1, $3);
 	delete[] $3;
-      }
-  | PACKAGE_IDENTIFIER K_SCOPE_RES TYPE_IDENTIFIER
-      { pform_package_export(@2, $1, $3.text);
-	delete[] $3.text;
       }
   | PACKAGE_IDENTIFIER K_SCOPE_RES '*'
       { pform_package_export(@2, $1, nullptr);
@@ -3274,7 +3265,7 @@ delay_value_simple
 	      FILE_NAME($$, @1);
 	}
       }
-  | IDENTIFIER
+  | identifier_name
       { PEIdent*tmp = new PEIdent(lex_strings.make($1), @1.lexical_pos);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
@@ -3351,16 +3342,16 @@ nature_item
   : K_units '=' STRING ';'
       { delete[] $3; }
   | K_abstol '=' expression ';'
-  | K_access '=' IDENTIFIER ';'
+  | K_access '=' identifier_name ';'
       { pform_nature_access(@1, $3); delete[] $3; }
-  | K_idt_nature '=' IDENTIFIER ';'
+  | K_idt_nature '=' identifier_name ';'
       { delete[] $3; }
-  | K_ddt_nature '=' IDENTIFIER ';'
+  | K_ddt_nature '=' identifier_name ';'
       { delete[] $3; }
   ;
 
 config_declaration
-  : K_config IDENTIFIER ';'
+  : K_config identifier_name ';'
     K_design lib_cell_identifiers ';'
     list_of_config_rule_statements
     K_endconfig
@@ -3527,9 +3518,9 @@ event_expression
      or explicit as a named branch. Elaboration will check that the
      function name really is a nature attribute identifier. */
 branch_probe_expression
-  : IDENTIFIER '(' IDENTIFIER ',' IDENTIFIER ')'
+  : identifier_name '(' identifier_name ',' identifier_name ')'
       { $$ = pform_make_branch_probe_expression(@1, $1, $3, $5); }
-  | IDENTIFIER '(' IDENTIFIER ')'
+  | identifier_name '(' identifier_name ')'
       { $$ = pform_make_branch_probe_expression(@1, $1, $3); }
   ;
 
@@ -4603,6 +4594,13 @@ list_of_identifiers
       { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
   ;
 
+genvar_identifier_list
+  : identifier_name
+      { $$ = list_from_identifier($1, @1.lexical_pos); }
+  | genvar_identifier_list ',' identifier_name
+      { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
+  ;
+
 list_of_port_identifiers
   : IDENTIFIER dimensions_opt
       { $$ = make_port_list($1, @1.lexical_pos, $2, 0); }
@@ -4809,7 +4807,7 @@ cont_assign_list
      items, and finally an end marker. */
 
 module
-  : attribute_list_opt module_start lifetime_opt IDENTIFIER
+  : attribute_list_opt module_start lifetime_opt identifier_name
       { pform_startmodule(@2, $4, $2==K_program, $2==K_interface, $3, $1);
         port_declaration_context_init(); }
     module_package_import_list_opt
@@ -4916,7 +4914,12 @@ label_opt
   ;
 
 module_attribute_foreign
-  : K_PSTAR IDENTIFIER K_integer IDENTIFIER '=' STRING ';' K_STARP { $$ = 0; }
+  : K_PSTAR identifier_name K_integer identifier_name '=' STRING ';' K_STARP
+      { delete[] $2;
+	delete[] $4;
+	delete[] $6;
+	$$ = 0;
+      }
   | { $$ = 0; }
   ;
 
@@ -5290,10 +5293,10 @@ module_item
 
   | K_generate { check_in_gen_region(@1); } generate_item_list_opt K_endgenerate { in_gen_region = false; }
 
-  | K_genvar list_of_identifiers ';'
+  | K_genvar genvar_identifier_list ';'
       { pform_genvars(@1, $2); }
 
-  | K_for '(' K_genvar_opt IDENTIFIER '=' expression ';'
+  | K_for '(' K_genvar_opt identifier_name '=' expression ';'
               expression ';'
               genvar_iteration ')'
       { pform_start_generate_for(@2, $3, $4, $6, $8, $10.text, $10.expr); }
@@ -6340,13 +6343,13 @@ specify_simple_path
   ;
 
 specify_path_identifiers
-  : IDENTIFIER
+  : identifier_name
       { std::list<perm_string>*tmp = new std::list<perm_string>;
 	tmp->push_back(lex_strings.make($1));
 	$$ = tmp;
 	delete[]$1;
       }
-  | IDENTIFIER '[' expr_primary ']'
+  | identifier_name '[' expr_primary ']'
       { if (gn_specify_blocks_flag) {
 	      yywarn(@4, "warning: Bit selects are not currently supported "
 			 "in path declarations. The declaration "
@@ -6357,7 +6360,7 @@ specify_path_identifiers
 	$$ = tmp;
 	delete[]$1;
       }
-  | IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
+  | identifier_name '[' expr_primary polarity_operator expr_primary ']'
       { if (gn_specify_blocks_flag) {
 	      yywarn(@4, "warning: Part selects are not currently supported "
 			 "in path declarations. The declaration "
@@ -6368,13 +6371,13 @@ specify_path_identifiers
 	$$ = tmp;
 	delete[]$1;
       }
-  | specify_path_identifiers ',' IDENTIFIER
+  | specify_path_identifiers ',' identifier_name
       { std::list<perm_string>*tmp = $1;
 	tmp->push_back(lex_strings.make($3));
 	$$ = tmp;
 	delete[]$3;
       }
-  | specify_path_identifiers ',' IDENTIFIER '[' expr_primary ']'
+  | specify_path_identifiers ',' identifier_name '[' expr_primary ']'
       { if (gn_specify_blocks_flag) {
 	      yywarn(@4, "warning: Bit selects are not currently supported "
 			 "in path declarations. The declaration "
@@ -6385,7 +6388,7 @@ specify_path_identifiers
 	$$ = tmp;
 	delete[]$3;
       }
-  | specify_path_identifiers ',' IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
+  | specify_path_identifiers ',' identifier_name '[' expr_primary polarity_operator expr_primary ']'
       { if (gn_specify_blocks_flag) {
 	      yywarn(@4, "warning: Part selects are not currently supported "
 			 "in path declarations. The declaration "
@@ -6399,7 +6402,7 @@ specify_path_identifiers
   ;
 
 specparam
-  : IDENTIFIER '=' expr_mintypmax
+  : identifier_name '=' expr_mintypmax
       { pform_set_specparam(@1, lex_strings.make($1), specparam_active_range, $3);
 	delete[]$1;
       }
