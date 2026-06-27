@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_declaration_after_null_statement_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
