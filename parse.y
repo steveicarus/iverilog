@@ -139,12 +139,16 @@ static data_type_t *pform_make_parray_type(const struct vlltype&loc,
 
 template <class T>
 static void set_type_id_range(T&value, data_type_t *type, char *id,
-			      unsigned lexical_pos,
+			      const YYLTYPE&loc,
 			      std::list<pform_range_t> *ranges)
 {
       value.type = type;
       value.id = id;
-      value.lexical_pos = lexical_pos;
+      value.lexical_pos = loc.lexical_pos;
+      value.first_line = loc.first_line;
+      value.first_column = loc.first_column;
+      value.last_line = loc.last_line;
+      value.last_column = loc.last_column;
       value.ranges = ranges;
 }
 
@@ -297,6 +301,29 @@ static decl_assignment_t *pform_make_net_decl(const YYLTYPE&loc, char *id,
 					      PExpr *init)
 {
       return pform_make_net_decl(loc, id, loc.lexical_pos, udims, init);
+}
+
+static void pform_set_parameter(const YYLTYPE&loc, char *id, unsigned lexical_pos,
+				bool is_local, bool is_type,
+				type_restrict_t type_restrict,
+				data_type_t*data_type, const list<pform_range_t>*udims,
+				PExpr*expr, LexicalScope::range_t*value_range)
+{
+      YYLTYPE id_loc = loc;
+      id_loc.lexical_pos = lexical_pos;
+      pform_set_parameter(id_loc, lex_strings.make(id), is_local, is_type,
+			  type_restrict, data_type, udims, expr, value_range);
+      delete[] id;
+}
+
+static void pform_set_parameter(const YYLTYPE&loc, char *id,
+				bool is_local, bool is_type,
+				type_restrict_t type_restrict,
+				data_type_t*data_type, const list<pform_range_t>*udims,
+				PExpr*expr, LexicalScope::range_t*value_range)
+{
+      pform_set_parameter(loc, id, loc.lexical_pos, is_local, is_type,
+			  type_restrict, data_type, udims, expr, value_range);
 }
 
 template <class T> void append(vector<T>&out, const std::vector<T>&in)
@@ -699,6 +726,10 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 	    data_type_t *type;
 	    char *id;
 	    unsigned lexical_pos;
+	    int first_line;
+	    int first_column;
+	    int last_line;
+	    int last_column;
 	    std::list<pform_range_t>*ranges;
       } type_id_range;
 
@@ -2726,25 +2757,26 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
   // dimensions followed by a separate declaration name.
 data_type_or_implicit_plus_id_base
   : IDENTIFIER
-      { set_type_id_range($$, nullptr, $1, @1.lexical_pos, nullptr);
+      { set_type_id_range($$, nullptr, $1, @1, nullptr);
       }
   | atomic_type identifier_name
-      { set_type_id_range($$, $1, $2, @2.lexical_pos, nullptr);
+      { set_type_id_range($$, $1, $2, @2, nullptr);
       }
   | implicit_type identifier_name
-      { set_type_id_range($$, $1, $2, @2.lexical_pos, nullptr);
+      { set_type_id_range($$, $1, $2, @2, nullptr);
       }
   | ps_type_identifier_dim identifier_name
-      { set_type_id_range($$, $1, $2, @2.lexical_pos, nullptr);
+      { set_type_id_range($$, $1, $2, @2, nullptr);
       }
   ;
 
 data_type_or_implicit_plus_id_dim
   : TYPE_IDENTIFIER dimensions_opt
-      { set_type_id_range($$, nullptr, $1.text, @1.lexical_pos, $2);
+      { set_type_id_range($$, nullptr, $1.text, @1, $2);
       }
   | data_type_or_implicit_plus_id_base dimensions_opt
-      { set_type_id_range($$, $1.type, $1.id, $1.lexical_pos, $2);
+      { $$ = $1;
+	$$.ranges = $2;
       }
   ;
 
@@ -2754,19 +2786,19 @@ data_type_or_implicit_plus_id_dim
   // still parsed as a continuation of the previous port declaration.
 partial_port_type_plus_id_dim
   : atomic_type identifier_name dimensions_opt
-      { set_type_id_range($$, $1, $2, @2.lexical_pos, $3);
+      { set_type_id_range($$, $1, $2, @2, $3);
       }
   | implicit_type identifier_name dimensions_opt
-      { set_type_id_range($$, $1, $2, @2.lexical_pos, $3);
+      { set_type_id_range($$, $1, $2, @2, $3);
       }
   ;
 
 partial_port_name_dim
   : IDENTIFIER dimensions_opt
-      { set_type_id_range($$, nullptr, $1, @1.lexical_pos, $2);
+      { set_type_id_range($$, nullptr, $1, @1, $2);
       }
   | TYPE_IDENTIFIER dimensions_opt
-      { set_type_id_range($$, nullptr, $1.text, @1.lexical_pos, $2);
+      { set_type_id_range($$, nullptr, $1.text, @1, $2);
       }
   ;
 
@@ -2777,7 +2809,7 @@ partial_port_typedef_plus_id_dim
 	FILE_NAME(tmp, @1);
 	delete[]$1.text;
 	tmp = pform_make_parray_type(@2, tmp, $2);
-	set_type_id_range($$, tmp, $3, @3.lexical_pos, $4);
+	set_type_id_range($$, tmp, $3, @3, $4);
       }
   | package_scope TYPE_IDENTIFIER dimensions_opt identifier_name dimensions_opt
       { lex_in_package_scope(nullptr);
@@ -2785,7 +2817,7 @@ partial_port_typedef_plus_id_dim
 	FILE_NAME(tmp, @2);
 	delete[]$2.text;
 	tmp = pform_make_parray_type(@3, tmp, $3);
-	set_type_id_range($$, tmp, $4, @4.lexical_pos, $5);
+	set_type_id_range($$, tmp, $4, @4, $5);
       }
   ;
 
@@ -5207,38 +5239,27 @@ type_param
   ;
 
 module_parameter
-  : parameter param_type parameter_assign
-  | localparam param_type parameter_assign
+  : parameter parameter_assign_with_type
+  | localparam parameter_assign_with_type
       { pform_requires_sv(@1, "Local parameter in module parameter port list");
       }
   ;
 
 module_parameter_port_list
   : module_parameter
-  | data_type_opt
-      { param_data_type = $1;
-        param_is_local = false;
-        param_is_type = false;
-	param_type_restrict = {};
-      }
-    parameter_assign
-      { pform_requires_sv(@3, "Omitting initial `parameter` in parameter port "
+  | value_parameter_assign_with_type
+      { pform_requires_sv(@1, "Omitting initial `parameter` in parameter port "
 			      "list");
       }
   | type_param
       { param_is_local = false; }
     parameter_assign
   | module_parameter_port_list ',' module_parameter
-  | module_parameter_port_list ',' data_type_opt
-      { if ($3) {
-	      pform_requires_sv(@3, "Omitting `parameter`/`localparam` before "
-				    "data type in parameter port list");
-	      param_data_type = $3;
-	      param_is_type = false;
-	      param_type_restrict = {};
-        }
+  | module_parameter_port_list ',' parameter_assign
+  | module_parameter_port_list ',' value_parameter_assign_with_explicit_type
+      { pform_requires_sv(@3, "Omitting `parameter`/`localparam` before "
+			      "data type in parameter port list");
       }
-    parameter_assign
   | module_parameter_port_list ',' type_param parameter_assign
   ;
 
@@ -5852,19 +5873,6 @@ net_type_or_var_opt
   | K_var        { $$ = NetNet::REG; }
   ;
 
-  /* The param_type rule is just the data_type_or_implicit rule wrapped
-     with an assignment to para_data_type with the figured data type.
-     This is used by parameter_assign, which is found to the right of
-     the param_type in various rules. */
-
-param_type
-  : data_type_or_implicit
-      { param_is_type = false;
-        param_data_type = $1;
-	param_type_restrict = {};
-      }
-  | type_param
-
 parameter
   : K_parameter
       { param_is_local = false; }
@@ -5876,7 +5884,7 @@ localparam
   ;
 
 parameter_declaration
-  : parameter_or_localparam param_type parameter_assign_list ';'
+  : parameter_or_localparam parameter_assign_list_with_type ';'
 
 parameter_or_localparam
   : parameter
@@ -5888,17 +5896,73 @@ parameter_or_localparam
      handling code. localparams parse the same as parameters, they
      just behave differently when someone tries to override them. */
 
-parameter_assign_list
-  : parameter_assign
-  | parameter_assign_list ',' parameter_assign
+  // The first parameter assignment is parsed together with the optional type
+  // so `parameter T` can shadow a typedef name, while `parameter T p` still
+  // parses T as the parameter type. Continuations keep the previous type, so a
+  // bare typedef name after a comma is still a parameter name.
+parameter_assign_list_with_type
+  : parameter_assign_with_type
+  | parameter_assign_list_with_type ',' parameter_assign
+  ;
+
+parameter_assign_with_type
+  : value_parameter_assign_with_type
+  | type_param parameter_assign
+  ;
+
+value_parameter_assign_with_type
+  : data_type_or_implicit_plus_id_dim initializer_opt parameter_value_ranges_opt
+      { param_is_type = false;
+	param_type_restrict = {};
+	param_data_type = $1.type;
+	YYLTYPE id_loc = @1;
+	id_loc.first_line = $1.first_line;
+	id_loc.first_column = $1.first_column;
+	id_loc.last_line = $1.last_line;
+	id_loc.last_column = $1.last_column;
+	id_loc.lexical_pos = $1.lexical_pos;
+	pform_set_parameter(id_loc, $1.id, param_is_local,
+			    param_is_type, param_type_restrict,
+			    param_data_type, $1.ranges, $2, $3);
+      }
+  ;
+
+  // Parameter port lists allow an explicit type after a comma without
+  // repeating `parameter`, e.g. `#(parameter p = 1, int q = 2)`. Keep this
+  // narrower than value_parameter_assign_with_type so a bare typedef name
+  // after a comma remains a parameter name that inherits the previous type.
+value_parameter_assign_with_explicit_type
+  : atomic_type identifier_name dimensions_opt initializer_opt parameter_value_ranges_opt
+      { param_is_type = false;
+	param_type_restrict = {};
+	param_data_type = $1;
+	pform_set_parameter(@2, $2, param_is_local,
+			    param_is_type, param_type_restrict,
+			    param_data_type, $3, $4, $5);
+      }
+  | implicit_type identifier_name dimensions_opt initializer_opt parameter_value_ranges_opt
+      { param_is_type = false;
+	param_type_restrict = {};
+	param_data_type = $1;
+	pform_set_parameter(@2, $2, param_is_local,
+			    param_is_type, param_type_restrict,
+			    param_data_type, $3, $4, $5);
+      }
+  | ps_type_identifier_dim identifier_name dimensions_opt initializer_opt parameter_value_ranges_opt
+      { param_is_type = false;
+	param_type_restrict = {};
+	param_data_type = $1;
+	pform_set_parameter(@2, $2, param_is_local,
+			    param_is_type, param_type_restrict,
+			    param_data_type, $3, $4, $5);
+      }
   ;
 
 parameter_assign
-  : IDENTIFIER dimensions_opt initializer_opt parameter_value_ranges_opt
-      { pform_set_parameter(@1, lex_strings.make($1), param_is_local,
+  : identifier_name dimensions_opt initializer_opt parameter_value_ranges_opt
+      { pform_set_parameter(@1, $1, param_is_local,
 			    param_is_type, param_type_restrict,
 			    param_data_type, $2, $3, $4);
-	delete[]$1;
       }
   ;
 
