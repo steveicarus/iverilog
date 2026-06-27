@@ -936,7 +936,6 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <statement> udp_initial udp_init_opt
 
 %type <text> event_variable label_opt interface_port_modport_opt
-%type <text> block_identifier_opt
 %type <text> identifier_name
 %type <identifiers> event_variable_list
 %type <identifiers> genvar_identifier_list list_of_identifiers
@@ -1001,6 +1000,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <decl_assignments> net_decl_assigns list_of_variable_decl_assignments
 %type <decl_assignments_with_type> list_of_net_decl_assignments_with_type
 %type <decl_assignments_with_type> list_of_variable_decl_assignments_with_type
+%type <decl_assignments_with_type> type_identifier_variable_decl_assignments_with_type
 
 %type <data_type>  data_type data_type_opt data_type_or_implicit data_type_or_implicit_or_void
 %type <data_type>  block_reg_data_type
@@ -1156,15 +1156,8 @@ assignment_pattern /* IEEE1800-2005: A.6.7.1 */
       }
   ;
 
-  /* Some rules have a ... [ block_identifier ':' ] ... part. This
-     implements it in a LALR way. */
-block_identifier_opt /* */
-  : IDENTIFIER ':'
-      { $$ = $1; }
-  |
-      { $$ = 0; }
-  ;
-
+  /* Assertion items have an optional block identifier prefix. Consume the
+     label here because its spelling is not used when assertions are parsed. */
 assertion_item_label_opt
   : identifier_name ':'
       { delete[]$1; }
@@ -1375,9 +1368,8 @@ class_new /* IEEE1800-2005 A.2.4 */
      concurrent_assertion_statement and checker_instantiation rules. */
 
 concurrent_assertion_item /* IEEE1800-2012 A.2.10 */
-  : block_identifier_opt concurrent_assertion_statement
-      { delete $1;
-	delete $2;
+  : assertion_item_label_opt concurrent_assertion_statement
+      { delete $2;
       }
   ;
 
@@ -1736,9 +1728,8 @@ data_type_or_implicit_or_void
   ;
 
 deferred_immediate_assertion_item /* IEEE1800-2012: A.6.10 */
-  : block_identifier_opt deferred_immediate_assertion_statement
-      { delete $1;
-	delete $2;
+  : assertion_item_label_opt deferred_immediate_assertion_statement
+      { delete $2;
       }
   ;
 
@@ -2254,6 +2245,25 @@ list_of_variable_decl_assignments /* IEEE1800-2005 A.2.3 */
       { std::list<decl_assignment_t*>*tmp = $1;
 	tmp->push_back($3);
 	$$ = tmp;
+      }
+  ;
+
+type_identifier_variable_decl_assignments_with_type
+  : TYPE_IDENTIFIER dimensions_opt list_of_variable_decl_assignments
+      { pform_set_type_referenced(@1, $1.text);
+	auto tmp = new typeref_t($1.type);
+	FILE_NAME(tmp, @1);
+	delete[]$1.text;
+	$$.decl_assignments = $3;
+	$$.type = pform_make_parray_type(@2, tmp, $2);
+      }
+  | package_scope TYPE_IDENTIFIER dimensions_opt list_of_variable_decl_assignments
+      { lex_in_package_scope(nullptr);
+	auto tmp = new typeref_t($2.type, $1);
+	FILE_NAME(tmp, @2);
+	delete[]$2.text;
+	$$.decl_assignments = $4;
+	$$.type = pform_make_parray_type(@3, tmp, $3);
       }
   ;
 
@@ -3213,6 +3223,18 @@ attribute
      rule has presumably set up the scope. */
 
 block_item_decl
+  : block_item_decl_no_type_identifier_start
+  | type_identifier_variable_decl_assignments_with_type ';'
+      { if ($1.type) pform_make_var(@1, $1.decl_assignments, $1.type, attributes_in_context, false);
+	var_lifetime = LexicalScope::INHERITED;
+      }
+  | ps_type_identifier_dim error ';'
+      { yyerror(@1, "error: Syntax error in variable list.");
+	yyerrok;
+      }
+  ;
+
+block_item_decl_no_type_identifier_start
 
   /* variable declarations. Note that data_type can be 0 if we are
      recovering from an error. */
@@ -3244,11 +3266,6 @@ block_item_decl
 
   | K_reg block_reg_data_type list_of_variable_decl_assignments ';'
       { if ($2) pform_make_var(@1, $3, $2, attributes_in_context, false);
-	var_lifetime = LexicalScope::INHERITED;
-      }
-
-  | ps_type_identifier_dim list_of_variable_decl_assignments ';'
-      { if ($1) pform_make_var(@1, $2, $1, attributes_in_context, false);
 	var_lifetime = LexicalScope::INHERITED;
       }
 
@@ -3292,10 +3309,6 @@ block_item_decl
 	yyerrok;
       }
   | K_reg block_reg_data_type error ';'
-      { yyerror(@1, "error: Syntax error in variable list.");
-	yyerrok;
-      }
-  | ps_type_identifier_dim error ';'
       { yyerror(@1, "error: Syntax error in variable list.");
 	yyerrok;
       }
@@ -5613,7 +5626,13 @@ module_item
   /* block_item_decl rule is shared with task blocks and named
      begin/end. Careful to pass attributes to the block_item_decl. */
 
-  | attribute_list_opt { attributes_in_context = $1; } block_item_decl
+  | attribute_list_opt type_identifier_variable_decl_assignments_with_type ';'
+      { if ($2.type) pform_make_var(@2, $2.decl_assignments, $2.type, $1, false);
+	var_lifetime = LexicalScope::INHERITED;
+	if ($1) delete $1;
+      }
+
+  | attribute_list_opt { attributes_in_context = $1; } block_item_decl_no_type_identifier_start
       { delete attributes_in_context;
 	attributes_in_context = 0;
       }
