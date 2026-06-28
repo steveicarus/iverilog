@@ -213,6 +213,7 @@ pv_wr_fn_vec2			vvp_tests/pv_wr_fn_vec2.json
 pv_wr_fn_vec4			vvp_tests/pv_wr_fn_vec4.json
 queue_fail			vvp_tests/queue_fail.json
 readmem-invalid			vvp_tests/readmem-invalid.json
+real_delay_assign		vvp_tests/real_delay_assign.json
 real_negative_zero		vvp_tests/real_negative_zero.json
 real_unary_minus_inf		vvp_tests/real_unary_minus_inf.json
 real_unary_minus_nan		vvp_tests/real_unary_minus_nan.json
