@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_type_identifier_net_name.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Typedefs and SystemVerilog net types are SystemVerilog",
+        "type"          : "CE"
+    }
+}
