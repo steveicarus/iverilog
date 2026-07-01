@@ -59,6 +59,20 @@ module test;
 
     c.d = '{2, 3, 4};
     `check(c.d.product(), 24);
+    `check(c.d.sum() with (item + 1), 12);
+    `check(c.d.product() with (item + 1), 60);
+
+    c.d = '{1, 2, 3};
+    c.d.reverse();
+    `check(c.d[0], 3);
+    `check(c.d[1], 2);
+    `check(c.d[2], 1);
+
+    c.d = '{3, 1, 2};
+    c.d.sort();
+    `check(c.d[0], 1);
+    `check(c.d[1], 2);
+    `check(c.d[2], 3);
 
     if (!failed)
       $display("PASSED");
