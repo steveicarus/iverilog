@@ -50,6 +50,7 @@ stamp-*-h
 /vvp/vvp.man
 
 # Directories
+/devel/
 autom4te.cache
 dep
 

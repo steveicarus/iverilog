@@ -421,7 +421,13 @@ void PEConcat::dump(ostream&out) const
 
 void PECallFunction::dump(ostream &out) const
 {
+      if (peek_chain_prefix()) {
+	    peek_chain_prefix()->dump(out);
+	    out << ".";
+      }
       out << path_ << "(" << parms_ << ")";
+      if (peek_with_clause())
+	    out << " with (" << *peek_with_clause() << ")";
 }
 
 void PECastSize::dump(ostream &out) const
