@@ -286,6 +286,11 @@ void vpip_format_strength(char*str, s_vpi_value*value, unsigned bit)
       assert(vpip_routines);
       vpip_routines->format_strength(str, value, bit);
 }
+char* vpip_format_pretty(vpiHandle ref)
+{
+      assert(vpip_routines);
+      return vpip_routines->format_pretty(ref);
+}
 void vpip_make_systf_system_defined(vpiHandle ref)
 {
       assert(vpip_routines);

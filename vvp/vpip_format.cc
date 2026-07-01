@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,7 +18,15 @@
  */
 
 # include  "vpi_user.h"
+# include  "vpi_priv.h"
+# include  "vvp_darray.h"
+# include  "vvp_net_sig.h"
 # include  <cassert>
+# include  <cstdio>
+# include  <cstdlib>
+# include  <cstring>
+# include  <string>
+# include  "ivl_alloc.h"
 
 static const char str_char1_table[257] = {
       ".HS1M222" "W3333333" /* 00 0F */ "L4444444" "44444444" /* 10 1F */
@@ -103,4 +111,61 @@ extern "C" void vpip_format_strength(char*str, s_vpi_value*value, unsigned bit)
 	            (int)value->value.strength[bit].logic);
 	    assert(0);
       }
+}
+
+static char* vpip_format_pretty_string(const char*msg)
+{
+      return strdup(msg);
+}
+
+static char* format_darray_pretty(vvp_darray* aobj)
+{
+      if (!aobj || aobj->get_size() == 0)
+	    return strdup("{}");
+
+      std::string out = "{";
+
+      for (size_t i = 0; i < aobj->get_size(); i += 1) {
+	    if (i > 0)
+		  out += ", ";
+	    if (dynamic_cast<vvp_darray_real*>(aobj)) {
+		  double d;
+		  aobj->get_word((unsigned) i, d);
+		  char buf[256];
+		  snprintf(buf, sizeof buf, "%g", d);
+		  out += buf;
+	    } else if (dynamic_cast<vvp_darray_string*>(aobj)) {
+		  std::string s;
+		  aobj->get_word((unsigned) i, s);
+		  out += "\"";
+		  out += s;
+		  out += "\"";
+	    } else {
+		  vvp_vector4_t v;
+		  aobj->get_word((unsigned) i, v);
+		  s_vpi_value val;
+		  val.format = vpiDecStrVal;
+		  vpip_vec4_get_value(v, v.size(), false, &val);
+		  out += val.value.str;
+	    }
+      }
+
+      out += "}";
+      return strdup(out.c_str());
+}
+
+extern "C" char* vpip_format_pretty(vpiHandle ref)
+{
+      if (!ref)
+	    return vpip_format_pretty_string("Handle is NULL");
+
+      if (dynamic_cast<__vpiPropQueueRef*>(ref) ||
+          dynamic_cast<__vpiDarrayVar*>(ref)) {
+	    vvp_darray* aobj = vpip_vpi_darray_from_handle(ref);
+	    if (!aobj)
+		  return vpip_format_pretty_string("Object not found");
+	    return format_darray_pretty(aobj);
+      }
+
+      return vpip_format_pretty_string("Unsupported object type");
 }
