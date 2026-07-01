@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -94,21 +94,11 @@ void vvp_fun_and::run_run()
 
       vvp_vector4_t result (input_[0]);
 
-      for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
-	    vvp_bit4_t bitbit = result.value(idx);
-	    for (unsigned pdx = 1 ;  pdx < 4 ;  pdx += 1) {
-		  if (input_[pdx].size() < idx) {
-			bitbit = BIT4_X;
-			break;
-		  }
+      for (unsigned pdx = 1 ; pdx < 4 ; pdx += 1)
+	    result &= input_[pdx];
 
-		  bitbit = bitbit & input_[pdx].value(idx);
-	    }
-
-	    if (invert_)
-		  bitbit = ~bitbit;
-	    result.set_bit(idx, bitbit);
-      }
+      if (invert_)
+	    result.invert();
 
       ptr->send_vec4(result, 0);
 }
@@ -535,21 +525,11 @@ void vvp_fun_or::run_run()
 
       vvp_vector4_t result (input_[0]);
 
-      for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
-	    vvp_bit4_t bitbit = result.value(idx);
-	    for (unsigned pdx = 1 ;  pdx < 4 ;  pdx += 1) {
-		  if (input_[pdx].size() < idx) {
-			bitbit = BIT4_X;
-			break;
-		  }
+      for (unsigned pdx = 1 ; pdx < 4 ; pdx += 1)
+	    result |= input_[pdx];
 
-		  bitbit = bitbit | input_[pdx].value(idx);
-	    }
-
-	    if (invert_)
-		  bitbit = ~bitbit;
-	    result.set_bit(idx, bitbit);
-      }
+      if (invert_)
+	    result.invert();
 
       ptr->send_vec4(result, 0);
 }
@@ -571,21 +551,11 @@ void vvp_fun_xor::run_run()
 
       vvp_vector4_t result (input_[0]);
 
-      for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
-	    vvp_bit4_t bitbit = result.value(idx);
-	    for (unsigned pdx = 1 ;  pdx < 4 ;  pdx += 1) {
-		  if (input_[pdx].size() < idx) {
-			bitbit = BIT4_X;
-			break;
-		  }
+      for (unsigned pdx = 1 ; pdx < 4 ; pdx += 1)
+	    result ^= input_[pdx];
 
-		  bitbit = bitbit ^ input_[pdx].value(idx);
-	    }
-
-	    if (invert_)
-		  bitbit = ~bitbit;
-	    result.set_bit(idx, bitbit);
-      }
+      if (invert_)
+	    result.invert();
 
       ptr->send_vec4(result, 0);
 }

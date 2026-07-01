@@ -78,7 +78,6 @@ void library_add_directory(const char*directory)
 
 SubprogramHeader*library_match_subprogram(perm_string name, const list<const VType*>*params)
 {
-      SubprogramHeader*subp;
       map<perm_string,struct library_contents>::const_iterator lib_it;
 
       for(lib_it = libraries.begin(); lib_it != libraries.end(); ++lib_it) {
@@ -86,6 +85,7 @@ SubprogramHeader*library_match_subprogram(perm_string name, const list<const VTy
         map<perm_string,Package*>::const_iterator pack_it;
 
         for(pack_it = lib.packages.begin(); pack_it != lib.packages.end(); ++pack_it) {
+	    SubprogramHeader*subp;
             if((subp = pack_it->second->match_subprogram(name, params)))
                 return subp;
         }

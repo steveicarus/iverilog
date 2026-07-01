@@ -228,6 +228,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%muli",   of_MULI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nand",   of_NAND,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%nand/r", of_NANDR,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%neg/wr", of_NEG_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%new/cobj",  of_NEW_COBJ,  1, {OA_VPI_PTR,OA_NONE,  OA_NONE} },
       { "%new/darray",of_NEW_DARRAY,2, {OA_BIT1,   OA_STRING,OA_NONE} },
       { "%noop",   of_NOOP,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
@@ -663,7 +664,7 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 	    unsigned base, wid;
 	    size_t n = 0;
 	    char ss[32];
-	    if (2 == sscanf(label(), "W<%u,%[r]>%zn", &base, ss, &n)
+	    if (2 == sscanf(label(), "W<%u,%31[r]>%zn", &base, ss, &n)
 		       && n == strlen(label())) {
 
 		  val.ptr = vpip_make_vthr_word(base, ss);
@@ -675,7 +676,7 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 		  val.ptr = vpip_make_vthr_str_stack(base);
 		  sym_set_value(sym_vpi, label(), val);
 
-	    } else if (3 == sscanf(label(), "S<%u,vec4,%[su]%u>%zn", &base, ss, &wid, &n)
+	    } else if (3 == sscanf(label(), "S<%u,vec4,%31[su]%u>%zn", &base, ss, &wid, &n)
 		       && n == strlen(label())) {
 
 		  bool signed_flag = false;
@@ -1642,7 +1643,7 @@ struct __vpiModPath* compile_modpath(char*label, unsigned width,
 }
 
 static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
-					       char edge,
+					       char edge_c,
 					       const struct symb_s&src,
 					       struct numbv_s&vals,
 					       bool ifnone)
@@ -1660,12 +1661,12 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
       vvp_fun_modpath_src*obj = 0;
 
       int vpi_edge = vpiNoEdge;
-      if (edge == 0) {
+      if (edge_c == 0) {
 	    obj = new vvp_fun_modpath_src(use_delay);
 
       } else {
 	    bool posedge, negedge;
-	    switch (edge) {
+	    switch (edge_c) {
 		case '+':
 		  vpi_edge = vpiPosedge;
 		  posedge = true;
@@ -1685,8 +1686,8 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
 		default:
 		  posedge = false;
 		  negedge = false;
-		  fprintf(stderr, "Unknown edge identifier %c(%d).\n", edge,
-		          edge);
+		  fprintf(stderr, "Unknown edge identifier %c(%d).\n", edge_c,
+		          edge_c);
 		  assert(0);
 	    }
 	    obj = new vvp_fun_modpath_edge(use_delay, posedge, negedge);
@@ -1705,19 +1706,19 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
       return srcobj;
 }
 
-void compile_modpath_src(struct __vpiModPath*dst, char edge,
+void compile_modpath_src(struct __vpiModPath*dst, char edge_c,
 			 const struct symb_s&src,
 			 struct numbv_s&vals,
 			 const struct symb_s&condit_src,
 			 const struct symb_s&path_term_in)
 {
       struct __vpiModPathSrc*obj =
-	    make_modpath_src(dst, edge, src, vals, false);
+	    make_modpath_src(dst, edge_c, src, vals, false);
       input_connect(obj->net, 1, condit_src.text);
       compile_vpi_lookup(&obj->path_term_in.expr, path_term_in.text);
 }
 
-void compile_modpath_src(struct __vpiModPath*dst, char edge,
+void compile_modpath_src(struct __vpiModPath*dst, char edge_c,
 			 const struct symb_s&src,
 			 struct numbv_s&vals,
 			 int condit_src,
@@ -1726,7 +1727,7 @@ void compile_modpath_src(struct __vpiModPath*dst, char edge,
 {
       assert(condit_src == 0);
       struct __vpiModPathSrc*obj =
-	    make_modpath_src(dst, edge, src, vals, ifnone);
+	    make_modpath_src(dst, edge_c, src, vals, ifnone);
       compile_vpi_lookup(&obj->path_term_in.expr, path_term_in.text);
 }
 

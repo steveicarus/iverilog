@@ -763,8 +763,8 @@ statement
   | T_LABEL K_VAR_2U local_flag T_STRING ',' signed_t_number signed_t_number ';'
       { compile_variable($1, $4, $6, $7, vpiIntVar, false, $3); }
 
-  | T_LABEL K_VAR_R T_STRING ',' signed_t_number signed_t_number ';'
-      { compile_var_real($1, $3); }
+  | T_LABEL K_VAR_R local_flag T_STRING ',' signed_t_number signed_t_number ';'
+      { compile_var_real($1, $4, $3); }
 
   | T_LABEL K_VAR_STR T_STRING ';'
       { compile_var_string($1, $3); }

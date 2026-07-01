@@ -838,7 +838,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           vpi_printf("WARNING: %s:%d: incompatible value for %s%s.\n",
                      info->filename, info->lineno, info->name, fmtb);
         } else {
-          PLI_INT32 veclen, word, elem, bits, byte;
+          PLI_INT32 veclen, word, elem, byte;
           char *cp;
 
           veclen = (vpi_get(vpiSize, info->items[*idx])+31)/32;
@@ -849,7 +849,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           for (word = 0; word < veclen; word += 1) {
             /* Write the aval followed by the bval in endian order. */
             for (elem = 0; elem < 2; elem += 1) {
-              bits = *(&value.value.vector[word].aval+elem);
+              PLI_INT32 bits = *(&value.value.vector[word].aval+elem);
 #ifdef WORDS_BIGENDIAN
               for (byte = 3; byte >= 0; byte -= 1) {
 #else

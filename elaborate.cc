@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -52,6 +52,7 @@
 # include  "netscalar.h"
 # include  "netclass.h"
 # include  "netmisc.h"
+# include  "PModport.h"
 # include  "util.h"
 # include  "parse_api.h"
 # include  "compiler.h"
@@ -115,19 +116,16 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 {
       ivl_assert(*this, scope);
 
-      NetExpr* rise_time, *fall_time, *decay_time;
-      eval_delays(des, scope, rise_time, fall_time, decay_time, true);
-
-      ivl_drive_t drive0 = strength0();
-      ivl_drive_t drive1 = strength1();
+      drive_strength_t drive = strength();
+      delay_exprs_t delays;
+      eval_delays(des, scope, delays, true);
 
       ivl_assert(*this, pin(0));
       ivl_assert(*this, pin(1));
 
 	/* Elaborate the l-value. */
         // A continuous assignment can drive a variable if the default strength is used.
-      bool var_allowed_in_sv = (drive0 == IVL_DR_STRONG &&
-                                drive1 == IVL_DR_STRONG) ? true : false;
+      bool var_allowed_in_sv = !drive.has_drive();
       NetNet*lval = pin(0)->elaborate_lnet(des, scope, var_allowed_in_sv);
       if (lval == 0) {
 	    return;
@@ -135,8 +133,8 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 	// If this turns out to be an assignment to an unpacked array,
 	// then handle that special case elsewhere.
-      if (lval->pin_count() > 1) {
-	    elaborate_unpacked_array_(des, scope, lval);
+      if (lval->unpacked_dimensions() > 0) {
+	    elaborate_unpacked_array_(des, scope, lval, drive, delays);
 	    return;
       }
 
@@ -214,7 +212,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	/* When we are given a non-default strength value and if the drive
 	 * source is a bit, part, indexed select or a concatenation we need
 	 * to add a driver (BUFZ) to convey the strength information. */
-      if ((drive0 != IVL_DR_STRONG || drive1 != IVL_DR_STRONG) &&
+      if (drive.has_drive() &&
           ((dynamic_cast<NetESelect*>(rval_expr)) ||
 	   (dynamic_cast<NetEConcat*>(rval_expr)))) {
 	    need_driver_flag = true;
@@ -242,11 +240,11 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 	/* Set the drive and delays for the r-val. */
 
-      if (drive0 != IVL_DR_STRONG || drive1 != IVL_DR_STRONG)
-	    rval->pin(0).drivers_drive(drive0, drive1);
+      if (drive.has_drive())
+	    rval->pin(0).drivers_drive(drive);
 
-      if (rise_time || fall_time || decay_time)
-	    rval->pin(0).drivers_delays(rise_time, fall_time, decay_time);
+      if (delays.has_delay())
+	    rval->pin(0).drivers_delays(delays);
 
       connect(lval->pin(0), rval->pin(0));
 
@@ -267,7 +265,8 @@ NetNet *elaborate_unpacked_array(Design *des, NetScope *scope, const LineInfo &l
 		       << endl;
 		  des->errors++;
 		  return nullptr;
-	    } else if (dynamic_cast<PEAssignPattern*> (expr)) {
+	    } else if (dynamic_cast<PEAssignPattern*> (expr) ||
+	               dynamic_cast<PEString*> (expr)) {
 		  auto net_expr = elaborate_rval_expr(des, scope, lval->array_type(), expr);
 		  if (! net_expr) return nullptr;
 		  expr_net = net_expr->synthesize(des, scope, net_expr);
@@ -313,11 +312,14 @@ NetNet *elaborate_unpacked_array(Design *des, NetScope *scope, const LineInfo &l
       return expr_net;
 }
 
-void PGAssign::elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval) const
+void PGAssign::elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval,
+					 const drive_strength_t &drive,
+					 const delay_exprs_t &delays) const
 {
       NetNet *rval_net = elaborate_unpacked_array(des, scope, *this, lval, pin(1));
       if (rval_net)
-	    assign_unpacked_with_bufz(des, scope, lval, lval, rval_net);
+	    assign_unpacked_with_bufz(des, scope, lval, lval, rval_net, drive,
+				      delays);
 }
 
 void PGBuiltin::calculate_gate_and_lval_count_(unsigned&gate_count,
@@ -825,8 +827,9 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	   values are given, they are taken as specified. */
 
       if (check_delay_count(des)) return;
-      NetExpr* rise_time, *fall_time, *decay_time;
-      eval_delays(des, scope, rise_time, fall_time, decay_time, true);
+      delay_exprs_t delays;
+      eval_delays(des, scope, delays, true);
+      drive_strength_t drive = strength();
 
       struct attrib_list_t*attrib_list;
       unsigned attrib_list_n = 0;
@@ -858,12 +861,8 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 				      attrib_list[adx].val);
 
 	      /* Set the delays and drive strength for all built in gates. */
-	    cur[idx]->rise_time(rise_time);
-	    cur[idx]->fall_time(fall_time);
-	    cur[idx]->decay_time(decay_time);
-
-	    cur[idx]->pin(0).drive0(strength0());
-	    cur[idx]->pin(0).drive1(strength1());
+	    cur[idx]->delay_times(delays);
+	    cur[idx]->pin(0).drive(drive);
 
 	    cur[idx]->set_line(*this);
 	    des->add_node(cur[idx]);
@@ -1203,6 +1202,17 @@ void elaborate_unpacked_port(Design *des, NetScope *scope, NetNet *port_net,
 			     PExpr *expr, NetNet::PortType port_type,
 			     const Module *mod, unsigned int port_idx)
 {
+      if (port_type == NetNet::POUTPUT && !dynamic_cast<PEIdent*> (expr)) {
+	    perm_string port_name = mod->get_port_name(port_idx);
+	    cerr << expr->get_fileline() << ": error: Output port expression"
+	            " must support a continuous assignment." << endl;
+	    cerr << expr->get_fileline() << ":      : Port "
+	         << port_idx + 1 << " (" << port_name << ") of "
+	         << mod->mod_name() << " is connected to " << *expr << endl;
+	    des->errors += 1;
+	    return;
+      }
+
       NetNet *expr_net = elaborate_unpacked_array(des, scope, *expr, port_net,
 						  expr);
       if (!expr_net) {
@@ -1237,32 +1247,12 @@ void elaborate_unpacked_port(Design *des, NetScope *scope, NetNet *port_net,
 	    assign_unpacked_with_bufz(des, scope, port_net, port_net, expr_net);
 }
 
-/*
- * Instantiate a module by recursively elaborating it. Set the path of
- * the recursive elaboration so that signal names get properly
- * set. Connect the ports of the instantiated module to the signals of
- * the parameters. This is done with BUFZ gates so that they look just
- * like continuous assignment connections.
- */
-void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
+bool PGModule::match_module_ports_(Design*des, const Module*rmod,
+				   NetScope*scope,
+				   vector<PExpr*>&pins,
+				   vector<bool>&pins_fromwc,
+				   vector<bool>&pins_is_explicitly_not_connected) const
 {
-
-      ivl_assert(*this, scope);
-
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: Instantiate module "
-		 << rmod->mod_name() << " with instance name "
-		 << get_name() << " in scope " << scope_path(scope) << endl;
-      }
-
-	// This is the array of pin expressions, shuffled to match the
-	// order of the declaration. If the source instantiation uses
-	// bind by order, this is the same as the source list. Otherwise,
-	// the source list is rearranged by name binding into this list.
-      vector<PExpr*>pins (rmod->port_count());
-      vector<bool>pins_fromwc (rmod->port_count(), false);
-      vector<bool>pins_is_explicitly_not_connected (rmod->port_count(), false);
-
 	// If the instance has a pins_ member, then we know we are
 	// binding by name. Therefore, make up a pins array that
 	// reflects the positions of the named ports.
@@ -1271,8 +1261,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	      // Scan the bindings, matching them with port names.
 	    for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
-
-		    // Handle wildcard named port
+		    // Handle wildcard named port.
 		  if (pins_[idx].name[0] == '*') {
 			for (unsigned j = 0 ; j < nexp ; j += 1) {
 			      if (rmod->ports[j] && !pins[j] && !pins_is_explicitly_not_connected[j]) {
@@ -1281,7 +1270,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 				    path_.push_back(name_component_t(rmod->ports[j]->name));
 				    symbol_search_results sr;
 				    symbol_search(this, des, scope, path_, UINT_MAX, &sr);
-				    if (sr.net != 0) {
+				    if (sr.net != 0 ||
+					(rmod->ports[j]->is_interface_port() &&
+					 sr.scope != 0 && sr.scope->is_interface())) {
 					  pins[j] = new PEIdent(rmod->ports[j]->name, UINT_MAX, true);
 					  pins[j]->set_lineno(get_lineno());
 					  pins[j]->set_file(get_file());
@@ -1307,7 +1298,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  }
 
 		    // If I am overriding a wildcard port, delete and
-		    // override it
+		    // override it.
 		  if (pins_fromwc[pidx]) {
 			delete pins[pidx];
 			pins_fromwc[pidx] = false;
@@ -1331,35 +1322,386 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			pins_is_explicitly_not_connected[pidx] = true;
 	    }
 
-
       } else if (pin_count() == 0) {
-
 	      /* Handle the special case that no ports are
 		 connected. It is possible that this is an empty
 		 connect-by-name list, so we'll allow it and assume
 		 that is the case. */
-
 	    for (unsigned idx = 0 ;  idx < rmod->port_count() ;  idx += 1)
 		  pins[idx] = 0;
 
       } else {
-
 	      /* Otherwise, this is a positional list of port
 		 connections. Use as many ports as provided. Trailing
 		 missing ports will be left unconnect or use the default
-		 value if one is available */
-
+		 value if one is available. */
 	    if (pin_count() > rmod->port_count()) {
 		  cerr << get_fileline() << ": error: Wrong number "
 			"of ports. Expecting at most " << rmod->port_count() <<
 			", got " << pin_count() << "."
 		       << endl;
 		  des->errors += 1;
-		  return;
+		  return false;
 	    }
 
 	    std::copy(get_pins().begin(), get_pins().end(), pins.begin());
       }
+
+      return true;
+}
+
+struct interface_actual_scope_t {
+      interface_actual_scope_t() : scope(nullptr), modport(nullptr) { }
+
+      NetScope*scope;
+      const PModport*modport;
+      perm_string display_name;
+};
+
+struct interface_actual_array_t {
+      std::map<long,NetScope::interface_port_alias_t> elements;
+      perm_string display_name;
+};
+
+static long interface_array_index(unsigned idx, long left, long right)
+{
+      long low = left < right ? left : right;
+      long high = left < right ? right : left;
+      return low < high ? low + idx : low - idx;
+}
+
+static bool interface_formal_range(const Module::port_t*port,
+				   Design*des, NetScope*scope,
+				   const LineInfo*li,
+				   long&left, long&right,
+				   unsigned&count)
+{
+      if (!port->interface_unpacked_dimensions) {
+	    left = 0;
+	    right = 0;
+	    count = 1;
+	    return true;
+      }
+
+      if (port->interface_unpacked_dimensions->size() != 1) {
+	    cerr << li->get_fileline() << ": sorry: Interface port `"
+		 << port->name << "' uses a multidimensional array, which "
+		    "is not supported." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      if (!evaluate_range(des, scope, li,
+			  port->interface_unpacked_dimensions->front(),
+			  left, right))
+	    return false;
+
+      count = left > right ? left - right + 1 : right - left + 1;
+      return true;
+}
+
+static bool resolve_interface_actual_scope(const PExpr*actual,
+					   NetScope*parent_scope,
+					   Design*des,
+					   interface_actual_scope_t&res)
+{
+      res = interface_actual_scope_t();
+
+      const PEIdent*actual_ident = dynamic_cast<const PEIdent*>(actual);
+      if (!actual_ident || actual_ident->path().package ||
+	  actual_ident->path().name.size() != 1 ||
+	  actual_ident->path().name.front().index.size() > 1) {
+	    return false;
+      }
+
+      const name_component_t&comp = actual_ident->path().name.front();
+      res.display_name = comp.name;
+
+      if (!comp.index.empty()) {
+	    if (comp.index.front().sel != index_component_t::SEL_BIT) {
+		  cerr << actual->get_fileline() << ": sorry: Interface array "
+		       << "slice actuals are not supported." << endl;
+		  des->errors += 1;
+		  return true;
+	    }
+
+	    bool error_flag = false;
+	    hname_t actual_name = eval_path_component(des, parent_scope,
+						      comp, error_flag);
+	    if (error_flag)
+		  return true;
+
+	    if (NetScope*child = parent_scope->child(actual_name))
+		  res.scope = child;
+	    else if (actual_name.has_numbers()) {
+		  const NetScope::interface_port_alias_t*alias =
+			parent_scope->find_interface_port_alias_element(
+			      comp.name, actual_name.peek_number(0));
+		  if (alias) {
+			res.scope = alias->actual_scope;
+			res.modport = alias->modport;
+		  }
+	    }
+
+	    if (!res.scope) {
+		  symbol_search_results sr;
+		  symbol_search(actual, des, parent_scope, actual_ident->path(),
+				actual_ident->lexical_pos(), &sr);
+		  res.scope = sr.scope;
+		  if (sr.through_interface_alias())
+			res.modport = sr.interface_alias_modport;
+	    }
+
+	    return true;
+      }
+
+      symbol_search_results sr;
+      symbol_search(actual, des, parent_scope, actual_ident->path(),
+		    actual_ident->lexical_pos(), &sr);
+
+      res.scope = sr.scope;
+      if (sr.through_interface_alias())
+	    res.modport = sr.interface_alias_modport;
+      else if (NetScope*child = parent_scope->child(hname_t(res.display_name)))
+	    res.scope = child;
+      else if (const NetScope::interface_port_alias_t*alias =
+	       parent_scope->find_interface_port_alias(res.display_name)) {
+	    res.scope = alias->actual_scope;
+	    res.modport = alias->modport;
+      }
+
+      return true;
+}
+
+static bool resolve_interface_actual_array(const PExpr*actual,
+					   NetScope*parent_scope,
+					   interface_actual_array_t&res)
+{
+      res = interface_actual_array_t();
+
+      const PEIdent*actual_ident = dynamic_cast<const PEIdent*>(actual);
+      if (!actual_ident || actual_ident->path().package ||
+	  actual_ident->path().name.size() != 1 ||
+	  !actual_ident->path().name.front().index.empty())
+	    return false;
+
+      perm_string name = actual_ident->path().name.front().name;
+      res.display_name = name;
+
+      for (NetScope*scope = parent_scope ; scope ; scope = scope->parent()) {
+	    auto arr = scope->instance_arrays.find(name);
+	    if (arr != scope->instance_arrays.end()) {
+		  for (unsigned idx = 0 ; idx < arr->second.size() ; idx += 1) {
+			NetScope*inst = arr->second[idx];
+			if (!inst)
+			      return false;
+			hname_t hname = inst->fullname();
+			if (!hname.has_numbers())
+			      return false;
+			res.elements[hname.peek_number(0)] =
+			      NetScope::interface_port_alias_t(inst, nullptr);
+		  }
+		  return true;
+	    }
+
+	    const map<long,NetScope::interface_port_alias_t>*alias_arr =
+		  scope->find_interface_port_alias_array(name);
+	    if (alias_arr) {
+		  res.elements = *alias_arr;
+		  return true;
+	    }
+      }
+
+      return false;
+}
+
+bool PGModule::bind_interface_ports_(Design*des, const Module*rmod,
+				     NetScope*parent_scope,
+				     NetScope*instance_scope,
+				     const vector<PExpr*>&pins,
+				     const vector<bool>&) const
+{
+      bool flag = true;
+
+      for (unsigned idx = 0 ; idx < rmod->port_count() ; idx += 1) {
+	    const Module::port_t*port = rmod->get_port_info(idx);
+	    if (!port || !port->is_interface_port())
+		  continue;
+
+	    if (!pins[idx]) {
+		  cerr << get_fileline() << ": error: Interface port `"
+		       << port->name << "' of module " << rmod->mod_name()
+		       << " is not connected." << endl;
+		  des->errors += 1;
+		  flag = false;
+		  continue;
+	    }
+
+	    long formal_left = 0;
+	    long formal_right = 0;
+	    unsigned formal_count = 1;
+	    if (!interface_formal_range(port, des, instance_scope, pins[idx],
+					formal_left, formal_right, formal_count)) {
+		  flag = false;
+		  continue;
+	    }
+	    bool formal_is_array = port->interface_unpacked_dimensions != nullptr;
+
+	    interface_formal_port_t formal;
+	    resolve_interface_formal_port(pins[idx], des, port, formal, false);
+	    if (!formal.module)
+		  continue;
+
+	    if (formal_is_array) {
+		  interface_actual_array_t actual_array;
+		  if (!resolve_interface_actual_array(pins[idx], parent_scope, actual_array)) {
+			cerr << pins[idx]->get_fileline() << ": error: Interface "
+			     << "array port `" << port->name << "' must be "
+				"connected to an interface instance array." << endl;
+			des->errors += 1;
+			flag = false;
+			continue;
+		  }
+
+		  if (actual_array.elements.size() != formal_count) {
+			cerr << pins[idx]->get_fileline() << ": error: Interface "
+			     << "array port `" << port->name << "' expects "
+			     << formal_count << " element(s) but actual `"
+			     << actual_array.display_name << "' has "
+			     << actual_array.elements.size() << " element(s)." << endl;
+			des->errors += 1;
+			flag = false;
+			continue;
+		  }
+
+		  unsigned pos = 0;
+		  bool array_ok = true;
+		  for (auto cur = actual_array.elements.begin()
+			 ; cur != actual_array.elements.end() ; ++cur, ++pos) {
+			NetScope*actual_scope = cur->second.actual_scope;
+			if (!actual_scope || !actual_scope->is_interface()) {
+			      cerr << pins[idx]->get_fileline() << ": error: Actual "
+				   << "element for interface array port `"
+				   << port->name << "' is not an interface instance." << endl;
+			      des->errors += 1;
+			      array_ok = false;
+			      continue;
+			}
+
+			if (actual_scope->module_name() != formal.module->mod_name()) {
+			      cerr << pins[idx]->get_fileline() << ": error: Interface "
+				   << "array port `" << port->name
+				   << "' expects interface type `" << port->interface_type
+				   << "' but actual `" << actual_array.display_name
+				   << "' has element type `" << actual_scope->module_name()
+				   << "'." << endl;
+			      des->errors += 1;
+			      array_ok = false;
+			      continue;
+			}
+
+			if (cur->second.modport && formal.modport &&
+			    cur->second.modport->name() != formal.modport->name()) {
+			      cerr << pins[idx]->get_fileline() << ": error: Interface "
+				   << "array port `" << port->name
+				   << "' cannot forward actual `" << actual_array.display_name
+				   << "' restricted by modport `" << cur->second.modport->name()
+				   << "' to formal modport `" << formal.modport->name()
+				   << "'." << endl;
+			      des->errors += 1;
+			      array_ok = false;
+			      continue;
+			}
+
+			const PModport*modport = formal.modport?
+			      formal.modport : cur->second.modport;
+			long formal_index = interface_array_index(pos, formal_left, formal_right);
+			instance_scope->add_interface_port_alias_element(
+			      port->name, formal_index, actual_scope, modport);
+		  }
+
+		  flag = flag && array_ok;
+		  continue;
+	    }
+
+	    interface_actual_scope_t actual;
+	    if (!resolve_interface_actual_scope(pins[idx], parent_scope, des, actual)) {
+		  cerr << pins[idx]->get_fileline() << ": error: Interface port `"
+		       << port->name << "' must be connected to a simple "
+		          "interface instance name." << endl;
+		  des->errors += 1;
+		  flag = false;
+		  continue;
+	    }
+
+	    if (!actual.scope || !actual.scope->is_interface()) {
+		  cerr << pins[idx]->get_fileline() << ": error: Actual for "
+		          "interface port `" << port->name
+		       << "' is not an interface instance." << endl;
+		  des->errors += 1;
+		  flag = false;
+		  continue;
+	    }
+
+	    if (actual.scope->module_name() != formal.module->mod_name()) {
+		  cerr << pins[idx]->get_fileline() << ": error: Interface port `"
+		       << port->name << "' expects interface type `"
+		       << port->interface_type << "' but actual `" << actual.display_name
+		       << "' has type `" << actual.scope->module_name() << "'." << endl;
+		  des->errors += 1;
+		  flag = false;
+		  continue;
+	    }
+
+	    if (actual.modport && formal.modport &&
+		actual.modport->name() != formal.modport->name()) {
+		  cerr << pins[idx]->get_fileline() << ": error: Interface port `"
+		       << port->name << "' cannot forward actual `" << actual.display_name
+		       << "' restricted by modport `" << actual.modport->name()
+		       << "' to formal modport `" << formal.modport->name()
+		       << "'." << endl;
+		  des->errors += 1;
+		  flag = false;
+		  continue;
+	    }
+
+	    const PModport*modport = formal.modport? formal.modport : actual.modport;
+	    instance_scope->add_interface_port_alias(port->name, actual.scope,
+						    modport);
+      }
+
+      return flag;
+}
+
+/*
+ * Instantiate a module by recursively elaborating it. Set the path of
+ * the recursive elaboration so that signal names get properly
+ * set. Connect the ports of the instantiated module to the signals of
+ * the parameters. This is done with BUFZ gates so that they look just
+ * like continuous assignment connections.
+ */
+void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) const
+{
+
+      ivl_assert(*this, scope);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: Instantiate module "
+		 << rmod->mod_name() << " with instance name "
+		 << get_name() << " in scope " << scope_path(scope) << endl;
+      }
+
+	// This is the array of pin expressions, shuffled to match the
+	// order of the declaration. If the source instantiation uses
+	// bind by order, this is the same as the source list. Otherwise,
+	// the source list is rearranged by name binding into this list.
+      vector<PExpr*>pins (rmod->port_count());
+      vector<bool>pins_fromwc (rmod->port_count(), false);
+      vector<bool>pins_is_explicitly_not_connected (rmod->port_count(), false);
+
+      if (!match_module_ports_(des, rmod, scope, pins, pins_fromwc,
+			       pins_is_explicitly_not_connected))
+	    return;
 
 	// Elaborate these instances of the module. The recursive
 	// elaboration causes the module to generate a netlist with
@@ -1392,6 +1734,13 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    bool using_default = false;
 
 	    perm_string port_name = rmod->get_port_name(idx);
+	    const Module::port_t*port_info = rmod->get_port_info(idx);
+	    if (port_info && port_info->is_interface_port()) {
+		  for (unsigned inst = 0 ;  inst < instance.size() ;  inst += 1)
+			instance[inst]->add_module_port_info(idx, port_name,
+							    PortType::PIMPLICIT, 0);
+		  continue;
+	    }
 
 	      // If the port is unconnected, substitute the default
 	      // value. The parser ensures that a default value only
@@ -2106,7 +2455,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 {
-      NetExpr*rise_expr =0, *fall_expr =0, *decay_expr =0;
+      delay_exprs_t delays;
 
       perm_string my_name = get_name();
       if (my_name == 0)
@@ -2123,8 +2472,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    } else {
 		  PDelays tmp_del;
 		  tmp_del.set_delays(overrides_, false);
-		  tmp_del.eval_delays(des, scope, rise_expr, fall_expr,
-		                      decay_expr, true);
+		  tmp_del.eval_delays(des, scope, delays, true);
 	    }
       }
 
@@ -2143,9 +2491,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
       ivl_assert(*this, udp);
       NetUDP*net = new NetUDP(scope, my_name, udp->ports.size(), udp);
       net->set_line(*this);
-      net->rise_time(rise_expr);
-      net->fall_time(fall_expr);
-      net->decay_time(decay_expr);
+      net->delay_times(delays);
 
       struct attrib_list_t*attrib_list;
       unsigned attrib_list_n = 0;
@@ -3774,7 +4120,6 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
 		 << "() method requires a single argument." << endl;
 	    des->errors += 1;
       }
-
 	// Get the context width if this is a logic type.
       ivl_variable_type_t base_type = use_darray->element_base_type();
       int context_width = -1;
@@ -5124,6 +5469,9 @@ cerr << endl;
 				    break;
 				  case PEEvent::NEGEDGE:
 				    cerr << "negedge";
+				    break;
+				  case PEEvent::EDGE:
+				    cerr << "edge";
 				    break;
 				  default:
 				    cerr << "unknown edge type!";
@@ -7050,6 +7398,7 @@ bool PGenerate::elaborate_(Design*des, NetScope*scope) const
       if (result_flag) {
 	    elaborate_functions(des, scope, funcs);
 	    elaborate_tasks(des, scope, tasks);
+	    elaborate_classes(des, scope, classes);
 
 	    for (const auto gt : gates) gt->elaborate(des, scope);
 

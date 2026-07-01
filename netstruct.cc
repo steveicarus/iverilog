@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,22 +26,19 @@
 
 using namespace std;
 
-netstruct_t::netstruct_t()
-: union_(false), packed_(false), signed_(false)
-{
-}
-
 netstruct_t::~netstruct_t()
 {
 }
 
-void netstruct_t::union_flag(bool flag)
+void netstruct_t::union_flag(bool flag, bool soft)
 {
 	// This MUST be called before any members are pushed into the
 	// definition. This is because the append relies on this flag
 	// being accurate.
       ivl_assert(*this, members_.empty());
+      ivl_assert(*this, flag || !soft);
       union_ = flag;
+      soft_union_ = soft;
 }
 
 void netstruct_t::packed(bool flag)
@@ -64,7 +61,7 @@ void netstruct_t::append_member(Design*des, const netstruct_t::member_t&val)
 		  des->errors += 1;
 	    }
       }
-      if (union_ && packed_ && members_.size() > 1) {
+      if (union_ && packed_ && !soft_union_ && members_.size() > 1) {
 	    unsigned long expect_wid = members_.front().net_type->packed_width();
 	    unsigned long got_wid = members_.back().net_type->packed_width();
 	    if (expect_wid != got_wid) {
@@ -104,8 +101,19 @@ long netstruct_t::packed_width(void) const
 	// If this is a packed union, then all the members are the
 	// same width, so it is sufficient to return the width of any
 	// single member.
-      if (union_)
+      if (union_ && !soft_union_)
 	    return members_.front().net_type->packed_width();
+
+	// A soft packed union uses the largest member width.
+      if (union_ && soft_union_) {
+	    long res = 0;
+	    for (size_t idx = 0 ; idx < members_.size() ; idx += 1) {
+		  long wid = members_[idx].net_type->packed_width();
+		  if (wid > res)
+			res = wid;
+	    }
+	    return res;
+      }
 
 	// The width of a packed struct is the sum of member widths.
       long res = 0;

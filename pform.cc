@@ -49,6 +49,10 @@
 
 using namespace std;
 
+static void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
+			        std::vector<PWire*> *wires,
+			        list<named_pexpr_t>*attr, bool is_const = false);
+
 /*
  * The "// synthesis translate_on/off" meta-comments cause this flag
  * to be turned off or on. The pform_make_behavior and similar
@@ -445,6 +449,11 @@ static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
       return scopex;
 }
 
+static PGenerate* current_generate_scope()
+{
+      return lexical_scope == pform_cur_generate ? pform_cur_generate : nullptr;
+}
+
 static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*item)
 {
       assert(scope);
@@ -581,12 +590,16 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
       ivl_assert(loc, scopex);
-      ivl_assert(loc, !pform_cur_generate);
 
       pform_set_scope_timescale(class_scope, scopex);
 
-      scopex->classes[name] = class_scope;
-      scopex->classes_lexical .push_back(class_scope);
+      if (auto generate_scope = current_generate_scope()) {
+	    generate_scope->classes[name] = class_scope;
+	    generate_scope->classes_lexical.push_back(class_scope);
+      } else {
+	    scopex->classes[name] = class_scope;
+	    scopex->classes_lexical.push_back(class_scope);
+      }
 
       lexical_scope = class_scope;
       return class_scope;
@@ -628,9 +641,9 @@ PTask* pform_push_task_scope(const struct vlltype&loc, const char*name,
 
       pform_set_scope_timescale(task, scopex);
 
-      if (pform_cur_generate) {
-	    add_local_symbol(pform_cur_generate, task_name, task);
-	    pform_cur_generate->tasks[task_name] = task;
+      if (auto generate_scope = current_generate_scope()) {
+	    add_local_symbol(generate_scope, task_name, task);
+	    generate_scope->tasks[task_name] = task;
       } else {
 	    add_local_symbol(scopex, task_name, task);
 	    scopex->tasks[task_name] = task;
@@ -663,9 +676,9 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 
       pform_set_scope_timescale(func, scopex);
 
-      if (pform_cur_generate) {
-	    add_local_symbol(pform_cur_generate, func_name, func);
-	    pform_cur_generate->funcs[func_name] = func;
+      if (auto generate_scope = current_generate_scope()) {
+	    add_local_symbol(generate_scope, func_name, func);
+	    generate_scope->funcs[func_name] = func;
 
       } else {
 	    add_local_symbol(scopex, func_name, func);
@@ -841,7 +854,7 @@ static typedef_t *pform_get_typedef(const struct vlltype&loc, perm_string name)
 }
 
 void pform_forward_typedef(const struct vlltype&loc, perm_string name,
-			   enum typedef_t::basic_type basic_type)
+			   type_restrict_t basic_type)
 {
       typedef_t *td = pform_get_typedef(loc, name);
 
@@ -910,6 +923,12 @@ typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
 	    if (cur != cur_scope->typedefs.end())
 		  return cur->second;
 
+	    // If it is defined as something else in this scope, it is not a
+	    // data type.
+	    auto sym = cur_scope->local_symbols.find(name);
+	    if (sym != cur_scope->local_symbols.end())
+		  return nullptr;
+
             PPackage*pkg = pform_find_potential_import(loc, cur_scope, name, false, false);
             if (pkg) {
 	          cur = pkg->typedefs.find(name);
@@ -924,6 +943,14 @@ typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
       } while (cur_scope);
 
       return 0;
+}
+
+bool pform_test_interface_identifier(const char*txt)
+{
+      perm_string name = lex_strings.make(txt);
+      map<perm_string,Module*>::const_iterator cur = pform_modules.find(name);
+
+      return cur != pform_modules.end() && cur->second->is_interface;
 }
 
 PECallFunction* pform_make_call_function(const struct vlltype&loc,
@@ -1402,6 +1429,35 @@ Module::port_t* pform_module_port_reference(const struct vlltype&loc,
       ptmp->default_value = 0;
 
       return ptmp;
+}
+
+Module::port_t* pform_module_interface_port_reference(
+					  const struct vlltype&loc,
+					  perm_string interface_type,
+					  perm_string modport_name,
+					  perm_string name,
+					  list<pform_range_t>*udims)
+{
+      Module::port_t*ptmp = new Module::port_t;
+
+      ptmp->port_kind = Module::port_t::P_INTERFACE;
+      ptmp->name = name;
+      ptmp->interface_type = interface_type;
+      ptmp->modport_name = modport_name;
+      ptmp->interface_unpacked_dimensions = udims;
+      ptmp->lexical_pos = loc.lexical_pos;
+
+      return ptmp;
+}
+
+void pform_module_define_interface_port(const struct vlltype&loc,
+					const Module::port_t*port,
+					list<named_pexpr_t>*attr)
+{
+      ivl_assert(loc, port);
+      ivl_assert(loc, port->is_interface_port());
+
+      delete attr;
 }
 
 void pform_module_set_ports(vector<Module::port_t*>*ports)
@@ -2056,10 +2112,18 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	    for (unsigned idx = 0 ;  idx < pins.size() ;  idx += 1)
 		  udp->ports[idx] = pins[idx]->basename();
 
-	    process_udp_table(udp, table, loc);
-	    udp->initial  = init;
+	    if (table) {
+		  process_udp_table(udp, table, loc);
+		  udp->initial  = init;
 
-	    pform_primitives[name] = udp;
+		  pform_primitives[name] = udp;
+	    } else {
+		  ostringstream msg;
+		  msg << "error: Invalid table for UDP primitive " << name
+		      << ".";
+		  VLerror(loc, msg.str().c_str(), "");
+		  delete udp;
+	    }
       }
 
 
@@ -2149,7 +2213,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	    } else {
 		  ostringstream msg;
 		  msg << "error: Invalid table for UDP primitive " << name
-		      << "." << endl;
+		      << ".";
 		    // Some compilers warn if there is just a single C string.
 		  VLerror(loc, msg.str().c_str(), "");
 	    }
@@ -2237,8 +2301,7 @@ static void pform_makegate(PGBuiltin::Type type,
 	// pform_bind_attributes function to keep the attr object.
       pform_bind_attributes(cur->attributes, attr, true);
 
-      cur->strength0(str.str0);
-      cur->strength1(str.str1);
+      cur->strength(drive_strength_t(str.str0, str.str1));
       cur->set_line(info);
 
       if (pform_cur_generate) {
@@ -2460,8 +2523,7 @@ static PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
       else
 	    cur = new PGAssign(wires, del);
 
-      cur->strength0(str.str0);
-      cur->strength1(str.str1);
+      cur->strength(drive_strength_t(str.str0, str.str1));
 
       if (pform_cur_generate)
 	    pform_cur_generate->add_gate(cur);
@@ -2690,22 +2752,24 @@ void pform_makewire(const struct vlltype&li,
 	    wires->push_back(wire);
       }
 
-      pform_set_data_type(li, data_type, wires, type, attr, is_const);
+      pform_set_data_type(li, data_type, wires, attr, is_const);
 
       while (! assign_list->empty()) {
 	    decl_assignment_t*first = assign_list->front();
 	    assign_list->pop_front();
-            if (PExpr*expr = first->expr.release()) {
-                  if (type == NetNet::REG || type == NetNet::IMPLICIT_REG) {
-                        pform_make_var_init(li, first->name, expr);
-                  } else {
-		        PEIdent*lval = new PEIdent(first->name.first,
+	    if (PExpr*expr = first->expr.release()) {
+		  if (type == NetNet::REG || type == NetNet::IMPLICIT_REG) {
+			pform_make_var_init(li, first->name, expr);
+		  } else {
+			PEIdent*lval = new PEIdent(first->name.first,
 						   first->name.second);
-		        FILE_NAME(lval, li);
-		        PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);
-		        FILE_NAME(ass, li);
-                  }
-            }
+			FILE_NAME(lval, li);
+			PGAssign*ass = pform_make_pgassign(lval, expr, delay, str);
+			FILE_NAME(ass, li);
+		  }
+	    } else if (delay) {
+		  VLerror(li, "sorry: net delays not supported.");
+	    }
 	    delete first;
       }
 }
@@ -2929,6 +2993,7 @@ static void pform_set_type_parameter(const struct vlltype&loc, perm_string name,
 
 void pform_set_parameter(const struct vlltype&loc,
 			 perm_string name, bool is_local, bool is_type,
+			 type_restrict_t type_restrict,
 			 data_type_t*data_type, const list<pform_range_t>*udims,
 			 PExpr*expr, LexicalScope::range_t*value_range)
 {
@@ -3001,6 +3066,7 @@ void pform_set_parameter(const struct vlltype&loc,
       parm->local_flag = is_local;
       parm->overridable = overridable;
       parm->type_flag = is_type;
+      parm->type_restrict = type_restrict;
       parm->lexical_pos = loc.lexical_pos;
 
       scope->parameters[name] = parm;
@@ -3251,9 +3317,9 @@ void pform_set_port_type(const struct vlltype&li,
  * This function detects the derived class for the given type and
  * dispatches the type to the proper subtype function.
  */
-void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
-			 std::vector<PWire*> *wires, NetNet::Type net_type,
-			 list<named_pexpr_t>*attr, bool is_const)
+static void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
+			        std::vector<PWire*> *wires,
+			        list<named_pexpr_t>*attr, bool is_const)
 {
       if (data_type == 0) {
 	    VLerror(li, "internal error: data_type==0.");
@@ -3267,11 +3333,6 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type,
 	    PWire *wire = *it;
 
 	    pform_set_net_range(wire, vec_type);
-
-	    // If these fail there is a bug somewhere else. pform_set_data_type()
-	    // is only ever called on a fresh wire that already exists.
-	    bool rc = wire->set_wire_type(net_type);
-	    ivl_assert(li, rc);
 
 	    wire->set_data_type(data_type);
 	    wire->set_const(is_const);

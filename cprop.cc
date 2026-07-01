@@ -180,9 +180,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		 << "Replace binary MUX with constant select=" << sel_val
 		 << " with a BUFZ to the selected input." << endl;
 
-      tmp->rise_time(obj->rise_time());
-      tmp->fall_time(obj->fall_time());
-      tmp->decay_time(obj->decay_time());
+      tmp->delay_times(obj->delay_times());
 
       connect(tmp->pin(0), obj->pin_Result());
       if (sel_val == verinum::V1)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -912,7 +912,7 @@ static void draw_equiv_impl_in_scope(ivl_net_logic_t lptr)
       unsigned ninp;
       const char *lval;
       const char *rval;
-      const char*ltype = "?";
+      const char *ltype;
 
       assert(width_of_nexus(ivl_logic_pin(lptr, 0)) == 1);
 

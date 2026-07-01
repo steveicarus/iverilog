@@ -1,0 +1,2 @@
+ivltests/sv_interface_port_array_size_mismatch_fail.v:12: error: Interface array port `bus' expects 2 element(s) but actual `buses' has 1 element(s).
+Elaboration failed

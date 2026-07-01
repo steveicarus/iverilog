@@ -68,6 +68,16 @@ These flags affect the general behavior of the compiler.
     This flag enables the IEEE1800-2012 standard, which includes
     SystemVerilog.
 
+  * 2017
+
+    This flag enables the IEEE1800-2017 standard, which includes
+    SystemVerilog.
+
+  * 2023
+
+    This flag enables the IEEE1800-2023 standard, which includes
+    SystemVerilog.
+
   * verilog-ams
 
     This flag enables Verilog-AMS features that are supported by Icarus

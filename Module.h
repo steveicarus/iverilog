@@ -1,7 +1,7 @@
 #ifndef IVL_Module_H
 #define IVL_Module_H
 /*
- * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -43,6 +43,7 @@ class PFunction;
 class PWire;
 class PProcess;
 class Design;
+class LineInfo;
 class NetScope;
 
 /*
@@ -65,9 +66,25 @@ class Module : public PScopeExtra, public PNamedItem {
 	   default value. */
     public:
       struct port_t {
+	    enum port_kind_t { P_SIGNAL, P_INTERFACE };
+
+	    port_t();
+
+	    port_kind_t port_kind;
 	    perm_string name;
 	    std::vector<PEIdent*> expr;
 	    PExpr*default_value;
+
+	      /* Interface formal port metadata. For signal ports these
+		 fields are empty/zero. The modport name is optional in the
+		 representation, although the parser initially only accepts
+		 the explicit interface_type.modport form. */
+	    perm_string interface_type;
+	    perm_string modport_name;
+	    std::list<pform_range_t>*interface_unpacked_dimensions;
+	    unsigned lexical_pos;
+
+	    bool is_interface_port() const { return port_kind == P_INTERFACE; }
       };
 
     public:
@@ -148,6 +165,7 @@ class Module : public PScopeExtra, public PNamedItem {
 
       unsigned port_count() const;
       const std::vector<PEIdent*>& get_port(unsigned idx) const;
+      const port_t* get_port_info(unsigned idx) const;
       unsigned find_port(const char*name) const;
 
       // Return port name ("" for undeclared port)
@@ -180,5 +198,17 @@ class Module : public PScopeExtra, public PNamedItem {
       Module(const Module&);
       Module& operator= (const Module&);
 };
+
+struct interface_formal_port_t {
+      interface_formal_port_t() : module(0), modport(0) { }
+
+      const Module*module;
+      const PModport*modport;
+};
+
+extern bool resolve_interface_formal_port(const LineInfo*li, Design*des,
+					  const Module::port_t*port,
+					  interface_formal_port_t&res,
+					  bool emit_errors);
 
 #endif /* IVL_Module_H */

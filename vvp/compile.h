@@ -242,13 +242,13 @@ extern __vpiModPath* compile_modpath(char*label,
 				     struct symb_s drv,
 				     struct symb_s dest);
 extern void compile_modpath_src(__vpiModPath*dst,
-				char edge,
+				char edge_c,
 				const struct symb_s&src,
 				struct numbv_s&vals,
 				const struct symb_s&condit_src,
 				const struct symb_s&path_term_in);
 extern void compile_modpath_src(__vpiModPath*dst,
-				char edge,
+				char edge_c,
 				const struct symb_s&src,
 				struct numbv_s&vals,
 				int condit_src, /* match with '0' */
@@ -507,7 +507,7 @@ extern void compile_variable(char*label, char*name,
 			     int msb, int lsb, int vpi_type_code,
 			     bool signed_flag, bool local_flag);
 
-extern void compile_var_real(char*label, char*name);
+extern void compile_var_real(char*label, char*name, bool local_flag);
 extern void compile_var_string(char*label, char*name);
 extern void compile_var_darray(char*label, char*name, unsigned size);
 extern void compile_var_cobject(char*label, char*name);

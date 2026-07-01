@@ -1,7 +1,7 @@
 #ifndef IVL_PExpr_H
 #define IVL_PExpr_H
 /*
- * Copyright (c) 1998-2025 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2026 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -489,18 +489,12 @@ class PEIdent : public PExpr {
 					 const NetScope*found_in,
 					 ivl_type_t par_type,
 				         unsigned expr_wid) const;
-      NetExpr*elaborate_expr_param_idx_up_(Design*des,
-					   NetScope*scope,
-					   const NetExpr*par,
-					   const NetScope*found_in,
-					   ivl_type_t par_type,
-                                           bool need_const) const;
-      NetExpr*elaborate_expr_param_idx_do_(Design*des,
-					   NetScope*scope,
-					   const NetExpr*par,
-					   const NetScope*found_in,
-					   ivl_type_t par_type,
-                                           bool need_const) const;
+      NetExpr*elaborate_expr_param_idx_up_do_(Design*des,
+					      NetScope*scope,
+					      const NetExpr*par,
+					      const NetScope*found_in,
+					      ivl_type_t par_type,
+					      bool up, bool need_const) const;
       NetExpr*elaborate_expr_net(Design*des,
 				 NetScope*scope,
 				 NetNet*net,
@@ -518,16 +512,11 @@ class PEIdent : public PExpr {
 				       NetESignal*net,
 				       NetScope*found,
 				       unsigned expr_wid) const;
-      NetExpr*elaborate_expr_net_idx_up_(Design*des,
-				         NetScope*scope,
-				         NetESignal*net,
-				         NetScope*found,
-                                         bool need_const) const;
-      NetExpr*elaborate_expr_net_idx_do_(Design*des,
-				         NetScope*scope,
-				         NetESignal*net,
-				         NetScope*found,
-                                         bool need_const) const;
+      NetExpr*elaborate_expr_net_idx_up_do_(Design*des,
+					    NetScope*scope,
+					    NetESignal*net,
+					    NetScope*found,
+					    bool up, bool need_const) const;
       NetExpr*elaborate_expr_net_bit_(Design*des,
 				      NetScope*scope,
 				      NetESignal*net,
@@ -691,12 +680,16 @@ class PEString : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode) override;
 
-      virtual NetEConst*elaborate_expr(Design*des, NetScope*scope,
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				       ivl_type_t type, unsigned flags) const override;
 
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				       unsigned expr_wid, unsigned) const override;
 
+      NetExpr *elaborate_expr_uarray_(Design *des, NetScope *scope,
+				      const netuarray_t *uarray_type,
+				      const std::vector<netrange_t> &dims,
+				      unsigned int cur_dim) const;
     private:
       char*text_;
 };

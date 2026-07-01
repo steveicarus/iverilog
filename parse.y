@@ -45,6 +45,7 @@ extern void lex_end_table();
 static data_type_t* param_data_type = 0;
 static bool param_is_local = false;
 static bool param_is_type = false;
+static type_restrict_t param_type_restrict;
 static bool in_gen_region = false;
 static std::list<pform_range_t>* specparam_active_range = 0;
 
@@ -98,6 +99,29 @@ static pform_name_t* pform_create_super(void)
       pform_name_t*res = new pform_name_t;
       res->push_back(name);
       return res;
+}
+
+static void check_net_decl_assigns(const struct vlltype&loc,
+				   const std::list<decl_assignment_t*>*assign_list)
+{
+      if (gn_system_verilog())
+	    return;
+
+      bool has_initializer = false;
+      bool has_no_initializer = false;
+
+      for (const auto*cur : *assign_list) {
+	    if (cur->expr)
+		  has_initializer = true;
+	    else
+		  has_no_initializer = true;
+
+	    if (has_initializer && has_no_initializer) {
+		  pform_requires_sv(loc, "Mixing initialized and uninitialized "
+					 "net declaration entries");
+		  return;
+	    }
+      }
 }
 
 /* The rules sometimes push attributes into a global context where
@@ -461,6 +485,32 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
       return port;
 }
 
+Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
+					      char *modport, char *id,
+					      std::list<pform_range_t> *udims,
+					      std::list<named_pexpr_t> *attributes)
+{
+      pform_requires_sv(loc, "Interface port declaration");
+
+      Module::port_t *port = pform_module_interface_port_reference(
+	    loc, lex_strings.make(type),
+	    modport ? lex_strings.make(modport) : perm_string(),
+	    lex_strings.make(id), udims);
+
+      delete[] type;
+      if (modport)
+	    delete[] modport;
+      delete[] id;
+
+      pform_module_define_interface_port(loc, port, attributes);
+
+      port_declaration_context.port_type = NetNet::NOT_A_PORT;
+      port_declaration_context.port_net_type = NetNet::NONE;
+      port_declaration_context.data_type = nullptr;
+
+      return port;
+}
+
 %}
 
 %union {
@@ -485,8 +535,6 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
       pform_name_t*pform_name;
 
       ivl_discipline_t discipline;
-
-      hname_t*hier;
 
       std::list<std::string>*strings;
 
@@ -540,7 +588,6 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
       struct_type_t*struct_type;
 
       data_type_t*data_type;
-      class_type_t*class_type;
       real_type_t::type_t real_type;
       property_qualifier_t property_qualifier;
       PPackage*package;
@@ -570,17 +617,15 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
       verireal* realtime;
 
       PSpecPath* specpath;
-      std::list<index_component_t> *dimensions;
-
       PTimingCheck::event_t* timing_check_event;
       PTimingCheck::optional_args_t* spec_optional_args;
 
       LexicalScope::lifetime_t lifetime;
 
-      enum typedef_t::basic_type typedef_basic_type;
+      enum type_restrict_t::type_t type_restrict;
 };
 
-%token <text>      IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
+%token <text>      IDENTIFIER INTERFACE_IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
 %token <type_identifier> TYPE_IDENTIFIER
 %token <package>   PACKAGE_IDENTIFIER
 %token <discipline> DISCIPLINE_IDENTIFIER
@@ -685,7 +730,7 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <flag>    from_exclude block_item_decls_opt
 %type <number>  number pos_neg_number
 %type <flag>    signing unsigned_signed_opt signed_unsigned_opt
-%type <flag>    import_export
+%type <flag>    import_export union_soft_opt
 %type <flag>    K_genvar_opt K_static_opt K_virtual_opt K_const_opt
 %type <flag>    udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
@@ -698,19 +743,13 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <wires>   udp_port_decl udp_port_decls
 %type <statement> udp_initial udp_init_opt
 
-%type <wire> net_variable
-%type <wires> net_variable_list
-
 %type <text> event_variable label_opt class_declaration_endlabel_opt
 %type <text> block_identifier_opt
 %type <text> identifier_name
 %type <identifiers> event_variable_list
-%type <identifiers> list_of_identifiers
+%type <identifiers> genvar_identifier_list list_of_identifiers
 %type <perm_strings> loop_variables
 %type <port_list> list_of_port_identifiers list_of_variable_port_identifiers
-
-%type <decl_assignments> net_decl_assigns
-%type <decl_assignment> net_decl_assign
 
 %type <mport> port port_opt port_reference port_reference_list
 %type <mport> port_declaration
@@ -758,7 +797,7 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <expr>  assignment_pattern expression expression_opt expr_mintypmax
 %type <expr>  expr_primary_or_typename expr_primary call_chain_expr
 %type <expr>  class_new dynamic_array_new
-%type <expr>  var_decl_initializer_opt initializer_opt
+%type <expr>  net_decl_initializer_opt var_decl_initializer_opt initializer_opt
 %type <expr>  inc_or_dec_expression inside_expression lpvalue
 %type <expr>  branch_probe_expression streaming_concatenation
 %type <expr>  delay_value delay_value_simple
@@ -766,8 +805,8 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 %type <exprs> expression_list_with_nuls expression_list_proper
 %type <exprs> cont_assign cont_assign_list
 
-%type <decl_assignment> variable_decl_assignment
-%type <decl_assignments> list_of_variable_decl_assignments
+%type <decl_assignment> net_decl_assign variable_decl_assignment
+%type <decl_assignments> net_decl_assigns list_of_variable_decl_assignments
 
 %type <data_type>  data_type data_type_opt data_type_or_implicit data_type_or_implicit_or_void
 %type <data_type>  data_type_or_implicit_no_opt
@@ -837,7 +876,7 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
 
 %type <letter> compressed_operator
 
-%type <typedef_basic_type> typedef_basic_type
+%type <type_restrict> forward_type forward_type_without_enum
 
 %token K_TAND
 %nonassoc K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
@@ -1283,22 +1322,24 @@ constraint_set /* IEEE1800-2005 A.1.9 */
   ;
 
 data_declaration /* IEEE1800-2005: A.2.1.3 */
-   : attribute_list_opt K_const_opt data_type list_of_variable_decl_assignments ';'
-      { data_type_t *data_type = $3;
-	if (!data_type) {
-	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
-	      FILE_NAME(data_type, @3);
-	}
-	pform_makewire(@3, 0, str_strength, $4, NetNet::IMPLICIT_REG, data_type,
-		       $1, $2);
-      }
-  | attribute_list_opt K_const_opt K_var data_type_or_implicit list_of_variable_decl_assignments ';'
+   : attribute_list_opt K_const_opt variable_lifetime_opt data_type list_of_variable_decl_assignments ';'
       { data_type_t *data_type = $4;
 	if (!data_type) {
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @4);
+	}
+	pform_makewire(@4, 0, str_strength, $5, NetNet::IMPLICIT_REG, data_type,
+		       $1, $2);
+	var_lifetime = LexicalScope::INHERITED;
+      }
+  | attribute_list_opt K_const_opt K_var variable_lifetime_opt data_type_or_implicit list_of_variable_decl_assignments ';'
+      { data_type_t *data_type = $5;
+	if (!data_type) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
 	      FILE_NAME(data_type, @3);
 	}
-	pform_make_var(@3, $5, data_type, $1, $2);
+	pform_make_var(@3, $6, data_type, $1, $2);
+	var_lifetime = LexicalScope::INHERITED;
       }
   | attribute_list_opt K_event event_variable_list ';'
       { if ($3) pform_make_events(@2, $3);
@@ -1333,7 +1374,7 @@ packed_array_data_type /* IEEE1800-2005: A.2.2.1 */
   : enum_data_type
       { $$ = $1; }
   | struct_data_type
-      { if (!$1->packed_flag) {
+      { if (!$1->packed_flag && !($1->union_flag && $1->soft_flag)) {
 	      yyerror(@1, "sorry: Unpacked structs not supported.");
         }
 	$$ = $1;
@@ -1647,27 +1688,27 @@ function_declaration /* IEEE1800-2005: A.2.6 */
   ;
 
 genvar_iteration /* IEEE1800-2012: A.4.2 */
-  : IDENTIFIER '=' expression
+  : identifier_name '=' expression
       { $$.text = $1;
         $$.expr = $3;
       }
-  | IDENTIFIER compressed_operator expression
+  | identifier_name compressed_operator expression
       { $$.text = $1;
         $$.expr = pform_genvar_compressed(@1, $1, $2, $3);;
       }
-  | IDENTIFIER K_INCR
+  | identifier_name K_INCR
       { $$.text = $1;
         $$.expr = pform_genvar_inc_dec(@1, $1, true);
       }
-  | IDENTIFIER K_DECR
+  | identifier_name K_DECR
       { $$.text = $1;
         $$.expr = pform_genvar_inc_dec(@1, $1, false);
       }
-  | K_INCR IDENTIFIER
+  | K_INCR identifier_name
       { $$.text = $2;
         $$.expr = pform_genvar_inc_dec(@1, $2, true);
       }
-  | K_DECR IDENTIFIER
+  | K_DECR identifier_name
       { $$.text = $2;
         $$.expr = pform_genvar_inc_dec(@1, $2, false);
       }
@@ -1969,7 +2010,7 @@ variable_decl_assignment /* IEEE1800-2005 A.2.3 */
 
 
 loop_variables /* IEEE1800-2005: A.6.8 */
-  : loop_variables ',' IDENTIFIER
+  : loop_variables ',' identifier_name
       { std::list<perm_string>*tmp = $1;
 	tmp->push_back(lex_strings.make($3));
 	delete[]$3;
@@ -1980,7 +2021,7 @@ loop_variables /* IEEE1800-2005: A.6.8 */
 	tmp->push_back(perm_string());
 	$$ = tmp;
       }
-  | IDENTIFIER
+  | identifier_name
       { std::list<perm_string>*tmp = new std::list<perm_string>;
 	tmp->push_back(lex_strings.make($1));
 	delete[]$1;
@@ -2017,7 +2058,7 @@ modport_item_list
   ;
 
 modport_item
-  : IDENTIFIER
+  : identifier_name
       { pform_start_modport_item(@1, $1); }
     '(' modport_ports_list ')'
       { pform_end_modport_item(@1); }
@@ -2046,7 +2087,7 @@ modport_ports_list
       { if (last_modport_port.type != MP_TF)
 	      yyerror(@3, "error: task/function declaration not allowed here.");
       }
-  | modport_ports_list ',' IDENTIFIER
+  | modport_ports_list ',' identifier_name
       { if (last_modport_port.type == MP_SIMPLE) {
 	      pform_add_modport_port(@3, last_modport_port.direction,
 				     lex_strings.make($3), 0);
@@ -2060,7 +2101,7 @@ modport_ports_list
   ;
 
 modport_ports_declaration
-  : attribute_list_opt port_direction IDENTIFIER
+  : attribute_list_opt port_direction identifier_name
       { last_modport_port.type = MP_SIMPLE;
 	last_modport_port.direction = $2;
 	pform_add_modport_port(@3, $2, lex_strings.make($3), 0);
@@ -2074,7 +2115,7 @@ modport_ports_declaration
 	delete $3;
 	delete $1;
       }
-  | attribute_list_opt import_export IDENTIFIER
+  | attribute_list_opt import_export identifier_name
       { last_modport_port.type = MP_TF;
 	last_modport_port.is_import = $2;
 	yyerror(@3, "sorry: modport task/function ports are not yet supported.");
@@ -2087,7 +2128,7 @@ modport_ports_declaration
 	yyerror(@3, "sorry: modport task/function ports are not yet supported.");
 	delete $1;
       }
-  | attribute_list_opt K_clocking IDENTIFIER
+  | attribute_list_opt K_clocking identifier_name
       { last_modport_port.type = MP_CLOCKING;
 	last_modport_port.direction = NetNet::NOT_A_PORT;
 	yyerror(@3, "sorry: modport clocking declaration is not yet supported.");
@@ -2156,15 +2197,10 @@ package_import_declaration /* IEEE1800-2005 A.2.1.3 */
   ;
 
 package_import_item
-  : package_scope IDENTIFIER
+  : package_scope identifier_name
       { lex_in_package_scope(0);
 	pform_package_import(@1, $1, $2);
 	delete[]$2;
-      }
-  | package_scope TYPE_IDENTIFIER
-      { lex_in_package_scope(0);
-	pform_package_import(@1, $1, $2.text);
-	delete[]$2.text;
       }
   | package_scope '*'
       { lex_in_package_scope(0);
@@ -2183,13 +2219,9 @@ package_export_declaration /* IEEE1800-2017 A.2.1.3 */
   ;
 
 package_export_item
-  : PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER
+  : PACKAGE_IDENTIFIER K_SCOPE_RES identifier_name
       { pform_package_export(@2, $1, $3);
 	delete[] $3;
-      }
-  | PACKAGE_IDENTIFIER K_SCOPE_RES TYPE_IDENTIFIER
-      { pform_package_export(@2, $1, $3.text);
-	delete[] $3.text;
       }
   | PACKAGE_IDENTIFIER K_SCOPE_RES '*'
       { pform_package_export(@2, $1, nullptr);
@@ -2705,10 +2737,16 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
 
 variable_lifetime_opt
   : lifetime
-      { if (pform_requires_sv(@1, "Overriding default variable lifetime") &&
-	    $1 != pform_peek_scope()->default_lifetime) {
-	      yyerror(@1, "sorry: Overriding the default variable lifetime "
-			  "is not yet supported.");
+      { LexicalScope*scope = pform_peek_scope();
+	if (dynamic_cast<PPackage*>(scope)) {
+	      if ($1 == LexicalScope::AUTOMATIC) {
+		    yyerror(@1, "error: automatic lifetime is not allowed for "
+				"variables declared in packages.");
+	      }
+	} else if (pform_requires_sv(@1, "Overriding default variable lifetime") &&
+		   $1 != scope->default_lifetime) {
+	      yyerror(@1, "sorry: Overriding the default variable "
+			  "lifetime is not yet supported.");
 	}
 	var_lifetime = $1;
       }
@@ -2853,11 +2891,16 @@ block_item_decls_opt
    * `typedef enum <TYPE_IDENTIFIER>` can either be the start of a enum forward
    * declaration or a enum type declaration with a type identifier as its base
    * type. And this abmiguity can not be resolved if we reduce the K_enum to
-   * typedef_basic_type. */
-typedef_basic_type
-  : K_struct { $$ = typedef_t::STRUCT; }
-  | K_union { $$ = typedef_t::UNION; }
-  | K_class { $$ = typedef_t::CLASS; }
+   * forward_type_without_enum. */
+forward_type_without_enum
+  : K_struct { $$ = type_restrict_t::STRUCT; }
+  | K_union { $$ = type_restrict_t::UNION; }
+  | K_class { $$ = type_restrict_t::CLASS; }
+  ;
+
+forward_type
+  : K_enum { $$ = type_restrict_t::ENUM; }
+  | forward_type_without_enum
   ;
 
   /* Type declarations are parsed here. The rule actions call pform
@@ -2873,17 +2916,17 @@ type_declaration
 
   | K_typedef identifier_name ';'
       { perm_string name = lex_strings.make($2);
-	pform_forward_typedef(@2, name, typedef_t::ANY);
+	pform_forward_typedef(@2, name, type_restrict_t(type_restrict_t::ANY));
 	delete[]$2;
       }
-  | K_typedef typedef_basic_type identifier_name ';'
+  | K_typedef forward_type_without_enum identifier_name ';'
       { perm_string name = lex_strings.make($3);
-	pform_forward_typedef(@3, name, $2);
+	pform_forward_typedef(@3, name, type_restrict_t($2));
 	delete[]$3;
       }
   | K_typedef K_enum identifier_name ';'
       { perm_string name = lex_strings.make($3);
-	pform_forward_typedef(@3, name, typedef_t::ENUM);
+	pform_forward_typedef(@3, name, type_restrict_t(type_restrict_t::ENUM));
 	delete[]$3;
       }
   | K_typedef error ';'
@@ -2984,6 +3027,13 @@ packed_signing /* IEEE 1800-2012 A.2.2.1 */
       }
   ;
 
+union_soft_opt
+  : K_soft
+      { $$ = true; }
+  |
+      { $$ = false; }
+  ;
+
 struct_data_type /* IEEE 1800-2012 A.2.2.1 */
   : K_struct packed_signing '{' struct_union_member_list '}'
       { struct_type_t*tmp = new struct_type_t;
@@ -2991,16 +3041,20 @@ struct_data_type /* IEEE 1800-2012 A.2.2.1 */
 	tmp->packed_flag = $2.packed_flag;
 	tmp->signed_flag = $2.signed_flag;
 	tmp->union_flag = false;
-	tmp->members .reset($4);
+	tmp->soft_flag = false;
+	tmp->members.reset($4);
 	$$ = tmp;
       }
-  | K_union packed_signing '{' struct_union_member_list '}'
-      { struct_type_t*tmp = new struct_type_t;
+  | K_union union_soft_opt packed_signing '{' struct_union_member_list '}'
+      { if ($2 && generation_flag < GN_VER2023)
+	      yyerror(@1, "error: Soft packed unions require SystemVerilog 2023 or later.");
+	struct_type_t*tmp = new struct_type_t;
 	FILE_NAME(tmp, @1);
-	tmp->packed_flag = $2.packed_flag;
-	tmp->signed_flag = $2.signed_flag;
+	tmp->packed_flag = $3.packed_flag;
+	tmp->signed_flag = $3.signed_flag;
 	tmp->union_flag = true;
-	tmp->members .reset($4);
+	tmp->soft_flag = $2;
+	tmp->members.reset($5);
 	$$ = tmp;
       }
   | K_struct packed_signing '{' error '}'
@@ -3011,16 +3065,20 @@ struct_data_type /* IEEE 1800-2012 A.2.2.1 */
 	tmp->packed_flag = $2.packed_flag;
 	tmp->signed_flag = $2.signed_flag;
 	tmp->union_flag = false;
+	tmp->soft_flag = false;
 	$$ = tmp;
       }
-  | K_union packed_signing '{' error '}'
-      { yyerror(@3, "error: Errors in union member list.");
+  | K_union union_soft_opt packed_signing '{' error '}'
+      { if ($2 && generation_flag < GN_VER2023)
+	      yyerror(@1, "error: Soft packed unions require SystemVerilog 2023 or later.");
+	yyerror(@4, "error: Errors in union member list.");
 	yyerrok;
 	struct_type_t*tmp = new struct_type_t;
 	FILE_NAME(tmp, @1);
-	tmp->packed_flag = $2.packed_flag;
-	tmp->signed_flag = $2.signed_flag;
+	tmp->packed_flag = $3.packed_flag;
+	tmp->signed_flag = $3.signed_flag;
 	tmp->union_flag = true;
+	tmp->soft_flag = $2;
 	$$ = tmp;
       }
   ;
@@ -3207,7 +3265,7 @@ delay_value_simple
 	      FILE_NAME($$, @1);
 	}
       }
-  | IDENTIFIER
+  | identifier_name
       { PEIdent*tmp = new PEIdent(lex_strings.make($1), @1.lexical_pos);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
@@ -3284,16 +3342,16 @@ nature_item
   : K_units '=' STRING ';'
       { delete[] $3; }
   | K_abstol '=' expression ';'
-  | K_access '=' IDENTIFIER ';'
+  | K_access '=' identifier_name ';'
       { pform_nature_access(@1, $3); delete[] $3; }
-  | K_idt_nature '=' IDENTIFIER ';'
+  | K_idt_nature '=' identifier_name ';'
       { delete[] $3; }
-  | K_ddt_nature '=' IDENTIFIER ';'
+  | K_ddt_nature '=' identifier_name ';'
       { delete[] $3; }
   ;
 
 config_declaration
-  : K_config IDENTIFIER ';'
+  : K_config identifier_name ';'
     K_design lib_cell_identifiers ';'
     list_of_config_rule_statements
     K_endconfig
@@ -3460,9 +3518,9 @@ event_expression
      or explicit as a named branch. Elaboration will check that the
      function name really is a nature attribute identifier. */
 branch_probe_expression
-  : IDENTIFIER '(' IDENTIFIER ',' IDENTIFIER ')'
+  : identifier_name '(' identifier_name ',' identifier_name ')'
       { $$ = pform_make_branch_probe_expression(@1, $1, $3, $5); }
-  | IDENTIFIER '(' IDENTIFIER ')'
+  | identifier_name '(' identifier_name ')'
       { $$ = pform_make_branch_probe_expression(@1, $1, $3); }
   ;
 
@@ -4575,6 +4633,13 @@ list_of_identifiers
       { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
   ;
 
+genvar_identifier_list
+  : identifier_name
+      { $$ = list_from_identifier($1, @1.lexical_pos); }
+  | genvar_identifier_list ',' identifier_name
+      { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
+  ;
+
 list_of_port_identifiers
   : IDENTIFIER dimensions_opt
       { $$ = make_port_list($1, @1.lexical_pos, $2, 0); }
@@ -4634,10 +4699,20 @@ list_of_port_declarations
       { std::vector<Module::port_t*> *ports = $1;
 
 	Module::port_t* port;
-	port = module_declare_port(@4, $4, port_declaration_context.port_type,
-				   port_declaration_context.port_net_type,
-				   port_declaration_context.data_type,
-				   $5, $6, $3);
+	if (port_declaration_context.port_type == NetNet::NOT_A_PORT) {
+	      yyerror(@4, "error: Incomplete interface port declaration.");
+	      delete[]$4;
+	      delete $5;
+	      delete $6;
+	      delete $3;
+	      port = 0;
+	} else {
+	      port = module_declare_port(@4, $4,
+					 port_declaration_context.port_type,
+					 port_declaration_context.port_net_type,
+					 port_declaration_context.data_type,
+					 $5, $6, $3);
+	}
 	ports->push_back(port);
 	$$ = ports;
       }
@@ -4652,6 +4727,12 @@ list_of_port_declarations
 port_declaration
   : attribute_list_opt port_direction net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
       { $$ = module_declare_port(@5, $5, $2, $3, $4, $6, $7, $1);
+      }
+  | attribute_list_opt INTERFACE_IDENTIFIER '.' IDENTIFIER IDENTIFIER dimensions_opt
+      { $$ = module_declare_interface_port(@5, $2, $4, $5, $6, $1);
+      }
+  | attribute_list_opt INTERFACE_IDENTIFIER IDENTIFIER dimensions_opt
+      { $$ = module_declare_interface_port(@3, $2, 0, $3, $4, $1);
       }
   | attribute_list_opt net_type_or_var data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
       { pform_requires_sv(@4, "Partial ANSI port declaration");
@@ -4765,14 +4846,16 @@ cont_assign_list
      items, and finally an end marker. */
 
 module
-  : attribute_list_opt module_start lifetime_opt IDENTIFIER
+  : attribute_list_opt module_start lifetime_opt identifier_name
       { pform_startmodule(@2, $4, $2==K_program, $2==K_interface, $3, $1);
         port_declaration_context_init(); }
     module_package_import_list_opt
     module_parameter_port_list_opt
+      { lex_in_module_port_list(true); }
     module_port_list_opt
+      { lex_in_module_port_list(false); }
     module_attribute_foreign ';'
-      { pform_module_set_ports($8); }
+      { pform_module_set_ports($9); }
     timeunits_declaration_opt
       { pform_set_scope_timescale(@2); }
     module_item_list_opt
@@ -4795,16 +4878,16 @@ module
 	}
 	  // Check that program/endprogram and module/endmodule
 	  // keywords match.
-	if ($2 != $15) {
+	if ($2 != $17) {
 	      switch ($2) {
 		  case K_module:
-		    yyerror(@15, "error: module not closed by endmodule.");
+		    yyerror(@17, "error: module not closed by endmodule.");
 		    break;
 		  case K_program:
-		    yyerror(@15, "error: program not closed by endprogram.");
+		    yyerror(@17, "error: program not closed by endprogram.");
 		    break;
 		  case K_interface:
-		    yyerror(@15, "error: interface not closed by endinterface.");
+		    yyerror(@17, "error: interface not closed by endinterface.");
 		    break;
 		  default:
 		    break;
@@ -4820,13 +4903,13 @@ module
 	// module.
 	switch ($2) {
 	    case K_module:
-	      check_end_label(@17, "module", $4, $17);
+	      check_end_label(@19, "module", $4, $19);
 	      break;
 	    case K_program:
-	      check_end_label(@17, "program", $4, $17);
+	      check_end_label(@19, "program", $4, $19);
 	      break;
 	    case K_interface:
-	      check_end_label(@17, "interface", $4, $17);
+	      check_end_label(@19, "interface", $4, $19);
 	      break;
 	    default:
 	      break;
@@ -4870,7 +4953,12 @@ label_opt
   ;
 
 module_attribute_foreign
-  : K_PSTAR IDENTIFIER K_integer IDENTIFIER '=' STRING ';' K_STARP { $$ = 0; }
+  : K_PSTAR identifier_name K_integer identifier_name '=' STRING ';' K_STARP
+      { delete[] $2;
+	delete[] $4;
+	delete[] $6;
+	$$ = 0;
+      }
   | { $$ = 0; }
   ;
 
@@ -4901,7 +4989,16 @@ module_parameter_port_list_opt
   ;
 
 type_param
-  : K_type { param_is_type = true; }
+  : K_type
+      { param_is_type = true;
+	param_type_restrict = {};
+      }
+  | K_type forward_type
+      { if (generation_flag < GN_VER2023)
+	      yyerror(@1, "error: Restricted type parameters require SystemVerilog 2023 or later.");
+	param_is_type = true;
+	param_type_restrict = type_restrict_t($2);
+      }
   ;
 
 module_parameter
@@ -4917,6 +5014,7 @@ module_parameter_port_list
       { param_data_type = $1;
         param_is_local = false;
         param_is_type = false;
+	param_type_restrict = {};
       }
     parameter_assign
       { pform_requires_sv(@3, "Omitting initial `parameter` in parameter port "
@@ -4932,6 +5030,7 @@ module_parameter_port_list
 				    "data type in parameter port list");
 	      param_data_type = $3;
 	      param_is_type = false;
+	      param_type_restrict = {};
         }
       }
     parameter_assign
@@ -4943,70 +5042,30 @@ module_item
   /* Modules can contain further sub-module definitions. */
   : module
 
-  | attribute_list_opt net_type data_type_or_implicit delay3_opt net_variable_list ';'
-
-      { data_type_t*data_type = $3;
-        pform_check_net_data_type(@2, $2, $3);
-	if (data_type == 0) {
-	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
-	      FILE_NAME(data_type, @2);
-	}
-	pform_set_data_type(@2, data_type, $5, $2, $1);
-	if ($4 != 0) {
-	      yyerror(@2, "sorry: Net delays not supported.");
-	      delete $4;
-	}
-	delete $1;
-      }
-
-  | attribute_list_opt K_wreal delay3 net_variable_list ';'
-      { real_type_t*tmpt = new real_type_t(real_type_t::REAL);
-	pform_set_data_type(@2, tmpt, $4, NetNet::WIRE, $1);
-	if ($3 != 0) {
-	      yyerror(@3, "sorry: Net delays not supported.");
-	      delete $3;
-	}
-	delete $1;
-      }
-
-  | attribute_list_opt K_wreal net_variable_list ';'
-      { real_type_t*tmpt = new real_type_t(real_type_t::REAL);
-	pform_set_data_type(@2, tmpt, $3, NetNet::WIRE, $1);
-	delete $1;
-      }
-
   /* Very similar to the rule above, but this takes a list of
      net_decl_assigns, which are <name> = <expr> assignment
      declarations. */
 
-  | attribute_list_opt net_type data_type_or_implicit delay3_opt net_decl_assigns ';'
-      { data_type_t*data_type = $3;
-        pform_check_net_data_type(@2, $2, $3);
+  | attribute_list_opt net_type drive_strength_opt data_type_or_implicit delay3_opt net_decl_assigns ';'
+      { data_type_t*data_type = $4;
+        pform_check_net_data_type(@2, $2, $4);
+	check_net_decl_assigns(@6, $6);
 	if (data_type == 0) {
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
 	      FILE_NAME(data_type, @2);
 	}
-	pform_makewire(@2, $4, str_strength, $5, $2, data_type, $1);
+	pform_makewire(@2, $5, $3, $6, $2, data_type, $1);
 	delete $1;
       }
 
-  /* This form doesn't have the range, but does have strengths. This
-     gives strength to the assignment drivers. */
-
-  | attribute_list_opt net_type data_type_or_implicit drive_strength net_decl_assigns ';'
-      { data_type_t*data_type = $3;
-        pform_check_net_data_type(@2, $2, $3);
-	if (data_type == 0) {
-	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
-	      FILE_NAME(data_type, @2);
-	}
-	pform_makewire(@2, 0, $4, $5, $2, data_type, $1);
-	delete $1;
-      }
-
-  | attribute_list_opt K_wreal net_decl_assigns ';'
+  | attribute_list_opt K_wreal delay3_opt net_decl_assigns ';'
       { real_type_t*data_type = new real_type_t(real_type_t::REAL);
-	pform_makewire(@2, 0, str_strength, $3, NetNet::WIRE, data_type, $1);
+	check_net_decl_assigns(@4, $4);
+	if ($3) {
+	      yyerror(@2, "error: wreal net does not support delay.");
+	      delete $3;
+	}
+	pform_makewire(@2, 0, str_strength, $4, NetNet::WIRE, data_type, $1);
 	delete $1;
       }
 
@@ -5196,8 +5255,22 @@ module_item
 		  delete[]$2;
       }
 
+  | attribute_list_opt
+	  INTERFACE_IDENTIFIER parameter_value_opt gate_instance_list ';'
+      { perm_string tmp1 = lex_strings.make($2);
+		  pform_make_modgates(@2, tmp1, $3, $4, $1);
+		  delete[]$2;
+      }
+
         | attribute_list_opt
 	  IDENTIFIER parameter_value_opt error ';'
+      { yyerror(@2, "error: Invalid module instantiation");
+		  delete[]$2;
+		  if ($1) delete $1;
+      }
+
+        | attribute_list_opt
+	  INTERFACE_IDENTIFIER parameter_value_opt error ';'
       { yyerror(@2, "error: Invalid module instantiation");
 		  delete[]$2;
 		  if ($1) delete $1;
@@ -5259,10 +5332,10 @@ module_item
 
   | K_generate { check_in_gen_region(@1); } generate_item_list_opt K_endgenerate { in_gen_region = false; }
 
-  | K_genvar list_of_identifiers ';'
+  | K_genvar genvar_identifier_list ';'
       { pform_genvars(@1, $2); }
 
-  | K_for '(' K_genvar_opt IDENTIFIER '=' expression ';'
+  | K_for '(' K_genvar_opt identifier_name '=' expression ';'
               expression ';'
               genvar_iteration ')'
       { pform_start_generate_for(@2, $3, $4, $6, $8, $10.text, $10.expr); }
@@ -5496,10 +5569,21 @@ generate_block
      Note that the continuous assignment statement is generated as a
      side effect, and all I pass up is the name of the l-value. */
 
+net_decl_initializer_opt
+ : '=' expression { $$ = $2; }
+ | { $$ = 0; }
+ ;
+
 net_decl_assign
-  : IDENTIFIER '=' expression
+  : IDENTIFIER dimensions_opt net_decl_initializer_opt
       { decl_assignment_t*tmp = new decl_assignment_t;
 	tmp->name = { lex_strings.make($1), @1.lexical_pos };
+	if ($2) {
+	      tmp->index = *$2;
+	      if ($3)
+		    pform_requires_sv(@$, "Assignment of net array during declaration");
+	      delete $2;
+	}
 	tmp->expr.reset($3);
 	delete[]$1;
 	$$ = tmp;
@@ -5561,6 +5645,7 @@ param_type
   : data_type_or_implicit
       { param_is_type = false;
         param_data_type = $1;
+	param_type_restrict = {};
       }
   | type_param
 
@@ -5595,7 +5680,8 @@ parameter_assign_list
 parameter_assign
   : IDENTIFIER dimensions_opt initializer_opt parameter_value_ranges_opt
       { pform_set_parameter(@1, lex_strings.make($1), param_is_local,
-			    param_is_type, param_data_type, $2, $3, $4);
+			    param_is_type, param_type_restrict,
+			    param_data_type, $2, $3, $4);
 	delete[]$1;
       }
   ;
@@ -5970,26 +6056,6 @@ dimensions
       }
   ;
 
-net_variable
-  : IDENTIFIER dimensions_opt
-      { pform_ident_t name = { lex_strings.make($1), @1.lexical_pos };
-	$$ = pform_makewire(@1, name, NetNet::IMPLICIT, $2);
-	delete [] $1;
-      }
-  ;
-
-net_variable_list
-  : net_variable
-      { std::vector<PWire*> *tmp = new std::vector<PWire*>;
-	tmp->push_back($1);
-	$$ = tmp;
-      }
-  | net_variable_list ',' net_variable
-      { $1->push_back($3);
-	$$ = $1;
-      }
-  ;
-
 event_variable
   : IDENTIFIER dimensions_opt
       { if ($2) {
@@ -6316,13 +6382,13 @@ specify_simple_path
   ;
 
 specify_path_identifiers
-  : IDENTIFIER
+  : identifier_name
       { std::list<perm_string>*tmp = new std::list<perm_string>;
 	tmp->push_back(lex_strings.make($1));
 	$$ = tmp;
 	delete[]$1;
       }
-  | IDENTIFIER '[' expr_primary ']'
+  | identifier_name '[' expr_primary ']'
       { if (gn_specify_blocks_flag) {
 	      yywarn(@4, "warning: Bit selects are not currently supported "
 			 "in path declarations. The declaration "
@@ -6333,7 +6399,7 @@ specify_path_identifiers
 	$$ = tmp;
 	delete[]$1;
       }
-  | IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
+  | identifier_name '[' expr_primary polarity_operator expr_primary ']'
       { if (gn_specify_blocks_flag) {
 	      yywarn(@4, "warning: Part selects are not currently supported "
 			 "in path declarations. The declaration "
@@ -6344,13 +6410,13 @@ specify_path_identifiers
 	$$ = tmp;
 	delete[]$1;
       }
-  | specify_path_identifiers ',' IDENTIFIER
+  | specify_path_identifiers ',' identifier_name
       { std::list<perm_string>*tmp = $1;
 	tmp->push_back(lex_strings.make($3));
 	$$ = tmp;
 	delete[]$3;
       }
-  | specify_path_identifiers ',' IDENTIFIER '[' expr_primary ']'
+  | specify_path_identifiers ',' identifier_name '[' expr_primary ']'
       { if (gn_specify_blocks_flag) {
 	      yywarn(@4, "warning: Bit selects are not currently supported "
 			 "in path declarations. The declaration "
@@ -6361,7 +6427,7 @@ specify_path_identifiers
 	$$ = tmp;
 	delete[]$3;
       }
-  | specify_path_identifiers ',' IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
+  | specify_path_identifiers ',' identifier_name '[' expr_primary polarity_operator expr_primary ']'
       { if (gn_specify_blocks_flag) {
 	      yywarn(@4, "warning: Part selects are not currently supported "
 			 "in path declarations. The declaration "
@@ -6375,7 +6441,7 @@ specify_path_identifiers
   ;
 
 specparam
-  : IDENTIFIER '=' expr_mintypmax
+  : identifier_name '=' expr_mintypmax
       { pform_set_specparam(@1, lex_strings.make($1), specparam_active_range, $3);
 	delete[]$1;
       }

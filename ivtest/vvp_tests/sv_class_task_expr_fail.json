@@ -1,0 +1,9 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_class_task_expr_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Classes are not supported",
+        "type"          : "CE"
+    }
+}

@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_type_param_restrict_union2.v",
+    "iverilog-args" : [ "-g2023" ]
+}

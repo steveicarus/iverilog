@@ -239,16 +239,16 @@ void NetScope::add_typedefs(const map<perm_string,typedef_t*>*typedefs)
 	    typedefs_ = *typedefs;
 }
 
-NetScope*NetScope::find_typedef_scope(const Design*des, const typedef_t*type)
+NetScope*NetScope::find_typedef_scope(const Design*des, const typedef_t*type_i)
 {
-      ivl_assert(*this, type);
+      ivl_assert(*this, type_i);
 
       NetScope *cur_scope = this;
       while (cur_scope) {
-	    auto it = cur_scope->typedefs_.find(type->name);
-	    if (it != cur_scope->typedefs_.end() && it->second == type)
+	    auto it = cur_scope->typedefs_.find(type_i->name);
+	    if (it != cur_scope->typedefs_.end() && it->second == type_i)
 		  return cur_scope;
-	    NetScope*import_scope = cur_scope->find_import(des, type->name);
+	    NetScope*import_scope = cur_scope->find_import(des, type_i->name);
 	    if (import_scope)
 		  cur_scope = import_scope;
 	    else if (cur_scope == unit_)
@@ -281,6 +281,7 @@ void NetScope::set_parameter(perm_string key, bool is_annotatable,
       ref.local_flag = param.local_flag;
       ref.overridable = param.overridable;
       ref.type_flag = param.type_flag;
+      ref.type_restrict = param.type_restrict;
       ref.lexical_pos = param.lexical_pos;
       ivl_assert(param, !ref.range);
       ref.range = range_list;
@@ -534,7 +535,24 @@ NetFuncDef* NetScope::func_def()
 
 bool NetScope::in_func() const
 {
-      return (type_ == FUNC) ? true : false;
+      if (type_ == FUNC)
+	    return true;
+
+      if (type_ == BEGIN_END || type_ == FORK_JOIN || type_ == GENBLOCK)
+	    return up_ ? up_->in_func() : false;
+
+      return false;
+}
+
+bool NetScope::in_final() const
+{
+      if (in_final_)
+	    return true;
+
+      if (type_ == BEGIN_END || type_ == FORK_JOIN || type_ == GENBLOCK)
+	    return up_ ? up_->in_final() : false;
+
+      return false;
 }
 
 const NetFuncDef* NetScope::func_def() const
@@ -812,6 +830,60 @@ const NetScope* NetScope::child(const hname_t&name) const
 	    return cur->second;
 }
 
+void NetScope::add_interface_port_alias(perm_string formal_name,
+					NetScope*actual_scope,
+					const PModport*modport)
+{
+      ivl_assert(*this, actual_scope);
+      interface_port_aliases_[formal_name] = interface_port_alias_t(actual_scope, modport);
+}
+
+const NetScope::interface_port_alias_t*
+NetScope::find_interface_port_alias(perm_string formal_name) const
+{
+      map<perm_string,interface_port_alias_t>::const_iterator cur;
+      cur = interface_port_aliases_.find(formal_name);
+      if (cur == interface_port_aliases_.end())
+	    return 0;
+
+      return &cur->second;
+}
+
+void NetScope::add_interface_port_alias_element(perm_string formal_name,
+						long index,
+						NetScope*actual_scope,
+						const PModport*modport)
+{
+      ivl_assert(*this, actual_scope);
+      interface_port_alias_arrays_[formal_name][index] =
+	    interface_port_alias_t(actual_scope, modport);
+}
+
+const NetScope::interface_port_alias_t*
+NetScope::find_interface_port_alias_element(perm_string formal_name,
+					    long index) const
+{
+      auto arr = interface_port_alias_arrays_.find(formal_name);
+      if (arr == interface_port_alias_arrays_.end())
+	    return 0;
+
+      auto cur = arr->second.find(index);
+      if (cur == arr->second.end())
+	    return 0;
+
+      return &cur->second;
+}
+
+const map<long,NetScope::interface_port_alias_t>*
+NetScope::find_interface_port_alias_array(perm_string formal_name) const
+{
+      auto cur = interface_port_alias_arrays_.find(formal_name);
+      if (cur == interface_port_alias_arrays_.end())
+	    return 0;
+
+      return &cur->second;
+}
+
 /* Helper function to see if the given scope is defined in a class and if
  * so return the class scope. */
 const NetScope* NetScope::get_class_scope() const
@@ -866,6 +938,10 @@ bool NetScope::symbol_exists(perm_string sym)
       if (typedefs_.find(sym) != typedefs_.end())
           return true;
       if (find_event(sym))
+          return true;
+      if (find_interface_port_alias(sym))
+          return true;
+      if (find_interface_port_alias_array(sym))
           return true;
 
       return false;

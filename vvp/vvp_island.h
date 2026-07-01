@@ -218,7 +218,7 @@ struct vvp_island_branch {
 
 static inline vvp_branch_ptr_t next(vvp_branch_ptr_t cur)
 {
-      vvp_island_branch*ptr = cur.ptr();
+      const vvp_island_branch*ptr = cur.ptr();
       unsigned ab = cur.port();
       return ptr->link[ab];
 }

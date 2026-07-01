@@ -1,0 +1,126 @@
+.TH iverilog-vpi 1 "Jan 13th, 2026" "" "Version @VERSION@"
+.SH NAME
+iverilog-vpi - Compile front end for VPI modules
+
+.SH SYNOPSIS
+.B iverilog-vpi
+[options]
+\fIsourcefile\fP...
+
+.SH DESCRIPTION
+.PP
+\fIiverilog\-vpi\fP is a tool to simplify the compilation of VPI
+modules for use with Icarus Verilog. It takes on the command line a
+list of C or C++ source files, and generates as output a linked VPI
+module. See the \fBvvp\fP(1) man page for a description of how the
+linked module is loaded by a simulation.
+
+By default the output is named after the first source file. For
+example, if the first source file is named \fIfoo.c\fP, the output
+becomes \fIfoo.vpi\fP.
+
+.SH OPTIONS
+\fIiverilog\-vpi\fP accepts the following options:
+.TP 8
+.B -l\fIlibrary\fP
+Include the named library in the link of the VPI module. This allows
+VPI modules to further reference external libraries.
+
+.TP 8
+.B -L\fIdirectory\fP
+Add \fIdirectory\fP to the list of directories that will be searched
+for library files.
+
+.TP 8
+.B -I\fIdirectory\fP
+Add \fIdirectory\fP to the list of directories that will be searched
+for header files.
+
+.TP 8
+.B -D\fIdefine\fP
+Define a macro named \fIdefine\fP.
+
+.TP 8
+.B --name=\fIname\fP
+Normally, the output VPI module will be named after the first source
+file passed to the command. This flag sets the name (without the .vpi
+suffix) of the output vpi module.
+
+.SH "PC-ONLY OPTIONS"
+
+When built as a native Windows program (using the MinGW toolchain),
+by default \fIiverilog\-vpi\fP will attempt to locate the MinGW tools
+needed to compile a VPI module on the system path (as set by the PATH
+environment variable). As an alternative, the user may specify the
+location of the MinGW tools via the following option.
+
+.TP 8
+.B -mingw=\fIpath\fP
+Tell the program the root of the MinGW compiler tool suite. The
+\fBvvp\fP runtime is compiled with this compiler, and this is the
+compiler that \fIiverilog\-vpi\fP expects to use to compile your
+source code. If this option accompanies a list of files, it will
+apply to the current build only. If this option is provided on its
+own, \fIiverilog\-vpi\fP will save the \fIpath\fP in the registry
+and use that path in preference to the system path for subsequent
+operations, avoiding the need to specify it on the command line
+every time.
+
+.SH "INFORMATIONAL OPTIONS"
+
+\fIiverilog\-vpi\fP includes additional flags to let Makefile gurus
+peek at the configuration of the \fIiverilog\fP installation.  This way,
+Makefiles can be written that handle complex VPI builds natively, and
+without hard-coding values that depend on the system and installation.
+If used at all, these options must be used one at a time, and without
+any other options or directives.
+
+.TP 8
+.B --install-dir
+Print the install directory for VPI modules.
+
+.TP 8
+.B --cflags
+Print the compiler flags (CFLAGS or CXXFLAGS) needed to compile source
+code destined for a VPI module.
+
+.TP 8
+.B --ldflags
+Print the linker flags (LDFLAGS) needed to link a VPI module.
+
+.TP 8
+.B --ldlibs
+Print the libraries (LDLIBS) needed to link a VPI module.
+
+.P
+Example GNU makefile that takes advantage of these flags:
+.IP "" 4
+CFLAGS = \-Wall \-O $(CFLAGS_$@)
+.br
+VPI_CFLAGS := $(shell iverilog-vpi \-\-cflags)
+.br
+CFLAGS_messagev.o = $(VPI_CFLAGS)
+.br
+CFLAGS_fifo.o = $(VPI_CFLAGS)
+.br
+messagev.o fifo.o: transport.h
+.br
+messagev.vpi: messagev.o fifo.o
+.br
+	iverilog-vpi $^
+
+.SH "AUTHOR"
+.nf
+Steve Williams (steve@icarus.com)
+
+.SH SEE ALSO
+iverilog(1), vvp(1),
+.BR "<https://steveicarus.github.io/iverilog/>",
+.BR "<http://mingw-w64.yaxm.org/>",
+
+.SH COPYRIGHT
+.nf
+Copyright \(co  2002\-2026 Stephen Williams
+
+This document can be freely redistributed according to the terms of the
+GNU General Public License version 2.0

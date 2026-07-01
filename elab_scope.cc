@@ -1322,6 +1322,10 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 
       collect_scope_signals(scope, wires);
 
+      elaborate_scope_enumerations(des, scope, enum_sets);
+
+      elaborate_scope_classes(des, scope, classes_lexical);
+
 	// Run through the defparams for this scope and save the result
 	// in a table for later final override.
 
@@ -1662,6 +1666,8 @@ void PFunction::elaborate_scope(Design*des, NetScope*scope) const
 
       collect_scope_signals(scope, wires);
 
+      elaborate_scope_enumerations(des, scope, enum_sets);
+
 	// Scan through all the named events in this scope.
       elaborate_scope_events_(des, scope, events);
 
@@ -1681,6 +1687,8 @@ void PTask::elaborate_scope(Design*des, NetScope*scope) const
       collect_scope_parameters(des, scope, parameters);
 
       collect_scope_signals(scope, wires);
+
+      elaborate_scope_enumerations(des, scope, enum_sets);
 
 	// Scan through all the named events in this scope.
       elaborate_scope_events_(des, scope, events);
@@ -1731,6 +1739,8 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
             collect_scope_parameters(des, my_scope, parameters);
 
 	    collect_scope_signals(my_scope, wires);
+
+	    elaborate_scope_enumerations(des, my_scope, enum_sets);
 
               // Scan through all the named events in this scope.
             elaborate_scope_events_(des, my_scope, events);

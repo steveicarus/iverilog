@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_queue_ap_method.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Queues are not supported",
+        "type"          : "CE"
+    }
+}

@@ -165,6 +165,7 @@ extern bool of_MOD_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MUL(vthread_t thr, vvp_code_t code);
 extern bool of_MULI(vthread_t thr, vvp_code_t code);
 extern bool of_MUL_WR(vthread_t thr, vvp_code_t code);
+extern bool of_NEG_WR(vthread_t thr, vvp_code_t code);
 extern bool of_NAND(vthread_t thr, vvp_code_t code);
 extern bool of_NANDR(vthread_t thr, vvp_code_t code);
 extern bool of_NEW_COBJ(vthread_t thr, vvp_code_t code);

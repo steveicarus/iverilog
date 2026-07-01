@@ -1,0 +1,5 @@
+{
+    "type"   : "normal",
+    "source" : "case_mux_array_word.v",
+    "iverilog-args" : [ "-S" ]
+}

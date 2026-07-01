@@ -79,6 +79,7 @@ class NetEvWait;
 class PClass;
 class PExpr;
 class PFunction;
+class PModport;
 class PPackage;
 class PTaskFunc;
 class PWire;
@@ -102,6 +103,42 @@ struct functor_t;
 # define ENUM_UNSIGNED_INT
 #endif
 
+struct drive_strength_t {
+      static const drive_strength_t hiz;
+
+      explicit drive_strength_t(ivl_drive_t d0 = IVL_DR_STRONG,
+				ivl_drive_t d1 = IVL_DR_STRONG)
+      : drive0(d0), drive1(d1)
+      { }
+
+      bool has_drive() const
+      {
+	    return drive0 != IVL_DR_STRONG || drive1 != IVL_DR_STRONG;
+      }
+
+      ivl_drive_t drive0;
+      ivl_drive_t drive1;
+};
+
+struct delay_exprs_t {
+      explicit delay_exprs_t(const NetExpr *r = nullptr,
+			     const NetExpr *f = nullptr,
+			     const NetExpr *d = nullptr)
+      : rise(r), fall(f), decay(d)
+      { }
+
+      bool has_delay() const
+      {
+	    return rise || fall || decay;
+      }
+
+      const NetExpr *rise;
+      const NetExpr *fall;
+      const NetExpr *decay;
+};
+
+std::ostream &operator << (std::ostream &o, const drive_strength_t &strength);
+std::ostream &operator << (std::ostream &o, const delay_exprs_t &delays);
 std::ostream& operator << (std::ostream&o, ivl_variable_type_t val);
 
 extern void join_island(NetPins*obj);
@@ -125,17 +162,17 @@ class Link {
       DIR get_dir() const;
 
 	// Set the delay for all the drivers to this nexus.
-      void drivers_delays(const NetExpr*rise, const NetExpr*fall, const NetExpr*decay);
+      void drivers_delays(const delay_exprs_t &delays);
 
 	// A link has a drive strength for 0 and 1 values. The drive0
 	// strength is for when the link has the value 0, and drive1
 	// strength is for when the link has a value 1.
-      void drive0(ivl_drive_t);
-      void drive1(ivl_drive_t);
+      void drive(const drive_strength_t &drive_i);
+      drive_strength_t drive() const;
 
 	// This sets the drives for all drivers of this link, and not
 	// just the current link.
-      void drivers_drive(ivl_drive_t d0, ivl_drive_t d1);
+      void drivers_drive(const drive_strength_t &drive_i);
 
       ivl_drive_t drive0() const;
       ivl_drive_t drive1() const;
@@ -268,13 +305,15 @@ class NetObj  : public NetPins, public Attrib {
       perm_string name() const { return name_; }
       void rename(perm_string n) { name_ = n; }
 
-      const NetExpr* rise_time() const { return delay1_; }
-      const NetExpr* fall_time() const { return delay2_; }
-      const NetExpr* decay_time() const { return delay3_; }
+      const NetExpr *rise_time() const { return delays_.rise; }
+      const NetExpr *fall_time() const { return delays_.fall; }
+      const NetExpr *decay_time() const { return delays_.decay; }
+      const delay_exprs_t &delay_times() const
+      {
+	    return delays_;
+      }
 
-      void rise_time(const NetExpr* d) { delay1_ = d; }
-      void fall_time(const NetExpr* d) { delay2_ = d; }
-      void decay_time(const NetExpr* d) { delay3_ = d; }
+      void delay_times(const delay_exprs_t &delays);
 
       void dump_obj_attr(std::ostream&, unsigned) const;
 
@@ -283,9 +322,7 @@ class NetObj  : public NetPins, public Attrib {
     private:
       NetScope*scope_;
       perm_string name_;
-      const NetExpr* delay1_;
-      const NetExpr* delay2_;
-      const NetExpr* delay3_;
+      delay_exprs_t delays_;
 };
 
 /*
@@ -373,8 +410,8 @@ class Nexus {
 
       const char* name() const;
 
-      void drivers_delays(const NetExpr*rise, const NetExpr*fall, const NetExpr*decay);
-      void drivers_drive(ivl_drive_t d0, ivl_drive_t d1);
+      void drivers_delays(const delay_exprs_t &delays);
+      void drivers_drive(const drive_strength_t &drive);
 
       Link*first_nlink();
       const Link* first_nlink()const;
@@ -970,7 +1007,7 @@ class NetScope : public Definitions, public Attrib {
       void add_typedefs(const std::map<perm_string,typedef_t*>*typedefs);
 
         /* Search the scope hierarchy for the scope where 'type' was defined. */
-      NetScope*find_typedef_scope(const Design*des, const typedef_t*type);
+      NetScope*find_typedef_scope(const Design*des, const typedef_t*type_i);
 
 	/* Parameters exist within a scope, and these methods allow
 	   one to manipulate the set. In these cases, the name is the
@@ -1042,6 +1079,31 @@ class NetScope : public Definitions, public Attrib {
       const NetScope* unit() const { return unit_; }
       const NetScope* parent() const { return up_; }
       const NetScope* child(const hname_t&name) const;
+
+      struct interface_port_alias_t {
+	    interface_port_alias_t() : actual_scope(nullptr), modport(nullptr) { }
+	    interface_port_alias_t(NetScope*actual, const PModport*mp)
+	    : actual_scope(actual), modport(mp) { }
+
+	    NetScope*actual_scope;
+	    const PModport*modport;
+      };
+
+	/* Interface-typed module formals are represented as aliases to
+	   concrete interface instance scopes. These are deliberately kept
+	   out of the real child-scope map; only alias-aware lookup paths
+	   should traverse them. */
+      void add_interface_port_alias(perm_string formal_name,
+				    NetScope*actual_scope,
+				    const PModport*modport);
+      const interface_port_alias_t* find_interface_port_alias(perm_string formal_name) const;
+      void add_interface_port_alias_element(perm_string formal_name,
+					    long index,
+					    NetScope*actual_scope,
+					    const PModport*modport);
+      const interface_port_alias_t* find_interface_port_alias_element(perm_string formal_name,
+								      long index) const;
+      const std::map<long,interface_port_alias_t>* find_interface_port_alias_array(perm_string formal_name) const;
 
 	/* A helper function to find the enclosing class scope. */
       const NetScope* get_class_scope() const;
@@ -1131,7 +1193,7 @@ class NetScope : public Definitions, public Attrib {
 
         /* Is this scope elaborating a final procedure? */
       void in_final(bool in_final__) { in_final_ = in_final__; };
-      bool in_final() const { return in_final_; };
+      bool in_final() const;
 
       const NetTaskDef* task_def() const;
       const NetFuncDef* func_def() const;
@@ -1253,6 +1315,8 @@ class NetScope : public Definitions, public Attrib {
 	    bool overridable = false;
 	    // Is it a type parameter
 	    bool type_flag = false;
+	    // Type restriction for a type parameter
+	    type_restrict_t type_restrict;
 	    // The lexical position of the declaration
 	    unsigned lexical_pos = 0;
 	    // range constraints
@@ -1347,6 +1411,8 @@ class NetScope : public Definitions, public Attrib {
       NetScope*unit_;
       NetScope*up_;
       std::map<hname_t,NetScope*> children_;
+      std::map<perm_string,interface_port_alias_t> interface_port_aliases_;
+      std::map<perm_string,std::map<long,interface_port_alias_t> > interface_port_alias_arrays_;
 
       unsigned lcounter_;
       bool need_const_func_, is_const_func_, is_auto_, is_cell_, calls_stask_;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -203,7 +203,7 @@ int CondSignalAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
 
 int ComponentInstantiation::emit(ostream&out, Entity*ent, Architecture*arc)
 {
-      const char*comma = "";
+      const char*comma;
       int errors = 0;
 
       arc->set_cur_component(this);

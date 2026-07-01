@@ -78,6 +78,23 @@ module top;
       pass = 1'b0;
     end
 
+    // These should execute as if there was no event control
+    result <= repeat(0) @(posedge clk) 4.0;
+    #1
+    if ($simtime != 171 || result != 4.0) begin
+      $display("Failed @ at %0t, expected 4.0, got %f",
+               $simtime, result);
+      pass = 1'b0;
+    end
+
+    result <= repeat(-1) @(posedge clk) 5.0;
+    #1
+    if ($simtime != 172 || result != 5.0) begin
+      $display("Failed @ at %0t, expected 5.0, got %f",
+               $simtime, result);
+      pass = 1'b0;
+    end
+
     if (pass) $display("PASSED");
     $finish;
   end

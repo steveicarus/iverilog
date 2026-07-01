@@ -162,7 +162,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       static ivl_scope_t find_scope(ivl_design_s &des, const NetScope*cur);
       static ivl_signal_t find_signal(ivl_design_s &des, const NetNet*net);
-      static ivl_parameter_t scope_find_param(ivl_scope_t scope,
+      static ivl_parameter_t scope_find_param(ivl_scope_t scope_i,
 					      const char*name);
 
       void add_root(const NetScope *s);

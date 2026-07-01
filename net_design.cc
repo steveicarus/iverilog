@@ -838,6 +838,16 @@ void NetScope::evaluate_type_parameter_(Design *des, param_ref_t cur)
       data_type_t *ptype = type_expr->get_type();
       NetScope *type_scope = cur->second.val_scope;
       cur->second.ivl_type = ptype->elaborate_type(des, type_scope);
+      if (!cur->second.ivl_type)
+	    return;
+
+      if (!cur->second.type_restrict.matches(cur->second.ivl_type)) {
+	    cerr << type_expr->get_fileline() << ": error: "
+		 << "Type parameter `" << cur->first << "` expects a `"
+		 << cur->second.type_restrict << "` type, got `"
+		 << *cur->second.ivl_type << "`." << endl;
+	    des->errors++;
+      }
 }
 
 void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)

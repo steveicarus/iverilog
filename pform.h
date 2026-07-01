@@ -167,6 +167,15 @@ extern void pform_module_define_port(const struct vlltype&li,
 
 extern Module::port_t* pform_module_port_reference(const struct vlltype&loc,
 						   perm_string name);
+extern Module::port_t* pform_module_interface_port_reference(
+						   const struct vlltype&loc,
+						   perm_string interface_type,
+						   perm_string modport_name,
+						   perm_string name,
+						   std::list<pform_range_t>*udims = 0);
+extern void pform_module_define_interface_port(const struct vlltype&loc,
+                                               const Module::port_t*port,
+					       std::list<named_pexpr_t>*attr);
 extern void pform_endmodule(const char*, bool inside_celldefine,
                             Module::UCDriveType uc_drive_def);
 
@@ -314,7 +323,7 @@ extern void pform_set_typedef(const struct vlltype&loc, perm_string name,
 			      data_type_t*data_type,
 			      std::list<pform_range_t>*unp_ranges = nullptr);
 extern void pform_forward_typedef(const struct vlltype&loc, perm_string name,
-			      enum typedef_t::basic_type basic_type);
+			      type_restrict_t basic_type);
 
 extern void pform_set_type_referenced(const struct vlltype&loc, const char*name);
 
@@ -379,13 +388,6 @@ extern void pform_set_port_type(const struct vlltype&li,
 				data_type_t*dt,
 				std::list<named_pexpr_t>*attr);
 
-extern void pform_set_data_type(const struct vlltype&li,
-				data_type_t *data_type,
-				std::vector<PWire*> *wires,
-				NetNet::Type net_type,
-				std::list<named_pexpr_t>*attr,
-				bool is_const = false);
-
 extern void pform_set_string_type(const struct vlltype&li, const string_type_t*string_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 
 extern void pform_set_class_type(const struct vlltype&li, class_type_t*class_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*addr);
@@ -407,6 +409,7 @@ extern LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 extern void pform_set_parameter(const struct vlltype&loc,
                                 perm_string name,
                                 bool is_local, bool is_type,
+                                type_restrict_t type_restrict,
                                 data_type_t*data_type, const std::list<pform_range_t>*udims,
                                 PExpr*expr, LexicalScope::range_t*value_range);
 extern void pform_set_specparam(const struct vlltype&loc,

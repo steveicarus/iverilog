@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_bad_member_lval_proc_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

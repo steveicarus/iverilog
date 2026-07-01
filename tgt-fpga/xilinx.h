@@ -1,7 +1,7 @@
 #ifndef IVL_xilinx_H
 #define IVL_xilinx_H
 /*
- * Copyright (c) 2003-2014 Stephen Williams (steve at icarus.com)
+ * Copyright (c) 2003-2026 Stephen Williams (steve at icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,13 +34,13 @@
 /* Buffer types of devices have the BUF_O and BUF_I pin
    assignments. The BUF, INV, and certain specialized devices fit in
    this category. */
-extern edif_cell_t xilinx_cell_buf (edif_xlibrary_t xlib);
-extern edif_cell_t xilinx_cell_bufe(edif_xlibrary_t xlib);
-extern edif_cell_t xilinx_cell_bufg(edif_xlibrary_t xlib);
-extern edif_cell_t xilinx_cell_buft(edif_xlibrary_t xlib);
-extern edif_cell_t xilinx_cell_inv (edif_xlibrary_t xlib);
-extern edif_cell_t xilinx_cell_ibuf(edif_xlibrary_t xlib);
-extern edif_cell_t xilinx_cell_obuf(edif_xlibrary_t xlib);
+extern edif_cell_t xilinx_cell_buf (edif_xlibrary_t xlib_i);
+extern edif_cell_t xilinx_cell_bufe(edif_xlibrary_t xlib_i);
+extern edif_cell_t xilinx_cell_bufg(edif_xlibrary_t xlib_i);
+extern edif_cell_t xilinx_cell_buft(edif_xlibrary_t xlib_i);
+extern edif_cell_t xilinx_cell_inv (edif_xlibrary_t xlib_i);
+extern edif_cell_t xilinx_cell_ibuf(edif_xlibrary_t xlib_i);
+extern edif_cell_t xilinx_cell_obuf(edif_xlibrary_t xlib_i);
 #define BUF_O 0
 #define BUF_I 1
   /* Only bufe and buft buffers have this input. */
@@ -52,9 +52,9 @@ extern edif_cell_t xilinx_cell_obuf(edif_xlibrary_t xlib);
    2, 3 or 4 inputs. All forms have a single bit output. Also, the
    real behavior of the device will need to be specified by an INIT
    parameter string. */
-extern edif_cell_t xilinx_cell_lut2(edif_xlibrary_t xlib);
-extern edif_cell_t xilinx_cell_lut3(edif_xlibrary_t xlib);
-extern edif_cell_t xilinx_cell_lut4(edif_xlibrary_t xlib);
+extern edif_cell_t xilinx_cell_lut2(edif_xlibrary_t xlib_i);
+extern edif_cell_t xilinx_cell_lut3(edif_xlibrary_t xlib_i);
+extern edif_cell_t xilinx_cell_lut4(edif_xlibrary_t xlib_i);
 #define LUT_O  0
 #define LUT_I0 1
 #define LUT_I1 2
@@ -67,9 +67,9 @@ extern edif_cell_t xilinx_cell_lut4(edif_xlibrary_t xlib);
 /*
  * These are flip-flops of various sort, but similar pinouts.
  */
-extern edif_cell_t xilinx_cell_fdce(edif_xlibrary_t xlib);
-extern edif_cell_t xilinx_cell_fdcpe(edif_xlibrary_t xlib);
-extern edif_cell_t xilinx_cell_fdre(edif_xlibrary_t xlib);
+extern edif_cell_t xilinx_cell_fdce(edif_xlibrary_t xlib_i);
+extern edif_cell_t xilinx_cell_fdcpe(edif_xlibrary_t xlib_i);
+extern edif_cell_t xilinx_cell_fdre(edif_xlibrary_t xlib_i);
 #define FDCE_Q   0
 #define FDCE_C   1
 #define FDCE_D   2
@@ -80,28 +80,28 @@ extern edif_cell_t xilinx_cell_fdre(edif_xlibrary_t xlib);
 
 /* === Virtex/Virtex2 Carry Chain Logic === */
 
-extern edif_cell_t xilinx_cell_mult_and(edif_xlibrary_t xlib);
+extern edif_cell_t xilinx_cell_mult_and(edif_xlibrary_t xlib_i);
 #define MULT_AND_LO 0
 #define MULT_AND_I0 1
 #define MULT_AND_I1 2
 
-extern edif_cell_t xilinx_cell_muxcy(edif_xlibrary_t xlib);
-extern edif_cell_t xilinx_cell_muxcy_l(edif_xlibrary_t xlib);
+extern edif_cell_t xilinx_cell_muxcy(edif_xlibrary_t xlib_i);
+extern edif_cell_t xilinx_cell_muxcy_l(edif_xlibrary_t xlib_i);
 #define MUXCY_O  0
 #define MUXCY_DI 1
 #define MUXCY_CI 2
 #define MUXCY_S  3
 
-extern edif_cell_t xilinx_cell_xorcy(edif_xlibrary_t xlib);
+extern edif_cell_t xilinx_cell_xorcy(edif_xlibrary_t xlib_i);
 #define XORCY_O  0
 #define XORCY_CI 1
 #define XORCY_LI 2
 
 /* === Virtex/Virtex2 MUX devices */
-extern edif_cell_t xilinx_cell_muxf5(edif_xlibrary_t xlib);
-extern edif_cell_t xilinx_cell_muxf6(edif_xlibrary_t xlib);
-extern edif_cell_t xilinx_cell_muxf7(edif_xlibrary_t xlib);
-extern edif_cell_t xilinx_cell_muxf8(edif_xlibrary_t xlib);
+extern edif_cell_t xilinx_cell_muxf5(edif_xlibrary_t xlib_i);
+extern edif_cell_t xilinx_cell_muxf6(edif_xlibrary_t xlib_i);
+extern edif_cell_t xilinx_cell_muxf7(edif_xlibrary_t xlib_i);
+extern edif_cell_t xilinx_cell_muxf8(edif_xlibrary_t xlib_i);
 #define MUXF_O  0
 #define MUXF_I0 1
 #define MUXF_I1 2

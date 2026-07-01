@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "begin_keywords_1364_2005.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

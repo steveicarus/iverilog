@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_type_param_restrict_class_fail2.v",
+    "iverilog-args" : [ "-g2023" ]
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1319,10 +1319,6 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 
 	    if (ivl_type_base(prop_type) == IVL_VT_BOOL ||
 	        ivl_type_base(prop_type) == IVL_VT_LOGIC) {
-		  assert(ivl_type_packed_dimensions(prop_type) == 0 ||
-		         (ivl_type_packed_dimensions(prop_type) == 1 &&
-		          ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0)));
-
 		  if (ivl_stmt_opcode(net) != 0) {
 			fprintf(vvp_out, "    %%prop/v %d;\n", prop_idx);
 		  }

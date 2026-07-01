@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# This script manually creates a version.h file.
+# This script manually creates a version_tag.h file.
 #
 # It is used when creating a MinGW executable from a Cygwin
 # hosted git repository. It assumes that git is available.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -133,11 +133,13 @@ NetAssign_* PEConcat::elaborate_lval(Design*des,
 		 the compiler catch more errors. */
 	    if (tmp == 0) continue;
 
-	    if (tmp->expr_type() == IVL_VT_REAL) {
+	    ivl_type_t tmp_type = tmp->net_type();
+	    if (tmp_type && !tmp_type->packed()) {
 		  cerr << parms_[idx]->get_fileline() << ": error: "
-		       << "concatenation operand can not be real: "
+		       << "concatenation operand must be packed: "
 		       << *parms_[idx] << endl;
 		  des->errors += 1;
+		  delete tmp;
 		  continue;
 	    }
 
@@ -296,6 +298,15 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 	// Past this point, we should have taken care of the cases
 	// where the name is a member/method of a struct/class.
 	// XXXX ivl_assert(*this, method_name.nil());
+      if (!tail_path.empty()) {
+	    cerr << get_fileline() << ": error: Variable "
+		 << reg->name()
+		 << " does not have a field named: "
+		 << tail_path << "." << endl;
+	    des->errors += 1;
+	    return nullptr;
+      }
+
       ivl_assert(*this, tail_path.empty());
 
       bool need_const_idx = is_cassign || is_force;
@@ -881,8 +892,10 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       calculate_up_do_width_(des, scope, wid);
 
       NetExpr*base = elab_and_eval(des, scope, index_tail.msb, -1);
+      if (!base)
+	    return false;
 
-      if (base && base->expr_type() == IVL_VT_REAL) {
+      if (base->expr_type() == IVL_VT_REAL) {
 	    cerr << get_fileline() << ": error: Indexed part select base "
 	            "expression for ";
 	    cerr << lv->sig()->name() << "[" << *base;

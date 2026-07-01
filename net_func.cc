@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,8 +41,7 @@ NetUserFunc::NetUserFunc(NetScope*s, perm_string n, NetScope*d,
       for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1) {
 
 	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).drive0(IVL_DR_HiZ);
-	    pin(idx).drive1(IVL_DR_HiZ);
+	    pin(idx).drive(drive_strength_t::hiz);
       }
 }
 
@@ -103,8 +102,7 @@ NetSysFunc::NetSysFunc(NetScope*s, perm_string n,
       for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1) {
 
 	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).drive0(IVL_DR_HiZ);
-	    pin(idx).drive1(IVL_DR_HiZ);
+	    pin(idx).drive(drive_strength_t::hiz);
       }
 }
 
