@@ -274,15 +274,24 @@ PECallFunction::PECallFunction(PExpr* chain_prefix, const pform_name_t &method,
 {
 }
 
+void PECallFunction::set_with_clause(PExpr* with_expr)
+{
+      delete with_expr_;
+      with_expr_ = with_expr;
+}
+
 PECallFunction::~PECallFunction()
 {
       delete chain_prefix_;
+      delete with_expr_;
 }
 
 void PECallFunction::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
       if (chain_prefix_)
 	    chain_prefix_->declare_implicit_nets(scope, type);
+      if (with_expr_)
+	    with_expr_->declare_implicit_nets(scope, type);
       for (const auto &parm : parms_) {
 	    if (parm.parm)
 		  parm.parm->declare_implicit_nets(scope, type);
@@ -292,6 +301,8 @@ void PECallFunction::declare_implicit_nets(LexicalScope*scope, NetNet::Type type
 bool PECallFunction::has_aa_term(Design*des, NetScope*scope) const
 {
       if (chain_prefix_ && chain_prefix_->has_aa_term(des, scope))
+	    return true;
+      if (with_expr_ && with_expr_->has_aa_term(des, scope))
 	    return true;
       for (const auto &parm : parms_) {
 	    if (parm.parm && parm.parm->has_aa_term(des, scope))

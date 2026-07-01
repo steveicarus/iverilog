@@ -426,6 +426,8 @@ void PECallFunction::dump(ostream &out) const
 	    out << ".";
       }
       out << path_ << "(" << parms_ << ")";
+      if (peek_with_clause())
+	    out << " with (" << *peek_with_clause() << ")";
 }
 
 void PECastSize::dump(ostream &out) const

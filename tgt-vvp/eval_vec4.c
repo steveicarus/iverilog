@@ -1046,12 +1046,6 @@ static void draw_select_pad_vec4(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%pad/u %u;\n", wid);
 }
 
-/*
- * This function handles the special case of a call to the internal
- * functions $ivl_queue_method$pop_back et al. The first (and only)
- * argument is the signal that represents a dynamic queue. Generate a
- * %qpop instruction to pop a value and push it to the vec4 stack.
- */
 static void draw_darray_pop(ivl_expr_t expr)
 {
       const char*fb;
@@ -1102,6 +1096,15 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
       if (strcmp(ivl_expr_name(expr),"$ivl_queue_method$pop_front")==0) {
 	    draw_darray_pop(expr);
 	    return;
+      }
+
+	/* find*_with has four parameters and is lowered in eval_object.c */
+      if (parm_count == 4 &&
+	  strncmp(ivl_expr_name(expr), "$ivl_queue_method$",
+		  sizeof("$ivl_queue_method$") - 1) == 0 &&
+	  strstr(ivl_expr_name(expr), "_with") != 0) {
+	    if (draw_queue_method_find_sfunc(expr) == 0)
+		  return;
       }
 
       if (strcmp(ivl_expr_name(expr), "$size")==0 && parm_count==1) {
