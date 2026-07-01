@@ -208,6 +208,8 @@ class PEAssignPattern : public PExpr {
 
       void dump(std::ostream&) const override;
 
+      virtual bool has_aa_term(Design*des, NetScope*scope) const override;
+
       virtual unsigned test_width(Design*des, NetScope*scope, width_mode_t&mode) override;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     ivl_type_t type, unsigned flags) const override;

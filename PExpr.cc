@@ -108,6 +108,16 @@ PEAssignPattern::~PEAssignPattern()
 {
 }
 
+bool PEAssignPattern::has_aa_term(Design*des, NetScope*scope) const
+{
+      bool flag = false;
+      for (const auto *parm : parms_) {
+	    if (parm)
+		  flag = parm->has_aa_term(des, scope) || flag;
+      }
+      return flag;
+}
+
 PEBinary::PEBinary(char op, PExpr*l, PExpr*r)
 : op_(op), left_(l), right_(r)
 {

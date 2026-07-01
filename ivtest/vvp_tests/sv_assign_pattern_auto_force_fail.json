@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_assign_pattern_auto_force_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
