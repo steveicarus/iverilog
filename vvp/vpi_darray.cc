@@ -22,6 +22,7 @@
 # include  "vpi_priv.h"
 # include  "vvp_net_sig.h"
 # include  "vvp_darray.h"
+# include  "vvp_cobject.h"
 # include  "array_common.h"
 # include  "schedule.h"
 #ifdef CHECK_WITH_VALGRIND
@@ -294,38 +295,23 @@ vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net)
 }
 
 __vpiQueueVar::__vpiQueueVar(__vpiScope*sc, const char*na, vvp_net_t*ne)
-: __vpiBaseVar(sc, na, ne)
+: __vpiDarrayVar(sc, na, ne)
 {
 }
 
-int __vpiQueueVar::get_type_code(void) const
-{ return vpiArrayVar; }
-
-
 int __vpiQueueVar::vpi_get(int code)
 {
-      vvp_fun_signal_object*fun = dynamic_cast<vvp_fun_signal_object*> (get_net()->fun);
-      assert(fun);
-      vvp_object_t val = fun->get_object();
-      const vvp_queue*aval = val.peek<vvp_queue>();
-
       switch (code) {
 	  case vpiArrayType:
 	    return vpiQueueArray;
-	  case vpiSize:
-	    if (aval == 0)
-		  return 0;
-	    else
-		  return aval->get_size();
-
 	  default:
-	    return 0;
+	    return __vpiDarrayVar::vpi_get(code);
       }
 }
 
 void __vpiQueueVar::vpi_get_value(p_vpi_value val)
 {
-      val->format = vpiSuppressVal;
+      __vpiDarrayVar::vpi_get_value(val);
 }
 
 
@@ -339,19 +325,144 @@ vpiHandle vpip_make_queue_var(const char*name, vvp_net_t*net)
       return obj;
 }
 
+__vpiPropQueueRef::__vpiPropQueueRef(__vpiScope*scope, unsigned pidx,
+				     bool is_queue)
+: class_net_(0), prop_idx_(pidx), is_queue_(is_queue), scope_(scope)
+{
+}
+
+int __vpiPropQueueRef::get_type_code(void) const
+{ return vpiArrayVar; }
+
+static vvp_darray* get_live_darray_from_prop(vvp_net_t* class_net, unsigned pid)
+{
+      if (!class_net)
+	    return 0;
+      vvp_fun_signal_object* fun
+	    = dynamic_cast<vvp_fun_signal_object*>(class_net->fun);
+      if (!fun)
+	    return 0;
+      vvp_object_t obj = fun->get_object();
+      vvp_cobject* cobj = obj.peek<vvp_cobject>();
+      if (!cobj)
+	    return 0;
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      return qobj.peek<vvp_darray>();
+}
+
+int __vpiPropQueueRef::vpi_get(int code)
+{
+      vvp_darray* aobj = get_live_darray_from_prop(class_net_, prop_idx_);
+      switch (code) {
+	  case vpiArrayType:
+	    return is_queue_ ? vpiQueueArray : vpiDynamicArray;
+	  case vpiLeftRange:
+	    return 0;
+	  case vpiRightRange:
+	    return aobj ? (int) (aobj->get_size() - 1) : 0;
+	  case vpiSize:
+	    return aobj ? (int) aobj->get_size() : 0;
+	  default:
+	    return 0;
+      }
+}
+
+char* __vpiPropQueueRef::vpi_get_str(int code)
+{
+      if (code == vpiFile) {
+	    return simple_set_rbuf_str(file_names[0]);
+      }
+      return generic_get_str(code, scope_, "prop_darray", NULL);
+}
+
+void __vpiPropQueueRef::vpi_get_value(p_vpi_value val)
+{
+      val->format = vpiSuppressVal;
+}
+
+vpiHandle vpip_make_prop_queue_ref(char* class_label, unsigned prop_idx,
+				   unsigned is_queue_flag)
+{
+      __vpiPropQueueRef* obj = new __vpiPropQueueRef(vpip_peek_current_scope(),
+						     prop_idx,
+						     is_queue_flag != 0);
+      functor_ref_lookup(&obj->class_net_, class_label);
+      return obj;
+}
+
+static char* format_darray_pretty(vvp_darray* aobj)
+{
+      if (!aobj || aobj->get_size() == 0)
+	    return strdup("{}");
+
+      string out = "{";
+
+      for (size_t i = 0; i < aobj->get_size(); i += 1) {
+	    if (i > 0)
+		  out += ", ";
+	    if (dynamic_cast<vvp_darray_real*>(aobj)) {
+		  double d;
+		  aobj->get_word((unsigned) i, d);
+		  char buf[256];
+		  snprintf(buf, sizeof buf, "%g", d);
+		  out += buf;
+	    } else if (dynamic_cast<vvp_darray_string*>(aobj)) {
+		  string s;
+		  aobj->get_word((unsigned) i, s);
+		  out += "\"";
+		  out += s;
+		  out += "\"";
+	    } else {
+		  vvp_vector4_t v;
+		  aobj->get_word((unsigned) i, v);
+		  s_vpi_value val;
+		  val.format = vpiDecStrVal;
+		  vpip_vec4_get_value(v, v.size(), false, &val);
+		  out += val.value.str;
+	    }
+      }
+
+      out += "}";
+      return strdup(out.c_str());
+}
+
+extern "C" char* vpip_format_pretty(vpiHandle ref)
+{
+      if (!ref)
+	    return 0;
+
+      if (__vpiPropQueueRef* pr = dynamic_cast<__vpiPropQueueRef*>(ref)) {
+	    vvp_darray* a = get_live_darray_from_prop(pr->class_net_,
+						      pr->prop_idx_);
+	    return format_darray_pretty(a);
+      }
+
+      if (__vpiDarrayVar* dv = dynamic_cast<__vpiDarrayVar*>(ref)) {
+	    vvp_fun_signal_object* fun
+		  = dynamic_cast<vvp_fun_signal_object*>(dv->get_net()->fun);
+	    if (!fun)
+		  return 0;
+	    vvp_object_t obj = fun->get_object();
+	    vvp_darray* aobj = obj.peek<vvp_darray>();
+	    return format_darray_pretty(aobj);
+      }
+
+      return 0;
+}
+
 #ifdef CHECK_WITH_VALGRIND
 void array_delete(vpiHandle item)
 {
+      if (__vpiPropQueueRef* pq = dynamic_cast<__vpiPropQueueRef*>(item)) {
+	    delete pq;
+	    return;
+      }
+
       __vpiDarrayVar*dobj = dynamic_cast<__vpiDarrayVar*>(item);
       if (dobj) {
 	    if (dobj->vals_words) delete [] (dobj->vals_words-1);
 	    delete dobj;
-	    return;
-      }
-
-      __vpiQueueVar*qobj = dynamic_cast<__vpiQueueVar*>(item);
-      if (qobj) {
-	    delete qobj;
 	    return;
       }
 

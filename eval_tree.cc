@@ -26,6 +26,7 @@
 # include  <cmath>
 
 # include  "netlist.h"
+# include  "netclass.h"
 # include  "ivl_assert.h"
 # include  "netmisc.h"
 
@@ -2182,6 +2183,27 @@ static bool get_array_info(const NetExpr*arg, long dim,
 	    left = range.get_msb();
 	    right = range.get_lsb();
 	    return false;
+      }
+	/* Class property (e.g. queue field): size is dynamic; defer to runtime
+	 * instead of folding to all-X in evaluate_array_funcs_. */
+      if (const NetEProperty*prop = dynamic_cast<const NetEProperty*>(arg)) {
+	    const NetNet*obj = prop->get_sig();
+	    const netclass_t*cls = dynamic_cast<const netclass_t*>(obj->net_type());
+	    if (cls == 0)
+		  return true;
+	    ivl_type_t ptype = cls->get_prop_type(prop->property_idx());
+	    if (ptype == 0)
+		  return true;
+	    switch (ptype->base_type()) {
+		case IVL_VT_DARRAY:
+		case IVL_VT_QUEUE:
+		case IVL_VT_STRING:
+		  defer = true;
+		  return true;
+		default:
+		  break;
+	    }
+	    return true;
       }
 	/* The argument must be a signal that has enough dimensions. */
       const NetESignal*esig = dynamic_cast<const NetESignal*>(arg);
