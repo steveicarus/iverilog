@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_darray_find_locators.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "SystemVerilog dynamic array locator methods",
+        "type"          : "CE"
+    }
+}
