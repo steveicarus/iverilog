@@ -2400,6 +2400,10 @@ extern int         ivl_type_properties(ivl_type_t net);
 extern const char* ivl_type_prop_name(ivl_type_t net, int idx);
 extern ivl_type_t  ivl_type_prop_type(ivl_type_t net, int idx);
 
+/* Maximum element count for a queue type (0 = unbounded). Only valid
+ * when ivl_type_base(net) == IVL_VT_QUEUE. */
+extern unsigned ivl_type_queue_max(ivl_type_t net);
+
 
 #if defined(__MINGW32__) || defined (__CYGWIN__)
 #  define DLLEXPORT __declspec(dllexport)
