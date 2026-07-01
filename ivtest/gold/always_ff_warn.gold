@@ -21,7 +21,7 @@
 ./ivltests/always_ff_warn.v:33: warning: A for statement step must be a simple binary +/- to be synthesized in an always_ff process.
 ./ivltests/always_ff_warn.v:33: warning: System task ($display) cannot be synthesized in an always_ff process.
 ./ivltests/always_ff_warn.v:34: warning: System task ($display) cannot be synthesized in an always_ff process.
-./ivltests/always_ff_warn.v:35: warning: Dynamic array delete method cannot be synthesized in an always_ff process.
+./ivltests/always_ff_warn.v:35: warning: Dynamic array ordering/delete method cannot be synthesized in an always_ff process.
 ./ivltests/always_ff_warn.v:36: warning: System task ($display) cannot be synthesized in an always_ff process.
 ./ivltests/always_ff_warn.v:15: warning: An event (tevt) cannot be synthesized in an always_ff process.
 ./ivltests/always_ff_warn.v:14: warning: A non-integral variable (trl) cannot be synthesized in an always_ff process.

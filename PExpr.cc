@@ -261,12 +261,37 @@ PECallFunction::PECallFunction(perm_string n, const list<named_pexpr_t> &parms)
 {
 }
 
+PECallFunction::PECallFunction(PExpr* chain_prefix, const pform_name_t &method,
+			       const vector<named_pexpr_t> &parms)
+: path_(method), parms_(parms), chain_prefix_(chain_prefix), is_overridden_(false)
+{
+}
+
+PECallFunction::PECallFunction(PExpr* chain_prefix, const pform_name_t &method,
+			       const list<named_pexpr_t> &parms)
+: path_(method), parms_(parms.begin(), parms.end()),
+  chain_prefix_(chain_prefix), is_overridden_(false)
+{
+}
+
+void PECallFunction::set_with_clause(PExpr* with_expr)
+{
+      delete with_expr_;
+      with_expr_ = with_expr;
+}
+
 PECallFunction::~PECallFunction()
 {
+      delete chain_prefix_;
+      delete with_expr_;
 }
 
 void PECallFunction::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
+      if (chain_prefix_)
+	    chain_prefix_->declare_implicit_nets(scope, type);
+      if (with_expr_)
+	    with_expr_->declare_implicit_nets(scope, type);
       for (const auto &parm : parms_) {
 	    if (parm.parm)
 		  parm.parm->declare_implicit_nets(scope, type);
@@ -275,12 +300,15 @@ void PECallFunction::declare_implicit_nets(LexicalScope*scope, NetNet::Type type
 
 bool PECallFunction::has_aa_term(Design*des, NetScope*scope) const
 {
-      bool flag = false;
+      if (chain_prefix_ && chain_prefix_->has_aa_term(des, scope))
+	    return true;
+      if (with_expr_ && with_expr_->has_aa_term(des, scope))
+	    return true;
       for (const auto &parm : parms_) {
-	    if (parm.parm)
-		  flag |= parm.parm->has_aa_term(des, scope);
+	    if (parm.parm && parm.parm->has_aa_term(des, scope))
+		  return true;
       }
-      return flag;
+      return false;
 }
 
 PEConcat::PEConcat(const list<PExpr*>&p, PExpr*r)
