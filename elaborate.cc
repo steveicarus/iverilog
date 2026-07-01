@@ -3251,15 +3251,6 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       NetEvWait*event = 0;
       if (count_ != 0 || event_ != 0) {
 	    if (count_ != 0) {
-                  if (scope->is_auto() && count_->has_aa_term(des, scope)) {
-                        cerr << get_fileline() << ": error: automatically "
-                                "allocated variables may not be referenced "
-                                "in intra-assignment event controls of "
-                                "non-blocking assignments." << endl;
-                        des->errors += 1;
-                        return 0;
-                  }
-
 		  ivl_assert(*this, event_ != 0);
 		  count = elab_and_eval(des, scope, count_, -1);
 		  if (count == 0) {

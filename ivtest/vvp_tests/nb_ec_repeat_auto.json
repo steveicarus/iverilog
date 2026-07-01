@@ -1,0 +1,8 @@
+{
+    "type"   : "normal",
+    "source" : "nb_ec_repeat_auto.v",
+    "vlog95" : {
+        "__comment" : "Automatic tasks are not supported",
+        "type"      : "CE"
+    }
+}
