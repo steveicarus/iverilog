@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en" data-accent-color="violet" data-content_root="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Getting Started as a Contributor - Icarus Verilog documentation</title><link rel="shortcut icon" href="../_static/favicon.ico"/><link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="The Regression Test Suite" href="regression_tests.html" /><link rel="prev" title="Icarus Verilog Developer Support" href="index.html" /><script>
+    function setColorMode(t){let e=document.documentElement;e.setAttribute("data-color-mode",t);let a=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,s=t;"auto"===t&&(s=a?"dark":"light"),"light"===s?(e.classList.remove("dark"),e.classList.add("light")):(e.classList.remove("light"),e.classList.add("dark"))}
+    setColorMode(localStorage._theme||"auto");
+  </script><link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=ad592e98" />
+    <link rel="stylesheet" type="text/css" href="../_static/shibuya.css?v=44020203" />
+    <link media="print" rel="stylesheet" type="text/css" href="../_static/print.css?v=20ff2c19" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sy-f-text: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+  --sy-f-heading: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+}
+</style>
+    <meta property="og:type" content="website"/><meta property="og:title" content="Getting Started as a Contributor"/>
+    <meta name="twitter:card" content="summary"/>
+  </head>
+<body><div class="sy-head">
+  <div class="sy-head-blur"></div>
+  <div class="sy-head-inner sy-container mx-auto">
+    <a class="sy-head-brand" href="../index.html">
+      
+      
+      <strong>Icarus Verilog</strong>
+    </a>
+    <div class="sy-head-nav" id="head-nav">
+      <nav class="sy-head-links"></nav>
+      <div class="sy-head-extra flex items-center print:hidden"><form class="searchbox flex items-center" action="../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <kbd>/</kbd>
+</form><div class="sy-head-socials">
+  <a href="https://github.com/steveicarus/iverilog" aria-label="GitHub">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </a></div></div>
+    </div>
+    <div class="sy-head-actions flex items-center shrink-0 print:hidden"><button class="js-theme theme-switch flex items-center"
+data-aria-auto="Switch to light color mode"
+data-aria-light="Switch to dark color mode"
+data-aria-dark="Switch to auto color mode">
+<i class="i-lucide theme-icon"></i>
+</button><button class="md:hidden flex items-center js-menu" aria-label="Menu" type="button" aria-controls="head-nav" aria-expanded="false">
+        <div class="hamburger">
+          <span class="hamburger_1"></span>
+          <span class="hamburger_2"></span>
+          <span class="hamburger_3"></span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+<div class="sy-page sy-container flex mx-auto">
+  <aside id="lside" class="sy-lside md:w-72 md:shrink-0 print:hidden">
+    <div class="sy-lside-inner md:sticky">
+      <div class="sy-scrollbar p-6">
+        <div class="globaltoc" data-expand-depth="0"><p class="caption" role="heading" aria-level="3"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../releases/index.html">Icarus Verilog Release Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../releases/v13-0-release-note.html">🎉 Release V13.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../releases/v13-0-release-note.html#major-changes-in-v13">🔄 Major Changes in V13</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/index.html">Icarus Verilog Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../usage/installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/waveform_viewer.html">Viewing Waveforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-vvp.html">The vvp Code Generator (-tvvp)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-stub.html">The stub Code Generator (-tstub)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-null.html">The null Code Generator (-tnull)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-vhdl.html">The VHDL Code Generator (-tvhdl)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-vlog95.html">The Verilog ‘95 Code Generator (-tvlog95)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-pcb.html">The PCB Code Generator (-tpcb)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-fpga.html">The FPGA Code Generator (-tfpga)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-pal.html">The PAL Code Generator (-tpal)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-sizer.html">The sizer Code Analyzer (-tsizer)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-verilog.html">The Verilog Code Generator (-tverilog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-blif.html">The BLIF Code Generator (-tblif)</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Getting Started as a Contributor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide/index.html">Developer Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="guide/ivl/index.html">IVL - The Core Compiler</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="guide/ivl/netlist.html">Netlist Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/ivl/attributes.html">Icarus Verilog Attributes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/ivl/ivl_target.html">Loadable Target API (ivl_target)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/ivl/lpm.html">What Is LPM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/ivl/t-dll.html">Loadable Targets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="guide/vvp/index.html">VVP - Verilog Virtual Processor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="guide/vvp/vvp.html">VVP Simulation Engine</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/vvp/opcodes.html">Executable Instruction Opcodes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/vvp/vpi.html">VPI Within VVP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/vvp/vthread.html">Thread Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/vvp/debug.html">Debug Aids For VVP</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="guide/tgt-vvp/tgt-vvp.html">The VVP Target</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guide/vpi/index.html">VPI in Icarus Verilog</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="guide/vpi/vpi.html">VPI Modules in Icarus Verilog</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/vpi/va_math.html">Verilog-A math library</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="guide/cadpli/cadpli.html">Cadence PLI1 Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guide/misc/index.html">Miscellaneous</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="guide/misc/ieee1364-notes.html">IEEE1364 Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/misc/swift.html">Swift Model Support (Preliminary)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/misc/xilinx-hint.html">Xilinx Hint</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="lside-overlay js-menu" role="button" aria-label="Close left sidebar" aria-controls="lside" aria-expanded="false"></div>
+  <aside id="rside" class="sy-rside pb-3 w-64 shrink-0 order-last">
+    <button class="rside-close js-menu xl:hidden" aria-label="Close Table of Contents" type="button" aria-controls="rside" aria-expanded="false">
+      <i class="i-lucide close"></i>
+    </button>
+    <div class="sy-scrollbar sy-rside-inner px-6 xl:top-16 xl:sticky xl:pl-0 pt-6 pb-4"><div class="localtoc"><h3>On this page</h3><ul>
+<li><a class="reference internal" href="#getting-icarus-verilog">Getting Icarus Verilog</a></li>
+<li><a class="reference internal" href="#icarus-specific-configuration-options">Icarus Specific Configuration Options</a></li>
+<li><a class="reference internal" href="#compiling-on-linux">Compiling on Linux</a></li>
+<li><a class="reference internal" href="#regression-tests">Regression Tests</a></li>
+<li><a class="reference internal" href="#forks-branches-and-pull-requests">Forks, Branches and Pull Requests</a></li>
+</ul>
+</div><a class="js-repo-stats repo-stats flex items-center" href="https://github.com/steveicarus/iverilog"
+  data-type="github" data-user="steveicarus" data-repo="iverilog">
+  <span class="w-8 flex items-center justify-around shrink-0 text-3xl">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </span>
+  <span class="flex-grow px-2 break-all">
+    
+    
+      <span>iverilog</span>
+    
+    <span class="flex text-sm repo-stats-count">
+      <span class="flex items-center pr-3">
+        <iconify-icon icon="lucide:star"></iconify-icon>
+        <strong class="js-repo-stars ml-1">0</strong>
+      </span>
+      <span class="flex items-center">
+        <iconify-icon icon="lucide:git-fork"></iconify-icon>
+        <strong class="js-repo-forks ml-1">0</strong>
+      </span>
+    </span>
+  </span>
+</a><div class="edit-this-page">
+  <a href="https://github.com/steveicarus/iverilog/blob/master/Documentation/developer/getting_started.rst">Edit this page</a>
+</div><div id="ethical-ad-placement" data-ea-publisher="readthedocs"></div></div>
+  </aside>
+  <div class="rside-overlay js-menu" role="button" aria-label="Close Table of Contents" aria-controls="rside" aria-expanded="false"></div>
+  <main class="sy-main w-full max-sm:max-w-full print:pt-6">
+<div class="sy-breadcrumbs" role="navigation">
+  <div class="sy-breadcrumbs-inner flex items-center">
+    <div class="md:hidden mr-3">
+      <button class="js-menu" aria-label="Menu" type="button" aria-controls="lside" aria-expanded="false">
+        <i class="i-lucide menu"></i>
+      </button>
+    </div>
+    <ol class="flex-1" itemscope itemtype="https://schema.org/BreadcrumbList"><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../index.html"><span itemprop="name">Icarus Verilog</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="1" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="index.html"><span itemprop="name">Icarus Verilog Developer Support</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="2" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <strong itemprop="name">Getting Started as a Contributor</strong>
+        <meta itemprop="position" content="3" />
+      </li></ol>
+    <div class="xl:hidden ml-1">
+      <button class="js-menu" aria-label="Show table of contents" type="button" aria-controls="rside"
+        aria-expanded="false">
+        <i class="i-lucide outdent"></i>
+      </button>
+    </div>
+  </div>
+</div><div class="flex flex-col break-words justify-between">
+      <div class="relative min-w-0 max-w-6xl px-6 pb-6 pt-8 xl:px-12">
+  <div class="copy-page-wrapper relative pb-4 lg:absolute lg:top-8 lg:right-6 xl:right-12">
+  <div id="copy-page-trigger">
+    <button
+      type="button"
+      class="js-copy px-3 py-1 inline-flex items-center gap-1"
+      data-url="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/getting_started.rst.txt"
+    >
+      <i class="i-lucide" data-icon="copy"></i>
+      <span>Copy page</span>
+    </button>
+    <button class="js-menu px-2 py-1" type="button" aria-label="More actions"
+      aria-haspopup="menu" aria-expanded="false" aria-controls="copy-page-content">
+      <i class="i-lucide chevron-down"></i>
+    </button>
+  </div>
+  <div id="copy-page-content" role="menu" aria-orientation="vertical" aria-hidden="true">
+    <div role="presentation">
+      <div class="flex flex-col" role="group">
+        <button class="js-copy" type="button" role="menuitem"
+          data-url="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/getting_started.rst.txt">
+          <span class="iconify-icon">
+            <i class="i-lucide" data-icon="copy"></i>
+          </span>
+          <span>Copy page</span>
+        </button>
+        <a role="menuitem" href="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/getting_started.rst.txt" target="_blank" rel="nofollow"><iconify-icon icon="bi:code-slash"></iconify-icon>
+            <span>View Source</span></a><a role="menuitem" href="https://chatgpt.com/?hints=search&q=Read%20https%3A//raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/getting_started.rst.txt%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:openai"></iconify-icon>
+          <span>Open in ChatGPT</span>
+        </a><a role="menuitem" href="https://claude.ai/new?q=Read%20https%3A//raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/getting_started.rst.txt%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:claude"></iconify-icon>
+          <span>Open in Claude</span>
+        </a></div>
+    </div>
+  </div>
+</div><article class="yue" role="main">
+          <section id="getting-started-as-a-contributor">
+<h1>Getting Started as a Contributor<a class="headerlink" href="#getting-started-as-a-contributor" title="Link to this heading">¶</a></h1>
+<p>Icarus Verilog development is centered around the github repository at
+<a class="reference external" href="http://github.com/steveicarus/iverilog">github.com/steveicarus/iverilog</a>.
+Contributing to Icarus Verilog requires a basic knowledge of git and github,
+so see the github documentation for more information. The sections below will
+step you through the basics of getting the source code from github, making a
+branch, and submitting a pull request for review.</p>
+<section id="getting-icarus-verilog">
+<h2>Getting Icarus Verilog<a class="headerlink" href="#getting-icarus-verilog" title="Link to this heading">¶</a></h2>
+<p>To start, you will need to clone the code. It is preferred that you use the
+“ssh” method, and the ssh based clone with the command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">% </span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:steveicarus/iverilog.git
+</span></pre></div>
+</div>
+<p>This assumes that you have a github account (accounts are free) and you have
+set up your ssh authentication keys. See the
+<a class="reference external" href="https://docs.github.com/en/authentication">Authentication Guides here</a>.</p>
+<p>The “git clone” command will get you all the source:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">% </span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:steveicarus/iverilog.git
+</span><span data-line="2"><span class="go">Cloning into &#39;iverilog&#39;...</span>
+</span><span data-line="3"><span class="go">remote: Enumerating objects: 66234, done.</span>
+</span><span data-line="4"><span class="go">remote: Counting objects: 100% (6472/6472), done.</span>
+</span><span data-line="5"><span class="go">remote: Compressing objects: 100% (4123/4123), done.</span>
+</span><span data-line="6"><span class="go">remote: Total 66234 (delta 2412), reused 6039 (delta 2190), pack-reused 59762</span>
+</span><span data-line="7"><span class="go">Receiving objects: 100% (66234/66234), 27.98 MiB | 2.53 MiB/s, done.</span>
+</span><span data-line="8"><span class="go">Resolving deltas: 100% (50234/50234), done.</span>
+</span><span data-line="9"><span class="gp">% </span><span class="nb">cd</span><span class="w"> </span>iverilog/
+</span></pre></div>
+</div>
+<p>Normally, this is enough as you are now pointing at the most current
+development code, and you have implicitly created a branch “master” that
+tracks the development head. However, If you want to actually be working on a
+specific version, say for example version 11, the v11-branch, you checkout
+that branch with the command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">% </span>git<span class="w"> </span>checkout<span class="w"> </span>--track<span class="w"> </span>-b<span class="w"> </span>v11-branch<span class="w"> </span>origin/v11-branch
+</span></pre></div>
+</div>
+<p>This creates a local branch that tracks the v11-branch in the repository, and
+switches you over to your new v11-branch. The tracking is important as it
+causes pulls from the repository to re-merge your local branch with the remote
+v11-branch. You always work on a local branch, then merge only when you
+push/pull from the remote repository.</p>
+<p>Now that you’ve cloned the repository and optionally selected the branch you
+want to work on, your local source tree may later be synced up with the
+development source by using the git command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">% </span>git<span class="w"> </span>pull
+</span><span data-line="2"><span class="go">Already up to date.</span>
+</span></pre></div>
+</div>
+<p>Finally, configuration files are built by the extra step:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">% </span>sh<span class="w"> </span>autoconf.sh
+</span><span data-line="2"><span class="go">Autoconf in root...</span>
+</span><span data-line="3"><span class="go">Precompiling lexor_keyword.gperf</span>
+</span><span data-line="4"><span class="go">Precompiling vhdlpp/lexor_keyword.gperf</span>
+</span></pre></div>
+</div>
+<p>You will need autoconf and gperf installed in order for the script to work.
+If you get errors such as:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">% </span>sh<span class="w"> </span>autoconf.sh
+</span><span data-line="2"><span class="go">Autoconf in root...</span>
+</span><span data-line="3"><span class="go">autoconf.sh: 10: autoconf: not found</span>
+</span><span data-line="4"><span class="go">Precompiling lexor_keyword.gperf</span>
+</span><span data-line="5"><span class="go">autoconf.sh: 13: gperf: not found.</span>
+</span></pre></div>
+</div>
+<p>You will need to install download and install the autoconf and gperf tools.</p>
+<p>Now you are ready to configure and compile the source.</p>
+</section>
+<section id="icarus-specific-configuration-options">
+<h2>Icarus Specific Configuration Options<a class="headerlink" href="#icarus-specific-configuration-options" title="Link to this heading">¶</a></h2>
+<p>Icarus takes many of the standard configuration options and those will not be
+described here. The following are specific to Icarus Verilog:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">--enable-suffix[=suffix]
+</span></pre></div>
+</div>
+<p>This option allows the user to build Icarus with a default suffix or when
+provided a user defined suffix. All programs or directories are tagged with
+this suffix. e.g.(iverilog-0.8, vvp-0.8, etc.). The output of iverilog will
+reference the correct run time files and directories. The run time will check
+that it is running a file with a compatible version e.g.(you can not run a
+V0.9 file with the V0.8 run time).</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">--enable-libvvp
+</span></pre></div>
+</div>
+<p>The vvp program is built as a small stub linked to a shared library,
+libvvp.so, that may be linked with other programs so that they can host
+a vvp simulation.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">--enable-libveriuser
+</span></pre></div>
+</div>
+<p>PLI version 1 (the ACC and TF routines) were deprecated in IEEE 1364-2005.
+These are supported in Icarus Verilog by the libveriuser library and cadpli
+module. Starting with v13, these will only be built if this option is used.</p>
+<p>A debug options is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">--with-valgrind
+</span></pre></div>
+</div>
+<p>This option adds extra memory cleanup code and pool management code to allow
+better memory leak checking when valgrind is available. This option is not
+needed when checking for basic errors with valgrind.</p>
+</section>
+<section id="compiling-on-linux">
+<h2>Compiling on Linux<a class="headerlink" href="#compiling-on-linux" title="Link to this heading">¶</a></h2>
+<p>(Note: You will need to install bison, flex, g++ and gcc) This is probably the
+easiest step. Given that you have the source tree from the above instructions,
+the compile and install is generally as simple as:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">% </span>./configure
+</span><span data-line="2"><span class="go">configure: loading site script /usr/share/site/x86_64-unknown-linux-gnu</span>
+</span><span data-line="3"><span class="go">checking build system type... x86_64-unknown-linux-gnu</span>
+</span><span data-line="4"><span class="go">checking host system type... x86_64-unknown-linux-gnu</span>
+</span><span data-line="5"><span class="go">checking for gcc... gcc</span>
+</span><span data-line="6"><span class="go">checking whether the C compiler works... yes</span>
+</span><span data-line="7"><span class="go">checking for C compiler default output file name... a.out</span>
+</span><span data-line="8"><span class="go">checking for suffix of executables...</span>
+</span><span data-line="9"><span class="go">[...and so on...]</span>
+</span><span data-line="10">
+</span><span data-line="11"><span class="gp">% </span>make
+</span><span data-line="12"><span class="go">mkdir dep</span>
+</span><span data-line="13"><span class="go">Using git-describe for VERSION_TAG</span>
+</span><span data-line="14"><span class="go">g++ -DHAVE_CONFIG_H -I. -Ilibmisc  -Wall -Wextra -Wshadow   -g -O2 -MD -c main.cc -o main.o</span>
+</span><span data-line="15"><span class="go">mv main.d dep/main.d</span>
+</span><span data-line="16"><span class="go">g++ -DHAVE_CONFIG_H -I. -Ilibmisc  -Wall -Wextra -Wshadow   -g -O2 -MD -c async.cc -o async.o</span>
+</span><span data-line="17"><span class="go">mv async.d dep/async.d</span>
+</span><span data-line="18"><span class="go">g++ -DHAVE_CONFIG_H -I. -Ilibmisc  -Wall -Wextra -Wshadow   -g -O2 -MD -c design_dump.cc -o design_dump.o</span>
+</span><span data-line="19"><span class="go">mv design_dump.d dep/design_dump.d</span>
+</span><span data-line="20"><span class="go">g++ -DHAVE_CONFIG_H -I. -Ilibmisc  -Wall -Wextra -Wshadow   -g -O2 -MD -c discipline.cc -o discipline.o</span>
+</span><span data-line="21"><span class="go">[...and so on...]</span>
+</span></pre></div>
+</div>
+<p>The end result is a complete build of Icarus Verilog. You can install your
+compiled version with a command like this:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">% </span>sudo<span class="w"> </span>make<span class="w"> </span>install
+</span></pre></div>
+</div>
+</section>
+<section id="regression-tests">
+<h2>Regression Tests<a class="headerlink" href="#regression-tests" title="Link to this heading">¶</a></h2>
+<p>Icarus Verilog comes with a fairly extensive regression test suite. As of
+2022, that test suite is included with the source in the “ivtest”
+directory. Contained in that directory are a couple driver scripts that run
+all the regression tests on the installed version of Icarus Verilog. So for
+example:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">% </span><span class="nb">cd</span><span class="w"> </span>ivtest
+</span><span data-line="2"><span class="gp">% </span>./vvp_reg.pl
+</span><span data-line="3"><span class="gp">% </span>./vvp_reg.py
+</span><span data-line="4"><span class="gp">% </span>./vpi_reg.pl
+</span></pre></div>
+</div>
+<p>will run all the regression tests for the simulation engine. (This is what
+most people will want to do.) You should rerun these tests before submitting
+patches to the developers. Also, if you are adding a new feature, you should
+add test programs to the regression test suite to validate your new feature
+(or bug fix.). The python script is the preferred method to add new tests.</p>
+<p>All of these scripts take other options to test various configurations. What
+options are supported can be found by using the <code class="docutils literal notranslate"><span class="pre">-h/--help</span></code> argument. There
+is also a separate <code class="docutils literal notranslate"><span class="pre">vlog95_reg.pl</span></code> script for testing the vlog95 translation
+of the original tests. This is integrated into the existing Python test script
+for the new tests.</p>
+<p>Note that pull requests will be required to pass these regression tests before
+being merged.</p>
+</section>
+<section id="forks-branches-and-pull-requests">
+<h2>Forks, Branches and Pull Requests<a class="headerlink" href="#forks-branches-and-pull-requests" title="Link to this heading">¶</a></h2>
+<p>Currently, the preferred way to submit patches to Icarus Verilog is via pull
+requests.
+<a class="reference external" href="https://docs.github.com/en/github-ae&#64;latest/pull-requests">Pull requests</a>
+can be created from the main repository if you have write access (very few
+people have write access) or more commonly from a fork, so the first step is
+to create a fork that you can work with. It is easy enough to create a fork,
+just go to the
+<a class="reference external" href="http://github.com/steveicarus/iverilog">github.com/steveicarus/iverilog</a>
+page and use the “fork” button in the upper right corner. This will create
+a new repository that you can clone instead of the steveicarus/iverilog
+repository. You then use your local repository to create feature branches,
+then submit them for inclusion in the main repository as pull
+requests. Remember to <a class="reference external" href="https://docs.github.com/en/github-ae&#64;latest/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork">synchronize your fork</a>
+periodically with the main repository. This will make sure your work is based
+on the latest upstream and avoid merge conflicts.</p>
+<p>Create your patch by first creating a branch that contains your commits:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">% </span>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>my-github-id/branch-name
+</span></pre></div>
+</div>
+<p>We are encouraging using this scheme for naming your branches that are
+destined for pull requests. Use your github id in the branch name. So for
+example:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">% </span>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>steveicarus/foo-feature
+</span></pre></div>
+</div>
+<p>Do your work in this branch, then when you are ready to create a pull request,
+first push the branch up to github:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">% </span>git<span class="w"> </span>push<span class="w"> </span>-u<span class="w"> </span>origin<span class="w"> </span>my-github-id/branch-name
+</span></pre></div>
+</div>
+<p>Then go to github.com to create your pull request. <a class="reference external" href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork">Create your pull request
+against the “master” branch of the upstream repository</a>,
+or the version branch that you are working on. Your pull request will be run
+through continuous integration, and reviewed by one of the main
+authors. Feedback may be offered to your PR, and once accepted, an approved
+individual will merge it for you. Then you are done.</p>
+</section>
+</section>
+
+        </article><button class="back-to-top" type="button">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+  </svg>
+  <span>Back to top</span>
+</button><div class="navigation flex print:hidden"><div class="navigation-prev">
+    <a href="index.html">
+      <i class="i-lucide chevron-left"></i>
+      <div class="page-info">
+        <span>Previous</span><div class="title">Icarus Verilog Developer Support</div></div>
+    </a>
+  </div><div class="navigation-next">
+    <a href="regression_tests.html">
+      <div class="page-info">
+        <span>Next</span>
+        <div class="title">The Regression Test Suite</div>
+      </div>
+      <i class="i-lucide chevron-right"></i>
+    </a>
+  </div></div></div>
+    </div>
+  </main>
+</div>
+<footer class="sy-foot">
+  <div class="sy-foot-inner sy-container mx-auto">
+    <div class="sy-foot-reserved md:flex justify-between items-center">
+      <div class="sy-foot-copyright"><p>2024-2026, Stephen Williams</p>
+  
+  <p>
+    Made with
+    
+    <a href="https://www.sphinx-doc.org/">Sphinx</a> and
+    
+    <a href="https://shibuya.lepture.com">Shibuya theme</a>.
+  </p>
+</div>
+      <div class="sy-foot-socials">
+<a href="https://github.com/steveicarus/iverilog" aria-label="GitHub">
+  <iconify-icon icon="simple-icons:github"></iconify-icon>
+</a></div>
+    </div>
+  </div>
+</footer>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/shibuya.js?v=cac61aee"></script></body>
+</html>
