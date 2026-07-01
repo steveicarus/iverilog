@@ -940,6 +940,9 @@ EOF
     *:SerenityOS:*:*)
         GUESS=$UNAME_MACHINE-pc-serenity
         ;;
+    *:HarmonyOS:*:*)
+        GUESS=$UNAME_MACHINE-unknown-linux-ohos
+        ;;
     *:Interix*:*)
 	case $UNAME_MACHINE in
 	    x86)
@@ -952,7 +955,7 @@ EOF
 		GUESS=ia64-unknown-interix$UNAME_RELEASE
 		;;
 	esac ;;
-    i*:UWIN*:*)
+    i*:UWIN:*:*)
 	GUESS=$UNAME_MACHINE-pc-uwin
 	;;
     amd64:CYGWIN*:*:* | x86_64:CYGWIN*:*:*)
