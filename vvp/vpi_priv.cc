@@ -2059,6 +2059,7 @@ extern "C" void vpip_count_drivers(vpiHandle ref, unsigned idx,
 }
 
 #if defined(__MINGW32__) || defined (__CYGWIN__)
+extern "C" char* vpip_format_pretty(vpiHandle ref);
 vpip_routines_s vpi_routines = {
     .register_cb                = vpi_register_cb,
     .remove_cb                  = vpi_remove_cb,
@@ -2098,6 +2099,7 @@ vpip_routines_s vpi_routines = {
     .calc_clog2                 = vpip_calc_clog2,
     .count_drivers              = vpip_count_drivers,
     .format_strength            = vpip_format_strength,
+    .format_pretty              = vpip_format_pretty,
     .make_systf_system_defined  = vpip_make_systf_system_defined,
     .mcd_rawwrite               = vpip_mcd_rawwrite,
     .set_return_value           = vpip_set_return_value,
