@@ -867,6 +867,35 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
        * be a binary string (can contain NULLs). */
       break;
 
+    case 'p':
+    case 'P':
+      *idx += 1;
+      if (plus != 0 || prec != -1) {
+        vpi_printf("WARNING: %s:%d: invalid format %s%s.\n",
+                   info->filename, info->lineno, info->name, fmtb);
+      }
+      if (*idx >= info->nitems) {
+        vpi_printf("WARNING: %s:%d: missing argument for %s%s.\n",
+                   info->filename, info->lineno, info->name, fmtb);
+      } else {
+        char *pp = vpip_format_pretty(info->items[*idx]);
+        if (pp == 0) {
+          vpi_printf("WARNING: %s:%d: incompatible value for %s%s.\n",
+                     info->filename, info->lineno, info->name, fmtb);
+        } else {
+          char *cp = pp;
+          if (width == -1) width = 0;
+          size = strlen(cp) + 1;
+          if ((signed)size < (width+1)) size = width+1;
+          if (size > ini_size) result = realloc(result, size*sizeof(char));
+          if (ljust == 0) sprintf(result, "%*s", width, cp);
+          else sprintf(result, "%-*s", width, cp);
+          free(pp);
+          size = strlen(result) + 1;
+        }
+      }
+      break;
+
     default:
       vpi_printf("WARNING: %s:%d: unknown format %s%s.\n",
                  info->filename, info->lineno, info->name, fmtb);
@@ -1215,6 +1244,7 @@ static int sys_check_args(vpiHandle callh, vpiHandle argv, const PLI_BYTE8*name,
 #endif
 	      case vpiClassVar:
 	      case vpiSysFuncCall:
+	      case vpiRegArray: /* dynamic arrays, queues, SV array vars */
 		  break;
 
 	      default:

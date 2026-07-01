@@ -25,6 +25,7 @@
 # include  "discipline.h"
 # include  "netclass.h"
 # include  "netdarray.h"
+# include  "netqueue.h"
 # include  "netenum.h"
 # include  "netvector.h"
 # include  <cstdlib>
@@ -3306,6 +3307,19 @@ extern "C" ivl_type_t ivl_type_prop_type(ivl_type_t net, int idx)
       assert(class_type);
 
       return class_type->get_prop_type(idx);
+}
+
+extern "C" unsigned ivl_type_queue_max(ivl_type_t net)
+{
+      if (net == 0)
+	    return 0;
+      if (const netqueue_t*que = dynamic_cast<const netqueue_t*>(net)) {
+	    long max_idx = que->max_idx();
+	    if (max_idx < 0)
+		  return 0;
+	    return (unsigned)(max_idx + 1);
+      }
+      return 0;
 }
 
 extern "C" int ivl_type_signed(ivl_type_t net)
