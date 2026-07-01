@@ -870,17 +870,37 @@ class __vpiDarrayVar : public __vpiBaseVar, public __vpiArrayBase {
 
 extern vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net);
 
-class __vpiQueueVar : public __vpiBaseVar {
+class __vpiQueueVar : public __vpiDarrayVar {
 
     public:
       __vpiQueueVar(__vpiScope*scope, const char*name, vvp_net_t*net);
 
-      int get_type_code(void) const override;
       int vpi_get(int code) override;
       void vpi_get_value(p_vpi_value val) override;
 };
 
 extern vpiHandle vpip_make_queue_var(const char*name, vvp_net_t*net);
+
+class __vpiPropQueueRef : public __vpiHandle {
+
+    public:
+      explicit __vpiPropQueueRef(__vpiScope*scope, unsigned pidx, bool is_queue);
+
+      int get_type_code(void) const override;
+      int vpi_get(int code) override;
+      char* vpi_get_str(int code) override;
+      void vpi_get_value(p_vpi_value val) override;
+
+      vvp_net_t* class_net_;
+      unsigned prop_idx_;
+      bool is_queue_;
+
+    private:
+      __vpiScope* scope_;
+};
+
+extern vpiHandle vpip_make_prop_queue_ref(char* class_label, unsigned prop_idx,
+					  unsigned is_queue_flag);
 
 class __vpiCobjectVar : public __vpiBaseVar {
 
