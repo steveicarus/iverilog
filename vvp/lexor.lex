@@ -175,6 +175,7 @@ inline uint64_t strtouint64(const char*str, char**endptr, int base)
 ".cmp/weq"      { return K_CMP_WEQ; }
 ".cmp/wne"      { return K_CMP_WNE; }
 ".concat"       { return K_CONCAT; }
+".contassign"   { return K_CONTASSIGN; }
 ".concat8"      { return K_CONCAT8; }
 ".delay"        { return K_DELAY; }
 ".dff/n"        { return K_DFF_N; }
@@ -214,6 +215,8 @@ inline uint64_t strtouint64(const char*str, char**endptr, int base)
 ".part/v.s"     { return K_PART_V_S; }
 ".port"         { return K_PORT; }
 ".port_info"    { return K_PORT_INFO; }
+".primitive"    { return K_PRIMITIVE; }
+".process"      { return K_PROCESS; }
 ".reduce/and"   { return K_REDUCE_AND; }
 ".reduce/or"    { return K_REDUCE_OR; }
 ".reduce/xor"   { return K_REDUCE_XOR; }
@@ -222,6 +225,7 @@ inline uint64_t strtouint64(const char*str, char**endptr, int base)
 ".reduce/xnor"  { return K_REDUCE_XNOR; }
 ".repeat"       { return K_REPEAT; }
 ".resolv"       { return K_RESOLV; }
+".resolv_drv"   { return K_RESOLV_DRV; }
 ".rtran"        { return K_RTRAN; }
 ".rtranif0"     { return K_RTRANIF0; }
 ".rtranif1"     { return K_RTRANIF1; }

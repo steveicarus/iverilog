@@ -515,6 +515,10 @@ drive_strength3		normal			ivltests
 dummy7			normal			ivltests gold=dummy7.gold
 dump_memword		normal			ivltests diff=work/test.vcd:gold/dump_memword.vcd:2
 dumpvars		normal			ivltests # PR#174: dumpvars non-hierarchical arguments
+evcd_basic		normal			ivltests diff=work/evcd_basic.evcd:gold/evcd_basic.evcd.gold:2
+evcd_bus		normal			ivltests diff=work/evcd_bus.evcd:gold/evcd_bus.evcd.gold:2
+evcd_onoff		normal			ivltests diff=work/evcd_onoff.evcd:gold/evcd_onoff.evcd.gold:2
+evcd_inout		normal			ivltests diff=work/evcd_inout.evcd:gold/evcd_inout.evcd.gold:2
 eeq			normal			ivltests # === and !== in structural context
 else1			normal			ivltests # ifdef with else
 else2			normal			ivltests # compound ifdef with else

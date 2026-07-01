@@ -1,0 +1,42 @@
+$date
+	Fri Jun 19 17:42:51 2026
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1s
+$end
+$scope module test.u $end
+$var port 1 <0 io $end
+$var port 1 <1 oe $end
+$var port 1 <2 ov $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpports
+pF 0 0 <0
+pD 6 0 <1
+pD 6 0 <2
+$end
+#5
+pU 0 6 <1
+pU 0 6 <2
+pH 0 6 <0
+#10
+pD 6 0 <1
+pD 6 0 <2
+pF 0 0 <0
+pU 0 6 <0
+#15
+pU 0 6 <1
+pU 0 6 <2
+pA 6 6 <0
+#20
+pD 6 0 <2
+p0 6 0 <0
+pB 6 6 <0
+#25
+pU 0 6 <2
+p1 0 6 <0
+#30

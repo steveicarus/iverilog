@@ -126,3 +126,39 @@ Compile, run, and view waveforms with GTKWave using these commands:
 Click on the 'test', then 'c1' in the top left box of GTKWave, then drag the
 signals to the Signals box. You will be able to add signals to display,
 scanning by scope.
+
+Extended VCD (port dumps)
+-------------------------
+
+In addition to the four-state VCD produced by $dumpvars, Icarus Verilog can
+write an *extended* VCD file (IEEE 1364-2005 Clause 18) that records the
+ports of one or more module instances together with their direction and drive
+strength. This is enabled with the $dumpports system task instead of
+$dumpfile/$dumpvars:
+
+.. code-block:: verilog
+
+  initial
+    begin
+      $dumpports(dut_instance, "ports.evcd");
+    end
+
+Each port is written with a ``$var port`` declaration and its value changes are
+recorded as ``p`` records carrying a per-bit state character (input ``D``/``U``,
+output ``L``/``H``, three-state, etc.) and the strength0/strength1 components.
+The companion tasks $dumpportsall, $dumpportsoff, $dumpportson,
+$dumpportsflush, and $dumpportslimit mirror the corresponding $dumpall family.
+
+For ``inout`` ports, Icarus separates the module-side drive from the external
+(testbench-side) drive and emits the full IEEE 1364-2005 conflict-state
+characters: ``0``/``1`` (both sides agree), ``A``/``a``/``B``/``b``/``C``/``c``
+(the two sides drive conflicting values), ``d``/``u``/``l``/``h`` (same value
+but differing drive strength), ``F`` (neither side drives), and the
+directional ``D``/``U``/``H``/``L`` forms when only one side drives. This is
+more precise than a plain resolved value, which would collapse a genuine bus
+conflict to ``?``.
+
+The extended VCD format is otherwise byte-compatible with the GHDL ``--evcd``
+writer, so the same waveform reader can consume port dumps from both Verilog
+and VHDL designs. (GHDL does not separate inout drive sides, so it emits the
+resolved-value states only; Icarus is a strict superset there.)

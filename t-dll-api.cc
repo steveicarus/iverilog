@@ -2222,6 +2222,49 @@ extern "C" ivl_lpm_t ivl_scope_lpm(ivl_scope_t net, unsigned idx)
       return net->lpm_[idx];
 }
 
+extern "C" unsigned ivl_scope_cassigns(ivl_scope_t net)
+{
+      assert(net);
+      return net->cassigns_.size();
+}
+
+extern "C" ivl_cont_assign_t ivl_scope_cassign(ivl_scope_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->cassigns_.size());
+      return net->cassigns_[idx];
+}
+
+extern "C" ivl_signal_t ivl_cassign_lval(ivl_cont_assign_t net)
+{
+      assert(net);
+      return net->lhs_;
+}
+
+extern "C" ivl_signal_t ivl_cassign_rval(ivl_cont_assign_t net)
+{
+      assert(net);
+      return net->rhs_;
+}
+
+extern "C" const char* ivl_cassign_file(ivl_cont_assign_t net)
+{
+      assert(net);
+      return net->file;
+}
+
+extern "C" unsigned ivl_cassign_lineno(ivl_cont_assign_t net)
+{
+      assert(net);
+      return net->lineno;
+}
+
+extern "C" ivl_scope_t ivl_cassign_scope(ivl_cont_assign_t net)
+{
+      assert(net);
+      return net->scope_;
+}
+
 static unsigned scope_name_len(ivl_scope_t net)
 {
       unsigned len = 0;

@@ -162,6 +162,11 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       static ivl_scope_t find_scope(ivl_design_s &des, const NetScope*cur);
       static ivl_signal_t find_signal(ivl_design_s &des, const NetNet*net);
+	/* Like find_signal but returns 0 instead of asserting when the net
+	   has no matching ivl_signal (used when preserving cont assigns). */
+      static ivl_signal_t find_signal_opt(ivl_design_s &des, const NetNet*net);
+	/* Walk the NetScope tree building ivl_cont_assign_s records. */
+      void add_cont_assigns(const NetScope*ns);
       static ivl_parameter_t scope_find_param(ivl_scope_t scope_i,
 					      const char*name);
 
@@ -654,6 +659,22 @@ struct ivl_process_s {
 };
 
 /*
+ * A continuous assignment (the `assign lhs = rhs;` form), preserved through
+ * elaboration so it can be presented as a vpiContAssign. lhs_ and rhs_ are
+ * the l-value and r-value nets; the location and drive strengths come from
+ * the source statement.
+ */
+struct ivl_cont_assign_s {
+      ivl_scope_t scope_;
+      ivl_signal_t lhs_;
+      ivl_signal_t rhs_;
+      perm_string file;
+      unsigned lineno;
+      ivl_drive_t drive0;
+      ivl_drive_t drive1;
+};
+
+/*
  * Scopes are kept in a tree. Each scope points to its first child,
  * and also to any siblings. Thus a parent can scan all its children
  * by following its child pointer, then following sibling pointers from
@@ -713,6 +734,7 @@ struct ivl_scope_s {
       } u_;
 
       std::vector<ivl_switch_t>switches;
+      std::vector<ivl_cont_assign_t>cassigns_;
 
       signed int time_precision :8;
       signed int time_units :8;

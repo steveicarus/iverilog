@@ -187,6 +187,7 @@ typedef struct ivl_net_probe_s*ivl_net_probe_t;
 typedef struct ivl_nexus_s    *ivl_nexus_t;
 typedef struct ivl_nexus_ptr_s*ivl_nexus_ptr_t;
 typedef struct ivl_parameter_s*ivl_parameter_t;
+typedef struct ivl_cont_assign_s*ivl_cont_assign_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
@@ -1888,6 +1889,16 @@ extern unsigned     ivl_scope_logs(ivl_scope_t net);
 extern ivl_net_logic_t ivl_scope_log(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_lpms(ivl_scope_t net);
 extern ivl_lpm_t    ivl_scope_lpm(ivl_scope_t, unsigned idx);
+  /* CONTINUOUS ASSIGNMENTS
+   * These methods enumerate the continuous assignments (`assign lhs = rhs;`)
+   * of a scope and access their l-value, r-value and source location. */
+extern unsigned     ivl_scope_cassigns(ivl_scope_t net);
+extern ivl_cont_assign_t ivl_scope_cassign(ivl_scope_t net, unsigned idx);
+extern ivl_signal_t ivl_cassign_lval(ivl_cont_assign_t net);
+extern ivl_signal_t ivl_cassign_rval(ivl_cont_assign_t net);
+extern const char*  ivl_cassign_file(ivl_cont_assign_t net);
+extern unsigned     ivl_cassign_lineno(ivl_cont_assign_t net);
+extern ivl_scope_t  ivl_cassign_scope(ivl_cont_assign_t net);
 extern const char*  ivl_scope_name(ivl_scope_t net);
 extern const char*  ivl_scope_basename(ivl_scope_t net);
 extern unsigned     ivl_scope_params(ivl_scope_t net);

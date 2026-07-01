@@ -1684,6 +1684,37 @@ void compile_shiftr(char*label, long wid, bool signed_flag,
       make_arith(arith, label, argc, argv);
 }
 
+/*
+ * Tag the inputs of an already-defined resolver with the scope each driver
+ * lives in. This lets the runtime expose vpiDriver and, in particular, lets
+ * the extended-VCD writer separate an inout port's module-side drivers from
+ * its external drivers when computing the IEEE 1364 conflict-state character.
+ * The resolver and the driver scopes are all defined earlier in the file, so
+ * the lookups resolve immediately.
+ */
+void compile_resolv_drv(char*resolver, unsigned argc, struct symb_s*argv)
+{
+      vvp_net_t*net = lookup_functor_symbol(resolver);
+      resolv_core*core = net ? dynamic_cast<resolv_core*>(net->fun) : 0;
+      if (core) {
+	    core->prepare_driver_scopes(argc);
+	    for (unsigned idx = 0 ; idx < argc ; idx += 1) {
+		    /* A driver scope may be declared later in the file than
+		       the resolver, so resolve it through the deferred
+		       vpi-handle lookup, which fills the (stable) slot once
+		       the scope is defined. The lookup takes ownership of
+		       the label string. */
+		  compile_vpi_lookup((vpiHandle*)(void*)core->driver_scope_ref(idx),
+				     argv[idx].text);
+	    }
+      } else {
+	    for (unsigned idx = 0 ; idx < argc ; idx += 1)
+		  free(argv[idx].text);
+      }
+      free(resolver);
+      free(argv);
+}
+
 void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
 {
       vvp_net_t*net = new vvp_net_t;
@@ -2027,6 +2058,29 @@ void compile_thread(char*start_sym, char*flag)
 
       free(start_sym);
       free(flag);
+}
+
+/*
+ * Record an always/initial/final process as a vpiProcess object attached
+ * to the current scope. The scope was just selected by the preceding
+ * ".scope" directive, so vpip_attach_to_current_scope() lands it in the
+ * right module/instance.
+ */
+void compile_process(long type, long file_idx, long lineno)
+{
+      vpiHandle obj = vpip_make_process(type, (unsigned)file_idx,
+                                        (unsigned)lineno);
+      vpip_attach_to_current_scope(obj);
+}
+
+void compile_primitive(long primtype, long npins,
+                       long file_idx, long lineno, char*name)
+{
+      vpiHandle obj = vpip_make_primitive((int)primtype, (unsigned)npins,
+                                          (unsigned)file_idx, (unsigned)lineno,
+                                          name);
+      vpip_attach_to_current_scope(obj);
+      free(name);
 }
 
 void compile_param_logic(char*label, const char*name, char*value, bool signed_flag,

@@ -24,6 +24,7 @@
 
 # include  "compile.h"
 # include  "vpi_priv.h"
+# include  "resolv.h"
 # include  "vvp_net_sig.h"
 # include  "vvp_island.h"
 # include  "schedule.h"
@@ -680,6 +681,67 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
       return 0;
 }
 
+/*
+ * vpiDriver: one input driver of a resolved (tri/inout) net. It exposes the
+ * value (with strength) that this single driver contributes — read from the
+ * resolver's retained per-input value — and the scope the driver lives in.
+ * The extended-VCD ($dumpports) writer uses the scope to tell an inout's
+ * module-side drivers from its external ones and so emit the IEEE 1364
+ * conflict-state characters.
+ */
+class __vpiDriver : public __vpiHandle {
+    public:
+      __vpiDriver(resolv_core*core, unsigned idx) : core_(core), idx_(idx) { }
+      int get_type_code(void) const override { return vpiDriver; }
+      vpiHandle vpi_handle(int code) override;
+      void vpi_get_value(p_vpi_value vp) override;
+    private:
+      resolv_core*core_;
+      unsigned idx_;
+};
+
+vpiHandle __vpiDriver::vpi_handle(int code)
+{
+      switch (code) {
+	  case vpiScope:
+	  case vpiModule:
+	    return core_->driver_scope(idx_);
+	  default:
+	    return 0;
+      }
+}
+
+void __vpiDriver::vpi_get_value(p_vpi_value vp)
+{
+	/* Only vpiStrengthVal is meaningful for a driver: it carries the
+	   per-bit value and drive strength this driver contributes. */
+      vvp_vector8_t v8;
+      bool ok = core_->driver_value(idx_, v8);
+      unsigned wid = (ok && v8.size() > 0) ? v8.size() : 1;
+
+      s_vpi_strengthval*op = static_cast<s_vpi_strengthval*>
+	    (need_result_buf(wid * sizeof(s_vpi_strengthval), RBUF_VAL));
+
+      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+	    if (!ok) {
+		    /* Driver not contributing -> three-state. */
+		  op[idx].logic = vpiZ; op[idx].s0 = vpiHiZ; op[idx].s1 = vpiHiZ;
+		  continue;
+	    }
+	    vvp_scalar_t val = v8.value(idx);
+	    unsigned s0 = 1 << val.strength0();
+	    unsigned s1 = 1 << val.strength1();
+	    switch (val.value()) {
+		case BIT4_0: op[idx].logic = vpi0; op[idx].s0 = s0|s1; op[idx].s1 = 0; break;
+		case BIT4_1: op[idx].logic = vpi1; op[idx].s0 = 0; op[idx].s1 = s0|s1; break;
+		case BIT4_X: op[idx].logic = vpiX; op[idx].s0 = s0; op[idx].s1 = s1; break;
+		default:     op[idx].logic = vpiZ; op[idx].s0 = vpiHiZ; op[idx].s1 = vpiHiZ; break;
+	    }
+      }
+      vp->format = vpiStrengthVal;
+      vp->value.strength = op;
+}
+
 static vpiHandle signal_iterate(int code, vpiHandle ref)
 {
       struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
@@ -687,6 +749,20 @@ static vpiHandle signal_iterate(int code, vpiHandle ref)
 
       if (code == vpiIndex) {
 	    return rfp->is_netarray ? rfp->id.index->vpi_iterate(code) : NULL;
+      }
+
+	/* Drivers of a resolved net (tri/inout): expose each input of the
+	   resolver feeding this signal as a vpiDriver. */
+      if (code == vpiDriver) {
+	    resolv_core*core = rfp->node
+		  ? dynamic_cast<resolv_core*>(rfp->node->fun) : 0;
+	    if (core == 0 || core->driver_count() == 0)
+		  return 0;
+	    unsigned n = core->driver_count();
+	    vpiHandle*args = static_cast<vpiHandle*>(calloc(n, sizeof(vpiHandle)));
+	    for (unsigned idx = 0 ; idx < n ; idx += 1)
+		  args[idx] = new __vpiDriver(core, idx);
+	    return vpip_make_iterator(n, args, true);
       }
 
       return 0;
