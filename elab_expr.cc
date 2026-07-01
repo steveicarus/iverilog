@@ -105,8 +105,13 @@ static NetExpr* elab_queue_locator_with_predicate(
       index_net->set_line(loc);
       index_net->local_flag(true);
 
-      NetExpr* pred = elab_and_eval(des, ws, with_expr, 1, false, false,
-				    IVL_VT_BOOL);
+      NetExpr* pred = 0;
+      if (method_suffix == "sum" || method_suffix == "product")
+	    pred = elab_and_eval(des, ws, with_expr, (int)ew, false, false,
+				 ivl_type_base(element_type));
+      else
+	    pred = elab_and_eval(des, ws, with_expr, 1, false, false,
+				 IVL_VT_BOOL);
       if (!pred)
 	    return 0;
 
@@ -131,6 +136,10 @@ static NetExpr* elab_queue_locator_with_predicate(
 	    sfunc_name = lex_strings.make("$ivl_queue_method$min_with");
       else if (method_suffix == "max")
 	    sfunc_name = lex_strings.make("$ivl_queue_method$max_with");
+      else if (method_suffix == "sum")
+	    sfunc_name = lex_strings.make("$ivl_queue_method$sum_with");
+      else if (method_suffix == "product")
+	    sfunc_name = lex_strings.make("$ivl_queue_method$product_with");
       else
 	    ivl_assert(loc, 0);
 
@@ -1747,6 +1756,21 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 		  return expr_width_;
 	    }
 
+	    if (method_name == "sum") {
+		  expr_type_   = darray->element_base_type();
+		  expr_width_  = darray->element_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = darray->get_signed();
+		  return expr_width_;
+	    }
+	    if (method_name == "product") {
+		  expr_type_   = darray->element_base_type();
+		  expr_width_  = darray->element_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = darray->get_signed();
+		  return expr_width_;
+	    }
+
 	    if (method_name == "find" || method_name == "find_index" ||
 		method_name == "unique" || method_name == "unique_index" ||
 		method_name == "min" || method_name == "max") {
@@ -1801,6 +1825,21 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 		  expr_width_ = darray->element_width();
 		  min_width_  = expr_width_;
 		  signed_flag_= darray->get_signed();
+		  return expr_width_;
+	    }
+
+	    if (method_name == "sum") {
+		  expr_type_   = darray->element_base_type();
+		  expr_width_  = darray->element_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = darray->get_signed();
+		  return expr_width_;
+	    }
+	    if (method_name == "product") {
+		  expr_type_   = darray->element_base_type();
+		  expr_width_  = darray->element_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = darray->get_signed();
 		  return expr_width_;
 	    }
 
@@ -3829,6 +3868,68 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 				    sys_expr->parm(0, prop);
 				    return sys_expr;
 			      }
+			      if (method_name == "sum") {
+				    if (parms_.size() != 0) {
+					  cerr << get_fileline() << ": error: sum() method "
+					       << "takes no arguments" << endl;
+					  des->errors += 1;
+				    }
+				    if (with_expr_) {
+					  if (!parms_.empty()) {
+						cerr << get_fileline() << ": error: array locator "
+						     << "`with` clause cannot be combined with a "
+						     << "method argument." << endl;
+						des->errors += 1;
+						return 0;
+					  }
+					  return elab_queue_locator_with_predicate(
+					      des, scope, *this, with_expr_, prop,
+					      element_type, element_type, method_name);
+				    }
+				    if (!queue_method_element_is_integral_vec4(element_type)) {
+					  cerr << get_fileline() << ": sorry: queue sum() for this "
+					       << "element type is not yet supported." << endl;
+					  des->errors += 1;
+					  return 0;
+				    }
+				    NetESFunc*sys_expr = new NetESFunc(
+					"$ivl_queue_method$sum",
+					element_type, 1);
+				    sys_expr->set_line(*this);
+				    sys_expr->parm(0, prop);
+				    return sys_expr;
+			      }
+			      if (method_name == "product") {
+				    if (parms_.size() != 0) {
+					  cerr << get_fileline() << ": error: product() method "
+					       << "takes no arguments" << endl;
+					  des->errors += 1;
+				    }
+				    if (with_expr_) {
+					  if (!parms_.empty()) {
+						cerr << get_fileline() << ": error: array locator "
+						     << "`with` clause cannot be combined with a "
+						     << "method argument." << endl;
+						des->errors += 1;
+						return 0;
+					  }
+					  return elab_queue_locator_with_predicate(
+					      des, scope, *this, with_expr_, prop,
+					      element_type, element_type, method_name);
+				    }
+				    if (!queue_method_element_is_integral_vec4(element_type)) {
+					  cerr << get_fileline() << ": sorry: queue product() for this "
+					       << "element type is not yet supported." << endl;
+					  des->errors += 1;
+					  return 0;
+				    }
+				    NetESFunc*sys_expr = new NetESFunc(
+					"$ivl_queue_method$product",
+					element_type, 1);
+				    sys_expr->set_line(*this);
+				    sys_expr->parm(0, prop);
+				    return sys_expr;
+			      }
 			      if (method_name == "min" || method_name == "max") {
 				    if (parms_.size() != 0) {
 					  cerr << get_fileline() << ": error: " << method_name
@@ -3840,6 +3941,19 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					       << "() for this element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
+				    }
+				    if (with_expr_) {
+					  if (!parms_.empty()) {
+						cerr << get_fileline() << ": error: array locator "
+						     << "`with` clause cannot be combined with a "
+						     << "method argument." << endl;
+						des->errors += 1;
+						return 0;
+					  }
+					  return elab_queue_locator_with_predicate(
+					      des, scope, *this, with_expr_, prop,
+					      element_type, static_cast<ivl_type_t>(queue),
+					      method_name);
 				    }
 				    NetESFunc*sys_expr = new NetESFunc(
 					method_name == "min" ? "$ivl_queue_method$min"
@@ -4053,12 +4167,14 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 				    return sys_expr;
 			      }
 			}
-			if (ptype && ptype->base_type() == IVL_VT_DARRAY) {
+			if (ptype &&
+			    (ptype->base_type() == IVL_VT_DARRAY ||
+			     ptype->base_type() == IVL_VT_QUEUE)) {
 			      NetEProperty*prop = new NetEProperty(search_results.net, pidx, nullptr);
 			      prop->set_line(*this);
 			      perm_string method_name = search_results.path_tail.back().name;
 			      ivl_type_t element_type = ivl_type_element(ptype);
-			      ivl_type_t darray_rtype = ptype;
+			      ivl_type_t array_rtype = ptype;
 			      if (method_name == "size") {
 				    if (parms_.size() != 0) {
 					  cerr << get_fileline() << ": error: size() method "
@@ -4077,7 +4193,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  des->errors += 1;
 				    }
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array unique() for this "
+					  cerr << get_fileline() << ": sorry: array unique() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4092,10 +4208,10 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  }
 					  return elab_queue_locator_with_predicate(
 					      des, scope, *this, with_expr_, prop,
-					      element_type, darray_rtype, method_name);
+					      element_type, array_rtype, method_name);
 				    }
 				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$unique", darray_rtype, 1);
+					"$ivl_queue_method$unique", array_rtype, 1);
 				    sys_expr->set_line(*this);
 				    sys_expr->parm(0, prop);
 				    return sys_expr;
@@ -4107,7 +4223,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  des->errors += 1;
 				    }
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array unique_index() for this "
+					  cerr << get_fileline() << ": sorry: array unique_index() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4135,7 +4251,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "find") {
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array find() for this "
+					  cerr << get_fileline() << ": sorry: array find() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4150,14 +4266,14 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  }
 					  return elab_queue_locator_with_predicate(
 					      des, scope, *this, with_expr_, prop,
-					      element_type, darray_rtype, method_name);
+					      element_type, array_rtype, method_name);
 				    }
 				    NetExpr* cmp = elab_queue_locator_cmp_arg(
 					des, scope, *this, parms_, element_type);
 				    if (!cmp)
 					  return 0;
 				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$find", darray_rtype, 2);
+					"$ivl_queue_method$find", array_rtype, 2);
 				    sys_expr->set_line(*this);
 				    sys_expr->parm(0, prop);
 				    sys_expr->parm(1, cmp);
@@ -4165,7 +4281,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "find_index") {
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array find_index() for this "
+					  cerr << get_fileline() << ": sorry: array find_index() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4198,7 +4314,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "find_first") {
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array find_first() for this "
+					  cerr << get_fileline() << ": sorry: array find_first() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4213,14 +4329,14 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  }
 					  return elab_queue_locator_with_predicate(
 					      des, scope, *this, with_expr_, prop,
-					      element_type, darray_rtype, method_name);
+					      element_type, array_rtype, method_name);
 				    }
 				    NetExpr* cmp = elab_queue_locator_cmp_arg(
 					des, scope, *this, parms_, element_type);
 				    if (!cmp)
 					  return 0;
 				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$find_first", darray_rtype, 2);
+					"$ivl_queue_method$find_first", array_rtype, 2);
 				    sys_expr->set_line(*this);
 				    sys_expr->parm(0, prop);
 				    sys_expr->parm(1, cmp);
@@ -4228,7 +4344,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "find_first_index") {
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array find_first_index() for this "
+					  cerr << get_fileline() << ": sorry: array find_first_index() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4261,7 +4377,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "find_last") {
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array find_last() for this "
+					  cerr << get_fileline() << ": sorry: array find_last() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4276,14 +4392,14 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  }
 					  return elab_queue_locator_with_predicate(
 					      des, scope, *this, with_expr_, prop,
-					      element_type, darray_rtype, method_name);
+					      element_type, array_rtype, method_name);
 				    }
 				    NetExpr* cmp = elab_queue_locator_cmp_arg(
 					des, scope, *this, parms_, element_type);
 				    if (!cmp)
 					  return 0;
 				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$find_last", darray_rtype, 2);
+					"$ivl_queue_method$find_last", array_rtype, 2);
 				    sys_expr->set_line(*this);
 				    sys_expr->parm(0, prop);
 				    sys_expr->parm(1, cmp);
@@ -4291,7 +4407,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "find_last_index") {
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array find_last_index() for this "
+					  cerr << get_fileline() << ": sorry: array find_last_index() for this "
 					       << "element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4322,6 +4438,68 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 				    sys_expr->parm(1, cmp);
 				    return sys_expr;
 			      }
+			      if (method_name == "sum") {
+				    if (parms_.size() != 0) {
+					  cerr << get_fileline() << ": error: sum() method "
+					       << "takes no arguments" << endl;
+					  des->errors += 1;
+				    }
+				    if (with_expr_) {
+					  if (!parms_.empty()) {
+						cerr << get_fileline() << ": error: array locator "
+						     << "`with` clause cannot be combined with a "
+						     << "method argument." << endl;
+						des->errors += 1;
+						return 0;
+					  }
+					  return elab_queue_locator_with_predicate(
+					      des, scope, *this, with_expr_, prop,
+					      element_type, element_type, method_name);
+				    }
+				    if (!queue_method_element_is_integral_vec4(element_type)) {
+					  cerr << get_fileline() << ": sorry: array sum() for this "
+					       << "element type is not yet supported." << endl;
+					  des->errors += 1;
+					  return 0;
+				    }
+				    NetESFunc*sys_expr = new NetESFunc(
+					"$ivl_queue_method$sum",
+					element_type, 1);
+				    sys_expr->set_line(*this);
+				    sys_expr->parm(0, prop);
+				    return sys_expr;
+			      }
+			      if (method_name == "product") {
+				    if (parms_.size() != 0) {
+					  cerr << get_fileline() << ": error: product() method "
+					       << "takes no arguments" << endl;
+					  des->errors += 1;
+				    }
+				    if (with_expr_) {
+					  if (!parms_.empty()) {
+						cerr << get_fileline() << ": error: array locator "
+						     << "`with` clause cannot be combined with a "
+						     << "method argument." << endl;
+						des->errors += 1;
+						return 0;
+					  }
+					  return elab_queue_locator_with_predicate(
+					      des, scope, *this, with_expr_, prop,
+					      element_type, element_type, method_name);
+				    }
+				    if (!queue_method_element_is_integral_vec4(element_type)) {
+					  cerr << get_fileline() << ": sorry: array product() for this "
+					       << "element type is not yet supported." << endl;
+					  des->errors += 1;
+					  return 0;
+				    }
+				    NetESFunc*sys_expr = new NetESFunc(
+					"$ivl_queue_method$product",
+					element_type, 1);
+				    sys_expr->set_line(*this);
+				    sys_expr->parm(0, prop);
+				    return sys_expr;
+			      }
 			      if (method_name == "min" || method_name == "max") {
 				    if (parms_.size() != 0) {
 					  cerr << get_fileline() << ": error: " << method_name
@@ -4329,7 +4507,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  des->errors += 1;
 				    }
 				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: dynamic array " << method_name
+					  cerr << get_fileline() << ": sorry: array " << method_name
 					       << "() for this element type is not yet supported." << endl;
 					  des->errors += 1;
 					  return 0;
@@ -4344,12 +4522,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 					  }
 					  return elab_queue_locator_with_predicate(
 					      des, scope, *this, with_expr_, prop,
-					      element_type, darray_rtype, method_name);
+					      element_type, array_rtype, method_name);
 				    }
 				    NetESFunc*sys_expr = new NetESFunc(
 					method_name == "min" ? "$ivl_queue_method$min"
 							     : "$ivl_queue_method$max",
-					darray_rtype, 1);
+					array_rtype, 1);
 				    sys_expr->set_line(*this);
 				    sys_expr->parm(0, prop);
 				    return sys_expr;
@@ -4697,6 +4875,66 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  sys_expr->parm(1, cmp);
 		  return sys_expr;
 	    }
+	    if (method_name == "sum") {
+		  if (parms_.size() != 0) {
+			cerr << get_fileline() << ": error: sum() method "
+			     << "takes no arguments" << endl;
+			des->errors += 1;
+		  }
+		  if (with_expr_) {
+			if (!parms_.empty()) {
+			      cerr << get_fileline() << ": error: array locator `with` clause "
+				      "cannot be combined with a method argument." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			return elab_queue_locator_with_predicate(
+			    des, scope, *this, with_expr_, sub_expr, element_type,
+			    element_type, method_name);
+		  }
+		  if (!queue_method_element_is_integral_vec4(element_type)) {
+			cerr << get_fileline() << ": sorry: dynamic array sum() for this "
+			     << "element type is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetESFunc*sys_expr = new NetESFunc(
+		      "$ivl_queue_method$sum",
+		      element_type, 1);
+		  sys_expr->set_line(*this);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
+	    }
+	    if (method_name == "product") {
+		  if (parms_.size() != 0) {
+			cerr << get_fileline() << ": error: product() method "
+			     << "takes no arguments" << endl;
+			des->errors += 1;
+		  }
+		  if (with_expr_) {
+			if (!parms_.empty()) {
+			      cerr << get_fileline() << ": error: array locator `with` clause "
+				      "cannot be combined with a method argument." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			return elab_queue_locator_with_predicate(
+			    des, scope, *this, with_expr_, sub_expr, element_type,
+			    element_type, method_name);
+		  }
+		  if (!queue_method_element_is_integral_vec4(element_type)) {
+			cerr << get_fileline() << ": sorry: dynamic array product() for this "
+			     << "element type is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetESFunc*sys_expr = new NetESFunc(
+		      "$ivl_queue_method$product",
+		      element_type, 1);
+		  sys_expr->set_line(*this);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
+	    }
 	    if (method_name == "min" || method_name == "max") {
 		  if (parms_.size() != 0) {
 			cerr << get_fileline() << ": error: " << method_name
@@ -4839,6 +5077,66 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  NetESFunc*sys_expr = new NetESFunc(
 		      "$ivl_queue_method$unique_index",
 		      static_cast<ivl_type_t>(&ivl_queue_unique_index_ret), 1);
+		  sys_expr->set_line(*this);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
+	    }
+	    if (method_name == "sum") {
+		  if (parms_.size() != 0) {
+			cerr << get_fileline() << ": error: sum() method "
+			     << "takes no arguments" << endl;
+			des->errors += 1;
+		  }
+		  if (with_expr_) {
+			if (!parms_.empty()) {
+			      cerr << get_fileline() << ": error: array locator `with` clause "
+				      "cannot be combined with a method argument." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			return elab_queue_locator_with_predicate(
+			    des, scope, *this, with_expr_, sub_expr, element_type,
+			    element_type, method_name);
+		  }
+		  if (!queue_method_element_is_integral_vec4(element_type)) {
+			cerr << get_fileline() << ": sorry: queue sum() for this "
+			     << "element type is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetESFunc*sys_expr = new NetESFunc(
+		      "$ivl_queue_method$sum",
+		      element_type, 1);
+		  sys_expr->set_line(*this);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
+	    }
+	    if (method_name == "product") {
+		  if (parms_.size() != 0) {
+			cerr << get_fileline() << ": error: product() method "
+			     << "takes no arguments" << endl;
+			des->errors += 1;
+		  }
+		  if (with_expr_) {
+			if (!parms_.empty()) {
+			      cerr << get_fileline() << ": error: array locator `with` clause "
+				      "cannot be combined with a method argument." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			return elab_queue_locator_with_predicate(
+			    des, scope, *this, with_expr_, sub_expr, element_type,
+			    element_type, method_name);
+		  }
+		  if (!queue_method_element_is_integral_vec4(element_type)) {
+			cerr << get_fileline() << ": sorry: queue product() for this "
+			     << "element type is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetESFunc*sys_expr = new NetESFunc(
+		      "$ivl_queue_method$product",
+		      element_type, 1);
 		  sys_expr->set_line(*this);
 		  sys_expr->parm(0, sub_expr);
 		  return sys_expr;
@@ -6283,6 +6581,38 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  fun->parm(0, arg);
 		  return fun;
 	    }
+	    if (member_comp.name == "sum") {
+		  if (!queue_method_element_is_integral_vec4(element_type)) {
+			cerr << get_fileline() << ": sorry: queue sum() for this "
+			     << "element type is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetESFunc*fun = new NetESFunc(
+		      "$ivl_queue_method$sum",
+		      element_type, 1);
+		  fun->set_line(*this);
+		  NetESignal*arg = new NetESignal(sr.net);
+		  arg->set_line(*sr.net);
+		  fun->parm(0, arg);
+		  return fun;
+	    }
+	    if (member_comp.name == "product") {
+		  if (!queue_method_element_is_integral_vec4(element_type)) {
+			cerr << get_fileline() << ": sorry: queue product() for this "
+			     << "element type is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetESFunc*fun = new NetESFunc(
+		      "$ivl_queue_method$product",
+		      element_type, 1);
+		  fun->set_line(*this);
+		  NetESignal*arg = new NetESignal(sr.net);
+		  arg->set_line(*sr.net);
+		  fun->parm(0, arg);
+		  return fun;
+	    }
 	    if (member_comp.name == "min" || member_comp.name == "max") {
 		  if (!queue_method_element_is_integral_vec4(element_type)) {
 			cerr << get_fileline() << ": sorry: queue " << member_comp.name
@@ -6617,6 +6947,22 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 			fun->parm(0, arg);
 			return fun;
 		  }
+		  if (member_comp.name == "sum") {
+			if (!queue_method_element_is_integral_vec4(element_type)) {
+			      cerr << get_fileline() << ": sorry: queue sum() for this "
+			           << "element type is not yet supported." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			NetESFunc*fun = new NetESFunc(
+			    "$ivl_queue_method$sum",
+			    element_type, 1);
+			fun->set_line(*this);
+			NetESignal*arg = new NetESignal(sr.net);
+			arg->set_line(*sr.net);
+			fun->parm(0, arg);
+			return fun;
+		  }
 		  if (member_comp.name == "min" || member_comp.name == "max") {
 			if (!queue_method_element_is_integral_vec4(element_type)) {
 			      cerr << get_fileline() << ": sorry: queue " << member_comp.name
@@ -6697,17 +7043,39 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 			return 0;
 // FIXME: Check this is a real or integral type.
 		  } else if (member_comp.name == "sum") {
-			cerr << get_fileline() << ": sorry: 'sum()' "
-			        "array reduction method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
+			const netdarray_t* dar_sum = sr.net->darray_type();
+			ivl_assert(*this, dar_sum);
+			ivl_type_t element_type = dar_sum->element_type();
+			if (!queue_method_element_is_integral_vec4(element_type)) {
+			      cerr << get_fileline() << ": sorry: dynamic array sum() for this "
+				   << "element type is not yet supported." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			NetESFunc*fun = new NetESFunc("$ivl_queue_method$sum",
+						      element_type, 1);
+			fun->set_line(*this);
+			NetESignal*arg = new NetESignal(sr.net);
+			arg->set_line(*sr.net);
+			fun->parm(0, arg);
+			return fun;
 		  } else if (member_comp.name == "product") {
-			cerr << get_fileline() << ": sorry: 'product()' "
-			        "array reduction method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
+			const netdarray_t* dar_sum = sr.net->darray_type();
+			ivl_assert(*this, dar_sum);
+			ivl_type_t element_type = dar_sum->element_type();
+			if (!queue_method_element_is_integral_vec4(element_type)) {
+			      cerr << get_fileline() << ": sorry: dynamic array product() for this "
+				   << "element type is not yet supported." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			NetESFunc*fun = new NetESFunc("$ivl_queue_method$product",
+						      element_type, 1);
+			fun->set_line(*this);
+			NetESignal*arg = new NetESignal(sr.net);
+			arg->set_line(*sr.net);
+			fun->parm(0, arg);
+			return fun;
 // FIXME: Check this is only an integral type.
 		  } else if (member_comp.name == "and") {
 			cerr << get_fileline() << ": sorry: 'and()' "
