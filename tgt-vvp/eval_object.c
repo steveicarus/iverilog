@@ -173,6 +173,59 @@ static int eval_darray_new(ivl_expr_t ex)
       return errors;
 }
 
+/* Build a dynamic-array object value from an array pattern expression. */
+static int eval_darray_pattern_object(ivl_expr_t ex)
+{
+      int errors = 0;
+      ivl_type_t net_type = ivl_expr_net_type(ex);
+      if (!net_type || ivl_type_base(net_type) != IVL_VT_DARRAY)
+	    return 1;
+
+      ivl_type_t element_type = ivl_type_element(net_type);
+      if (!element_type)
+	    return 1;
+
+      unsigned size_reg = allocate_word();
+      fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", size_reg, ivl_expr_parms(ex));
+      fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+      darray_new(element_type, size_reg);
+
+      switch (ivl_type_base(element_type)) {
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    for (unsigned idx = 0; idx < ivl_expr_parms(ex); idx += 1) {
+		  draw_eval_vec4(ivl_expr_parm(ex, idx));
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%set/dar/obj/vec4 3;\n");
+		  fprintf(vvp_out, "    %%pop/vec4 1;\n");
+	    }
+	    break;
+	  case IVL_VT_REAL:
+	    for (unsigned idx = 0; idx < ivl_expr_parms(ex); idx += 1) {
+		  draw_eval_real(ivl_expr_parm(ex, idx));
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%set/dar/obj/real 3;\n");
+		  fprintf(vvp_out, "    %%pop/real 1;\n");
+	    }
+	    break;
+	  case IVL_VT_STRING:
+	    for (unsigned idx = 0; idx < ivl_expr_parms(ex); idx += 1) {
+		  draw_eval_string(ivl_expr_parm(ex, idx));
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%set/dar/obj/str 3;\n");
+		  fprintf(vvp_out, "    %%pop/str 1;\n");
+	    }
+	    break;
+	  default:
+	    fprintf(vvp_out, "; ERROR: eval_darray_pattern_object: unsupported "
+		             "element type %d\n", ivl_type_base(element_type));
+	    errors += 1;
+	    break;
+      }
+
+      return errors;
+}
+
 static int eval_class_new(ivl_expr_t ex)
 {
       ivl_type_t class_type = ivl_expr_net_type(ex);
@@ -290,7 +343,7 @@ static int eval_queue_method_unique(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/unique/prop/v %u, %u;\n", pidx,
 		          elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(arg);
 		  fprintf(vvp_out, "    %%queue/unique/v v%p_0, %u;\n", sig,
@@ -306,11 +359,31 @@ static int eval_queue_method_unique(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/unique/index/prop/v %u, %u;\n",
 		          pidx, elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(arg);
 		  fprintf(vvp_out, "    %%queue/unique/index/v v%p_0, %u;\n",
 		          sig, elem_wid);
+	    }
+	    return 0;
+      }
+
+      if (strcmp(name, "$ivl_queue_method$min") == 0 ||
+	  strcmp(name, "$ivl_queue_method$max") == 0) {
+	    const char* opname = strcmp(name, "$ivl_queue_method$min") == 0
+				     ? "min"
+				     : "max";
+	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
+		  ivl_signal_t cl = ivl_expr_signal(arg);
+		  unsigned pidx = ivl_expr_property_idx(arg);
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
+		  fprintf(vvp_out, "    %%queue/%s/prop/v %u, %u;\n", opname, pidx,
+		          elem_wid);
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+	    } else {
+		  ivl_signal_t sig = ivl_expr_signal(arg);
+		  fprintf(vvp_out, "    %%queue/%s/v v%p_0, %u;\n", opname, sig,
+		          elem_wid);
 	    }
 	    return 0;
       }
@@ -353,6 +426,14 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    mode = 4;
       else if (strcmp(name, "$ivl_queue_method$find_last_index_with") == 0)
 	    mode = 5;
+      else if (strcmp(name, "$ivl_queue_method$min_with") == 0)
+	    mode = 6;
+      else if (strcmp(name, "$ivl_queue_method$max_with") == 0)
+	    mode = 7;
+      else if (strcmp(name, "$ivl_queue_method$unique_with") == 0)
+	    mode = 8;
+      else if (strcmp(name, "$ivl_queue_method$unique_index_with") == 0)
+	    mode = 9;
       else
 	    return 1;
 
@@ -372,7 +453,8 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 	    fprintf(vvp_out, "    %%prop/queue/size %u;\n", pidx);
 	    fprintf(vvp_out, "    %%ix/vec4/s %u;\n", n_reg);
-	    if (mode == 0 || mode == 1) {
+	    if (mode == 0 || mode == 1 || mode == 6 || mode == 7 ||
+		mode == 8 || mode == 9) {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
 	    }
 	    if (!reverse) {
@@ -416,6 +498,18 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
 		  fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
 		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
+	    } else if (mode == 6 || mode == 7) {
+		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
+		  fprintf(vvp_out, "    %%queue/append_word/v %u;\n", elem_wid);
+		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
+	    } else if (mode == 8) {
+		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
+		  fprintf(vvp_out, "    %%queue/append_word/v %u;\n", elem_wid);
+		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
+	    } else if (mode == 9) {
+		  fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
+		  fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
+		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
 	    } else if (mode == 2) {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
 		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
@@ -455,7 +549,16 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    fprintf(vvp_out, "T_%u.%u ; loop end (prop)\n", thread_count,
 	            lab_loop_end);
 	    if (mode == 0 || mode == 1) {
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  /* Keep result queue object, drop class object beneath it. */
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+	    } else if (mode == 8 || mode == 9) {
+		  fprintf(vvp_out, "    %%queue/unique/obj/v %u;\n",
+			  mode == 9 ? 32 : elem_wid);
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+	    } else if (mode == 6 || mode == 7) {
+		  fprintf(vvp_out, "    %%queue/%s/obj/v %u;\n",
+			  mode == 6 ? "min" : "max", elem_wid);
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
 		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
@@ -465,7 +568,8 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    ivl_signal_t sig = ivl_expr_signal(qarg);
 	    fprintf(vvp_out, "    %%queue/size/v v%p_0;\n", sig);
 	    fprintf(vvp_out, "    %%ix/vec4/s %u;\n", n_reg);
-	    if (mode == 0 || mode == 1) {
+	    if (mode == 0 || mode == 1 || mode == 6 || mode == 7 ||
+		mode == 8 || mode == 9) {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
 	    }
 	    if (!reverse) {
@@ -509,6 +613,18 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
 		  fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
 		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
+	    } else if (mode == 6 || mode == 7) {
+		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
+		  fprintf(vvp_out, "    %%queue/append_word/v %u;\n", elem_wid);
+		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
+	    } else if (mode == 8) {
+		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
+		  fprintf(vvp_out, "    %%queue/append_word/v %u;\n", elem_wid);
+		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
+	    } else if (mode == 9) {
+		  fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
+		  fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
+		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
 	    } else if (mode == 2) {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
 		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
@@ -542,7 +658,13 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 
 	    fprintf(vvp_out, "T_%u.%u ; loop end (var)\n", thread_count,
 	            lab_loop_end);
-	    if (mode >= 2) {
+	    if (mode == 8 || mode == 9) {
+		  fprintf(vvp_out, "    %%queue/unique/obj/v %u;\n",
+			  mode == 9 ? 32 : elem_wid);
+	    } else if (mode == 6 || mode == 7) {
+		  fprintf(vvp_out, "    %%queue/%s/obj/v %u;\n",
+			  mode == 6 ? "min" : "max", elem_wid);
+	    } else if (mode >= 2) {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
 	    }
 	    fprintf(vvp_out, "T_%u.%u ; with end (var)\n", thread_count, lab_end);
@@ -575,7 +697,7 @@ static int eval_queue_method_find(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/find/prop/v %u, %u;\n", pidx,
 		          elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(qarg);
 		  fprintf(vvp_out, "    %%queue/find/v v%p_0, %u;\n", sig,
@@ -591,7 +713,7 @@ static int eval_queue_method_find(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/find/index/prop/v %u, %u;\n",
 		          pidx, elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(qarg);
 		  fprintf(vvp_out, "    %%queue/find/index/v v%p_0, %u;\n",
@@ -607,7 +729,7 @@ static int eval_queue_method_find(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/find_first/prop/v %u, %u;\n", pidx,
 		          elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(qarg);
 		  fprintf(vvp_out, "    %%queue/find_first/v v%p_0, %u;\n", sig,
@@ -622,7 +744,7 @@ static int eval_queue_method_find(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/find_first/index/prop/v %u, %u;\n",
 		          pidx, elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(qarg);
 		  fprintf(vvp_out, "    %%queue/find_first/index/v v%p_0, %u;\n",
@@ -637,7 +759,7 @@ static int eval_queue_method_find(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/find_last/prop/v %u, %u;\n", pidx,
 		          elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(qarg);
 		  fprintf(vvp_out, "    %%queue/find_last/v v%p_0, %u;\n", sig,
@@ -652,7 +774,7 @@ static int eval_queue_method_find(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 		  fprintf(vvp_out, "    %%queue/find_last/index/prop/v %u, %u;\n",
 		          pidx, elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    } else {
 		  ivl_signal_t sig = ivl_expr_signal(qarg);
 		  fprintf(vvp_out, "    %%queue/find_last/index/v v%p_0, %u;\n",
@@ -699,6 +821,9 @@ int draw_eval_object(ivl_expr_t ex)
 
 	  case IVL_EX_UFUNC:
 	    return eval_object_ufunc(ex);
+
+	  case IVL_EX_ARRAY_PATTERN:
+	    return eval_darray_pattern_object(ex);
 
 	  case IVL_EX_SFUNC:
 	    /* Queue locator `with` may report IVL_VT_DARRAY in ivl; handle by name. */
