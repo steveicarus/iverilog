@@ -916,6 +916,17 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
       eval_expr(lp, l_width_);
       eval_expr(rp, r_width_);
 
+	// test_width() does not equalize operand widths for string
+	// operands, but constant evaluation expects equal widths.
+      if (left_->expr_type() == IVL_VT_STRING ||
+	  right_->expr_type() == IVL_VT_STRING) {
+	    if (dynamic_cast<NetEConst*>(lp) && dynamic_cast<NetEConst*>(rp)) {
+		  unsigned use_wid = max(lp->expr_width(), rp->expr_width());
+		  lp = pad_to_width(lp, use_wid, false, *this);
+		  rp = pad_to_width(rp, use_wid, false, *this);
+	    }
+      }
+
 	// Handle some operand-specific special cases...
       switch (op_) {
 	  case 'E': /* === */
