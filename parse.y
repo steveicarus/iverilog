@@ -124,6 +124,41 @@ static void check_net_decl_assigns(const struct vlltype&loc,
       }
 }
 
+static data_type_t *pform_make_parray_type(const struct vlltype&loc,
+					  data_type_t *base,
+					  std::list<pform_range_t> *pdims)
+{
+      if (!pdims)
+	    return base;
+
+      data_type_t *type = new parray_type_t(base, pdims);
+      FILE_NAME(type, loc);
+
+      return type;
+}
+
+template <class T>
+static void set_type_id_range(T&value, data_type_t *type, char *id,
+			      unsigned lexical_pos,
+			      std::list<pform_range_t> *ranges)
+{
+      value.type = type;
+      value.id = id;
+      value.lexical_pos = lexical_pos;
+      value.ranges = ranges;
+}
+
+template <class T>
+static void delete_type_id_range(T&value)
+{
+      delete value.type;
+      delete[] value.id;
+      delete value.ranges;
+      value.type = nullptr;
+      value.id = nullptr;
+      value.ranges = nullptr;
+}
+
 /* The rules sometimes push attributes into a global context where
    sub-rules may grab them. This makes parser rules a little easier to
    write in some cases. */
@@ -169,25 +204,29 @@ static std::list<named_pexpr_t>*attributes_in_context = 0;
 static const struct str_pair_t pull_strength = { IVL_DR_PULL,  IVL_DR_PULL };
 static const struct str_pair_t str_strength = { IVL_DR_STRONG, IVL_DR_STRONG };
 
-static std::list<pform_port_t>* make_port_list(char*id, unsigned idn,
-					       std::list<pform_range_t>*udims,
-					       PExpr*expr)
+static struct pform_port_list make_port_list(data_type_t *type, char*id,
+					     unsigned idn,
+					     std::list<pform_range_t>*udims,
+					     PExpr*expr)
 {
-      std::list<pform_port_t>*tmp = new std::list<pform_port_t>;
+      struct pform_port_list list;
+      list.type = type;
+      list.ports = new std::list<pform_port_t>;
       pform_ident_t tmp_name = { lex_strings.make(id), idn };
-      tmp->push_back(pform_port_t(tmp_name, udims, expr));
+      list.ports->push_back(pform_port_t(tmp_name, udims, expr));
       delete[]id;
-      return tmp;
+      return list;
 }
-static std::list<pform_port_t>* make_port_list(list<pform_port_t>*tmp,
-					       char*id, unsigned idn,
-					       std::list<pform_range_t>*udims,
-					       PExpr*expr)
+
+static struct pform_port_list make_port_list(struct pform_port_list list,
+					     char*id, unsigned idn,
+					     std::list<pform_range_t>*udims,
+					     PExpr*expr)
 {
       pform_ident_t tmp_name = { lex_strings.make(id), idn };
-      tmp->push_back(pform_port_t(tmp_name, udims, expr));
+      list.ports->push_back(pform_port_t(tmp_name, udims, expr));
       delete[]id;
-      return tmp;
+      return list;
 }
 
 static std::list<pform_ident_t>* list_from_identifier(char*id, unsigned idn)
@@ -204,6 +243,60 @@ static std::list<pform_ident_t>* list_from_identifier(list<pform_ident_t>*tmp,
       tmp->push_back({ lex_strings.make(id), idn });
       delete[]id;
       return tmp;
+}
+
+static decl_assignment_t *pform_make_var_decl(const YYLTYPE&loc, char *id,
+					      unsigned lexical_pos,
+					      std::list<pform_range_t>*udims,
+					      PExpr *init)
+{
+      if (init && pform_peek_scope()->var_init_needs_explicit_lifetime() &&
+          var_lifetime == LexicalScope::INHERITED) {
+	    cerr << loc << ": warning: Static variable initialization requires "
+			   "explicit lifetime in this context." << endl;
+	    warn_count += 1;
+      }
+      decl_assignment_t *decl = new decl_assignment_t;
+      decl->name = { lex_strings.make(id), lexical_pos };
+      if (udims) {
+	    decl->index = *udims;
+	    delete udims;
+      }
+      decl->expr.reset(init);
+      delete[] id;
+      return decl;
+}
+
+static decl_assignment_t *pform_make_var_decl(const YYLTYPE&loc, char *id,
+					      std::list<pform_range_t>*udims,
+					      PExpr *init)
+{
+      return pform_make_var_decl(loc, id, loc.lexical_pos, udims, init);
+}
+
+static decl_assignment_t *pform_make_net_decl(const YYLTYPE&loc, char *id,
+					      unsigned lexical_pos,
+					      std::list<pform_range_t>*udims,
+					      PExpr *init)
+{
+      decl_assignment_t *decl = new decl_assignment_t;
+      decl->name = { lex_strings.make(id), lexical_pos };
+      if (udims) {
+	    decl->index = *udims;
+	    if (init)
+		  pform_requires_sv(loc, "Assignment of net array during declaration");
+	    delete udims;
+      }
+      decl->expr.reset(init);
+      delete[] id;
+      return decl;
+}
+
+static decl_assignment_t *pform_make_net_decl(const YYLTYPE&loc, char *id,
+					      std::list<pform_range_t>*udims,
+					      PExpr *init)
+{
+      return pform_make_net_decl(loc, id, loc.lexical_pos, udims, init);
 }
 
 template <class T> void append(vector<T>&out, const std::vector<T>&in)
@@ -427,14 +520,15 @@ static void port_declaration_context_init(void)
 }
 
 Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
-			            NetNet::PortType port_type,
+				    unsigned lexical_pos,
+				    NetNet::PortType port_type,
 				    NetNet::Type net_type,
 				    data_type_t *data_type,
 				    std::list<pform_range_t> *unpacked_dims,
 				    PExpr *default_value,
 				    std::list<named_pexpr_t> *attributes)
 {
-      pform_ident_t name = { lex_strings.make(id), loc.lexical_pos };
+      pform_ident_t name = { lex_strings.make(id), lexical_pos };
       delete[] id;
 
       Module::port_t *port = pform_module_port_reference(loc, name.first);
@@ -527,8 +621,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
       std::list<perm_string>*perm_strings;
 
       std::list<pform_ident_t>*identifiers;
-
-      std::list<pform_port_t>*port_list;
+      struct pform_port_list port_list;
 
       std::vector<pform_tf_port_t>* tf_ports;
 
@@ -583,6 +676,11 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
       decl_assignment_t*decl_assignment;
       std::list<decl_assignment_t*>*decl_assignments;
 
+      struct {
+	    data_type_t *type;
+	    std::list<decl_assignment_t*> *decl_assignments;
+      } decl_assignments_with_type;
+
       struct_member_t*struct_member;
       std::list<struct_member_t*>*struct_members;
       struct_type_t*struct_type;
@@ -596,6 +694,13 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 	    char*text;
 	    typedef_t*type;
       } type_identifier;
+
+      struct {
+	    data_type_t *type;
+	    char *id;
+	    unsigned lexical_pos;
+	    std::list<pform_range_t>*ranges;
+      } type_id_range;
 
       struct {
 	    data_type_t*type;
@@ -807,12 +912,15 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 
 %type <decl_assignment> net_decl_assign variable_decl_assignment
 %type <decl_assignments> net_decl_assigns list_of_variable_decl_assignments
+%type <decl_assignments_with_type> list_of_net_decl_assignments_with_type
+%type <decl_assignments_with_type> list_of_variable_decl_assignments_with_type
 
 %type <data_type>  data_type data_type_opt data_type_or_implicit data_type_or_implicit_or_void
-%type <data_type>  data_type_or_implicit_no_opt
-%type <data_type>  simple_type_or_string let_formal_type
-%type <data_type>  packed_array_data_type
-%type <data_type>  ps_type_identifier
+%type <data_type>  implicit_type
+%type <data_type>  reg_prefixed_atomic_type simple_type_or_string let_formal_type
+%type <data_type>  packed_array_data_type atomic_type
+
+%type <data_type>  ps_type_identifier ps_type_identifier_dim
 %type <data_type>  simple_packed_type
 %type <data_type>  class_scope
 %type <struct_member>  struct_union_member
@@ -833,7 +941,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <nettype>  net_type net_type_opt net_type_or_var net_type_or_var_opt
 %type <gatetype> gatetype switchtype
 %type <porttype> port_direction port_direction_opt
-%type <vartype> integer_vector_type
+%type <vartype> integer_vector_type integer_vector_type_no_reg
 %type <parmvalue> parameter_value_opt
 
 %type <event_exprs> event_expression_list
@@ -877,6 +985,11 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <letter> compressed_operator
 
 %type <type_restrict> forward_type forward_type_without_enum
+%type <type_id_range> data_type_or_implicit_plus_id_base
+%type <type_id_range> data_type_or_implicit_plus_id_dim
+%type <type_id_range> partial_port_name_dim
+%type <type_id_range> partial_port_type_plus_id_dim
+%type <type_id_range> partial_port_typedef_plus_id_dim
 
 %token K_TAND
 %nonassoc K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
@@ -1332,13 +1445,13 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
 		       $1, $2);
 	var_lifetime = LexicalScope::INHERITED;
       }
-  | attribute_list_opt K_const_opt K_var variable_lifetime_opt data_type_or_implicit list_of_variable_decl_assignments ';'
-      { data_type_t *data_type = $5;
+  | attribute_list_opt K_const_opt K_var variable_lifetime_opt list_of_variable_decl_assignments_with_type ';'
+      { data_type_t*data_type = $5.type;
 	if (!data_type) {
-	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, nullptr);
 	      FILE_NAME(data_type, @3);
 	}
-	pform_make_var(@3, $6, data_type, $1, $2);
+	pform_make_var(@3, $5.decl_assignments, data_type, $1, $2);
 	var_lifetime = LexicalScope::INHERITED;
       }
   | attribute_list_opt K_event event_variable_list ';'
@@ -1354,6 +1467,7 @@ package_scope
       }
   ;
 
+  // Type identifiers with and without attached packed dimensions.
 ps_type_identifier /* IEEE1800-2017: A.9.3 */
  : TYPE_IDENTIFIER
       { pform_set_type_referenced(@1, $1.text);
@@ -1369,17 +1483,33 @@ ps_type_identifier /* IEEE1800-2017: A.9.3 */
       }
   ;
 
+ps_type_identifier_dim /* IEEE1800-2017: A.9.3 */
+ : TYPE_IDENTIFIER dimensions_opt
+      { pform_set_type_referenced(@1, $1.text);
+	data_type_t*tmp = new typeref_t($1.type);
+	FILE_NAME(tmp, @1);
+	delete[]$1.text;
+	$$ = pform_make_parray_type(@2, tmp, $2);
+      }
+  | package_scope TYPE_IDENTIFIER dimensions_opt
+      { lex_in_package_scope(nullptr);
+	data_type_t*tmp = new typeref_t($2.type, $1);
+	FILE_NAME(tmp, @2);
+	$$ = pform_make_parray_type(@3, tmp, $3);
+	delete[]$2.text;
+      }
+  ;
+
 /* Data types that can have packed dimensions directly attached to it */
 packed_array_data_type /* IEEE1800-2005: A.2.2.1 */
-  : enum_data_type
-      { $$ = $1; }
-  | struct_data_type
+  : enum_data_type dimensions_opt
+      { $$ = pform_make_parray_type(@2, $1, $2); }
+  | struct_data_type dimensions_opt
       { if (!$1->packed_flag && !($1->union_flag && $1->soft_flag)) {
 	      yyerror(@1, "sorry: Unpacked structs not supported.");
-        }
-	$$ = $1;
+	}
+	$$ = pform_make_parray_type(@2, $1, $2);
       }
-  | ps_type_identifier
   ;
 
 simple_packed_type /* Integer and vector types */
@@ -1400,7 +1530,7 @@ simple_packed_type /* Integer and vector types */
       }
   ;
 
-data_type /* IEEE1800-2005: A.2.2.1 */
+atomic_type
   : simple_packed_type
       { $$ = $1;
       }
@@ -1409,20 +1539,51 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | packed_array_data_type dimensions_opt
-      { if ($2) {
-	      parray_type_t*tmp = new parray_type_t($1, $2);
-	      FILE_NAME(tmp, @1);
-	      $$ = tmp;
-        } else {
-	      $$ = $1;
-        }
+  | packed_array_data_type { $$ = $1; }
+  | K_string
+      { string_type_t*tmp = new string_type_t;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  ;
+
+/* Data types allowed after the historical iverilog extension that permits an
+   extra leading `reg` in block declarations. Keep `reg` itself out of this
+   subset so ordinary `reg` declarations continue through the normal rules. */
+reg_prefixed_atomic_type
+  : integer_vector_type_no_reg unsigned_signed_opt dimensions_opt
+      { vector_type_t*tmp = new vector_type_t($1, $2, $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | atom_type signed_unsigned_opt
+      { atom_type_t*tmp = new atom_type_t($1, $2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_time unsigned_signed_opt
+      { atom_type_t*tmp = new atom_type_t(atom_type_t::TIME, $2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | non_integer_type
+      { real_type_t*tmp = new real_type_t($1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | packed_array_data_type
+      { $$ = $1;
       }
   | K_string
       { string_type_t*tmp = new string_type_t;
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  ;
+
+data_type /* IEEE1800-2005: A.2.2.1 */
+  : atomic_type { $$ = $1; }
+  | ps_type_identifier_dim { $$ = $1; }
   ;
 
 /* Data type or nothing, but not implicit */
@@ -1436,6 +1597,11 @@ data_type_opt
      absent. The context may need that information to decide to resort
      to left context. */
 
+data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
+  : data_type_opt { $$ = $1; }
+  | implicit_type { $$ = $1; }
+  ;
+
 scalar_vector_opt /*IEEE1800-2005: optional support for packed array */
   : K_vectored
       { /* Ignore */ }
@@ -1445,14 +1611,8 @@ scalar_vector_opt /*IEEE1800-2005: optional support for packed array */
       { /* Ignore */ }
   ;
 
-data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
-  : data_type_or_implicit_no_opt
-  | { $$ = nullptr; }
-
-data_type_or_implicit_no_opt
-  : data_type
-      { $$ = $1; }
-  | signing dimensions_opt
+implicit_type
+  : signing dimensions_opt
       { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $1, $2);
 	tmp->implicit_flag = true;
 	FILE_NAME(tmp, @1);
@@ -1465,7 +1625,6 @@ data_type_or_implicit_no_opt
 	$$ = tmp;
       }
   ;
-
 
 data_type_or_implicit_or_void
   : data_type_or_implicit
@@ -1772,7 +1931,13 @@ inside_expression /* IEEE1800-2005 A.8.3 */
 
 integer_vector_type /* IEEE1800-2005: A.2.2.1 */
   : K_reg   { $$ = IVL_VT_LOGIC; } /* A synonym for logic. */
-  | K_bit   { $$ = IVL_VT_BOOL; }
+  | integer_vector_type_no_reg
+      { $$ = $1;
+      }
+  ;
+
+integer_vector_type_no_reg
+  : K_bit   { $$ = IVL_VT_BOOL; }
   | K_logic { $$ = IVL_VT_LOGIC; }
   | K_bool  { $$ = IVL_VT_BOOL; } /* Icarus Verilog xtypes extension */
   ;
@@ -1962,6 +2127,18 @@ loop_statement /* IEEE1800-2005: A.6.8 */
       }
   ;
 
+list_of_variable_decl_assignments_with_type /* IEEE1800-2005 A.2.3 */
+  : data_type_or_implicit_plus_id_dim var_decl_initializer_opt
+      { std::list<decl_assignment_t*>*tmp = new std::list<decl_assignment_t*>;
+	tmp->push_back(pform_make_var_decl(@1, $1.id, $1.lexical_pos, $1.ranges, $2));
+	$$.decl_assignments = tmp;
+	$$.type = $1.type;
+      }
+  | list_of_variable_decl_assignments_with_type ',' variable_decl_assignment
+      { $1.decl_assignments->push_back($3);
+	$$ = $1;
+      }
+  ;
 
 list_of_variable_decl_assignments /* IEEE1800-2005 A.2.3 */
   : variable_decl_assignment
@@ -1988,23 +2165,8 @@ var_decl_initializer_opt
  ;
 
 variable_decl_assignment /* IEEE1800-2005 A.2.3 */
-  : IDENTIFIER dimensions_opt var_decl_initializer_opt
-      { if ($3 && pform_peek_scope()->var_init_needs_explicit_lifetime()
-	    && (var_lifetime == LexicalScope::INHERITED)) {
-	      cerr << @1 << ": warning: Static variable initialization requires "
-			    "explicit lifetime in this context." << endl;
-	      warn_count += 1;
-	}
-
-	decl_assignment_t*tmp = new decl_assignment_t;
-	tmp->name = { lex_strings.make($1), @1.lexical_pos };
-	if ($2) {
-	      tmp->index = *$2;
-	      delete $2;
-	}
-	tmp->expr.reset($3);
-	delete[]$1;
-	$$ = tmp;
+  : identifier_name dimensions_opt var_decl_initializer_opt
+      { $$ = pform_make_var_decl(@1, $1, $2, $3);
       }
   ;
 
@@ -2077,7 +2239,7 @@ modport_ports_list
   | modport_ports_list ',' named_expression
       { if (last_modport_port.type == MP_SIMPLE) {
 	      pform_add_modport_port(@3, last_modport_port.direction,
-				     $3->name, $3->parm);
+					     $3->name, $3->parm);
 	} else {
 	      yyerror(@3, "error: modport expression not allowed here.");
 	}
@@ -2551,11 +2713,81 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 
 
 tf_port_declaration /* IEEE1800-2005: A.2.7 */
-  : port_direction K_var_opt data_type_or_implicit list_of_port_identifiers ';'
-      { $$ = pform_make_task_ports(@1, $1, $3, $4, true);
+  : port_direction K_var_opt list_of_port_identifiers ';'
+      { $$ = pform_make_task_ports(@1, $1, $3.type, $3.ports, true);
       }
   ;
 
+  // These rules only disambiguate declaration items that can be either an
+  // implicit declaration name or an explicit type followed by a name. Keep the
+  // bare `TYPE_IDENTIFIER dimensions_opt` case in the parent rule so a typedef
+  // name can be shadowed by an unpacked declaration name, while
+  // `ps_type_identifier_dim identifier_name` still parses a typedef with packed
+  // dimensions followed by a separate declaration name.
+data_type_or_implicit_plus_id_base
+  : IDENTIFIER
+      { set_type_id_range($$, nullptr, $1, @1.lexical_pos, nullptr);
+      }
+  | atomic_type identifier_name
+      { set_type_id_range($$, $1, $2, @2.lexical_pos, nullptr);
+      }
+  | implicit_type identifier_name
+      { set_type_id_range($$, $1, $2, @2.lexical_pos, nullptr);
+      }
+  | ps_type_identifier_dim identifier_name
+      { set_type_id_range($$, $1, $2, @2.lexical_pos, nullptr);
+      }
+  ;
+
+data_type_or_implicit_plus_id_dim
+  : TYPE_IDENTIFIER dimensions_opt
+      { set_type_id_range($$, nullptr, $1.text, @1.lexical_pos, $2);
+      }
+  | data_type_or_implicit_plus_id_base dimensions_opt
+      { set_type_id_range($$, $1.type, $1.id, $1.lexical_pos, $2);
+      }
+  ;
+
+  // Partial ANSI port declarations such as `input a, integer b` can redeclare
+  // the data type without repeating the direction. Keep this narrower than
+  // data_type_or_implicit_plus_id_dim so a bare identifier after a comma is
+  // still parsed as a continuation of the previous port declaration.
+partial_port_type_plus_id_dim
+  : atomic_type identifier_name dimensions_opt
+      { set_type_id_range($$, $1, $2, @2.lexical_pos, $3);
+      }
+  | implicit_type identifier_name dimensions_opt
+      { set_type_id_range($$, $1, $2, @2.lexical_pos, $3);
+      }
+  ;
+
+partial_port_name_dim
+  : IDENTIFIER dimensions_opt
+      { set_type_id_range($$, nullptr, $1, @1.lexical_pos, $2);
+      }
+  | TYPE_IDENTIFIER dimensions_opt
+      { set_type_id_range($$, nullptr, $1.text, @1.lexical_pos, $2);
+      }
+  ;
+
+partial_port_typedef_plus_id_dim
+  : TYPE_IDENTIFIER dimensions_opt identifier_name dimensions_opt
+      { pform_set_type_referenced(@1, $1.text);
+	data_type_t*tmp = new typeref_t($1.type);
+	FILE_NAME(tmp, @1);
+	delete[]$1.text;
+	tmp = pform_make_parray_type(@2, tmp, $2);
+	set_type_id_range($$, tmp, $3, @3.lexical_pos, $4);
+      }
+  | package_scope TYPE_IDENTIFIER dimensions_opt identifier_name dimensions_opt
+      { lex_in_package_scope(nullptr);
+	data_type_t*tmp = new typeref_t($2.type, $1);
+	FILE_NAME(tmp, @2);
+	delete[]$2.text;
+	tmp = pform_make_parray_type(@3, tmp, $3);
+	set_type_id_range($$, tmp, $4, @4.lexical_pos, $5);
+      }
+  ;
 
   /* These rules for tf_port_item are slightly expanded from the
      strict rules in the LRM to help with LALR parsing.
@@ -2567,61 +2799,62 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
 
 tf_port_item /* IEEE1800-2005: A.2.7 */
 
-  : port_direction_opt K_var_opt data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
+  : port_direction_opt K_var_opt data_type_or_implicit_plus_id_dim initializer_opt
       { std::vector<pform_tf_port_t>*tmp;
 	NetNet::PortType use_port_type = $1;
-        if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || ($3 == 0)))
+        if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || !$3.type))
               use_port_type = port_declaration_context.port_type;
-	list<pform_port_t>* port_list = make_port_list($4, @4.lexical_pos, $5, 0);
+	struct pform_port_list port_list = make_port_list($3.type, $3.id,
+							  $3.lexical_pos,
+							  $3.ranges, nullptr);
 
 	if (use_port_type == NetNet::PIMPLICIT) {
 	      yyerror(@1, "error: Missing task/function port direction.");
 	      use_port_type = NetNet::PINPUT; // for error recovery
 	}
-	if (($3 == 0) && ($1==NetNet::PIMPLICIT)) {
+	if (!$3.type && ($1==NetNet::PIMPLICIT)) {
 		// Detect special case this is an undecorated
 		// identifier and we need to get the declaration from
 		// left context.
-	      if ($5 != 0) {
-		    yyerror(@5, "internal error: How can there be an unpacked range here?\n");
-	      }
-	      tmp = pform_make_task_ports(@4, use_port_type,
+	      tmp = pform_make_task_ports(@3, use_port_type,
 					  port_declaration_context.data_type,
-					  port_list);
+					  port_list.ports);
 
 	} else {
 		// Otherwise, the decorations for this identifier
 		// indicate the type. Save the type for any right
 		// context that may come later.
 	      port_declaration_context.port_type = use_port_type;
-	      if ($3 == 0) {
-		    $3 = new vector_type_t(IVL_VT_LOGIC, false, 0);
-		    FILE_NAME($3, @4);
+	      if (!$3.type) {
+		    $3.type = new vector_type_t(IVL_VT_LOGIC, false, nullptr);
+		    FILE_NAME($3.type, @3);
 	      }
-	      port_declaration_context.data_type = $3;
-	      tmp = pform_make_task_ports(@3, use_port_type, $3, port_list);
+	      port_declaration_context.data_type = $3.type;
+	      tmp = pform_make_task_ports(@3, use_port_type, $3.type,
+					  port_list.ports);
 	}
 
 	$$ = tmp;
-	if ($6) {
-	      pform_requires_sv(@6, "Task/function default argument");
+	if ($4) {
+	      pform_requires_sv(@4, "Task/function default argument");
 	      assert(tmp->size()==1);
-	      tmp->front().defe = $6;
+	      tmp->front().defe = $4;
 	}
       }
 
   /* Rules to match error cases... */
 
-  | port_direction_opt K_var_opt data_type_or_implicit IDENTIFIER error
-      { yyerror(@3, "error: Error in task/function port item after port name %s.", $4);
+  | port_direction_opt K_var_opt data_type_or_implicit_plus_id_dim error
+      { yyerror(@3, "error: Error in task/function port item after port name %s.", $3.id);
+	delete_type_id_range($3);
 	yyerrok;
-	$$ = 0;
+	$$ = nullptr;
       }
   ;
 
 tf_port_list /* IEEE1800-2005: A.2.7 */
   :   { port_declaration_context.port_type = gn_system_verilog() ? NetNet::PINPUT : NetNet::PIMPLICIT;
-	port_declaration_context.data_type = 0;
+	port_declaration_context.data_type = nullptr;
       }
     tf_port_item_list
       { $$ = $2; }
@@ -2816,13 +3049,13 @@ block_item_decl
   /* variable declarations. Note that data_type can be 0 if we are
      recovering from an error. */
 
-  : K_const_opt K_var variable_lifetime_opt data_type_or_implicit list_of_variable_decl_assignments ';'
-      { data_type_t *data_type = $4;
+  : K_const_opt K_var variable_lifetime_opt list_of_variable_decl_assignments_with_type ';'
+      { data_type_t*data_type = $4.type;
 	if (!data_type) {
-	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
-	      FILE_NAME(data_type, @2);
+	    data_type = new vector_type_t(IVL_VT_LOGIC, false, nullptr);
+	    FILE_NAME(data_type, @2);
 	}
-	pform_make_var(@2, $5, data_type, attributes_in_context, $1);
+	pform_make_var(@2, $4.decl_assignments, data_type, attributes_in_context, $1);
 	var_lifetime = LexicalScope::INHERITED;
       }
 
@@ -2831,8 +3064,8 @@ block_item_decl
 	var_lifetime = LexicalScope::INHERITED;
       }
 
-  /* The extra `reg` is not valid (System)Verilog, this is a iverilog extension. */
-  | K_const_opt variable_lifetime_opt K_reg data_type list_of_variable_decl_assignments ';'
+  /* The extra `reg` is not valid (System)Verilog, this is an iverilog extension. */
+  | K_const_opt variable_lifetime_opt K_reg reg_prefixed_atomic_type list_of_variable_decl_assignments ';'
       { if ($4) pform_make_var(@4, $5, $4, attributes_in_context, $1);
 	var_lifetime = LexicalScope::INHERITED;
       }
@@ -2853,11 +3086,6 @@ block_item_decl
 
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
-
-  | K_const_opt K_var variable_lifetime_opt data_type_or_implicit error ';'
-      { yyerror(@1, "error: Syntax error in variable list.");
-	yyerrok;
-      }
   | K_const_opt variable_lifetime_opt data_type error ';'
       { yyerror(@1, "error: Syntax error in variable list.");
 	yyerrok;
@@ -2945,13 +3173,8 @@ enum_base_type /* IEEE 1800-2012 A.2.2.1 */
   : simple_packed_type
       { $$ = $1;
       }
-  | ps_type_identifier dimensions_opt
-      { if ($2) {
-	      $$ = new parray_type_t($1, $2);
-	      FILE_NAME($$, @1);
-        } else {
-	      $$ = $1;
-        }
+  | ps_type_identifier_dim
+      {  $$ = $1;
       }
   |
       { $$ = new atom_type_t(atom_type_t::INT, true);
@@ -4602,16 +4825,16 @@ genvar_identifier_list
   ;
 
 list_of_port_identifiers
-  : IDENTIFIER dimensions_opt
-      { $$ = make_port_list($1, @1.lexical_pos, $2, 0); }
-  | list_of_port_identifiers ',' IDENTIFIER dimensions_opt
-      { $$ = make_port_list($1, $3, @3.lexical_pos, $4, 0); }
+  : data_type_or_implicit_plus_id_dim
+      { $$ = make_port_list($1.type, $1.id, $1.lexical_pos, $1.ranges, nullptr); }
+  | list_of_port_identifiers ',' identifier_name dimensions_opt
+      { $$ = make_port_list($1, $3, @3.lexical_pos, $4, nullptr); }
   ;
 
 list_of_variable_port_identifiers
-  : IDENTIFIER dimensions_opt initializer_opt
-      { $$ = make_port_list($1, @1.lexical_pos, $2, $3); }
-  | list_of_variable_port_identifiers ',' IDENTIFIER dimensions_opt initializer_opt
+  : data_type_or_implicit_plus_id_dim initializer_opt
+      { $$ = make_port_list($1.type, $1.id, $1.lexical_pos, $1.ranges, $2); }
+  | list_of_variable_port_identifiers ',' identifier_name dimensions_opt initializer_opt
       { $$ = make_port_list($1, $3, @3.lexical_pos, $4, $5); }
   ;
 
@@ -4656,23 +4879,41 @@ list_of_port_declarations
 	tmp->push_back($3);
 	$$ = tmp;
       }
-  | list_of_port_declarations ',' attribute_list_opt IDENTIFIER dimensions_opt initializer_opt
+  | list_of_port_declarations ',' attribute_list_opt partial_port_name_dim initializer_opt
       { std::vector<Module::port_t*> *ports = $1;
 
 	Module::port_t* port;
 	if (port_declaration_context.port_type == NetNet::NOT_A_PORT) {
 	      yyerror(@4, "error: Incomplete interface port declaration.");
-	      delete[]$4;
+	      delete_type_id_range($4);
 	      delete $5;
-	      delete $6;
 	      delete $3;
 	      port = 0;
 	} else {
-	      port = module_declare_port(@4, $4,
+	      port = module_declare_port(@4, $4.id, $4.lexical_pos,
 					 port_declaration_context.port_type,
 					 port_declaration_context.port_net_type,
 					 port_declaration_context.data_type,
-					 $5, $6, $3);
+					 $4.ranges, $5, $3);
+	}
+	ports->push_back(port);
+	$$ = ports;
+      }
+  | list_of_port_declarations ',' attribute_list_opt partial_port_typedef_plus_id_dim initializer_opt
+      { std::vector<Module::port_t*> *ports = $1;
+
+	Module::port_t* port;
+	if (port_declaration_context.port_type == NetNet::NOT_A_PORT) {
+	      yyerror(@4, "error: Incomplete interface port declaration.");
+	      delete_type_id_range($4);
+	      delete $5;
+	      delete $3;
+	      port = 0;
+	} else {
+	      port = module_declare_port(@4, $4.id, $4.lexical_pos,
+					 port_declaration_context.port_type,
+					 NetNet::IMPLICIT, $4.type,
+					 $4.ranges, $5, $3);
 	}
 	ports->push_back(port);
 	$$ = ports;
@@ -4686,29 +4927,32 @@ list_of_port_declarations
   // All of port direction, port kind and data type are optional, but at least
   // one has to be specified, so we need multiple rules.
 port_declaration
-  : attribute_list_opt port_direction net_type_or_var_opt data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
-      { $$ = module_declare_port(@5, $5, $2, $3, $4, $6, $7, $1);
+  : attribute_list_opt port_direction net_type_or_var_opt data_type_or_implicit_plus_id_dim initializer_opt
+      { $$ = module_declare_port(@4, $4.id, $4.lexical_pos,
+				 $2, $3, $4.type, $4.ranges, $5, $1);
       }
-  | attribute_list_opt INTERFACE_IDENTIFIER '.' IDENTIFIER IDENTIFIER dimensions_opt
+  | attribute_list_opt INTERFACE_IDENTIFIER '.' identifier_name identifier_name dimensions_opt
       { $$ = module_declare_interface_port(@5, $2, $4, $5, $6, $1);
       }
-  | attribute_list_opt INTERFACE_IDENTIFIER IDENTIFIER dimensions_opt
+  | attribute_list_opt INTERFACE_IDENTIFIER identifier_name dimensions_opt
       { $$ = module_declare_interface_port(@3, $2, 0, $3, $4, $1);
       }
-  | attribute_list_opt net_type_or_var data_type_or_implicit IDENTIFIER dimensions_opt initializer_opt
-      { pform_requires_sv(@4, "Partial ANSI port declaration");
-	$$ = module_declare_port(@4, $4, port_declaration_context.port_type,
-			         $2, $3, $5, $6, $1);
-      }
-  | attribute_list_opt data_type_or_implicit_no_opt IDENTIFIER dimensions_opt initializer_opt
+  | attribute_list_opt net_type_or_var data_type_or_implicit_plus_id_dim initializer_opt
       { pform_requires_sv(@3, "Partial ANSI port declaration");
-	$$ = module_declare_port(@3, $3, port_declaration_context.port_type,
-			         NetNet::IMPLICIT, $2, $4, $5, $1);
+	$$ = module_declare_port(@3, $3.id, $3.lexical_pos,
+				 port_declaration_context.port_type,
+				 $2, $3.type, $3.ranges, $4, $1);
       }
-  | attribute_list_opt port_direction K_wreal IDENTIFIER
+  | attribute_list_opt partial_port_type_plus_id_dim initializer_opt
+      { pform_requires_sv(@2, "Partial ANSI port declaration");
+	$$ = module_declare_port(@2, $2.id, $2.lexical_pos,
+				 port_declaration_context.port_type,
+				 NetNet::IMPLICIT, $2.type, $2.ranges, $3, $1);
+      }
+  | attribute_list_opt port_direction K_wreal identifier_name
       { real_type_t*real_type = new real_type_t(real_type_t::REAL);
 	FILE_NAME(real_type, @3);
-	$$ = module_declare_port(@4, $4, $2, NetNet::WIRE,
+	$$ = module_declare_port(@4, $4, @4.lexical_pos, $2, NetNet::WIRE,
 				 real_type, nullptr, nullptr, $1);
       }
   ;
@@ -5007,7 +5251,19 @@ module_item
      net_decl_assigns, which are <name> = <expr> assignment
      declarations. */
 
-  | attribute_list_opt net_type drive_strength_opt data_type_or_implicit delay3_opt net_decl_assigns ';'
+  | attribute_list_opt net_type drive_strength_opt list_of_net_decl_assignments_with_type ';'
+      { data_type_t*data_type = $4.type;
+        pform_check_net_data_type(@2, $2, data_type);
+	check_net_decl_assigns(@4, $4.decl_assignments);
+	if (!data_type) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, nullptr);
+	      FILE_NAME(data_type, @2);
+	}
+	pform_makewire(@2, nullptr, $3, $4.decl_assignments, $2, data_type, $1);
+	delete $1;
+      }
+
+  | attribute_list_opt net_type drive_strength_opt data_type_or_implicit delay3 net_decl_assigns ';'
       { data_type_t*data_type = $4;
         pform_check_net_data_type(@2, $2, $4);
 	check_net_decl_assigns(@6, $6);
@@ -5041,12 +5297,12 @@ module_item
        input wire signed [h:l] <list>;
      This creates the wire and sets the port type all at once. */
 
-  | attribute_list_opt port_direction net_type_or_var data_type_or_implicit list_of_port_identifiers ';'
-      { pform_module_define_port(@2, $5, $2, $3, $4, $1); }
+  | attribute_list_opt port_direction net_type_or_var list_of_port_identifiers ';'
+      { pform_module_define_port(@2, $4.ports, $2, $3, $4.type, $1); }
 
   | attribute_list_opt port_direction K_wreal list_of_port_identifiers ';'
       { real_type_t*real_type = new real_type_t(real_type_t::REAL);
-	pform_module_define_port(@2, $4, $2, NetNet::WIRE, real_type, $1);
+	pform_module_define_port(@2, $4.ports, $2, NetNet::WIRE, real_type, $1);
       }
 
   /* The next three rules handle port declarations that include a variable
@@ -5055,33 +5311,33 @@ module_item
      and also handle incomplete port declarations, e.g.
        input signed [h:l] <list>;
    */
-  | attribute_list_opt K_inout data_type_or_implicit list_of_port_identifiers ';'
-      { NetNet::Type use_type = $3 ? NetNet::IMPLICIT : NetNet::NONE;
-	if (const vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
+  | attribute_list_opt K_inout list_of_port_identifiers ';'
+      { NetNet::Type use_type = $3.type ? NetNet::IMPLICIT : NetNet::NONE;
+	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3.type)) {
 	      if (dtype->implicit_flag)
 		    use_type = NetNet::NONE;
 	}
 	if (use_type == NetNet::NONE)
-	      pform_set_port_type(@2, $4, NetNet::PINOUT, $3, $1);
+	      pform_set_port_type(@2, $3.ports, NetNet::PINOUT, $3.type, $1);
 	else
-	      pform_module_define_port(@2, $4, NetNet::PINOUT, use_type, $3, $1);
+	      pform_module_define_port(@2, $3.ports, NetNet::PINOUT, use_type, $3.type, $1);
       }
 
-  | attribute_list_opt K_input data_type_or_implicit list_of_port_identifiers ';'
-      { NetNet::Type use_type = $3 ? NetNet::IMPLICIT : NetNet::NONE;
-	if (const vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
+  | attribute_list_opt K_input list_of_port_identifiers ';'
+      { NetNet::Type use_type = $3.type ? NetNet::IMPLICIT : NetNet::NONE;
+	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3.type)) {
 	      if (dtype->implicit_flag)
 		    use_type = NetNet::NONE;
 	}
 	if (use_type == NetNet::NONE)
-	      pform_set_port_type(@2, $4, NetNet::PINPUT, $3, $1);
+	      pform_set_port_type(@2, $3.ports, NetNet::PINPUT, $3.type, $1);
 	else
-	      pform_module_define_port(@2, $4, NetNet::PINPUT, use_type, $3, $1);
+	      pform_module_define_port(@2, $3.ports, NetNet::PINPUT, use_type, $3.type, $1);
       }
 
-  | attribute_list_opt K_output data_type_or_implicit list_of_variable_port_identifiers ';'
-      { NetNet::Type use_type = $3 ? NetNet::IMPLICIT : NetNet::NONE;
-	if (const vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3)) {
+  | attribute_list_opt K_output list_of_variable_port_identifiers ';'
+      { NetNet::Type use_type = $3.type ? NetNet::IMPLICIT : NetNet::NONE;
+	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3.type)) {
 	      if (dtype->implicit_flag)
 		    use_type = NetNet::NONE;
 	      else
@@ -5091,40 +5347,36 @@ module_item
 		// output ports are implicitly (on the inside)
 		// variables because "reg" is not valid syntax
 		// here.
-	} else if ($3) {
+	} else if ($3.type) {
 	      use_type = NetNet::IMPLICIT_REG;
 	}
 	if (use_type == NetNet::NONE)
-	      pform_set_port_type(@2, $4, NetNet::POUTPUT, $3, $1);
+	      pform_set_port_type(@2, $3.ports, NetNet::POUTPUT, $3.type, $1);
 	else
-	      pform_module_define_port(@2, $4, NetNet::POUTPUT, use_type, $3, $1);
+	      pform_module_define_port(@2, $3.ports, NetNet::POUTPUT, use_type, $3.type, $1);
       }
 
-  | attribute_list_opt port_direction net_type_or_var data_type_or_implicit error ';'
+  | attribute_list_opt port_direction net_type_or_var error ';'
       { yyerror(@2, "error: Invalid variable list in port declaration.");
 	if ($1) delete $1;
-	if ($4) delete $4;
 	yyerrok;
       }
 
-  | attribute_list_opt K_inout data_type_or_implicit error ';'
+  | attribute_list_opt K_inout error ';'
       { yyerror(@2, "error: Invalid variable list in port declaration.");
 	if ($1) delete $1;
-	if ($3) delete $3;
 	yyerrok;
       }
 
-  | attribute_list_opt K_input data_type_or_implicit error ';'
+  | attribute_list_opt K_input error ';'
       { yyerror(@2, "error: Invalid variable list in port declaration.");
 	if ($1) delete $1;
-	if ($3) delete $3;
 	yyerrok;
       }
 
-  | attribute_list_opt K_output data_type_or_implicit error ';'
+  | attribute_list_opt K_output error ';'
       { yyerror(@2, "error: Invalid variable list in port declaration.");
 	if ($1) delete $1;
-	if ($3) delete $3;
 	yyerrok;
       }
 
@@ -5535,19 +5787,22 @@ net_decl_initializer_opt
  | { $$ = 0; }
  ;
 
+list_of_net_decl_assignments_with_type /* IEEE1800-2005 A.2.5 */
+  : data_type_or_implicit_plus_id_dim net_decl_initializer_opt
+      { std::list<decl_assignment_t*>*tmp = new std::list<decl_assignment_t*>;
+	tmp->push_back(pform_make_net_decl(@1, $1.id, $1.lexical_pos, $1.ranges, $2));
+	$$.decl_assignments = tmp;
+	$$.type = $1.type;
+      }
+  | list_of_net_decl_assignments_with_type ',' net_decl_assign
+      { $1.decl_assignments->push_back($3);
+	$$ = $1;
+      }
+  ;
+
 net_decl_assign
-  : IDENTIFIER dimensions_opt net_decl_initializer_opt
-      { decl_assignment_t*tmp = new decl_assignment_t;
-	tmp->name = { lex_strings.make($1), @1.lexical_pos };
-	if ($2) {
-	      tmp->index = *$2;
-	      if ($3)
-		    pform_requires_sv(@$, "Assignment of net array during declaration");
-	      delete $2;
-	}
-	tmp->expr.reset($3);
-	delete[]$1;
-	$$ = tmp;
+  : identifier_name dimensions_opt net_decl_initializer_opt
+      { $$ = pform_make_net_decl(@1, $1, $2, $3);
       }
   ;
 
@@ -5798,7 +6053,7 @@ port
      references. The port_t object gets its PWire from the
      port_reference, but its name from the IDENTIFIER. */
 
-  | '.' IDENTIFIER '(' port_reference ')'
+  | '.' identifier_name '(' port_reference ')'
       { Module::port_t*tmp = $4;
 	tmp->name = lex_strings.make($2);
 	delete[]$2;
@@ -5818,7 +6073,7 @@ port
   /* This attaches a name to a port reference concatenation list so
      that parameter passing be name is possible. */
 
-  | '.' IDENTIFIER '(' '{' port_reference_list '}' ')'
+  | '.' identifier_name '(' '{' port_reference_list '}' ')'
       { Module::port_t*tmp = $5;
 	tmp->name = lex_strings.make($2);
 	delete[]$2;
@@ -5921,14 +6176,14 @@ port_conn_expression_list_with_nuls
      port_t object to pass it up to the module declaration code. */
 
 port_reference
-  : IDENTIFIER
+  : identifier_name
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($1);
 	ptmp = pform_module_port_reference(@1, name);
 	delete[]$1;
 	$$ = ptmp;
       }
-  | IDENTIFIER '[' expression ':' expression ']'
+  | identifier_name '[' expression ':' expression ']'
       { index_component_t itmp;
 	itmp.sel = index_component_t::SEL_PART;
 	itmp.msb = $3;
@@ -5951,7 +6206,7 @@ port_reference
 	delete[]$1;
 	$$ = ptmp;
       }
-  | IDENTIFIER '[' expression ']'
+  | identifier_name '[' expression ']'
       { index_component_t itmp;
 	itmp.sel = index_component_t::SEL_BIT;
 	itmp.msb = $3;
@@ -5973,7 +6228,7 @@ port_reference
 	delete[]$1;
 	$$ = ptmp;
       }
-  | IDENTIFIER '[' error ']'
+  | identifier_name '[' error ']'
       { yyerror(@1, "error: Invalid port bit select");
 	Module::port_t*ptmp = new Module::port_t;
 	PEIdent*wtmp = new PEIdent(lex_strings.make($1), @1.lexical_pos);
