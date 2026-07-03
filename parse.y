@@ -1017,7 +1017,9 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 
 %type <type_restrict> forward_type forward_type_without_enum
 %type <type_id_range> data_type_or_implicit_plus_id_base
+%type <type_id_range> data_type_or_implicit_plus_id
 %type <type_id_range> data_type_or_implicit_plus_id_dim
+%type <type_id_range> data_type_or_implicit_or_void_plus_id
 %type <type_id_range> partial_port_name_dim
 %type <type_id_range> partial_port_type_plus_id_dim
 %type <type_id_range> partial_port_typedef_plus_id_dim
@@ -1808,53 +1810,53 @@ for_step_opt
      definitions in the func_body to take on the scope of the function
      instead of the module. */
 function_declaration /* IEEE1800-2005: A.2.6 */
-  : K_function lifetime_opt data_type_or_implicit_or_void IDENTIFIER ';'
+  : K_function lifetime_opt data_type_or_implicit_or_void_plus_id ';'
       { assert(current_function == 0);
-	current_function = pform_push_function_scope(@1, $4, $2);
+	current_function = pform_push_function_scope(@1, $3.id, $2);
       }
     tf_item_list_opt
     statement_or_null_list_opt
     K_endfunction
-      { current_function->set_ports($7);
-	current_function->set_return($3);
-	current_function_set_statement($8? @8 : @4, $8);
-	pform_set_this_class(@4, current_function);
+      { current_function->set_ports($6);
+	current_function->set_return($3.type);
+	current_function_set_statement($7 ? @7 : @3, $7);
+	pform_set_this_class(@3, current_function);
 	pform_pop_scope();
 	current_function = 0;
       }
     label_opt
       { // Last step: check any closing name.
-	check_end_label(@11, "function", $4, $11);
-	delete[]$4;
+	check_end_label(@10, "function", $3.id, $10);
+	delete[]$3.id;
       }
 
-  | K_function lifetime_opt data_type_or_implicit_or_void IDENTIFIER
+  | K_function lifetime_opt data_type_or_implicit_or_void_plus_id
       { assert(current_function == 0);
-	current_function = pform_push_function_scope(@1, $4, $2);
+	current_function = pform_push_function_scope(@1, $3.id, $2);
       }
     '(' tf_port_list_opt ')' ';'
     block_item_decls_opt
     statement_or_null_list_opt
     K_endfunction
-      { current_function->set_ports($7);
-	current_function->set_return($3);
-	current_function_set_statement($11? @11 : @4, $11);
-	pform_set_this_class(@4, current_function);
+      { current_function->set_ports($6);
+	current_function->set_return($3.type);
+	current_function_set_statement($10 ? @10 : @3, $10);
+	pform_set_this_class(@3, current_function);
 	pform_pop_scope();
 	current_function = 0;
-	if ($7 == 0) {
-	      pform_requires_sv(@4, "Functions with no ports");
+	if ($6 == 0) {
+	      pform_requires_sv(@3, "Functions with no ports");
 	}
       }
     label_opt
       { // Last step: check any closing name.
-	check_end_label(@14, "function", $4, $14);
-	delete[]$4;
+	check_end_label(@13, "function", $3.id, $13);
+	delete[]$3.id;
       }
 
   /* Detect and recover from some errors. */
 
-  | K_function lifetime_opt data_type_or_implicit_or_void IDENTIFIER error K_endfunction
+  | K_function lifetime_opt data_type_or_implicit_or_void_plus_id error K_endfunction
       { /* */
 	if (current_function) {
 	      pform_pop_scope();
@@ -1866,8 +1868,8 @@ function_declaration /* IEEE1800-2005: A.2.6 */
       }
     label_opt
       { // Last step: check any closing name.
-	check_end_label(@8, "function", $4, $8);
-	delete[]$4;
+	check_end_label(@7, "function", $3.id, $7);
+	delete[]$3.id;
       }
 
   ;
@@ -2662,7 +2664,11 @@ streaming_concatenation /* IEEE1800-2005: A.8.1 */
 
 task_declaration /* IEEE1800-2005: A.2.7 */
 
-  : K_task lifetime_opt IDENTIFIER ';'
+  /* Tasks do not have a return type, so the leading identifier is always the
+     task name. Use identifier_name so a name tokenized as TYPE_IDENTIFIER can
+     still declare a task that shadows a visible type name. */
+
+  : K_task lifetime_opt identifier_name ';'
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -2689,7 +2695,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	delete[]$3;
       }
 
-  | K_task lifetime_opt IDENTIFIER '('
+  | K_task lifetime_opt identifier_name '('
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -2718,7 +2724,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	delete[]$3;
       }
 
-  | K_task lifetime_opt IDENTIFIER error K_endtask
+  | K_task lifetime_opt identifier_name error K_endtask
       {
 	if (current_task) {
 	      pform_pop_scope();
@@ -2765,6 +2771,20 @@ data_type_or_implicit_plus_id_base
       }
   ;
 
+  // Function declarations have the same type/name ambiguity as other
+  // declarations. For `function T;`, T can be the function name even when the
+  // lexer returns TYPE_IDENTIFIER, while `function T f;` still uses T as the
+  // explicit return type. Unlike variable/net declarations, function names do
+  // not allow unpacked dimensions.
+data_type_or_implicit_plus_id
+  : TYPE_IDENTIFIER
+      { set_type_id_range($$, nullptr, $1.text, @1, nullptr);
+      }
+  | data_type_or_implicit_plus_id_base
+      { $$ = $1;
+      }
+  ;
+
 data_type_or_implicit_plus_id_dim
   : TYPE_IDENTIFIER dimensions_opt
       { set_type_id_range($$, nullptr, $1.text, @1, $2);
@@ -2772,6 +2792,20 @@ data_type_or_implicit_plus_id_dim
   | data_type_or_implicit_plus_id_base dimensions_opt
       { $$ = $1;
 	$$.ranges = $2;
+      }
+  ;
+
+  // `void` is only an explicit return type. The following identifier is still a
+  // function name and may be tokenized as TYPE_IDENTIFIER when it shadows a
+  // visible type name.
+data_type_or_implicit_or_void_plus_id
+  : data_type_or_implicit_plus_id
+      { $$ = $1;
+      }
+  | K_void identifier_name
+      { void_type_t*tmp = new void_type_t;
+	FILE_NAME(tmp, @1);
+	set_type_id_range($$, tmp, $2, @2, nullptr);
       }
   ;
 
