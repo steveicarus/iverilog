@@ -37,6 +37,7 @@ br_gh440			vvp_tests/br_gh440.json
 br_gh483a			vvp_tests/br_gh483a.json
 br_gh483b			vvp_tests/br_gh483b.json
 br_gh552			vvp_tests/br_gh552.json
+br_gh670			vvp_tests/br_gh670.json
 br_gh687			vvp_tests/br_gh687.json
 br_gh703			vvp_tests/br_gh703.json
 br_gh710a			vvp_tests/br_gh710a.json
@@ -387,6 +388,7 @@ sv_super_member_fail		vvp_tests/sv_super_member_fail.json
 sv_type_identifier_ams_name_fields	vvp_tests/sv_type_identifier_ams_name_fields.json
 sv_type_identifier_config_name	vvp_tests/sv_type_identifier_config_name.json
 sv_type_identifier_foreach_name	vvp_tests/sv_type_identifier_foreach_name.json
+sv_type_identifier_function_name	vvp_tests/sv_type_identifier_function_name.json
 sv_type_identifier_genvar_name	vvp_tests/sv_type_identifier_genvar_name.json
 sv_type_identifier_modport_name	vvp_tests/sv_type_identifier_modport_name.json
 sv_type_identifier_module_name	vvp_tests/sv_type_identifier_module_name.json
@@ -399,6 +401,7 @@ sv_type_identifier_parameter_type_param_name	vvp_tests/sv_type_identifier_parame
 sv_type_identifier_port_name	vvp_tests/sv_type_identifier_port_name.json
 sv_type_identifier_specparam_name	vvp_tests/sv_type_identifier_specparam_name.json
 sv_type_identifier_task_function_argument_name	vvp_tests/sv_type_identifier_task_function_argument_name.json
+sv_type_identifier_task_name	vvp_tests/sv_type_identifier_task_name.json
 sv_type_identifier_variable_name	vvp_tests/sv_type_identifier_variable_name.json
 sv_type_param_restrict_class1	vvp_tests/sv_type_param_restrict_class1.json
 sv_type_param_restrict_class2	vvp_tests/sv_type_param_restrict_class2.json

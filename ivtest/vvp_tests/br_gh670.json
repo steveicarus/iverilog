@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "br_gh670.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Classes are not supported",
+        "type"          : "CE"
+    }
+}
