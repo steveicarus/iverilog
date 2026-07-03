@@ -929,6 +929,16 @@ typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
 	    if (sym != cur_scope->local_symbols.end())
 		  return nullptr;
 
+	    // Class properties are tracked in the class type, not in
+	    // local_symbols, but still shadow type names before lookup falls
+	    // through to wildcard imports.
+	    if (auto cur_class = dynamic_cast<PClass*> (cur_scope)) {
+		  if (cur_class->type &&
+		      cur_class->type->properties.find(name) !=
+		      cur_class->type->properties.end())
+			return nullptr;
+	    }
+
             PPackage*pkg = pform_find_potential_import(loc, cur_scope, name, false, false);
             if (pkg) {
 	          cur = pkg->typedefs.find(name);

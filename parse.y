@@ -1172,11 +1172,11 @@ class_item /* IEEE1800-2005: A.1.8 */
 
     /* IEEE1800-2017: A.1.9 Class items: Class properties... */
 
-  | property_qualifier_opt data_type list_of_variable_decl_assignments ';'
-      { pform_class_property(@2, $1, $2, $3); }
+  | property_qualifier_opt list_of_variable_decl_assignments_with_type ';'
+      { pform_class_property(@2, $1, $2.type, $2.decl_assignments); }
 
-  | K_const class_item_qualifier_opt data_type list_of_variable_decl_assignments ';'
-      { pform_class_property(@1, $2 | property_qualifier_t::make_const(), $3, $4); }
+  | K_const class_item_qualifier_opt list_of_variable_decl_assignments_with_type ';'
+      { pform_class_property(@1, $2 | property_qualifier_t::make_const(), $3.type, $3.decl_assignments); }
 
     /* IEEEE1800-2017: A.1.9 Class items: class_item ::= { property_qualifier} data_declaration */
 
@@ -1211,11 +1211,6 @@ class_item /* IEEE1800-2005: A.1.8 */
 
     /* Here are some error matching rules to help recover from various
        syntax errors within a class declaration. */
-
-  | property_qualifier_opt data_type error ';'
-      { yyerror(@3, "error: Errors in variable names after data type.");
-	yyerrok;
-      }
 
   | property_qualifier_opt IDENTIFIER error ';'
       { yyerror(@3, "error: %s doesn't name a type.", $2);
@@ -4749,7 +4744,7 @@ hierarchy_identifier
 	$$->push_back(name_component_t(lex_strings.make($1)));
 	delete[]$1;
       }
-  | hierarchy_identifier '.' IDENTIFIER
+  | hierarchy_identifier '.' identifier_name
       { pform_name_t * tmp = $1;
 	tmp->push_back(name_component_t(lex_strings.make($3)));
 	delete[]$3;
