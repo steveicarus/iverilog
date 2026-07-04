@@ -1947,16 +1947,38 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 		  ivl_assert(loc, (*decl)[idx]);
 		  if ((*decl)[idx]->get_port_type() != NetNet::PIMPLICIT) {
 			bool rc = cur->set_port_type((*decl)[idx]->get_port_type());
-			ivl_assert(loc, rc);
+			if (!rc) {
+			      cerr << loc << ": error: "
+				   << "Port " << port_name << " of primitive "
+				   << name << " has conflicting port declarations."
+				   << endl;
+			      error_count += 1;
+			      local_errors += 1;
+			}
 		  }
 		  if ((*decl)[idx]->get_wire_type() != NetNet::IMPLICIT) {
 			bool rc = cur->set_wire_type((*decl)[idx]->get_wire_type());
-			ivl_assert(loc, rc);
+			if (!rc) {
+			      cerr << loc << ": error: "
+				   << "Port " << port_name << " of primitive "
+				   << name << " has conflicting data declarations."
+				   << endl;
+			      error_count += 1;
+			      local_errors += 1;
+			}
 		  }
 
 	    } else {
 		  defs[port_name] = (*decl)[idx];
 	    }
+      }
+
+      if (local_errors > 0) {
+	    delete parms;
+	    delete decl;
+	    delete table;
+	    delete init_expr;
+	    return;
       }
 
 
@@ -2070,22 +2092,56 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	   registered. Then save the initial value that I get. */
       verinum::V init = verinum::Vx;
       if (init_expr) {
-	      // XXXX
-	    ivl_assert(loc, pins[0]->get_wire_type() == NetNet::REG);
+	    if (pins[0]->get_wire_type() != NetNet::REG) {
+		  cerr << init_expr->get_fileline() << ": error: "
+		       << "Initial value for primitive " << name
+		       << " requires a registered output port." << endl;
+		  error_count += 1;
+		  local_errors += 1;
+	    }
 
-	    const PAssign*pa = dynamic_cast<PAssign*>(init_expr);
-	    ivl_assert(*init_expr, pa);
+	    auto*pa = dynamic_cast<PAssign*>(init_expr);
+	    if (!pa) {
+		  cerr << init_expr->get_fileline() << ": error: "
+		       << "Invalid initial statement for primitive "
+		       << name << "." << endl;
+		  error_count += 1;
+		  local_errors += 1;
+	    }
 
-	    const PEIdent*id = dynamic_cast<const PEIdent*>(pa->lval());
-	    ivl_assert(*init_expr, id);
+	    if (pa) {
+		  auto*id = dynamic_cast<const PEIdent*>(pa->lval());
+		  if (!id) {
+			cerr << init_expr->get_fileline() << ": error: "
+			     << "Invalid initial statement for primitive "
+			     << name << "." << endl;
+			error_count += 1;
+			local_errors += 1;
+		  }
 
-	      // XXXX
-	      //ivl_assert(*init_expr, id->name() == pins[0]->name());
+		    // XXXX
+		    //ivl_assert(*init_expr, id->name() == pins[0]->name());
 
-	    const PENumber*np = dynamic_cast<const PENumber*>(pa->rval());
-	    ivl_assert(*init_expr, np);
+		  auto*np = dynamic_cast<const PENumber*>(pa->rval());
+		  if (!np) {
+			cerr << init_expr->get_fileline() << ": error: "
+			     << "Invalid initial value for primitive "
+			     << name << "." << endl;
+			error_count += 1;
+			local_errors += 1;
+		  } else {
+			init = np->value()[0];
+		  }
+	    }
 
-	    init = np->value()[0];
+	    if (local_errors > 0) {
+		  delete parms;
+		  delete decl;
+		  delete table;
+		  delete init_expr;
+		  return;
+	    }
+
       }
 
 	// Put the primitive into the primitives table
@@ -2159,20 +2215,31 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	   registered. Then save the initial value that I get. */
       verinum::V init = verinum::Vx;
       if (init_expr) {
-	      // XXXX
-	    ivl_assert(*init_expr, pins[0]->get_wire_type() == NetNet::REG);
+	    bool local_errors = false;
 
-	    const PAssign*pa = dynamic_cast<PAssign*>(init_expr);
-	    ivl_assert(*init_expr, pa);
+	    if (pins[0]->get_wire_type() != NetNet::REG) {
+		  cerr << init_expr->get_fileline() << ": error: "
+		       << "Initial value for primitive " << name
+		       << " requires a registered output port." << endl;
+		  error_count += 1;
+		  local_errors = true;
+	    }
 
-	    const PEIdent*id = dynamic_cast<const PEIdent*>(pa->lval());
-	    ivl_assert(*init_expr, id);
+	    auto*np = dynamic_cast<const PENumber*>(init_expr);
+	    if (!np) {
+		  cerr << init_expr->get_fileline() << ": error: "
+		       << "Invalid initial value for primitive "
+		       << name << "." << endl;
+		  error_count += 1;
+		  local_errors = true;
+	    }
 
-	      // XXXX
-	      //ivl_assert(*init_expr, id->name() == pins[0]->name());
-
-	    const PENumber*np = dynamic_cast<const PENumber*>(pa->rval());
-	    ivl_assert(*init_expr, np);
+	    if (local_errors) {
+		  delete parms;
+		  delete table;
+		  delete init_expr;
+		  return;
+	    }
 
 	    init = np->value()[0];
       }
