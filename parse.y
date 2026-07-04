@@ -2030,7 +2030,9 @@ loop_statement /* IEEE1800-2005: A.6.8 */
       // statement in a synthetic named block. We can name the block
       // after the variable that we are creating, that identifier is
       // safe in the controlling scope.
-  | K_for '(' K_var_opt data_type IDENTIFIER '=' expression ';' expression_opt ';' for_step_opt ')'
+  | K_for '(' K_var_opt data_type identifier_name
+      // Make the loop variable symbol visible while parsing the rest of
+      // the header.
       { static unsigned for_counter = 0;
 	char for_block_name [64];
 	snprintf(for_block_name, sizeof for_block_name, "$ivl_for_loop%u", for_counter);
@@ -2044,6 +2046,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	assign_list.push_back(tmp_assign);
 	pform_make_var(@5, &assign_list, $4);
       }
+    '=' expression ';' expression_opt ';' for_step_opt ')'
     statement_or_null
       { pform_name_t tmp_hident;
 	tmp_hident.push_back(name_component_t(lex_strings.make($5)));
@@ -2051,8 +2054,8 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	PEIdent*tmp_ident = pform_new_ident(@5, tmp_hident);
 	FILE_NAME(tmp_ident, @5);
 
-	check_for_loop(@1, $7, $9, $11);
-	PForStatement*tmp_for = new PForStatement(tmp_ident, $7, $9, $11, $14);
+	check_for_loop(@1, $8, $10, $12);
+	PForStatement*tmp_for = new PForStatement(tmp_ident, $8, $10, $12, $14);
 	FILE_NAME(tmp_for, @1);
 
 	pform_pop_scope();
@@ -2091,7 +2094,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 
       // When matching a foreach loop, implicitly create a named block
       // to hold the definitions for the index variables.
-  | K_foreach '(' IDENTIFIER '[' loop_variables ']' ')'
+  | K_foreach '(' identifier_name '[' loop_variables ']' ')'
       { static unsigned foreach_counter = 0;
 	char for_block_name[64];
 	snprintf(for_block_name, sizeof for_block_name, "$ivl_foreach%u", foreach_counter);
@@ -2143,7 +2146,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	yyerror(@1, "error: Error in do/while loop condition.");
       }
 
-  | K_foreach '(' IDENTIFIER '[' error ']' ')' statement_or_null
+  | K_foreach '(' identifier_name '[' error ']' ')' statement_or_null
       { $$ = 0;
         yyerror(@4, "error: Errors in foreach loop variables list.");
       }
