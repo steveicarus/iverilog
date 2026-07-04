@@ -1,0 +1,4 @@
+{
+    "type"   : "CE",
+    "source" : "udp_port_decl_conflict_fail.v"
+}
