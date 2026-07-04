@@ -7650,7 +7650,7 @@ udp_sequ_entry
   ;
 
 udp_initial
-  : K_initial IDENTIFIER '=' number ';'
+  : K_initial identifier_name '=' number ';'
       { PExpr*etmp = new PENumber($4);
 	PEIdent*itmp = new PEIdent(lex_strings.make($2), @2.lexical_pos);
 	PAssign*atmp = new PAssign(itmp, etmp);
@@ -7728,9 +7728,9 @@ udp_output_sym
      makes for these ports are scoped within the UDP, so there is no
      hierarchy involved. */
 udp_port_decl
-  : K_input list_of_identifiers ';'
+  : K_input udp_port_list ';'
       { $$ = pform_make_udp_input_ports($2); }
-  | K_output IDENTIFIER ';'
+  | K_output identifier_name ';'
       { perm_string pname = lex_strings.make($2);
 	PWire*pp = new PWire(pname, @2.lexical_pos, NetNet::IMPLICIT, NetNet::POUTPUT);
 	vector<PWire*>*tmp = new std::vector<PWire*>(1);
@@ -7738,7 +7738,7 @@ udp_port_decl
 	$$ = tmp;
 	delete[]$2;
       }
-  | K_reg IDENTIFIER ';'
+  | K_reg identifier_name ';'
       { perm_string pname = lex_strings.make($2);
 	PWire*pp = new PWire(pname, @2.lexical_pos, NetNet::REG, NetNet::PIMPLICIT);
 	vector<PWire*>*tmp = new std::vector<PWire*>(1);
@@ -7746,7 +7746,7 @@ udp_port_decl
 	$$ = tmp;
 	delete[]$2;
       }
-  | K_output K_reg IDENTIFIER ';'
+  | K_output K_reg identifier_name ';'
       { perm_string pname = lex_strings.make($3);
 	PWire*pp = new PWire(pname, @3.lexical_pos, NetNet::REG, NetNet::POUTPUT);
 	vector<PWire*>*tmp = new std::vector<PWire*>(1);
@@ -7771,9 +7771,9 @@ udp_port_decls
   ;
 
 udp_port_list
-  : IDENTIFIER
+  : identifier_name
       { $$ = list_from_identifier($1, @1.lexical_pos); }
-  | udp_port_list ',' IDENTIFIER
+  | udp_port_list ',' identifier_name
       { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
   ;
 
@@ -7782,9 +7782,9 @@ udp_reg_opt
   |        { $$ = false; };
 
 udp_input_declaration_list
-  : K_input IDENTIFIER
+  : K_input identifier_name
       { $$ = list_from_identifier($2, @2.lexical_pos); }
-  | udp_input_declaration_list ',' K_input IDENTIFIER
+  | udp_input_declaration_list ',' K_input identifier_name
       { $$ = list_from_identifier($1, $4, @4.lexical_pos); }
   ;
 
@@ -7793,7 +7793,7 @@ udp_primitive
 	   format. The ports are simply names in the port list, and the
 	   declarations are in the body. */
 
-  : K_primitive IDENTIFIER '(' udp_port_list ')' ';'
+  : K_primitive identifier_name '(' udp_port_list ')' ';'
     udp_port_decls
     udp_init_opt
     udp_body
@@ -7807,8 +7807,8 @@ udp_primitive
         /* This is the syntax for IEEE1364-2001 format definitions. The port
 	   names and declarations are all in the parameter list. */
 
-  | K_primitive IDENTIFIER
-    '(' K_output udp_reg_opt IDENTIFIER initializer_opt ','
+  | K_primitive identifier_name
+    '(' K_output udp_reg_opt identifier_name initializer_opt ','
     udp_input_declaration_list ')' ';'
     udp_body
     K_endprimitive label_opt
