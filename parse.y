@@ -879,7 +879,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <wires>   udp_port_decl udp_port_decls
 %type <statement> udp_initial udp_init_opt
 
-%type <text> event_variable label_opt class_declaration_endlabel_opt
+%type <text> event_variable label_opt
 %type <text> block_identifier_opt
 %type <text> identifier_name
 %type <identifiers> event_variable_list
@@ -1126,7 +1126,7 @@ class_declaration /* IEEE1800-2005: A.1.2 */
       { // Process a class.
 	pform_end_class_declaration(@9);
       }
-    class_declaration_endlabel_opt
+    label_opt
       { // Wrap up the class.
 	check_end_label(@11, "class", $4, $11);
 	delete[] $4;
@@ -1143,14 +1143,6 @@ class_constraint /* IEEE1800-2005: A.1.8 */
 identifier_name
   : IDENTIFIER { $$ = $1; }
   | TYPE_IDENTIFIER { $$ = $1.text; }
-  ;
-
-  /* The endlabel after a class declaration is a little tricky because
-     the class name is detected by the lexor as a TYPE_IDENTIFIER if it
-     does indeed match a name. */
-class_declaration_endlabel_opt
-  : ':' identifier_name { $$ = $2; }
-  | { $$ = 0; }
   ;
 
   /* This rule implements [ extends class_type ] in the
@@ -5217,7 +5209,7 @@ module_end
   ;
 
 label_opt
-  : ':' IDENTIFIER { $$ = $2; }
+  : ':' identifier_name { $$ = $2; }
   |                { $$ = 0; }
   ;
 
@@ -5787,7 +5779,7 @@ generate_item
 	      cerr << @1 << ": warning: Anachronistic use of begin/end to surround generate schemes." << endl;
 	}
       }
-  | K_begin ':' IDENTIFIER
+  | K_begin ':' identifier_name
       { pform_start_generate_nblock(@1, $3); }
     generate_item_list_opt K_end
       { /* Detect and warn about anachronistic named begin/end use */
