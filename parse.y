@@ -3276,20 +3276,23 @@ pos_neg_number
       }
   ;
 
+  /* Enum items are declaration names. Use identifier_name so an enum item can
+     shadow a visible type identifier without introducing a type/name
+     ambiguity. */
 enum_name
-  : IDENTIFIER initializer_opt
+  : identifier_name initializer_opt
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
 	$$ = make_named_number(@$, name, $2);
       }
-  | IDENTIFIER '[' pos_neg_number ']' initializer_opt
+  | identifier_name '[' pos_neg_number ']' initializer_opt
       { perm_string name = lex_strings.make($1);
 	long count = check_enum_seq_value(@1, $3, false);
 	$$ = make_named_numbers(@$, name, 0, count-1, $5);
 	delete[]$1;
 	delete $3;
       }
-  | IDENTIFIER '[' pos_neg_number ':' pos_neg_number ']' initializer_opt
+  | identifier_name '[' pos_neg_number ':' pos_neg_number ']' initializer_opt
       { perm_string name = lex_strings.make($1);
 	$$ = make_named_numbers(@$, name, check_enum_seq_value(@1, $3, true),
 	                                  check_enum_seq_value(@1, $5, true), $7);
