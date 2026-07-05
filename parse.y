@@ -2359,7 +2359,7 @@ open_range_list /* IEEE1800-2005 A.2.11 */
   ;
 
 package_declaration /* IEEE1800-2005 A.1.2 */
-  : K_package lifetime_opt IDENTIFIER ';'
+  : K_package lifetime_opt identifier_name ';'
       { pform_start_package_declaration(@1, $3, $2); }
     timeunits_declaration_opt
       { pform_set_scope_timescale(@1); }
