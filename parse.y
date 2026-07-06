@@ -6368,7 +6368,7 @@ dimensions
   ;
 
 event_variable
-  : IDENTIFIER dimensions_opt
+  : identifier_name dimensions_opt
       { if ($2) {
 	      yyerror(@2, "sorry: event arrays are not supported.");
 	      delete $2;
