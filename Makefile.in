@@ -85,6 +85,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 LEX = @LEX@
 YACC = @YACC@
+YACC_CONFLICT_FLAGS = -Werror=conflicts-sr -Werror=conflicts-rr
 MAN = @MAN@
 PS2PDF = @PS2PDF@
 GROFF = @GROFF@
@@ -241,10 +242,10 @@ parse.o: parse.cc
 
 # Use pattern rules to avoid parallel build issues (see pr3462585)
 parse%cc parse%h: $(srcdir)/parse%y
-	$(YACC) --verbose -t -p VL --defines=parse.h -o parse.cc $<
+	$(YACC) --verbose $(YACC_CONFLICT_FLAGS) -t -p VL --defines=parse.h -o parse.cc $<
 
 syn-rules.cc: $(srcdir)/syn-rules.y
-	$(YACC) --verbose -t -p syn_ -o $@ $<
+	$(YACC) --verbose $(YACC_CONFLICT_FLAGS) -t -p syn_ -o $@ $<
 
 lexor.cc: $(srcdir)/lexor.lex
 	$(LEX) -s -t $< > $@
