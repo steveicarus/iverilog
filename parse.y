@@ -5991,10 +5991,17 @@ value_parameter_assign_with_explicit_type
   ;
 
 parameter_assign
-  : identifier_name dimensions_opt initializer_opt parameter_value_ranges_opt
-      { pform_set_parameter(@1, $1, param_is_local,
+  : IDENTIFIER dimensions_opt initializer_opt parameter_value_ranges_opt
+      { pform_set_parameter(@1, lex_strings.make($1), param_is_local,
 			    param_is_type, param_type_restrict,
 			    param_data_type, $2, $3, $4);
+	delete[]$1;
+      }
+  | TYPE_IDENTIFIER dimensions_opt initializer_opt parameter_value_ranges_opt
+      { pform_set_parameter(@1, lex_strings.make($1.text), param_is_local,
+			    param_is_type, param_type_restrict,
+			    param_data_type, $2, $3, $4);
+	delete[]$1.text;
       }
   ;
 
