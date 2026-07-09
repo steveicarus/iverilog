@@ -6089,7 +6089,7 @@ parameter_value_opt
   ;
 
 named_expression
-  : '.' IDENTIFIER '(' expression ')'
+  : '.' identifier_name '(' expression ')'
       { named_pexpr_t*tmp = new named_pexpr_t;
 	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($2);
@@ -6100,7 +6100,7 @@ named_expression
 
 named_expression_opt
   : named_expression
-  | '.' IDENTIFIER '(' ')'
+  | '.' identifier_name '(' ')'
       { named_pexpr_t*tmp = new named_pexpr_t;
 	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($2);
@@ -6190,7 +6190,7 @@ port_name
       { delete $1;
 	$$ = $2;
       }
-  | attribute_list_opt '.' IDENTIFIER '(' error ')'
+  | attribute_list_opt '.' identifier_name '(' error ')'
       { yyerror(@3, "error: Invalid port connection expression.");
 	named_pexpr_t*tmp = new named_pexpr_t;
 	FILE_NAME(tmp, @$);
@@ -6200,7 +6200,7 @@ port_name
 	delete $1;
 	$$ = tmp;
       }
-  | attribute_list_opt '.' IDENTIFIER
+  | attribute_list_opt '.' identifier_name
       { pform_requires_sv(@3, "Implicit named port connections");
 	named_pexpr_t*tmp = new named_pexpr_t;
 	FILE_NAME(tmp, @$);
