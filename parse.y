@@ -1020,6 +1020,8 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <type_id_range> data_type_or_implicit_plus_id
 %type <type_id_range> data_type_or_implicit_plus_id_dim
 %type <type_id_range> data_type_or_implicit_or_void_plus_id
+%type <type_id_range> data_type_or_parameter_id_base
+%type <type_id_range> data_type_or_parameter_id_dim
 %type <type_id_range> partial_port_name_dim
 %type <type_id_range> partial_port_type_plus_id_dim
 %type <type_id_range> partial_port_typedef_plus_id_dim
@@ -2782,6 +2784,33 @@ data_type_or_implicit_plus_id_dim
       { set_type_id_range($$, nullptr, $1.text, @1, $2);
       }
   | data_type_or_implicit_plus_id_base dimensions_opt
+      { $$ = $1;
+	$$.ranges = $2;
+      }
+  ;
+
+  // Parameter port lists can omit the `parameter` keyword, but the optional
+  // type in that form is a data_type, not data_type_or_implicit. Keep this
+  // separate from data_type_or_implicit_plus_id_dim so a bare typedef name can
+  // still be parsed as a parameter name while implicit types like `signed P`
+  // and `[3:0] P` are rejected.
+data_type_or_parameter_id_base
+  : IDENTIFIER
+      { set_type_id_range($$, nullptr, $1, @1, nullptr);
+      }
+  | atomic_type identifier_name
+      { set_type_id_range($$, $1, $2, @2, nullptr);
+      }
+  | ps_type_identifier_dim identifier_name
+      { set_type_id_range($$, $1, $2, @2, nullptr);
+      }
+  ;
+
+data_type_or_parameter_id_dim
+  : TYPE_IDENTIFIER dimensions_opt
+      { set_type_id_range($$, nullptr, $1.text, @1, $2);
+      }
+  | data_type_or_parameter_id_base dimensions_opt
       { $$ = $1;
 	$$.ranges = $2;
       }
@@ -5271,7 +5300,7 @@ module_parameter
 
 module_parameter_port_list
   : module_parameter
-  | value_parameter_assign_with_type
+  | value_parameter_assign_without_parameter
       { pform_requires_sv(@1, "Omitting initial `parameter` in parameter port "
 			      "list");
       }
@@ -5951,20 +5980,30 @@ value_parameter_assign_with_type
       }
   ;
 
+value_parameter_assign_without_parameter
+  : data_type_or_parameter_id_dim initializer_opt parameter_value_ranges_opt
+      { param_is_type = false;
+	param_type_restrict = {};
+	param_data_type = $1.type;
+	YYLTYPE id_loc = @1;
+	id_loc.first_line = $1.first_line;
+	id_loc.first_column = $1.first_column;
+	id_loc.last_line = $1.last_line;
+	id_loc.last_column = $1.last_column;
+	id_loc.lexical_pos = $1.lexical_pos;
+	pform_set_parameter(id_loc, $1.id, param_is_local,
+			    param_is_type, param_type_restrict,
+			    param_data_type, $1.ranges, $2, $3);
+      }
+  ;
+
   // Parameter port lists allow an explicit type after a comma without
   // repeating `parameter`, e.g. `#(parameter p = 1, int q = 2)`. Keep this
   // narrower than value_parameter_assign_with_type so a bare typedef name
-  // after a comma remains a parameter name that inherits the previous type.
+  // after a comma remains a parameter name that inherits the previous type. The
+  // LRM allows data_type here, but not implicit_type.
 value_parameter_assign_with_explicit_type
   : atomic_type identifier_name dimensions_opt initializer_opt parameter_value_ranges_opt
-      { param_is_type = false;
-	param_type_restrict = {};
-	param_data_type = $1;
-	pform_set_parameter(@2, $2, param_is_local,
-			    param_is_type, param_type_restrict,
-			    param_data_type, $3, $4, $5);
-      }
-  | implicit_type identifier_name dimensions_opt initializer_opt parameter_value_ranges_opt
       { param_is_type = false;
 	param_type_restrict = {};
 	param_data_type = $1;

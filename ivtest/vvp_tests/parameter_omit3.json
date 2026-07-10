@@ -1,0 +1,7 @@
+{
+    "type"          : "CE",
+    "source"        : "parameter_omit3.v",
+    "force-sv"      : {
+        "type"          : "normal"
+    }
+}
