@@ -3614,7 +3614,7 @@ delay_value_simple
 optional_semicolon : ';' | ;
 
 discipline_declaration
-  : K_discipline IDENTIFIER optional_semicolon
+  : K_discipline identifier_name optional_semicolon
       { pform_start_discipline($2); }
     discipline_items K_enddiscipline
       { pform_end_discipline(@1); delete[] $2; }
@@ -3630,14 +3630,14 @@ discipline_item
       { pform_discipline_domain(@1, IVL_DIS_DISCRETE); }
   | K_domain K_continuous ';'
       { pform_discipline_domain(@1, IVL_DIS_CONTINUOUS); }
-  | K_potential IDENTIFIER ';'
+  | K_potential identifier_name ';'
       { pform_discipline_potential(@1, $2); delete[] $2; }
-  | K_flow IDENTIFIER ';'
+  | K_flow identifier_name ';'
       { pform_discipline_flow(@1, $2); delete[] $2; }
   ;
 
 nature_declaration
-  : K_nature IDENTIFIER optional_semicolon
+  : K_nature identifier_name optional_semicolon
       { pform_start_nature($2); }
     nature_items
     K_endnature
