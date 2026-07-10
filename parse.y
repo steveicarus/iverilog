@@ -1748,7 +1748,7 @@ description /* IEEE1800-2005: A.1.2 */
   | package_declaration
   | discipline_declaration
   | package_item
-  | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
+  | KK_attribute '(' identifier_name ',' STRING ',' STRING ')'
       { perm_string tmp3 = lex_strings.make($3);
 	pform_set_type_attrib(tmp3, $5, $7);
 	delete[] $3;
@@ -3109,7 +3109,7 @@ attribute_list
 
 
 attribute
-  : IDENTIFIER initializer_opt
+  : identifier_name initializer_opt
       { named_pexpr_t*tmp = new named_pexpr_t;
 	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($1);
@@ -5715,7 +5715,7 @@ module_item
   /* These rules are for the Icarus Verilog specific $attribute
      extensions. Then catch the parameters of the $attribute keyword. */
 
-  | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
+  | KK_attribute '(' identifier_name ',' STRING ',' STRING ')' ';'
       { perm_string tmp3 = lex_strings.make($3);
 	perm_string tmp5 = lex_strings.make($5);
 	pform_set_attrib(tmp3, tmp5, $7);
