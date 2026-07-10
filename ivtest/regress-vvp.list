@@ -371,6 +371,12 @@ sv_net_array_decl_assign	vvp_tests/sv_net_array_decl_assign.json
 sv_net_decl_assign		vvp_tests/sv_net_decl_assign.json
 sv_package_lifetime		vvp_tests/sv_package_lifetime.json
 sv_package_lifetime_fail	vvp_tests/sv_package_lifetime_fail.json
+parameter_omit1			vvp_tests/parameter_omit1.json
+parameter_omit2			vvp_tests/parameter_omit2.json
+parameter_omit3			vvp_tests/parameter_omit3.json
+parameter_omit_invalid1		vvp_tests/parameter_omit_invalid1.json
+parameter_omit_invalid2		vvp_tests/parameter_omit_invalid2.json
+parameter_omit_invalid3		vvp_tests/parameter_omit_invalid3.json
 sv_parameter_type		vvp_tests/sv_parameter_type.json
 sv_partsel_var_negative_packed	vvp_tests/sv_partsel_var_negative_packed.json
 sv_queue_ap_method		vvp_tests/sv_queue_ap_method.json
