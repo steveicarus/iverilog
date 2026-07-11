@@ -40,6 +40,7 @@ extern void sys_scanf_register(void);
 extern void sys_sdf_register(void);
 extern void sys_time_register(void);
 extern void sys_vcd_register(void);
+extern void sys_evcd_register(void);
 extern void sys_vcdoff_register(void);
 extern void sys_special_register(void);
 extern void table_model_register(void);
@@ -214,6 +215,7 @@ void (*vlog_startup_routines[])(void) = {
       sys_scanf_register,
       sys_time_register,
       sys_lxt_or_vcd_register,
+      sys_evcd_register,
       sys_sdf_register,
       sys_special_register,
       table_model_register,

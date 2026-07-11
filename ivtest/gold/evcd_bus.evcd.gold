@@ -1,0 +1,29 @@
+$date
+	Fri Jun 19 15:35:20 2026
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1s
+$end
+$scope module evcd_bus.u $end
+$var port [3:0] <0 din $end
+$var port [3:0] <1 dout $end
+$var port [3:0] <2 bus $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpports
+pDDDD 6666 0000 <0
+pHHHH 0000 6666 <1
+pFFFF 0000 0000 <2
+$end
+#5
+pUDUD 0606 6060 <0
+pLHLH 6060 0606 <1
+#10
+pUUUU 0000 6666 <0
+pLLLL 6666 0000 <1
+p1111 0000 6666 <2
+#15

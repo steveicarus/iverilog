@@ -21,6 +21,9 @@
 
 # include  "config.h"
 # include  "vvp_net.h"
+# include  <vector>
+
+class __vpiScope;
 
 /*
  * Resolver nodes are similar to wide functors, in that they may have
@@ -35,6 +38,23 @@ class resolv_core : public vvp_net_fun_t {
     public:
       explicit resolv_core(unsigned nports, vvp_net_t*net);
       virtual ~resolv_core() override;
+
+	// Per-driver introspection, used to expose vpiDriver and to let
+	// the extended-VCD writer separate an inout's input-side and
+	// output-side drives. driver_count() is the number of leaf input
+	// drivers; driver_value() reads one driver's current contributed
+	// value (with strength); the scope each driver lives in is tagged
+	// from the .resolv_drv directive so callers can classify a driver
+	// as inside or outside a given module instance.
+      unsigned driver_count() const { return nports_; }
+	// Pre-size the per-driver scope table to a fixed size so the slot
+	// addresses are stable; the .resolv_drv directive then fills them
+	// through the deferred vpi-handle resolver (driver scopes can be
+	// declared later in the file than the resolver).
+      void prepare_driver_scopes(unsigned n) { driver_scopes_.assign(n, 0); }
+      __vpiScope** driver_scope_ref(unsigned idx) { return &driver_scopes_[idx]; }
+      __vpiScope* driver_scope(unsigned idx) const;
+      virtual bool driver_value(unsigned idx, vvp_vector8_t&val) const = 0;
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t) override
@@ -66,6 +86,7 @@ class resolv_core : public vvp_net_fun_t {
     protected:
       unsigned nports_;
       vvp_net_t*net_;
+      std::vector<__vpiScope*> driver_scopes_;
 };
 
 class resolv_extend : public vvp_net_fun_t {
@@ -116,6 +137,7 @@ class resolv_tri : public resolv_core {
       ~resolv_tri() override;
 
       void count_drivers(unsigned bit_idx, unsigned counts[3]) override;
+      bool driver_value(unsigned idx, vvp_vector8_t&val) const override;
 
     private:
       void recv_vec4_(unsigned port, const vvp_vector4_t&bit) override;
@@ -144,6 +166,7 @@ class resolv_wired_logic : public resolv_core {
       virtual ~resolv_wired_logic() override;
 
       void count_drivers(unsigned bit_idx, unsigned counts[3]) override;
+      bool driver_value(unsigned idx, vvp_vector8_t&val) const override;
 
     protected:
       virtual vvp_vector4_t wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b) =0;

@@ -86,16 +86,16 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_CMP_EEQ K_CMP_EQ K_CMP_EQX K_CMP_EQZ K_CMP_WEQ K_CMP_WNE
 %token K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
 %token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
-%token K_CONCAT K_CONCAT8 K_DEBUG K_DELAY K_DFF_N K_DFF_N_ACLR
+%token K_CONCAT K_CONCAT8 K_CONTASSIGN K_DEBUG K_DELAY K_DFF_N K_DFF_N_ACLR
 %token K_DFF_N_ASET K_DFF_P K_DFF_P_ACLR K_DFF_P_ASET
 %token K_ENUM2 K_ENUM2_S K_ENUM4 K_ENUM4_S K_EVENT K_EVENT_OR
 %token K_EXPORT K_EXTEND_S K_FUNCTOR K_IMPORT K_ISLAND K_LATCH K_MODPATH
 %token K_NET K_NET_S K_NET_R K_NET_2S K_NET_2U
 %token K_NET8 K_NET8_2S K_NET8_2U K_NET8_S
 %token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
-%token K_PART_V K_PART_V_S K_PORT K_PORT_INFO K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
+%token K_PART_V K_PART_V_S K_PORT K_PORT_INFO K_PRIMITIVE K_PROCESS K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
-%token K_RESOLV K_RTRAN K_RTRANIF0 K_RTRANIF1
+%token K_RESOLV K_RESOLV_DRV K_RTRAN K_RTRANIF0 K_RTRANIF1
 %token K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_SUBSTITUTE
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
@@ -277,6 +277,16 @@ statement
 	| T_LABEL K_RESOLV T_SYMBOL ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_resolver($1, $3, obj.cnt, obj.vect);
+		}
+
+  /* Tags the inputs of a resolver with the scope each driver lives in,
+     so the runtime can expose vpiDriver and separate an inout port's
+     module-side and external drives. First symbol is the resolver; the
+     rest are the per-input driver scopes, in input order. */
+
+	| K_RESOLV_DRV T_SYMBOL ',' symbols ';'
+		{ struct symbv_s obj = $4;
+		  compile_resolv_drv($2, obj.cnt, obj.vect);
 		}
 
   /* Part select statements take a single netlist input, and numbers
@@ -717,13 +727,18 @@ statement
 
   /* Port information for scopes... currently this is just meta-data for VPI queries */
 
+	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING T_SYMBOL T_SYMBOL ';'
+		{ compile_port_info( $2 /* port_index */, $3, $4 /* width */,
+		                     $5 /*&name */, $6 /* low conn */,
+		                     $7 /* high conn */ ); }
+
 	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING T_SYMBOL ';'
 		{ compile_port_info( $2 /* port_index */, $3, $4 /* width */,
-		                     $5 /*&name */, $6 /* buffer */ ); }
+		                     $5 /*&name */, $6 /* low conn */ ); }
 
 	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING ';'
 		{ compile_port_info( $2 /* port_index */, $3, $4 /* width */,
-		                     $5 /*&name */, nullptr /* buffer */ ); }
+		                     $5 /*&name */, nullptr /* low conn */ ); }
 
 	|         K_TIMESCALE T_NUMBER T_NUMBER';'
 		{ compile_timescale($2, $3); }
@@ -737,6 +752,34 @@ statement
   /* Thread statements declare a thread with its starting address. The
      starting address must already be defined. The .thread statement
      may also take an optional flag word. */
+
+  /* A process statement records an always/initial/final process as a
+     structural object attached to the current scope, so the runtime can
+     expose it through vpi_iterate(vpiProcess, scope). Arguments are the
+     process type (0=initial, 1=always, 2=final), the file-table index and
+     the source line number of the process statement. */
+
+	|         K_PROCESS T_NUMBER T_NUMBER T_NUMBER ';'
+		{ compile_process($2, $3, $4); }
+
+  /* A continuous-assignment statement records an `assign lhs = rhs;` as a
+     vpiContAssign on the current scope. Arguments are the file-table index,
+     the source line, and the l-value and r-value signal symbols. */
+
+	|         K_CONTASSIGN T_NUMBER T_NUMBER ',' T_SYMBOL ',' T_SYMBOL ';'
+		{ compile_contassign($2, $3, $5, $7); }
+
+	|         K_CONTASSIGN T_NUMBER T_NUMBER ',' T_SYMBOL ';'
+		{ compile_contassign($2, $3, $5, 0); }
+
+  /* A primitive statement records a gate/switch/UDP as a structural object
+     attached to the current scope, exposed through vpi_iterate(vpiPrimitive,
+     scope). Arguments are the vpiPrimType subtype code, the number of
+     terminals (pin 0 is the output), the file-table index, the source line,
+     and the gate's base name. */
+
+	|         K_PRIMITIVE T_NUMBER T_NUMBER T_NUMBER T_NUMBER ',' T_STRING ';'
+		{ compile_primitive($2, $3, $4, $5, $7); }
 
 	|         K_THREAD T_SYMBOL ';'
 		{ compile_thread($2, 0); }

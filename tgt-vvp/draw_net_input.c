@@ -546,6 +546,23 @@ static void display_multi_driver_error(ivl_nexus_t nex, unsigned ndrivers,
 static ivl_nexus_ptr_t *drivers = 0x0;
 static unsigned adrivers = 0;
 
+/* The scope a nexus driver lives in. Used to tag each resolver input so the
+   runtime can tell an inout's module-side drivers from its external ones,
+   which is what the extended-VCD ($dumpports) writer needs to emit the IEEE
+   1364 conflict-state characters. Every driver kind carries a scope. */
+static ivl_scope_t driver_scope_of(ivl_nexus_ptr_t nptr)
+{
+      ivl_net_logic_t log = ivl_nexus_ptr_log(nptr);
+      if (log) return ivl_logic_scope(log);
+      ivl_lpm_t lpm = ivl_nexus_ptr_lpm(nptr);
+      if (lpm) return ivl_lpm_scope(lpm);
+      ivl_net_const_t con = ivl_nexus_ptr_con(nptr);
+      if (con) return ivl_const_scope(con);
+      ivl_signal_t sig = ivl_nexus_ptr_sig(nptr);
+      if (sig) return ivl_signal_scope(sig);
+      return 0;
+}
+
 void EOC_cleanup_drivers(void)
 {
       free(drivers);
@@ -758,6 +775,14 @@ static void draw_net_input_x(ivl_nexus_t nex,
 	    display_multi_driver_error(nex, ndrivers, MDRV_REAL);
       }
 
+	/* Capture each driver's scope now, before drawing the driver
+	   inputs below: draw_net_input_drive() can recurse into
+	   draw_net_input_x() and refill the shared static drivers[] array,
+	   so it is not safe to read drivers[] after that loop. */
+      ivl_scope_t*driver_scopes = malloc(ndrivers * sizeof(ivl_scope_t));
+      for (idx = 0; idx < ndrivers; idx += 1)
+	    driver_scopes[idx] = driver_scope_of(drivers[idx]);
+
       driver_labels = malloc(ndrivers * sizeof(char*));
       ivl_signal_t path_sig = find_modpath(nex);
       if (path_sig) {
@@ -781,6 +806,18 @@ static void draw_net_input_x(ivl_nexus_t nex,
       }
       fprintf(vvp_out, ";\n");
       free(driver_labels);
+
+	/* Tag each resolver input with the scope of its driver, so the
+	   runtime can expose vpiDriver and separate an inout's two drive
+	   sides. Emitted as a companion directive keyed by the resolver. */
+      fprintf(vvp_out, "    .resolv_drv RS_%p", nex);
+      for (idx = 0; idx < ndrivers; idx += 1) {
+	    ivl_scope_t dsc = driver_scopes[idx];
+	    if (dsc) fprintf(vvp_out, ", S_%p", dsc);
+	    else     fprintf(vvp_out, ", S_%p", nex); /* never expected */
+      }
+      fprintf(vvp_out, ";\n");
+      free(driver_scopes);
 
       snprintf(result, sizeof result, "RS_%p", nex);
 

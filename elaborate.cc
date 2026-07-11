@@ -174,6 +174,12 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       ivl_assert(*this, lval && rval);
       ivl_assert(*this, rval->pin_count() == 1);
 
+	// Keep a faithful record of this continuous assignment (its
+	// l-value net, the r-value expression's net, location and drive
+	// strengths) so the target API can expose it as a vpiContAssign.
+      scope->add_cont_assign(lval, rval, get_file(), get_lineno(),
+			     drive.drive0, drive.drive1);
+
 	// Detect the case that the rvalue-expression is a simple
 	// expression. In this case, we will need to create a driver
 	// (later) to carry strengths.
