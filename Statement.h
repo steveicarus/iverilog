@@ -40,6 +40,8 @@ class NetCAssign;
 class NetDeassign;
 class NetForce;
 class NetScope;
+class NetNet;
+class netdarray_t;
 
 /*
  * The PProcess is the root of a behavioral process. Each process gets
@@ -261,16 +263,42 @@ class PCallTask  : public Statement {
 					 perm_string method_name,
 					 const char *sys_task_name,
 				         const std::vector<perm_string> &parm_names = {}) const;
+      NetProc*elaborate_sys_task_property_method_(Design*des, NetScope*scope,
+						  NetNet*net, int property_idx,
+						  perm_string method_name,
+						  const char *sys_task_name,
+				          const std::vector<perm_string> &parm_names = {}) const;
       NetProc*elaborate_queue_method_(Design*des, NetScope*scope,
 				      NetNet*net,
 				      perm_string method_name,
 				      const char *sys_task_name,
 				      const std::vector<perm_string> &parm_names) const;
+      NetProc*elaborate_queue_property_method_(Design*des, NetScope*scope,
+					       NetNet*net, int property_idx,
+					       perm_string method_name,
+					       const char *sys_task_name,
+					       const std::vector<perm_string> &parm_names) const;
       NetProc*elaborate_method_func_(NetScope*scope,
 				     NetNet*net,
 				     ivl_type_t type,
 				     perm_string method_name,
 				     const char*sys_task_name) const;
+      NetProc*elaborate_method_property_func_(NetScope*scope,
+						NetNet*net, int property_idx,
+						ivl_type_t type,
+						perm_string method_name,
+						const char*sys_task_name) const;
+      NetProc*elaborate_queue_method_expr_(Design*des, NetScope*scope,
+					   NetExpr*queue_base,
+					   const netdarray_t*use_darray,
+					   perm_string method_name,
+					   const char *sys_task_name,
+					   const std::vector<perm_string> &parm_names) const;
+      NetProc*elaborate_method_func_expr_(NetScope*scope,
+					  NetExpr*queue_base,
+					  ivl_type_t type,
+					  perm_string method_name,
+					  const char*sys_task_name) const;
       bool test_task_calls_ok_(Design*des, const NetScope*scope) const;
 
       PPackage*package_;
