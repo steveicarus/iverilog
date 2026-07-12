@@ -120,8 +120,6 @@ static list<int> keyword_mask_stack;
 static int comment_enter;
 static bool in_module = false;
 static bool in_UDP = false;
-static bool in_module_port_list = false;
-static bool module_port_list_start = false;
 bool in_celldefine = false;
 UCDriveType uc_drive = UCD_NONE;
 static int ts_state = 0;
@@ -139,12 +137,6 @@ static PPackage* in_package_scope = 0;
 void lex_in_package_scope(PPackage*pkg)
 {
       in_package_scope = pkg;
-}
-
-void lex_in_module_port_list(bool flag)
-{
-      in_module_port_list = flag;
-      module_port_list_start = flag;
 }
 
 %}
@@ -426,13 +418,6 @@ TU [munpf]
 	    }
       }
 
-	/* If this identifier names a previously declared interface, then
-	   return this as an INTERFACE_IDENTIFIER instead. */
-      if (rc == IDENTIFIER && gn_system_verilog()) {
-	    if (pform_test_interface_identifier(yylval.text))
-		  rc = INTERFACE_IDENTIFIER;
-      }
-
 	/* If this identifier names a previously declared type, then
 	   return this as a TYPE_IDENTIFIER instead. */
       if (rc == IDENTIFIER && gn_system_verilog()) {
@@ -443,22 +428,6 @@ TU [munpf]
 	    }
       }
 
-      if (rc == IDENTIFIER && gn_system_verilog() &&
-	  in_module_port_list && module_port_list_start) {
-	    char save_ch = *yy_c_buf_p;
-	    *yy_c_buf_p = yy_hold_char;
-	    const char*cp = yy_c_buf_p;
-	    while (*cp == ' ' || *cp == '\t' || *cp == '\b' ||
-		   *cp == '\f' || *cp == '\r' || *cp == '\n')
-		  cp += 1;
-	    if (*cp == '.' || isalpha(static_cast<unsigned char>(*cp)) ||
-		*cp == '_' || *cp == '\\')
-		  rc = INTERFACE_IDENTIFIER;
-	    *yy_c_buf_p = save_ch;
-      }
-
-      if (in_module_port_list)
-	    module_port_list_start = false;
       return rc;
   }
 
@@ -473,10 +442,6 @@ TU [munpf]
 		  yylval.package = pkg;
 		  return PACKAGE_IDENTIFIER;
 	    }
-      }
-      if (gn_system_verilog()) {
-	    if (pform_test_interface_identifier(yylval.text))
-		  return INTERFACE_IDENTIFIER;
       }
       if (gn_system_verilog()) {
 	    if (typedef_t*type = pform_test_type_identifier(yylloc, yylval.text)) {
@@ -933,16 +898,7 @@ TU [munpf]
 `{W} { VLerror(yylloc, "error: Stray tic (`) here. Perhaps you put white "
                        "space between the tic and preprocessor directive?"); }
 
-. {
-      if (in_module_port_list) {
-	    if (yytext[0] == '(' || yytext[0] == ',')
-		  module_port_list_start = true;
-	    else if (yytext[0] != ')' && yytext[0] != '[' &&
-		     yytext[0] != ']' && yytext[0] != ':')
-		  module_port_list_start = false;
-      }
-      return yytext[0];
-}
+. { return yytext[0]; }
 
   /* Final catchall. something got lost or mishandled. */
   /* XXX Should we tell the user something about the lexical state? */

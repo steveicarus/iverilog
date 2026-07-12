@@ -955,14 +955,6 @@ typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
       return 0;
 }
 
-bool pform_test_interface_identifier(const char*txt)
-{
-      perm_string name = lex_strings.make(txt);
-      map<perm_string,Module*>::const_iterator cur = pform_modules.find(name);
-
-      return cur != pform_modules.end() && cur->second->is_interface;
-}
-
 PECallFunction* pform_make_call_function(const struct vlltype&loc,
 					 const pform_name_t&name,
 					 const list<named_pexpr_t> &parms)

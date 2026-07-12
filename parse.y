@@ -761,7 +761,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
       enum type_restrict_t::type_t type_restrict;
 };
 
-%token <text>      IDENTIFIER INTERFACE_IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
+%token <text>      IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
 %token <type_identifier> TYPE_IDENTIFIER
 %token <package>   PACKAGE_IDENTIFIER
 %token <discipline> DISCIPLINE_IDENTIFIER
@@ -879,7 +879,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <wires>   udp_port_decl udp_port_decls
 %type <statement> udp_initial udp_init_opt
 
-%type <text> event_variable label_opt
+%type <text> event_variable label_opt interface_port_modport_opt
 %type <text> block_identifier_opt
 %type <text> identifier_name
 %type <identifiers> event_variable_list
@@ -5000,6 +5000,18 @@ list_of_port_declarations
 	(*tmp)[0] = $1;
 	$$ = tmp;
       }
+    // Keep interface ports as list base cases so the leading identifier is
+    // shifted before choosing between an interface port and an old-style port
+    // reference. The attributed form is separate because attribute_list_opt
+    // can be empty.
+  | IDENTIFIER interface_port_modport_opt identifier_name dimensions_opt
+      { Module::port_t*port = module_declare_interface_port(@3, $1, $2, $3, $4, 0);
+	$$ = new std::vector<Module::port_t*>(1, port);
+      }
+  | attribute_instance_list IDENTIFIER interface_port_modport_opt identifier_name dimensions_opt
+      { Module::port_t*port = module_declare_interface_port(@4, $2, $3, $4, $5, $1);
+	$$ = new std::vector<Module::port_t*>(1, port);
+      }
   | list_of_port_declarations ',' port_declaration
       { std::vector<Module::port_t*>*tmp = $1;
 	tmp->push_back($3);
@@ -5044,10 +5056,26 @@ list_of_port_declarations
 	ports->push_back(port);
 	$$ = ports;
       }
+    // Once an ANSI port declaration list has been established, an identifier
+    // can unambiguously start an interface port. Keeping this case out of
+    // port_declaration avoids ambiguity with an old-style port reference at
+    // the start of the list.
+  | list_of_port_declarations ',' attribute_list_opt IDENTIFIER interface_port_modport_opt identifier_name dimensions_opt
+      { std::vector<Module::port_t*> *ports = $1;
+	ports->push_back(module_declare_interface_port(@6, $4, $5, $6, $7, $3));
+	$$ = ports;
+      }
   | list_of_port_declarations ','
       { yyerror(@2, "error: Superfluous comma in port declaration list."); }
   | list_of_port_declarations ';'
       { yyerror(@2, "error: ';' is an invalid port declaration separator."); }
+  ;
+
+interface_port_modport_opt
+  : '.' identifier_name
+      { $$ = $2; }
+  |
+      { $$ = 0; }
   ;
 
   // All of port direction, port kind and data type are optional, but at least
@@ -5056,12 +5084,6 @@ port_declaration
   : attribute_list_opt port_direction net_type_or_var_opt data_type_or_implicit_plus_id_dim initializer_opt
       { $$ = module_declare_port(@4, $4.id, $4.lexical_pos,
 				 $2, $3, $4.type, $4.ranges, $5, $1);
-      }
-  | attribute_list_opt INTERFACE_IDENTIFIER '.' identifier_name identifier_name dimensions_opt
-      { $$ = module_declare_interface_port(@5, $2, $4, $5, $6, $1);
-      }
-  | attribute_list_opt INTERFACE_IDENTIFIER identifier_name dimensions_opt
-      { $$ = module_declare_interface_port(@3, $2, 0, $3, $4, $1);
       }
   | attribute_list_opt net_type_or_var data_type_or_implicit_plus_id_dim initializer_opt
       { pform_requires_sv(@3, "Partial ANSI port declaration");
@@ -5182,11 +5204,9 @@ module
         port_declaration_context_init(); }
     module_package_import_list_opt
     module_parameter_port_list_opt
-      { lex_in_module_port_list(true); }
     module_port_list_opt
-      { lex_in_module_port_list(false); }
     module_attribute_foreign ';'
-      { pform_module_set_ports($9); }
+      { pform_module_set_ports($8); }
     timeunits_declaration_opt
       { pform_set_scope_timescale(@2); }
     module_item_list_opt
@@ -5209,16 +5229,16 @@ module
 	}
 	  // Check that program/endprogram and module/endmodule
 	  // keywords match.
-	if ($2 != $17) {
+	if ($2 != $15) {
 	      switch ($2) {
 		  case K_module:
-		    yyerror(@17, "error: module not closed by endmodule.");
+		    yyerror(@15, "error: module not closed by endmodule.");
 		    break;
 		  case K_program:
-		    yyerror(@17, "error: program not closed by endprogram.");
+		    yyerror(@15, "error: program not closed by endprogram.");
 		    break;
 		  case K_interface:
-		    yyerror(@17, "error: interface not closed by endinterface.");
+		    yyerror(@15, "error: interface not closed by endinterface.");
 		    break;
 		  default:
 		    break;
@@ -5234,13 +5254,13 @@ module
 	// module.
 	switch ($2) {
 	    case K_module:
-	      check_end_label(@19, "module", $4, $19);
+	      check_end_label(@17, "module", $4, $17);
 	      break;
 	    case K_program:
-	      check_end_label(@19, "program", $4, $19);
+	      check_end_label(@17, "program", $4, $17);
 	      break;
 	    case K_interface:
-	      check_end_label(@19, "interface", $4, $19);
+	      check_end_label(@17, "interface", $4, $17);
 	      break;
 	    default:
 	      break;
@@ -5583,22 +5603,8 @@ module_item
 		  delete[]$2;
       }
 
-  | attribute_list_opt
-	  INTERFACE_IDENTIFIER parameter_value_opt gate_instance_list ';'
-      { perm_string tmp1 = lex_strings.make($2);
-		  pform_make_modgates(@2, tmp1, $3, $4, $1);
-		  delete[]$2;
-      }
-
         | attribute_list_opt
 	  IDENTIFIER parameter_value_opt error ';'
-      { yyerror(@2, "error: Invalid module instantiation");
-		  delete[]$2;
-		  if ($1) delete $1;
-      }
-
-        | attribute_list_opt
-	  INTERFACE_IDENTIFIER parameter_value_opt error ';'
       { yyerror(@2, "error: Invalid module instantiation");
 		  delete[]$2;
 		  if ($1) delete $1;
