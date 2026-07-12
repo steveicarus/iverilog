@@ -120,14 +120,12 @@ static char* vpip_format_pretty_string(const char*msg)
 
 static char* format_darray_pretty(vvp_darray* aobj)
 {
-      if (!aobj || aobj->get_size() == 0)
-	    return strdup("{}");
+      if (!aobj || aobj->get_size() == 0) return strdup("{}");
 
       std::string out = "{";
 
       for (size_t i = 0; i < aobj->get_size(); i += 1) {
-	    if (i > 0)
-		  out += ", ";
+	    if (i > 0) out += ", ";
 	    if (dynamic_cast<vvp_darray_real*>(aobj)) {
 		  double d;
 		  aobj->get_word((unsigned) i, d);
@@ -156,14 +154,16 @@ static char* format_darray_pretty(vvp_darray* aobj)
 
 extern "C" char* vpip_format_pretty(vpiHandle ref)
 {
-      if (!ref)
+      if (!ref) {
 	    return vpip_format_pretty_string("Handle is NULL");
+	  }
 
       if (dynamic_cast<__vpiPropQueueRef*>(ref) ||
           dynamic_cast<__vpiDarrayVar*>(ref)) {
 	    vvp_darray* aobj = vpip_vpi_darray_from_handle(ref);
-	    if (!aobj)
+	    if (!aobj) {
 		  return vpip_format_pretty_string("Object not found");
+		}
 	    return format_darray_pretty(aobj);
       }
 
