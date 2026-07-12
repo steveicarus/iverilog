@@ -52,7 +52,7 @@ unsigned compile_errors = 0;
  * by mnemonic string: compile_code() uses bsearch() on this array.
  * If the order is wrong, lookup fails and the assembler reports
  * "Invalid opcode" for otherwise valid instructions (e.g. class
- * property queue ops must sort among all %delete/*, %qpop/*, %store/*
+ * property queue ops must sort among all %delete*, %qpop*, %store*
  * names, not grouped by feature).
  * The opcode_compare function is a helper for that lookup.
  */
