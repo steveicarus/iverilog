@@ -4337,8 +4337,9 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	// e.g.  c.q.push_back(x)  =>  sr.path_tail = {q}, method_name = push_back
       if (sr.path_tail.size() == 1) {
 	    const netclass_t*cls = dynamic_cast<const netclass_t*>(sr.type);
-	    if (!cls && net->net_type())
+	    if (!cls && net->net_type()) {
 		  cls = dynamic_cast<const netclass_t*>(net->net_type());
+		}
 	    if (cls) {
 		  perm_string prop_name = sr.path_tail.front().name;
 		  int pidx = cls->property_idx_from_name(prop_name);
