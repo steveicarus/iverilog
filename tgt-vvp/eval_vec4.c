@@ -933,8 +933,9 @@ static void draw_property_vec4(ivl_expr_t expr)
 			fprintf(vvp_out, "    %%load/prop/dar/vec4 %u, %u;\n",
 			        pidx, wid);
 			fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-			if (ivl_expr_value(expr) == IVL_VT_BOOL)
+			if (ivl_expr_value(expr) == IVL_VT_BOOL) {
 			      fprintf(vvp_out, "    %%cast2;\n");
+			}
 			return;
 		  }
 	    }
