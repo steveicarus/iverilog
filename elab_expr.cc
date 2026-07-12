@@ -3329,8 +3329,7 @@ NetExpr* PECallFunction::elaborate_expr_method_chained_(Design*des, NetScope*sco
 	    ivl_assert(*this, use_index.lsb == 0);
 
 	    NetExpr*mux = elab_and_eval(des, scope, use_index.msb, -1, false);
-	    if (!mux)
-		  return 0;
+	    if (!mux) return 0;
 
 	    NetESelect*tmp = new NetESelect(sub_expr, mux, darray->element_width(), darray->element_type());
 	    tmp->set_line(*this);
@@ -3356,8 +3355,9 @@ NetExpr* PECallFunction::elaborate_expr_method_chained_(Design*des, NetScope*sco
 
       NetNet* cur_net = search_results.net;
       const netclass_t* cur_class = dynamic_cast<const netclass_t*>(search_results.type);
-      if (cur_class == 0)
+      if (cur_class == 0) {
 	    cur_class = dynamic_cast<const netclass_t*>(cur_net->net_type());
+	  }
       if (cur_class == 0) {
 	    cerr << get_fileline() << ": internal error: "
 		 << "IVL_VT_CLASS net without netclass_t type." << endl;
@@ -3373,9 +3373,7 @@ NetExpr* PECallFunction::elaborate_expr_method_chained_(Design*des, NetScope*sco
 
 	    NetExpr* step = elaborate_class_method_net_(des, scope, cur_net, cur_class,
 	                                               method_name, &no_parms);
-	    if (step == 0) {
-		  return 0;
-	    }
+	    if (step == 0) return 0;
 
 	    NetEUFunc*uf = dynamic_cast<NetEUFunc*> (step);
 	    if (uf == 0) {
