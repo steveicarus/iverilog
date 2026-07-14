@@ -291,21 +291,25 @@ PECallFunction::~PECallFunction()
 
 void PECallFunction::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
-      if (chain_prefix_)
+      if (chain_prefix_) {
 	    chain_prefix_->declare_implicit_nets(scope, type);
+	  }
       for (const auto &parm : parms_) {
-	    if (parm.parm)
+	    if (parm.parm) {
 		  parm.parm->declare_implicit_nets(scope, type);
+		}
       }
 }
 
 bool PECallFunction::has_aa_term(Design*des, NetScope*scope) const
 {
-      if (chain_prefix_ && chain_prefix_->has_aa_term(des, scope))
+      if (chain_prefix_ && chain_prefix_->has_aa_term(des, scope)) {
 	    return true;
+	  }
       for (const auto &parm : parms_) {
-	    if (parm.parm && parm.parm->has_aa_term(des, scope))
+	    if (parm.parm && parm.parm->has_aa_term(des, scope)) {
 		  return true;
+		}
       }
       return false;
 }
