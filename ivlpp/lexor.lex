@@ -27,6 +27,7 @@
 # include  <ctype.h>
 # include  <assert.h>
 
+# include  "CmdExec.h"
 # include  "globals.h"
 # include  "ivl_alloc.h"
 
@@ -2128,12 +2129,12 @@ static void open_input_file(struct include_stack_t*isp)
       cmdlen += liblen;
 
       char*cmd = malloc(cmdlen);
-      snprintf(cmd, cmdlen, "%s -w\"%s\"%s %s", vhdlpp_path, vhdlpp_work, libs, isp->path);
+      snprintf(cmd, cmdlen, "%s -w\"%s\"%s \"%s\"", vhdlpp_path, vhdlpp_work, libs, isp->path);
 
       if (verbose_flag) fprintf(stderr, "Invoke vhdlpp: %s\n", cmd);
 
-      isp->file = popen(cmd, "r");
-      isp->file_close = pclose;
+      isp->file = ivl_run_cmd_pipe(cmd);
+      isp->file_close = ivl_close_cmd_pipe;
 
       free(libs);
       free(cmd);

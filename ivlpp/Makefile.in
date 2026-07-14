@@ -26,6 +26,7 @@ exec_prefix = @exec_prefix@
 srcdir = @srcdir@
 
 VPATH = $(srcdir)
+vpath %.c $(srcdir)/../libmisc
 
 bindir = @bindir@
 libdir = @libdir@
@@ -38,16 +39,16 @@ INSTALL_DATA = @INSTALL_DATA@
 LEX = @LEX@
 
 ifeq (@srcdir@,.)
-INCLUDE_PATH = -I. -I..
+INCLUDE_PATH = -I. -I.. -I../libmisc
 else
-INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/.. -I$(srcdir)/../libmisc
 endif
 
 CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@
 CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-O = main.o lexor.o
+O = main.o lexor.o CmdExec.o
 
 all: ivlpp@EXEEXT@
 

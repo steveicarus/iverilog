@@ -59,6 +59,8 @@ SUBDIRS += driver-vpi
 # rebuild the lexor_keyword.cc file. If we do, then we want to use the
 # local version instead of the one is $(srcdir).
 vpath lexor_keyword.cc .
+vpath %.c $(srcdir)/libmisc
+vpath %.c $(srcdir)
 vpath %.cc $(srcdir)/libmisc
 vpath %.cc $(srcdir)
 
@@ -110,7 +112,8 @@ M = LineInfo.o StringHeap.o
 TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-dll-analog.o
 FF = cprop.o exposenodes.o nodangle.o synth.o synth2.o syn-rules.o
 
-O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
+C_OBJ = CmdExec.o
+CXX_OBJ = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
     elab_expr.o elaborate_analog.o elab_lval.o elab_net.o \
     elab_scope.o elab_sig.o elab_sig_analog.o elab_type.o \
     emit.o eval_attrib.o \
@@ -129,6 +132,7 @@ O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
     Attrib.o HName.o Module.o PClass.o PDelays.o PEvent.o PExpr.o PFunction.o \
     PGate.o PGenerate.o PModport.o PNamedItem.o PPackage.o PScope.o PSpec.o PTimingCheck.o \
     PTask.o PUdp.o PWire.o Statement.o AStatement.o $M $(FF) $(TT)
+O = $(C_OBJ) $(CXX_OBJ)
 
 all: dep config.h _pli_types.h version_tag.h version_base.h ivl@EXEEXT@
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
@@ -175,7 +179,7 @@ ifneq (@srcdir@,.)
 endif
 	rm -rf autom4te.cache
 
-cppcheck: $(O:.o=.cc) $(srcdir)/dosify.c
+cppcheck: $(C_OBJ:.o=.c) $(CXX_OBJ:.o=.cc) $(srcdir)/dosify.c
 	cppcheck --enable=all --std=c99 --std=c++11 -f \
 	         --check-level=exhaustive \
 	         --suppressions-list=$(srcdir)/cppcheck-global.sup \
@@ -231,6 +235,10 @@ endif
 
 %.o: %.cc config.h | dep
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
+	mv $*.d dep/$*.d
+
+%.o: %.c config.h | dep
+	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep/$*.d
 
 # Here are some explicit dependencies needed to get things going.
