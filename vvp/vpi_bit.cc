@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2020-2026 Cary R. (cygcary@yahoo.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,6 +57,7 @@ static int bit_get_type(const __vpiBit*rfp)
 	    return vpiRegBit;
       }
       assert(0);
+      return 0;
 }
 
 static int bit_get(int code, vpiHandle ref)

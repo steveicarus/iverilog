@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -462,6 +462,8 @@ static void draw_binary_vec4_logical(ivl_expr_t expr, char op)
 	    jmp_type = "1";
 	    break;
 	  default:
+	    opcode = "<invalid>"
+	    jmp_type = "<invalid>"
 	    assert(0);
 	    break;
       }
