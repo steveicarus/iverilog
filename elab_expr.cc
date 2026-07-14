@@ -62,50 +62,44 @@ bool type_is_vectorable(ivl_variable_type_t type)
 static const netclass_t* resolve_call_chain_prefix_class(Design*des, NetScope*scope,
 							 PECallFunction* link)
 {
-      if (link == 0)
-	    return 0;
+      if (link == 0) return 0;
 
       if (link->peek_chain_prefix() == 0) {
 	    symbol_search_results sr;
-	    if (!symbol_search(link, des, scope, link->peek_path(), UINT_MAX, &sr))
+	    if (!symbol_search(link, des, scope, link->peek_path(), UINT_MAX, &sr)) {
 		  return 0;
-	    if (!sr.is_scope() || sr.scope->type() != NetScope::FUNC)
+		}
+	    if (!sr.is_scope() || sr.scope->type() != NetScope::FUNC) {
 		  return 0;
+		}
 	    NetFuncDef* fundef = sr.scope->func_def();
 	    ivl_assert(*link, fundef);
 	    NetScope* dscope = fundef->scope();
 	    NetNet* res = dscope->find_signal(dscope->basename());
-	    if (res == 0)
-		  return 0;
+	    if (res == 0) return 0;
 	    return dynamic_cast<const netclass_t*>(res->net_type());
       }
 
       PECallFunction* inner = dynamic_cast<PECallFunction*>(
 	    const_cast<PExpr*>(link->peek_chain_prefix()));
-      if (inner == 0)
-	    return 0;
+      if (inner == 0) return 0;
 
       const netclass_t* recv_class = resolve_call_chain_prefix_class(des, scope, inner);
-      if (recv_class == 0)
-	    return 0;
+      if (recv_class == 0) return 0;
 
       perm_string mname = peek_tail_name(link->peek_path());
       NetScope* mscope = recv_class->method_from_name(mname);
-      if (mscope == 0)
-	    return 0;
+      if (mscope == 0) return 0;
       NetFuncDef* mdef = mscope->func_def();
-      if (mdef == 0)
-	    return 0;
+      if (mdef == 0) return 0;
       NetNet* mres = mscope->find_signal(mscope->basename());
-      if (mres == 0)
-	    return 0;
+      if (mres == 0) return 0;
       return dynamic_cast<const netclass_t*>(mres->net_type());
 }
 
 static ivl_nature_t find_access_function(const pform_scoped_name_t &path)
 {
-      if (path.package || path.name.size() != 1)
-	    return nullptr;
+      if (path.package || path.name.size() != 1) return nullptr;
       return access_function_nature[peek_tail_name(path)];
 }
 
@@ -1802,36 +1796,22 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 unsigned PECallFunction::test_width_chain_(Design*des, NetScope*scope,
 					   width_mode_t&)
 {
+      expr_width_ = 0;
       PECallFunction* inner_pf = dynamic_cast<PECallFunction*>(chain_prefix_);
-      if (inner_pf == 0) {
-	    expr_width_ = 0;
-	    return 0;
-      }
+      if (inner_pf == 0) return 0;
 
       const netclass_t* cls = resolve_call_chain_prefix_class(des, scope, inner_pf);
-      if (cls == 0) {
-	    expr_width_ = 0;
-	    return 0;
-      }
+      if (cls == 0) return 0;
 
       perm_string mname = peek_tail_name(path_);
       NetScope* mscope = cls->method_from_name(mname);
-      if (mscope == 0) {
-	    expr_width_ = 0;
-	    return 0;
-      }
+      if (mscope == 0) return 0;
 
       NetFuncDef* mdef = mscope->func_def();
-      if (mdef == 0 || mdef->is_void()) {
-	    expr_width_ = 0;
-	    return 0;
-      }
+      if (mdef == 0 || mdef->is_void()) return 0;
 
       NetNet* mres = mscope->find_signal(mscope->basename());
-      if (mres == 0) {
-	    expr_width_ = 0;
-	    return 0;
-      }
+      if (mres == 0) return 0;
 
       expr_type_   = mres->data_type();
       expr_width_  = mres->vector_width();
@@ -1843,8 +1823,7 @@ unsigned PECallFunction::test_width_chain_(Design*des, NetScope*scope,
 unsigned PECallFunction::test_width(Design*des, NetScope*scope,
                                     width_mode_t&mode)
 {
-      if (chain_prefix_)
-	    return test_width_chain_(des, scope, mode);
+      if (chain_prefix_) return test_width_chain_(des, scope, mode);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PECallFunction::test_width: "
@@ -2993,8 +2972,7 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 {
       flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
-      if (chain_prefix_)
-	    return elaborate_expr_chain_(des, scope, flags);
+      if (chain_prefix_) return elaborate_expr_chain_(des, scope, flags);
 
       // Search for the symbol. This should turn up a scope.
       symbol_search_results search_results;
@@ -3416,8 +3394,7 @@ NetExpr* PECallFunction::elaborate_expr_chain_(Design*des, NetScope*scope,
 {
       ivl_assert(*this, chain_prefix_);
       NetExpr* inner = chain_prefix_->elaborate_expr(des, scope, -1, flags);
-      if (inner == 0)
-	    return 0;
+      if (inner == 0) return 0;
 
       const netclass_t* cls = dynamic_cast<const netclass_t*>(inner->net_type());
       if (cls == 0) {
