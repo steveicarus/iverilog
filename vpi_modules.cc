@@ -126,7 +126,7 @@ s_vpi_vecval vpip_calc_clog2(vpiHandle)
 }
 void        vpip_count_drivers(vpiHandle, unsigned, unsigned [4]) { }
 void        vpip_format_strength(char*, s_vpi_value*, unsigned) { }
-void        vpip_format_pretty(vpiHandle) { }
+char*       vpip_format_pretty(vpiHandle) { return "invalid"; }
 void        vpip_make_systf_system_defined(vpiHandle) { }
 void        vpip_mcd_rawwrite(PLI_UINT32, const char*, size_t) { }
 void        vpip_set_return_value(int) { }
