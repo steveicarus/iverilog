@@ -4320,8 +4320,7 @@ expr_primary
   /* SV call chains get_c1().f() — must come before bare hierarchy_identifier
      so `id (` is not reduced as PEIdent + error. */
   | call_chain_expr
-      { $$ = $1;
-      }
+      { $$ = $1; }
   | hierarchy_identifier
       { PEIdent*tmp = pform_new_ident(@1, *$1);
 	FILE_NAME(tmp, @1);
