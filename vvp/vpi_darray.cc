@@ -309,12 +309,6 @@ int __vpiQueueVar::vpi_get(int code)
       }
 }
 
-void __vpiQueueVar::vpi_get_value(p_vpi_value val)
-{
-      __vpiDarrayVar::vpi_get_value(val);
-}
-
-
 vpiHandle vpip_make_queue_var(const char*name, vvp_net_t*net)
 {
       __vpiScope*scope = vpip_peek_current_scope();
@@ -337,7 +331,7 @@ int __vpiPropQueueRef::get_type_code(void) const
 static vvp_darray* get_live_darray_from_prop(vvp_net_t* class_net, unsigned pid)
 {
       if (!class_net) return 0;
-      vvp_fun_signal_object* fun = dynamic_cast<vvp_fun_signal_object*>(class_net->fun);
+      const vvp_fun_signal_object* fun = dynamic_cast<vvp_fun_signal_object*>(class_net->fun);
       if (!fun) return 0;
       vvp_object_t obj = fun->get_object();
       vvp_cobject* cobj = obj.peek<vvp_cobject>();
@@ -349,7 +343,7 @@ static vvp_darray* get_live_darray_from_prop(vvp_net_t* class_net, unsigned pid)
 
 int __vpiPropQueueRef::vpi_get(int code)
 {
-      vvp_darray* aobj = get_live_darray_from_prop(class_net_, prop_idx_);
+      const vvp_darray* aobj = get_live_darray_from_prop(class_net_, prop_idx_);
       switch (code) {
 	  case vpiArrayType:
 	    return is_queue_ ? vpiQueueArray : vpiDynamicArray;
@@ -395,8 +389,8 @@ vvp_darray* vpip_vpi_darray_from_handle(vpiHandle ref)
 	    return get_live_darray_from_prop(pr->class_net_, pr->prop_idx_);
       }
 
-      if (__vpiDarrayVar* dv = dynamic_cast<__vpiDarrayVar*>(ref)) {
-	    vvp_fun_signal_object* fun = dynamic_cast<vvp_fun_signal_object*>(dv->get_net()->fun);
+      if (const __vpiDarrayVar* dv = dynamic_cast<__vpiDarrayVar*>(ref)) {
+	    const vvp_fun_signal_object* fun = dynamic_cast<vvp_fun_signal_object*>(dv->get_net()->fun);
 	    if (!fun) return 0;
 	    vvp_object_t obj = fun->get_object();
 	    return obj.peek<vvp_darray>();

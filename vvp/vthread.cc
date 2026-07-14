@@ -6138,7 +6138,7 @@ bool of_PROP_QUEUE_SIZE(vthread_t thr, vvp_code_t cp)
 
       vvp_object_t qobj;
       cobj->get_object(pid, qobj, 0);
-      vvp_queue* queue = qobj.peek<vvp_queue>();
+      const vvp_queue* queue = qobj.peek<vvp_queue>();
 
       size_t sz = queue ? queue->get_size() : 0;
 
