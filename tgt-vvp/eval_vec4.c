@@ -462,8 +462,8 @@ static void draw_binary_vec4_logical(ivl_expr_t expr, char op)
 	    jmp_type = "1";
 	    break;
 	  default:
-	    opcode = "<invalid>"
-	    jmp_type = "<invalid>"
+	    opcode = "<invalid>";
+	    jmp_type = "<invalid>";
 	    assert(0);
 	    break;
       }
