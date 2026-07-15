@@ -449,6 +449,11 @@ static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
       return scopex;
 }
 
+static PGenerate* current_generate_scope()
+{
+      return lexical_scope == pform_cur_generate ? pform_cur_generate : nullptr;
+}
+
 static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*item)
 {
       assert(scope);
@@ -585,12 +590,16 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
       ivl_assert(loc, scopex);
-      ivl_assert(loc, !pform_cur_generate);
 
       pform_set_scope_timescale(class_scope, scopex);
 
-      scopex->classes[name] = class_scope;
-      scopex->classes_lexical .push_back(class_scope);
+      if (auto generate_scope = current_generate_scope()) {
+	    generate_scope->classes[name] = class_scope;
+	    generate_scope->classes_lexical.push_back(class_scope);
+      } else {
+	    scopex->classes[name] = class_scope;
+	    scopex->classes_lexical.push_back(class_scope);
+      }
 
       lexical_scope = class_scope;
       return class_scope;
@@ -632,9 +641,9 @@ PTask* pform_push_task_scope(const struct vlltype&loc, const char*name,
 
       pform_set_scope_timescale(task, scopex);
 
-      if (pform_cur_generate) {
-	    add_local_symbol(pform_cur_generate, task_name, task);
-	    pform_cur_generate->tasks[task_name] = task;
+      if (auto generate_scope = current_generate_scope()) {
+	    add_local_symbol(generate_scope, task_name, task);
+	    generate_scope->tasks[task_name] = task;
       } else {
 	    add_local_symbol(scopex, task_name, task);
 	    scopex->tasks[task_name] = task;
@@ -667,9 +676,9 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 
       pform_set_scope_timescale(func, scopex);
 
-      if (pform_cur_generate) {
-	    add_local_symbol(pform_cur_generate, func_name, func);
-	    pform_cur_generate->funcs[func_name] = func;
+      if (auto generate_scope = current_generate_scope()) {
+	    add_local_symbol(generate_scope, func_name, func);
+	    generate_scope->funcs[func_name] = func;
 
       } else {
 	    add_local_symbol(scopex, func_name, func);
@@ -914,6 +923,22 @@ typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
 	    if (cur != cur_scope->typedefs.end())
 		  return cur->second;
 
+	    // If it is defined as something else in this scope, it is not a
+	    // data type.
+	    auto sym = cur_scope->local_symbols.find(name);
+	    if (sym != cur_scope->local_symbols.end())
+		  return nullptr;
+
+	    // Class properties are tracked in the class type, not in
+	    // local_symbols, but still shadow type names before lookup falls
+	    // through to wildcard imports.
+	    if (auto cur_class = dynamic_cast<PClass*> (cur_scope)) {
+		  if (cur_class->type &&
+		      cur_class->type->properties.find(name) !=
+		      cur_class->type->properties.end())
+			return nullptr;
+	    }
+
             PPackage*pkg = pform_find_potential_import(loc, cur_scope, name, false, false);
             if (pkg) {
 	          cur = pkg->typedefs.find(name);
@@ -946,6 +971,24 @@ PECallFunction* pform_make_call_function(const struct vlltype&loc,
 	    check_potential_imports(loc, name.front().name, true);
 
       PECallFunction*tmp = new PECallFunction(name, parms);
+      FILE_NAME(tmp, loc);
+      return tmp;
+}
+
+PECallFunction* pform_make_chained_call_function(const struct vlltype&loc,
+						 PExpr*prefix,
+						 const pform_name_t&method,
+						 const list<named_pexpr_t> &parms)
+{
+      if (!gn_system_verilog()) {
+	    pform_requires_sv(loc, "Chained calls like a().b()");
+	    delete prefix;
+	    return new PECallFunction(method, parms);
+      }
+
+      check_potential_imports(loc, method.front().name, true);
+
+      PECallFunction*tmp = new PECallFunction(prefix, method, parms);
       FILE_NAME(tmp, loc);
       return tmp;
 }
@@ -1922,16 +1965,38 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 		  ivl_assert(loc, (*decl)[idx]);
 		  if ((*decl)[idx]->get_port_type() != NetNet::PIMPLICIT) {
 			bool rc = cur->set_port_type((*decl)[idx]->get_port_type());
-			ivl_assert(loc, rc);
+			if (!rc) {
+			      cerr << loc << ": error: "
+				   << "Port " << port_name << " of primitive "
+				   << name << " has conflicting port declarations."
+				   << endl;
+			      error_count += 1;
+			      local_errors += 1;
+			}
 		  }
 		  if ((*decl)[idx]->get_wire_type() != NetNet::IMPLICIT) {
 			bool rc = cur->set_wire_type((*decl)[idx]->get_wire_type());
-			ivl_assert(loc, rc);
+			if (!rc) {
+			      cerr << loc << ": error: "
+				   << "Port " << port_name << " of primitive "
+				   << name << " has conflicting data declarations."
+				   << endl;
+			      error_count += 1;
+			      local_errors += 1;
+			}
 		  }
 
 	    } else {
 		  defs[port_name] = (*decl)[idx];
 	    }
+      }
+
+      if (local_errors > 0) {
+	    delete parms;
+	    delete decl;
+	    delete table;
+	    delete init_expr;
+	    return;
       }
 
 
@@ -2045,22 +2110,56 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	   registered. Then save the initial value that I get. */
       verinum::V init = verinum::Vx;
       if (init_expr) {
-	      // XXXX
-	    ivl_assert(loc, pins[0]->get_wire_type() == NetNet::REG);
+	    if (pins[0]->get_wire_type() != NetNet::REG) {
+		  cerr << init_expr->get_fileline() << ": error: "
+		       << "Initial value for primitive " << name
+		       << " requires a registered output port." << endl;
+		  error_count += 1;
+		  local_errors += 1;
+	    }
 
-	    const PAssign*pa = dynamic_cast<PAssign*>(init_expr);
-	    ivl_assert(*init_expr, pa);
+	    auto*pa = dynamic_cast<PAssign*>(init_expr);
+	    if (!pa) {
+		  cerr << init_expr->get_fileline() << ": error: "
+		       << "Invalid initial statement for primitive "
+		       << name << "." << endl;
+		  error_count += 1;
+		  local_errors += 1;
+	    }
 
-	    const PEIdent*id = dynamic_cast<const PEIdent*>(pa->lval());
-	    ivl_assert(*init_expr, id);
+	    if (pa) {
+		  auto*id = dynamic_cast<const PEIdent*>(pa->lval());
+		  if (!id) {
+			cerr << init_expr->get_fileline() << ": error: "
+			     << "Invalid initial statement for primitive "
+			     << name << "." << endl;
+			error_count += 1;
+			local_errors += 1;
+		  }
 
-	      // XXXX
-	      //ivl_assert(*init_expr, id->name() == pins[0]->name());
+		    // XXXX
+		    //ivl_assert(*init_expr, id->name() == pins[0]->name());
 
-	    const PENumber*np = dynamic_cast<const PENumber*>(pa->rval());
-	    ivl_assert(*init_expr, np);
+		  auto*np = dynamic_cast<const PENumber*>(pa->rval());
+		  if (!np) {
+			cerr << init_expr->get_fileline() << ": error: "
+			     << "Invalid initial value for primitive "
+			     << name << "." << endl;
+			error_count += 1;
+			local_errors += 1;
+		  } else {
+			init = np->value()[0];
+		  }
+	    }
 
-	    init = np->value()[0];
+	    if (local_errors > 0) {
+		  delete parms;
+		  delete decl;
+		  delete table;
+		  delete init_expr;
+		  return;
+	    }
+
       }
 
 	// Put the primitive into the primitives table
@@ -2079,10 +2178,18 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	    for (unsigned idx = 0 ;  idx < pins.size() ;  idx += 1)
 		  udp->ports[idx] = pins[idx]->basename();
 
-	    process_udp_table(udp, table, loc);
-	    udp->initial  = init;
+	    if (table) {
+		  process_udp_table(udp, table, loc);
+		  udp->initial  = init;
 
-	    pform_primitives[name] = udp;
+		  pform_primitives[name] = udp;
+	    } else {
+		  ostringstream msg;
+		  msg << "error: Invalid table for UDP primitive " << name
+		      << ".";
+		  VLerror(loc, msg.str().c_str(), "");
+		  delete udp;
+	    }
       }
 
 
@@ -2126,20 +2233,31 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	   registered. Then save the initial value that I get. */
       verinum::V init = verinum::Vx;
       if (init_expr) {
-	      // XXXX
-	    ivl_assert(*init_expr, pins[0]->get_wire_type() == NetNet::REG);
+	    bool local_errors = false;
 
-	    const PAssign*pa = dynamic_cast<PAssign*>(init_expr);
-	    ivl_assert(*init_expr, pa);
+	    if (pins[0]->get_wire_type() != NetNet::REG) {
+		  cerr << init_expr->get_fileline() << ": error: "
+		       << "Initial value for primitive " << name
+		       << " requires a registered output port." << endl;
+		  error_count += 1;
+		  local_errors = true;
+	    }
 
-	    const PEIdent*id = dynamic_cast<const PEIdent*>(pa->lval());
-	    ivl_assert(*init_expr, id);
+	    auto*np = dynamic_cast<const PENumber*>(init_expr);
+	    if (!np) {
+		  cerr << init_expr->get_fileline() << ": error: "
+		       << "Invalid initial value for primitive "
+		       << name << "." << endl;
+		  error_count += 1;
+		  local_errors = true;
+	    }
 
-	      // XXXX
-	      //ivl_assert(*init_expr, id->name() == pins[0]->name());
-
-	    const PENumber*np = dynamic_cast<const PENumber*>(pa->rval());
-	    ivl_assert(*init_expr, np);
+	    if (local_errors) {
+		  delete parms;
+		  delete table;
+		  delete init_expr;
+		  return;
+	    }
 
 	    init = np->value()[0];
       }
@@ -2172,7 +2290,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 	    } else {
 		  ostringstream msg;
 		  msg << "error: Invalid table for UDP primitive " << name
-		      << "." << endl;
+		      << ".";
 		    // Some compilers warn if there is just a single C string.
 		  VLerror(loc, msg.str().c_str(), "");
 	    }

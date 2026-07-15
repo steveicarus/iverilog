@@ -2368,6 +2368,8 @@ void reset_lexor(FILE* out, char* paths[])
     isp->stringify_flag = 0;
     isp->comment = NULL;
 
+    yyout = out;
+
     if (isp->file == 0) {
 	perror(paths[0]);
 	error_count += 1;
@@ -2381,8 +2383,6 @@ void reset_lexor(FILE* out, char* paths[])
 	    fprintf(depend_file, "%s\n", paths[0]);
 	}
     }
-
-    yyout = out;
 
     yyrestart(isp->file);
 

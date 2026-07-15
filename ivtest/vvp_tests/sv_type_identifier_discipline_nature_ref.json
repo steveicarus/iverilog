@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_type_identifier_discipline_nature_ref.v",
+    "iverilog-args" : [ "-g2005-sv", "-gverilog-ams" ]
+}

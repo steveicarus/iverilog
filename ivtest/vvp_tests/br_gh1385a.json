@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "br_gh1385a.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

@@ -35,7 +35,8 @@
 using namespace std;
 
 static void __compile_var_real(char*label, char*name,
-			       vvp_array_t array, unsigned long array_addr)
+			       vvp_array_t array, unsigned long array_addr,
+			       bool local_flag)
 {
       vvp_net_t*net = new vvp_net_t;
 
@@ -55,7 +56,8 @@ static void __compile_var_real(char*label, char*name,
 
       if (name) {
 	    assert(!array);
-	    vpip_attach_to_current_scope(obj);
+	    if (!local_flag)
+		  vpip_attach_to_current_scope(obj);
             if (!vpip_peek_current_scope()->is_automatic())
                   schedule_init_vector(vvp_net_ptr_t(net,0), 0.0);
       }
@@ -67,9 +69,9 @@ static void __compile_var_real(char*label, char*name,
       delete[] name;
 }
 
-void compile_var_real(char*label, char*name)
+void compile_var_real(char*label, char*name, bool local_flag)
 {
-      __compile_var_real(label, name, 0, 0);
+      __compile_var_real(label, name, 0, 0, local_flag);
 }
 
 void compile_var_string(char*label, char*name)

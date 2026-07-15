@@ -48,9 +48,13 @@ unsigned compile_errors = 0;
 
 /*
  * The opcode table lists all the code mnemonics, along with their
- * opcode and operand types. The table is written sorted by mnemonic
- * so that it can be searched by binary search. The opcode_compare
- * function is a helper function for that lookup.
+ * opcode and operand types. The table must be sorted lexicographically
+ * by mnemonic string: compile_code() uses bsearch() on this array.
+ * If the order is wrong, lookup fails and the assembler reports
+ * "Invalid opcode" for otherwise valid instructions (e.g. class
+ * property queue ops must sort among all %delete*, %qpop*, %store*
+ * names, not grouped by feature).
+ * The opcode_compare function is a helper for that lookup.
  */
 
 enum operand_e {
@@ -151,6 +155,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%delayx", of_DELAYX, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%delete/elem",of_DELETE_ELEM,1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
       { "%delete/obj",of_DELETE_OBJ,1,{OA_FUNC_PTR,OA_NONE,  OA_NONE} },
+      { "%delete/prop/elem", of_DELETE_PROP_ELEM, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%delete/prop/obj",  of_DELETE_PROP_OBJ,  1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%delete/tail",of_DELETE_TAIL,2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
       { "%disable",  of_DISABLE, 1, {OA_VPI_PTR,OA_NONE,     OA_NONE} },
       { "%disable/flow", of_DISABLE_FLOW, 1, {OA_VPI_PTR,OA_NONE, OA_NONE} },
@@ -204,6 +210,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%load/dar/vec4",of_LOAD_DAR_VEC4,1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%load/obj",   of_LOAD_OBJ,  1,{OA_FUNC_PTR,OA_NONE, OA_NONE} },
       { "%load/obja",  of_LOAD_OBJA, 2,{OA_ARR_PTR, OA_BIT1, OA_NONE} },
+      { "%load/prop/dar/vec4", of_LOAD_PROP_DAR_VEC4, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%load/real",  of_LOAD_REAL, 1,{OA_VPI_PTR, OA_NONE, OA_NONE} },
       { "%load/str",   of_LOAD_STR,  1,{OA_FUNC_PTR,OA_NONE, OA_NONE} },
       { "%load/stra",  of_LOAD_STRA, 2,{OA_ARR_PTR, OA_BIT1, OA_NONE} },
@@ -219,6 +226,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%muli",   of_MULI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nand",   of_NAND,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%nand/r", of_NANDR,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%neg/wr", of_NEG_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%new/cobj",  of_NEW_COBJ,  1, {OA_VPI_PTR,OA_NONE,  OA_NONE} },
       { "%new/darray",of_NEW_DARRAY,2, {OA_BIT1,   OA_STRING,OA_NONE} },
       { "%noop",   of_NOOP,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
@@ -241,6 +249,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%pow/s",   of_POW_S,   0,  {OA_NONE,   OA_NONE,     OA_NONE} },
       { "%pow/wr",  of_POW_WR,  0,  {OA_NONE,   OA_NONE,     OA_NONE} },
       { "%prop/obj",of_PROP_OBJ,2,  {OA_NUMBER,   OA_BIT1,     OA_NONE} },
+      { "%prop/queue/size", of_PROP_QUEUE_SIZE,  1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%prop/r",  of_PROP_R,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%prop/str",of_PROP_STR,1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%prop/v",  of_PROP_V,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
@@ -249,6 +258,9 @@ static const struct opcode_table_s opcode_table[] = {
       { "%pushi/vec4",of_PUSHI_VEC4,3,{OA_BIT1,   OA_BIT2,   OA_NUMBER} },
       { "%pushv/str", of_PUSHV_STR, 0,{OA_NONE,   OA_NONE,   OA_NONE} },
       { "%putc/str/vec4",of_PUTC_STR_VEC4,2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
+      { "%qinsert/prop/r",   of_QINSERT_PROP_R,   2, {OA_NUMBER, OA_BIT1, OA_NONE} },
+      { "%qinsert/prop/str", of_QINSERT_PROP_STR, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
+      { "%qinsert/prop/v",   of_QINSERT_PROP_V,   3, {OA_NUMBER, OA_BIT1, OA_BIT2} },
       { "%qinsert/real",of_QINSERT_REAL,2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
       { "%qinsert/str", of_QINSERT_STR, 2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
       { "%qinsert/v",   of_QINSERT_V,   3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
@@ -258,6 +270,12 @@ static const struct opcode_table_s opcode_table[] = {
       { "%qpop/f/real",of_QPOP_F_REAL,1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
       { "%qpop/f/str", of_QPOP_F_STR, 1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
       { "%qpop/f/v",   of_QPOP_F_V,   2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
+      { "%qpop/prop/b/r",   of_QPOP_PROP_B_REAL, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%qpop/prop/b/str", of_QPOP_PROP_B_STR, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%qpop/prop/b/v",   of_QPOP_PROP_B_V,    2, {OA_NUMBER, OA_BIT1, OA_NONE} },
+      { "%qpop/prop/f/r",   of_QPOP_PROP_F_REAL, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%qpop/prop/f/str", of_QPOP_PROP_F_STR, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%qpop/prop/f/v",   of_QPOP_PROP_F_V,    2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%release/net",of_RELEASE_NET,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/reg",of_RELEASE_REG,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/wr", of_RELEASE_WR, 2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
@@ -282,6 +300,12 @@ static const struct opcode_table_s opcode_table[] = {
       { "%store/obj",   of_STORE_OBJ,   1, {OA_FUNC_PTR,OA_NONE, OA_NONE} },
       { "%store/obja",  of_STORE_OBJA,  2, {OA_ARR_PTR, OA_BIT1, OA_NONE} },
       { "%store/prop/obj",of_STORE_PROP_OBJ,2, {OA_NUMBER,  OA_BIT1, OA_NONE} },
+      { "%store/prop/qb/r",   of_STORE_PROP_QB_R,   2, {OA_NUMBER, OA_BIT1, OA_NONE} },
+      { "%store/prop/qb/str", of_STORE_PROP_QB_STR, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
+      { "%store/prop/qb/v",   of_STORE_PROP_QB_V,   3, {OA_NUMBER, OA_BIT1, OA_BIT2} },
+      { "%store/prop/qf/r",   of_STORE_PROP_QF_R,   2, {OA_NUMBER, OA_BIT1, OA_NONE} },
+      { "%store/prop/qf/str", of_STORE_PROP_QF_STR, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
+      { "%store/prop/qf/v",   of_STORE_PROP_QF_V,   3, {OA_NUMBER, OA_BIT1, OA_BIT2} },
       { "%store/prop/r",  of_STORE_PROP_R,  1, {OA_NUMBER,  OA_NONE, OA_NONE} },
       { "%store/prop/str",of_STORE_PROP_STR,1, {OA_NUMBER,  OA_NONE, OA_NONE} },
       { "%store/prop/v",  of_STORE_PROP_V,  2, {OA_NUMBER,  OA_BIT1, OA_NONE} },
@@ -594,7 +618,7 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 	    unsigned base, wid;
 	    size_t n = 0;
 	    char ss[32];
-	    if (2 == sscanf(label(), "W<%u,%[r]>%zn", &base, ss, &n)
+	    if (2 == sscanf(label(), "W<%u,%31[r]>%zn", &base, ss, &n)
 		       && n == strlen(label())) {
 
 		  val.ptr = vpip_make_vthr_word(base, ss);
@@ -606,7 +630,7 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 		  val.ptr = vpip_make_vthr_str_stack(base);
 		  sym_set_value(sym_vpi, label(), val);
 
-	    } else if (3 == sscanf(label(), "S<%u,vec4,%[su]%u>%zn", &base, ss, &wid, &n)
+	    } else if (3 == sscanf(label(), "S<%u,vec4,%31[su]%u>%zn", &base, ss, &wid, &n)
 		       && n == strlen(label())) {
 
 		  bool signed_flag = false;

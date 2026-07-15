@@ -1232,7 +1232,7 @@ int main(int argc, char*argv[])
 
       if (pre_process_fail_count) {
 	    cerr << "Preprocessor failed with " << pre_process_fail_count
-	         << " errors." << endl;
+	         << " error(s)." << endl;
 	    return pre_process_fail_count;
       }
 

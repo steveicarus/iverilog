@@ -812,6 +812,10 @@ result is pushed back on the vec4 stack.
 
 This opcode multiplies two real words together.
 
+* %neg/wr
+
+This opcode negates the real value on top of the real stack.
+
 * %nand
 
 Perform the bitwise NAND of two vec4 vectors, and push the result. Each

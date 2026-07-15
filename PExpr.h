@@ -37,6 +37,7 @@ class NetExpr;
 class NetScope;
 class PPackage;
 struct symbol_search_results;
+class netclass_t;
 
 /*
  * The PExpr class hierarchy supports the description of
@@ -207,6 +208,8 @@ class PEAssignPattern : public PExpr {
       ~PEAssignPattern() override;
 
       void dump(std::ostream&) const override;
+
+      virtual bool has_aa_term(Design*des, NetScope*scope) const override;
 
       virtual unsigned test_width(Design*des, NetScope*scope, width_mode_t&mode) override;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
@@ -488,18 +491,12 @@ class PEIdent : public PExpr {
 					 const NetScope*found_in,
 					 ivl_type_t par_type,
 				         unsigned expr_wid) const;
-      NetExpr*elaborate_expr_param_idx_up_(Design*des,
-					   NetScope*scope,
-					   const NetExpr*par,
-					   const NetScope*found_in,
-					   ivl_type_t par_type,
-                                           bool need_const) const;
-      NetExpr*elaborate_expr_param_idx_do_(Design*des,
-					   NetScope*scope,
-					   const NetExpr*par,
-					   const NetScope*found_in,
-					   ivl_type_t par_type,
-                                           bool need_const) const;
+      NetExpr*elaborate_expr_param_idx_up_do_(Design*des,
+					      NetScope*scope,
+					      const NetExpr*par,
+					      const NetScope*found_in,
+					      ivl_type_t par_type,
+					      bool up, bool need_const) const;
       NetExpr*elaborate_expr_net(Design*des,
 				 NetScope*scope,
 				 NetNet*net,
@@ -517,16 +514,11 @@ class PEIdent : public PExpr {
 				       NetESignal*net,
 				       NetScope*found,
 				       unsigned expr_wid) const;
-      NetExpr*elaborate_expr_net_idx_up_(Design*des,
-				         NetScope*scope,
-				         NetESignal*net,
-				         NetScope*found,
-                                         bool need_const) const;
-      NetExpr*elaborate_expr_net_idx_do_(Design*des,
-				         NetScope*scope,
-				         NetESignal*net,
-				         NetScope*found,
-                                         bool need_const) const;
+      NetExpr*elaborate_expr_net_idx_up_do_(Design*des,
+					    NetScope*scope,
+					    NetESignal*net,
+					    NetScope*found,
+					    bool up, bool need_const) const;
       NetExpr*elaborate_expr_net_bit_(Design*des,
 				      NetScope*scope,
 				      NetESignal*net,
@@ -928,7 +920,17 @@ class PECallFunction : public PExpr {
       explicit PECallFunction(const pform_name_t &n, const std::list<named_pexpr_t> &parms);
       explicit PECallFunction(perm_string n, const std::list<named_pexpr_t> &parms);
 
+	// SystemVerilog: prefix().method(args) — prefix elaborates to a class handle.
+      explicit PECallFunction(PExpr* chain_prefix, const pform_name_t &method,
+			      const std::vector<named_pexpr_t> &parms);
+      explicit PECallFunction(PExpr* chain_prefix, const pform_name_t &method,
+			      const std::list<named_pexpr_t> &parms);
+
       ~PECallFunction() override;
+
+	// For chained-call resolution (path is only the final method name).
+      const pform_scoped_name_t& peek_path(void) const { return path_; }
+      const PExpr* peek_chain_prefix(void) const { return chain_prefix_; }
 
       virtual void dump(std::ostream &) const override;
 
@@ -948,6 +950,8 @@ class PECallFunction : public PExpr {
     private:
       pform_scoped_name_t path_;
       std::vector<named_pexpr_t> parms_;
+	// If non-null, this call is prefix().tail_name(...) (SV method chain).
+      PExpr* chain_prefix_ = nullptr;
 
         // For system functions.
       bool is_overridden_;
@@ -985,7 +989,26 @@ class PECallFunction : public PExpr {
       unsigned elaborate_arguments_(Design*des, NetScope*scope,
                                     const NetFuncDef*def, bool need_const,
                                     std::vector<NetExpr*>&parms,
-                                    unsigned parm_off) const;
+                                    unsigned parm_off,
+                                    const std::vector<named_pexpr_t>*src_parms = nullptr) const;
+
+      NetExpr* elaborate_class_method_net_(Design*des, NetScope*scope,
+					   NetNet*net, const netclass_t*class_type,
+					   perm_string method_name,
+					   const std::vector<named_pexpr_t>*src_parms) const;
+
+      NetExpr* elaborate_class_method_net_this_(Design*des, NetScope*scope,
+						NetExpr* this_expr,
+						const netclass_t*class_type,
+						perm_string method_name,
+						const std::vector<named_pexpr_t>*src_parms) const;
+
+      NetExpr* elaborate_expr_method_chained_(Design*des, NetScope*scope,
+					     symbol_search_results&search_results) const;
+
+      NetExpr* elaborate_expr_chain_(Design*des, NetScope*scope, unsigned flags) const;
+
+      unsigned test_width_chain_(Design*des, NetScope*scope, width_mode_t&mode);
 };
 
 /*

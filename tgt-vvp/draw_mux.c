@@ -83,10 +83,14 @@ static void draw_lpm_mux_nest(ivl_lpm_t net, const char*muxz)
 	      net, select_input);
 
       for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 2) {
+	      /* draw_net_input() can emit helper statements, for example for
+		 array words. Emit those before starting the .functor line. */
+	    const char*input0 = draw_net_input(ivl_lpm_data(net,idx+0));
+	    const char*input1 = draw_net_input(ivl_lpm_data(net,idx+1));
 	    fprintf(vvp_out, "L_%p/0/%u .functor %s %u",
 		    net, idx/2, muxz, width);
-	    fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,idx+0)));
-	    fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,idx+1)));
+	    fprintf(vvp_out, ", %s", input0);
+	    fprintf(vvp_out, ", %s", input1);
 	    fprintf(vvp_out, ", L_%p/0s, C4<>;\n", net);
       }
 

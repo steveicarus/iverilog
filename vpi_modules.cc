@@ -17,6 +17,7 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include <cstring>
 #include "config.h"
 #include "compiler.h"
 #include "vpi_user.h"
@@ -128,6 +129,7 @@ s_vpi_vecval vpip_calc_clog2(vpiHandle)
 }
 void        vpip_count_drivers(vpiHandle, unsigned, unsigned [4]) { }
 void        vpip_format_strength(char*, s_vpi_value*, unsigned) { }
+char*       vpip_format_pretty(vpiHandle) { return strdup("invalid"); }
 void        vpip_make_systf_system_defined(vpiHandle) { }
 void        vpip_mcd_rawwrite(PLI_UINT32, const char*, size_t) { }
 void        vpip_set_return_value(int) { }
@@ -232,6 +234,7 @@ vpip_routines_s vpi_routines = {
     .calc_clog2                 = vpip_calc_clog2,
     .count_drivers              = vpip_count_drivers,
     .format_strength            = vpip_format_strength,
+    .format_pretty              = vpip_format_pretty,
     .make_systf_system_defined  = vpip_make_systf_system_defined,
     .mcd_rawwrite               = vpip_mcd_rawwrite,
     .set_return_value           = vpip_set_return_value,

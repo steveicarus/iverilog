@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_type_identifier_genvar_name.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Typedefs and generate blocks are SystemVerilog",
+        "type"          : "CE"
+    }
+}

@@ -35,16 +35,19 @@ Makefile
 /_pli_types.h
 config.h
 /tgt-pcb/pcb_config.h
-/tgt-pcb/fp.cc
-/tgt-pcb/fp.h
-/tgt-pcb/fp.output
-/tgt-pcb/fp_lex.cc
 /tgt-vvp/vvp_config.h
 /tgt-vhdl/vhdl_config.h
+/vhdlpp/vhdlpp_config.h
 /vpi/vpi_config.h
 stamp-*-h
-/version.h
 /version_tag.h
+/version_base.h
+
+/driver-vpi/iverilog-vpi.man
+/driver-vpi/res.rc
+/driver/iverilog.man
+/vvp/libvvp.pc
+/vvp/vvp.man
 
 # Directories
 autom4te.cache
@@ -56,8 +59,6 @@ dep
 *.vpi
 /cadpli/cadpli.vpl
 
-/tgt-blif/Makefile
-
 # lex, yacc and gperf output
 /driver/cflexor.c
 /driver/cfparse.c
@@ -66,14 +67,6 @@ dep
 
 /ivlpp/lexor.c
 
-/vhdlpp/lexor.cc
-/vhdlpp/lexor_keyword.cc
-/vhdlpp/parse.cc
-/vhdlpp/parse.h
-/vhdlpp/parse.output
-/vhdlpp/vhdlpp_config.h
-/vhdlpp/vhdlpp
-
 /lexor.cc
 /lexor_keyword.cc
 /parse.cc
@@ -81,6 +74,17 @@ dep
 /parse.output
 /syn-rules.cc
 /syn-rules.output
+
+/tgt-pcb/fp.cc
+/tgt-pcb/fp.h
+/tgt-pcb/fp.output
+/tgt-pcb/fp_lex.cc
+
+/vhdlpp/lexor.cc
+/vhdlpp/lexor_keyword.cc
+/vhdlpp/parse.cc
+/vhdlpp/parse.h
+/vhdlpp/parse.output
 
 /vpi/sdf_lexor.c
 /vpi/sdf_parse.c
@@ -101,17 +105,13 @@ dep
 # Program created files
 /vvp/tables.cc
 
-/iverilog-vpi.man
-/driver-vpi/res.rc
-/driver/iverilog.man
-/vvp/vvp.man
-
 # The executables.
 *.exe
 /driver/iverilog
-/iverilog-vpi
+/driver-vpi/iverilog-vpi
 /ivl
 /ivlpp/ivlpp
+/vhdlpp/vhdlpp
 /vvp/vvp
 
 /ivl.exp
@@ -119,3 +119,4 @@ dep
 
 # Check output
 /check.vvp
+/driver/top.vvp

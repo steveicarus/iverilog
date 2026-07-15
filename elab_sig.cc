@@ -404,11 +404,6 @@ void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 		       << " type=" << *use_type << endl;
 	    }
 
-	    if (dynamic_cast<const netqueue_t *> (use_type)) {
-		  cerr << cur->second.get_fileline() << ": sorry: "
-		       << "Queues inside classes are not yet supported." << endl;
-		  des->errors++;
-	    }
 	    set_property(cur->first, cur->second.qual, use_type);
 
 	    if (! cur->second.qual.test_static())
@@ -607,6 +602,7 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
 
       elaborate_sig_funcs(des, scope, funcs);
       elaborate_sig_tasks(des, scope, tasks);
+      elaborate_sig_classes(des, scope, classes);
 
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()

@@ -162,7 +162,7 @@ int __vpiArray::get_word_size() const
 	/* For a net array we need to get the width from the first element. */
       if (nets) {
 	    assert(vals4 == 0 && vals == 0);
-	    struct __vpiSignal*vsig = dynamic_cast<__vpiSignal*>(nets[0]);
+	    const struct __vpiSignal*vsig = dynamic_cast<__vpiSignal*>(nets[0]);
 	    assert(vsig);
 	    width = vpip_size(vsig);
 	/* For a variable array we can get the width from vals_width. */
@@ -625,7 +625,7 @@ void __vpiArray::set_word(unsigned address, unsigned part_off, const vvp_vector4
 
 	// Select the word of the array that we affect.
       vpiHandle word = nets[address];
-      struct __vpiSignal*vsig = dynamic_cast<__vpiSignal*>(word);
+      const struct __vpiSignal*vsig = dynamic_cast<__vpiSignal*>(word);
       assert(vsig);
 
       vsig->node->send_vec4_pv(val, part_off, vpip_size(vsig), 0);

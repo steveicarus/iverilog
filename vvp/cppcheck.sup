@@ -92,11 +92,11 @@ knownConditionTrueFalse:vthread.cc:3571
 duplicateExpression:vpi_signal.cc:1207
 
 // cppcheck does not relize this is deleted[] in the called routine
-leakNoVarFunctionCall:compile.cc:452
+leakNoVarFunctionCall:compile.cc:476
 
 // Yes, these are not currently initialized in the constructor
 // All are added after __vpiSysTaskCall is built
-uninitMemberVar:vpi_priv.h:946
+uninitMemberVar:vpi_priv.h:967
 // All are added after __vpiSignal is built
 uninitMemberVar:vpi_priv.h:394
 // run_run_ptr is added after the event is built
@@ -151,13 +151,13 @@ knownConditionTrueFalse:vpi_modules.cc:118
 redundantAssignment:vpi_modules.cc:117
 
 // cppcheck does not undestand the format types match
-invalidScanfArgType_int:compile.cc:597
-invalidScanfArgType_int:compile.cc:603
-invalidScanfArgType_int:compile.cc:609
-invalidScanfArgType_int:vthread.cc:4541
-invalidScanfArgType_int:vthread.cc:4544
-invalidScanfArgType_int:vthread.cc:4547
-invalidScanfArgType_int:vthread.cc:4550
+invalidScanfArgType_int:compile.cc:621
+invalidScanfArgType_int:compile.cc:627
+invalidScanfArgType_int:compile.cc:633
+invalidScanfArgType_int:vthread.cc:4580
+invalidScanfArgType_int:vthread.cc:4583
+invalidScanfArgType_int:vthread.cc:4586
+invalidScanfArgType_int:vthread.cc:4589
 
 // The new() operator is always used to allocate space for this class and
 // pool is defined there.

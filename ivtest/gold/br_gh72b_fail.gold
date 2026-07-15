@@ -3,4 +3,4 @@
 ./ivltests/br_gh72b_fail.v:8: error: too few arguments for `macro2
 ./ivltests/br_gh72b_fail.v:9: error: too few arguments for `macro2
 ./ivltests/br_gh72b_fail.v:10: error: too many arguments for `macro2
-Preprocessor failed with 5 errors.
+Preprocessor failed with 5 error(s).

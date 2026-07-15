@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_type_identifier_named_constructor_argument.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Class scopes and new operators are not translated",
+        "type"          : "CE"
+    }
+}

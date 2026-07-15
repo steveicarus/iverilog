@@ -344,6 +344,10 @@ class resolv_list_s {
  */
 extern void functor_ref_lookup(vvp_net_t**ref, char*lab);
 
+extern vpiHandle vpip_make_prop_queue_ref(char* class_label,
+                                          unsigned prop_idx,
+                                          unsigned is_queue_flag);
+
 /*
  * This function schedules a lookup of the labeled instruction. The
  * code points to a code structure that points to the instruction
@@ -504,7 +508,7 @@ extern void compile_variable(char*label, char*name,
 			     int msb, int lsb, int vpi_type_code,
 			     bool signed_flag, bool local_flag);
 
-extern void compile_var_real(char*label, char*name);
+extern void compile_var_real(char*label, char*name, bool local_flag);
 extern void compile_var_string(char*label, char*name);
 extern void compile_var_darray(char*label, char*name, unsigned size);
 extern void compile_var_cobject(char*label, char*name);

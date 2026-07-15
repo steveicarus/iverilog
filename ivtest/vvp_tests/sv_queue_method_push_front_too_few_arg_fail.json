@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_queue_method_push_front_too_few_arg_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

@@ -128,7 +128,7 @@ struct vpip_string_chunk {
       char data[64*1024 - sizeof (struct vpip_string_chunk*)];
 };
 
-unsigned vpip_size(__vpiSignal *sig)
+unsigned vpip_size(const __vpiSignal *sig)
 {
       return abs(sig->msb.get_value() - sig->lsb.get_value()) + 1;
 }
@@ -2098,6 +2098,7 @@ vpip_routines_s vpi_routines = {
     .calc_clog2                 = vpip_calc_clog2,
     .count_drivers              = vpip_count_drivers,
     .format_strength            = vpip_format_strength,
+    .format_pretty              = vpip_format_pretty,
     .make_systf_system_defined  = vpip_make_systf_system_defined,
     .mcd_rawwrite               = vpip_mcd_rawwrite,
     .set_return_value           = vpip_set_return_value,

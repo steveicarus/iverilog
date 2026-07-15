@@ -178,7 +178,7 @@ VVP_POSTBUILD = ln -sf vvp@EXEEXT@ vvp$(suffix)@EXEEXT@
 VVP_CLEAN += vvp$(suffix)@EXEEXT@
 endif
 
-all: dep vvp@EXEEXT@ vvp.man
+all: dep vvp@EXEEXT@ libvvp.pc vvp.man
 
 # ENV_VVP sets LD_LIBRARY_PATH by default to run vvp from the build tree
 check: all
@@ -220,6 +220,10 @@ endif
 vvp@EXEEXT@: $(VVP_OBJ) $(VVP_DEPS)
 	$(CXX) $(LDFLAGS) -o $@ $(VVP_OBJ) -L. $(VVP_LDFLAGS) $(LIBS)
 	$(VVP_POSTBUILD)
+
+libvvp.pc: $(srcdir)/libvvp.pc.in ../config.status
+	cd ..; ./config.status --file=vvp/$@
+
 
 %.o: %.cc config.h | dep
 	$(CXX) $(CPPFLAGS) -DIVL_SUFFIX='"$(suffix)"' $(MDIR1) $(MDIR2) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o

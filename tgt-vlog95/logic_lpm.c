@@ -22,7 +22,8 @@
 # include "vlog95_priv.h"
 
 /*
- * Data type used to signify if a $signed or $unsigned should be emitted.
+ * Data type used to signify whether to emit $signed() or wrap the
+ * expression in a concatenation for an unsigned self-determined context.
  */
 typedef enum lpm_sign_e {
       NO_SIGN = 0,
@@ -119,7 +120,7 @@ static lpm_sign_t lpm_get_sign_type(ivl_lpm_t lpm,
 	    break;
       }
 
-	/* Check to see if a $signed() or $unsigned() is needed. */
+	/* Check to see if the expression sign needs to be forced. */
       if (lpm_sign && ! opr_sign) rtn = NEED_SIGNED;
       if (! lpm_sign && opr_sign && ! can_skip_unsigned) rtn = NEED_UNSIGNED;
 
@@ -1173,7 +1174,7 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
                            unsigned sign_extend)
 {
       lpm_sign_t sign_type;
-	/* Check to see if a $signed() or $unsigned() needs to be emitted
+	/* Check to see if a $signed() or concatenation needs to be emitted
 	 * before the expression. */
       sign_type = lpm_get_sign_type(lpm, 0);
       if (sign_type == NEED_SIGNED) {
@@ -1185,14 +1186,9 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 		  vlog_errors += 1;
 	    }
       }
+	  /* A concatenation creates a self-determined unsigned context */
       if (sign_type == NEED_UNSIGNED) {
-	    fprintf(vlog_out, "$unsigned(");
-	    if (! allow_signed) {
-		  fprintf(stderr, "%s:%u: vlog95 error: $unsigned() is not "
-		                  "supported.\n",
-		                  ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
-		  vlog_errors += 1;
-	    }
+	    fprintf(vlog_out, "{");
       }
 
       switch (ivl_lpm_type(lpm)) {
@@ -1472,8 +1468,17 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	    vlog_errors += 1;
       }
 
-	/* Close the $signed() or $unsigned() if needed. */
-      if (sign_type != NO_SIGN) fprintf(vlog_out, ")");
+	/* Close the $signed() or concatenation if needed. */
+      switch (sign_type) {
+	case NEED_SIGNED:
+	    fprintf(vlog_out, ")");
+	    break;
+	case NEED_UNSIGNED:
+	    fprintf(vlog_out, "}");
+	    break;
+	default:
+	    break;
+      }
 }
 
 static void emit_posedge_dff_prim(void)

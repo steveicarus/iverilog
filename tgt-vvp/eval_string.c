@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -167,6 +167,15 @@ static void string_ex_pop(ivl_expr_t expr)
 	    fb = "f";
 
       arg = ivl_expr_parm(expr, 0);
+      if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
+	    ivl_signal_t clas = ivl_expr_signal(arg);
+	    unsigned pidx = ivl_expr_property_idx(arg);
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
+	    fprintf(vvp_out, "    %%qpop/prop/%s/str %u;\n", fb, pidx);
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    return;
+      }
+
       assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
 
       fprintf(vvp_out, "    %%qpop/%s/str v%p_0;\n", fb, ivl_expr_signal(arg));

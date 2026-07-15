@@ -396,7 +396,7 @@ struct __vpiSignal : public __vpiHandle {
       static void*operator new[] (std::size_t size);
       static void operator delete[](void*);
 };
-extern unsigned vpip_size(__vpiSignal *sig);
+extern unsigned vpip_size(const __vpiSignal *sig);
 extern __vpiScope* vpip_scope(__vpiSignal*sig);
 
 extern vpiHandle vpip_make_int2(const char*name, int msb, int lsb,
@@ -870,17 +870,38 @@ class __vpiDarrayVar : public __vpiBaseVar, public __vpiArrayBase {
 
 extern vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net);
 
-class __vpiQueueVar : public __vpiBaseVar {
+class __vpiQueueVar : public __vpiDarrayVar {
 
     public:
       __vpiQueueVar(__vpiScope*scope, const char*name, vvp_net_t*net);
 
-      int get_type_code(void) const override;
       int vpi_get(int code) override;
-      void vpi_get_value(p_vpi_value val) override;
 };
 
 extern vpiHandle vpip_make_queue_var(const char*name, vvp_net_t*net);
+
+class __vpiPropQueueRef : public __vpiHandle {
+
+    public:
+      explicit __vpiPropQueueRef(__vpiScope*scope, unsigned pidx, bool is_queue);
+
+      int get_type_code(void) const override;
+      int vpi_get(int code) override;
+      char* vpi_get_str(int code) override;
+      void vpi_get_value(p_vpi_value val) override;
+
+      vvp_net_t* class_net_;
+      unsigned prop_idx_;
+      bool is_queue_;
+
+    private:
+      __vpiScope* scope_;
+};
+
+extern vpiHandle vpip_make_prop_queue_ref(char* class_label,
+                                          unsigned prop_idx,
+                                          unsigned is_queue_flag);
+extern vvp_darray* vpip_vpi_darray_from_handle(vpiHandle ref);
 
 class __vpiCobjectVar : public __vpiBaseVar {
 

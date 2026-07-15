@@ -423,8 +423,10 @@ NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
 
       unsigned min_wid = base->expr_width();
       if ((sb < 0) && !base->has_sign()) min_wid += 1;
-      if (min_wid < num_bits(pcur->get_lsb())) min_wid = pcur->get_lsb();
-      if (min_wid < num_bits(pcur->get_msb())) min_wid = pcur->get_msb();
+      if (min_wid < num_bits(pcur->get_lsb()))
+	    min_wid = num_bits(pcur->get_lsb());
+      if (min_wid < num_bits(pcur->get_msb()))
+	    min_wid = num_bits(pcur->get_msb());
       base = pad_to_width(base, min_wid, *base);
       if ((sb < 0) && !base->has_sign()) {
 	    NetESelect *tmp = new NetESelect(base, 0 , min_wid);

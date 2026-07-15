@@ -1193,7 +1193,7 @@ class NetScope : public Definitions, public Attrib {
 
         /* Is this scope elaborating a final procedure? */
       void in_final(bool in_final__) { in_final_ = in_final__; };
-      bool in_final() const { return in_final_; };
+      bool in_final() const;
 
       const NetTaskDef* task_def() const;
       const NetFuncDef* func_def() const;
