@@ -92,9 +92,9 @@ static NetExpr* elab_queue_locator_with_predicate(
       ws->set_line(&loc);
 
       unsigned ew = ivl_type_packed_width(element_type);
-      const netvector_t* item_vec = new netvector_t(
-	  ivl_type_base(element_type), (long)ew - 1, 0,
-	  ivl_type_signed(element_type));
+      const netvector_t* item_vec = new netvector_t(ivl_type_base(element_type),
+						    (long)ew - 1, 0,
+						    ivl_type_signed(element_type));
       NetNet* item_net = new NetNet(ws, lex_strings.make("item"), NetNet::REG,
 				    item_vec);
       item_net->set_line(loc);
@@ -133,6 +133,84 @@ static NetExpr* elab_queue_locator_with_predicate(
       out->parm(2, new NetESignal(item_net));
       out->parm(3, new NetESignal(index_net));
       return out;
+}
+
+static bool is_array_locator_method(perm_string name)
+{
+      return name == "find" || name == "find_index" ||
+	     name == "find_first" || name == "find_first_index" ||
+	     name == "find_last" || name == "find_last_index" ||
+	     name == "unique" || name == "unique_index";
+}
+
+static bool locator_returns_indices(perm_string name)
+{
+      return name == "find_index" || name == "find_first_index" ||
+	     name == "find_last_index" || name == "unique_index";
+}
+
+/*
+ * Elaborate unique* / find* on a queue or dynamic array expression.
+ * value_queue_type is the result type for value-returning find/unique
+ * (typically the array own queue/darray type).
+ */
+static NetExpr* elab_array_locator_method(Design* des, NetScope* scope,
+					  const LineInfo& loc,
+					  perm_string method_name,
+					  NetExpr* array_arg,
+					  ivl_type_t element_type,
+					  ivl_type_t value_queue_type,
+					  const vector<named_pexpr_t>& parms,
+					  PExpr* with_expr, const char* kind)
+{
+      if (!queue_method_element_is_integral_vec4(element_type)) {
+	    cerr << loc.get_fileline() << ": sorry: " << kind << " "
+		 << method_name << "() for this "
+		 << "element type is not yet supported." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      ivl_type_t result_type = locator_returns_indices(method_name)
+	    ? static_cast<ivl_type_t>(&ivl_queue_unique_index_ret)
+	    : value_queue_type;
+
+      char sfunc[64];
+      snprintf(sfunc, sizeof sfunc, "$ivl_queue_method$%s", method_name.str());
+
+      if (method_name == "unique" || method_name == "unique_index") {
+	    if (parms.size() != 0) {
+		  cerr << loc.get_fileline() << ": error: " << method_name
+		       << "() method takes no arguments" << endl;
+		  des->errors += 1;
+	    }
+	    NetESFunc*sys_expr = new NetESFunc(sfunc, result_type, 1);
+	    sys_expr->set_line(loc);
+	    sys_expr->parm(0, array_arg);
+	    return sys_expr;
+      }
+
+      if (with_expr) {
+	    if (!parms.empty()) {
+		  cerr << loc.get_fileline() << ": error: array locator "
+		       << "`with` clause cannot be combined with a "
+		       << "method argument." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    return elab_queue_locator_with_predicate(des, scope, loc, with_expr,
+						     array_arg, element_type,
+						     result_type, method_name);
+      }
+
+      NetExpr* cmp = elab_queue_locator_cmp_arg(des, scope, loc, parms,
+						element_type);
+      if (!cmp) return 0;
+      NetESFunc*sys_expr = new NetESFunc(sfunc, result_type, 2);
+      sys_expr->set_line(loc);
+      sys_expr->parm(0, array_arg);
+      sys_expr->parm(1, cmp);
+      return sys_expr;
 }
 
 bool type_is_vectorable(ivl_variable_type_t type)
@@ -3746,240 +3824,11 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 				    sys_expr->parm(0, prop);
 				    return sys_expr;
 			      }
-			      if (method_name == "unique") {
-				    if (parms_.size() != 0) {
-					  cerr << get_fileline() << ": error: unique() method "
-					       << "takes no arguments" << endl;
-					  des->errors += 1;
-				    }
-				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: queue unique() for this "
-					       << "element type is not yet supported." << endl;
-					  des->errors += 1;
-					  return 0;
-				    }
-				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$unique",
-					static_cast<ivl_type_t>(queue), 1);
-				    sys_expr->set_line(*this);
-				    sys_expr->parm(0, prop);
-				    return sys_expr;
-			      }
-			      if (method_name == "unique_index") {
-				    if (parms_.size() != 0) {
-					  cerr << get_fileline() << ": error: unique_index() method "
-					       << "takes no arguments" << endl;
-					  des->errors += 1;
-				    }
-				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: queue unique_index() for this "
-					       << "element type is not yet supported." << endl;
-					  des->errors += 1;
-					  return 0;
-				    }
-				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$unique_index",
-					static_cast<ivl_type_t>(&ivl_queue_unique_index_ret), 1);
-				    sys_expr->set_line(*this);
-				    sys_expr->parm(0, prop);
-				    return sys_expr;
-			      }
-			      if (method_name == "find") {
-				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: queue find() for this "
-					       << "element type is not yet supported." << endl;
-					  des->errors += 1;
-					  return 0;
-				    }
-				    if (with_expr_) {
-					  if (!parms_.empty()) {
-						cerr << get_fileline() << ": error: array locator "
-						     << "`with` clause cannot be combined with a "
-						     << "method argument." << endl;
-						des->errors += 1;
-						return 0;
-					  }
-					  return elab_queue_locator_with_predicate(
-					      des, scope, *this, with_expr_, prop,
-					      element_type, static_cast<ivl_type_t>(queue),
-					      method_name);
-				    }
-				    NetExpr* cmp = elab_queue_locator_cmp_arg(
-					des, scope, *this, parms_, element_type);
-				    if (!cmp) return 0;
-				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$find",
-					static_cast<ivl_type_t>(queue), 2);
-				    sys_expr->set_line(*this);
-				    sys_expr->parm(0, prop);
-				    sys_expr->parm(1, cmp);
-				    return sys_expr;
-			      }
-			      if (method_name == "find_index") {
-				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: queue find_index() for this "
-					       << "element type is not yet supported." << endl;
-					  des->errors += 1;
-					  return 0;
-				    }
-				    if (with_expr_) {
-					  if (!parms_.empty()) {
-						cerr << get_fileline() << ": error: array locator "
-						     << "`with` clause cannot be combined with a "
-						     << "method argument." << endl;
-						des->errors += 1;
-						return 0;
-					  }
-					  return elab_queue_locator_with_predicate(
-					      des, scope, *this, with_expr_, prop,
-					      element_type,
-					      static_cast<ivl_type_t>(&ivl_queue_unique_index_ret),
-					      method_name);
-				    }
-				    NetExpr* cmp = elab_queue_locator_cmp_arg(
-					des, scope, *this, parms_, element_type);
-				    if (!cmp) return 0;
-				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$find_index",
-					static_cast<ivl_type_t>(&ivl_queue_unique_index_ret), 2);
-				    sys_expr->set_line(*this);
-				    sys_expr->parm(0, prop);
-				    sys_expr->parm(1, cmp);
-				    return sys_expr;
-			      }
-			      if (method_name == "find_first") {
-				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: queue find_first() for this "
-					       << "element type is not yet supported." << endl;
-					  des->errors += 1;
-					  return 0;
-				    }
-				    if (with_expr_) {
-					  if (!parms_.empty()) {
-						cerr << get_fileline() << ": error: array locator "
-						     << "`with` clause cannot be combined with a "
-						     << "method argument." << endl;
-						des->errors += 1;
-						return 0;
-					  }
-					  return elab_queue_locator_with_predicate(
-					      des, scope, *this, with_expr_, prop,
-					      element_type,
-					      static_cast<ivl_type_t>(queue),
-					      method_name);
-				    }
-				    NetExpr* cmp = elab_queue_locator_cmp_arg(
-					des, scope, *this, parms_, element_type);
-				    if (!cmp) return 0;
-				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$find_first",
-					static_cast<ivl_type_t>(queue), 2);
-				    sys_expr->set_line(*this);
-				    sys_expr->parm(0, prop);
-				    sys_expr->parm(1, cmp);
-				    return sys_expr;
-			      }
-			      if (method_name == "find_first_index") {
-				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: queue find_first_index() for this "
-					       << "element type is not yet supported." << endl;
-					  des->errors += 1;
-					  return 0;
-				    }
-				    if (with_expr_) {
-					  if (!parms_.empty()) {
-						cerr << get_fileline() << ": error: array locator "
-						     << "`with` clause cannot be combined with a "
-						     << "method argument." << endl;
-						des->errors += 1;
-						return 0;
-					  }
-					  return elab_queue_locator_with_predicate(
-					      des, scope, *this, with_expr_, prop,
-					      element_type,
-					      static_cast<ivl_type_t>(
-						  &ivl_queue_unique_index_ret),
-					      method_name);
-				    }
-				    NetExpr* cmp = elab_queue_locator_cmp_arg(
-					des, scope, *this, parms_, element_type);
-				    if (!cmp) return 0;
-				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$find_first_index",
-					static_cast<ivl_type_t>(
-					    &ivl_queue_unique_index_ret),
-					2);
-				    sys_expr->set_line(*this);
-				    sys_expr->parm(0, prop);
-				    sys_expr->parm(1, cmp);
-				    return sys_expr;
-			      }
-			      if (method_name == "find_last") {
-				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: queue find_last() for this "
-					       << "element type is not yet supported." << endl;
-					  des->errors += 1;
-					  return 0;
-				    }
-				    if (with_expr_) {
-					  if (!parms_.empty()) {
-						cerr << get_fileline() << ": error: array locator "
-						     << "`with` clause cannot be combined with a "
-						     << "method argument." << endl;
-						des->errors += 1;
-						return 0;
-					  }
-					  return elab_queue_locator_with_predicate(
-					      des, scope, *this, with_expr_, prop,
-					      element_type,
-					      static_cast<ivl_type_t>(queue),
-					      method_name);
-				    }
-				    NetExpr* cmp = elab_queue_locator_cmp_arg(
-					des, scope, *this, parms_, element_type);
-				    if (!cmp) return 0;
-				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$find_last",
-					static_cast<ivl_type_t>(queue), 2);
-				    sys_expr->set_line(*this);
-				    sys_expr->parm(0, prop);
-				    sys_expr->parm(1, cmp);
-				    return sys_expr;
-			      }
-			      if (method_name == "find_last_index") {
-				    if (!queue_method_element_is_integral_vec4(element_type)) {
-					  cerr << get_fileline() << ": sorry: queue find_last_index() for this "
-					       << "element type is not yet supported." << endl;
-					  des->errors += 1;
-					  return 0;
-				    }
-				    if (with_expr_) {
-					  if (!parms_.empty()) {
-						cerr << get_fileline() << ": error: array locator "
-						     << "`with` clause cannot be combined with a "
-						     << "method argument." << endl;
-						des->errors += 1;
-						return 0;
-					  }
-					  return elab_queue_locator_with_predicate(
-					      des, scope, *this, with_expr_, prop,
-					      element_type,
-					      static_cast<ivl_type_t>(
-						  &ivl_queue_unique_index_ret),
-					      method_name);
-				    }
-				    NetExpr* cmp = elab_queue_locator_cmp_arg(
-					des, scope, *this, parms_, element_type);
-				    if (!cmp) return 0;
-				    NetESFunc*sys_expr = new NetESFunc(
-					"$ivl_queue_method$find_last_index",
-					static_cast<ivl_type_t>(
-					    &ivl_queue_unique_index_ret),
-					2);
-				    sys_expr->set_line(*this);
-				    sys_expr->parm(0, prop);
-				    sys_expr->parm(1, cmp);
-				    return sys_expr;
+			      if (is_array_locator_method(method_name)) {
+				    return elab_array_locator_method(des, scope, *this,
+						method_name, prop, element_type,
+						static_cast<ivl_type_t>(queue),
+						parms_, with_expr_, "queue");
 			      }
 			}
 			if (ptype && ptype->base_type() == IVL_VT_DARRAY) {
@@ -4098,179 +3947,11 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    ivl_type_t queue_rtype = queue ? static_cast<ivl_type_t>(queue)
 					   : static_cast<ivl_type_t>(dar);
 
-	    if (method_name == "find") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: dynamic array find() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  if (with_expr_) {
-			if (!parms_.empty()) {
-			      cerr << get_fileline() << ": error: array locator `with` clause "
-				      "cannot be combined with a method argument." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			return elab_queue_locator_with_predicate(
-			    des, scope, *this, with_expr_, sub_expr, element_type,
-			    queue_rtype, method_name);
-		  }
-		  NetExpr* cmp = elab_queue_locator_cmp_arg(
-		      des, scope, *this, parms_, element_type);
-		  if (!cmp) return 0;
-		  NetESFunc*sys_expr = new NetESFunc(
-		      "$ivl_queue_method$find", queue_rtype, 2);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  sys_expr->parm(1, cmp);
-		  return sys_expr;
-	    }
-	    if (method_name == "find_index") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: dynamic array find_index() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  if (with_expr_) {
-			if (!parms_.empty()) {
-			      cerr << get_fileline() << ": error: array locator `with` clause "
-				      "cannot be combined with a method argument." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			return elab_queue_locator_with_predicate(
-			    des, scope, *this, with_expr_, sub_expr, element_type,
-			    static_cast<ivl_type_t>(&ivl_queue_unique_index_ret),
-			    method_name);
-		  }
-		  NetExpr* cmp = elab_queue_locator_cmp_arg(
-		      des, scope, *this, parms_, element_type);
-		  if (!cmp) return 0;
-		  NetESFunc*sys_expr = new NetESFunc(
-		      "$ivl_queue_method$find_index",
-		      static_cast<ivl_type_t>(&ivl_queue_unique_index_ret), 2);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  sys_expr->parm(1, cmp);
-		  return sys_expr;
-	    }
-	    if (method_name == "find_first") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: dynamic array find_first() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  if (with_expr_) {
-			if (!parms_.empty()) {
-			      cerr << get_fileline() << ": error: array locator `with` clause "
-				      "cannot be combined with a method argument." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			return elab_queue_locator_with_predicate(
-			    des, scope, *this, with_expr_, sub_expr, element_type,
-			    queue_rtype, method_name);
-		  }
-		  NetExpr* cmp = elab_queue_locator_cmp_arg(
-		      des, scope, *this, parms_, element_type);
-		  if (!cmp) return 0;
-		  NetESFunc*sys_expr = new NetESFunc(
-		      "$ivl_queue_method$find_first", queue_rtype, 2);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  sys_expr->parm(1, cmp);
-		  return sys_expr;
-	    }
-	    if (method_name == "find_first_index") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: dynamic array find_first_index() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  if (with_expr_) {
-			if (!parms_.empty()) {
-			      cerr << get_fileline() << ": error: array locator `with` clause "
-				      "cannot be combined with a method argument." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			return elab_queue_locator_with_predicate(
-			    des, scope, *this, with_expr_, sub_expr, element_type,
-			    static_cast<ivl_type_t>(&ivl_queue_unique_index_ret),
-			    method_name);
-		  }
-		  NetExpr* cmp = elab_queue_locator_cmp_arg(
-		      des, scope, *this, parms_, element_type);
-		  if (!cmp) return 0;
-		  NetESFunc*sys_expr = new NetESFunc(
-		      "$ivl_queue_method$find_first_index",
-		      static_cast<ivl_type_t>(&ivl_queue_unique_index_ret), 2);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  sys_expr->parm(1, cmp);
-		  return sys_expr;
-	    }
-	    if (method_name == "find_last") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: dynamic array find_last() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  if (with_expr_) {
-			if (!parms_.empty()) {
-			      cerr << get_fileline() << ": error: array locator `with` clause "
-				      "cannot be combined with a method argument." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			return elab_queue_locator_with_predicate(
-			    des, scope, *this, with_expr_, sub_expr, element_type,
-			    queue_rtype, method_name);
-		  }
-		  NetExpr* cmp = elab_queue_locator_cmp_arg(
-		      des, scope, *this, parms_, element_type);
-		  if (!cmp) return 0;
-		  NetESFunc*sys_expr = new NetESFunc(
-		      "$ivl_queue_method$find_last", queue_rtype, 2);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  sys_expr->parm(1, cmp);
-		  return sys_expr;
-	    }
-	    if (method_name == "find_last_index") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: dynamic array find_last_index() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  if (with_expr_) {
-			if (!parms_.empty()) {
-			      cerr << get_fileline() << ": error: array locator `with` clause "
-				      "cannot be combined with a method argument." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			return elab_queue_locator_with_predicate(
-			    des, scope, *this, with_expr_, sub_expr, element_type,
-			    static_cast<ivl_type_t>(&ivl_queue_unique_index_ret),
-			    method_name);
-		  }
-		  NetExpr* cmp = elab_queue_locator_cmp_arg(
-		      des, scope, *this, parms_, element_type);
-		  if (!cmp) return 0;
-		  NetESFunc*sys_expr = new NetESFunc(
-		      "$ivl_queue_method$find_last_index",
-		      static_cast<ivl_type_t>(&ivl_queue_unique_index_ret), 2);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  sys_expr->parm(1, cmp);
-		  return sys_expr;
+	    if (is_array_locator_method(method_name)) {
+		  return elab_array_locator_method(des, scope, *this, method_name,
+						   sub_expr, element_type,
+						   queue_rtype, parms_, with_expr_,
+						   "dynamic array");
 	    }
 
 	    cerr << get_fileline() << ": error: Method " << method_name
@@ -4325,222 +4006,11 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  return sys_expr;
 	    }
 
-	    if (method_name == "unique") {
-		  if (parms_.size() != 0) {
-			cerr << get_fileline() << ": error: unique() method "
-			     << "takes no arguments" << endl;
-			des->errors += 1;
-		  }
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: queue unique() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  NetESFunc*sys_expr = new NetESFunc(
-		      "$ivl_queue_method$unique",
-		      static_cast<ivl_type_t>(queue), 1);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  return sys_expr;
-	    }
-
-	    if (method_name == "unique_index") {
-		  if (parms_.size() != 0) {
-			cerr << get_fileline() << ": error: unique_index() method "
-			     << "takes no arguments" << endl;
-			des->errors += 1;
-		  }
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: queue unique_index() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  NetESFunc*sys_expr = new NetESFunc(
-		      "$ivl_queue_method$unique_index",
-		      static_cast<ivl_type_t>(&ivl_queue_unique_index_ret), 1);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  return sys_expr;
-	    }
-
-	    if (method_name == "find") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: queue find() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  if (with_expr_) {
-			if (!parms_.empty()) {
-			      cerr << get_fileline() << ": error: array locator `with` clause "
-				      "cannot be combined with a method argument." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			return elab_queue_locator_with_predicate(
-			    des, scope, *this, with_expr_, sub_expr, element_type,
-			    static_cast<ivl_type_t>(queue), method_name);
-		  }
-		  NetExpr* cmp = elab_queue_locator_cmp_arg(
-		      des, scope, *this, parms_, element_type);
-		  if (!cmp) return 0;
-		  NetESFunc*sys_expr = new NetESFunc(
-		      "$ivl_queue_method$find",
-		      static_cast<ivl_type_t>(queue), 2);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  sys_expr->parm(1, cmp);
-		  return sys_expr;
-	    }
-	    if (method_name == "find_index") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: queue find_index() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  if (with_expr_) {
-			if (!parms_.empty()) {
-			      cerr << get_fileline() << ": error: array locator `with` clause "
-				      "cannot be combined with a method argument." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			return elab_queue_locator_with_predicate(
-			    des, scope, *this, with_expr_, sub_expr, element_type,
-			    static_cast<ivl_type_t>(&ivl_queue_unique_index_ret),
-			    method_name);
-		  }
-		  NetExpr* cmp = elab_queue_locator_cmp_arg(
-		      des, scope, *this, parms_, element_type);
-		  if (!cmp) return 0;
-		  NetESFunc*sys_expr = new NetESFunc(
-		      "$ivl_queue_method$find_index",
-		      static_cast<ivl_type_t>(&ivl_queue_unique_index_ret), 2);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  sys_expr->parm(1, cmp);
-		  return sys_expr;
-	    }
-	    if (method_name == "find_first") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: queue find_first() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  if (with_expr_) {
-			if (!parms_.empty()) {
-			      cerr << get_fileline() << ": error: array locator `with` clause "
-				      "cannot be combined with a method argument." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			return elab_queue_locator_with_predicate(
-			    des, scope, *this, with_expr_, sub_expr, element_type,
-			    static_cast<ivl_type_t>(queue), method_name);
-		  }
-		  NetExpr* cmp = elab_queue_locator_cmp_arg(
-		      des, scope, *this, parms_, element_type);
-		  if (!cmp) return 0;
-		  NetESFunc*sys_expr = new NetESFunc(
-		      "$ivl_queue_method$find_first",
-		      static_cast<ivl_type_t>(queue), 2);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  sys_expr->parm(1, cmp);
-		  return sys_expr;
-	    }
-	    if (method_name == "find_first_index") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: queue find_first_index() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  if (with_expr_) {
-			if (!parms_.empty()) {
-			      cerr << get_fileline() << ": error: array locator `with` clause "
-				      "cannot be combined with a method argument." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			return elab_queue_locator_with_predicate(
-			    des, scope, *this, with_expr_, sub_expr, element_type,
-			    static_cast<ivl_type_t>(&ivl_queue_unique_index_ret),
-			    method_name);
-		  }
-		  NetExpr* cmp = elab_queue_locator_cmp_arg(
-		      des, scope, *this, parms_, element_type);
-		  if (!cmp) return 0;
-		  NetESFunc*sys_expr = new NetESFunc(
-		      "$ivl_queue_method$find_first_index",
-		      static_cast<ivl_type_t>(&ivl_queue_unique_index_ret), 2);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  sys_expr->parm(1, cmp);
-		  return sys_expr;
-	    }
-	    if (method_name == "find_last") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: queue find_last() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  if (with_expr_) {
-			if (!parms_.empty()) {
-			      cerr << get_fileline() << ": error: array locator `with` clause "
-				      "cannot be combined with a method argument." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			return elab_queue_locator_with_predicate(
-			    des, scope, *this, with_expr_, sub_expr, element_type,
-			    static_cast<ivl_type_t>(queue), method_name);
-		  }
-		  NetExpr* cmp = elab_queue_locator_cmp_arg(
-		      des, scope, *this, parms_, element_type);
-		  if (!cmp) return 0;
-		  NetESFunc*sys_expr = new NetESFunc(
-		      "$ivl_queue_method$find_last",
-		      static_cast<ivl_type_t>(queue), 2);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  sys_expr->parm(1, cmp);
-		  return sys_expr;
-	    }
-	    if (method_name == "find_last_index") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: queue find_last_index() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  if (with_expr_) {
-			if (!parms_.empty()) {
-			      cerr << get_fileline() << ": error: array locator `with` clause "
-				      "cannot be combined with a method argument." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			return elab_queue_locator_with_predicate(
-			    des, scope, *this, with_expr_, sub_expr, element_type,
-			    static_cast<ivl_type_t>(&ivl_queue_unique_index_ret),
-			    method_name);
-		  }
-		  NetExpr* cmp = elab_queue_locator_cmp_arg(
-		      des, scope, *this, parms_, element_type);
-		  if (!cmp) return 0;
-		  NetESFunc*sys_expr = new NetESFunc(
-		      "$ivl_queue_method$find_last_index",
-		      static_cast<ivl_type_t>(&ivl_queue_unique_index_ret), 2);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  sys_expr->parm(1, cmp);
-		  return sys_expr;
+	    if (is_array_locator_method(method_name)) {
+		  return elab_array_locator_method(des, scope, *this, method_name,
+						   sub_expr, element_type,
+						   static_cast<ivl_type_t>(queue),
+						   parms_, with_expr_, "queue");
 	    }
 
 	    cerr << get_fileline() << ": error: Method " << method_name

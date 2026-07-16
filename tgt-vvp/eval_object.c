@@ -276,45 +276,55 @@ static unsigned queue_unique_src_elem_wid(ivl_expr_t arg)
       return 0;
 }
 
+/*
+ * Emit a queue locator opcode. Plain signal uses `op_v`; class property
+ * uses `op_prop_v`. Returning a queue object leaves it on the object stack.
+ *
+ * Note: opcode names are still type-specific (vec4) for this slice. Future
+ * real/string/class support should prefer parameterized opcodes or typed
+ * helpers rather than cloning this table per element type.
+ */
+static int emit_queue_locator_opcode(ivl_expr_t arg, unsigned elem_wid,
+				     const char* op_v, const char* op_prop_v)
+{
+      if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
+	    ivl_signal_t cl = ivl_expr_signal(arg);
+	    unsigned pidx = ivl_expr_property_idx(arg);
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
+	    fprintf(vvp_out, "    %s %u, %u;\n", op_prop_v, pidx, elem_wid);
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+      } else {
+	    ivl_signal_t sig = ivl_expr_signal(arg);
+	    fprintf(vvp_out, "    %s v%p_0, %u;\n", op_v, sig, elem_wid);
+      }
+      return 0;
+}
+
 static int eval_queue_method_unique(ivl_expr_t expr)
 {
-      const char*name = ivl_expr_name(expr);
+      static const struct {
+	    const char* name;
+	    const char* op_v;
+	    const char* op_prop_v;
+      } table[] = {
+	    { "$ivl_queue_method$unique",
+	      "%queue/unique/v", "%queue/unique/prop/v" },
+	    { "$ivl_queue_method$unique_index",
+	      "%queue/unique/index/v", "%queue/unique/index/prop/v" },
+      };
+
+      const char* name = ivl_expr_name(expr);
       ivl_expr_t arg = ivl_expr_parm(expr, 0);
       unsigned elem_wid = queue_unique_src_elem_wid(arg);
       if (elem_wid == 0) return 1;
 
-      if (strcmp(name, "$ivl_queue_method$unique") == 0) {
-	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
-		  ivl_signal_t cl = ivl_expr_signal(arg);
-		  unsigned pidx = ivl_expr_property_idx(arg);
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
-		  fprintf(vvp_out, "    %%queue/unique/prop/v %u, %u;\n", pidx,
-		          elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-	    } else {
-		  ivl_signal_t sig = ivl_expr_signal(arg);
-		  fprintf(vvp_out, "    %%queue/unique/v v%p_0, %u;\n", sig,
-		          elem_wid);
+      for (unsigned idx = 0; idx < sizeof table / sizeof table[0]; idx += 1) {
+	    if (strcmp(name, table[idx].name) == 0) {
+		  return emit_queue_locator_opcode(arg, elem_wid,
+						   table[idx].op_v,
+						   table[idx].op_prop_v);
 	    }
-	    return 0;
       }
-
-      if (strcmp(name, "$ivl_queue_method$unique_index") == 0) {
-	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
-		  ivl_signal_t cl = ivl_expr_signal(arg);
-		  unsigned pidx = ivl_expr_property_idx(arg);
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
-		  fprintf(vvp_out, "    %%queue/unique/index/prop/v %u, %u;\n",
-		          pidx, elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-	    } else {
-		  ivl_signal_t sig = ivl_expr_signal(arg);
-		  fprintf(vvp_out, "    %%queue/unique/index/v v%p_0, %u;\n",
-		          sig, elem_wid);
-	    }
-	    return 0;
-      }
-
       return 1;
 }
 
@@ -361,12 +371,76 @@ static int queue_with_multi(enum queue_locator_with_mode_e mode)
       return mode == QUEUE_WITH_FIND || mode == QUEUE_WITH_FIND_INDEX;
 }
 
+static int queue_with_as_index(enum queue_locator_with_mode_e mode)
+{
+      return mode == QUEUE_WITH_FIND_INDEX ||
+	     mode == QUEUE_WITH_FIND_FIRST_INDEX ||
+	     mode == QUEUE_WITH_FIND_LAST_INDEX;
+}
+
+/* On predicate match: append value/index and continue or stop. */
+static void emit_queue_with_on_match(enum queue_locator_with_mode_e mode,
+				     ivl_signal_t item_sig, int i_reg,
+				     unsigned elem_wid, unsigned match_lab)
+{
+      int multi = queue_with_multi(mode);
+      int as_index = queue_with_as_index(mode);
+
+      if (!multi) {
+	    fprintf(vvp_out, "    %%queue/new_empty/v;\n");
+      }
+      if (as_index) {
+	    fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
+	    fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
+      } else {
+	    fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
+	    fprintf(vvp_out, "    %%queue/append_word/v %u;\n", elem_wid);
+      }
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, match_lab);
+}
+
+static void emit_queue_with_init_index(int reverse, int i_reg, int n_reg)
+{
+      if (!reverse) {
+	    fprintf(vvp_out, "    %%ix/load %u, 0, 0;\n", i_reg);
+	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+      } else {
+	    fprintf(vvp_out, "    %%ix/load %u, 0, 0;\n", i_reg);
+	    fprintf(vvp_out, "    %%ix/mov %u, %u;\n", i_reg, n_reg);
+	    fprintf(vvp_out, "    %%ix/sub %u, 1, 0;\n", i_reg);
+      }
+}
+
+static void emit_queue_with_loop_test(int reverse, int i_reg, int n_reg,
+				      unsigned lab_loop_end)
+{
+      if (!reverse) {
+	    fprintf(vvp_out, "    %%cmpix/ltu %u, %u;\n", i_reg, n_reg);
+	    fprintf(vvp_out, "    %%jmp/0 T_%u.%u, 4;\n", thread_count,
+		    lab_loop_end);
+      } else {
+	    fprintf(vvp_out, "    %%cmpix/slt0 %u;\n", i_reg);
+	    fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n", thread_count,
+		    lab_loop_end);
+      }
+}
+
+static void emit_queue_with_step_index(int reverse, int i_reg, unsigned lab_top)
+{
+      if (!reverse) {
+	    fprintf(vvp_out, "    %%ix/add %u, 1, 0;\n", i_reg);
+      } else {
+	    fprintf(vvp_out, "    %%ix/sub %u, 1, 0;\n", i_reg);
+      }
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
+}
+
 static int eval_queue_method_find_with(ivl_expr_t expr)
 {
       const char* name = ivl_expr_name(expr);
       if (ivl_expr_parms(expr) != 4) return 1;
       if (strncmp(name, "$ivl_queue_method$",
-                  sizeof("$ivl_queue_method$") - 1) != 0) return 1;
+		  sizeof("$ivl_queue_method$") - 1) != 0) return 1;
       if (strstr(name, "_with") == 0) return 1;
 
       ivl_expr_t qarg = ivl_expr_parm(expr, 0);
@@ -376,7 +450,8 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
       unsigned elem_wid = queue_unique_src_elem_wid(qarg);
       if (elem_wid == 0) return 1;
 
-      enum queue_locator_with_mode_e mode = queue_locator_with_mode_from_name(name);
+      enum queue_locator_with_mode_e mode =
+	    queue_locator_with_mode_from_name(name);
       if ((int) mode < 0) return 1;
 
       int i_reg = allocate_word();
@@ -387,97 +462,66 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
       unsigned lab_found = local_count++;
       unsigned lab_end = local_count++;
       int reverse = queue_with_reverse(mode);
-      unsigned append_wid = (mode == QUEUE_WITH_FIND_INDEX) ? 32 : elem_wid;
+      int multi = queue_with_multi(mode);
+      int is_prop = (ivl_expr_type(qarg) == IVL_EX_PROPERTY);
+      /* First/last stop label: property path needs an extra pop. */
+      unsigned stop_lab = is_prop ? lab_found : lab_end;
+      unsigned match_lab = multi ? lab_nom : stop_lab;
 
-      if (ivl_expr_type(qarg) == IVL_EX_PROPERTY) {
+      if (is_prop) {
 	    ivl_signal_t cl = ivl_expr_signal(qarg);
 	    unsigned pidx = ivl_expr_property_idx(qarg);
 	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 	    fprintf(vvp_out, "    %%prop/queue/size %u;\n", pidx);
 	    fprintf(vvp_out, "    %%ix/vec4/s %u;\n", n_reg);
-	    if (queue_with_multi(mode)) {
+	    if (multi) {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
 	    }
-	    if (!reverse) {
-		  fprintf(vvp_out, "    %%ix/load %u, 0, 0;\n", i_reg);
-		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
-	    } else {
-		  fprintf(vvp_out, "    %%ix/load %u, 0, 0;\n", i_reg);
-		  fprintf(vvp_out, "    %%ix/mov %u, %u;\n", i_reg, n_reg);
-		  fprintf(vvp_out, "    %%ix/sub %u, 1, 0;\n", i_reg);
-	    }
+	    emit_queue_with_init_index(reverse, i_reg, n_reg);
 	    fprintf(vvp_out, "T_%u.%u ; queue with loop\n", thread_count, lab_top);
-	    if (!reverse) {
-		  fprintf(vvp_out, "    %%cmpix/ltu %u, %u;\n", i_reg, n_reg);
-		  fprintf(vvp_out, "    %%jmp/0 T_%u.%u, 4;\n", thread_count,
-		          lab_loop_end);
-	    } else {
-		  fprintf(vvp_out, "    %%cmpix/slt0 %u;\n", i_reg);
-		  fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n", thread_count,
-		          lab_loop_end);
-	    }
+	    emit_queue_with_loop_test(reverse, i_reg, n_reg, lab_loop_end);
 	    /* cmpix leaves flag 4 set; %queue/word* uses flag 4 for X push */
 	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
-
 	    fprintf(vvp_out, "    %%queue/word/prop/v %u, %u, %u;\n", pidx,
-	            elem_wid, i_reg);
-	    fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", item_sig,
-	            elem_wid);
-	    fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
-	    fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, 32;\n", idx_sig);
-
-	    int pf = draw_eval_condition(pred);
-	    fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_nom,
-	            pf);
-	    clr_flag(pf);
-
-	    if (mode == QUEUE_WITH_FIND) {
-		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
-		  fprintf(vvp_out, "    %%queue/append_word/v %u;\n", append_wid);
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
-	    } else if (mode == QUEUE_WITH_FIND_INDEX) {
-		  fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
-		  fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
-	    } else if (mode == QUEUE_WITH_FIND_FIRST) {
+		    elem_wid, i_reg);
+      } else {
+	    ivl_signal_t sig = ivl_expr_signal(qarg);
+	    fprintf(vvp_out, "    %%queue/size/v v%p_0;\n", sig);
+	    fprintf(vvp_out, "    %%ix/vec4/s %u;\n", n_reg);
+	    if (multi) {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
-		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
-		  fprintf(vvp_out, "    %%queue/append_word/v %u;\n", elem_wid);
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_found);
-	    } else if (mode == QUEUE_WITH_FIND_FIRST_INDEX) {
-		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
-		  fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
-		  fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_found);
-	    } else if (mode == QUEUE_WITH_FIND_LAST) {
-		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
-		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
-		  fprintf(vvp_out, "    %%queue/append_word/v %u;\n", elem_wid);
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_found);
-	    } else {
-		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
-		  fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
-		  fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_found);
 	    }
+	    emit_queue_with_init_index(reverse, i_reg, n_reg);
+	    fprintf(vvp_out, "T_%u.%u ; queue with loop (var)\n", thread_count,
+		    lab_top);
+	    emit_queue_with_loop_test(reverse, i_reg, n_reg, lab_loop_end);
+	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+	    fprintf(vvp_out, "    %%queue/word/v v%p_0, %u, %u;\n", sig, elem_wid,
+		    i_reg);
+      }
 
-	    fprintf(vvp_out, "T_%u.%u ; nomatch\n", thread_count, lab_nom);
-	    if (!reverse) {
-		  fprintf(vvp_out, "    %%ix/add %u, 1, 0;\n", i_reg);
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
-	    } else {
-		  fprintf(vvp_out, "    %%ix/sub %u, 1, 0;\n", i_reg);
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
-	    }
+      fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", item_sig, elem_wid);
+      fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
+      fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, 32;\n", idx_sig);
 
+      int pf = draw_eval_condition(pred);
+      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_nom, pf);
+      clr_flag(pf);
+
+      emit_queue_with_on_match(mode, item_sig, i_reg, elem_wid, match_lab);
+
+      fprintf(vvp_out, "T_%u.%u ; nomatch\n", thread_count, lab_nom);
+      emit_queue_with_step_index(reverse, i_reg, lab_top);
+
+      if (is_prop) {
 	    fprintf(vvp_out, "T_%u.%u ; found (queue prop)\n", thread_count,
-	            lab_found);
+		    lab_found);
 	    fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_end);
 
 	    fprintf(vvp_out, "T_%u.%u ; loop end (prop)\n", thread_count,
-	            lab_loop_end);
-	    if (queue_with_multi(mode)) {
+		    lab_loop_end);
+	    if (multi) {
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 	    } else {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
@@ -485,87 +529,9 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    }
 	    fprintf(vvp_out, "T_%u.%u ; with end (prop)\n", thread_count, lab_end);
       } else {
-	    ivl_signal_t sig = ivl_expr_signal(qarg);
-	    fprintf(vvp_out, "    %%queue/size/v v%p_0;\n", sig);
-	    fprintf(vvp_out, "    %%ix/vec4/s %u;\n", n_reg);
-	    if (queue_with_multi(mode)) {
-		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
-	    }
-	    if (!reverse) {
-		  fprintf(vvp_out, "    %%ix/load %u, 0, 0;\n", i_reg);
-		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
-	    } else {
-		  fprintf(vvp_out, "    %%ix/load %u, 0, 0;\n", i_reg);
-		  fprintf(vvp_out, "    %%ix/mov %u, %u;\n", i_reg, n_reg);
-		  fprintf(vvp_out, "    %%ix/sub %u, 1, 0;\n", i_reg);
-	    }
-	    fprintf(vvp_out, "T_%u.%u ; queue with loop (var)\n", thread_count,
-	            lab_top);
-	    if (!reverse) {
-		  fprintf(vvp_out, "    %%cmpix/ltu %u, %u;\n", i_reg, n_reg);
-		  fprintf(vvp_out, "    %%jmp/0 T_%u.%u, 4;\n", thread_count,
-		          lab_loop_end);
-	    } else {
-		  fprintf(vvp_out, "    %%cmpix/slt0 %u;\n", i_reg);
-		  fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n", thread_count,
-		          lab_loop_end);
-	    }
-	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
-
-	    fprintf(vvp_out, "    %%queue/word/v v%p_0, %u, %u;\n", sig, elem_wid,
-	            i_reg);
-	    fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", item_sig,
-	            elem_wid);
-	    fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
-	    fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, 32;\n", idx_sig);
-
-	    int pf = draw_eval_condition(pred);
-	    fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_nom,
-	            pf);
-	    clr_flag(pf);
-
-	    if (mode == QUEUE_WITH_FIND) {
-		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
-		  fprintf(vvp_out, "    %%queue/append_word/v %u;\n", append_wid);
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
-	    } else if (mode == QUEUE_WITH_FIND_INDEX) {
-		  fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
-		  fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_nom);
-	    } else if (mode == QUEUE_WITH_FIND_FIRST) {
-		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
-		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
-		  fprintf(vvp_out, "    %%queue/append_word/v %u;\n", elem_wid);
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_end);
-	    } else if (mode == QUEUE_WITH_FIND_FIRST_INDEX) {
-		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
-		  fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
-		  fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_end);
-	    } else if (mode == QUEUE_WITH_FIND_LAST) {
-		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
-		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
-		  fprintf(vvp_out, "    %%queue/append_word/v %u;\n", elem_wid);
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_end);
-	    } else {
-		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
-		  fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
-		  fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_end);
-	    }
-
-	    fprintf(vvp_out, "T_%u.%u ; nomatch (var)\n", thread_count, lab_nom);
-	    if (!reverse) {
-		  fprintf(vvp_out, "    %%ix/add %u, 1, 0;\n", i_reg);
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
-	    } else {
-		  fprintf(vvp_out, "    %%ix/sub %u, 1, 0;\n", i_reg);
-		  fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
-	    }
-
 	    fprintf(vvp_out, "T_%u.%u ; loop end (var)\n", thread_count,
-	            lab_loop_end);
-	    if (mode >= QUEUE_WITH_FIND_FIRST) {
+		    lab_loop_end);
+	    if (!multi) {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
 	    }
 	    fprintf(vvp_out, "T_%u.%u ; with end (var)\n", thread_count, lab_end);
@@ -578,10 +544,30 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 
 static int eval_queue_method_find(ivl_expr_t expr)
 {
-      const char*name = ivl_expr_name(expr);
+      static const struct {
+	    const char* name;
+	    const char* op_v;
+	    const char* op_prop_v;
+      } table[] = {
+	    { "$ivl_queue_method$find",
+	      "%queue/find/v", "%queue/find/prop/v" },
+	    { "$ivl_queue_method$find_index",
+	      "%queue/find/index/v", "%queue/find/index/prop/v" },
+	    { "$ivl_queue_method$find_first",
+	      "%queue/find_first/v", "%queue/find_first/prop/v" },
+	    { "$ivl_queue_method$find_first_index",
+	      "%queue/find_first/index/v", "%queue/find_first/index/prop/v" },
+	    { "$ivl_queue_method$find_last",
+	      "%queue/find_last/v", "%queue/find_last/prop/v" },
+	    { "$ivl_queue_method$find_last_index",
+	      "%queue/find_last/index/v", "%queue/find_last/index/prop/v" },
+      };
+
+      const char* name = ivl_expr_name(expr);
       if (ivl_expr_parms(expr) == 4 &&
-	  strstr(ivl_expr_name(expr), "_with") != 0)
+	  strstr(ivl_expr_name(expr), "_with") != 0) {
 	    return eval_queue_method_find_with(expr);
+      }
 
       ivl_expr_t qarg = ivl_expr_parm(expr, 0);
       ivl_expr_t carg = ivl_expr_parm(expr, 1);
@@ -590,99 +576,13 @@ static int eval_queue_method_find(ivl_expr_t expr)
 
       draw_eval_vec4(carg);
 
-      if (strcmp(name, "$ivl_queue_method$find") == 0) {
-	    if (ivl_expr_type(qarg) == IVL_EX_PROPERTY) {
-		  ivl_signal_t cl = ivl_expr_signal(qarg);
-		  unsigned pidx = ivl_expr_property_idx(qarg);
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
-		  fprintf(vvp_out, "    %%queue/find/prop/v %u, %u;\n", pidx,
-		          elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-	    } else {
-		  ivl_signal_t sig = ivl_expr_signal(qarg);
-		  fprintf(vvp_out, "    %%queue/find/v v%p_0, %u;\n", sig,
-		          elem_wid);
+      for (unsigned idx = 0; idx < sizeof table / sizeof table[0]; idx += 1) {
+	    if (strcmp(name, table[idx].name) == 0) {
+		  return emit_queue_locator_opcode(qarg, elem_wid,
+						   table[idx].op_v,
+						   table[idx].op_prop_v);
 	    }
-	    return 0;
       }
-
-      if (strcmp(name, "$ivl_queue_method$find_index") == 0) {
-	    if (ivl_expr_type(qarg) == IVL_EX_PROPERTY) {
-		  ivl_signal_t cl = ivl_expr_signal(qarg);
-		  unsigned pidx = ivl_expr_property_idx(qarg);
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
-		  fprintf(vvp_out, "    %%queue/find/index/prop/v %u, %u;\n",
-		          pidx, elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-	    } else {
-		  ivl_signal_t sig = ivl_expr_signal(qarg);
-		  fprintf(vvp_out, "    %%queue/find/index/v v%p_0, %u;\n",
-		          sig, elem_wid);
-	    }
-	    return 0;
-      }
-
-      if (strcmp(name, "$ivl_queue_method$find_first") == 0) {
-	    if (ivl_expr_type(qarg) == IVL_EX_PROPERTY) {
-		  ivl_signal_t cl = ivl_expr_signal(qarg);
-		  unsigned pidx = ivl_expr_property_idx(qarg);
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
-		  fprintf(vvp_out, "    %%queue/find_first/prop/v %u, %u;\n", pidx,
-		          elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-	    } else {
-		  ivl_signal_t sig = ivl_expr_signal(qarg);
-		  fprintf(vvp_out, "    %%queue/find_first/v v%p_0, %u;\n", sig,
-		          elem_wid);
-	    }
-	    return 0;
-      }
-      if (strcmp(name, "$ivl_queue_method$find_first_index") == 0) {
-	    if (ivl_expr_type(qarg) == IVL_EX_PROPERTY) {
-		  ivl_signal_t cl = ivl_expr_signal(qarg);
-		  unsigned pidx = ivl_expr_property_idx(qarg);
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
-		  fprintf(vvp_out, "    %%queue/find_first/index/prop/v %u, %u;\n",
-		          pidx, elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-	    } else {
-		  ivl_signal_t sig = ivl_expr_signal(qarg);
-		  fprintf(vvp_out, "    %%queue/find_first/index/v v%p_0, %u;\n",
-		          sig, elem_wid);
-	    }
-	    return 0;
-      }
-      if (strcmp(name, "$ivl_queue_method$find_last") == 0) {
-	    if (ivl_expr_type(qarg) == IVL_EX_PROPERTY) {
-		  ivl_signal_t cl = ivl_expr_signal(qarg);
-		  unsigned pidx = ivl_expr_property_idx(qarg);
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
-		  fprintf(vvp_out, "    %%queue/find_last/prop/v %u, %u;\n", pidx,
-		          elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-	    } else {
-		  ivl_signal_t sig = ivl_expr_signal(qarg);
-		  fprintf(vvp_out, "    %%queue/find_last/v v%p_0, %u;\n", sig,
-		          elem_wid);
-	    }
-	    return 0;
-      }
-      if (strcmp(name, "$ivl_queue_method$find_last_index") == 0) {
-	    if (ivl_expr_type(qarg) == IVL_EX_PROPERTY) {
-		  ivl_signal_t cl = ivl_expr_signal(qarg);
-		  unsigned pidx = ivl_expr_property_idx(qarg);
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
-		  fprintf(vvp_out, "    %%queue/find_last/index/prop/v %u, %u;\n",
-		          pidx, elem_wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-	    } else {
-		  ivl_signal_t sig = ivl_expr_signal(qarg);
-		  fprintf(vvp_out, "    %%queue/find_last/index/v v%p_0, %u;\n",
-		          sig, elem_wid);
-	    }
-	    return 0;
-      }
-
       return 1;
 }
 
