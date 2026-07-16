@@ -1110,6 +1110,14 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 	    return;
       }
 
+	/* find*_with has four parameters and is lowered in eval_object.c */
+      if (parm_count == 4 &&
+	  strncmp(ivl_expr_name(expr), "$ivl_queue_method$",
+		  sizeof("$ivl_queue_method$") - 1) == 0 &&
+	  strstr(ivl_expr_name(expr), "_with") != 0) {
+	    if (draw_queue_method_find_sfunc(expr) == 0) return;
+      }
+
       if (strcmp(ivl_expr_name(expr), "$size")==0 && parm_count==1) {
 	    ivl_expr_t arg = ivl_expr_parm(expr, 0);
 	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {

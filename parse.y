@@ -4256,6 +4256,21 @@ call_chain_expr
 	delete $5;
 	$$ = tmp;
       }
+  | call_chain_expr K_with '(' expression ')'
+      { PECallFunction* cf = dynamic_cast<PECallFunction*>($1);
+	if (cf == 0) {
+	      if (gn_system_verilog())
+		    yyerror(@2, "Error: `with` clause must follow a method call.");
+	      else
+		    yyerror(@2, "Error: Enable SystemVerilog for `with` clause on method calls.");
+	      delete $1;
+	      delete $4;
+	      $$ = 0;
+	} else {
+	      cf->set_with_clause($4);
+	      $$ = cf;
+	}
+      }
   ;
 
 expr_primary
@@ -4321,6 +4336,15 @@ expr_primary
      so `id (` is not reduced as PEIdent + error. */
   | call_chain_expr
       { $$ = $1; }
+  /* SV: q.find with (item == 1) — iterator names item, index */
+  | hierarchy_identifier K_with '(' expression ')'
+      { std::vector<named_pexpr_t> empty;
+	PECallFunction* tmp = new PECallFunction(*$1, empty);
+	FILE_NAME(tmp, @1);
+	tmp->set_with_clause($4);
+	delete $1;
+	$$ = tmp;
+      }
   | hierarchy_identifier
       { PEIdent*tmp = pform_new_ident(@1, *$1);
 	FILE_NAME(tmp, @1);
@@ -4344,14 +4368,6 @@ expr_primary
 	$$ = tmp;
 	delete nm;
       }
-  | hierarchy_identifier '.' K_unique
-      { pform_name_t * nm = $1;
-	nm->push_back(name_component_t(lex_strings.make("unique")));
-	PEIdent*tmp = pform_new_ident(@1, *nm);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-	delete nm;
-      }
   | hierarchy_identifier '.' K_xor
       { pform_name_t * nm = $1;
 	nm->push_back(name_component_t(lex_strings.make("xor")));
@@ -4360,7 +4376,6 @@ expr_primary
 	$$ = tmp;
 	delete nm;
       }
-
   | package_scope hierarchy_identifier
       { lex_in_package_scope(0);
 	$$ = pform_package_ident(@2, $1, $2);
@@ -4858,6 +4873,12 @@ hierarchy_identifier
       { pform_name_t * tmp = $1;
 	tmp->push_back(name_component_t(lex_strings.make($3)));
 	delete[]$3;
+	$$ = tmp;
+      }
+  /* "unique" is a keyword (K_unique) but also a queue/array method name. */
+  | hierarchy_identifier '.' K_unique
+      { pform_name_t * tmp = $1;
+	tmp->push_back(name_component_t(lex_strings.make("unique")));
 	$$ = tmp;
       }
   | hierarchy_identifier '[' expression ']'
