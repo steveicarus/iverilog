@@ -35,6 +35,7 @@
 # include  <cstring>
 # include  <sstream>
 # include  <memory>
+# include  <utility>
 
 using namespace std;
 
@@ -539,6 +540,60 @@ static void current_function_set_statement(const YYLTYPE&loc, std::vector<Statem
       current_function->set_statement(tmp);
 }
 
+struct procedural_item_list_t {
+      bool has_decls = false;
+      YYLTYPE statements_loc = {};
+      std::unique_ptr<std::vector<Statement *> > statements;
+      std::unique_ptr<std::vector<pform_tf_port_t> > ports;
+};
+
+static procedural_item_list_t *make_procedural_item_list()
+{
+      return new procedural_item_list_t;
+}
+
+static void procedural_item_list_add_statement(const YYLTYPE&loc,
+					       procedural_item_list_t *list,
+					       Statement *statement)
+{
+      assert(list);
+      if (!list->statements) {
+	    list->statements.reset(new std::vector<Statement *>);
+	    list->statements_loc = loc;
+      } else {
+	    list->statements_loc.last_line = loc.last_line;
+	    list->statements_loc.last_column = loc.last_column;
+      }
+      if (statement)
+	    list->statements->push_back(statement);
+}
+
+static void procedural_item_list_add_ports(procedural_item_list_t *list,
+					   std::vector<pform_tf_port_t> *ports)
+{
+      assert(list);
+      std::unique_ptr<std::vector<pform_tf_port_t> > new_ports(ports);
+      if (!new_ports)
+	    return;
+      if (!list->ports) {
+	    list->ports = std::move(new_ports);
+	    return;
+      }
+      list->ports->insert(list->ports->end(), new_ports->begin(),
+			  new_ports->end());
+}
+
+static void procedural_item_list_add_declaration(const YYLTYPE&loc,
+						 procedural_item_list_t *list,
+						 std::vector<pform_tf_port_t> *ports)
+{
+      assert(list);
+      if (list->statements)
+	    yyerror(loc, "error: Declarations must precede statements.");
+      list->has_decls = true;
+      procedural_item_list_add_ports(list, ports);
+}
+
 static void port_declaration_context_init(void)
 {
       port_declaration_context.port_type = NetNet::PINOUT;
@@ -699,6 +754,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
       PEventStatement*event_statement;
       Statement*statement;
       std::vector<Statement*>*statement_list;
+      struct procedural_item_list_t *procedural_item_list;
 
       decl_assignment_t*decl_assignment;
       std::list<decl_assignment_t*>*decl_assignments;
@@ -863,7 +919,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %token K_timer K_transition K_units K_white_noise K_wreal
 %token K_zi_nd K_zi_np K_zi_zd K_zi_zp
 
-%type <flag>    from_exclude block_item_decls_opt
+%type <flag>    from_exclude
 %type <number>  number pos_neg_number
 %type <flag>    signing unsigned_signed_opt signed_unsigned_opt
 %type <flag>    import_export union_soft_opt
@@ -897,7 +953,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <named_pexprs> enum_name_list enum_name
 %type <data_type> enum_data_type enum_base_type
 
-%type <tf_ports> tf_item_declaration tf_item_list tf_item_list_opt
+%type <tf_ports> tf_item_declaration
 %type <tf_ports> tf_port_declaration tf_port_item tf_port_item_list
 %type <tf_ports> tf_port_list tf_port_list_opt tf_port_list_parens_opt
 
@@ -986,7 +1042,10 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <statement> deferred_immediate_assertion_statement
 %type <statement> simple_immediate_assertion_statement
 %type <statement> procedural_assertion_statement
-%type <statement_list> statement_or_null_list statement_or_null_list_opt
+%type <procedural_item_list> block_item_or_statement_list
+%type <procedural_item_list> block_item_or_statement_list_opt
+%type <procedural_item_list> tf_item_or_statement_list
+%type <procedural_item_list> tf_item_or_statement_list_opt
 
 %type <statement> analog_statement
 
@@ -1106,6 +1165,12 @@ block_identifier_opt /* */
       { $$ = 0; }
   ;
 
+assertion_item_label_opt
+  : identifier_name ':'
+      { delete[]$1; }
+  |
+  ;
+
 class_declaration /* IEEE1800-2005: A.1.2 */
   : K_virtual_opt K_class lifetime_opt identifier_name class_declaration_extends_opt ';'
       { /* Up to 1800-2017 the grammar in the LRM allowed an optional lifetime
@@ -1187,13 +1252,13 @@ class_item /* IEEE1800-2005: A.1.8 */
 	current_function = pform_push_constructor_scope(@3);
       }
     tf_port_list_parens_opt ';'
-    block_item_decls_opt
-    statement_or_null_list_opt
+    block_item_or_statement_list_opt
     K_endfunction endnew_opt
-      { current_function->set_ports($5);
+      { std::unique_ptr<procedural_item_list_t> items($7);
+	current_function->set_ports($5);
 	pform_set_constructor_return(current_function);
 	pform_set_this_class(@3, current_function);
-	current_function_set_statement(@3, $8);
+	current_function_set_statement(@3, items->statements.get());
 	pform_pop_scope();
 	current_function = 0;
       }
@@ -1820,19 +1885,20 @@ function_declaration /* IEEE1800-2005: A.2.6 */
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $3.id, $2);
       }
-    tf_item_list_opt
-    statement_or_null_list_opt
+    tf_item_or_statement_list_opt
     K_endfunction
-      { current_function->set_ports($6);
+      { std::unique_ptr<procedural_item_list_t> items($6);
+	current_function->set_ports(items->ports.release());
 	current_function->set_return($3.type);
-	current_function_set_statement($7 ? @7 : @3, $7);
+	current_function_set_statement(items->statements ? items->statements_loc : @3,
+				       items->statements.get());
 	pform_set_this_class(@3, current_function);
 	pform_pop_scope();
 	current_function = 0;
       }
     label_opt
       { // Last step: check any closing name.
-	check_end_label(@10, "function", $3.id, $10);
+	check_end_label(@9, "function", $3.id, $9);
 	delete[]$3.id;
       }
 
@@ -1841,12 +1907,13 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	current_function = pform_push_function_scope(@1, $3.id, $2);
       }
     '(' tf_port_list_opt ')' ';'
-    block_item_decls_opt
-    statement_or_null_list_opt
+    block_item_or_statement_list_opt
     K_endfunction
-      { current_function->set_ports($6);
+      { std::unique_ptr<procedural_item_list_t> items($9);
+	current_function->set_ports($6);
 	current_function->set_return($3.type);
-	current_function_set_statement($10 ? @10 : @3, $10);
+	current_function_set_statement(items->statements ? items->statements_loc : @3,
+				       items->statements.get());
 	pform_set_this_class(@3, current_function);
 	pform_pop_scope();
 	current_function = 0;
@@ -1856,7 +1923,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
       }
     label_opt
       { // Last step: check any closing name.
-	check_end_label(@13, "function", $3.id, $13);
+	check_end_label(@12, "function", $3.id, $12);
 	delete[]$3.id;
       }
 
@@ -2473,11 +2540,11 @@ port_direction_opt
   ;
 
 procedural_assertion_statement /* IEEE1800-2012 A.6.10 */
-  : block_identifier_opt concurrent_assertion_statement
+  : assertion_item_label_opt concurrent_assertion_statement
       { $$ = $2; }
-  | block_identifier_opt simple_immediate_assertion_statement
+  | assertion_item_label_opt simple_immediate_assertion_statement
       { $$ = $2; }
-  | block_identifier_opt deferred_immediate_assertion_statement
+  | assertion_item_label_opt deferred_immediate_assertion_statement
       { $$ = $2; }
   ;
 
@@ -2682,18 +2749,18 @@ task_declaration /* IEEE1800-2005: A.2.7 */
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
-    tf_item_list_opt
-    statement_or_null_list_opt
+    tf_item_or_statement_list_opt
     K_endtask
-      { current_task->set_ports($6);
-	current_task_set_statement(@3, $7);
+      { std::unique_ptr<procedural_item_list_t> items($6);
+	current_task->set_ports(items->ports.release());
+	current_task_set_statement(@3, items->statements.get());
 	pform_set_this_class(@3, current_task);
 	pform_pop_scope();
 	current_task = 0;
-	if ($7 && $7->size() > 1) {
-	      pform_requires_sv(@7, "Task body with multiple statements");
+	if (items->statements && items->statements->size() > 1) {
+	      pform_requires_sv(items->statements_loc,
+				"Task body with multiple statements");
 	}
-	delete $7;
       }
     label_opt
       { // Last step: check any closing name. This is done late so
@@ -2701,7 +2768,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	// label_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	check_end_label(@10, "task", $3, $10);
+	check_end_label(@9, "task", $3, $9);
 	delete[]$3;
       }
 
@@ -2710,11 +2777,11 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
     tf_port_list_opt ')' ';'
-    block_item_decls_opt
-    statement_or_null_list_opt
+    block_item_or_statement_list_opt
     K_endtask
-      { current_task->set_ports($6);
-	current_task_set_statement(@3, $10);
+      { std::unique_ptr<procedural_item_list_t> items($9);
+	current_task->set_ports($6);
+	current_task_set_statement(@3, items->statements.get());
 	pform_set_this_class(@3, current_task);
 	pform_pop_scope();
 	if (generation_flag < GN_VER2005 && $6 == 0) {
@@ -2722,7 +2789,6 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 		   << "\" has an empty port declaration list!" << endl;
 	}
 	current_task = 0;
-	if ($10) delete $10;
       }
     label_opt
       { // Last step: check any closing name. This is done late so
@@ -2730,7 +2796,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	// label_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	check_end_label(@13, "task", $3, $13);
+	check_end_label(@12, "task", $3, $12);
 	delete[]$3;
       }
 
@@ -3246,16 +3312,6 @@ block_item_decl
       { yyerror(@1, "error: Syntax error localparam list.");
 	yyerrok;
       }
-  ;
-
-block_item_decls
-  : block_item_decl
-  | block_item_decls block_item_decl
-  ;
-
-block_item_decls_opt
-  : block_item_decls { $$ = true; }
-  | { $$ = false; }
   ;
 
   /* We need to handle K_enum separately because
@@ -4745,36 +4801,6 @@ expr_primary
 	$$ = tmp;
       }
   ;
-
-  /* A tf_item_list is shared between functions and tasks to match
-     declarations of ports. We check later to make sure there are no
-     output or inout ports actually used for functions. */
-tf_item_list_opt /* IEEE1800-2017: A.2.7 */
-  : tf_item_list
-      { $$ = $1; }
-  |
-      { $$ = 0; }
-  ;
-
-tf_item_list /* IEEE1800-2017: A.2.7 */
-  : tf_item_declaration
-      { $$ = $1; }
-  | tf_item_list tf_item_declaration
-      { if ($1 && $2) {
-	      std::vector<pform_tf_port_t>*tmp = $1;
-	      size_t s1 = tmp->size();
-	      tmp->resize(s1 + $2->size());
-	      for (size_t idx = 0 ; idx < $2->size() ; idx += 1)
-		    tmp->at(s1+idx) = $2->at(idx);
-	      delete $2;
-	      $$ = tmp;
-	} else if ($1) {
-	      $$ = $1;
-	} else {
-	      $$ = $2;
-	}
-      }
- ;
 
 tf_item_declaration /* IEEE1800-2017: A.2.7 */
   : tf_port_declaration { $$ = $1; }
@@ -7292,35 +7318,23 @@ statement_item /* This is roughly statement_item in the LRM */
       { PBlock*tmp = pform_push_block_scope(@1, $2, PBlock::BL_SEQ);
 	current_block_stack.push(tmp);
       }
-    block_item_decls_opt
-      {
-        if (!$2) {
-	      if ($4) {
-		    pform_block_decls_requires_sv();
-	      } else {
-		    /* If there are no declarations in the scope then just delete it. */
-		    pform_pop_scope();
-		    assert(! current_block_stack.empty());
-		    PBlock*tmp = current_block_stack.top();
-		    current_block_stack.pop();
-		    delete tmp;
-	      }
+    block_item_or_statement_list_opt K_end label_opt
+      { std::unique_ptr<procedural_item_list_t> items($4);
+	if (!$2 && items->has_decls) {
+	      pform_block_decls_requires_sv();
 	}
-      }
-    statement_or_null_list_opt K_end label_opt
-      { PBlock*tmp;
-	if ($2 || $4) {
-	      pform_pop_scope();
-	      assert(! current_block_stack.empty());
-	      tmp = current_block_stack.top();
-	      current_block_stack.pop();
-	} else {
+	bool keep_scope = $2 || items->has_decls;
+	pform_pop_block_scope(keep_scope);
+	assert(! current_block_stack.empty());
+	auto tmp = current_block_stack.top();
+	current_block_stack.pop();
+	if (!keep_scope) {
+	      delete tmp;
 	      tmp = new PBlock(PBlock::BL_SEQ);
 	      FILE_NAME(tmp, @1);
 	}
-	if ($6) tmp->set_statement(*$6);
-	delete $6;
-	check_end_label(@8, "block", $2, $8);
+	if (items->statements) tmp->set_statement(*items->statements);
+	check_end_label(@6, "block", $2, $6);
 	delete[]$2;
 	$$ = tmp;
       }
@@ -7335,36 +7349,25 @@ statement_item /* This is roughly statement_item in the LRM */
       { PBlock*tmp = pform_push_block_scope(@1, $2, PBlock::BL_PAR);
 	current_block_stack.push(tmp);
       }
-    block_item_decls_opt
-      {
-        if (!$2) {
-	      if ($4) {
-		    pform_requires_sv(@4, "Variable declaration in unnamed block");
-	      } else {
-		    /* If there are no declarations in the scope then just delete it. */
-		    pform_pop_scope();
-		    assert(! current_block_stack.empty());
-		    PBlock*tmp = current_block_stack.top();
-		    current_block_stack.pop();
-		    delete tmp;
-	      }
+    block_item_or_statement_list_opt join_keyword label_opt
+      { std::unique_ptr<procedural_item_list_t> items($4);
+	if (!$2 && items->has_decls) {
+	      pform_requires_sv(@4, "Variable declaration in unnamed block");
 	}
-      }
-    statement_or_null_list_opt join_keyword label_opt
-      { PBlock*tmp;
-	if ($2 || $4) {
-	      pform_pop_scope();
-	      assert(! current_block_stack.empty());
-	      tmp = current_block_stack.top();
-	      current_block_stack.pop();
-	      tmp->set_join_type($7);
+	bool keep_scope = $2 || items->has_decls;
+	pform_pop_block_scope(keep_scope);
+	assert(! current_block_stack.empty());
+	auto tmp = current_block_stack.top();
+	current_block_stack.pop();
+	if (keep_scope) {
+	      tmp->set_join_type($5);
 	} else {
-	      tmp = new PBlock($7);
+	      delete tmp;
+	      tmp = new PBlock($5);
 	      FILE_NAME(tmp, @1);
 	}
-	if ($6) tmp->set_statement(*$6);
-	delete $6;
-	check_end_label(@8, "fork", $2, $8);
+	if (items->statements) tmp->set_statement(*items->statements);
+	check_end_label(@6, "fork", $2, $6);
 	delete[]$2;
 	$$ = tmp;
       }
@@ -7671,24 +7674,56 @@ compressed_statement
       }
    ;
 
-statement_or_null_list_opt
-  : statement_or_null_list
-      { $$ = $1; }
-  |
-      { $$ = 0; }
-  ;
-
-statement_or_null_list
-  : statement_or_null_list statement_or_null
-      { std::vector<Statement*>*tmp = $1;
-	if ($2) tmp->push_back($2);
-	$$ = tmp;
+block_item_or_statement_list
+  : block_item_decl
+      { $$ = make_procedural_item_list();
+	procedural_item_list_add_declaration(@1, $$, nullptr);
       }
   | statement_or_null
-      { std::vector<Statement*>*tmp = new std::vector<Statement*>(0);
-	if ($1) tmp->push_back($1);
-	$$ = tmp;
+      { $$ = make_procedural_item_list();
+	procedural_item_list_add_statement(@1, $$, $1);
       }
+  | block_item_or_statement_list block_item_decl
+      { procedural_item_list_add_declaration(@2, $1, nullptr);
+	$$ = $1;
+      }
+  | block_item_or_statement_list statement_or_null
+      { procedural_item_list_add_statement(@2, $1, $2);
+	$$ = $1;
+      }
+  ;
+
+block_item_or_statement_list_opt
+  : block_item_or_statement_list
+      { $$ = $1; }
+  |
+      { $$ = make_procedural_item_list(); }
+  ;
+
+tf_item_or_statement_list
+  : tf_item_declaration
+      { $$ = make_procedural_item_list();
+	procedural_item_list_add_declaration(@1, $$, $1);
+      }
+  | statement_or_null
+      { $$ = make_procedural_item_list();
+	procedural_item_list_add_statement(@1, $$, $1);
+      }
+  | tf_item_or_statement_list tf_item_declaration
+      { procedural_item_list_add_declaration(@2, $1, $2);
+	$$ = $1;
+      }
+  | tf_item_or_statement_list statement_or_null
+      { procedural_item_list_add_statement(@2, $1, $2);
+	$$ = $1;
+      }
+  ;
+
+tf_item_or_statement_list_opt
+  : tf_item_or_statement_list
+      { $$ = $1; }
+  |
+      { $$ = make_procedural_item_list(); }
   ;
 
 analog_statement

@@ -166,6 +166,7 @@ class LexicalScope {
       unsigned generate_counter;
 
       LexicalScope* parent_scope() const { return parent_; }
+      void set_parent_scope(LexicalScope *parent) { parent_ = parent; }
 
       virtual bool var_init_needs_explicit_lifetime() const;
 
