@@ -979,7 +979,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <event_exprs> event_expression_list
 %type <event_expr> event_expression
 %type <event_statement> event_control
-%type <statement> statement statement_item statement_or_null
+%type <statement> statement_item statement_or_null
 %type <statement> compressed_statement
 %type <statement> loop_statement for_step for_step_opt jump_statement
 %type <statement> concurrent_assertion_statement
@@ -2623,24 +2623,22 @@ simple_type_or_string /* IEEE1800-2005: A.2.2.1 */
   | ps_type_identifier
   ;
 
-statement /* IEEE1800-2005: A.6.4 */
-  : attribute_list_opt statement_item
-      { pform_bind_attributes($2->attributes, $1);
-	if (!$1) @$ = @2;
-	$$ = $2;
-      }
-  ;
-
   /* Many places where statements are allowed can actually take a
      statement or a null statement marked with a naked semi-colon. */
 
 statement_or_null /* IEEE1800-2005: A.6.4 */
-  : statement
-      { $$ = $1; }
-  | attribute_list_opt ';'
-      { if (!$1) @$ = @2;
-	$$ = 0;
+  : statement_item
+      { pform_bind_attributes($1->attributes, nullptr);
+	$$ = $1;
       }
+  | attribute_instance_list statement_item
+      { pform_bind_attributes($2->attributes, $1);
+	$$ = $2;
+      }
+  | ';'
+      { $$ = 0; }
+  | attribute_instance_list ';'
+      { $$ = 0; }
   ;
 
 stream_expression
