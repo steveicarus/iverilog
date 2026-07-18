@@ -594,6 +594,48 @@ static void procedural_item_list_add_declaration(const YYLTYPE&loc,
       procedural_item_list_add_ports(list, ports);
 }
 
+static PBlock *pform_start_block(const YYLTYPE&loc, const char *name,
+				 PBlock::BL_TYPE block_type)
+{
+      auto block = pform_push_block_scope(loc, name, block_type);
+      current_block_stack.push(block);
+
+      return block;
+}
+
+static PBlock *pform_finish_block(const YYLTYPE&block_loc,
+				  const YYLTYPE&end_loc, const char *type,
+				  char *raw_name, char *end_label,
+				  PBlock::BL_TYPE block_type,
+				  procedural_item_list_t *raw_items)
+{
+      std::unique_ptr<char[]> name_ptr(raw_name);
+      std::unique_ptr<procedural_item_list_t> items(raw_items);
+
+      const char *name = name_ptr.get();
+      bool keep_scope = name || items->has_decls;
+      pform_pop_block_scope(keep_scope);
+      assert(! current_block_stack.empty());
+      auto block = current_block_stack.top();
+      current_block_stack.pop();
+
+      if (keep_scope) {
+	    if (block_type != PBlock::BL_SEQ)
+		  block->set_join_type(block_type);
+      } else {
+	    delete block;
+	    block = new PBlock(block_type);
+	    FILE_NAME(block, block_loc);
+      }
+
+      if (items->statements)
+	    block->set_statement(*items->statements);
+
+      check_end_label(end_loc, type, name, end_label);
+
+      return block;
+}
+
 static void port_declaration_context_init(void)
 {
       port_declaration_context.port_type = NetNet::PINOUT;
@@ -7315,28 +7357,13 @@ statement_item /* This is roughly statement_item in the LRM */
 
   /* In SystemVerilog an unnamed block can contain variable declarations. */
   | K_begin label_opt
-      { PBlock*tmp = pform_push_block_scope(@1, $2, PBlock::BL_SEQ);
-	current_block_stack.push(tmp);
-      }
+      { pform_start_block(@1, $2, PBlock::BL_SEQ); }
     block_item_or_statement_list_opt K_end label_opt
-      { std::unique_ptr<procedural_item_list_t> items($4);
-	if (!$2 && items->has_decls) {
+      { if (!$2 && $4->has_decls) {
 	      pform_block_decls_requires_sv();
 	}
-	bool keep_scope = $2 || items->has_decls;
-	pform_pop_block_scope(keep_scope);
-	assert(! current_block_stack.empty());
-	auto tmp = current_block_stack.top();
-	current_block_stack.pop();
-	if (!keep_scope) {
-	      delete tmp;
-	      tmp = new PBlock(PBlock::BL_SEQ);
-	      FILE_NAME(tmp, @1);
-	}
-	if (items->statements) tmp->set_statement(*items->statements);
-	check_end_label(@6, "block", $2, $6);
-	delete[]$2;
-	$$ = tmp;
+	$$ = pform_finish_block(@1, @6, "block", $2, $6,
+				    PBlock::BL_SEQ, $4);
       }
 
   /* fork-join blocks are very similar to begin-end blocks. In fact,
@@ -7346,30 +7373,12 @@ statement_item /* This is roughly statement_item in the LRM */
 
   /* In SystemVerilog an unnamed block can contain variable declarations. */
   | K_fork label_opt
-      { PBlock*tmp = pform_push_block_scope(@1, $2, PBlock::BL_PAR);
-	current_block_stack.push(tmp);
-      }
+      { pform_start_block(@1, $2, PBlock::BL_PAR); }
     block_item_or_statement_list_opt join_keyword label_opt
-      { std::unique_ptr<procedural_item_list_t> items($4);
-	if (!$2 && items->has_decls) {
+      { if (!$2 && $4->has_decls) {
 	      pform_requires_sv(@4, "Variable declaration in unnamed block");
 	}
-	bool keep_scope = $2 || items->has_decls;
-	pform_pop_block_scope(keep_scope);
-	assert(! current_block_stack.empty());
-	auto tmp = current_block_stack.top();
-	current_block_stack.pop();
-	if (keep_scope) {
-	      tmp->set_join_type($5);
-	} else {
-	      delete tmp;
-	      tmp = new PBlock($5);
-	      FILE_NAME(tmp, @1);
-	}
-	if (items->statements) tmp->set_statement(*items->statements);
-	check_end_label(@6, "fork", $2, $6);
-	delete[]$2;
-	$$ = tmp;
+	$$ = pform_finish_block(@1, @6, "fork", $2, $6, $5, $4);
       }
 
   | K_disable hierarchy_identifier ';'
