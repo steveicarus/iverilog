@@ -947,6 +947,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <decl_assignments_with_type> list_of_variable_decl_assignments_with_type
 
 %type <data_type>  data_type data_type_opt data_type_or_implicit data_type_or_implicit_or_void
+%type <data_type>  block_reg_data_type
 %type <data_type>  implicit_type
 %type <data_type>  reg_prefixed_atomic_type simple_type_or_string let_formal_type
 %type <data_type>  packed_array_data_type atomic_type
@@ -1566,6 +1567,17 @@ atomic_type
       { string_type_t*tmp = new string_type_t;
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
+      }
+  ;
+
+block_reg_data_type
+  : unsigned_signed_opt dimensions_opt
+      { vector_type_t *tmp = new vector_type_t(IVL_VT_LOGIC, $1, $2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | reg_prefixed_atomic_type
+      { $$ = $1;
       }
   ;
 
@@ -3056,7 +3068,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
       }
   ;
 
-variable_lifetime_opt
+variable_lifetime
   : lifetime
       { LexicalScope*scope = pform_peek_scope();
 	if (dynamic_cast<PPackage*>(scope)) {
@@ -3071,6 +3083,10 @@ variable_lifetime_opt
 	}
 	var_lifetime = $1;
       }
+  ;
+
+variable_lifetime_opt
+  : variable_lifetime
   |
   ;
 
@@ -3147,14 +3163,39 @@ block_item_decl
 	var_lifetime = LexicalScope::INHERITED;
       }
 
-  | K_const_opt variable_lifetime_opt data_type list_of_variable_decl_assignments ';'
-      { if ($3) pform_make_var(@3, $4, $3, attributes_in_context, $1);
+  | K_const variable_lifetime_opt data_type list_of_variable_decl_assignments ';'
+      { if ($3) pform_make_var(@3, $4, $3, attributes_in_context, true);
+	var_lifetime = LexicalScope::INHERITED;
+      }
+
+  | variable_lifetime data_type list_of_variable_decl_assignments ';'
+      { if ($2) pform_make_var(@2, $3, $2, attributes_in_context, false);
+	var_lifetime = LexicalScope::INHERITED;
+      }
+
+  | reg_prefixed_atomic_type list_of_variable_decl_assignments ';'
+      { if ($1) pform_make_var(@1, $2, $1, attributes_in_context, false);
+	var_lifetime = LexicalScope::INHERITED;
+      }
+
+  | K_reg block_reg_data_type list_of_variable_decl_assignments ';'
+      { if ($2) pform_make_var(@1, $3, $2, attributes_in_context, false);
+	var_lifetime = LexicalScope::INHERITED;
+      }
+
+  | ps_type_identifier_dim list_of_variable_decl_assignments ';'
+      { if ($1) pform_make_var(@1, $2, $1, attributes_in_context, false);
 	var_lifetime = LexicalScope::INHERITED;
       }
 
   /* The extra `reg` is not valid (System)Verilog, this is an iverilog extension. */
-  | K_const_opt variable_lifetime_opt K_reg reg_prefixed_atomic_type list_of_variable_decl_assignments ';'
-      { if ($4) pform_make_var(@4, $5, $4, attributes_in_context, $1);
+  | K_const variable_lifetime_opt K_reg reg_prefixed_atomic_type list_of_variable_decl_assignments ';'
+      { if ($4) pform_make_var(@4, $5, $4, attributes_in_context, true);
+	var_lifetime = LexicalScope::INHERITED;
+      }
+
+  | variable_lifetime K_reg reg_prefixed_atomic_type list_of_variable_decl_assignments ';'
+      { if ($3) pform_make_var(@3, $4, $3, attributes_in_context, false);
 	var_lifetime = LexicalScope::INHERITED;
       }
 
@@ -3174,7 +3215,23 @@ block_item_decl
 
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
-  | K_const_opt variable_lifetime_opt data_type error ';'
+  | K_const variable_lifetime_opt data_type error ';'
+      { yyerror(@1, "error: Syntax error in variable list.");
+	yyerrok;
+      }
+  | variable_lifetime data_type error ';'
+      { yyerror(@1, "error: Syntax error in variable list.");
+	yyerrok;
+      }
+  | reg_prefixed_atomic_type error ';'
+      { yyerror(@1, "error: Syntax error in variable list.");
+	yyerrok;
+      }
+  | K_reg block_reg_data_type error ';'
+      { yyerror(@1, "error: Syntax error in variable list.");
+	yyerrok;
+      }
+  | ps_type_identifier_dim error ';'
       { yyerror(@1, "error: Syntax error in variable list.");
 	yyerrok;
       }
