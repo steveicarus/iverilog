@@ -251,6 +251,7 @@ extern PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
  * deletes it. Thus, the string pushed must be allocated.
  */
 extern void pform_pop_scope();
+extern void pform_pop_block_scope(bool keep_scope);
 
 /*
  * Peek at the current (most recently active) scope.

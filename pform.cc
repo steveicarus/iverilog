@@ -487,6 +487,29 @@ static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*it
       scope->local_symbols[name] = item;
 }
 
+/*
+ * Pop the scope used while parsing a block. If the block does not keep that
+ * scope, move any nested named scopes to the enclosing scope before the caller
+ * discards it.
+ */
+void pform_pop_block_scope(bool keep_scope)
+{
+      auto scope = lexical_scope;
+      assert(scope);
+
+      pform_pop_scope();
+
+      if (keep_scope)
+	    return;
+
+      for (const auto& symbol : scope->local_symbols) {
+	    auto nested_scope = dynamic_cast<LexicalScope *> (symbol.second);
+	    assert(nested_scope);
+	    nested_scope->set_parent_scope(lexical_scope);
+	    add_local_symbol(lexical_scope, symbol.first, symbol.second);
+      }
+}
+
 static void check_potential_imports(const struct vlltype&loc, perm_string name, bool tf_call)
 {
       LexicalScope*scope = lexical_scope;
