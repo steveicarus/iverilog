@@ -2614,6 +2614,7 @@ simple_type_or_string /* IEEE1800-2005: A.2.2.1 */
 statement /* IEEE1800-2005: A.6.4 */
   : attribute_list_opt statement_item
       { pform_bind_attributes($2->attributes, $1);
+	if (!$1) @$ = @2;
 	$$ = $2;
       }
   ;
@@ -2625,7 +2626,9 @@ statement_or_null /* IEEE1800-2005: A.6.4 */
   : statement
       { $$ = $1; }
   | attribute_list_opt ';'
-      { $$ = 0; }
+      { if (!$1) @$ = @2;
+	$$ = 0;
+      }
   ;
 
 stream_expression
