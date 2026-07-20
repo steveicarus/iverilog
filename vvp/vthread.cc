@@ -6298,8 +6298,7 @@ template <class SRC>
 static vvp_queue_vec4* queue_run_min_max_src(SRC* src, unsigned wid, bool want_max)
 {
       vvp_queue_vec4* dst = new vvp_queue_vec4();
-      if (!src || src->get_size() == 0)
-	    return dst;
+      if (!src || src->get_size() == 0) return dst;
 
       vvp_vector4_t best(wid);
       src->get_word(0, best);
@@ -6316,8 +6315,7 @@ static vvp_queue_vec4* queue_run_min_max_src(SRC* src, unsigned wid, bool want_m
 
 	    vvp_bit4_t ge = compare_gtge(vi, best, BIT4_1);
 	    bool replace = want_max ? (ge == BIT4_1) : (ge == BIT4_0);
-	    if (!replace)
-		  continue;
+	    if (!replace) continue;
 
 	    best = vi;
 	    delete dst;
@@ -6598,10 +6596,8 @@ bool of_QUEUE_MIN_V(vthread_t thr, vvp_code_t cp)
       vvp_darray* dsrc = 0;
       get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
       vvp_queue_vec4* dst;
-      if (qsrc)
-	    dst = queue_run_min_max_src(qsrc, wid, false);
-      else if (dsrc)
-	    dst = queue_run_min_max_src(dsrc, wid, false);
+      if (qsrc) dst = queue_run_min_max_src(qsrc, wid, false);
+      else if (dsrc) dst = queue_run_min_max_src(dsrc, wid, false);
       else {
 	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
 	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
@@ -6654,10 +6650,8 @@ bool of_QUEUE_MAX_V(vthread_t thr, vvp_code_t cp)
       vvp_darray* dsrc = 0;
       get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
       vvp_queue_vec4* dst;
-      if (qsrc)
-	    dst = queue_run_min_max_src(qsrc, wid, true);
-      else if (dsrc)
-	    dst = queue_run_min_max_src(dsrc, wid, true);
+      if (qsrc) dst = queue_run_min_max_src(qsrc, wid, true);
+      else if (dsrc) dst = queue_run_min_max_src(dsrc, wid, true);
       else {
 	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
 	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
@@ -6934,8 +6928,7 @@ bool of_QUEUE_WORD_PROP_V(vthread_t thr, vvp_code_t cp)
 	    cobj = below.peek<vvp_cobject>();
       }
       if (cobj == 0) {
-	    if (popped_top)
-		  thr->push_object(saved_top);
+	    if (popped_top) thr->push_object(saved_top);
 	    thr->push_vec4(vvp_vector4_t(wid));
 	    return true;
       }
@@ -6960,12 +6953,10 @@ bool of_QUEUE_WORD_PROP_V(vthread_t thr, vvp_code_t cp)
 	    dsrc->get_word((unsigned)adr, out);
       } else {
 	    thr->push_vec4(out);
-	    if (popped_top)
-		  thr->push_object(saved_top);
+	    if (popped_top) thr->push_object(saved_top);
 	    return true;
       }
-      if (popped_top)
-	    thr->push_object(saved_top);
+      if (popped_top) thr->push_object(saved_top);
       thr->push_vec4(out);
       return true;
 }

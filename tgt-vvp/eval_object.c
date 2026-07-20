@@ -178,12 +178,10 @@ static int eval_darray_pattern_object(ivl_expr_t ex)
 {
       int errors = 0;
       ivl_type_t net_type = ivl_expr_net_type(ex);
-      if (!net_type || ivl_type_base(net_type) != IVL_VT_DARRAY)
-	    return 1;
+      if (!net_type || ivl_type_base(net_type) != IVL_VT_DARRAY) return 1;
 
       ivl_type_t element_type = ivl_type_element(net_type);
-      if (!element_type)
-	    return 1;
+      if (!element_type) return 1;
 
       unsigned size_reg = allocate_word();
       fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", size_reg, ivl_expr_parms(ex));
