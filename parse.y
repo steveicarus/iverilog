@@ -1233,7 +1233,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <decl_assignments_with_type> type_identifier_variable_decl_assignments_with_type
 
 %type <data_type>  data_type data_type_opt data_type_or_implicit data_type_or_implicit_or_void
-%type <data_type>  block_reg_data_type
+%type <data_type>  block_reg_data_type for_decl_data_type
 %type <data_type>  implicit_type
 %type <data_type>  reg_prefixed_atomic_type let_formal_type
 %type <data_type>  packed_array_data_type atomic_type
@@ -2080,6 +2080,13 @@ dynamic_array_new /* IEEE1800-2005: A.2.4 */
       }
   ;
 
+for_decl_data_type
+  : data_type
+      { $$ = $1; }
+  | K_var data_type
+      { $$ = $2; }
+  ;
+
 for_step /* IEEE1800-2005: A.6.8 */
   : lpvalue '=' expression
       { PAssign*tmp = new PAssign($1,$3);
@@ -2330,7 +2337,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
       // statement in a synthetic named block. We can name the block
       // after the variable that we are creating, that identifier is
       // safe in the controlling scope.
-  | K_for '(' K_var_opt data_type identifier_name
+  | K_for '(' for_decl_data_type identifier_name
       // Make the loop variable symbol visible while parsing the rest of
       // the header.
       { static unsigned for_counter = 0;
@@ -2342,19 +2349,19 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 
 	list<decl_assignment_t*>assign_list;
 	decl_assignment_t*tmp_assign = new decl_assignment_t;
-	tmp_assign->name = { lex_strings.make($5), @5.lexical_pos };
+	tmp_assign->name = { lex_strings.make($4), @4.lexical_pos };
 	assign_list.push_back(tmp_assign);
-	pform_make_var(@5, &assign_list, $4);
+	pform_make_var(@4, &assign_list, $3);
       }
     '=' expression ';' expression_opt ';' for_step_opt ')'
     statement_or_null
       { pform_name_t tmp_hident;
-	tmp_hident.push_back(name_component_t(lex_strings.make($5)));
+	tmp_hident.push_back(name_component_t(lex_strings.make($4)));
 
-	PEIdent*tmp_ident = pform_new_ident(@5, tmp_hident);
+	PEIdent*tmp_ident = pform_new_ident(@4, tmp_hident);
 
-	check_for_loop(@1, $8, $10, $12);
-	PForStatement*tmp_for = new PForStatement(tmp_ident, $8, $10, $12, $14);
+	check_for_loop(@1, $7, $9, $11);
+	PForStatement*tmp_for = new PForStatement(tmp_ident, $7, $9, $11, $13);
 	FILE_NAME(tmp_for, @1);
 
 	pform_pop_scope();
@@ -2364,7 +2371,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	current_block_stack.pop();
 	tmp_blk->set_statement(tmp_for_list);
 	$$ = tmp_blk;
-	delete[]$5;
+	delete[]$4;
       }
 
   | K_forever statement_or_null
