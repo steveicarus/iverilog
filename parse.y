@@ -247,24 +247,6 @@ static void append_hierarchy_identifier_component(
       append_identifier_component(path, name, components);
 }
 
-static PExpr *make_type_identifier_expression(
-				const struct vlltype &loc, PPackage *package,
-				char *text,
-				std::list<index_component_t> *components)
-{
-      pform_name_t name;
-      append_identifier_component(name, lex_strings.make(text), components);
-
-      PExpr *expr;
-      if (package)
-	    expr = pform_package_ident(loc, package, &name);
-      else
-	    expr = pform_new_ident(loc, name, true);
-
-      delete[]text;
-      return expr;
-}
-
 static std::list<pform_range_t> *
 make_dimensions(std::list<index_component_t> *components)
 {
@@ -4554,13 +4536,6 @@ type_value
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | TYPE_IDENTIFIER index_components_opt
-      { $$ = make_type_identifier_expression(@1, nullptr, $1.text, $2);
-      }
-  | package_scope TYPE_IDENTIFIER index_components_opt
-      { lex_in_package_scope(nullptr);
-	$$ = make_type_identifier_expression(@2, $1, $2.text, $3);
-      }
   ;
 
   /* SystemVerilog: a().b() — call a function, then invoke a method on the
@@ -5166,6 +5141,11 @@ hierarchy_identifier_component
       { $$ = new pform_name_t;
 	append_hierarchy_identifier_component(*$$, lex_strings.make($1), $2);
 	delete[]$1;
+      }
+  | TYPE_IDENTIFIER index_components_opt
+      { $$ = new pform_name_t;
+	append_hierarchy_identifier_component(*$$, lex_strings.make($1.text), $2);
+	delete[]$1.text;
       }
   ;
 

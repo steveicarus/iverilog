@@ -1,2 +1,1 @@
-ivltests/sv_type_identifier_dim_unsized_fail.v:6: error: An unsized dimension is not allowed here.
-1 error(s) during elaboration.
+ivltests/sv_type_identifier_dim_unsized_fail.v:6: error: Empty index is not allowed in a hierarchy identifier.

@@ -1,2 +1,3 @@
-ivltests/sv_type_identifier_implicit_gate_fail.v:10: syntax error
-ivltests/sv_type_identifier_implicit_gate_fail.v:10: error: Invalid module item.
+ivltests/sv_type_identifier_implicit_gate_fail.v:10: error: Type name `value' cannot be used in an expression.
+ivltests/sv_type_identifier_implicit_gate_fail.v:4:      : The type was declared here.
+1 error(s) during elaboration.

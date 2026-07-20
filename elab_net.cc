@@ -535,6 +535,10 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       symbol_search_results sr;
       symbol_search(this, des, scope, path_.name, lexical_pos(), &sr);
 
+      if (!sr.require_non_type(this, des,
+			       "as a continuous assignment l-value"))
+	    return nullptr;
+
       if (sr.eve != 0) {
 	    cerr << get_fileline() << ": error: named events (" << path_
 		 << ") cannot be l-values in continuous "
