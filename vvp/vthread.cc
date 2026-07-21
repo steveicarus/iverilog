@@ -37,6 +37,7 @@
 # include  <set>
 # include  <typeinfo>
 # include  <vector>
+# include  <random>
 # include  <cstdlib>
 # include  <climits>
 # include  <cstring>
@@ -8630,5 +8631,32 @@ bool of_UNBOX_VEC4(vthread_t thr, vvp_code_t cp)
 		  res.set_bit(i, v.value(i));
       }
       thr->push_vec4(res);
+      return true;
+}
+
+/*
+ * %urandom <wid>
+ *
+ * Push <wid> bits of unconstrained random 0/1 onto the vec4 stack.
+ * Used by unconstrained class.randomize().
+ */
+bool of_URANDOM(vthread_t thr, vvp_code_t cp)
+{
+      static std::mt19937 rng(std::random_device{}());
+      unsigned wid = cp->number;
+      vvp_vector4_t val(wid);
+
+      unsigned bit = 0;
+      while (bit < wid) {
+	    uint32_t r = rng();
+	    unsigned chunk = (wid - bit) < 32 ? (wid - bit) : 32;
+	    for (unsigned i = 0 ; i < chunk ; i += 1) {
+		  val.set_bit(bit + i, (r & 1u) ? BIT4_1 : BIT4_0);
+		  r >>= 1;
+	    }
+	    bit += chunk;
+      }
+
+      thr->push_vec4(val);
       return true;
 }

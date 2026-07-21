@@ -4642,6 +4642,16 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 									 : sem_one_parm);
 		  }
 	    }
+	    if (method_name == perm_string::literal("randomize")) {
+		  static const std::vector<perm_string> no_parms;
+		  if (!parms_.empty()) {
+			cerr << get_fileline() << ": sorry: randomize() with "
+			     << "arguments is not supported yet." << endl;
+			des->errors += 1;
+		  }
+		  return elaborate_sys_task_method_(des, scope, net, method_name,
+						    "$ivl_randomize", no_parms);
+	    }
 	    NetScope*task = class_type->method_from_name(method_name);
 	    if (task == 0) {
 		    // If an implicit this was added it is not an error if we

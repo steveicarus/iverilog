@@ -39,6 +39,62 @@ void resize_vec4_wid(ivl_expr_t expr, unsigned wid)
 }
 
 /*
+ * Unconstrained randomize: for each rand/randc integral property of
+ * the class, push random bits and store into the property. Leaves a
+ * 1-bit success (1) on the vec4 stack when leave_result is set.
+ */
+void draw_ivl_randomize(ivl_expr_t obj, int leave_result)
+{
+      ivl_type_t cls = ivl_expr_net_type(obj);
+      int idx;
+
+      if (cls == 0 && ivl_expr_type(obj) == IVL_EX_SIGNAL) {
+	    ivl_signal_t sig = ivl_expr_signal(obj);
+	    if (sig)
+		  cls = ivl_signal_net_type(sig);
+      }
+
+      draw_eval_object(obj);
+
+      if (cls == 0 || ivl_type_base(cls) != IVL_VT_CLASS) {
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    if (leave_result)
+		  fprintf(vvp_out, "    %%pushi/vec4 0, 0, 1;\n");
+	    return;
+      }
+
+      for (idx = 0 ; idx < ivl_type_properties(cls) ; idx += 1) {
+	    ivl_type_t ptype;
+	    ivl_variable_type_t pbase;
+	    unsigned wid;
+
+	    if (ivl_type_prop_rand(cls, idx) == 0)
+		  continue;
+
+	    ptype = ivl_type_prop_type(cls, idx);
+	    if (ptype == 0)
+		  continue;
+	    pbase = ivl_type_base(ptype);
+	    if (pbase != IVL_VT_BOOL && pbase != IVL_VT_LOGIC)
+		  continue;
+
+	    wid = ivl_type_packed_width(ptype);
+	    if (wid == 0)
+		  wid = 1;
+
+	    fprintf(vvp_out, "    %%urandom %u; randomize prop %s\n",
+		    wid, ivl_type_prop_name(cls, idx));
+	    if (pbase == IVL_VT_BOOL)
+		  fprintf(vvp_out, "    %%cast2;\n");
+	    fprintf(vvp_out, "    %%store/prop/v %d, %u;\n", idx, wid);
+      }
+
+      fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+      if (leave_result)
+	    fprintf(vvp_out, "    %%pushi/vec4 1, 0, 1;\n");
+}
+
+/*
  * Test if the draw_immediate_vec4 instruction can be used.
  */
 int test_immediate_vec4_ok(ivl_expr_t re)
@@ -1265,6 +1321,18 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%pushi/vec4 1, 0, 32;\n");
 	    }
 	    fprintf(vvp_out, "    %%sem/try_get;\n");
+	    if (ivl_expr_width(expr) > 1)
+		  fprintf(vvp_out, "    %%pad/u %u;\n", ivl_expr_width(expr));
+	    return;
+      }
+
+      /* Unconstrained class.randomize(): fill rand/randc integral props. */
+      if (strcmp(ivl_expr_name(expr), "$ivl_randomize") == 0) {
+	    ivl_expr_t obj = (parm_count > 0) ? ivl_expr_parm(expr, 0) : 0;
+	    if (obj)
+		  draw_ivl_randomize(obj, 1);
+	    else
+		  fprintf(vvp_out, "    %%pushi/vec4 0, 0, 1;\n");
 	    if (ivl_expr_width(expr) > 1)
 		  fprintf(vvp_out, "    %%pad/u %u;\n", ivl_expr_width(expr));
 	    return;

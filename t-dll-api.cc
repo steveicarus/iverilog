@@ -3315,6 +3315,19 @@ extern "C" ivl_type_t ivl_type_prop_type(ivl_type_t net, int idx)
       return class_type->get_prop_type(idx);
 }
 
+extern "C" int ivl_type_prop_rand(ivl_type_t net, int idx)
+{
+      const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
+      assert(class_type);
+
+      property_qualifier_t qual = class_type->get_prop_qual(idx);
+      if (qual.test_randc())
+	    return 2;
+      if (qual.test_rand())
+	    return 1;
+      return 0;
+}
+
 extern "C" unsigned ivl_type_queue_max(ivl_type_t net)
 {
       if (net == 0) return 0;

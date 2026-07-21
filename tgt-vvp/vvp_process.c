@@ -2048,6 +2048,13 @@ static int show_system_task_call(ivl_statement_t net)
 	    return 0;
       }
 
+      if (strcmp(stmt_name, "$ivl_randomize") == 0) {
+	    ivl_expr_t obj = ivl_stmt_parm(net, 0);
+	    if (obj)
+		  draw_ivl_randomize(obj, 0);
+	    return 0;
+      }
+
       if (strcmp(stmt_name, "$ivl_semaphore$get") == 0) {
 	    ivl_expr_t sem = ivl_stmt_parm(net, 0);
 	    if (sem) draw_eval_object(sem);
