@@ -46,7 +46,8 @@ static unsigned current_within_chunk = 0;
 void codespace_init(void)
 {
       assert(current_chunk == 0);
-      first_chunk = new struct vvp_code_s [code_chunk_size];
+	/* Value-initialize so unused slots are not random (opcode NULL). */
+      first_chunk = new struct vvp_code_s [code_chunk_size]();
       current_chunk = first_chunk;
 
       current_chunk[0].opcode = &of_ZOMBIE;
@@ -64,7 +65,7 @@ vvp_code_t codespace_next(void)
 {
       if (current_within_chunk == (code_chunk_size-1)) {
 	    current_chunk[code_chunk_size-1].cptr
-		  = new struct vvp_code_s [code_chunk_size];
+		  = new struct vvp_code_s [code_chunk_size]();
 	    current_chunk = current_chunk[code_chunk_size-1].cptr;
 
 	      /* Put a link opcode on the end of the chunk. */
