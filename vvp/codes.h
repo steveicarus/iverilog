@@ -186,6 +186,7 @@ extern bool of_SEM_PUT(vthread_t thr, vvp_code_t code);
 extern bool of_SEM_TRY_GET(vthread_t thr, vvp_code_t code);
 extern bool of_BOX_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_UNBOX_VEC4(vthread_t thr, vvp_code_t code);
+extern bool of_URANDOM(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 extern bool of_NOR(vthread_t thr, vvp_code_t code);
 extern bool of_NORR(vthread_t thr, vvp_code_t code);

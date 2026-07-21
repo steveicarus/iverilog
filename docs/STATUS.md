@@ -18,7 +18,7 @@ Last updated: 2026-07-21
 | Virtual interfaces | **Partial** on `feat/virtual-interface`: `virtual interface T` as class property / TF arg; assign interface instance; member R/W; `@(posedge vif.clk)`. See [`docs/virtual-interface.md`](virtual-interface.md) and [`examples/virtual_interface`](../examples/virtual_interface). |
 | Clocking blocks | **Partial** on `feat/clocking-blocks`: interface-local `clocking`; `@(bif.cb)`; `cb.sig` R/W with `#0` skew. See [`docs/clocking.md`](clocking.md) and [`examples/clocking`](../examples/clocking). |
 | Mailbox / semaphore | **Partial** on `feat/mailbox-semaphore`: compiler builtins; `mailbox #(int)` + blocking/nonblocking put/get/num; `semaphore` get/put/try_get. See [`docs/mailbox-semaphore.md`](mailbox-semaphore.md) and [`examples/mailbox_sem`](../examples/mailbox_sem). |
-| Constraints / randomize | Missing |
+| Constraints / randomize | **Partial** on `feat/randomize-unconstrained`: unconstrained `rand`/`randc` integral props via `obj.randomize()` (returns 1). No constraint solver / `with` yet. See [`docs/randomize.md`](randomize.md) and [`examples/randomize`](../examples/randomize). |
 | Covergroups / DPI | Missing |
 
 ## Remotes

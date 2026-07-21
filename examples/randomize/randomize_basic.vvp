@@ -1,0 +1,98 @@
+#! /home/jawad/Desktop/iverilog-uvm/install/bin/vvp
+:ivl_version "14.0 (devel)" "(4fc765f91-dirty)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "/home/jawad/Desktop/iverilog-uvm/install/lib/ivl/system.vpi";
+:vpi_module "/home/jawad/Desktop/iverilog-uvm/install/lib/ivl/vhdl_sys.vpi";
+:vpi_module "/home/jawad/Desktop/iverilog-uvm/install/lib/ivl/vhdl_textio.vpi";
+:vpi_module "/home/jawad/Desktop/iverilog-uvm/install/lib/ivl/v2005_math.vpi";
+:vpi_module "/home/jawad/Desktop/iverilog-uvm/install/lib/ivl/va_math.vpi";
+:vpi_module "/home/jawad/Desktop/iverilog-uvm/install/lib/ivl/v2009.vpi";
+S_0x557fac363450 .scope package, "$unit" "$unit" 2 1;
+ .timescale 0 0;
+C0x557fac34e5f0  .class "pkt" [3]
+   0: "a", "b8"
+   1: "b", "b4"
+   2: "c", "b8"
+ ;
+S_0x557fac376b30 .scope class, "pkt" "pkt" 3 2, 3 2 0, S_0x557fac363450;
+ .timescale 0 0;
+S_0x557fac376ce0 .scope autofunction.obj, "new" "new" 3 6, 3 6 0, S_0x557fac376b30;
+ .timescale 0 0;
+v0x557fac376ec0_0 .var/cobj "@";
+TD_$unit.pkt.new ;
+    %load/obj v0x557fac376ec0_0;
+    %pushi/vec4 17, 0, 8;
+    %store/prop/v 2, 8; Store in logic property c
+    %pop/obj 1, 0;
+    %end;
+S_0x557fac3635e0 .scope module, "top" "top" 3 11;
+ .timescale 0 0;
+v0x557fac376fa0_0 .var/2u "ok", 0 0;
+v0x557fac377080_0 .var/cobj "p";
+    .scope S_0x557fac3635e0;
+T_1 ;
+    %alloc S_0x557fac376ce0;
+    %new/cobj C0x557fac34e5f0;
+    %store/obj v0x557fac376ec0_0;
+    %callf/obj TD_$unit.pkt.new, S_0x557fac376ce0;
+    %load/obj v0x557fac376ec0_0;
+    %free S_0x557fac376ce0;
+    %store/obj v0x557fac377080_0;
+    %load/obj v0x557fac377080_0;
+    %urandom 8; randomize prop a
+    %cast2;
+    %store/prop/v 0, 8;
+    %urandom 4; randomize prop b
+    %cast2;
+    %store/prop/v 1, 4;
+    %pop/obj 1, 0;
+    %pushi/vec4 1, 0, 1;
+    %cast2;
+    %store/vec4 v0x557fac376fa0_0, 0, 1;
+    %load/vec4 v0x557fac376fa0_0;
+    %nor/r;
+    %flag_set/vec4 8;
+    %jmp/0xz  T_1.0, 8;
+    %vpi_call/w 3 17 "$fatal", 32'sb00000000000000000000000000000001, "randomize failed" {0 0 0};
+T_1.0 ;
+    %load/obj v0x557fac377080_0;
+    %prop/v 0;
+    %pop/obj 1, 0;
+    %cmpi/e 255, 255, 8;
+    %jmp/0xz  T_1.2, 6;
+    %vpi_call/w 3 19 "$fatal", 32'sb00000000000000000000000000000001, "rand a still X" {0 0 0};
+T_1.2 ;
+    %load/obj v0x557fac377080_0;
+    %prop/v 1;
+    %pop/obj 1, 0;
+    %cmpi/e 15, 15, 4;
+    %jmp/0xz  T_1.4, 6;
+    %vpi_call/w 3 20 "$fatal", 32'sb00000000000000000000000000000001, "rand b still X" {0 0 0};
+T_1.4 ;
+    %load/obj v0x557fac377080_0;
+    %prop/v 2;
+    %pop/obj 1, 0;
+    %cmpi/ne 17, 0, 8;
+    %jmp/0xz  T_1.6, 6;
+    %vpi_call/w 3 21 "$fatal", 32'sb00000000000000000000000000000001, "non-rand mutated" {0 0 0};
+T_1.6 ;
+    %load/obj v0x557fac377080_0;
+    %prop/v 0;
+    %pop/obj 1, 0;
+    %load/obj v0x557fac377080_0;
+    %prop/v 1;
+    %pop/obj 1, 0;
+    %load/obj v0x557fac377080_0;
+    %prop/v 2;
+    %pop/obj 1, 0;
+    %vpi_call/w 3 22 "$display", "a=%0h b=%0h c=%0h", S<2,vec4,u8>, S<1,vec4,u4>, S<0,vec4,u8> {3 0 0};
+    %vpi_call/w 3 23 "$display", "PASSED" {0 0 0};
+    %end;
+    .thread T_1;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "-";
+    "randomize_basic.sv";

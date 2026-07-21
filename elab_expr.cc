@@ -2036,6 +2036,14 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 		  signed_flag_ = false;
 		  return expr_width_;
 	    }
+	    /* Built-in unconstrained randomize() -> bit success. */
+	    if (method_name == "randomize") {
+		  expr_type_ = IVL_VT_BOOL;
+		  expr_width_ = 1;
+		  min_width_ = 1;
+		  signed_flag_ = false;
+		  return expr_width_;
+	    }
 	    NetScope*method = class_type->method_from_name(method_name);
 
 	    if (method == 0) {
@@ -4195,6 +4203,21 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			sys->parm(1, narg ? narg
 					  : new NetEConst(verinum((uint64_t)1, 32)));
 		  }
+		  return sys;
+	    }
+
+	    /* Unconstrained std::randomize vertical slice: assign random
+	       values to rand/randc integral properties; return 1. */
+	    if (method_name == perm_string::literal("randomize")) {
+		  if (!parms_.empty()) {
+			cerr << get_fileline() << ": sorry: randomize() with "
+			     << "arguments is not supported yet." << endl;
+			des->errors += 1;
+		  }
+		  NetESFunc*sys = new NetESFunc("$ivl_randomize",
+						 &netvector_t::scalar_logic, 1);
+		  sys->set_line(*this);
+		  sys->parm(0, sub_expr);
 		  return sys;
 	    }
 

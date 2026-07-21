@@ -208,6 +208,11 @@ extern uint64_t get_number_immediate64(ivl_expr_t ex);
  * evaluation is the vec4 result in the top of the vec4 expression stack.
  */
 extern void draw_eval_vec4(ivl_expr_t ex);
+
+/* Emit unconstrained class randomize for $ivl_randomize(obj).
+ * Leaves a 1-bit success flag on the vec4 stack when leave_result!=0;
+ * otherwise pops the result (task form). */
+extern void draw_ivl_randomize(ivl_expr_t obj, int leave_result);
 extern void resize_vec4_wid(ivl_expr_t expr, unsigned wid);
 
 /*
