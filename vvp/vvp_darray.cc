@@ -124,8 +124,9 @@ template <class TYPE> size_t vvp_darray_atom<TYPE>::get_size() const
 template <class TYPE> void vvp_darray_atom<TYPE>::reverse_elems(void)
 {
       size_t n = array_.size();
-      for (size_t idx = 0 ; idx < n/2 ; idx += 1)
+      for (size_t idx = 0 ; idx < n/2 ; idx += 1) {
 	    std::swap(array_[idx], array_[n-1-idx]);
+      }
 }
 
 template <class TYPE> void vvp_darray_atom<TYPE>::sort_elems(bool ascending)
@@ -285,8 +286,9 @@ vvp_vector4_t vvp_darray_vec4::get_bitstream(bool as_vec4)
 void vvp_darray_vec4::reverse_elems(void)
 {
       size_t n = array_.size();
-      for (size_t idx = 0 ; idx < n/2 ; idx += 1)
+      for (size_t idx = 0 ; idx < n/2 ; idx += 1) {
 	    std::swap(array_[idx], array_[n-1-idx]);
+      }
 }
 
 void vvp_darray_vec4::sort_elems(bool ascending)
@@ -296,8 +298,6 @@ void vvp_darray_vec4::sort_elems(bool ascending)
       } else {
 	    std::sort(array_.begin(), array_.end(),
 		      [](const vvp_vector4_t&a, const vvp_vector4_t&b) {
-			    if (a.eeq(b))
-				  return false;
 			    return vec4_lt_unsigned(b, a);
 		      });
       }
@@ -311,8 +311,9 @@ void vvp_darray_vec4::shuffle_elems(void)
 void vvp_darray_vec2::reverse_elems(void)
 {
       size_t n = array_.size();
-      for (size_t idx = 0 ; idx < n/2 ; idx += 1)
+      for (size_t idx = 0 ; idx < n/2 ; idx += 1) {
 	    std::swap(array_[idx], array_[n-1-idx]);
+      }
 }
 
 void vvp_darray_vec2::sort_elems(bool ascending)
@@ -432,8 +433,9 @@ void vvp_darray_object::shallow_copy(const vvp_object*obj)
 void vvp_darray_object::reverse_elems(void)
 {
       size_t n = array_.size();
-      for (size_t idx = 0 ; idx < n/2 ; idx += 1)
+      for (size_t idx = 0 ; idx < n/2 ; idx += 1) {
 	    std::swap(array_[idx], array_[n-1-idx]);
+      }
 }
 
 void vvp_darray_object::sort_elems(bool ascending)
@@ -495,8 +497,9 @@ void vvp_darray_real::shallow_copy(const vvp_object*obj)
 void vvp_darray_real::reverse_elems(void)
 {
       size_t n = array_.size();
-      for (size_t idx = 0 ; idx < n/2 ; idx += 1)
+      for (size_t idx = 0 ; idx < n/2 ; idx += 1) {
 	    std::swap(array_[idx], array_[n-1-idx]);
+      }
 }
 
 void vvp_darray_real::sort_elems(bool ascending)
@@ -585,8 +588,9 @@ void vvp_darray_string::shallow_copy(const vvp_object*obj)
 void vvp_darray_string::reverse_elems(void)
 {
       size_t n = array_.size();
-      for (size_t idx = 0 ; idx < n/2 ; idx += 1)
+      for (size_t idx = 0 ; idx < n/2 ; idx += 1) {
 	    std::swap(array_[idx], array_[n-1-idx]);
+      }
 }
 
 void vvp_darray_string::sort_elems(bool ascending)
@@ -1091,8 +1095,6 @@ void vvp_queue_vec4::sort_elems(bool ascending)
       } else {
 	    std::sort(queue.begin(), queue.end(),
 		      [](const vvp_vector4_t&a, const vvp_vector4_t&b) {
-			    if (a.eeq(b))
-				  return false;
 			    return vec4_lt_unsigned(b, a);
 		      });
       }
