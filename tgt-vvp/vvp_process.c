@@ -1945,6 +1945,20 @@ static int show_system_task_call(ivl_statement_t net)
 {
       const char*stmt_name = ivl_stmt_name(net);
 
+      if (strcmp(stmt_name,"$ivl_vif_wait") == 0) {
+	    ivl_expr_t vif = ivl_stmt_parm(net, 0);
+	    ivl_expr_t edge_ex = ivl_stmt_parm(net, 1);
+	    ivl_expr_t idx_ex = ivl_stmt_parm(net, 2);
+	    unsigned long edge, midx;
+	    assert(ivl_expr_type(edge_ex) == IVL_EX_NUMBER);
+	    assert(ivl_expr_type(idx_ex) == IVL_EX_NUMBER);
+	    edge = get_number_immediate64(edge_ex);
+	    midx = get_number_immediate64(idx_ex);
+	    draw_eval_object(vif);
+	    fprintf(vvp_out, "    %%vif/wait %lu, %lu;\n", edge, midx);
+	    return 0;
+      }
+
       if (strcmp(stmt_name,"$ivl_darray_method$delete") == 0)
 	    return show_delete_method(net);
 

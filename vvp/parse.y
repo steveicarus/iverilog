@@ -105,6 +105,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_VAR_S K_VAR_STR K_VAR_I K_VAR_R K_VAR_2S K_VAR_2U
 %token K_vpi_call K_vpi_call_w K_vpi_call_i
 %token K_vpi_func K_vpi_func_r K_vpi_func_s
+%token K_new_vif
 %token K_ivl_version K_ivl_delay_selection
 %token K_vpi_module K_vpi_time_precision K_file_names K_file_line
 %token K_PORT_INPUT K_PORT_OUTPUT K_PORT_INOUT K_PORT_MIXED K_PORT_NODIR
@@ -645,6 +646,14 @@ statement
 	| label_opt K_file_line T_NUMBER T_NUMBER T_NUMBER ';'
 		{ assert($5 == 0);
 		  compile_file_line($1, $3, $4, 0); }
+
+  /* %new/vif takes a variable-length list of member-signal symbols
+     (one per interface member), so like %vpi_call it cannot go
+     through the generic label_opt T_INSTR operands_opt rule, which
+     only accepts a fixed, small number of operands. */
+
+	| label_opt K_new_vif T_NUMBER ',' symbols ';'
+		{ compile_new_vif($1, $3, $5.cnt, $5.vect); }
 
   /* %vpi_call statements are instructions that have unusual operand
      requirements so are handled by their own rules. The %vpi_func

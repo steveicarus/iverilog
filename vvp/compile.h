@@ -426,6 +426,20 @@ extern void compile_event(char*label, char*type,
 			  unsigned argc, struct symb_s*argv);
 extern void compile_named_event(char*label, char*type, bool local_flag=false);
 
+/*
+ * %new/vif <n>, <sig0>, <sig1>, ...
+ *
+ * Compiles the virtual-interface constructor instruction. The <n>
+ * symbols name the member signal nets of the interface, in member
+ * order; they are resolved to vvp_net_t pointers at compile time and
+ * handed to of_NEW_VIF() (see vvp_vif.cc), which builds the vvp_vif
+ * object at run time. This needs its own compile function (rather
+ * than going through compile_code()/opcode_table) because, like
+ * %vpi_call, it takes a variable-length operand list.
+ */
+extern void compile_new_vif(char*label, uint64_t n,
+			    unsigned argc, struct symb_s*argv);
+
 
 /*
  * A code statement is a label, an opcode and up to 3 operands. There

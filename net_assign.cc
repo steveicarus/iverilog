@@ -24,6 +24,7 @@
 # include  "netdarray.h"
 # include  "netparray.h"
 # include  "netenum.h"
+# include  "netvif.h"
 # include  "ivl_assert.h"
 
 using namespace std;
@@ -161,6 +162,12 @@ ivl_type_t NetAssign_::net_type() const
 	    ntype = class_type->get_prop_type(member_idx_);
       }
 
+      if (vif_member_idx_ >= 0) {
+	    const netvif_t*vif_type = dynamic_cast<const netvif_t*>(ntype);
+	    ivl_assert(*this, vif_type);
+	    ntype = vif_type->get_member_type(static_cast<size_t>(vif_member_idx_));
+      }
+
       if (word_) {
 	    if (const netdarray_t *darray = dynamic_cast<const netdarray_t*>(ntype))
 		  ntype = darray->element_type();
@@ -204,6 +211,12 @@ void NetAssign_::set_property(const perm_string&mname, unsigned idx)
 {
       member_ = mname;
       member_idx_ = idx;
+}
+
+void NetAssign_::set_vif_member(unsigned idx, unsigned wid)
+{
+      vif_member_idx_ = static_cast<int>(idx);
+      lwid_ = wid;
 }
 
 /*

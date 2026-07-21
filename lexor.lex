@@ -264,6 +264,10 @@ TU [munpf]
 "'{" { return K_LP; }
 "::" { return K_SCOPE_RES; }
 
+  /* Combine `virtual interface` into one token so LALR can distinguish
+     virtual-interface types from `virtual class` / `virtual function`. */
+"virtual"{W}+"interface" { return K_virtual_interface; }
+
   /* This is horrible. The Verilog systax uses "->" in a lot of places.
      The trickiest is in constraints, where it is not an operator at all
      but a constraint implication. This only turns up as a problem when

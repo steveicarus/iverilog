@@ -31,6 +31,7 @@
 # include  "netparray.h"
 # include  "netvector.h"
 # include  "netenum.h"
+# include  "netvif.h"
 # include  "compiler.h"
 # include  <cstdlib>
 # include  <iostream>
@@ -295,6 +296,31 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
       if (class_type && !tail_path.empty() && gn_system_verilog())
 	    return elaborate_lval_net_class_member_(des, scope, class_type, reg, tail_path);
 
+	/* Virtual interface member write: vif.member = ... */
+      if (const netvif_t*vif_type = dynamic_cast<const netvif_t*>(data_type)) {
+	    if (!tail_path.empty() && gn_system_verilog()) {
+		  if (tail_path.size() != 1) {
+			cerr << get_fileline() << ": error: "
+			     << "Invalid virtual interface member path." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  const name_component_t&comp = tail_path.front();
+		  int midx = vif_type->member_idx_from_name(comp.name);
+		  if (midx < 0) {
+			cerr << get_fileline() << ": error: "
+			     << "Virtual interface has no member `"
+			     << comp.name << "'." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  ivl_type_t mtype = vif_type->get_member_type(static_cast<size_t>(midx));
+		  NetAssign_*lv = new NetAssign_(reg);
+		  lv->set_vif_member(static_cast<unsigned>(midx),
+				     ivl_type_packed_width(mtype));
+		  return lv;
+	    }
+      }
 
 	// Past this point, we should have taken care of the cases
 	// where the name is a member/method of a struct/class.
@@ -1217,6 +1243,32 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 
 	    if (canon_index)
 		  lv->set_word(canon_index);
+
+	      /* Virtual interface property: remaining path is a VI member. */
+	    if (const netvif_t*vif_type = dynamic_cast<const netvif_t*>(ptype)) {
+		  if (member_path.empty())
+			return lv;
+		  if (member_path.size() != 1) {
+			cerr << get_fileline() << ": error: "
+			     << "Invalid virtual interface member path." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  const name_component_t&mcomp = member_path.front();
+		  member_path.pop_front();
+		  int midx = vif_type->member_idx_from_name(mcomp.name);
+		  if (midx < 0) {
+			cerr << get_fileline() << ": error: "
+			     << "Virtual interface has no member `"
+			     << mcomp.name << "'." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  ivl_type_t member_type = vif_type->get_member_type(static_cast<size_t>(midx));
+		  lv->set_vif_member(static_cast<unsigned>(midx),
+				     ivl_type_packed_width(member_type));
+		  return lv;
+	    }
 
 	      // If the current member is a class object, then get the
 	      // type. We may wind up iterating, and need the proper

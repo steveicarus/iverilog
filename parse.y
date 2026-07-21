@@ -959,7 +959,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %token K_randcase K_randsequence K_ref K_return K_sequence K_shortint
 %token K_shortreal K_solve K_static K_string K_struct K_super
 %token K_tagged K_this K_throughout K_timeprecision K_timeunit K_type
-%token K_typedef K_union K_unique K_var K_virtual K_void K_wait_order
+%token K_typedef K_union K_unique K_var K_virtual K_virtual_interface K_void K_wait_order
 %token K_wildcard K_with K_within
 
  /* The new tokens from 1800-2009. */
@@ -1077,6 +1077,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <data_type>  implicit_type
 %type <data_type>  reg_prefixed_atomic_type simple_type_or_string let_formal_type
 %type <data_type>  packed_array_data_type atomic_type
+%type <data_type>  virtual_interface_type
 
 %type <data_type>  ps_type_identifier ps_type_identifier_dim
 %type <data_type>  simple_packed_type
@@ -1339,6 +1340,9 @@ class_item /* IEEE1800-2005: A.1.8 */
 
   | property_qualifier_opt list_of_variable_decl_assignments_with_type ';'
       { pform_class_property(@2, $1, $2.type, $2.decl_assignments); }
+
+  | property_qualifier_opt virtual_interface_type list_of_variable_decl_assignments ';'
+      { pform_class_property(@2, $1, $2, $3); }
 
   | K_const class_item_qualifier_opt list_of_variable_decl_assignments_with_type ';'
       { pform_class_property(@1, $2 | property_qualifier_t::make_const(), $3.type, $3.decl_assignments); }
@@ -1754,6 +1758,26 @@ reg_prefixed_atomic_type
 data_type /* IEEE1800-2005: A.2.2.1 */
   : atomic_type { $$ = $1; }
   | ps_type_identifier_dim { $$ = $1; }
+  ;
+
+/* Keep virtual_interface_type out of general data_type to avoid LALR
+ * conflicts with `virtual class` / `virtual function`. The lexer returns
+ * K_virtual_interface for the two-word keyword sequence. */
+virtual_interface_type
+  : K_virtual_interface IDENTIFIER
+      { virtual_interface_type_t*tmp = new virtual_interface_type_t(lex_strings.make($2));
+	FILE_NAME(tmp, @1);
+	delete[] $2;
+	$$ = tmp;
+      }
+  | K_virtual_interface IDENTIFIER '.' IDENTIFIER
+      { virtual_interface_type_t*tmp = new virtual_interface_type_t(lex_strings.make($2),
+								   lex_strings.make($4));
+	FILE_NAME(tmp, @1);
+	delete[] $2;
+	delete[] $4;
+	$$ = tmp;
+      }
   ;
 
 /* Data type or nothing, but not implicit */
@@ -3092,6 +3116,23 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	      pform_requires_sv(@4, "Task/function default argument");
 	      assert(tmp->size()==1);
 	      tmp->front().defe = $4;
+	}
+      }
+
+  | port_direction_opt K_var_opt virtual_interface_type identifier_name initializer_opt
+      { NetNet::PortType use_port_type = $1;
+	if (use_port_type == NetNet::PIMPLICIT)
+	      use_port_type = NetNet::PINPUT;
+	struct pform_port_list port_list = make_port_list($3, $4, 0, nullptr, nullptr);
+	port_declaration_context.port_type = use_port_type;
+	port_declaration_context.data_type = $3;
+	std::vector<pform_tf_port_t>*tmp = pform_make_task_ports(@4, use_port_type, $3,
+								port_list.ports);
+	$$ = tmp;
+	if ($5) {
+	      pform_requires_sv(@5, "Task/function default argument");
+	      assert(tmp->size()==1);
+	      tmp->front().defe = $5;
 	}
       }
 

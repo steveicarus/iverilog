@@ -794,6 +794,17 @@ int draw_eval_object(ivl_expr_t ex)
 		strstr(ivl_expr_name(ex), "_with") != 0) {
 		  if (draw_queue_method_find_sfunc(ex) == 0) return 0;
 	    }
+	    if (strcmp(ivl_expr_name(ex), "$ivl_vif_new") == 0) {
+		  unsigned n = ivl_expr_parms(ex);
+		  fprintf(vvp_out, "    %%new/vif %u", n);
+		  for (unsigned idx = 0; idx < n; idx += 1) {
+			ivl_expr_t p = ivl_expr_parm(ex, idx);
+			assert(ivl_expr_type(p) == IVL_EX_SIGNAL);
+			fprintf(vvp_out, ", v%p_0", ivl_expr_signal(p));
+		  }
+		  fprintf(vvp_out, ";\n");
+		  return 0;
+	    }
 	    if (ivl_expr_value(ex) == IVL_VT_QUEUE ||
 		ivl_expr_value(ex) == IVL_VT_DARRAY) {
 		  if (eval_queue_method_unique(ex) == 0) return 0;

@@ -112,11 +112,11 @@ FF = cprop.o exposenodes.o nodangle.o synth.o synth2.o syn-rules.o
 
 O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
     elab_expr.o elaborate_analog.o elab_lval.o elab_net.o \
-    elab_scope.o elab_sig.o elab_sig_analog.o elab_type.o \
+    elab_scope.o elab_sig.o elab_sig_analog.o elab_type.o elab_vif.o \
     emit.o eval_attrib.o \
     eval_tree.o expr_synth.o functor.o lexor.o lexor_keyword.o link_const.o \
     load_module.o netlist.o netmisc.o nettypes.o net_analog.o net_assign.o \
-    net_design.o netclass.o netdarray.o netaarray.o \
+    net_design.o netclass.o netdarray.o netaarray.o netvif.o \
     netenum.o netparray.o netqueue.o netscalar.o netstruct.o netvector.o \
     net_event.o net_expr.o net_func.o \
     net_func_eval.o net_link.o net_modulo.o \

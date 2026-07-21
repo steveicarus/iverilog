@@ -212,8 +212,10 @@ NetENull* NetENull::dup_expr() const
 
 NetEProperty* NetEProperty::dup_expr() const
 {
-      ivl_assert(*this, 0);
-      return 0;
+      NetEProperty*tmp = new NetEProperty(net_, pidx_,
+					  index_ ? index_->dup_expr() : 0);
+      tmp->set_line(*this);
+      return tmp;
 }
 
 NetEScope* NetEScope::dup_expr() const

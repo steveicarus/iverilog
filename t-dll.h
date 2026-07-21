@@ -479,6 +479,7 @@ struct ivl_lval_s {
       unsigned width_;
       unsigned type_   : 8; /* values from ivl_lval_type_t */
       int property_idx;
+      int vif_member_idx;
       union {
 	    ivl_signal_t sig;
 	    ivl_lval_t  nest; // type_ == IVL_LVAL_LVAL

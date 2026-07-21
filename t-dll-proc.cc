@@ -205,6 +205,7 @@ bool dll_target::make_single_lval_(const LineInfo*li, struct ivl_lval_s*cur, con
       }
 
       cur->property_idx = asn->get_property_idx();
+      cur->vif_member_idx = asn->get_vif_member_idx();
 
       return flag;
 }

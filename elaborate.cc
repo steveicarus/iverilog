@@ -48,6 +48,7 @@
 # include  "netvector.h"
 # include  "netdarray.h"
 # include  "netaarray.h"
+# include  "netvif.h"
 # include  "netqueue.h"
 # include  "netparray.h"
 # include  "netscalar.h"
@@ -3028,7 +3029,8 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	/* If the l-value is a compound type of some sort, then use
 	   the newer net_type form of the elaborate_rval_ method to
 	   handle the new types. */
-      if (dynamic_cast<const netclass_t*> (lv_net_type)) {
+      if (dynamic_cast<const netclass_t*> (lv_net_type) ||
+	  dynamic_cast<const netvif_t*> (lv_net_type)) {
 	    ivl_assert(*this, lv->more==0);
 	    rv = elaborate_rval_(des, scope, lv_net_type);
 
@@ -5403,6 +5405,49 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	            "have event statements." << endl;
 	    des->errors += 1;
 	    return 0;
+      }
+
+	/* Vertical-slice support: @(posedge vif.clk) where vif is a
+	   virtual interface. Emit $ivl_vif_wait then the continuation. */
+      if (expr_.size() == 1 && dynamic_cast<PEIdent*>(expr_[0]->expr())) {
+	    NetExpr*tmp = elab_and_eval(des, scope, expr_[0]->expr(), -1);
+	    if (NetESFunc*sf = dynamic_cast<NetESFunc*>(tmp)) {
+		  if (strcmp(sf->name(), "$ivl_vif_get") == 0 && sf->nparms() == 2) {
+			int edge_code = 2; /* anyedge */
+			switch (expr_[0]->type()) {
+			  case PEEvent::POSEDGE: edge_code = 0; break;
+			  case PEEvent::NEGEDGE: edge_code = 1; break;
+			  case PEEvent::ANYEDGE: edge_code = 2; break;
+			  case PEEvent::EDGE:    edge_code = 2; break;
+			  default: break;
+			}
+			NetExpr*idx_ex = sf->parm(1);
+			long midx = 0;
+			if (!eval_as_long(midx, idx_ex)) {
+			      cerr << get_fileline() << ": error: "
+				   << "Virtual interface wait member index "
+				   << "must be constant." << endl;
+			      des->errors += 1;
+			      delete tmp;
+			      return 0;
+			}
+			/* Dup the VI base — NetESFunc::parm(idx,0) deletes
+			   the old expression, so we cannot steal in place. */
+			NetExpr*vif_base = sf->parm(0)->dup_expr();
+			delete tmp;
+			NetSTask*wait_task = elab_vif_wait_task(*this, vif_base,
+								edge_code,
+								static_cast<int>(midx));
+			if (!enet)
+			      return wait_task;
+			NetBlock*blk = new NetBlock(NetBlock::SEQU, 0);
+			blk->set_line(*this);
+			blk->append(wait_task);
+			blk->append(enet);
+			return blk;
+		  }
+	    }
+	    delete tmp;
       }
 
 	/* Create a single NetEvent and NetEvWait. Then, create a
