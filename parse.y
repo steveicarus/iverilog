@@ -22,6 +22,8 @@
 
 # include "config.h"
 
+# include  <climits>
+# include  <cstddef>
 # include  <cstdarg>
 # include  "parse_misc.h"
 # include  "compiler.h"
@@ -125,6 +127,9 @@ static void check_net_decl_assigns(const struct vlltype&loc,
       }
 }
 
+static std::list<pform_range_t> *
+make_dimensions(std::list<index_component_t> *components);
+
 static data_type_t *pform_make_parray_type(const struct vlltype&loc,
 					  data_type_t *base,
 					  std::list<pform_range_t> *pdims)
@@ -138,6 +143,14 @@ static data_type_t *pform_make_parray_type(const struct vlltype&loc,
       return type;
 }
 
+static data_type_t *pform_make_parray_type(
+					  const struct vlltype &loc,
+					  data_type_t *base,
+					  std::list<index_component_t> *components)
+{
+      return pform_make_parray_type(loc, base, make_dimensions(components));
+}
+
 template <class T>
 static void set_type_id_range(T&value, data_type_t *type, char *id,
 			      const YYLTYPE&loc,
@@ -147,6 +160,22 @@ static void set_type_id_range(T&value, data_type_t *type, char *id,
       value.id = id;
       value.id_loc = loc;
       value.ranges = ranges;
+}
+
+template <class T>
+static void set_type_id_range(T &value, data_type_t *type, char *id,
+			      const YYLTYPE &loc,
+			      std::list<index_component_t> *components)
+{
+      set_type_id_range(value, type, id, loc, make_dimensions(components));
+}
+
+template <class T>
+static void set_type_id_range(T &value, data_type_t *type, char *id,
+			      const YYLTYPE &loc, std::nullptr_t)
+{
+      set_type_id_range(value, type, id, loc,
+			static_cast<std::list<pform_range_t> *>(nullptr));
 }
 
 template <class T>
@@ -162,11 +191,10 @@ static void delete_type_id_range(T&value)
 
 static data_type_t *pform_new_type_identifier(const struct vlltype &loc,
 					     PPackage *package,
-					     char *text)
+					     const char *name)
 {
-      std::unique_ptr<char[]> owned_text(text);
       pform_name_t path;
-      path.emplace_back(lex_strings.make(owned_text.get()));
+      path.emplace_back(lex_strings.make(name));
 
       PEIdent *identifier;
       if (package) {
@@ -179,6 +207,15 @@ static data_type_t *pform_new_type_identifier(const struct vlltype &loc,
       auto tmp = new type_identifier_t(identifier);
       FILE_NAME(tmp, loc);
       return tmp;
+}
+
+static data_type_t *pform_new_type_identifier(const struct vlltype &loc,
+					     PPackage *package,
+					     char *text)
+{
+      std::unique_ptr<char[]> owned_text(text);
+      const char *name = owned_text.get();
+      return pform_new_type_identifier(loc, package, name);
 }
 
 static index_component_t *make_index_component(const struct vlltype &loc,
@@ -1302,7 +1339,6 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <letter> compressed_operator
 
 %type <type_restrict> forward_type forward_type_without_enum
-%type <type_id_range> data_type_or_implicit_plus_id_base
 %type <type_id_range> data_type_or_implicit_plus_id
 %type <type_id_range> data_type_or_implicit_plus_id_dim
 %type <type_id_range> data_type_or_implicit_or_void_plus_id
@@ -3023,15 +3059,26 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
       }
   ;
 
-  // These rules only disambiguate declaration items that can be either an
-  // implicit declaration name or an explicit type followed by a name. Keep the
-  // bare `TYPE_IDENTIFIER dimensions_opt` case in the parent rule so a typedef
-  // name can be shadowed by an unpacked declaration name, while
-  // `ps_type_identifier_dim identifier_name` still parses a typedef with packed
-  // dimensions followed by a separate declaration name.
-data_type_or_implicit_plus_id_base
-  : IDENTIFIER
+  // Function declarations have the same type/name ambiguity as other
+  // declarations. For `function T;`, T can be the function name, while
+  // `function T f;` still uses T as the explicit return type. Unlike
+  // variable/net declarations, function names do not allow unpacked
+  // dimensions.
+data_type_or_implicit_plus_id
+  : identifier_name
       { set_type_id_range($$, nullptr, $1, @1, nullptr);
+      }
+  | identifier_name index_components_opt identifier_name
+      { if (!gn_system_verilog()) {
+	      yyerror(@1, "syntax error");
+	      delete[]$1;
+	      delete $2;
+	      delete[]$3;
+	      YYERROR;
+	}
+	auto tmp = pform_new_type_identifier(@1, nullptr, $1);
+	tmp = pform_make_parray_type(@2, tmp, $2);
+	set_type_id_range($$, tmp, $3, @3, nullptr);
       }
   | atomic_type identifier_name
       { set_type_id_range($$, $1, $2, @2, nullptr);
@@ -3039,32 +3086,34 @@ data_type_or_implicit_plus_id_base
   | implicit_type identifier_name
       { set_type_id_range($$, $1, $2, @2, nullptr);
       }
-  | ps_type_identifier_dim identifier_name
-      { set_type_id_range($$, $1, $2, @2, nullptr);
+  | package_scope identifier_name dimensions_opt identifier_name
+      { lex_in_package_scope(nullptr);
+	auto tmp = pform_new_type_identifier(@2, $1, $2);
+	set_type_id_range($$, pform_make_parray_type(@3, tmp, $3),
+			  $4, @4, nullptr);
       }
   ;
 
-  // Function declarations have the same type/name ambiguity as other
-  // declarations. For `function T;`, T can be the function name even when the
-  // lexer returns TYPE_IDENTIFIER, while `function T f;` still uses T as the
-  // explicit return type. Unlike variable/net declarations, function names do
-  // not allow unpacked dimensions.
-data_type_or_implicit_plus_id
-  : TYPE_IDENTIFIER
-      { set_type_id_range($$, nullptr, $1.text, @1, nullptr);
-      }
-  | data_type_or_implicit_plus_id_base
-      { $$ = $1;
-      }
-  ;
-
+  // Declaration items can be either an implicit declaration name or an
+  // explicit type followed by a name. A bare `TYPE_IDENTIFIER dimensions_opt`
+  // lets a typedef name be shadowed by a declaration name with unpacked
+  // dimensions, while `ps_type_identifier_dim identifier_name` parses a
+  // typedef with packed dimensions followed by a separate declaration name.
 data_type_or_implicit_plus_id_dim
   : TYPE_IDENTIFIER dimensions_opt
       { set_type_id_range($$, nullptr, $1.text, @1, $2);
       }
-  | data_type_or_implicit_plus_id_base dimensions_opt
-      { $$ = $1;
-	$$.ranges = $2;
+  | IDENTIFIER dimensions_opt
+      { set_type_id_range($$, nullptr, $1, @1, $2);
+      }
+  | atomic_type identifier_name dimensions_opt
+      { set_type_id_range($$, $1, $2, @2, $3);
+      }
+  | implicit_type identifier_name dimensions_opt
+      { set_type_id_range($$, $1, $2, @2, $3);
+      }
+  | ps_type_identifier_dim identifier_name dimensions_opt
+      { set_type_id_range($$, $1, $2, @2, $3);
       }
   ;
 
@@ -5989,7 +6038,7 @@ module_item
       }
 
   | K_function error K_endfunction label_opt
-      { yyerror(@1, "error: I give up on this function definition.");
+      { yyerror(@1, "error: Syntax error defining function.");
 	if ($4) {
 	    pform_requires_sv(@4, "Function end label");
 	    delete[]$4;
