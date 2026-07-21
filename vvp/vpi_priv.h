@@ -869,6 +869,7 @@ class __vpiDarrayVar : public __vpiBaseVar, public __vpiArrayBase {
 };
 
 extern vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net);
+extern vpiHandle vpip_make_aarray_var(const char*name, vvp_net_t*net);
 
 class __vpiQueueVar : public __vpiDarrayVar {
 

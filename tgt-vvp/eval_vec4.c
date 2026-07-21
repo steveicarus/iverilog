@@ -1013,6 +1013,19 @@ static void draw_select_vec4(ivl_expr_t expr)
 	    return;
       }
 
+      if (ivl_expr_value(subexpr) == IVL_VT_AARRAY) {
+	    ivl_signal_t sig = ivl_expr_signal(subexpr);
+	    assert(sig);
+	    assert(ivl_signal_data_type(sig)==IVL_VT_AARRAY);
+	    assert(base);
+	    draw_eval_string(base);
+	    fprintf(vvp_out, "    %%load/aar/vec4 v%p_0;\n", sig);
+	    if (ivl_expr_value(expr) == IVL_VT_BOOL) {
+		  fprintf(vvp_out, "    %%cast2;\n");
+	    }
+	    return;
+      }
+
       if (test_immediate_vec4_ok(base)) {
 	    unsigned long val0, valx;
 	    unsigned base_wid;
@@ -1110,6 +1123,16 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 	    return;
       }
 
+      if (strcmp(ivl_expr_name(expr), "$ivl_aarray_method$exists")==0 &&
+	  parm_count == 2) {
+	    ivl_expr_t arr = ivl_expr_parm(expr, 0);
+	    ivl_expr_t key = ivl_expr_parm(expr, 1);
+	    assert(ivl_expr_type(arr) == IVL_EX_SIGNAL);
+	    draw_eval_string(key);
+	    fprintf(vvp_out, "    %%aar/exists v%p_0;\n", ivl_expr_signal(arr));
+	    return;
+      }
+
 	/* find*_with has four parameters and is lowered in eval_object.c */
       if (parm_count == 4 &&
 	  strncmp(ivl_expr_name(expr), "$ivl_queue_method$",
@@ -1126,6 +1149,11 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  fprintf(vvp_out, "    %%prop/queue/size %u;\n", pidx);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  return;
+	    }
+	    if (ivl_expr_type(arg) == IVL_EX_SIGNAL &&
+		ivl_signal_data_type(ivl_expr_signal(arg)) == IVL_VT_AARRAY) {
+		  fprintf(vvp_out, "    %%aar/size v%p_0;\n", ivl_expr_signal(arg));
 		  return;
 	    }
       }

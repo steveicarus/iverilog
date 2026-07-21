@@ -506,6 +506,14 @@ void PENull::dump(ostream&out) const
       out << "null";
 }
 
+void PEAArrayKey::dump(ostream&out) const
+{
+      if (kind_ == STRING)
+	    out << "string";
+      else
+	    out << "*";
+}
+
 void PENumber::dump(ostream&out) const
 {
       out << value();

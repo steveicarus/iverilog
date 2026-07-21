@@ -27,6 +27,7 @@
 # include  "vvp_net_sig.h"
 # include  "vvp_cobject.h"
 # include  "vvp_darray.h"
+# include  "vvp_aarray.h"
 # include  "class_type.h"
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
@@ -6035,6 +6036,126 @@ bool of_STORE_DAR_STR(vthread_t thr, vvp_code_t cp)
 bool of_STORE_DAR_VEC4(vthread_t thr, vvp_code_t cp)
 {
       return store_dar<vvp_vector4_t>(thr, cp);
+}
+
+static vvp_aarray* get_aarray(vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+      assert(net);
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*>(net->fun);
+      assert(obj);
+      return obj->get_object().peek<vvp_aarray>();
+}
+
+/*
+ * %store/aar/vec4 <var>
+ *   string key on string stack, vec4 value on vec4 stack.
+ */
+bool of_STORE_AAR_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      string key = thr->pop_str();
+      vvp_vector4_t value = thr->pop_vec4();
+
+      vvp_aarray*aa = get_aarray(cp);
+      if (!aa) {
+	    /* Lazily create if somehow missing. */
+	    vvp_net_t*net = cp->net;
+	    vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*>(net->fun);
+	    unsigned wid = obj ? obj->size() : value.size();
+	    vvp_object_t empty(new vvp_aarray_vec4(wid));
+	    vvp_net_ptr_t ptr(net, 0);
+	    vvp_send_object(ptr, empty, thr->wt_context);
+	    aa = empty.peek<vvp_aarray>();
+      }
+      aa->set_word(key, value);
+      return true;
+}
+
+/*
+ * %load/aar/vec4 <var>
+ *   string key on string stack; push vec4 value.
+ */
+bool of_LOAD_AAR_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      string key = thr->pop_str();
+      vvp_aarray*aa = get_aarray(cp);
+      vvp_vector4_t word;
+      if (aa)
+	    aa->get_word(key, word);
+      else {
+	    vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*>(cp->net->fun);
+	    word = vvp_vector4_t(obj ? obj->size() : 1, BIT4_X);
+      }
+      thr->push_vec4(word);
+      return true;
+}
+
+/*
+ * %delete/aar <var>  — clear all entries
+ */
+bool of_DELETE_AAR(vthread_t thr, vvp_code_t cp)
+{
+      (void) thr;
+      vvp_aarray*aa = get_aarray(cp);
+      if (aa) aa->clear();
+      return true;
+}
+
+/*
+ * %delete/aar/str <var>  — erase one key (string stack)
+ */
+bool of_DELETE_AAR_STR(vthread_t thr, vvp_code_t cp)
+{
+      string key = thr->pop_str();
+      vvp_aarray*aa = get_aarray(cp);
+      if (aa) aa->erase(key);
+      return true;
+}
+
+/*
+ * %aar/exists <var> — pop string key, push 32-bit 0/1
+ */
+bool of_AAR_EXISTS(vthread_t thr, vvp_code_t cp)
+{
+      string key = thr->pop_str();
+      vvp_aarray*aa = get_aarray(cp);
+      int present = (aa && aa->exists(key)) ? 1 : 0;
+      vvp_vector4_t res(32, BIT4_0);
+      if (present)
+	    res.set_bit(0, BIT4_1);
+      thr->push_vec4(res);
+      return true;
+}
+
+/*
+ * %aar/key_at <var> — index in words[3], push string key
+ */
+bool of_AAR_KEY_AT(vthread_t thr, vvp_code_t cp)
+{
+      int64_t adr = thr->words[3].w_int;
+      vvp_aarray*aa = get_aarray(cp);
+      string key;
+      if (aa && adr >= 0)
+	    key = aa->key_at((size_t)adr);
+      thr->push_str(key);
+      return true;
+}
+
+/*
+ * %aar/size <var> — push 32-bit entry count
+ */
+bool of_AAR_SIZE(vthread_t thr, vvp_code_t cp)
+{
+      vvp_aarray*aa = get_aarray(cp);
+      size_t sz = aa ? aa->get_size() : 0;
+      vvp_vector4_t val(32, BIT4_0);
+      unsigned long ul = sz;
+      for (unsigned idx = 0; idx < 32; idx++) {
+	    val.set_bit(idx, (ul & 1UL) ? BIT4_1 : BIT4_0);
+	    ul >>= 1;
+      }
+      thr->push_vec4(val);
+      return true;
 }
 
 bool of_STORE_OBJ(vthread_t thr, vvp_code_t cp)

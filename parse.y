@@ -2252,7 +2252,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	PBlock*tmp = pform_push_block_scope(@1, for_block_name, PBlock::BL_SEQ);
 	current_block_stack.push(tmp);
 
-	pform_make_foreach_declarations(@1, $5);
+	pform_make_foreach_declarations(@1, $3, $5);
       }
     statement_or_null
       { PForeach*tmp_for = pform_make_foreach(@1, $3, $5, $9);
@@ -3200,6 +3200,14 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
       { std::list<pform_range_t> *tmp = new std::list<pform_range_t>;
 	pform_range_t index (0,0);
 	pform_requires_sv(@$, "Dynamic array declaration");
+	tmp->push_back(index);
+	$$ = tmp;
+      }
+  | '[' '*' ']'
+      { // Associative array wildcard key. First slice: string-keyed.
+	std::list<pform_range_t> *tmp = new std::list<pform_range_t>;
+	pform_range_t index (new PENull, new PENull);
+	pform_requires_sv(@$, "Associative array declaration");
 	tmp->push_back(index);
 	$$ = tmp;
       }

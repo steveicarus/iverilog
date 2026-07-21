@@ -2195,6 +2195,7 @@ static bool get_array_info(const NetExpr*arg, long dim,
 	    switch (ptype->base_type()) {
 		  case IVL_VT_DARRAY:
 		  case IVL_VT_QUEUE:
+		  case IVL_VT_AARRAY:
 		  case IVL_VT_STRING:
 		    defer = true;
 		    return true;
@@ -2211,6 +2212,7 @@ static bool get_array_info(const NetExpr*arg, long dim,
       switch (sig->data_type()) {
 	case IVL_VT_DARRAY:
 	case IVL_VT_QUEUE:
+	case IVL_VT_AARRAY:
 	case IVL_VT_STRING:
 	    defer = true;
 	    return true;

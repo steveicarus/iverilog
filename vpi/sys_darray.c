@@ -50,12 +50,13 @@ static PLI_INT32 dobject_size_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    switch(vpi_get(vpiArrayType, arg)) {
 	      case vpiDynamicArray:
 	      case vpiQueueArray:
+	      case vpiAssocArray:
 		  break;
 	      default:
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
-		  vpi_printf("%s argument must be a dynamic array, queue or "
-		             "string.\n", name);
+		  vpi_printf("%s argument must be a dynamic array, queue, "
+		             "associative array or string.\n", name);
 		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }

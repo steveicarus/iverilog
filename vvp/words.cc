@@ -21,6 +21,7 @@
 # include  "vpi_priv.h"
 # include  "array.h"
 # include  "vvp_net_sig.h"
+# include  "vvp_aarray.h"
 # include  "logic.h"
 # include  "schedule.h"
 #ifdef CHECK_WITH_VALGRIND
@@ -136,6 +137,36 @@ void compile_var_queue(char*label, char*name, unsigned size)
       define_functor_symbol(label, net);
 
       vpiHandle obj = vpip_make_queue_var(name, net);
+      compile_vpi_symbol(label, obj);
+
+      vpip_attach_to_current_scope(obj);
+      free(label);
+      delete[] name;
+}
+
+void compile_var_aarray(char*label, char*name, unsigned size)
+{
+      vvp_net_t*net = new vvp_net_t;
+
+      if (vpip_peek_current_scope()->is_automatic()) {
+	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa(size);
+	    net->fil = tmp;
+	    net->fun = tmp;
+      } else {
+	    net->fil = 0;
+	    net->fun = new vvp_fun_signal_object_sa(size);
+      }
+
+      define_functor_symbol(label, net);
+
+      /* Immediately bind an empty aarray so methods work without `new`. */
+      {
+	    vvp_object_t empty(new vvp_aarray_vec4(size));
+	    vvp_net_ptr_t ptr(net, 0);
+	    vvp_send_object(ptr, empty, 0);
+      }
+
+      vpiHandle obj = vpip_make_aarray_var(name, net);
       compile_vpi_symbol(label, obj);
 
       vpip_attach_to_current_scope(obj);

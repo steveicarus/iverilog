@@ -69,6 +69,9 @@ void show_net_type(ivl_type_t net_type)
 	  case IVL_VT_QUEUE:
 	    show_net_type_queue(net_type);
 	    break;
+	  case IVL_VT_AARRAY:
+	    fprintf(out, "aarray");
+	    break;
 	  case IVL_VT_VOID:
 	    fprintf(out, "void");
 	    break;

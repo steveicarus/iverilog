@@ -4,8 +4,8 @@ Each item should be a dedicated `feat/<name>` branch, with tests/examples and a 
 
 ## Tier A — Compiler SV foundations (block Accellera UVM)
 
-1. **Parameterized classes** — `class C #(type T = int);` / `C#(byte)` — needed for `uvm_*#(T)`, `config_db`
-2. **Associative arrays** — `int aa[string];`
+1. **Parameterized classes** — `class C #(type T = int);` / `C#(byte)` — needed for `uvm_*#(T)`, `config_db` — **partial** (defaults; see STATUS)
+2. **Associative arrays** — `int aa[string];` — **in progress / partial** (string keys only; see [assoc-array.md](assoc-array.md))
 3. **Virtual interfaces** + eventing on `vif.clk`
 4. **Clocking blocks** — enough for `@(vif.cb)`
 5. **`mailbox` / `semaphore` builtins** (or solid class equivalents with blocking put/get)

@@ -244,6 +244,7 @@ inline uint64_t strtouint64(const char*str, char**endptr, int base)
 ".var"          { return K_VAR; }
 ".var/cobj"     { return K_VAR_COBJECT; }
 ".var/darray"   { return K_VAR_DARRAY; }
+".var/aarray"   { return K_VAR_AARRAY; }
 ".var/queue"    { return K_VAR_QUEUE; }
 ".var/real"     { return K_VAR_R; }
 ".var/s"        { return K_VAR_S; }

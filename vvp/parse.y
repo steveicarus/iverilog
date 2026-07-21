@@ -100,7 +100,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_SUBSTITUTE
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC_REAL K_UFUNC_VEC4 K_UFUNC_E K_UDP K_UDP_C K_UDP_S
-%token K_VAR K_VAR_COBJECT K_VAR_DARRAY
+%token K_VAR K_VAR_COBJECT K_VAR_DARRAY K_VAR_AARRAY
 %token K_VAR_QUEUE
 %token K_VAR_S K_VAR_STR K_VAR_I K_VAR_R K_VAR_2S K_VAR_2U
 %token K_vpi_call K_vpi_call_w K_vpi_call_i
@@ -771,6 +771,9 @@ statement
 
   | T_LABEL K_VAR_DARRAY T_STRING ',' T_NUMBER ';'
       { compile_var_darray($1, $3, $5); }
+
+  | T_LABEL K_VAR_AARRAY T_STRING ',' T_NUMBER ';'
+      { compile_var_aarray($1, $3, $5); }
 
   | T_LABEL K_VAR_QUEUE T_STRING  ',' T_NUMBER';'
       { compile_var_queue($1, $3, $5); }

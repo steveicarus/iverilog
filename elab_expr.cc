@@ -35,6 +35,7 @@
 # include  "discipline.h"
 # include  "netmisc.h"
 # include  "netdarray.h"
+# include  "netaarray.h"
 # include  "netqueue.h"
 # include  "netstruct.h"
 # include  "netscalar.h"
@@ -413,6 +414,10 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 	      // uses the lv_net_type. We should eventually transition
 	      // all the types to this new form.
 	    typed_elab = true;
+	    break;
+	  case IVL_VT_AARRAY:
+	      // Whole-array assigns are handled as objects; indexed
+	      // assigns use the element type via context_wid below.
 	    break;
 	  case IVL_VT_REAL:
 	  case IVL_VT_STRING:
@@ -3939,6 +3944,65 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 
       ivl_assert(*this, sub_expr);
 
+      // Associative array methods (string-keyed vertical slice).
+      if (search_results.net &&
+	  search_results.net->data_type()==IVL_VT_AARRAY &&
+	  search_results.path_head.back().index.size()==0) {
+
+	    perm_string method_name = search_results.path_tail.back().name;
+
+	    if (method_name == "size" || method_name == "num") {
+		  if (parms_.size() != 0) {
+			cerr << get_fileline() << ": error: " << method_name
+			     << "() method takes no arguments" << endl;
+			des->errors += 1;
+		  }
+		  NetESFunc*sys_expr = new NetESFunc("$size", &netvector_t::atom2u32, 1);
+		  sys_expr->set_line(*this);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
+	    }
+
+	    if (method_name == "exists") {
+		  if (parms_.size() != 1) {
+			cerr << get_fileline() << ": error: exists() method "
+			     << "takes one argument" << endl;
+			des->errors += 1;
+		  }
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_aarray_method$exists",
+						     &netvector_t::atom2u32, 2);
+		  sys_expr->set_line(*this);
+		  sys_expr->parm(0, sub_expr);
+		  if (parms_.size() >= 1 && parms_[0].parm) {
+			NetExpr*key = elab_and_eval(des, scope, parms_[0].parm, -1);
+			sys_expr->parm(1, key);
+		  } else {
+			sys_expr->parm(1, 0);
+		  }
+		  return sys_expr;
+	    }
+
+	    if (method_name == "key_at") {
+		  /* Internal helper for foreach lowering. */
+		  if (parms_.size() != 1) {
+			cerr << get_fileline() << ": error: key_at() takes one argument"
+			     << endl;
+			des->errors += 1;
+		  }
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_aarray_method$key_at",
+						     &netstring_t::type_string, 2);
+		  sys_expr->set_line(*this);
+		  sys_expr->parm(0, sub_expr);
+		  if (parms_.size() >= 1 && parms_[0].parm) {
+			NetExpr*idx = elab_and_eval(des, scope, parms_[0].parm, -1);
+			sys_expr->parm(1, idx);
+		  } else {
+			sys_expr->parm(1, 0);
+		  }
+		  return sys_expr;
+	    }
+      }
+
       // Dynamic array or queue methods when there is no index.
       if (search_results.net &&
 	  (search_results.net->data_type()==IVL_VT_DARRAY ||
@@ -4669,6 +4733,7 @@ bool PEIdent::calculate_packed_indices_(Design*des, NetScope*scope, const NetNet
 	  case IVL_VT_STRING:
 	  case IVL_VT_DARRAY:
 	  case IVL_VT_QUEUE:
+	  case IVL_VT_AARRAY:
 	    dimensions += 1;
 	  default:
 	    break;
@@ -6914,6 +6979,16 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	    return res;
       }
 
+      if (const netaarray_t*aarray = net->sig()->aarray_type()) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Bit select of an associative array becomes NetESelect." << endl;
+	    }
+	    NetESelect*res = new NetESelect(net, mux, aarray->element_width(), aarray->element_type());
+	    res->set_line(*net);
+	    return res;
+      }
+
 	// If the bit select is constant, then treat it similar
 	// to the part select, so that I save the effort of
 	// making a mux part in the netlist.
@@ -7453,6 +7528,31 @@ NetExpr* PENull::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
       NetENull*tmp = new NetENull;
       tmp->set_line(*this);
       return tmp;
+}
+
+unsigned PEAArrayKey::test_width(Design*, NetScope*, width_mode_t&)
+{
+      expr_type_   = IVL_VT_NO_TYPE;
+      expr_width_  = 1;
+      min_width_   = 1;
+      signed_flag_ = false;
+      return expr_width_;
+}
+
+NetExpr* PEAArrayKey::elaborate_expr(Design*des, NetScope*, ivl_type_t, unsigned) const
+{
+      cerr << get_fileline() << ": internal error: "
+	   << "PEAArrayKey used as an expression." << endl;
+      des->errors += 1;
+      return 0;
+}
+
+NetExpr* PEAArrayKey::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
+{
+      cerr << get_fileline() << ": internal error: "
+	   << "PEAArrayKey used as an expression." << endl;
+      des->errors += 1;
+      return 0;
 }
 
 unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)

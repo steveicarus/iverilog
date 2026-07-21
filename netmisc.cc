@@ -1005,6 +1005,10 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 		  if (dynamic_cast<PEAssignPattern*>(pe))
 			return tmp;
 		  // fall through
+		case IVL_VT_AARRAY:
+		  if (expr_type == IVL_VT_AARRAY)
+			return tmp;
+		  break;
 		case IVL_VT_STRING:
 		  if (dynamic_cast<PEConcat*>(pe))
 			return tmp;

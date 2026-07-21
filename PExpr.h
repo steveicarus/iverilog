@@ -637,6 +637,33 @@ class PENull : public PExpr {
                                      unsigned flags) const override;
 };
 
+/*
+ * Sentinel used in pform_range_t for associative-array dimensions.
+ * WILDCARD encodes `[*]` (string-keyed in the first vertical slice).
+ * STRING encodes `[string]`.
+ */
+class PEAArrayKey : public PExpr {
+    public:
+      enum key_kind_t { STRING, WILDCARD };
+
+      explicit PEAArrayKey(key_kind_t kind);
+      ~PEAArrayKey() override;
+
+      inline key_kind_t key_kind() const { return kind_; }
+
+      virtual void dump(std::ostream&) const override;
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  width_mode_t&mode) override;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const override;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
+				     unsigned expr_wid,
+                                     unsigned flags) const override;
+
+    private:
+      key_kind_t kind_;
+};
+
 class PENumber : public PExpr {
 
     public:

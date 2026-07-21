@@ -80,6 +80,7 @@ class PWire : public PNamedItem {
       void set_range(const std::list<pform_range_t>&ranges, PWSRType type);
 
       void set_unpacked_idx(const std::list<pform_range_t>&ranges);
+      const std::list<pform_range_t>& get_unpacked_idx() const { return unpacked_; }
 
       void set_data_type(data_type_t*type);
 

@@ -144,6 +144,9 @@ ostream& operator << (ostream&o, ivl_variable_type_t val)
 	  case IVL_VT_QUEUE:
 	    o << "queue";
 	    break;
+	  case IVL_VT_AARRAY:
+	    o << "aarray";
+	    break;
       }
       return o;
 }

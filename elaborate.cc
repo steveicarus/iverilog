@@ -47,6 +47,7 @@
 # include  "netenum.h"
 # include  "netvector.h"
 # include  "netdarray.h"
+# include  "netaarray.h"
 # include  "netqueue.h"
 # include  "netparray.h"
 # include  "netscalar.h"
@@ -3047,6 +3048,13 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 
 	    rv = elaborate_rval_(des, scope, use_lv_type);
 
+      } else if (const netaarray_t*atype = dynamic_cast<const netaarray_t*> (lv_net_type)) {
+	    ivl_assert(*this, lv->more==0);
+	    ivl_type_t use_lv_type = lv_net_type;
+	    if (lv->word())
+		  use_lv_type = atype->element_type();
+	    rv = elaborate_rval_(des, scope, use_lv_type);
+
       } else if (const netuarray_t*utype = dynamic_cast<const netuarray_t*>(lv_net_type)) {
 	    ivl_assert(*this, lv->more==0);
 	    if (debug_elaborate) {
@@ -4042,6 +4050,12 @@ NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
 			     << "method takes zero or one argument." << endl;
 			des->errors += 1;
 		  }
+	    } else if (net->aarray_type()) {
+		  if (nparms > 1) {
+			cerr << get_fileline() << ": error: associative array delete() "
+			     << "method takes zero or one argument." << endl;
+			des->errors += 1;
+		  }
 	    } else if (nparms > 0) {
 		  cerr << get_fileline() << ": error: darray delete() "
 		       << "method takes no arguments." << endl;
@@ -4504,6 +4518,22 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 		  return elaborate_sys_task_method_(des, scope, net, method_name,
 						    "$ivl_darray_method$shuffle",
 						    parm_names);
+	    }
+      }
+
+	// Associative array methods (string-keyed vertical slice).
+      if (net->aarray_type()) {
+	    if (method_name == "delete") {
+		  static const std::vector<perm_string> parm_names = {
+			perm_string::literal("index")
+		  };
+		  return elaborate_sys_task_method_(des, scope, net, method_name,
+						    "$ivl_aarray_method$delete",
+						    parm_names);
+	    } else if (method_name == "size" || method_name == "num") {
+		  return elaborate_method_func_(scope, net,
+						&netvector_t::atom2s32,
+						method_name, "$size");
 	    }
       }
 
@@ -6047,6 +6077,74 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
 	    return elaborate_static_array_(des, scope, dims);
       if (array_sig->unpacked_dimensions() >= index_vars_.size())
 	    return elaborate_static_array_(des, scope, dims);
+
+	// Associative array foreach: for (i=0; i<size; i++) { k = key_at(i); body }
+      if (array_sig->aarray_type()) {
+	    if (index_vars_.size() != 1) {
+		  cerr << get_fileline() << ": sorry: "
+		       << "Multi-index foreach loops not supported." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    pform_name_t index_name;
+	    index_name.push_back(name_component_t(index_vars_[0]));
+	    NetNet*idx_sig = des->find_signal(scope, index_name);
+	    ivl_assert(*this, idx_sig);
+
+	      // Hidden integer loop index
+	    netvector_t*idx_vec = new netvector_t(IVL_VT_BOOL, 31, 0);
+	    idx_vec->set_signed(true);
+	    NetNet*loop_idx = new NetNet(scope, scope->local_symbol(),
+					 NetNet::REG, idx_vec);
+	    loop_idx->set_line(*this);
+	    loop_idx->local_flag(true);
+
+	    NetESignal*array_exp = new NetESignal(array_sig);
+	    array_exp->set_line(*this);
+	    NetESignal*loop_exp = new NetESignal(loop_idx);
+	    loop_exp->set_line(*this);
+
+	    NetEConst*zero = make_const_val(0);
+	    zero->set_line(*this);
+
+	    NetESFunc*size_expr = new NetESFunc("$size", &netvector_t::atom2u32, 1);
+	    size_expr->set_line(*this);
+	    size_expr->parm(0, array_exp);
+
+	    NetEBComp*cond_expr = new NetEBComp('<', loop_exp, size_expr);
+	    cond_expr->set_line(*this);
+
+	    NetESFunc*key_at = new NetESFunc("$ivl_aarray_method$key_at",
+					     &netstring_t::type_string, 2);
+	    key_at->set_line(*this);
+	    key_at->parm(0, new NetESignal(array_sig));
+	    key_at->parm(1, new NetESignal(loop_idx));
+
+	    NetAssign_*key_lv = new NetAssign_(idx_sig);
+	    NetAssign*key_asgn = new NetAssign(key_lv, key_at);
+	    key_asgn->set_line(*this);
+
+	    NetProc*sub;
+	    if (statement_)
+		  sub = statement_->elaborate(des, scope);
+	    else
+		  sub = new NetBlock(NetBlock::SEQU, 0);
+
+	    NetBlock*body = new NetBlock(NetBlock::SEQU, 0);
+	    body->set_line(*this);
+	    body->append(key_asgn);
+	    body->append(sub);
+
+	    NetAssign_*step_lv = new NetAssign_(loop_idx);
+	    NetEConst*step_val = make_const_val(1);
+	    NetAssign*step = new NetAssign(step_lv, '+', step_val);
+	    step->set_line(*this);
+
+	    NetForLoop*stmt = new NetForLoop(loop_idx, zero, cond_expr, body, step);
+	    stmt->set_line(*this);
+	    return stmt;
+      }
 
 	// At this point, we know that the array is dynamic so we
 	// handle that slightly differently, using run-time tests.
