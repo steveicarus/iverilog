@@ -603,6 +603,29 @@ static PBlock *pform_start_block(const YYLTYPE&loc, const char *name,
       return block;
 }
 
+static char *pform_start_block_with_labels(
+			       const YYLTYPE&loc, const YYLTYPE&name_loc,
+			       char *prefix_label, char *block_name,
+			       std::list<named_pexpr_t> *attributes,
+			       PBlock::BL_TYPE block_type)
+{
+      std::unique_ptr<char[]> prefix_label_ptr(prefix_label);
+      std::unique_ptr<char[]> block_name_ptr(block_name);
+
+      if (prefix_label_ptr && block_name_ptr) {
+	    yyerror(name_loc,
+		    "error: A block cannot have both a prefix label and a block name.");
+      }
+
+      const char *name = block_name_ptr ? block_name_ptr.get()
+					: prefix_label_ptr.get();
+      auto block = pform_start_block(loc, name, block_type);
+      pform_bind_attributes(block->attributes, attributes);
+
+      return block_name_ptr ? block_name_ptr.release()
+			    : prefix_label_ptr.release();
+}
+
 static PBlock *pform_finish_block(const YYLTYPE&block_loc,
 				  const YYLTYPE&end_loc, const char *type,
 				  char *raw_name, char *end_label,
@@ -797,6 +820,11 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
       Statement*statement;
       std::vector<Statement*>*statement_list;
       struct procedural_item_list_t *procedural_item_list;
+
+      struct {
+	    char *label;
+	    std::list<named_pexpr_t> *attributes;
+      } block_prefix;
 
       decl_assignment_t*decl_assignment;
       std::list<decl_assignment_t*>*decl_assignments;
@@ -1088,6 +1116,8 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <procedural_item_list> block_item_or_statement_list_opt
 %type <procedural_item_list> tf_item_or_statement_list
 %type <procedural_item_list> tf_item_or_statement_list_opt
+%type <block_prefix> block_prefix_opt
+%type <text> sequential_block_start parallel_block_start
 
 %type <statement> analog_statement
 
@@ -7315,6 +7345,34 @@ subroutine_call
       }
   ;
 
+block_prefix_opt
+  : /* empty */
+      { $$.label = nullptr;
+	$$.attributes = nullptr;
+      }
+  | identifier_name ':' attribute_list_opt
+      { pform_requires_sv(@1, "Block prefix label");
+	$$.label = $1;
+	$$.attributes = $3;
+      }
+  ;
+
+sequential_block_start
+  : block_prefix_opt K_begin label_opt
+      { $$ = pform_start_block_with_labels(@2, @3, $1.label, $3,
+					   $1.attributes, PBlock::BL_SEQ);
+	@$ = @2;
+      }
+  ;
+
+parallel_block_start
+  : block_prefix_opt K_fork label_opt
+      { $$ = pform_start_block_with_labels(@2, @3, $1.label, $3,
+					   $1.attributes, PBlock::BL_PAR);
+	@$ = @2;
+      }
+  ;
+
 statement_item /* This is roughly statement_item in the LRM */
 
   /* assign and deassign statements are procedural code to do
@@ -7356,14 +7414,12 @@ statement_item /* This is roughly statement_item in the LRM */
      the declarations. The scope is popped at the end of the block. */
 
   /* In SystemVerilog an unnamed block can contain variable declarations. */
-  | K_begin label_opt
-      { pform_start_block(@1, $2, PBlock::BL_SEQ); }
-    block_item_or_statement_list_opt K_end label_opt
-      { if (!$2 && $4->has_decls) {
+  | sequential_block_start block_item_or_statement_list_opt K_end label_opt
+      { if (!$1 && $2->has_decls) {
 	      pform_block_decls_requires_sv();
 	}
-	$$ = pform_finish_block(@1, @6, "block", $2, $6,
-				    PBlock::BL_SEQ, $4);
+	$$ = pform_finish_block(@1, @4, "block", $1, $4,
+				    PBlock::BL_SEQ, $2);
       }
 
   /* fork-join blocks are very similar to begin-end blocks. In fact,
@@ -7372,13 +7428,11 @@ statement_item /* This is roughly statement_item in the LRM */
      code generator can do the right thing. */
 
   /* In SystemVerilog an unnamed block can contain variable declarations. */
-  | K_fork label_opt
-      { pform_start_block(@1, $2, PBlock::BL_PAR); }
-    block_item_or_statement_list_opt join_keyword label_opt
-      { if (!$2 && $4->has_decls) {
-	      pform_requires_sv(@4, "Variable declaration in unnamed block");
+  | parallel_block_start block_item_or_statement_list_opt join_keyword label_opt
+      { if (!$1 && $2->has_decls) {
+	      pform_requires_sv(@2, "Variable declaration in unnamed block");
 	}
-	$$ = pform_finish_block(@1, @6, "fork", $2, $6, $5, $4);
+	$$ = pform_finish_block(@1, @4, "fork", $1, $4, $3, $2);
       }
 
   | K_disable hierarchy_identifier ';'
