@@ -1131,13 +1131,23 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
       }
 
       if ((strcmp(ivl_expr_name(expr), "$ivl_queue_method$sum") == 0 ||
-	   strcmp(ivl_expr_name(expr), "$ivl_queue_method$product") == 0) &&
+	   strcmp(ivl_expr_name(expr), "$ivl_queue_method$product") == 0 ||
+	   strcmp(ivl_expr_name(expr), "$ivl_queue_method$and") == 0 ||
+	   strcmp(ivl_expr_name(expr), "$ivl_queue_method$or") == 0 ||
+	   strcmp(ivl_expr_name(expr), "$ivl_queue_method$xor") == 0) &&
 	  parm_count == 1) {
 	    ivl_expr_t arg = ivl_expr_parm(expr, 0);
 	    unsigned wid = ivl_expr_width(expr);
-	    const char* op = strcmp(ivl_expr_name(expr), "$ivl_queue_method$product") == 0
-			       ? "product"
-			       : "sum";
+	    const char* name = ivl_expr_name(expr);
+	    const char* op = "sum";
+	    if (strcmp(name, "$ivl_queue_method$product") == 0)
+		  op = "product";
+	    else if (strcmp(name, "$ivl_queue_method$and") == 0)
+		  op = "and";
+	    else if (strcmp(name, "$ivl_queue_method$or") == 0)
+		  op = "or";
+	    else if (strcmp(name, "$ivl_queue_method$xor") == 0)
+		  op = "xor";
 	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
 		  ivl_signal_t clas = ivl_expr_signal(arg);
 		  unsigned pidx = ivl_expr_property_idx(arg);

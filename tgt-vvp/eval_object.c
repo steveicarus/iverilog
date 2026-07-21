@@ -450,7 +450,10 @@ enum queue_locator_with_mode_e {
       QUEUE_WITH_UNIQUE,
       QUEUE_WITH_UNIQUE_INDEX,
       QUEUE_WITH_SUM,
-      QUEUE_WITH_PRODUCT
+      QUEUE_WITH_PRODUCT,
+      QUEUE_WITH_AND,
+      QUEUE_WITH_OR,
+      QUEUE_WITH_XOR
 };
 
 static enum queue_locator_with_mode_e queue_locator_with_mode_from_name(
@@ -480,6 +483,12 @@ static enum queue_locator_with_mode_e queue_locator_with_mode_from_name(
 	    return QUEUE_WITH_SUM;
       } else if (strcmp(name, "$ivl_queue_method$product_with") == 0) {
 	    return QUEUE_WITH_PRODUCT;
+      } else if (strcmp(name, "$ivl_queue_method$and_with") == 0) {
+	    return QUEUE_WITH_AND;
+      } else if (strcmp(name, "$ivl_queue_method$or_with") == 0) {
+	    return QUEUE_WITH_OR;
+      } else if (strcmp(name, "$ivl_queue_method$xor_with") == 0) {
+	    return QUEUE_WITH_XOR;
       }
       return (enum queue_locator_with_mode_e) -1;
 }
@@ -499,12 +508,19 @@ static int queue_with_multi(enum queue_locator_with_mode_e mode)
 	     mode == QUEUE_WITH_UNIQUE ||
 	     mode == QUEUE_WITH_UNIQUE_INDEX ||
 	     mode == QUEUE_WITH_SUM ||
-	     mode == QUEUE_WITH_PRODUCT;
+	     mode == QUEUE_WITH_PRODUCT ||
+	     mode == QUEUE_WITH_AND ||
+	     mode == QUEUE_WITH_OR ||
+	     mode == QUEUE_WITH_XOR;
 }
 
 static int queue_with_expr_value(enum queue_locator_with_mode_e mode)
 {
-      return mode == QUEUE_WITH_SUM || mode == QUEUE_WITH_PRODUCT;
+      return mode == QUEUE_WITH_SUM ||
+	     mode == QUEUE_WITH_PRODUCT ||
+	     mode == QUEUE_WITH_AND ||
+	     mode == QUEUE_WITH_OR ||
+	     mode == QUEUE_WITH_XOR;
 }
 
 static int queue_with_as_index(enum queue_locator_with_mode_e mode)
@@ -613,6 +629,27 @@ static void emit_queue_with_finish(enum queue_locator_with_mode_e mode,
 	    }
 	    return;
       }
+      if (mode == QUEUE_WITH_AND) {
+	    fprintf(vvp_out, "    %%queue/and/obj/v %u;\n", elem_wid);
+	    if (is_prop) {
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    }
+	    return;
+      }
+      if (mode == QUEUE_WITH_OR) {
+	    fprintf(vvp_out, "    %%queue/or/obj/v %u;\n", elem_wid);
+	    if (is_prop) {
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    }
+	    return;
+      }
+      if (mode == QUEUE_WITH_XOR) {
+	    fprintf(vvp_out, "    %%queue/xor/obj/v %u;\n", elem_wid);
+	    if (is_prop) {
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    }
+	    return;
+      }
       if (queue_with_multi(mode)) {
 	    if (is_prop) {
 		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
@@ -648,11 +685,13 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    queue_locator_with_mode_from_name(name);
       if ((int) mode < 0) return 1;
 
-      /* String unique/min/max/sum/product with() not implemented yet. */
+      /* String unique/min/max/sum/product/and/or/xor with() not implemented yet. */
       if (is_string &&
 	  (mode == QUEUE_WITH_UNIQUE || mode == QUEUE_WITH_UNIQUE_INDEX ||
 	   mode == QUEUE_WITH_MIN || mode == QUEUE_WITH_MAX ||
-	   mode == QUEUE_WITH_SUM || mode == QUEUE_WITH_PRODUCT)) {
+	   mode == QUEUE_WITH_SUM || mode == QUEUE_WITH_PRODUCT ||
+	   mode == QUEUE_WITH_AND || mode == QUEUE_WITH_OR ||
+	   mode == QUEUE_WITH_XOR)) {
 	    return 1;
       }
 

@@ -6551,6 +6551,45 @@ static vvp_vector4_t queue_product_words_src(SRC* src, unsigned wid)
       return acc;
 }
 
+template <class SRC>
+static vvp_vector4_t queue_and_words_src(SRC* src, unsigned wid)
+{
+      vvp_vector4_t acc(wid, BIT4_1);
+      if (!src) return acc;
+      for (size_t i = 0; i < src->get_size(); i += 1) {
+	    vvp_vector4_t vi(wid);
+	    src->get_word(i, vi);
+	    acc &= vi;
+      }
+      return acc;
+}
+
+template <class SRC>
+static vvp_vector4_t queue_or_words_src(SRC* src, unsigned wid)
+{
+      vvp_vector4_t acc(wid, BIT4_0);
+      if (!src) return acc;
+      for (size_t i = 0; i < src->get_size(); i += 1) {
+	    vvp_vector4_t vi(wid);
+	    src->get_word(i, vi);
+	    acc |= vi;
+      }
+      return acc;
+}
+
+template <class SRC>
+static vvp_vector4_t queue_xor_words_src(SRC* src, unsigned wid)
+{
+      vvp_vector4_t acc(wid, BIT4_0);
+      if (!src) return acc;
+      for (size_t i = 0; i < src->get_size(); i += 1) {
+	    vvp_vector4_t vi(wid);
+	    src->get_word(i, vi);
+	    acc ^= vi;
+      }
+      return acc;
+}
+
 bool of_QUEUE_PRODUCT_V(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t* net = cp->net;
@@ -6660,6 +6699,174 @@ bool of_QUEUE_SUM_OBJ_V(vthread_t thr, vvp_code_t cp)
 	    qsrc ? queue_sum_words_src(qsrc, wid)
 		 : queue_sum_words_src(dsrc, wid);
       thr->push_vec4(sum);
+      return true;
+}
+
+bool of_QUEUE_AND_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t* net = cp->net;
+      unsigned wid = cp->bit_idx[0];
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_vector4_t acc;
+      if (qsrc) acc = queue_and_words_src(qsrc, wid);
+      else if (dsrc) acc = queue_and_words_src(dsrc, wid);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    acc = queue_and_words_src(src, wid);
+      }
+      thr->push_vec4(acc);
+      return true;
+}
+
+bool of_QUEUE_AND_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_vector4_t acc =
+	    qsrc ? queue_and_words_src(qsrc, wid)
+		 : queue_and_words_src(dsrc, wid);
+      thr->push_vec4(acc);
+      return true;
+}
+
+bool of_QUEUE_AND_OBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_object_t src_obj;
+      thr->pop_object(src_obj);
+
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(src_obj, qsrc, dsrc);
+      vvp_vector4_t acc =
+	    qsrc ? queue_and_words_src(qsrc, wid)
+		 : queue_and_words_src(dsrc, wid);
+      thr->push_vec4(acc);
+      return true;
+}
+
+bool of_QUEUE_OR_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t* net = cp->net;
+      unsigned wid = cp->bit_idx[0];
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_vector4_t acc;
+      if (qsrc) acc = queue_or_words_src(qsrc, wid);
+      else if (dsrc) acc = queue_or_words_src(dsrc, wid);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    acc = queue_or_words_src(src, wid);
+      }
+      thr->push_vec4(acc);
+      return true;
+}
+
+bool of_QUEUE_OR_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_vector4_t acc =
+	    qsrc ? queue_or_words_src(qsrc, wid)
+		 : queue_or_words_src(dsrc, wid);
+      thr->push_vec4(acc);
+      return true;
+}
+
+bool of_QUEUE_OR_OBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_object_t src_obj;
+      thr->pop_object(src_obj);
+
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(src_obj, qsrc, dsrc);
+      vvp_vector4_t acc =
+	    qsrc ? queue_or_words_src(qsrc, wid)
+		 : queue_or_words_src(dsrc, wid);
+      thr->push_vec4(acc);
+      return true;
+}
+
+bool of_QUEUE_XOR_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t* net = cp->net;
+      unsigned wid = cp->bit_idx[0];
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_net(thr, net, qsrc, dsrc);
+      vvp_vector4_t acc;
+      if (qsrc) acc = queue_xor_words_src(qsrc, wid);
+      else if (dsrc) acc = queue_xor_words_src(dsrc, wid);
+      else {
+	    vvp_queue* src_q = get_queue_object<vvp_queue_vec4>(thr, net);
+	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
+	    acc = queue_xor_words_src(src, wid);
+      }
+      thr->push_vec4(acc);
+      return true;
+}
+
+bool of_QUEUE_XOR_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject*cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_vector4_t acc =
+	    qsrc ? queue_xor_words_src(qsrc, wid)
+		 : queue_xor_words_src(dsrc, wid);
+      thr->push_vec4(acc);
+      return true;
+}
+
+bool of_QUEUE_XOR_OBJ_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[0];
+      vvp_object_t src_obj;
+      thr->pop_object(src_obj);
+
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(src_obj, qsrc, dsrc);
+      vvp_vector4_t acc =
+	    qsrc ? queue_xor_words_src(qsrc, wid)
+		 : queue_xor_words_src(dsrc, wid);
+      thr->push_vec4(acc);
       return true;
 }
 

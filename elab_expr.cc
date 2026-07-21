@@ -96,8 +96,12 @@ static NetExpr* elab_array_locator_noparens(Design* des, const LineInfo& loc,
 
       if (method_name == "unique" || method_name == "unique_index" ||
 	  method_name == "min" || method_name == "max" ||
-	  method_name == "sum" || method_name == "product") {
-	    if (method_name == "sum" || method_name == "product") {
+	  method_name == "sum" || method_name == "product" ||
+	  method_name == "and" || method_name == "or" ||
+	  method_name == "xor") {
+	    if (method_name == "sum" || method_name == "product" ||
+		method_name == "and" || method_name == "or" ||
+		method_name == "xor") {
 		  if (!queue_method_element_is_integral_vec4(element_type)) {
 			cerr << loc.get_fileline() << ": sorry: " << kind << " "
 			     << method_name << "() for this "
@@ -118,7 +122,9 @@ static NetExpr* elab_array_locator_noparens(Design* des, const LineInfo& loc,
 	    if (method_name == "unique_index") {
 		  result_type = &ivl_queue_unique_index_ret;
 		  snprintf(sfunc, sizeof sfunc, "$ivl_queue_method$unique_index");
-	    } else if (method_name == "sum" || method_name == "product") {
+	    } else if (method_name == "sum" || method_name == "product" ||
+		       method_name == "and" || method_name == "or" ||
+		       method_name == "xor") {
 		  result_type = element_type;
 		  snprintf(sfunc, sizeof sfunc, "$ivl_queue_method$%s",
 			   method_name.str());
@@ -208,7 +214,9 @@ static NetExpr* elab_queue_locator_with_predicate(
       index_net->local_flag(true);
 
       NetExpr* pred = 0;
-      if (method_suffix == "sum" || method_suffix == "product") {
+      if (method_suffix == "sum" || method_suffix == "product" ||
+	  method_suffix == "and" || method_suffix == "or" ||
+	  method_suffix == "xor") {
 	    pred = elab_and_eval(des, ws, with_expr, (int)ew, false, false,
 				 ivl_type_base(element_type));
       } else {
@@ -242,6 +250,12 @@ static NetExpr* elab_queue_locator_with_predicate(
 	    sfunc_name = lex_strings.make("$ivl_queue_method$sum_with");
       } else if (method_suffix == "product") {
 	    sfunc_name = lex_strings.make("$ivl_queue_method$product_with");
+      } else if (method_suffix == "and") {
+	    sfunc_name = lex_strings.make("$ivl_queue_method$and_with");
+      } else if (method_suffix == "or") {
+	    sfunc_name = lex_strings.make("$ivl_queue_method$or_with");
+      } else if (method_suffix == "xor") {
+	    sfunc_name = lex_strings.make("$ivl_queue_method$xor_with");
       } else {
 	    ivl_assert(loc, 0);
       }
@@ -346,11 +360,41 @@ static NetExpr* elab_array_locator_method(Design* des, NetScope* scope,
 
 static bool is_array_reduction_method(perm_string name)
 {
-      return name == "sum" || name == "product";
+      return name == "sum" || name == "product" ||
+	     name == "and" || name == "or" || name == "xor";
 }
 
 /*
- * Elaborate sum()/product() on a queue or dynamic array expression.
+ * LRM 7.12.4: iterator index querying. In `with` predicates the iterator
+ * exposes `.index`. Icarus models that as a sibling local net named `index`
+ * in the synthetic `$ivl_qwith*` scope; map `item.index` to that net.
+ */
+static NetExpr* elab_array_iterator_index_query(const LineInfo& loc,
+						const symbol_search_results& sr)
+{
+      if (!sr.net || sr.path_tail.size() != 1)
+	    return 0;
+      if (sr.path_tail.front().name != "index" ||
+	  !sr.path_tail.front().index.empty())
+	    return 0;
+      if (sr.net->name() != "item")
+	    return 0;
+      NetScope* sc = sr.net->scope();
+      if (!sc)
+	    return 0;
+      perm_string sn = sc->basename();
+      if (!sn.str() || strncmp(sn.str(), "$ivl_qwith", 10) != 0)
+	    return 0;
+      NetNet* idx = sc->find_signal(lex_strings.make("index"));
+      if (!idx)
+	    return 0;
+      NetESignal* tmp = new NetESignal(idx);
+      tmp->set_line(loc);
+      return tmp;
+}
+
+/*
+ * Elaborate sum()/product()/and()/or()/xor() on a queue or dynamic array.
  * Returns an integral value with the element type/width.
  */
 static NetExpr* elab_array_reduction_method(Design* des, NetScope* scope,
@@ -2009,7 +2053,9 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 		  return expr_width_;
 	    }
 
-	    if (method_name == "sum" || method_name == "product") {
+	    if (method_name == "sum" || method_name == "product" ||
+		method_name == "and" || method_name == "or" ||
+		method_name == "xor") {
 		  expr_type_   = darray->element_base_type();
 		  expr_width_  = darray->element_width();
 		  min_width_   = expr_width_;
@@ -5254,6 +5300,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       NetNet *net = sr.net;
 
+      if (NetExpr* idxq = elab_array_iterator_index_query(*this, sr))
+	    return idxq;
+
       if (!sr.path_tail.empty()) {
 	    if (net->struct_type()) {
 		  return check_for_struct_members(this, des, scope, net,
@@ -5364,6 +5413,24 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  NetESFunc*fun = new NetESFunc(
 		      "$ivl_queue_method$product",
 		      element_type, 1);
+		  fun->set_line(*this);
+		  NetESignal*arg = new NetESignal(sr.net);
+		  arg->set_line(*sr.net);
+		  fun->parm(0, arg);
+		  return fun;
+	    }
+	    if (member_comp.name == "and" || member_comp.name == "or" ||
+		member_comp.name == "xor") {
+		  if (!queue_method_element_is_integral_vec4(element_type)) {
+			cerr << get_fileline() << ": sorry: queue " << member_comp.name
+			     << "() for this element type is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  char sfunc[64];
+		  snprintf(sfunc, sizeof sfunc, "$ivl_queue_method$%s",
+			   member_comp.name.str());
+		  NetESFunc*fun = new NetESFunc(sfunc, element_type, 1);
 		  fun->set_line(*this);
 		  NetESignal*arg = new NetESignal(sr.net);
 		  arg->set_line(*sr.net);
@@ -5597,6 +5664,9 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 	    if (!check_interface_modport_access(this, des, sr, false))
 		  return 0;
 
+	    if (NetExpr* idxq = elab_array_iterator_index_query(*this, sr))
+		  return idxq;
+
             if (NEED_CONST & flags) {
                   cerr << get_fileline() << ": error: A reference to a net "
                           "or variable (`" << path_ << "') is not allowed in "
@@ -5735,6 +5805,27 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 			fun->parm(0, arg);
 			return fun;
 		  }
+		  if (member_comp.name == "product" ||
+		      member_comp.name == "and" || member_comp.name == "or" ||
+		      member_comp.name == "xor") {
+			if (!queue_method_element_is_integral_vec4(element_type)) {
+			      cerr << get_fileline() << ": sorry: queue "
+				   << member_comp.name
+				   << "() for this element type is not yet supported."
+				   << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			char sfunc[64];
+			snprintf(sfunc, sizeof sfunc, "$ivl_queue_method$%s",
+				 member_comp.name.str());
+			NetESFunc*fun = new NetESFunc(sfunc, element_type, 1);
+			fun->set_line(*this);
+			NetESignal*arg = new NetESignal(sr.net);
+			arg->set_line(*sr.net);
+			fun->parm(0, arg);
+			return fun;
+		  }
 		  if (member_comp.name == "min" || member_comp.name == "max") {
 			if (!queue_method_element_is_integral_vec4(element_type)) {
 			      cerr << get_fileline() << ": sorry: queue " << member_comp.name
@@ -5774,26 +5865,6 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 							    "dynamic array");
 		  if (tmp) return tmp;
 		  if (des->errors) return 0;
-
-		  if (member_comp.name == "and") {
-			cerr << get_fileline() << ": sorry: 'and()' "
-			        "array reduction method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
-		  } else if (member_comp.name == "or") {
-			cerr << get_fileline() << ": sorry: 'or()' "
-			        "array reduction method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
-		  } else if (member_comp.name == "xor") {
-			cerr << get_fileline() << ": sorry: 'xor()' "
-			        "array reduction method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
-		  }
 	    }
 
 	    if ((sr.net->data_type() == IVL_VT_STRING) && !sr.path_tail.empty()) {
