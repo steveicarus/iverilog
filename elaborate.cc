@@ -55,6 +55,7 @@
 # include  "netclass.h"
 # include  "netmisc.h"
 # include  "PModport.h"
+# include  "PClocking.h"
 # include  "util.h"
 # include  "parse_api.h"
 # include  "compiler.h"
@@ -5408,46 +5409,61 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
       }
 
 	/* Vertical-slice support: @(posedge vif.clk) where vif is a
-	   virtual interface. Emit $ivl_vif_wait then the continuation. */
+	   virtual interface. Emit $ivl_vif_wait then the continuation.
+	   Skip speculative elaborate when the path is a clocking wait. */
       if (expr_.size() == 1 && dynamic_cast<PEIdent*>(expr_[0]->expr())) {
-	    NetExpr*tmp = elab_and_eval(des, scope, expr_[0]->expr(), -1);
-	    if (NetESFunc*sf = dynamic_cast<NetESFunc*>(tmp)) {
-		  if (strcmp(sf->name(), "$ivl_vif_get") == 0 && sf->nparms() == 2) {
-			int edge_code = 2; /* anyedge */
-			switch (expr_[0]->type()) {
-			  case PEEvent::POSEDGE: edge_code = 0; break;
-			  case PEEvent::NEGEDGE: edge_code = 1; break;
-			  case PEEvent::ANYEDGE: edge_code = 2; break;
-			  case PEEvent::EDGE:    edge_code = 2; break;
-			  default: break;
-			}
-			NetExpr*idx_ex = sf->parm(1);
-			long midx = 0;
-			if (!eval_as_long(midx, idx_ex)) {
-			      cerr << get_fileline() << ": error: "
-				   << "Virtual interface wait member index "
-				   << "must be constant." << endl;
-			      des->errors += 1;
-			      delete tmp;
-			      return 0;
-			}
-			/* Dup the VI base — NetESFunc::parm(idx,0) deletes
-			   the old expression, so we cannot steal in place. */
-			NetExpr*vif_base = sf->parm(0)->dup_expr();
-			delete tmp;
-			NetSTask*wait_task = elab_vif_wait_task(*this, vif_base,
-								edge_code,
-								static_cast<int>(midx));
-			if (!enet)
-			      return wait_task;
-			NetBlock*blk = new NetBlock(NetBlock::SEQU, 0);
-			blk->set_line(*this);
-			blk->append(wait_task);
-			blk->append(enet);
-			return blk;
+	    const PEIdent*vid = dynamic_cast<PEIdent*>(expr_[0]->expr());
+	    bool maybe_clocking = false;
+	    if (vid && !vid->path().name.empty()) {
+		  symbol_search_results csr;
+		  if (symbol_search(this, des, scope, vid->path(),
+				    vid->lexical_pos(), &csr) &&
+		      csr.is_scope() && csr.scope) {
+			perm_string tail = vid->path().name.back().name;
+			if (find_scope_clocking(csr.scope, tail))
+			      maybe_clocking = true;
 		  }
 	    }
-	    delete tmp;
+	    if (!maybe_clocking) {
+		  NetExpr*tmp = elab_and_eval(des, scope, expr_[0]->expr(), -1);
+		  if (NetESFunc*sf = dynamic_cast<NetESFunc*>(tmp)) {
+			if (strcmp(sf->name(), "$ivl_vif_get") == 0 && sf->nparms() == 2) {
+			      int edge_code = 2; /* anyedge */
+			      switch (expr_[0]->type()) {
+				case PEEvent::POSEDGE: edge_code = 0; break;
+				case PEEvent::NEGEDGE: edge_code = 1; break;
+				case PEEvent::ANYEDGE: edge_code = 2; break;
+				case PEEvent::EDGE:    edge_code = 2; break;
+				default: break;
+			      }
+			      NetExpr*idx_ex = sf->parm(1);
+			      long midx = 0;
+			      if (!eval_as_long(midx, idx_ex)) {
+				    cerr << get_fileline() << ": error: "
+					 << "Virtual interface wait member index "
+					 << "must be constant." << endl;
+				    des->errors += 1;
+				    delete tmp;
+				    return 0;
+			      }
+			      /* Dup the VI base — NetESFunc::parm(idx,0) deletes
+				 the old expression, so we cannot steal in place. */
+			      NetExpr*vif_base = sf->parm(0)->dup_expr();
+			      delete tmp;
+			      NetSTask*wait_task = elab_vif_wait_task(*this, vif_base,
+								      edge_code,
+								      static_cast<int>(midx));
+			      if (!enet)
+				    return wait_task;
+			      NetBlock*blk = new NetBlock(NetBlock::SEQU, 0);
+			      blk->set_line(*this);
+			      blk->append(wait_task);
+			      blk->append(enet);
+			      return blk;
+			}
+		  }
+		  delete tmp;
+	    }
       }
 
 	/* Create a single NetEvent and NetEvWait. Then, create a
@@ -5554,7 +5570,8 @@ cerr << endl;
 
 	      /* If the expression is an identifier that matches a
 		 named event, then handle this case all at once and
-		 skip the rest of the expression handling. */
+		 skip the rest of the expression handling. Also handle
+		 terminal clocking-block waits: @(cb) / @(bif.cb). */
 
 	    if (const PEIdent*id = dynamic_cast<PEIdent*>(expr_[idx]->expr())) {
 		  symbol_search_results sr;
@@ -5585,6 +5602,72 @@ cerr << endl;
                               des->errors += 1;
 			}
 			continue;
+		  }
+
+		  /* @(bif.cb): path ends at a clocking block name that
+		     was treated as transparent during symbol_search. */
+		  if (sr.is_scope() && sr.scope && !id->path().name.empty()) {
+			perm_string cb_name = id->path().name.back().name;
+			const PClocking*cb = find_scope_clocking(sr.scope, cb_name);
+			if (cb && !cb->events().empty()) {
+			      NetScope*cb_scope = sr.scope;
+			      for (size_t eidx = 0 ; eidx < cb->events().size()
+					 ; eidx += 1) {
+				    PEEvent*cev = cb->events()[eidx];
+				    if (!cev || !cev->expr()) {
+					  cerr << get_fileline() << ": error: "
+						  "Clocking block '" << cb_name
+					       << "' has an empty clocking event."
+					       << endl;
+					  des->errors += 1;
+					  continue;
+				    }
+				    NetExpr*tmp = elab_and_eval(des, cb_scope,
+								cev->expr(), -1);
+				    if (tmp == 0) {
+					  cerr << get_fileline() << ": error: "
+						  "Failed to evaluate clocking event for '"
+					       << cb_name << "'." << endl;
+					  des->errors += 1;
+					  continue;
+				    }
+				    NetNet*expr = tmp->synthesize(des, cb_scope, tmp);
+				    if (expr == 0) {
+					  des->errors += 1;
+					  delete tmp;
+					  continue;
+				    }
+				    delete tmp;
+
+				    unsigned pins = (cev->type() == PEEvent::ANYEDGE)
+					  ? expr->pin_count() : 1;
+				    NetEvProbe*pr = 0;
+				    switch (cev->type()) {
+					case PEEvent::POSEDGE:
+					  pr = new NetEvProbe(scope, scope->local_symbol(),
+							      ev, NetEvProbe::POSEDGE, pins);
+					  break;
+					case PEEvent::NEGEDGE:
+					  pr = new NetEvProbe(scope, scope->local_symbol(),
+							      ev, NetEvProbe::NEGEDGE, pins);
+					  break;
+					case PEEvent::EDGE:
+					  pr = new NetEvProbe(scope, scope->local_symbol(),
+							      ev, NetEvProbe::EDGE, pins);
+					  break;
+					case PEEvent::ANYEDGE:
+					default:
+					  pr = new NetEvProbe(scope, scope->local_symbol(),
+							      ev, NetEvProbe::ANYEDGE, pins);
+					  break;
+				    }
+				    for (unsigned p = 0 ; p < pr->pin_count() ; p += 1)
+					  connect(pr->pin(p), expr->pin(p));
+				    des->add_node(pr);
+				    expr_count += 1;
+			      }
+			      continue;
+			}
 		  }
 	    }
 

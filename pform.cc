@@ -31,6 +31,7 @@
 # include  "PUdp.h"
 # include  "PGenerate.h"
 # include  "PModport.h"
+# include  "PClocking.h"
 # include  "PSpec.h"
 # include  "PTimingCheck.h"
 # include  "discipline.h"
@@ -367,6 +368,7 @@ static list<set<perm_string> > conditional_block_names;
   /* This tracks the current modport list being processed. This is
      always within an interface. */
 static PModport*pform_cur_modport = 0;
+static PClocking*pform_cur_clocking = 0;
 
 static NetNet::Type pform_default_nettype = NetNet::WIRE;
 
@@ -3552,6 +3554,78 @@ void pform_add_modport_port(const struct vlltype&loc,
 	    error_count += 1;
       }
       pform_cur_modport->simple_ports[name] = make_pair(port_type, expr);
+}
+
+void pform_start_clocking(const struct vlltype&loc, const char*name,
+			  PEventStatement*ev)
+{
+      Module*scope = pform_cur_module.front();
+      ivl_assert(loc, scope);
+      ivl_assert(loc, pform_cur_clocking == 0);
+
+      pform_requires_sv(loc, "Clocking block");
+
+      perm_string use_name = lex_strings.make(name);
+      pform_cur_clocking = new PClocking(use_name);
+      FILE_NAME(pform_cur_clocking, loc);
+
+      if (ev) {
+	    pform_cur_clocking->set_events(ev->get_events());
+	    /* Keep PEEvent objects; drop the statement wrapper. */
+	    delete ev;
+      } else {
+	    cerr << loc << ": error: Clocking block '" << use_name
+		 << "' requires a clocking event." << endl;
+	    error_count += 1;
+      }
+
+      if (scope->clockings.find(use_name) != scope->clockings.end()) {
+	    cerr << loc << ": error: Duplicate clocking block '"
+		 << use_name << "'." << endl;
+	    error_count += 1;
+      }
+
+      add_local_symbol(scope, use_name, pform_cur_clocking);
+      scope->clockings[use_name] = pform_cur_clocking;
+
+      delete[] name;
+}
+
+void pform_end_clocking(const struct vlltype&loc)
+{
+      ivl_assert(loc, pform_cur_clocking);
+      pform_cur_clocking = 0;
+}
+
+void pform_add_clocking_signals(const struct vlltype&loc,
+				NetNet::PortType direction,
+				PExpr*skew,
+				std::list<pform_ident_t>*names)
+{
+      ivl_assert(loc, pform_cur_clocking);
+      ivl_assert(loc, names);
+
+      /* Skews other than #0 / #1step are accepted but ignored for v1. */
+      (void)skew;
+
+      for (list<pform_ident_t>::iterator cur = names->begin()
+		 ; cur != names->end() ; ++cur) {
+	    perm_string name = cur->first;
+	    if (pform_cur_clocking->signals.find(name)
+		!= pform_cur_clocking->signals.end()) {
+		  cerr << loc << ": error: Duplicate clocking signal '"
+		       << name << "' in clocking block '"
+		       << pform_cur_clocking->name() << "'." << endl;
+		  error_count += 1;
+		  continue;
+	    }
+	    PClocking::signal_t sig;
+	    sig.direction = direction;
+	    sig.skew = skew;
+	    pform_cur_clocking->signals[name] = sig;
+      }
+
+      delete names;
 }
 
 bool pform_requires_sv(const struct vlltype&loc, const char *feature)

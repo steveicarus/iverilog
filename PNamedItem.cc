@@ -78,6 +78,9 @@ std::ostream& operator << (std::ostream&o, PNamedItem::SymbolType st)
           case PNamedItem::MODPORT:
             o << "a modport";
             break;
+          case PNamedItem::CLOCKING:
+            o << "a clocking block";
+            break;
           case PNamedItem::PACKAGE:
             o << "a package";
             break;

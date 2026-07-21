@@ -7,7 +7,7 @@ Each item should be a dedicated `feat/<name>` branch, with tests/examples and a 
 1. **Parameterized classes** — `class C #(type T = int);` / `C#(byte)` — needed for `uvm_*#(T)`, `config_db` — **partial** (defaults; see STATUS)
 2. **Associative arrays** — `int aa[string];` — **in progress / partial** (string keys only; see [assoc-array.md](assoc-array.md))
 3. **Virtual interfaces** + eventing on `vif.clk` — **partial** (see [virtual-interface.md](virtual-interface.md))
-4. **Clocking blocks** — enough for `@(vif.cb)`
+4. **Clocking blocks** — enough for `@(vif.cb)` — **partial** (interface-local `@(bif.cb)`; see [clocking.md](clocking.md))
 5. **`mailbox` / `semaphore` builtins** (or solid class equivalents with blocking put/get)
 6. **Constraints + `randomize()` / `randomize() with`** — start unconstrained `rand`, then solver
 7. **`$cast` / `$typename` hardening** for factory patterns

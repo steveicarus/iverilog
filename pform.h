@@ -236,6 +236,17 @@ extern void pform_add_modport_port(const struct vlltype&loc,
 	                           perm_string name, PExpr*expr);
 
 /*
+ * Clocking-block related functions (Tier A #4 vertical slice).
+ */
+extern void pform_start_clocking(const struct vlltype&loc, const char*name,
+				 PEventStatement*ev);
+extern void pform_end_clocking(const struct vlltype&loc);
+extern void pform_add_clocking_signals(const struct vlltype&loc,
+				       NetNet::PortType direction,
+				       PExpr*skew,
+				       std::list<pform_ident_t>*names);
+
+/*
  * This creates an identifier aware of names that may have been
  * imported from other packages.
  */
