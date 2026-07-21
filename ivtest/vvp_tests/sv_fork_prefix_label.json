@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_fork_prefix_label.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "join_any, join_none, and wait fork are not supported",
+        "type"      : "CE"
+    }
+}
