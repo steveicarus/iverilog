@@ -1872,13 +1872,12 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
       perm_string method_name = search_results.path_tail.back().name;
 
       // Dynamic array variable without a select expression. The method
-      // applies to the array itself, and not to the object that might be
-      // indexed from it. So return
-      // the expr_width for the return value of the queue method. For example:
-      //    <scope>.x.size();
-      // In this example, x is a dynamic array.
-      if (search_results.net && search_results.net->data_type()==IVL_VT_DARRAY
-	  && search_results.path_head.back().index.empty()) {
+      // Dynamic array or queue without a select expression. The method
+      // applies to the array itself. For example: <scope>.x.size();
+      if (search_results.net &&
+	  (search_results.net->data_type()==IVL_VT_DARRAY ||
+	   search_results.net->data_type()==IVL_VT_QUEUE) &&
+	  search_results.path_head.back().index.empty()) {
 
 	    const NetNet*net = search_results.net;
 	    const netdarray_t*darray = net->darray_type();
@@ -1892,14 +1891,16 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 		  return expr_width_;
 	    }
 
-	    if (method_name == "sum") {
-		  expr_type_   = darray->element_base_type();
-		  expr_width_  = darray->element_width();
-		  min_width_   = expr_width_;
-		  signed_flag_ = darray->get_signed();
+	    if (net->queue_type() &&
+		(method_name=="pop_back" || method_name=="pop_front")) {
+		  expr_type_  = darray->element_base_type();
+		  expr_width_ = darray->element_width();
+		  min_width_  = expr_width_;
+		  signed_flag_= darray->get_signed();
 		  return expr_width_;
 	    }
-	    if (method_name == "product") {
+
+	    if (method_name == "sum" || method_name == "product") {
 		  expr_type_   = darray->element_base_type();
 		  expr_width_  = darray->element_width();
 		  min_width_   = expr_width_;
@@ -1910,78 +1911,6 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 	    if (method_name == "find" || method_name == "find_index" ||
 		method_name == "unique" || method_name == "unique_index" ||
 		method_name == "min" || method_name == "max") {
-		  expr_type_   = IVL_VT_QUEUE;
-		  expr_width_  = 1;
-		  min_width_   = 1;
-		  signed_flag_ = false;
-		  return expr_width_;
-	    }
-
-	    if (method_name == "find_first" || method_name == "find_last") {
-		  expr_type_   = darray->element_base_type();
-		  expr_width_  = darray->element_width();
-		  min_width_   = expr_width_;
-		  signed_flag_ = darray->get_signed();
-		  return expr_width_;
-	    }
-
-	    if (method_name == "find_first_index" || method_name == "find_last_index") {
-		  expr_type_  = IVL_VT_BOOL;
-		  expr_width_ = 32;
-		  min_width_  = 32;
-		  signed_flag_= true;
-		  return expr_width_;
-	    }
-
-	    return 0;
-      }
-
-      // Queue variable without a select expression. The method applies to the
-      // queue, and not to the object that might be indexed from it. So return
-      // the expr_width for the return value of the queue method. For example:
-      //    <scope>.x.size();
-      // In this example, x is a queue.
-      if (search_results.net && search_results.net->data_type()==IVL_VT_QUEUE &&
-          search_results.path_head.back().index.empty()) {
-
-	    const NetNet*net = search_results.net;
-	    const netdarray_t*darray = net->darray_type();
-	    ivl_assert(*this, darray);
-
-	    if (method_name == "size") {
-		  expr_type_  = IVL_VT_BOOL;
-		  expr_width_ = 32;
-		  min_width_  = expr_width_;
-		  signed_flag_= true;
-		  return expr_width_;
-	    }
-
-	    if (method_name=="pop_back" || method_name=="pop_front") {
-		  expr_type_  = darray->element_base_type();
-		  expr_width_ = darray->element_width();
-		  min_width_  = expr_width_;
-		  signed_flag_= darray->get_signed();
-		  return expr_width_;
-	    }
-
-	    if (method_name == "sum") {
-		  expr_type_   = darray->element_base_type();
-		  expr_width_  = darray->element_width();
-		  min_width_   = expr_width_;
-		  signed_flag_ = darray->get_signed();
-		  return expr_width_;
-	    }
-	    if (method_name == "product") {
-		  expr_type_   = darray->element_base_type();
-		  expr_width_  = darray->element_width();
-		  min_width_   = expr_width_;
-		  signed_flag_ = darray->get_signed();
-		  return expr_width_;
-	    }
-
-	    if (method_name == "unique" || method_name == "unique_index" ||
-		method_name == "min" || method_name == "max" ||
-		method_name == "find" || method_name == "find_index") {
 		  expr_type_   = IVL_VT_QUEUE;
 		  expr_width_  = 1;
 		  min_width_   = 1;
@@ -3882,13 +3811,15 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  int pidx = cls->property_idx_from_name(prop_name);
 		  if (pidx >= 0) {
 			ivl_type_t ptype = cls->get_prop_type(pidx);
-			if (ptype && dynamic_cast<const netqueue_t*>(ptype)) {
+			if (ptype &&
+			    (ptype->base_type() == IVL_VT_DARRAY ||
+			     ptype->base_type() == IVL_VT_QUEUE)) {
 			      NetEProperty*prop = new NetEProperty(search_results.net, pidx, nullptr);
 			      prop->set_line(*this);
 			      perm_string method_name = search_results.path_tail.back().name;
+			      ivl_type_t element_type = ivl_type_element(ptype);
 			      const netqueue_t*queue = dynamic_cast<const netqueue_t*>(ptype);
-			      ivl_assert(*this, queue);
-			      ivl_type_t element_type = queue->element_type();
+			      const char* kind = queue ? "queue" : "dynamic array";
 			      if (method_name == "size") {
 				    if (parms_.size() != 0) {
 					  cerr << get_fileline() << ": error: size() method "
@@ -3900,7 +3831,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 				    sys_expr->parm(0, prop);
 				    return sys_expr;
 			      }
-			      if (method_name == "pop_back") {
+			      if (queue && method_name == "pop_back") {
 				    if (parms_.size() != 0) {
 					  cerr << get_fileline() << ": error: pop_back() method "
 					       << "takes no arguments" << endl;
@@ -3912,7 +3843,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 				    sys_expr->parm(0, prop);
 				    return sys_expr;
 			      }
-			      if (method_name == "pop_front") {
+			      if (queue && method_name == "pop_front") {
 				    if (parms_.size() != 0) {
 					  cerr << get_fileline() << ": error: pop_front() method "
 					       << "takes no arguments" << endl;
@@ -3927,43 +3858,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			      if (is_array_locator_method(method_name)) {
 				    return elab_array_locator_method(des, scope, *this,
 						method_name, prop, element_type,
-						static_cast<ivl_type_t>(queue),
-						parms_, with_expr_, "queue");
+						ptype, parms_, with_expr_, kind);
 			      }
 			      if (is_array_reduction_method(method_name)) {
 				    return elab_array_reduction_method(des, scope, *this,
 						method_name, prop, element_type,
-						parms_, with_expr_, "queue");
-			      }
-			}
-			if (ptype &&
-			    (ptype->base_type() == IVL_VT_DARRAY ||
-			     ptype->base_type() == IVL_VT_QUEUE)) {
-			      NetEProperty*prop = new NetEProperty(search_results.net, pidx, nullptr);
-			      prop->set_line(*this);
-			      perm_string method_name = search_results.path_tail.back().name;
-			      ivl_type_t element_type = ivl_type_element(ptype);
-			      if (method_name == "size") {
-				    if (parms_.size() != 0) {
-					  cerr << get_fileline() << ": error: size() method "
-					       << "takes no arguments" << endl;
-					  des->errors += 1;
-				    }
-				    NetESFunc*sys_expr = new NetESFunc("$size", &netvector_t::atom2u32, 1);
-				    sys_expr->set_line(*this);
-				    sys_expr->parm(0, prop);
-				    return sys_expr;
-			      }
-			      if (is_array_locator_method(method_name)) {
-				    return elab_array_locator_method(des, scope, *this,
-						method_name, prop, element_type,
-						ptype, parms_, with_expr_,
-						"array");
-			      }
-			      if (is_array_reduction_method(method_name)) {
-				    return elab_array_reduction_method(des, scope, *this,
-						method_name, prop, element_type,
-						parms_, with_expr_, "array");
+						parms_, with_expr_, kind);
 			      }
 			}
 		  }
@@ -4039,12 +3939,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 
       ivl_assert(*this, sub_expr);
 
-      // Dynamic array methods. This handles the case that the located signal
-      // is a dynamic array, and there is no index.
-      if (search_results.net && search_results.net->data_type()==IVL_VT_DARRAY
-	  && search_results.path_head.back().index.size()==0) {
+      // Dynamic array or queue methods when there is no index.
+      if (search_results.net &&
+	  (search_results.net->data_type()==IVL_VT_DARRAY ||
+	   search_results.net->data_type()==IVL_VT_QUEUE) &&
+	  search_results.path_head.back().index.size()==0) {
 
-	    // Get the method name that we are looking for.
 	    perm_string method_name = search_results.path_tail.back().name;
 
 	    if (method_name == "size") {
@@ -4063,49 +3963,11 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    ivl_assert(*this, dar);
 	    ivl_type_t element_type = dar->element_type();
 	    const netqueue_t*queue = search_results.net->queue_type();
-	    ivl_type_t queue_rtype = queue ? static_cast<ivl_type_t>(queue)
-					   : static_cast<ivl_type_t>(dar);
+	    ivl_type_t value_rtype = queue ? static_cast<ivl_type_t>(queue)
+					  : static_cast<ivl_type_t>(dar);
+	    const char* kind = queue ? "queue" : "dynamic array";
 
-	    if (is_array_locator_method(method_name)) {
-		  return elab_array_locator_method(des, scope, *this, method_name,
-						   sub_expr, element_type,
-						   queue_rtype, parms_, with_expr_,
-						   "dynamic array");
-	    }
-	    if (is_array_reduction_method(method_name)) {
-		  return elab_array_reduction_method(des, scope, *this, method_name,
-						     sub_expr, element_type,
-						     parms_, with_expr_,
-						     "dynamic array");
-	    }
-
-	    cerr << get_fileline() << ": error: Method " << method_name
-		 << " is not a dynamic array method." << endl;
-	    return 0;
-      }
-
-      // Queue methods. This handles the case that the located signal is a
-      // QUEUE object, and there is a method.
-      if (search_results.net && search_results.net->data_type()==IVL_VT_QUEUE &&
-          search_results.path_head.back().index.size()==0) {
-
-	    // Get the method name that we are looking for.
-	    perm_string method_name = search_results.path_tail.back().name;
-	    if (method_name == "size") {
-		  if (parms_.size() != 0) {
-			cerr << get_fileline() << ": error: size() method "
-			     << "takes no arguments" << endl;
-			des->errors += 1;
-		  }
-		  NetESFunc*sys_expr = new NetESFunc("$size", &netvector_t::atom2u32, 1);
-		  sys_expr->set_line(*this);
-		  sys_expr->parm(0, sub_expr);
-		  return sys_expr;
-	    }
-
-	    const netqueue_t*queue = search_results.net->queue_type();
-	    ivl_type_t element_type = queue->element_type();
-	    if (method_name == "pop_back") {
+	    if (queue && method_name == "pop_back") {
 		  if (parms_.size() != 0) {
 			cerr << get_fileline() << ": error: pop_back() method "
 			     << "takes no arguments" << endl;
@@ -4118,7 +3980,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  return sys_expr;
 	    }
 
-	    if (method_name == "pop_front") {
+	    if (queue && method_name == "pop_front") {
 		  if (parms_.size() != 0) {
 			cerr << get_fileline() << ": error: pop_front() method "
 			     << "takes no arguments" << endl;
@@ -4134,17 +3996,17 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    if (is_array_locator_method(method_name)) {
 		  return elab_array_locator_method(des, scope, *this, method_name,
 						   sub_expr, element_type,
-						   static_cast<ivl_type_t>(queue),
-						   parms_, with_expr_, "queue");
+						   value_rtype, parms_, with_expr_,
+						   kind);
 	    }
 	    if (is_array_reduction_method(method_name)) {
 		  return elab_array_reduction_method(des, scope, *this, method_name,
 						     sub_expr, element_type,
-						     parms_, with_expr_, "queue");
+						     parms_, with_expr_, kind);
 	    }
 
 	    cerr << get_fileline() << ": error: Method " << method_name
-		 << " is not a queue method." << endl;
+		 << " is not a " << kind << " method." << endl;
 	    des->errors += 1;
 	    return 0;
       }

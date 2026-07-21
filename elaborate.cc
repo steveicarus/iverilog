@@ -4336,11 +4336,14 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 		  int pidx = cls->property_idx_from_name(prop_name);
 		  if (pidx >= 0) {
 			ivl_type_t ptype = cls->get_prop_type(pidx);
-			if (ptype && dynamic_cast<const netqueue_t*>(ptype)) {
+			if (ptype &&
+			    (dynamic_cast<const netqueue_t*>(ptype) ||
+			     ptype->base_type() == IVL_VT_DARRAY)) {
+			      const netqueue_t*queue = dynamic_cast<const netqueue_t*>(ptype);
 			      const netdarray_t*use_darray = dynamic_cast<const netdarray_t*>(ptype);
 			      ivl_assert(*this, use_darray);
 
-			      if (method_name == "push_back") {
+			      if (queue && method_name == "push_back") {
 				    static const std::vector<perm_string> parm_names = {
 					  perm_string::literal("item")
 				    };
@@ -4349,7 +4352,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 									    "$ivl_queue_method$push_back",
 									    parm_names);
 			      }
-			      if (method_name == "push_front") {
+			      if (queue && method_name == "push_front") {
 				    static const std::vector<perm_string> parm_names = {
 					  perm_string::literal("item")
 				    };
@@ -4358,7 +4361,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 									    "$ivl_queue_method$push_front",
 									    parm_names);
 			      }
-			      if (method_name == "insert") {
+			      if (queue && method_name == "insert") {
 				    static const std::vector<perm_string> parm_names = {
 					  perm_string::literal("index"),
 					  perm_string::literal("item")
@@ -4368,25 +4371,19 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 									    "$ivl_queue_method$insert",
 									    parm_names);
 			      }
-			      if (method_name == "pop_front") {
+			      if (queue && method_name == "pop_front") {
 				    return elaborate_method_property_func_(scope, net, pidx,
 									   use_darray->element_type(),
 									   method_name,
 									   "$ivl_queue_method$pop_front");
 			      }
-			      if (method_name == "pop_back") {
+			      if (queue && method_name == "pop_back") {
 				    return elaborate_method_property_func_(scope, net, pidx,
 									   use_darray->element_type(),
 									   method_name,
 									   "$ivl_queue_method$pop_back");
 			      }
-			      if (method_name == "size") {
-				    return elaborate_method_property_func_(scope, net, pidx,
-									   &netvector_t::atom2s32,
-									   method_name, "$size");
-			      }
-			} else if (ptype && ptype->base_type() == IVL_VT_DARRAY) {
-			      if (method_name == "delete") {
+			      if (!queue && method_name == "delete") {
 				    static const std::vector<perm_string> parm_names = {
 					  perm_string::literal("index")
 				    };
@@ -4399,6 +4396,34 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 				    return elaborate_method_property_func_(scope, net, pidx,
 									   &netvector_t::atom2s32,
 									   method_name, "$size");
+			      }
+			      if (method_name == "reverse") {
+				    static const std::vector<perm_string> parm_names;
+				    return elaborate_sys_task_property_method_(des, scope, net, pidx,
+									       method_name,
+									       "$ivl_darray_method$reverse",
+									       parm_names);
+			      }
+			      if (method_name == "sort") {
+				    static const std::vector<perm_string> parm_names;
+				    return elaborate_sys_task_property_method_(des, scope, net, pidx,
+									       method_name,
+									       "$ivl_darray_method$sort",
+									       parm_names);
+			      }
+			      if (method_name == "rsort") {
+				    static const std::vector<perm_string> parm_names;
+				    return elaborate_sys_task_property_method_(des, scope, net, pidx,
+									       method_name,
+									       "$ivl_darray_method$rsort",
+									       parm_names);
+			      }
+			      if (method_name == "shuffle") {
+				    static const std::vector<perm_string> parm_names;
+				    return elaborate_sys_task_property_method_(des, scope, net, pidx,
+									       method_name,
+									       "$ivl_darray_method$shuffle",
+									       parm_names);
 			      }
 			}
 		  }
@@ -4460,29 +4485,25 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 		                                &netvector_t::atom2s32,
 		                                method_name, "$size");
 	    } else if (method_name == "reverse") {
-		  cerr << get_fileline() << ": sorry: 'reverse()' "
-		          "array sorting method is not currently supported."
-		       << endl;
-		  des->errors += 1;
-		  return 0;
-	    } else if (method_name=="sort") {
-		  cerr << get_fileline() << ": sorry: 'sort()' "
-		          "array sorting method is not currently supported."
-		       << endl;
-		  des->errors += 1;
-		  return 0;
-	    } else if (method_name=="rsort") {
-		  cerr << get_fileline() << ": sorry: 'rsort()' "
-		          "array sorting method is not currently supported."
-		       << endl;
-		  des->errors += 1;
-		  return 0;
-	    } else if (method_name=="shuffle") {
-		  cerr << get_fileline() << ": sorry: 'shuffle()' "
-		          "array sorting method is not currently supported."
-		       << endl;
-		  des->errors += 1;
-		  return 0;
+		  static const std::vector<perm_string> parm_names;
+		  return elaborate_sys_task_method_(des, scope, net, method_name,
+						    "$ivl_darray_method$reverse",
+						    parm_names);
+	    } else if (method_name == "sort") {
+		  static const std::vector<perm_string> parm_names;
+		  return elaborate_sys_task_method_(des, scope, net, method_name,
+						    "$ivl_darray_method$sort",
+						    parm_names);
+	    } else if (method_name == "rsort") {
+		  static const std::vector<perm_string> parm_names;
+		  return elaborate_sys_task_method_(des, scope, net, method_name,
+						    "$ivl_darray_method$rsort",
+						    parm_names);
+	    } else if (method_name == "shuffle") {
+		  static const std::vector<perm_string> parm_names;
+		  return elaborate_sys_task_method_(des, scope, net, method_name,
+						    "$ivl_darray_method$shuffle",
+						    parm_names);
 	    }
       }
 
