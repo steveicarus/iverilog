@@ -1,0 +1,23 @@
+UVM_INFO ../../ivl_uvm_src/ivl_uvm_top.svh(8) @ 0.000 ns [IVL_GO2UVM] Using UVM_TESTNAME: uvm_test
+UVM_INFO ../../ivl_uvm_src/ivl_uvm_comps.svh(95) @ 0.000 ns [IVL_GO2UVM] ivl_uvm_pkg.uvm_object.uvm_report_info
+UVM_INFO ../../ivl_uvm_src/ivl_uvm_clp.svh(509) @ 1.000 ns [IVL_GO2UVM] CLP
+UVM_INFO @ 1.000 ns [TIMOUTSET] '+UVM_TIMEOUT=1' Global Timeout: 1000000.000 ns
+UVM_INFO ../../ivl_uvm_tests/ivl_uvm_test_0/ivl_uvm_test_msg.sv(30) @ 100.000 ns [IVL_UVM] UVM_MEDIUM: Hello World
+UVM_INFO ../../ivl_uvm_tests/ivl_uvm_test_0/ivl_uvm_test_msg.sv(31) @ 100.000 ns [IVL_UVM] UVM_HIGH: Hello World
+UVM_INFO ../../ivl_uvm_tests/ivl_uvm_test_0/ivl_uvm_test_msg.sv(32) @ 100.000 ns [IVL_UVM] UVM_FULL: Hello World
+UVM_INFO ../../ivl_uvm_tests/ivl_uvm_test_0/ivl_uvm_test_msg.sv(33) @ 200.000 ns [IVL_UVM] NONE: Hello World
+UVM_WARNING ../../ivl_uvm_tests/ivl_uvm_test_0/ivl_uvm_test_msg.sv(35) @ 300.000 ns [IVL_UVM] Sample Warning!
+UVM_ERROR ../../ivl_uvm_tests/ivl_uvm_test_0/ivl_uvm_test_msg.sv(36) @ 400.000 ns [IVL_UVM] Sample Error!
+UVM_FATAL ../../ivl_uvm_tests/ivl_uvm_test_0/ivl_uvm_test_msg.sv(37) @ 500.000 ns [IVL_UVM] Sample Fatal!
+
+--- UVM Report Summary ---
+
+** Report counts by severity
+UVM_INFO : 10
+UVM_WARNING : 1
+UVM_ERROR : 1
+UVM_FATAL : 1
+[1;31m
+Test FAILED with 1 error(s), look for UVM_ERROR in log file
+[0m
+UVM_INFO ../../ivl_uvm_src/ivl_uvm_msg.svh(74) @ 500.000 ns [IVL_GO2UVM] Thanks for using IVL_UVM Package

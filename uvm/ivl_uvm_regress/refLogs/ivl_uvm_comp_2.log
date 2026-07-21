@@ -1,0 +1,2 @@
+../../ivl_uvm_tests/ivl_uvm_test_2/ivl_uvm_run_test.sv:42: error: The ivl_uvm_pkg.uvm_component.new constructor call is missing arguments.
+1 error(s) during elaboration.

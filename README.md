@@ -1,5 +1,12 @@
 # The ICARUS Verilog Compilation System
 
+> **This repository is `muhammadjawadkhan/iverilog-uvm` — an experimental
+> UVM / SystemVerilog track.** It is **not** for production use and is **not**
+> an official Accellera UVM port. **Do not open pull requests to
+> [steveicarus/iverilog](https://github.com/steveicarus/iverilog) for UVM work
+> on this fork.** See [UVM_README.md](UVM_README.md), [docs/ROADMAP.md](docs/ROADMAP.md),
+> and [docs/WORKFLOW.md](docs/WORKFLOW.md).
+
 Copyright 2000-2026 Stephen Williams
 
 <details>

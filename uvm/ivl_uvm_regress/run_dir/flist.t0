@@ -1,0 +1,5 @@
+${IVL_UVM_HOME}/ivl_uvm_src/ivl_uvm_pkg.sv
+${IVL_UVM_HOME}/ivl_uvm_tests/ivl_uvm_test_0/ivl_uvm_test_msg.sv
+
+// This should be the last line in file-list
+${IVL_UVM_HOME}/ivl_uvm_src/ivl_uvm_top.svh

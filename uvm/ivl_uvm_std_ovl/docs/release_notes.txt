@@ -1,0 +1,770 @@
+===================================================================================
+ Accellera Standard V2.8.1 Open Verification Library (OVL).
+ Accellera Copyright (c) 2005-2014. All rights reserved.
+===================================================================================
+
+----------------------------------------------------------------------------
+ CONTENTS (last updated: Monday March 20, 2014)
+ ========
+  - About this file (release notes for Open Verification Library)
+
+  - Version 2
+     - V2.8.1    (20 Mar 2014)       
+     - V2.8      (02 Dec 2013)       
+     - V2.7      (28 Nov 2013)       
+     - V2.4      (24 Mar 2009)
+     - V2.3      (06 Jun 2008)
+     - V2.2      (04 Feb 2008)
+     - V2.1      (29 Sep 2007)
+     - V2.0      (01 Jun 2007)
+     - V2.0-Beta (15 Apr 2007)
+   
+  - Version 1
+     - V1.8      (18 Oct 2006)
+     - V1.7a     (01 Aug 2006)
+     - V1.7      (21 Jul 2006)
+     - V1.6      (16 Mar 2006)
+     - V1.5      (13 Dec 2005)
+     - V1.1b     (25 Aug 2005)
+     - V1.1a     (23 Aug 2005)
+     - V1.1      (27 Jul 2005)
+     - V1.0      (31 May 2005)
+----------------------------------------------------------------------------
+
+
+===================================================================================
+INDEX: About this file (release notes for Open Verification Library)
+=====
+These notes describe the changes made to the Accellera Standard OVL.  Changes
+made to the LRM are indicated with change bars in the PDF version. For BUGS FIXED,
+see the Mantis bug tracking system (http://www.eda.org/mantis; user: guest
+password: guest).
+===================================================================================
+
+
+===================================================================================
+
+INDEX:   - V2.8.1    (20 March 2014)
+===================================================================================
+
+MAIN CHANGES
+~~~~~~~~~~~~
+fire_xcheck/fire_2state were not being reset in ovl_zero_one_hot_logic.sv.  This
+has been fixed.
+
+===================================================================================
+
+INDEX:   - V2.8      (02 December 2013)
+===================================================================================
+
+MAIN CHANGES
+~~~~~~~~~~~~
+Pass action blocks were used to reset 'fire' bits which introduced possible race
+conditions.  We have removed this now.  A fire bit is set to '1' in the cycle in
+which the violation occurs and reset to '0' in the next cycle by a clocked process.
+
+===================================================================================
+
+INDEX:   - V2.7      (28 November 2013)
+===================================================================================
+
+MAIN CHANGES
+~~~~~~~~~~~~
+LRM is updated to clearly document what is synthesizable
+
+ENHANCEMENTS & FIXES
+~~~~~~~~~~~~~~~~~~~~
+
+
+4539  Removed label in "std_ovl/sva05/ovl_bits_logic.sv" 
+
+4538  Label changed to logical name in "std_ovl/sva05/assert_next_logic.sv"
+
+4537  Added missing architecture for assert_width_assume entity in "std_ovl/psl05/assert_width_psl_logic.vhd"
+
+4536  Added Missing wrappers in std_ovl/std_ovl_u_components.vhd 
+
+4535  Removed redundant file std_ovl/assert_change.vhd 
+
+4421  Corrected port mapping In file 'assert_next_psl_logic.vhd' for 'check' signal.
+
+4426  Corrected the cover_test_expr_change cover when there is no reset in previous clock.
+
+4496  Corrected the min/max prameter value for various checkers. 
+
+4437  Corrected the use of ovl_change instead of assert_change in vhdl version of PSL checkers.
+
+===================================================================================
+
+INDEX:   - V2.4      (24 March 2009)
+===================================================================================
+
+MAIN CHANGES
+~~~~~~~~~~~~
+LRM is updated to clearly document what is synthesizable
+
+ENHANCEMENTS & FIXES
+~~~~~~~~~~~~~~~~~~~~
+2586    Use of $countones outside property/endproperty 
+
+2461    OVL_RUNTIME_AFTER_FATAL is not redefinition friendly
+
+2426    OVL_ARBITER: Problem with always @(*) and the same "for loop" index variable
+        used in two loops 
+
+2407    ovl_req_requires_logic.sv : Bad cycle bound error
+
+2259    ovl_fifo_logic.v: Problem with OVL_FIFO_VALUE_P 
+
+2257    ovl_multiport_fifo_logic.sv has both blocking and non-blocking assignments to
+        the same register  
+
+2207    OVL_VALID_ID: lack of cover reporting task for most covers in this checker.
+
+2138    OVL_MUTEX: cover_mutex_bitmap is the only cover which dont have any task
+        enable in action block.
+
+1662    property_type inconsistent for async OVLs --> doc update and might have some 
+        update in implementation for better error message.
+
+1658    assert_quiescent_state - shift the antecedent by one clock tick
+
+
+
+===================================================================================
+INDEX:   - V2.3      (06 Jun 2008)
+===================================================================================
+
+MAIN CHANGES
+~~~~~~~~~~~~
+The fire output was implemented in 10 SVA checkers.
+
+ENHANCEMENTS & FIXES
+~~~~~~~~~~~~~~~~~~~~
+2369    VHDL wrappers required for Verilog checkers
+
+2366    never_unknown: incorrectly turned off by OVL_IMPLICIT_XCHECK_OFF
+
+2296    assert_increment: incorrect coverage
+
+2258    ovl_arbiter_logic.sv: Problem with register assignments inside for loop
+
+2174    ovl_arbiter: Problem with always @(*) and for loop index variables
+
+2134    win_unchange: test_expr X-check fixed
+
+2077    ovl_never_unknown: SVA vs PSL cover inconsitency
+
+2076    ovl_no_overflow: Different results for PSL and SVA version of checker
+
+2408:   ovl_memory_sync : Need of lower or user selectable auto_bin_max limit
+
+
+===================================================================================
+INDEX:   - V2.2      (04 Feb 2008)
+===================================================================================
+
+DOC CHANGES
+~~~~~~~~~~~
+2180    ovl_reg_loaded: Corrected data sheet to use <dest_expr> instead of
+        <test_expr>.
+
+2104    ovl_code_distance: minor typo in description
+
+2098    ovl_bits: LRM incorrectly states that max=0 to switch off max checking
+
+2084    ovl_quick_ref.pdf is same as assert_quick_ref.pdf in 2.1 release
+
+
+ENHANCEMENTS & FIXES
+~~~~~~~~~~~~~~~~~~~~
+2261    ovl_proposition (SVA): Fixed bug introduced during the last fix (2224)
+
+2224    SVA versions of ovl_proposition and ovl_never_unknown_async: Fixed
+        checkers to properly recognize <property_type>.
+
+2208    ovl_valid_id (SVA): Fixed A_OVL_VALID_ID_XZ_ISSUED_SIG_P message.
+
+2203    ovl_cover_t task: Increased input size to support all OVL messages.
+
+2179    ovl_no_contention (SVA): Fixed cover_quiet_time_equal_to_max_quiet
+        message.
+
+2177    ovl_no_contention (SVA): Fixed checker bug related to incorrect operator
+        precedence.
+
+2166    ovl_bits (SVA): Added check for max > min if max > 0.
+
+2079    SVA & PSL versions of ovl_never and ovl_always_on_edge: improved checker
+        performance.
+
+2078    SVA versions of ovl_delta, ovl_never_unknown, ovl_one_cold, ovl_one_hot,
+        ovl_range and ovl_zero_one_hot. Fixed checkers to check whether reset in
+        previous cycle was inactive.
+
+
+===================================================================================
+INDEX:   - V2.1      (29 Sep 2007)
+===================================================================================
+
+DIRECTORY CHANGES
+~~~~~~~~~~~~~~~~~
+2040    Two directories were renamed:
+          - "sva31a" -> "sva05" (as SVA is IEEE 1800 2005)
+          - "psl11"  -> "psl05" (as PSL is IEEE 1850 2005)
+
+
+DOC CHANGES
+~~~~~~~~~~~
+1961    Corner case behaviour clarified for RESET_ON_NEW_START
+        (frame, time, unchange/change)
+
+1960    Timing diagrams fixed for time/unchange, and updated the change-history.
+
+1959    Added pre-Accellera -> V1.0 to release notes
+
+1873    Links in the HTML data sheets fixed
+
+1872    Updated quick-reference guides
+
+1869    win_unchange: fixed waveforms
+
+1774    assert_never_unknown_async: fixed LRM to show coverage is None
+
+
+ENHANCEMENTS & FIXES
+~~~~~~~~~~~~~~~~~~~~
+2048    Fixed typo in ovl_multiport_fifo_logic.sv file 
+
+2047    Removed unnecessary use of generate block indexing in ovl_abiter.sv
+
+2046    never_unknown_async: Fixed incorrect firing during reset in PSL
+
+2045    assert_even_parity SVA vs PSL vs Verilog inconsistency
+
+2044    legacy/std_ovl.vhd: removed extra port and fixed typo in name
+
+2038    ovl_fifo: localparam -> parameter (Verilog 95)
+
+2001    Added synthesizable VHDL in vhdl93/syn_src
+
+2000    ovl_arbiter label name fixed
+
+1990    SVA performance improvements for always and always_on_edge
+
+1962    frame: fixed Verilog to avoid false trigger immediately after reset.
+
+1953    frame: removed unsupported parameters/mode
+
+1931    Fixed 3 silent bugs in std_ovl_task (FATAL and IGNORE/2STATE = $finish)
+
+1906    Non-synthesizable code removed via OVL_SYNTHESIS
+
+1904    $countones used in ovl_multiport_fifo, and fixed synthesis issue:
+        (blocking + non-blocking assigments)
+
+1903    Fixed invalid cycle bounds in ovl_hold_value
+
+1902    Enabled log2 function when OVL_SVA defined
+
+1836    Reomved pullup/pulldown from ovl_valid_id
+
+1810    Stopped error_count incrementing if OVL_IGNORE
+
+1803    X-checking fix in assert_implication vlog95 to match ovl_implication
+
+1773    Added reset to sensitivity list of the assert_never_unknown_async OVL
+
+
+===================================================================================
+INDEX:   - V2.0      (01 Jun 2007)
+===================================================================================
+
+NEW FEATURES
+~~~~~~~~~~~~
+Since V2.0-Beta:
+
+  - OVL_GATING_OFF to ignore the enable input
+  - More global defaults e.g. OVL_MSG_DEFAULT
+  - Per-instance disable of X-checking view two new property_type values
+    (OVL_ASSERT_2STATE, OVL_ASSUME_2STATE)
+
+
+CHANGES
+~~~~~~~
+Since V2.0-Beta:
+
+  - enable made a single-bit (not a 1-bit vector)
+  - fire output driven low in all SVA and PSL files
+  - ten vlog95/ovl_<checker>_logic.v files with fire output implemented
+  - removed OVL_EVERYTHING_OFF (now use older OVL_SHARED_CODE)
+
+
+DOC CHANGES
+~~~~~~~~~~~
+1778    Timing diagrams document fixed for assert_next overlap check case
+
+1781    Fixed default value of the necessary_condition in the parameters section
+        of the assert_cycle_sequence.
+
+1782    Fixed various errors in the assert_cycle_sequence checker. The last
+        timing diagram was not correct. The second error will not be generated.
+        The descriptions of the values for necessary_condition were improved as
+        suggested.
+
+
+ENHANCEMENTS & FIXES
+~~~~~~~~~~~~~~~~~~~~
+1779    VHDL. ovl_next incorrectly performs overlap check
+
+1790    std_ovl_reset.h: Fixed reset_n so that it's always defined
+
+1795    Fire output driven low in 18 new SVA checkers. Code kept in logic file,
+        with bugs fixed, but excluded via "ifdef OVL_REVISIT".
+
+1796    Renamed `OVL_SYNTHESIS_OFF to `OVL_SYNTHESIS to avoid confusion.
+
+1798    X-check logic calculated without OVL_ASSERT_ON defined.
+        Generic fix in std_ovl_defines.h
+
+1811    VHDL: Removed two delta cycle delay from clock
+
+1822    assert_always_logic.sv: aAdded X-filter to the 2state check, so that an
+        X on test_expr only causes one failure (causes two failures in V1.8)
+
+1839    VHDL. enable port in wrong position
+
+1840    VHDL. Change names of ovl_*_u std_ulogic wrappers to standard ovl_*
+
+1841    VHDL. Added constants to select fire output bits from array
+
+1843    assert_next.vlib, ovl_next.v
+        Added sanity check when check_overlapping=0 redundant due to num_cks=1
+
+
+===================================================================================
+INDEX:   - V2.0-Beta (15 Apr 2007)
+===================================================================================
+
+NEW FEATURES
+~~~~~~~~~~~~
+1. New ovl_<checker> modules for existing 33 assert_<checker> moduless, but with
+   additional features:
+
+     - New input:  enable
+     - New output: fire (tied low in this beta version)
+     - New param:  clock_edge
+     - New param:  reset_polarity
+     - New param:  gating_type
+
+   Note that the parameter order in ovl_fifo_index differs to that in the original
+   assert_fifo_index.
+
+2. VHDL implementation of top 10 of the existing checkers. For details see:
+
+     - std_ovl/docs/readme_vhdl.txt
+
+Note that the old std_ovl.vhd file has been replaced, but a copy of the old version
+still exists at:
+
+  std_ovl/vhdl93/legacy/std_ovl.vhd
+
+3. 18 new ovl_<checker> modules from the 20 new checkers donated by Synopsys
+   e.g. ovl_mutex.
+
+4. New macros: OVL_FINISH_OFF and OVL_EVERYTHING_OFF
+
+
+ENHANCEMENTS & FIXES
+~~~~~~~~~~~~~~~~~~~~
+1663    assert_handshake
+        Fixed mismatch in SVA and PSL versions of the checker.
+
+1692    assert_cycle_sequence, assert_decrement, assert_delta,
+        assert_frame, assert_increment
+        Moved definition of assert_name parameter to the .vlib level.
+
+1694    assert_implication
+        X/Z check no longer fails when antecedent is X but consequent is 1.
+
+1705    Added `OVL_FINISH_OFF to std_ovl_task.h. Problem was that if a fatal
+        assertion failure occurs, a subsequent failure goes undetected.
+        Adding +define+OVL_FINISH_OFF gets simulation to complete
+        (including the point where the assertion fails).
+
+
+DOC CHANGES
+~~~~~~~~~~~
+1670    OVL_COVER_DEFAULT fixed to OVL_COVER_ALL
+
+1691    Discrepancy fixed in the use of check_overlapping in assert_next.
+
+1718    Fixed description of assert_quiescent_state
+
+
+===================================================================================
+INDEX: 
+INDEX: Version 1
+===================================================================================
+
+
+===================================================================================
+INDEX:   - V1.8      (18 Oct 2006)
+===================================================================================
+
+DOC CHANGES
+~~~~~~~~~~~
+1661    Updated Chapter 5 (OVL Backward Compatability) to include missing new
+        functionality descriptions for V1.1, V1.5 and V1.6.
+
+1592    Fixed typo in assert_one_hot cover points description. The
+        cover_all_one_hots_checked now has the cover point type CORNER (not BASIC).
+
+
+ENHANCEMENTS & FIXES
+~~~~~~~~~~~~~~~~~~~~
+1656,   assert_frame, assert_handshake, assert_width
+1616,   Fixed problem with elaboration errors on some simulators related to
+1617    badly defined ranges when certain parameters were 0. (SVA)
+
+1640    assert_fifo_index, assert_frame
+        Made the modeling verilog code in PSL version same as that in SVA version.
+
+1639    assert_time, assert_transition
+        Fixed typo in property instance name and also fixed typos where some
+        assume properties were instantiated as asserts. (PSL)
+
+1636    assert_handshake
+        Removed reporting of X values on req/ack during reset. (Verilog)
+
+1634    assert_decrement, assert_delta, assert_frame, assert_handshake,
+        assert_increment, assert_one_cold, assert_range, assert_width,
+        assert_zero_one_hot
+        Added reset logic to cover functionality for compatibility with formal
+        tools. (Verilog)
+
+1633    assert_always_on_edge, assert_decrement, assert_increment
+        Fixed problem with improper assignment of reset. (Verilog)
+
+1630    assert_fifo_index
+        Fixed problem that caused the library to fail compilation when only
+        +define+OVL_COVER_ON was specified. (Verilog)
+
+1629    assert_change, assert_frame, assert_time, assert_unchange (Verilog)
+        assert_fifo_index (Verilog, SVA)
+        Fixed to use OVL_RESET_SIGNAL.
+
+1622    SVA and PSL. Made the coding structure of 'ifdefs' uniform.
+
+1587    assert_frame. Fixed code to make the checker synthesizable.
+
+1586    assert_handshake (SVA)
+        Split the property ASSERT_HANDSHAKE_ACK_WITHOUT_REQ_P into two properties:
+        ASSERT_HANDSHAKE_ACK_WITHOUT_REQ_FIRST_REQ_P
+        ASSERT_HANDSHAKE_ACK_WITHOUT_REQ_SUBSEQUENT_REQ_P
+
+1578    Named all unnamed blocks inside generates. (SVA)
+
+1577    assert_always_on_edge, assert_handshake, assert_cycle_sequence. (SVA)
+        Fixed typos where some assume properties were instantiated as asserts.
+
+1569    Fixed uninitialized registers for compatibility  with formal/static tools
+        and linters. (Verilog)
+
+1358    assert_window, assert_win_change, assert_win_unchange. (PSL, SVA)
+        Modified properties to handle liveness for compatibility with formal tools
+
+1373    Fixed re-surfaced bug again. Modified the checkers to compile without
+        errors  when neither OVL_ASSERT_ON nor OVL_COVER_ON are defined. (SVA)
+
+
+===================================================================================
+INDEX:   - V1.7a     (01 Aug 2006)
+===================================================================================
+Fixed typos in assert_one_cold_psl_logic.v, assert_transition_psl_logic.v and
+assert_win_change_psl_logic.v
+
+
+===================================================================================
+INDEX:   - V1.7      (21 Jul 2006)
+===================================================================================
+
+NEW FEATURES
+~~~~~~~~~~~~
+Implicit X/Z checks  Added X/Z checks to most checkers. Changed explicit X/Z checks
+to implicit, except for assert_never_-unknown and assert_never_unknown_async.
+Added `OVL_IMPLICIT_XCHECK_OFF switch.
+
+Cover point types.  Implemented cover point types for checker's cover points:
+SANITY, BASIC and  CORNER. STATISTIC is reserved for future use.  Changed
+coverage_level parameter to support bitwise-OR of cover point types:
+`OVL_COVER_SANITY, `OVL_COVER_BASIC and `OVL_COVER_CORNER.
+
+
+DOC CHANGES
+~~~~~~~~~~~
+1536    Updated "Backwards Compatibility" section and moved the section to a
+        chapter level to improve visibility.
+
+1535    Fixed waveform for assert_win_unchange example. Added window_open signal
+        to waveforms for examples in assert_win_change description.
+
+1463    Fixed typo in assert_change description.
+
+1394    Added `OVL_IGNORE to property_type description.
+
+
+ENHANCEMENTS & FIXES
+~~~~~~~~~~~~~~~~~~~~
+1525    assert_no_overflow, assert_window, assert_width, assert_quiescent_state
+        Recoded to correct inconsistencies between SVA and PSL versions.
+        (PSL and SVA).
+
+1491    Added OVL instance name to error messages for illegal property_type and
+        severity_level.
+
+1461    assert_handshake
+        Fixed bug that doesn't reset the max ack counter after a handshake
+        transaction. (Verilog)
+
+1455    assert_fifo_index, std_ovl_defines.h
+        Moved the log(n) function from the std_ovl_defines.h file to the PSL
+        logic file. (PSL)
+
+1454    assert_delta
+        Fixed bug that misses violations for large values of delta. (Verilog)
+
+1449    assert_never, assert_never_unknown, assert_one_hot, assert_one_cold,
+        assert_zero_one_hot
+        Recoded to use onehot, onehot0 and isunknown built-in functions. (PSL)
+
+1423    `OVL_IGNORE: Added support. (Verilog)
+
+1409    assert_next: Fixed false violation.
+
+1408    `OVL_RUNTIME_AFTER_FATAL: Added global variable to set the delay (in time
+        units) from a fatal error to the end of simulation. Default: 100.
+
+
+===================================================================================
+INDEX:   - V1.6      (16 Mar 2006)
+===================================================================================
+
+DOC CHANGES
+~~~~~~~~~~~
+1300    assert_never_unknown_async added.
+
+1365    OVL_COVER_ALL/OVL_COVER_NONE descriptions fixed (reversed).
+
+
+ENHANCEMENTS & FIXES
+~~~~~~~~~~~~~~~~~~~~
+1314    vlog95/assert_handshake_logic.v, assert_cycle_sequence.vlib
+        assert_frame.vlib, assert_handshake.vlib
+        Changed files from DOS to UNIX format.
+
+1359    assert_transition: Fixed typo in block name. (SVA)
+
+1372    assert_handshake: Modified ack max cycle check to fail properly when
+        req_drop is 1. (SVA & PSL)
+
+1373    Modified the checkers to compile without errors when neither
+        OVL_ASSERT_ON nor OVL_COVER_ON are defined. (SVA)
+
+1374    assert_no_transition
+        Modified checker to work properly with bit vectors (PSL)
+
+1375    assert_always_on_edge
+        Modified checker to check test_expr properly for edge types OVL_NEGEDGE
+        and OVL_ANYEDGE. (PSL)
+
+1376    assert_never: Fixed typo in assert_never_assume_vunit. (PSL)
+
+
+===================================================================================
+INDEX:   - V1.5      (13 Dec 2005)
+===================================================================================
+
+NEW FEATURES
+~~~~~~~~~~~~
+PSL support   Added PSL support (OVL_PSL define).
+
+OVL_IGNORE   New property type.
+
+
+DOC CHANGES
+~~~~~~~~~~~
+0947    Prepended "cover_" to the cover point names.
+
+
+ENHANCEMENTS & FIXES
+~~~~~~~~~~~~~~~~~~~~
+0896    assert_always_on_edge: Checker functionality fixed. (Verilog and SVA)
+
+1081    std_ovl_defines.h: Fixed header file to display correct OVL version.
+
+1082    std_ovl_task.h: Fixed the task ovl_init_msg_t to display the OVL
+        version as part of OVL note.
+
+1093    assert_fifo_index: Modified checker to make it consistent with Verilog
+        implementation. (SVA)
+
+1094    assert_never_unknown
+        Added qualifier input to the cover point test_expr_change. (Verilog & SVA)
+
+1095    assert_cycle_sequence
+        Fixed record of sequence started by cover point sequence_trigger for
+        the OVL_TRIGGER_ON_MOST_PIPE condition. (Verilog)
+
+1096    assert_fifo_index
+        Fixed the checker so that both overflow and underflow checks can never
+        fire on the same clock edge at any time. (Verilog)
+
+1097    assert_one_hot, assert_one_cold
+        Fixed the bugs in the cover properties all_one_hots_checked and
+        all_one_colds_checked. (SVA)
+
+1098    assert_handshake
+        Added missing check for acknowledge without request condition. (SVA)
+
+1099    assert_handshake
+        Check for request signal deassert violation is fixed. (Verilog and SVA)
+
+1100    assert_handshake
+        State machine is corrected to return the checker to the monitoring state
+        after a violation when acknowledge signal is low. (Verilog)
+
+
+NOTES
+~~~~~
+
+1) PSL Implementation
+
+ The PSL properties are implemented inside PSL vunits with Verilog flavor. For
+ each `OVL-PSL checker type, the following file:
+
+  <std_ovl>/psl11/vunits/<checker_type>.psl
+
+ contains three vunits: for assert, assume, and cover (one vunit per checker
+ type). To use a PSL version of a checker type, add the corresponding PSL
+ file to the compilation file list. In addition, add the 'OVL_PSL' compiler
+ directive to select the PSL version of the library. For example, to compile
+ a design using the assert_next checker do the following:
+
+  <verilog_compiler> -y <path_to_std_ovl>
+   +libext+.v +libext+.vlib <testbench_and_design_source_files>
+   +define+OVL_ASSERT_ON +define+OVL_COVER_ON +define+OVL_PSL
+   +incdir+<path_to_std_ovl>
+   -pslfile <path_to_std_ovl>/psl11/vunits/assert_next.psl
+
+2) OVL_INIT_COUNT
+
+ An experimental feature in V1.5, is to display a single OVL initialization
+ count message (rather than one per OVL instance). To enable this:
+
+ a) Define the existing initialization macro (OVL_INIT_MSG) and a new one
+    (OVL_INIT_COUNT); point to the location of the standard OVL:
+
+  +define+OVL_INIT_MSG
+  +define+OVL_INIT_COUNT=<testbench_module_name>.ovl_init_count
+  +incdir+<path_to_std_ovl>
+
+ b) Add the following to your testbench (to instantiate ovl_init_count):
+
+  `include "std_ovl_count.h"
+
+
+===================================================================================
+INDEX:   - V1.1b     (25 Aug 2005)
+===================================================================================
+
+DOC CHANGES
+~~~~~~~~~~~
+Some typos were fixed in the LRM.
+
+
+===================================================================================
+INDEX:   - V1.1a     (23 Aug 2005)
+===================================================================================
+
+ENHANCEMENTS & FIXES
+~~~~~~~~~~~~~~~~~~~~
+0863    assert_width: Verilog functionality fixed.
+
+DOC CHANGES
+~~~~~~~~~~~
+assert_next           Waveforms were fixed (817).
+assert_no_transition  Description improved.
+assert_width          Waveform fixed (862).
+
+
+===================================================================================
+INDEX:   - V1.1      (27 Jul 2005)
+===================================================================================
+
+NEW FEATURES
+~~~~~~~~~~~~
+assert_never_unknown
+  New assertion checker type. Ensures that the value of a specified expression
+  contains only 0 and 1 bits when a qualifying expression is TRUE.
+
+$STD_OVL_DIR/docs/pdf
+  New documentation directory. Contains the PDF versions of the LRM.
+
+$STD_OVL_DIR/docs/html
+  New documentation directory. Contains HTML versions of the assertions data sheets.
+
+
+NON-COMPATIBLE CHANGES
+~~~~~~~~~~~~~~~~~~~~~~
+assert_implication  The typo in a port name was fixed
+  (<antecendent_expr> => <antecedent_expr>).
+
+
+ENHANCEMENTS & FIXES
+~~~~~~~~~~~~~~~~~~~~
+0768    assert_frame: SVA property was fixed.
+
+0769    Conditional generates without labels. Labels were added to conditional
+        generates.
+
+0772    assert_never_unknown: Dedicated checker was added to improve unknown
+        check support.
+
+0792    assert_next: add labels to improve debug. Labels were added.
+
+
+DOC CHANGES
+~~~~~~~~~~~
+Typos were corrected.
+
+Many examples were simplified and every example now has a sample waveform.
+
+<action_on_new_start> Checkers with <action_on_new_start> parameters had their
+descriptions corrected.
+
+Clarifications. Some paragraphs were unclear and were rewritten.
+
+0761    Examples for OVL_IGNORE_NEW_START, OVL_RESET_ON_NEW_START,
+        OVL_ERROR_ON_NEW_START were added to assert_change, assert_unchange,
+        assert_time and assert_frame data sheets.
+
+
+===================================================================================
+INDEX:   - V1.0      (31 May 2005)
+===================================================================================
+
+SEMNATIC CHANGES SINCE PRE-ACCELLERA OVL (April 2003)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+assert_change: Window can no longer finish before num_cks-1 cycles, even if
+               test_expr changes earlier.
+
+assert_fifo_index: Functionality no longer depends on property_type parameter.
+
+assert_time: RESET_ON_NEW_START no longer fires if test_expr changes
+             simultaneously with a new start_event
+
+assert_unchange: RESET_ON_NEW_START no longer fires if test_expr changes
+                 simultaneously with a new start_event
+
+Other changes are documented in the face-to-face meeting minutes of 17/18 May 2005

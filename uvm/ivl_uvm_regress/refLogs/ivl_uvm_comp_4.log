@@ -1,0 +1,3 @@
+../../ivl_uvm_tests/ivl_uvm_test_4/ivl_uvm_test_bcl.sv:49: error: The ivl_uvm_pkg.uvm_component.new constructor call is missing arguments.
+../../ivl_uvm_src/ivl_uvm_top.svh:9: error: Parm count mismatch passing 2 arguments  to constructor expecting 1 arguments.
+2 error(s) during elaboration.

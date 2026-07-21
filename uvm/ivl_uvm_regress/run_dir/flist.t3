@@ -1,0 +1,7 @@
++define+UVM_CMDLINE_NO_DPI
+${IVL_UVM_HOME}/ivl_uvm_src/ivl_uvm_pkg.sv
+${IVL_UVM_HOME}/ivl_uvm_tests/ivl_uvm_test_3/ivl_uvm_test_clp.sv
+
+// Thie should be the last line in file-list
+${IVL_UVM_HOME}/ivl_uvm_src/ivl_uvm_top.svh
+

@@ -1,0 +1,8 @@
++define+IVL_UVM_MBX_T=apb_mst_xactn
+${IVL_UVM_HOME}/ivl_uvm_src/ivl_uvm_pkg.sv
+
++incdir+${IVL_UVM_HOME}/ivl_uvm_tests/ivl_uvm_test_7/tb_src
++incdir+${IVL_UVM_HOME}/ivl_uvm_tests/ivl_uvm_test_7/dut_src
+
+${IVL_UVM_HOME}/ivl_uvm_tests/ivl_uvm_test_7/tb_src/apb_pkg.sv
+${IVL_UVM_HOME}/ivl_uvm_tests/ivl_uvm_test_7/tb_src/apb_mst_top.sv
