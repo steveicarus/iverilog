@@ -1364,7 +1364,26 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
       ivl_expr_t rval = ivl_stmt_rval(net);
       unsigned lwid = ivl_lval_width(lval);
       int prop_idx = ivl_lval_property_idx(lval);
+      int vif_midx = ivl_lval_vif_member_idx(lval);
 
+	/* Assign through a virtual-interface member (possibly nested
+	   under a class property that holds the VI handle). */
+      if (vif_midx >= 0) {
+	    if (prop_idx >= 0) {
+		  ivl_type_t sig_type = draw_lval_expr(lval);
+		  fprintf(vvp_out, "    %%prop/obj %d, 0; VI handle property\n",
+			  prop_idx);
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+		  (void)sig_type;
+	    } else {
+		  ivl_signal_t sig = ivl_lval_sig(lval);
+		  assert(sig);
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+	    }
+	    draw_eval_vec4(rval);
+	    fprintf(vvp_out, "    %%vif/store/vec4 %d, %u;\n", vif_midx, lwid);
+	    return errors;
+      }
 
       if (prop_idx >= 0) {
 	    ivl_type_t sig_type = draw_lval_expr(lval);

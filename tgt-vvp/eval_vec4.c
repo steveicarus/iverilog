@@ -1114,6 +1114,20 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 	    return;
       }
 
+      if (strcmp(ivl_expr_name(expr), "$ivl_vif_get") == 0 && parm_count == 2) {
+	    ivl_expr_t vif = ivl_expr_parm(expr, 0);
+	    ivl_expr_t idx = ivl_expr_parm(expr, 1);
+	    unsigned long midx;
+	    assert(ivl_expr_type(idx) == IVL_EX_NUMBER);
+	    assert(number_is_immediate(idx, IMM_WID, 0) && !number_is_unknown(idx));
+	    midx = get_number_immediate64(idx);
+	    draw_eval_object(vif);
+	    fprintf(vvp_out, "    %%vif/load/vec4 %lu, %u;\n",
+		    midx, ivl_expr_width(expr));
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    return;
+      }
+
       if (strcmp(ivl_expr_name(expr), "$ivl_queue_method$pop_back")==0) {
 	    draw_darray_pop(expr);
 	    return;

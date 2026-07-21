@@ -83,6 +83,7 @@ class PWire : public PNamedItem {
       const std::list<pform_range_t>& get_unpacked_idx() const { return unpacked_; }
 
       void set_data_type(data_type_t*type);
+      data_type_t* get_data_type() const { return set_data_type_.get(); }
 
       void set_discipline(ivl_discipline_t);
       ivl_discipline_t get_discipline(void) const;

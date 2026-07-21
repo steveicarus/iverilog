@@ -408,6 +408,18 @@ extern NetExpr* elaborate_rval_expr(Design *des, NetScope *scope,
 				    bool need_const = false,
 				    bool force_unsigned = false);
 
+class netvif_t;
+class NetSTask;
+
+/* Virtual-interface helpers (elab_vif.cc). */
+extern NetExpr* elab_vif_new_from_scope(Design*des, const LineInfo&loc,
+					NetScope*iface_scope,
+					const netvif_t*vif_type);
+extern NetExpr* elab_vif_member_get(const LineInfo&loc, NetExpr*vif_base,
+				    const netvif_t*vif_type, int member_idx);
+extern NetSTask* elab_vif_wait_task(const LineInfo&loc, NetExpr*vif_base,
+				    int edge_code, int member_idx);
+
 extern bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
                            const pform_range_t&range,
                            long&index_l, long&index_r);

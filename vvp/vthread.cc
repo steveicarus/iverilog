@@ -28,6 +28,7 @@
 # include  "vvp_cobject.h"
 # include  "vvp_darray.h"
 # include  "vvp_aarray.h"
+# include  "vvp_vif.h"
 # include  "class_type.h"
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
@@ -4278,6 +4279,38 @@ bool of_LOAD_VEC4(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %vif/load/vec4 <idx>, <wid>
+ *
+ * Read virtual-interface member <idx> from the vvp_vif object on top
+ * of the object stack, and push its current value onto the vec4
+ * stack. The object stack is left alone (this mirrors %prop/v); the
+ * caller issues its own %pop/obj once it is done with the handle.
+ */
+bool of_VIF_LOAD_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_object_t&top = thr->peek_object();
+      vvp_vif*vif = top.peek<vvp_vif>();
+      assert(vif);
+
+      vvp_net_t*net = vif->signal(idx);
+      assert(net);
+
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
+      assert(sig);
+
+      vvp_vector4_t val;
+      sig->vec4_value(val);
+      assert(val.size() == wid);
+
+      thr->push_vec4(val);
+
+      return true;
+}
+
+/*
  * %load/vec4a <arr>, <adrx>
  */
 bool of_LOAD_VEC4A(vthread_t thr, vvp_code_t cp)
@@ -4854,6 +4887,28 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
       }
 
       thr->push_object(obj);
+
+      return true;
+}
+
+/*
+ * %new/vif <n>, <sig0>, <sig1>, ...
+ *
+ * Build a fresh vvp_vif object with one member per operand net (see
+ * compile_new_vif() in vvp_vif.cc for how those nets got resolved and
+ * attached to this instruction), and push the new object onto the
+ * object stack.
+ */
+bool of_NEW_VIF(vthread_t thr, vvp_code_t cp)
+{
+      unsigned n = cp->bit_idx[0];
+      vvp_net_t**list = cp->net_list;
+
+      vvp_vif*vif = new vvp_vif(n);
+      for (unsigned idx = 0 ; idx < n ; idx += 1)
+	    vif->set_member(idx, list[idx]);
+
+      thr->push_object(vvp_object_t(vif));
 
       return true;
 }
@@ -7834,6 +7889,39 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %vif/store/vec4 <idx>, <wid>
+ *
+ * Pop a vector from the vec4 stack and drive it onto virtual
+ * interface member <idx> of the vvp_vif object on top of the object
+ * stack. Unlike %vif/load/vec4, this pops both the value and the
+ * object handle: there is nothing left to chain another vif access
+ * onto once the store has happened.
+ */
+bool of_VIF_STORE_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_vector4_t val = thr->pop_vec4();
+      assert(val.size() >= wid);
+      if (val.size() > wid)
+	    val.resize(wid);
+
+      vvp_object_t obj;
+      thr->pop_object(obj);
+      vvp_vif*vif = obj.peek<vvp_vif>();
+      assert(vif);
+
+      vvp_net_t*net = vif->signal(idx);
+      assert(net);
+
+      vvp_net_ptr_t ptr(net, 0);
+      vvp_send_vec4(ptr, val, thr->wt_context);
+
+      return true;
+}
+
+/*
  * %store/vec4a <var-label>, <addr>, <offset>
  */
 bool of_STORE_VEC4A(vthread_t thr, vvp_code_t cp)
@@ -8086,6 +8174,51 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
       waitable_hooks_s*ep = dynamic_cast<waitable_hooks_s*> (cp->net->fun);
       assert(ep);
       thr->wait_next = ep->add_waiting_thread(thr);
+
+	/* Return false to suspend this thread. */
+      return false;
+}
+
+/*
+ * %vif/wait <edge>, <idx>
+ *
+ * Suspend the current thread until virtual interface member <idx> of
+ * the vvp_vif object on top of the object stack sees the requested
+ * <edge> (0=posedge, 1=negedge, 2=anyedge; 3 is also accepted and
+ * treated as anyedge, since vvp_vif only keeps a single "any change"
+ * detector per member). The member's edge-detector net is created
+ * (and wired to the member signal) the first time it is needed; see
+ * vvp_vif::edge_event(). The vif handle is popped off the object
+ * stack once the wait has been armed, mirroring the way %vif/store/vec4
+ * consumes the handle.
+ */
+bool of_VIF_WAIT(vthread_t thr, vvp_code_t cp)
+{
+      unsigned edge = cp->number;
+      unsigned idx  = cp->bit_idx[0];
+
+      vvp_object_t&top = thr->peek_object();
+      vvp_vif*vif = top.peek<vvp_vif>();
+      assert(vif);
+
+      vvp_vif::edge_t kind = vvp_vif::EDGE_ANYEDGE;
+      if (edge == static_cast<unsigned>(vvp_vif::EDGE_POSEDGE))
+	    kind = vvp_vif::EDGE_POSEDGE;
+      else if (edge == static_cast<unsigned>(vvp_vif::EDGE_NEGEDGE))
+	    kind = vvp_vif::EDGE_NEGEDGE;
+
+      vvp_net_t*event_net = vif->edge_event(idx, kind);
+
+      assert(! thr->i_am_in_function);
+      assert(! thr->waiting_for_event);
+      thr->waiting_for_event = 1;
+
+      waitable_hooks_s*ep = dynamic_cast<waitable_hooks_s*> (event_net->fun);
+      assert(ep);
+      thr->wait_next = ep->add_waiting_thread(thr);
+
+      vvp_object_t tmp;
+      thr->pop_object(tmp);
 
 	/* Return false to suspend this thread. */
       return false;

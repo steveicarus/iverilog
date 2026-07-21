@@ -2964,6 +2964,10 @@ class NetAssign_ {
       void set_property(const perm_string&name, unsigned int idx);
       inline int get_property_idx(void) const { return member_idx_; }
 
+	// Virtual-interface member select (after a VI handle lval).
+      void set_vif_member(unsigned int idx, unsigned wid);
+      inline int get_vif_member_idx(void) const { return vif_member_idx_; }
+
 	// Determine if the assigned object is signed or unsigned.
 	// This is used when determining the expression type for
 	// a compressed assignment statement.
@@ -3017,6 +3021,8 @@ class NetAssign_ {
 	// member/property if signal is a class.
       perm_string member_;
       int member_idx_ = -1;
+	// Virtual-interface member when assigning through a VI handle.
+      int vif_member_idx_ = -1;
 
       bool signed_;
       bool turn_sig_to_wire_on_release_;

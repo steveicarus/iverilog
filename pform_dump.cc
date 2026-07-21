@@ -359,6 +359,14 @@ void class_type_t::pform_dump(ostream&out, unsigned indent) const
       if (base_type) base_type->pform_dump(out, indent+4);
 }
 
+void virtual_interface_type_t::pform_dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << "virtual interface " << name;
+      if (modport)
+	    out << "." << modport;
+      out << endl;
+}
+
 void class_type_t::pform_dump_init(ostream&out, unsigned indent) const
 {
       for (vector<Statement*>::const_iterator cur = initialize.begin()

@@ -436,6 +436,21 @@ struct class_type_t : public data_type_t {
       virtual SymbolType symbol_type() const override;
 };
 
+/*
+ * virtual [interface] interface_identifier
+ * Optional modport is parsed but deferred (not used in this slice).
+ */
+struct virtual_interface_type_t : public data_type_t {
+      explicit virtual_interface_type_t(perm_string n, perm_string mp = perm_string())
+      : name(n), modport(mp) { }
+
+      void pform_dump(std::ostream&out, unsigned indent) const override;
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
+
+      perm_string name;
+      perm_string modport;
+};
+
 ivl_type_t elaborate_array_type(Design *des, NetScope *scope,
 			        const LineInfo &li, ivl_type_t base_type,
 			        const std::list<pform_range_t> &dims);

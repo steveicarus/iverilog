@@ -268,6 +268,7 @@ inline uint64_t strtouint64(const char*str, char**endptr, int base)
 "%vpi_func/r" { return K_vpi_func_r; }
 "%vpi_func/s" { return K_vpi_func_s; }
 "%file_line"  { return K_file_line; }
+"%new/vif"    { return K_new_vif; }
 
   /* Handle the specialized variable access functions. */
 

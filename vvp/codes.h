@@ -171,6 +171,7 @@ extern bool of_NAND(vthread_t thr, vvp_code_t code);
 extern bool of_NANDR(vthread_t thr, vvp_code_t code);
 extern bool of_NEW_COBJ(vthread_t thr, vvp_code_t code);
 extern bool of_NEW_DARRAY(vthread_t thr, vvp_code_t code);
+extern bool of_NEW_VIF(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 extern bool of_NOR(vthread_t thr, vvp_code_t code);
 extern bool of_NORR(vthread_t thr, vvp_code_t code);
@@ -332,6 +333,9 @@ extern bool of_TEST_NUL(vthread_t thr, vvp_code_t code);
 extern bool of_TEST_NUL_A(vthread_t thr, vvp_code_t code);
 extern bool of_TEST_NUL_OBJ(vthread_t thr, vvp_code_t code);
 extern bool of_TEST_NUL_PROP(vthread_t thr, vvp_code_t code);
+extern bool of_VIF_LOAD_VEC4(vthread_t thr, vvp_code_t code);
+extern bool of_VIF_STORE_VEC4(vthread_t thr, vvp_code_t code);
+extern bool of_VIF_WAIT(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
 extern bool of_WAIT(vthread_t thr, vvp_code_t code);
 extern bool of_WAIT_FORK(vthread_t thr, vvp_code_t code);
@@ -362,6 +366,9 @@ struct vvp_code_s {
 	    class __vpiHandle*handle;
 	    __vpiScope*scope;
 	    const char*text;
+	      // Used by %new/vif: a compile-time array of the vvp_net_t
+	      // pointers for the virtual interface's member signals.
+	    vvp_net_t   **net_list;
       };
 
       union {

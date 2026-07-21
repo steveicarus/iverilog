@@ -1733,6 +1733,12 @@ extern "C" int ivl_lval_property_idx(ivl_lval_t net)
       return net->property_idx;
 }
 
+extern "C" int ivl_lval_vif_member_idx(ivl_lval_t net)
+{
+      assert(net);
+      return net->vif_member_idx;
+}
+
 extern "C" ivl_signal_t ivl_lval_sig(ivl_lval_t net)
 {
       assert(net);

@@ -39,6 +39,7 @@
 # include  "netqueue.h"
 # include  "netstruct.h"
 # include  "netscalar.h"
+# include  "netvif.h"
 # include  "util.h"
 # include  "ivl_assert.h"
 # include  "map_named_args.h"
@@ -3104,11 +3105,39 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
 		 << " look for property " << comp << endl;
       }
 
+	/* Nested path: property is a virtual interface, then member. */
       if (sr.path_tail.size() > 1) {
-	    cerr << get_fileline() << ": sorry: "
-		 << "Nested member path not yet supported for class properties."
-		 << endl;
-	    return nullptr;
+	    int pidx = class_type->property_idx_from_name(comp.name);
+	    if (pidx < 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Class " << class_type->get_name()
+		       << " has no property " << comp.name << "." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    ivl_type_t ptype = class_type->get_prop_type(pidx);
+	    const netvif_t*vif_type = dynamic_cast<const netvif_t*>(ptype);
+	    if (!vif_type || sr.path_tail.size() != 2) {
+		  cerr << get_fileline() << ": sorry: "
+		       << "Nested member path not yet supported for class properties."
+		       << endl;
+		  des->errors += 1;
+		  return nullptr;
+	    }
+	    pform_name_t::const_iterator it = sr.path_tail.begin();
+	    ++it;
+	    const name_component_t&mcomp = *it;
+	    int midx = vif_type->member_idx_from_name(mcomp.name);
+	    if (midx < 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Virtual interface has no member `"
+		       << mcomp.name << "'." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    NetEProperty*prop = new NetEProperty(sr.net, pidx, nullptr);
+	    prop->set_line(*this);
+	    return elab_vif_member_get(*this, prop, vif_type, midx);
       }
 
       ivl_type_t par_type;
@@ -5196,6 +5225,22 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       symbol_search_results sr;
       symbol_search(this, des, scope, path_, lexical_pos_, &sr);
 
+	/* Assigning an interface instance to a virtual interface. */
+      if (const netvif_t*vif_type = dynamic_cast<const netvif_t*>(ntype)) {
+	    if (sr.is_scope() && sr.scope && sr.scope->is_interface()
+		&& sr.path_tail.empty()) {
+		  return elab_vif_new_from_scope(des, *this, sr.scope, vif_type);
+	    }
+	      /* Also allow a relative child scope name that is an interface. */
+	    if (!sr.net && path_.size() == 1) {
+		  hname_t use_name(peek_tail_name(path_));
+		  if (NetScope*nsc = scope->child(use_name)) {
+			if (nsc->is_interface())
+			      return elab_vif_new_from_scope(des, *this, nsc, vif_type);
+		  }
+	    }
+      }
+
       if (!sr.net) {
             cerr << get_fileline() << ": error: Unable to bind variable `"
 	         << path_ << "' in `" << scope_path(scope) << "'" << endl;
@@ -5217,6 +5262,25 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 						  sr.path_tail);
 	    } else if (dynamic_cast<const netclass_t*>(sr.type)) {
 		  return elaborate_expr_class_field_(des, scope, sr, 0, flags);
+	    } else if (const netvif_t*vif_type = dynamic_cast<const netvif_t*>(sr.type)) {
+		  if (sr.path_tail.size() != 1) {
+			cerr << get_fileline() << ": error: "
+			     << "Invalid virtual interface member path." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  const name_component_t&comp = sr.path_tail.front();
+		  int midx = vif_type->member_idx_from_name(comp.name);
+		  if (midx < 0) {
+			cerr << get_fileline() << ": error: "
+			     << "Virtual interface has no member `"
+			     << comp.name << "'." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetESignal*base = new NetESignal(net);
+		  base->set_line(*this);
+		  return elab_vif_member_get(*this, base, vif_type, midx);
 	    }
       }
 
@@ -5831,6 +5895,29 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 	    if (dynamic_cast<const netclass_t*>(sr.type) && !sr.path_tail.empty()) {
 		  return elaborate_expr_class_field_(des, scope, sr,
 						     expr_wid, flags);
+	    }
+
+	    if (const netvif_t*vif_type = dynamic_cast<const netvif_t*>(sr.type)) {
+		  if (!sr.path_tail.empty()) {
+			if (sr.path_tail.size() != 1) {
+			      cerr << get_fileline() << ": error: "
+				   << "Invalid virtual interface member path." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			const name_component_t&comp = sr.path_tail.front();
+			int midx = vif_type->member_idx_from_name(comp.name);
+			if (midx < 0) {
+			      cerr << get_fileline() << ": error: "
+				   << "Virtual interface has no member `"
+				   << comp.name << "'." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			NetESignal*base = new NetESignal(sr.net);
+			base->set_line(*this);
+			return elab_vif_member_get(*this, base, vif_type, midx);
+		  }
 	    }
 
 	    if (sr.net->enumeration() && !sr.path_tail.empty()) {

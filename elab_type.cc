@@ -19,11 +19,15 @@
 
 # include  "PExpr.h"
 # include  "PScope.h"
+# include  "PWire.h"
+# include  "Module.h"
+# include  "parse_api.h"
 # include  "pform_types.h"
 # include  "netlist.h"
 # include  "netclass.h"
 # include  "netdarray.h"
 # include  "netaarray.h"
+# include  "netvif.h"
 # include  "netenum.h"
 # include  "netqueue.h"
 # include  "netparray.h"
@@ -129,6 +133,43 @@ ivl_type_t atom_type_t::elaborate_type_raw(Design*des, NetScope*) const
 ivl_type_t class_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 {
       return scope->find_class(des, name);
+}
+
+ivl_type_t virtual_interface_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
+{
+      map<perm_string,Module*>::const_iterator cur = pform_modules.find(name);
+      if (cur == pform_modules.end() || !cur->second->is_interface) {
+	    cerr << get_fileline() << ": error: `" << name
+		 << "' is not an interface type." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (modport) {
+	    cerr << get_fileline() << ": warning: Modport-qualified virtual "
+		 << "interfaces (`virtual " << name << "." << modport
+		 << "') are accepted but modport rules are not enforced yet."
+		 << endl;
+      }
+
+      netvif_t*vif = new netvif_t(name);
+      Module*mod = cur->second;
+      for (map<perm_string,PWire*>::const_iterator wt = mod->wires.begin();
+	   wt != mod->wires.end(); ++wt) {
+	    PWire*pw = wt->second;
+	    if (!pw)
+		  continue;
+	      // Skip non-net/variable declarations if any.
+	    data_type_t*dt = pw->get_data_type();
+	    ivl_type_t mt = 0;
+	    if (dt)
+		  mt = dt->elaborate_type(des, scope);
+	    if (!mt)
+		  mt = &netvector_t::scalar_logic;
+	    vif->add_member(wt->first, mt);
+      }
+
+      return vif;
 }
 
 /*
