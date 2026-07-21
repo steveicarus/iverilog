@@ -770,14 +770,8 @@ vthread_t vthread_new(vvp_code_t pc, __vpiScope*scope)
       thr->flags[1] = BIT4_1;
       thr->flags[2] = BIT4_X;
       thr->flags[3] = BIT4_Z;
-	/* Initialize the remaining flags. Older code only cleared 4..7; the
-	   codegen freely uses higher flag indices, so leave nothing
-	   uninitialized for tools like valgrind. */
-      for (int idx = 4 ; idx < vthread_s::FLAGS_COUNT ; idx += 1)
+      for (int idx = 4 ; idx < 8 ; idx += 1)
 	    thr->flags[idx] = BIT4_X;
-
-      for (int idx = 0 ; idx < vthread_s::WORDS_COUNT ; idx += 1)
-	    thr->words[idx].w_uint = 0;
 
       scope->threads .insert(thr);
       return thr;
