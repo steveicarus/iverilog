@@ -922,6 +922,28 @@ typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
 {
       perm_string name = lex_strings.make(txt);
 
+      // Built-in SystemVerilog classes (IEEE 1800 mailbox/semaphore).
+      if (gn_system_verilog()) {
+	    if (name == lex_strings.make("semaphore")) {
+		  static typedef_t*semaphore_type = 0;
+		  if (!semaphore_type) {
+			semaphore_type = new typedef_t(lex_strings.make("semaphore"));
+			semaphore_type->set_data_type(new type_parameter_t(semaphore_type->name));
+			semaphore_type->set_basic_type(type_restrict_t(type_restrict_t::CLASS));
+		  }
+		  return semaphore_type;
+	    }
+	    if (name == lex_strings.make("mailbox")) {
+		  static typedef_t*mailbox_type = 0;
+		  if (!mailbox_type) {
+			mailbox_type = new typedef_t(lex_strings.make("mailbox"));
+			mailbox_type->set_data_type(new type_parameter_t(mailbox_type->name));
+			mailbox_type->set_basic_type(type_restrict_t(type_restrict_t::CLASS));
+		  }
+		  return mailbox_type;
+	    }
+      }
+
       LexicalScope*cur_scope = lexical_scope;
       do {
 	    LexicalScope::typedef_map_t::iterator cur;
@@ -2558,6 +2580,59 @@ void pform_make_modgates(const struct vlltype&loc,
 			 std::vector<lgate>*gates,
 			 std::list<named_pexpr_t>*attr)
 {
+	// Reinterpret `mailbox #(int) mb;` style no-port instantiations of a
+	// known type identifier as variable declarations (built-in classes).
+      if (gn_system_verilog()) {
+	    typedef_t*decl_type = pform_test_type_identifier(loc, type);
+	    if (decl_type) {
+		  bool declaration_like = true;
+		  std::list<decl_assignment_t*>*decls = new std::list<decl_assignment_t*>;
+		  for (unsigned idx = 0 ; idx < gates->size() ; idx += 1) {
+			lgate&cur = (*gates)[idx];
+			if (cur.parms || cur.parms_by_name) {
+			      declaration_like = false;
+			      break;
+			}
+			decl_assignment_t*decl = new decl_assignment_t;
+			decl->name = { lex_strings.make(cur.name), loc.lexical_pos };
+			if (cur.ranges) {
+			      decl->index.swap(*cur.ranges);
+			      delete cur.ranges;
+			      cur.ranges = 0;
+			}
+			decls->push_back(decl);
+		  }
+		  if (declaration_like) {
+			pform_set_type_referenced(loc, type);
+			typeref_t*dtype = new typeref_t(decl_type);
+			FILE_NAME(dtype, loc);
+			pform_make_var(loc, decls, dtype, attr, false);
+			if (overrides) {
+			      // Built-in mailbox/semaphore ignore specialization args for now.
+			      if (overrides->by_order) {
+				    for (list<PExpr*>::iterator i = overrides->by_order->begin()
+					       ; i != overrides->by_order->end() ; ++i)
+					  delete *i;
+				    delete overrides->by_order;
+			      }
+			      if (overrides->by_name) {
+				    for (list<named_pexpr_t>::iterator i = overrides->by_name->begin()
+					       ; i != overrides->by_name->end() ; ++i)
+					  delete i->parm;
+				    delete overrides->by_name;
+			      }
+			      delete overrides;
+			}
+			delete gates;
+			return;
+		  }
+		  for (list<decl_assignment_t*>::iterator cur = decls->begin()
+			     ; cur != decls->end() ; ++cur)
+			delete *cur;
+		  delete decls;
+	    }
+      }
+
 	// The grammer should not allow module gates to happen outside
 	// an active module. But if really bad input errors combine in
 	// an ugly way with error recovery, then catch this

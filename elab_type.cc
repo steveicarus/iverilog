@@ -40,6 +40,23 @@
 
 using namespace std;
 
+static netclass_t* make_builtin_semaphore_type_()
+{
+      static netclass_t*builtin_semaphore_type = 0;
+      if (!builtin_semaphore_type)
+	    builtin_semaphore_type = new netclass_t(perm_string::literal("semaphore"), 0);
+      return builtin_semaphore_type;
+}
+
+static netclass_t* make_builtin_mailbox_type_()
+{
+      static netclass_t*builtin_mailbox_type = 0;
+      if (!builtin_mailbox_type)
+	    builtin_mailbox_type = new netclass_t(perm_string::literal("mailbox"), 0);
+      return builtin_mailbox_type;
+}
+
+
 /*
  * Elaborations of types may vary depending on the scope that it is
  * done in, so keep a per-scope cache of the results.
@@ -506,6 +523,11 @@ NetScope *typeref_t::find_scope(Design *des, NetScope *s) const
 
 ivl_type_t typedef_t::elaborate_type(Design *des, NetScope *scope)
 {
+      if (name == perm_string::literal("mailbox"))
+	    return make_builtin_mailbox_type_();
+      if (name == perm_string::literal("semaphore"))
+	    return make_builtin_semaphore_type_();
+
       if (!data_type.get()) {
 	    cerr << get_fileline() << ": error: Undefined type `" << name << "`."
 		 << endl;

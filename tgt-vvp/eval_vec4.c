@@ -1194,6 +1194,82 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 	    return;
       }
 
+
+      /* Mailbox num: $ivl_mailbox$num(mbx) -> int on vec4 */
+      if (strcmp(ivl_expr_name(expr), "$ivl_mailbox$num") == 0) {
+	    ivl_expr_t mbx_e = (parm_count > 0) ? ivl_expr_parm(expr, 0) : 0;
+	    if (mbx_e) draw_eval_object(mbx_e);
+	    fprintf(vvp_out, "    %%mbx/num;\n");
+	    if (ivl_expr_width(expr) > 1)
+		  fprintf(vvp_out, "    %%pad/u %u;\n", ivl_expr_width(expr));
+	    return;
+      }
+
+      /* Mailbox try_put: $ivl_mailbox$try_put(mbx, item) -> bit on vec4 */
+      if (strcmp(ivl_expr_name(expr), "$ivl_mailbox$try_put") == 0) {
+	    ivl_expr_t mbx_e  = (parm_count > 0) ? ivl_expr_parm(expr, 0) : 0;
+	    ivl_expr_t item_e = (parm_count > 1) ? ivl_expr_parm(expr, 1) : 0;
+	    if (mbx_e)  draw_eval_object(mbx_e);
+	    if (item_e) {
+		  if (ivl_expr_value(item_e) == IVL_VT_CLASS) {
+			draw_eval_object(item_e);
+		  } else {
+			unsigned wid = ivl_expr_width(item_e);
+			if (!wid) wid = 32;
+			draw_eval_vec4(item_e);
+			fprintf(vvp_out, "    %%box/vec4 %u;\n", wid);
+		  }
+	    } else {
+		  fprintf(vvp_out, "    %%null;\n");
+	    }
+	    fprintf(vvp_out, "    %%mbx/try_put;\n");
+	    if (ivl_expr_width(expr) > 1)
+		  fprintf(vvp_out, "    %%pad/u %u;\n", ivl_expr_width(expr));
+	    return;
+      }
+
+      /* Mailbox try_get/try_peek */
+      if (strcmp(ivl_expr_name(expr), "$ivl_mailbox$try_get") == 0 ||
+          strcmp(ivl_expr_name(expr), "$ivl_mailbox$try_peek") == 0) {
+	    int is_peek = (strcmp(ivl_expr_name(expr), "$ivl_mailbox$try_peek") == 0);
+	    ivl_expr_t mbx_e  = (parm_count > 0) ? ivl_expr_parm(expr, 0) : 0;
+	    ivl_expr_t item_e = (parm_count > 1) ? ivl_expr_parm(expr, 1) : 0;
+	    if (mbx_e) draw_eval_object(mbx_e);
+	    fprintf(vvp_out, "    %s;\n", is_peek ? "%mbx/try_peek" : "%mbx/try_get");
+	    if (item_e && ivl_expr_type(item_e) == IVL_EX_SIGNAL
+		&& ivl_expr_signal(item_e)) {
+		  ivl_signal_t sig = ivl_expr_signal(item_e);
+		  if (ivl_signal_data_type(sig) == IVL_VT_CLASS) {
+			fprintf(vvp_out, "    %%store/obj v%p_0;\n", sig);
+		  } else {
+			unsigned wid = ivl_signal_width(sig);
+			if (!wid) wid = 32;
+			fprintf(vvp_out, "    %%unbox/vec4 %u;\n", wid);
+			fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", sig, wid);
+		  }
+	    } else {
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    }
+	    if (ivl_expr_width(expr) > 1)
+		  fprintf(vvp_out, "    %%pad/u %u;\n", ivl_expr_width(expr));
+	    return;
+      }
+
+      /* Semaphore try_get */
+      if (strcmp(ivl_expr_name(expr), "$ivl_semaphore$try_get") == 0) {
+	    ivl_expr_t sem_e = (parm_count > 0) ? ivl_expr_parm(expr, 0) : 0;
+	    if (sem_e) draw_eval_object(sem_e);
+	    if (parm_count >= 2 && ivl_expr_parm(expr, 1)) {
+		  draw_eval_vec4(ivl_expr_parm(expr, 1));
+	    } else {
+		  fprintf(vvp_out, "    %%pushi/vec4 1, 0, 32;\n");
+	    }
+	    fprintf(vvp_out, "    %%sem/try_get;\n");
+	    if (ivl_expr_width(expr) > 1)
+		  fprintf(vvp_out, "    %%pad/u %u;\n", ivl_expr_width(expr));
+	    return;
+      }
+
       draw_vpi_func_call(expr);
 }
 

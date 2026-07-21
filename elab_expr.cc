@@ -2017,6 +2017,25 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
       if (search_results.net && search_results.net->data_type()==IVL_VT_CLASS) {
 	    const netclass_t *class_type = dynamic_cast<const netclass_t*>(search_results.type);
 	    ivl_assert(*this, class_type);
+	    perm_string cname = class_type->get_name();
+	    if (cname == perm_string::literal("mailbox")) {
+		  if (method_name == "num" || method_name == "try_get"
+		      || method_name == "try_peek" || method_name == "try_put") {
+			expr_type_ = IVL_VT_BOOL;
+			expr_width_ = (method_name == "num") ? 32 : 1;
+			min_width_ = expr_width_;
+			signed_flag_ = false;
+			return expr_width_;
+		  }
+	    }
+	    if (cname == perm_string::literal("semaphore")
+		&& method_name == "try_get") {
+		  expr_type_ = IVL_VT_BOOL;
+		  expr_width_ = 1;
+		  min_width_ = 1;
+		  signed_flag_ = false;
+		  return expr_width_;
+	    }
 	    NetScope*method = class_type->method_from_name(method_name);
 
 	    if (method == 0) {
@@ -4126,6 +4145,59 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    NetNet*net = search_results.net;
 	    const netclass_t*class_type = dynamic_cast<const netclass_t*>(search_results.type);
 	    ivl_assert(*this, class_type);
+
+	    perm_string cname = class_type->get_name();
+	    if (cname == perm_string::literal("mailbox")) {
+		  if (method_name == perm_string::literal("num")) {
+			NetESFunc*sys = new NetESFunc("$ivl_mailbox$num",
+						     &netvector_t::atom2u32, 1);
+			sys->set_line(*this);
+			sys->parm(0, sub_expr);
+			return sys;
+		  }
+		  if (method_name == perm_string::literal("try_get")
+		      || method_name == perm_string::literal("try_peek")
+		      || method_name == perm_string::literal("try_put")) {
+			const char*sname =
+			      method_name==perm_string::literal("try_get")
+			      ? "$ivl_mailbox$try_get"
+			      : (method_name==perm_string::literal("try_peek")
+				 ? "$ivl_mailbox$try_peek"
+				 : "$ivl_mailbox$try_put");
+			unsigned nargs = parms_.empty() ? 0 : 1;
+			NetESFunc*sys = new NetESFunc(sname,
+						     &netvector_t::atom2u32,
+						     1 + nargs);
+			sys->set_line(*this);
+			sys->parm(0, sub_expr);
+			if (nargs > 0 && parms_[0].parm) {
+			      NetExpr*a = elab_and_eval(des, scope,
+						       parms_[0].parm,
+						       -1, false, false);
+			      if (a) sys->parm(1, a);
+			}
+			return sys;
+		  }
+	    }
+	    if (cname == perm_string::literal("semaphore")
+		&& method_name == perm_string::literal("try_get")) {
+		  unsigned nargs = parms_.empty() ? 0 : 1;
+		  NetESFunc*sys = new NetESFunc("$ivl_semaphore$try_get",
+						 &netvector_t::atom2u32,
+						 1 + nargs);
+		  sys->set_line(*this);
+		  sys->parm(0, sub_expr);
+		  if (nargs > 0 && parms_[0].parm) {
+			NetExpr*narg = elab_and_eval(des, scope,
+						    parms_[0].parm,
+						    32, false, false,
+						    IVL_VT_LOGIC);
+			sys->parm(1, narg ? narg
+					  : new NetEConst(verinum((uint64_t)1, 32)));
+		  }
+		  return sys;
+	    }
+
 	    return elaborate_class_method_net_(des, scope, net, class_type,
 					       method_name, nullptr);
       }
@@ -7426,6 +7498,33 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 
       NetScope *new_scope = ctype->get_constructor();
       if (new_scope == 0) {
+	      // Built-in mailbox/semaphore constructors map to runtime sfuncs.
+	    if (gn_system_verilog()
+		&& ctype->get_name() == perm_string::literal("mailbox")) {
+		  unsigned nargs = parms_.empty() ? 0 : 1;
+		  NetESFunc*mbx = new NetESFunc("$ivl_mailbox$new", ctype, nargs);
+		  mbx->set_line(*this);
+		  if (!parms_.empty() && parms_[0].parm) {
+			NetExpr*barg = elab_and_eval(des, scope, parms_[0].parm, 32,
+						     false, false, IVL_VT_LOGIC);
+			mbx->parm(0, barg ? barg : new NetEConst(verinum((uint64_t)0, 32)));
+		  }
+		  delete obj;
+		  return mbx;
+	    }
+	    if (gn_system_verilog()
+		&& ctype->get_name() == perm_string::literal("semaphore")) {
+		  unsigned nargs = parms_.empty() ? 0 : 1;
+		  NetESFunc*sem = new NetESFunc("$ivl_semaphore$new", ctype, nargs);
+		  sem->set_line(*this);
+		  if (!parms_.empty() && parms_[0].parm) {
+			NetExpr*carg = elab_and_eval(des, scope, parms_[0].parm, 32,
+						     false, false, IVL_VT_LOGIC);
+			sem->parm(0, carg ? carg : new NetEConst(verinum((uint64_t)0, 32)));
+		  }
+		  delete obj;
+		  return sem;
+	    }
 	      // No constructor.
 	    if (parms_.size() > 0) {
 		  cerr << get_fileline() << ": error: "

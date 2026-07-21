@@ -136,4 +136,8 @@ extern const vvp_vector4_t& vthread_get_vec4_stack(struct vthread_s*thr, unsigne
 /* This is used to actually delete a thread once we are done with it. */
 extern void vthread_delete(vthread_t thr);
 
+/* Push an object onto a (possibly suspended) thread object stack. */
+class vvp_object_t;
+extern void vthread_push_obj_item(vthread_t thr, const vvp_object_t& obj);
+
 #endif /* IVL_vthread_H */

@@ -3,7 +3,10 @@
   `define IVL_UVM_MBX_T int
 `endif
 
-// Poor man's mailbox
+// Poor man's mailbox (legacy IVL_UVM helper).
+// Prefer the compiler builtin `mailbox #(int)` when using -g2012 on this fork
+// (see docs/mailbox-semaphore.md). This class remains for IVL_UVM tests that
+// still instantiate ivl_uvm_mbx.
 // Default size = 1 in SV
 // Here, only size-1 is supported as of now
 // Also no parameterized classes in Icarus (yet), so using a `define

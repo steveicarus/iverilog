@@ -794,6 +794,30 @@ int draw_eval_object(ivl_expr_t ex)
 		strstr(ivl_expr_name(ex), "_with") != 0) {
 		  if (draw_queue_method_find_sfunc(ex) == 0) return 0;
 	    }
+	    /* Mailbox constructor: $ivl_mailbox$new([bound]) */
+	    if (strcmp(ivl_expr_name(ex), "$ivl_mailbox$new") == 0) {
+		  long bound = 0;
+		  unsigned parm_count = ivl_expr_parms(ex);
+		  if (parm_count > 0) {
+			ivl_expr_t bexpr = ivl_expr_parm(ex, 0);
+			if (bexpr && ivl_expr_type(bexpr) == IVL_EX_NUMBER)
+			      bound = (long)ivl_expr_uvalue(bexpr);
+		  }
+		  fprintf(vvp_out, "    %%mbx/new %ld;\n", bound);
+		  return 0;
+	    }
+	    /* Semaphore constructor: $ivl_semaphore$new([initial_count]) */
+	    if (strcmp(ivl_expr_name(ex), "$ivl_semaphore$new") == 0) {
+		  long cnt = 0;
+		  unsigned parm_count = ivl_expr_parms(ex);
+		  if (parm_count > 0) {
+			ivl_expr_t cexpr = ivl_expr_parm(ex, 0);
+			if (cexpr && ivl_expr_type(cexpr) == IVL_EX_NUMBER)
+			      cnt = (long)ivl_expr_uvalue(cexpr);
+		  }
+		  fprintf(vvp_out, "    %%sem/new %ld;\n", cnt);
+		  return 0;
+	    }
 	    if (strcmp(ivl_expr_name(ex), "$ivl_vif_new") == 0) {
 		  unsigned n = ivl_expr_parms(ex);
 		  fprintf(vvp_out, "    %%new/vif %u", n);
