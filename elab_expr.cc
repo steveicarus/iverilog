@@ -105,8 +105,14 @@ static NetExpr* elab_queue_locator_with_predicate(
       index_net->set_line(loc);
       index_net->local_flag(true);
 
-      NetExpr* pred = elab_and_eval(des, ws, with_expr, 1, false, false,
-				    IVL_VT_BOOL);
+      NetExpr* pred = 0;
+      if (method_suffix == "sum" || method_suffix == "product") {
+	    pred = elab_and_eval(des, ws, with_expr, (int)ew, false, false,
+				 ivl_type_base(element_type));
+      } else {
+	    pred = elab_and_eval(des, ws, with_expr, 1, false, false,
+				 IVL_VT_BOOL);
+      }
       if (!pred) return 0;
 
       perm_string sfunc_name;
@@ -130,6 +136,10 @@ static NetExpr* elab_queue_locator_with_predicate(
 	    sfunc_name = lex_strings.make("$ivl_queue_method$min_with");
       } else if (method_suffix == "max") {
 	    sfunc_name = lex_strings.make("$ivl_queue_method$max_with");
+      } else if (method_suffix == "sum") {
+	    sfunc_name = lex_strings.make("$ivl_queue_method$sum_with");
+      } else if (method_suffix == "product") {
+	    sfunc_name = lex_strings.make("$ivl_queue_method$product_with");
       } else {
 	    ivl_assert(loc, 0);
       }
@@ -222,6 +232,58 @@ static NetExpr* elab_array_locator_method(Design* des, NetScope* scope,
       sys_expr->set_line(loc);
       sys_expr->parm(0, array_arg);
       sys_expr->parm(1, cmp);
+      return sys_expr;
+}
+
+static bool is_array_reduction_method(perm_string name)
+{
+      return name == "sum" || name == "product";
+}
+
+/*
+ * Elaborate sum()/product() on a queue or dynamic array expression.
+ * Returns an integral value with the element type/width.
+ */
+static NetExpr* elab_array_reduction_method(Design* des, NetScope* scope,
+					    const LineInfo& loc,
+					    perm_string method_name,
+					    NetExpr* array_arg,
+					    ivl_type_t element_type,
+					    const vector<named_pexpr_t>& parms,
+					    PExpr* with_expr, const char* kind)
+{
+      if (!queue_method_element_is_integral_vec4(element_type)) {
+	    cerr << loc.get_fileline() << ": sorry: " << kind << " "
+		 << method_name << "() for this "
+		 << "element type is not yet supported." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      char sfunc[64];
+      snprintf(sfunc, sizeof sfunc, "$ivl_queue_method$%s", method_name.str());
+
+      if (with_expr) {
+	    if (!parms.empty()) {
+		  cerr << loc.get_fileline() << ": error: array locator "
+		       << "`with` clause cannot be combined with a "
+		       << "method argument." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    return elab_queue_locator_with_predicate(des, scope, loc, with_expr,
+						     array_arg, element_type,
+						     element_type, method_name);
+      }
+
+      if (parms.size() != 0) {
+	    cerr << loc.get_fileline() << ": error: " << method_name
+		 << "() method takes no arguments" << endl;
+	    des->errors += 1;
+      }
+      NetESFunc*sys_expr = new NetESFunc(sfunc, element_type, 1);
+      sys_expr->set_line(loc);
+      sys_expr->parm(0, array_arg);
       return sys_expr;
 }
 
@@ -1830,6 +1892,21 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 		  return expr_width_;
 	    }
 
+	    if (method_name == "sum") {
+		  expr_type_   = darray->element_base_type();
+		  expr_width_  = darray->element_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = darray->get_signed();
+		  return expr_width_;
+	    }
+	    if (method_name == "product") {
+		  expr_type_   = darray->element_base_type();
+		  expr_width_  = darray->element_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = darray->get_signed();
+		  return expr_width_;
+	    }
+
 	    if (method_name == "find" || method_name == "find_index" ||
 		method_name == "unique" || method_name == "unique_index" ||
 		method_name == "min" || method_name == "max") {
@@ -1884,6 +1961,21 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 		  expr_width_ = darray->element_width();
 		  min_width_  = expr_width_;
 		  signed_flag_= darray->get_signed();
+		  return expr_width_;
+	    }
+
+	    if (method_name == "sum") {
+		  expr_type_   = darray->element_base_type();
+		  expr_width_  = darray->element_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = darray->get_signed();
+		  return expr_width_;
+	    }
+	    if (method_name == "product") {
+		  expr_type_   = darray->element_base_type();
+		  expr_width_  = darray->element_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = darray->get_signed();
 		  return expr_width_;
 	    }
 
@@ -3838,8 +3930,15 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 						static_cast<ivl_type_t>(queue),
 						parms_, with_expr_, "queue");
 			      }
+			      if (is_array_reduction_method(method_name)) {
+				    return elab_array_reduction_method(des, scope, *this,
+						method_name, prop, element_type,
+						parms_, with_expr_, "queue");
+			      }
 			}
-			if (ptype && ptype->base_type() == IVL_VT_DARRAY) {
+			if (ptype &&
+			    (ptype->base_type() == IVL_VT_DARRAY ||
+			     ptype->base_type() == IVL_VT_QUEUE)) {
 			      NetEProperty*prop = new NetEProperty(search_results.net, pidx, nullptr);
 			      prop->set_line(*this);
 			      perm_string method_name = search_results.path_tail.back().name;
@@ -3859,7 +3958,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 				    return elab_array_locator_method(des, scope, *this,
 						method_name, prop, element_type,
 						ptype, parms_, with_expr_,
-						"dynamic array");
+						"array");
+			      }
+			      if (is_array_reduction_method(method_name)) {
+				    return elab_array_reduction_method(des, scope, *this,
+						method_name, prop, element_type,
+						parms_, with_expr_, "array");
 			      }
 			}
 		  }
@@ -3968,6 +4072,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 						   queue_rtype, parms_, with_expr_,
 						   "dynamic array");
 	    }
+	    if (is_array_reduction_method(method_name)) {
+		  return elab_array_reduction_method(des, scope, *this, method_name,
+						     sub_expr, element_type,
+						     parms_, with_expr_,
+						     "dynamic array");
+	    }
 
 	    cerr << get_fileline() << ": error: Method " << method_name
 		 << " is not a dynamic array method." << endl;
@@ -4026,6 +4136,11 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 						   sub_expr, element_type,
 						   static_cast<ivl_type_t>(queue),
 						   parms_, with_expr_, "queue");
+	    }
+	    if (is_array_reduction_method(method_name)) {
+		  return elab_array_reduction_method(des, scope, *this, method_name,
+						     sub_expr, element_type,
+						     parms_, with_expr_, "queue");
 	    }
 
 	    cerr << get_fileline() << ": error: Method " << method_name
@@ -5252,6 +5367,38 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  fun->parm(0, arg);
 		  return fun;
 	    }
+	    if (member_comp.name == "sum") {
+		  if (!queue_method_element_is_integral_vec4(element_type)) {
+			cerr << get_fileline() << ": sorry: queue sum() for this "
+			     << "element type is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetESFunc*fun = new NetESFunc(
+		      "$ivl_queue_method$sum",
+		      element_type, 1);
+		  fun->set_line(*this);
+		  NetESignal*arg = new NetESignal(sr.net);
+		  arg->set_line(*sr.net);
+		  fun->parm(0, arg);
+		  return fun;
+	    }
+	    if (member_comp.name == "product") {
+		  if (!queue_method_element_is_integral_vec4(element_type)) {
+			cerr << get_fileline() << ": sorry: queue product() for this "
+			     << "element type is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetESFunc*fun = new NetESFunc(
+		      "$ivl_queue_method$product",
+		      element_type, 1);
+		  fun->set_line(*this);
+		  NetESignal*arg = new NetESignal(sr.net);
+		  arg->set_line(*sr.net);
+		  fun->parm(0, arg);
+		  return fun;
+	    }
 	    if (member_comp.name == "min" || member_comp.name == "max") {
 		  if (!queue_method_element_is_integral_vec4(element_type)) {
 			cerr << get_fileline() << ": sorry: queue " << member_comp.name
@@ -5586,6 +5733,22 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 			fun->parm(0, arg);
 			return fun;
 		  }
+		  if (member_comp.name == "sum") {
+			if (!queue_method_element_is_integral_vec4(element_type)) {
+			      cerr << get_fileline() << ": sorry: queue sum() for this "
+			           << "element type is not yet supported." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			NetESFunc*fun = new NetESFunc(
+			    "$ivl_queue_method$sum",
+			    element_type, 1);
+			fun->set_line(*this);
+			NetESignal*arg = new NetESignal(sr.net);
+			arg->set_line(*sr.net);
+			fun->parm(0, arg);
+			return fun;
+		  }
 		  if (member_comp.name == "min" || member_comp.name == "max") {
 			if (!queue_method_element_is_integral_vec4(element_type)) {
 			      cerr << get_fileline() << ": sorry: queue " << member_comp.name
@@ -5666,17 +5829,39 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 			return 0;
 // FIXME: Check this is a real or integral type.
 		  } else if (member_comp.name == "sum") {
-			cerr << get_fileline() << ": sorry: 'sum()' "
-			        "array reduction method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
+			const netdarray_t* dar_sum = sr.net->darray_type();
+			ivl_assert(*this, dar_sum);
+			ivl_type_t element_type = dar_sum->element_type();
+			if (!queue_method_element_is_integral_vec4(element_type)) {
+			      cerr << get_fileline() << ": sorry: dynamic array sum() for this "
+				   << "element type is not yet supported." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			NetESFunc*fun = new NetESFunc("$ivl_queue_method$sum",
+						      element_type, 1);
+			fun->set_line(*this);
+			NetESignal*arg = new NetESignal(sr.net);
+			arg->set_line(*sr.net);
+			fun->parm(0, arg);
+			return fun;
 		  } else if (member_comp.name == "product") {
-			cerr << get_fileline() << ": sorry: 'product()' "
-			        "array reduction method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
+			const netdarray_t* dar_sum = sr.net->darray_type();
+			ivl_assert(*this, dar_sum);
+			ivl_type_t element_type = dar_sum->element_type();
+			if (!queue_method_element_is_integral_vec4(element_type)) {
+			      cerr << get_fileline() << ": sorry: dynamic array product() for this "
+				   << "element type is not yet supported." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			NetESFunc*fun = new NetESFunc("$ivl_queue_method$product",
+						      element_type, 1);
+			fun->set_line(*this);
+			NetESignal*arg = new NetESignal(sr.net);
+			arg->set_line(*sr.net);
+			fun->parm(0, arg);
+			return fun;
 // FIXME: Check this is only an integral type.
 		  } else if (member_comp.name == "and") {
 			cerr << get_fileline() << ": sorry: 'and()' "

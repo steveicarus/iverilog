@@ -1130,6 +1130,28 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 	    }
       }
 
+      if ((strcmp(ivl_expr_name(expr), "$ivl_queue_method$sum") == 0 ||
+	   strcmp(ivl_expr_name(expr), "$ivl_queue_method$product") == 0) &&
+	  parm_count == 1) {
+	    ivl_expr_t arg = ivl_expr_parm(expr, 0);
+	    unsigned wid = ivl_expr_width(expr);
+	    const char* op = strcmp(ivl_expr_name(expr), "$ivl_queue_method$product") == 0
+			       ? "product"
+			       : "sum";
+	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
+		  ivl_signal_t clas = ivl_expr_signal(arg);
+		  unsigned pidx = ivl_expr_property_idx(arg);
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
+		  fprintf(vvp_out, "    %%queue/%s/prop/v %u, %u;\n", op, pidx, wid);
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  return;
+	    }
+	    assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
+	    fprintf(vvp_out, "    %%queue/%s/v v%p_0, %u;\n",
+	            op, ivl_expr_signal(arg), wid);
+	    return;
+      }
+
       draw_vpi_func_call(expr);
 }
 

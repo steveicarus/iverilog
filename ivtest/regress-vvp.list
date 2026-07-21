@@ -291,6 +291,7 @@ sv_class_darray_prop_locators	vvp_tests/sv_class_darray_prop_locators.json
 sv_class_prop_packed_dims	vvp_tests/sv_class_prop_packed_dims.json
 sv_class_prop_type_name	vvp_tests/sv_class_prop_type_name.json
 sv_class_prop_wildcard_type_name	vvp_tests/sv_class_prop_wildcard_type_name.json
+sv_class_queue_prop_locators	vvp_tests/sv_class_queue_prop_locators.json
 sv_class_prop_nest_darray1	vvp_tests/sv_class_prop_nest_darray1.json
 sv_class_prop_nest_obj1		vvp_tests/sv_class_prop_nest_obj1.json
 sv_class_prop_nest_real1	vvp_tests/sv_class_prop_nest_real1.json
@@ -316,6 +317,10 @@ sv_darray_assign_op		vvp_tests/sv_darray_assign_op.json
 sv_darray_find_locators		vvp_tests/sv_darray_find_locators.json
 sv_darray_min_max		vvp_tests/sv_darray_min_max.json
 sv_darray_min_max_with		vvp_tests/sv_darray_min_max_with.json
+sv_darray_product		vvp_tests/sv_darray_product.json
+sv_darray_product_with		vvp_tests/sv_darray_product_with.json
+sv_darray_sum			vvp_tests/sv_darray_sum.json
+sv_darray_sum_with		vvp_tests/sv_darray_sum_with.json
 sv_darray_unique		vvp_tests/sv_darray_unique.json
 sv_darray_unique_with		vvp_tests/sv_darray_unique_with.json
 sv_declaration_after_null_statement_fail	vvp_tests/sv_declaration_after_null_statement_fail.json
@@ -415,6 +420,10 @@ sv_queue_method_push_front_too_few_arg_fail	vvp_tests/sv_queue_method_push_front
 sv_queue_method_push_front_too_many_arg_fail	vvp_tests/sv_queue_method_push_front_too_many_arg_fail.json
 sv_queue_min_max		vvp_tests/sv_queue_min_max.json
 sv_queue_min_max_with		vvp_tests/sv_queue_min_max_with.json
+sv_queue_product		vvp_tests/sv_queue_product.json
+sv_queue_product_with		vvp_tests/sv_queue_product_with.json
+sv_queue_sum			vvp_tests/sv_queue_sum.json
+sv_queue_sum_with		vvp_tests/sv_queue_sum_with.json
 sv_queue_unique			vvp_tests/sv_queue_unique.json
 sv_queue_unique_with		vvp_tests/sv_queue_unique_with.json
 sv_soft_packed_union		vvp_tests/sv_soft_packed_union.json
