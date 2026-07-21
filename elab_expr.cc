@@ -122,6 +122,14 @@ static NetExpr* elab_queue_locator_with_predicate(
 	    sfunc_name = lex_strings.make("$ivl_queue_method$find_last_with");
       } else if (method_suffix == "find_last_index") {
 	    sfunc_name = lex_strings.make("$ivl_queue_method$find_last_index_with");
+      } else if (method_suffix == "unique") {
+	    sfunc_name = lex_strings.make("$ivl_queue_method$unique_with");
+      } else if (method_suffix == "unique_index") {
+	    sfunc_name = lex_strings.make("$ivl_queue_method$unique_index_with");
+      } else if (method_suffix == "min") {
+	    sfunc_name = lex_strings.make("$ivl_queue_method$min_with");
+      } else if (method_suffix == "max") {
+	    sfunc_name = lex_strings.make("$ivl_queue_method$max_with");
       } else {
 	    ivl_assert(loc, 0);
       }
@@ -140,7 +148,8 @@ static bool is_array_locator_method(perm_string name)
       return name == "find" || name == "find_index" ||
 	     name == "find_first" || name == "find_first_index" ||
 	     name == "find_last" || name == "find_last_index" ||
-	     name == "unique" || name == "unique_index";
+	     name == "unique" || name == "unique_index" ||
+	     name == "min" || name == "max";
 }
 
 static bool locator_returns_indices(perm_string name)
@@ -178,17 +187,8 @@ static NetExpr* elab_array_locator_method(Design* des, NetScope* scope,
       char sfunc[64];
       snprintf(sfunc, sizeof sfunc, "$ivl_queue_method$%s", method_name.str());
 
-      if (method_name == "unique" || method_name == "unique_index") {
-	    if (parms.size() != 0) {
-		  cerr << loc.get_fileline() << ": error: " << method_name
-		       << "() method takes no arguments" << endl;
-		  des->errors += 1;
-	    }
-	    NetESFunc*sys_expr = new NetESFunc(sfunc, result_type, 1);
-	    sys_expr->set_line(loc);
-	    sys_expr->parm(0, array_arg);
-	    return sys_expr;
-      }
+      bool no_arg = method_name == "unique" || method_name == "unique_index" ||
+		    method_name == "min" || method_name == "max";
 
       if (with_expr) {
 	    if (!parms.empty()) {
@@ -201,6 +201,18 @@ static NetExpr* elab_array_locator_method(Design* des, NetScope* scope,
 	    return elab_queue_locator_with_predicate(des, scope, loc, with_expr,
 						     array_arg, element_type,
 						     result_type, method_name);
+      }
+
+      if (no_arg) {
+	    if (parms.size() != 0) {
+		  cerr << loc.get_fileline() << ": error: " << method_name
+		       << "() method takes no arguments" << endl;
+		  des->errors += 1;
+	    }
+	    NetESFunc*sys_expr = new NetESFunc(sfunc, result_type, 1);
+	    sys_expr->set_line(loc);
+	    sys_expr->parm(0, array_arg);
+	    return sys_expr;
       }
 
       NetExpr* cmp = elab_queue_locator_cmp_arg(des, scope, loc, parms,
@@ -1818,7 +1830,9 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 		  return expr_width_;
 	    }
 
-	    if (method_name == "find" || method_name == "find_index") {
+	    if (method_name == "find" || method_name == "find_index" ||
+		method_name == "unique" || method_name == "unique_index" ||
+		method_name == "min" || method_name == "max") {
 		  expr_type_   = IVL_VT_QUEUE;
 		  expr_width_  = 1;
 		  min_width_   = 1;
@@ -1873,15 +1887,9 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 		  return expr_width_;
 	    }
 
-	    if (method_name == "unique" || method_name == "unique_index") {
-		  expr_type_   = IVL_VT_QUEUE;
-		  expr_width_  = 1;
-		  min_width_   = 1;
-		  signed_flag_ = false;
-		  return expr_width_;
-	    }
-
-	    if (method_name == "find" || method_name == "find_index") {
+	    if (method_name == "unique" || method_name == "unique_index" ||
+		method_name == "min" || method_name == "max" ||
+		method_name == "find" || method_name == "find_index") {
 		  expr_type_   = IVL_VT_QUEUE;
 		  expr_width_  = 1;
 		  min_width_   = 1;
@@ -3835,6 +3843,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			      NetEProperty*prop = new NetEProperty(search_results.net, pidx, nullptr);
 			      prop->set_line(*this);
 			      perm_string method_name = search_results.path_tail.back().name;
+			      ivl_type_t element_type = ivl_type_element(ptype);
 			      if (method_name == "size") {
 				    if (parms_.size() != 0) {
 					  cerr << get_fileline() << ": error: size() method "
@@ -3845,6 +3854,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 				    sys_expr->set_line(*this);
 				    sys_expr->parm(0, prop);
 				    return sys_expr;
+			      }
+			      if (is_array_locator_method(method_name)) {
+				    return elab_array_locator_method(des, scope, *this,
+						method_name, prop, element_type,
+						ptype, parms_, with_expr_,
+						"dynamic array");
 			      }
 			}
 		  }
@@ -5237,6 +5252,23 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  fun->parm(0, arg);
 		  return fun;
 	    }
+	    if (member_comp.name == "min" || member_comp.name == "max") {
+		  if (!queue_method_element_is_integral_vec4(element_type)) {
+			cerr << get_fileline() << ": sorry: queue " << member_comp.name
+			     << "() for this element type is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetESFunc*fun = new NetESFunc(
+		      member_comp.name == "min" ? "$ivl_queue_method$min"
+						: "$ivl_queue_method$max",
+		      static_cast<ivl_type_t>(queue), 1);
+		  fun->set_line(*this);
+		  NetESignal*arg = new NetESignal(sr.net);
+		  arg->set_line(*sr.net);
+		  fun->parm(0, arg);
+		  return fun;
+	    }
 	    cerr << get_fileline() << ": error: Unknown or unsupported queue "
 		 << "member `" << member_comp.name << "'." << endl;
 	    des->errors += 1;
@@ -5548,6 +5580,23 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 			NetESFunc*fun = new NetESFunc(
 			    "$ivl_queue_method$unique_index",
 			    static_cast<ivl_type_t>(&ivl_queue_unique_index_ret), 1);
+			fun->set_line(*this);
+			NetESignal*arg = new NetESignal(sr.net);
+			arg->set_line(*sr.net);
+			fun->parm(0, arg);
+			return fun;
+		  }
+		  if (member_comp.name == "min" || member_comp.name == "max") {
+			if (!queue_method_element_is_integral_vec4(element_type)) {
+			      cerr << get_fileline() << ": sorry: queue " << member_comp.name
+			           << "() for this element type is not yet supported." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			NetESFunc*fun = new NetESFunc(
+			    member_comp.name == "min" ? "$ivl_queue_method$min"
+						      : "$ivl_queue_method$max",
+			    static_cast<ivl_type_t>(queue), 1);
 			fun->set_line(*this);
 			NetESignal*arg = new NetESignal(sr.net);
 			arg->set_line(*sr.net);

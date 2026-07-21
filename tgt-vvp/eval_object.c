@@ -173,6 +173,57 @@ static int eval_darray_new(ivl_expr_t ex)
       return errors;
 }
 
+/* Build a dynamic-array object value from an array pattern expression. */
+static int eval_darray_pattern_object(ivl_expr_t ex)
+{
+      int errors = 0;
+      ivl_type_t net_type = ivl_expr_net_type(ex);
+      if (!net_type || ivl_type_base(net_type) != IVL_VT_DARRAY) return 1;
+
+      ivl_type_t element_type = ivl_type_element(net_type);
+      if (!element_type) return 1;
+
+      unsigned size_reg = allocate_word();
+      fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", size_reg, ivl_expr_parms(ex));
+      fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+      darray_new(element_type, size_reg);
+
+      switch (ivl_type_base(element_type)) {
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    for (unsigned idx = 0; idx < ivl_expr_parms(ex); idx += 1) {
+		  draw_eval_vec4(ivl_expr_parm(ex, idx));
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%set/dar/obj/vec4 3;\n");
+		  fprintf(vvp_out, "    %%pop/vec4 1;\n");
+	    }
+	    break;
+	  case IVL_VT_REAL:
+	    for (unsigned idx = 0; idx < ivl_expr_parms(ex); idx += 1) {
+		  draw_eval_real(ivl_expr_parm(ex, idx));
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%set/dar/obj/real 3;\n");
+		  fprintf(vvp_out, "    %%pop/real 1;\n");
+	    }
+	    break;
+	  case IVL_VT_STRING:
+	    for (unsigned idx = 0; idx < ivl_expr_parms(ex); idx += 1) {
+		  draw_eval_string(ivl_expr_parm(ex, idx));
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%set/dar/obj/str 3;\n");
+		  fprintf(vvp_out, "    %%pop/str 1;\n");
+	    }
+	    break;
+	  default:
+	    fprintf(vvp_out, "; ERROR: eval_darray_pattern_object: unsupported "
+		             "element type %d\n", ivl_type_base(element_type));
+	    errors += 1;
+	    break;
+      }
+
+      return errors;
+}
+
 static int eval_class_new(ivl_expr_t ex)
 {
       ivl_type_t class_type = ivl_expr_net_type(ex);
@@ -292,7 +343,7 @@ static int emit_queue_locator_opcode(ivl_expr_t arg, unsigned elem_wid,
 	    unsigned pidx = ivl_expr_property_idx(arg);
 	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 	    fprintf(vvp_out, "    %s %u, %u;\n", op_prop_v, pidx, elem_wid);
-	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
       } else {
 	    ivl_signal_t sig = ivl_expr_signal(arg);
 	    fprintf(vvp_out, "    %s v%p_0, %u;\n", op_v, sig, elem_wid);
@@ -311,6 +362,10 @@ static int eval_queue_method_unique(ivl_expr_t expr)
 	      "%queue/unique/v", "%queue/unique/prop/v" },
 	    { "$ivl_queue_method$unique_index",
 	      "%queue/unique/index/v", "%queue/unique/index/prop/v" },
+	    { "$ivl_queue_method$min",
+	      "%queue/min/v", "%queue/min/prop/v" },
+	    { "$ivl_queue_method$max",
+	      "%queue/max/v", "%queue/max/prop/v" },
       };
 
       const char* name = ivl_expr_name(expr);
@@ -338,7 +393,11 @@ enum queue_locator_with_mode_e {
       QUEUE_WITH_FIND_FIRST,
       QUEUE_WITH_FIND_FIRST_INDEX,
       QUEUE_WITH_FIND_LAST,
-      QUEUE_WITH_FIND_LAST_INDEX
+      QUEUE_WITH_FIND_LAST_INDEX,
+      QUEUE_WITH_MIN,
+      QUEUE_WITH_MAX,
+      QUEUE_WITH_UNIQUE,
+      QUEUE_WITH_UNIQUE_INDEX
 };
 
 static enum queue_locator_with_mode_e queue_locator_with_mode_from_name(
@@ -356,6 +415,14 @@ static enum queue_locator_with_mode_e queue_locator_with_mode_from_name(
 	    return QUEUE_WITH_FIND_LAST;
       } else if (strcmp(name, "$ivl_queue_method$find_last_index_with") == 0) {
 	    return QUEUE_WITH_FIND_LAST_INDEX;
+      } else if (strcmp(name, "$ivl_queue_method$min_with") == 0) {
+	    return QUEUE_WITH_MIN;
+      } else if (strcmp(name, "$ivl_queue_method$max_with") == 0) {
+	    return QUEUE_WITH_MAX;
+      } else if (strcmp(name, "$ivl_queue_method$unique_with") == 0) {
+	    return QUEUE_WITH_UNIQUE;
+      } else if (strcmp(name, "$ivl_queue_method$unique_index_with") == 0) {
+	    return QUEUE_WITH_UNIQUE_INDEX;
       }
       return (enum queue_locator_with_mode_e) -1;
 }
@@ -368,14 +435,20 @@ static int queue_with_reverse(enum queue_locator_with_mode_e mode)
 
 static int queue_with_multi(enum queue_locator_with_mode_e mode)
 {
-      return mode == QUEUE_WITH_FIND || mode == QUEUE_WITH_FIND_INDEX;
+      return mode == QUEUE_WITH_FIND ||
+	     mode == QUEUE_WITH_FIND_INDEX ||
+	     mode == QUEUE_WITH_MIN ||
+	     mode == QUEUE_WITH_MAX ||
+	     mode == QUEUE_WITH_UNIQUE ||
+	     mode == QUEUE_WITH_UNIQUE_INDEX;
 }
 
 static int queue_with_as_index(enum queue_locator_with_mode_e mode)
 {
       return mode == QUEUE_WITH_FIND_INDEX ||
 	     mode == QUEUE_WITH_FIND_FIRST_INDEX ||
-	     mode == QUEUE_WITH_FIND_LAST_INDEX;
+	     mode == QUEUE_WITH_FIND_LAST_INDEX ||
+	     mode == QUEUE_WITH_UNIQUE_INDEX;
 }
 
 /* On predicate match: append value/index and continue or stop. */
@@ -433,6 +506,37 @@ static void emit_queue_with_step_index(int reverse, int i_reg, unsigned lab_top)
 	    fprintf(vvp_out, "    %%ix/sub %u, 1, 0;\n", i_reg);
       }
       fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
+}
+
+static void emit_queue_with_finish(enum queue_locator_with_mode_e mode,
+				   int is_prop, unsigned elem_wid)
+{
+      if (mode == QUEUE_WITH_UNIQUE || mode == QUEUE_WITH_UNIQUE_INDEX) {
+	    unsigned wid = (mode == QUEUE_WITH_UNIQUE_INDEX) ? 32 : elem_wid;
+	    fprintf(vvp_out, "    %%queue/unique/obj/v %u;\n", wid);
+	    if (is_prop) {
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+	    }
+	    return;
+      }
+      if (mode == QUEUE_WITH_MIN || mode == QUEUE_WITH_MAX) {
+	    const char* opname = (mode == QUEUE_WITH_MIN) ? "min" : "max";
+	    fprintf(vvp_out, "    %%queue/%s/obj/v %u;\n", opname, elem_wid);
+	    if (is_prop) {
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+	    }
+	    return;
+      }
+      if (queue_with_multi(mode)) {
+	    if (is_prop) {
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+	    }
+	    return;
+      }
+      fprintf(vvp_out, "    %%queue/new_empty/v;\n");
+      if (is_prop) {
+	    fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+      }
 }
 
 static int eval_queue_method_find_with(ivl_expr_t expr)
@@ -521,19 +625,12 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 
 	    fprintf(vvp_out, "T_%u.%u ; loop end (prop)\n", thread_count,
 		    lab_loop_end);
-	    if (multi) {
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-	    } else {
-		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
-		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
-	    }
+	    emit_queue_with_finish(mode, 1, elem_wid);
 	    fprintf(vvp_out, "T_%u.%u ; with end (prop)\n", thread_count, lab_end);
       } else {
 	    fprintf(vvp_out, "T_%u.%u ; loop end (var)\n", thread_count,
 		    lab_loop_end);
-	    if (!multi) {
-		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
-	    }
+	    emit_queue_with_finish(mode, 0, elem_wid);
 	    fprintf(vvp_out, "T_%u.%u ; with end (var)\n", thread_count, lab_end);
       }
 
@@ -621,6 +718,9 @@ int draw_eval_object(ivl_expr_t ex)
 
 	  case IVL_EX_UFUNC:
 	    return eval_object_ufunc(ex);
+
+	  case IVL_EX_ARRAY_PATTERN:
+	    return eval_darray_pattern_object(ex);
 
 	  case IVL_EX_SFUNC:
 	    /* Queue locator `with` may report IVL_VT_DARRAY in ivl; handle by name. */
