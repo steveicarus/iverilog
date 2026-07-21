@@ -1163,6 +1163,59 @@ static int show_stmt_assign_sig_darray(ivl_statement_t net)
 }
 
 /*
+ * Associative array assignment (string-keyed vertical slice).
+ * Indexed: evaluate value then string key, %store/aar/vec4.
+ * Whole: duplicate object like darray.
+ */
+static int show_stmt_assign_sig_aarray(ivl_statement_t net)
+{
+      int errors = 0;
+      ivl_lval_t lval = ivl_stmt_lval(net, 0);
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_signal_t var= ivl_lval_sig(lval);
+      ivl_type_t var_type= ivl_signal_net_type(var);
+      assert(ivl_type_base(var_type) == IVL_VT_AARRAY);
+      ivl_type_t element_type = ivl_type_element(var_type);
+
+      assert(ivl_stmt_lvals(net) == 1);
+      assert(ivl_lval_part_off(lval) == 0);
+
+      if (ivl_lval_idx(lval)) {
+	    ivl_expr_t mux = ivl_lval_idx(lval);
+	    assert(ivl_stmt_opcode(net) == 0);
+	    switch (ivl_type_base(element_type)) {
+		case IVL_VT_BOOL:
+		case IVL_VT_LOGIC:
+		  draw_eval_vec4(rval);
+		  resize_vec4_wid(rval, ivl_type_packed_width(element_type));
+		  draw_eval_string(mux);
+		  fprintf(vvp_out, "    %%store/aar/vec4 v%p_0;\n", var);
+		  break;
+		default:
+		  fprintf(stderr, "%s:%u: sorry: associative array element "
+			  "type not supported in this slice.\n",
+			  ivl_stmt_file(net), ivl_stmt_lineno(net));
+		  errors += 1;
+		  break;
+	    }
+      } else if (ivl_expr_type(rval) == IVL_EX_SIGNAL) {
+	    assert(ivl_stmt_opcode(net) == 0);
+	    errors += draw_eval_object(rval);
+	    fprintf(vvp_out, "    %%dup/obj;\n");
+	    fprintf(vvp_out, "    %%store/obj v%p_0; %s:%u: aarray copy\n",
+		    var, ivl_stmt_file(net), ivl_stmt_lineno(net));
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+      } else {
+	    assert(ivl_stmt_opcode(net) == 0);
+	    errors += draw_eval_object(rval);
+	    fprintf(vvp_out, "    %%store/obj v%p_0; %s:%u: aarray assign\n",
+		    var, ivl_stmt_file(net), ivl_stmt_lineno(net));
+      }
+
+      return errors;
+}
+
+/*
  * This function handles the special case that we assign an array
  * pattern to a queue. Handle this by assigning each element.
  * The array pattern will have a fixed size.
@@ -1445,6 +1498,10 @@ int show_stmt_assign(ivl_statement_t net)
 
       if (sig && (ivl_signal_data_type(sig) == IVL_VT_DARRAY)) {
 	    return show_stmt_assign_sig_darray(net);
+      }
+
+      if (sig && (ivl_signal_data_type(sig) == IVL_VT_AARRAY)) {
+	    return show_stmt_assign_sig_aarray(net);
       }
 
       if (sig && (ivl_signal_data_type(sig) == IVL_VT_QUEUE)) {

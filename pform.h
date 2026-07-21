@@ -346,6 +346,7 @@ extern PCallTask* pform_make_call_task(const struct vlltype&loc,
 				       const std::list<named_pexpr_t> &parms);
 
 extern void pform_make_foreach_declarations(const struct vlltype&loc,
+					    char*array_name,
 					    std::list<perm_string>*loop_vars);
 extern PForeach* pform_make_foreach(const struct vlltype&loc,
 				    char*ident,

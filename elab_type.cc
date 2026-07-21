@@ -23,6 +23,7 @@
 # include  "netlist.h"
 # include  "netclass.h"
 # include  "netdarray.h"
+# include  "netaarray.h"
 # include  "netenum.h"
 # include  "netqueue.h"
 # include  "netparray.h"
@@ -343,6 +344,12 @@ static ivl_type_t elaborate_static_array_type(Design *des, const LineInfo &li,
 	    des->errors++;
 	    // Recover
 	    base_type = new netvector_t(IVL_VT_LOGIC);
+      } else if (dynamic_cast<const netaarray_t*>(base_type)) {
+	    cerr << li.get_fileline() << ": sorry: "
+		 << "array of associative array type is not yet supported."
+		 << endl;
+	    des->errors++;
+	    base_type = new netvector_t(IVL_VT_LOGIC);
       }
 
       ivl_type_t type = new netuarray_t(dims, base_type);
@@ -373,6 +380,37 @@ ivl_type_t elaborate_array_type(Design *des, NetScope *scope,
 		  type = elaborate_static_array_type(des, li, type, dimensions);
 		  type = elaborate_darray_check_type(des, li, type, "Dynamic array");
 		  type = new netdarray_t(type);
+		  continue;
+	    } else if (dynamic_cast<PENull*>(lidx) && dynamic_cast<PENull*>(ridx)) {
+		    // Associative array wildcard `[*]` — string-keyed in this slice.
+		  type = elaborate_static_array_type(des, li, type, dimensions);
+		  type = elaborate_darray_check_type(des, li, type, "Associative array");
+		  type = new netaarray_t(type);
+		  continue;
+	    } else if (dynamic_cast<PEAArrayKey*>(lidx)) {
+		    // Associative array via PEAArrayKey sentinel.
+		  type = elaborate_static_array_type(des, li, type, dimensions);
+		  type = elaborate_darray_check_type(des, li, type, "Associative array");
+		  type = new netaarray_t(type);
+		  continue;
+	    } else if (PETypename*tn = dynamic_cast<PETypename*>(lidx)) {
+		    // `[string]` arrives as PETypename via `'[' expression ']'`
+		    // (dedicated K_string rule conflicts with typename-as-expr).
+		  if (dynamic_cast<string_type_t*>(tn->get_type()) &&
+		      (ridx == 0 || dynamic_cast<PENull*>(ridx))) {
+			type = elaborate_static_array_type(des, li, type, dimensions);
+			type = elaborate_darray_check_type(des, li, type, "Associative array");
+			type = new netaarray_t(type);
+			continue;
+		  }
+		  cerr << li.get_fileline() << ": sorry: "
+		       << "associative array key type is not yet supported "
+		       << "(string keys only in this slice)."
+		       << endl;
+		  des->errors++;
+		  type = elaborate_static_array_type(des, li, type, dimensions);
+		  type = elaborate_darray_check_type(des, li, type, "Associative array");
+		  type = new netaarray_t(type);
 		  continue;
 	    } else if (dynamic_cast<PENull*>(lidx)) {
 		    // Special case: Detect the mark for a QUEUE declaration,

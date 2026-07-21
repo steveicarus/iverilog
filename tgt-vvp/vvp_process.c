@@ -1684,6 +1684,16 @@ static int show_delete_method(ivl_statement_t net)
       assert(ivl_expr_type(parm) == IVL_EX_SIGNAL);
       ivl_signal_t var = ivl_expr_signal(parm);
 
+      if (ivl_signal_data_type(var) == IVL_VT_AARRAY) {
+	    if (parm_count == 2) {
+		  draw_eval_string(ivl_stmt_parm(net, 1));
+		  fprintf(vvp_out, "    %%delete/aar/str v%p_0;\n", var);
+	    } else {
+		  fprintf(vvp_out, "    %%delete/aar v%p_0;\n", var);
+	    }
+	    return 0;
+      }
+
 	/* If this is a queue then it can have an element to delete. */
       if (parm_count == 2) {
 	    if (ivl_type_base(ivl_signal_net_type(var)) != IVL_VT_QUEUE)
@@ -1936,6 +1946,9 @@ static int show_system_task_call(ivl_statement_t net)
       const char*stmt_name = ivl_stmt_name(net);
 
       if (strcmp(stmt_name,"$ivl_darray_method$delete") == 0)
+	    return show_delete_method(net);
+
+      if (strcmp(stmt_name,"$ivl_aarray_method$delete") == 0)
 	    return show_delete_method(net);
 
       if (strcmp(stmt_name,"$ivl_darray_method$reverse") == 0)

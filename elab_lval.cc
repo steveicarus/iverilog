@@ -27,6 +27,7 @@
 # include  "netstruct.h"
 # include  "netclass.h"
 # include  "netdarray.h"
+# include  "netaarray.h"
 # include  "netparray.h"
 # include  "netvector.h"
 # include  "netenum.h"
@@ -340,7 +341,7 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 
 
       if (use_sel == index_component_t::SEL_BIT) {
-	    if (reg->darray_type()) {
+	    if (reg->darray_type() || reg->aarray_type()) {
 		  NetAssign_*lv = new NetAssign_(reg);
 		  elaborate_lval_darray_bit_(des, scope, lv, is_force);
 		  return lv;
@@ -729,12 +730,13 @@ bool PEIdent::elaborate_lval_darray_bit_(Design*des,
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
 
-	// For now, only support single-dimension dynamic arrays.
+	// For now, only support single-dimension dynamic/associative arrays.
       ivl_assert(*this, name_tail.index.size() == 1);
 
       if ((lv->sig()->type()==NetNet::UNRESOLVED_WIRE) && !is_force) {
 	    ivl_assert(*this, lv->sig()->coerced_to_uwire());
-	    report_mixed_assignment_conflict_("darray word");
+	    report_mixed_assignment_conflict_(lv->sig()->aarray_type()
+					      ? "aarray word" : "darray word");
 	    des->errors += 1;
 	    return false;
       }
@@ -743,7 +745,7 @@ bool PEIdent::elaborate_lval_darray_bit_(Design*des,
       ivl_assert(*this, index_tail.msb != 0);
       ivl_assert(*this, index_tail.lsb == 0);
 
-	// Evaluate the select expression...
+	// Evaluate the select expression (integer for darray, string for aarray).
       NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1);
 
       lv->set_word(mux);

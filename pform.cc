@@ -1032,6 +1032,7 @@ void pform_make_var(const struct vlltype&loc,
 }
 
 void pform_make_foreach_declarations(const struct vlltype&loc,
+				     char*array_name,
 				     std::list<perm_string>*loop_vars)
 {
       list<decl_assignment_t*>assign_list;
@@ -1044,7 +1045,27 @@ void pform_make_foreach_declarations(const struct vlltype&loc,
 	    assign_list.push_back(tmp_assign);
       }
 
-      pform_make_var(loc, &assign_list, &size_type);
+	/* Associative arrays (string / [*] keys in this slice) need string
+	   foreach index variables. Look up the array in enclosing scopes. */
+      data_type_t*idx_type = &size_type;
+      perm_string aname = lex_strings.make(array_name);
+      for (LexicalScope*scp = lexical_scope ? lexical_scope->parent_scope() : 0;
+	   scp; scp = scp->parent_scope()) {
+	    PWire*wire = scp->wires_find(aname);
+	    if (!wire) continue;
+	    const list<pform_range_t>&udims = wire->get_unpacked_idx();
+	    if (udims.empty()) break;
+	    const pform_range_t&r = udims.front();
+	    if ((dynamic_cast<PENull*>(r.first) && dynamic_cast<PENull*>(r.second)) ||
+		dynamic_cast<PEAArrayKey*>(r.first) ||
+		dynamic_cast<PETypename*>(r.first)) {
+		  static string_type_t aa_string_idx;
+		  idx_type = &aa_string_idx;
+	    }
+	    break;
+      }
+
+      pform_make_var(loc, &assign_list, idx_type);
 }
 
 PForeach* pform_make_foreach(const struct vlltype&loc,

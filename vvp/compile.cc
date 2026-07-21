@@ -89,6 +89,9 @@ struct opcode_table_s {
 };
 
 static const struct opcode_table_s opcode_table[] = {
+      { "%aar/exists",    of_AAR_EXISTS,    1,{OA_FUNC_PTR, OA_NONE, OA_NONE} },
+      { "%aar/key_at",    of_AAR_KEY_AT,    1,{OA_FUNC_PTR, OA_NONE, OA_NONE} },
+      { "%aar/size",      of_AAR_SIZE,      1,{OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%abs/wr", of_ABS_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%add",    of_ADD,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%add/wr", of_ADD_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
@@ -155,6 +158,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%debug/thr",  of_DEBUG_THR,  1,{OA_STRING,   OA_NONE,     OA_NONE} },
       { "%delay",  of_DELAY,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%delayx", of_DELAYX, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
+      { "%delete/aar",    of_DELETE_AAR,    1,{OA_FUNC_PTR, OA_NONE, OA_NONE} },
+      { "%delete/aar/str",of_DELETE_AAR_STR,1,{OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%delete/elem",of_DELETE_ELEM,1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
       { "%delete/obj",of_DELETE_OBJ,1,{OA_FUNC_PTR,OA_NONE,  OA_NONE} },
       { "%delete/prop/elem", of_DELETE_PROP_ELEM, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
@@ -206,6 +211,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%jmp/1xz",of_JMP1XZ, 2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%join/detach",of_JOIN_DETACH,1,{OA_NUMBER,OA_NONE,  OA_NONE} },
+      { "%load/aar/vec4",of_LOAD_AAR_VEC4,1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%load/ar",of_LOAD_AR,2,  {OA_ARR_PTR,  OA_BIT1,     OA_NONE} },
       { "%load/dar/r",  of_LOAD_DAR_R,    1, {OA_FUNC_PTR, OA_NONE, OA_NONE}},
       { "%load/dar/str",of_LOAD_DAR_STR,  1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
@@ -340,6 +346,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%sort/obj", of_SORT_OBJ, 1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%sort/prop/obj", of_SORT_PROP_OBJ, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%split/vec4",    of_SPLIT_VEC4,    1,{OA_NUMBER,   OA_NONE, OA_NONE} },
+      { "%store/aar/vec4",of_STORE_AAR_VEC4,1,{OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%store/dar/r",   of_STORE_DAR_R,   1,{OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%store/dar/str", of_STORE_DAR_STR, 1,{OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%store/dar/vec4",of_STORE_DAR_VEC4,1,{OA_FUNC_PTR, OA_NONE, OA_NONE} },

@@ -30,6 +30,7 @@
 # include  "netmisc.h"
 # include  "netclass.h"
 # include  "netdarray.h"
+# include  "netaarray.h"
 # include  "netenum.h"
 # include  "netparray.h"
 # include  "netscalar.h"
@@ -709,6 +710,11 @@ const netstruct_t*NetNet::struct_type(void) const
 const netdarray_t* NetNet::darray_type(void) const
 {
       return dynamic_cast<const netdarray_t*> (net_type_);
+}
+
+const netaarray_t* NetNet::aarray_type(void) const
+{
+      return dynamic_cast<const netaarray_t*> (net_type_);
 }
 
 const netqueue_t* NetNet::queue_type(void) const
@@ -2498,6 +2504,8 @@ ivl_variable_type_t NetESignal::expr_type() const
 {
       if (net_->darray_type())
 	    return IVL_VT_DARRAY;
+      if (net_->aarray_type())
+	    return IVL_VT_AARRAY;
       else
 	    return net_->data_type();
 }

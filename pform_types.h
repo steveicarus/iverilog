@@ -93,6 +93,16 @@ typedef std::pair<perm_string, unsigned> pform_ident_t;
  *   [ $ ] -- Queue type
  *       first = PENull
  *       second = 0
+ *
+ *   [ * ] -- Associative array (wildcard key; this slice treats as string)
+ *       first = PENull
+ *       second = PENull
+ *
+ *   [ string ] -- Associative array with string keys
+ *       first = PETypename(string_type_t)  (via '[' expression ']')
+ *       second = 0
+ *
+ *   PEAArrayKey may also appear as first for AA sentinels.
  */
 typedef std::pair<PExpr*,PExpr*> pform_range_t;
 

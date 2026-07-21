@@ -218,7 +218,14 @@ void draw_eval_string(ivl_expr_t expr)
 		  string_ex_pop(expr);
 	    else if (strcmp(ivl_expr_name(expr), "$ivl_queue_method$pop_front")==0)
 		  string_ex_pop(expr);
-	    else
+	    else if (strcmp(ivl_expr_name(expr), "$ivl_aarray_method$key_at")==0) {
+		  ivl_expr_t arr = ivl_expr_parm(expr, 0);
+		  ivl_expr_t idx = ivl_expr_parm(expr, 1);
+		  assert(ivl_expr_type(arr) == IVL_EX_SIGNAL);
+		  draw_eval_expr_into_integer(idx, 3);
+		  fprintf(vvp_out, "    %%aar/key_at v%p_0;\n",
+			  ivl_expr_signal(arr));
+	    } else
 		  draw_sfunc_string(expr);
 	    break;
 

@@ -178,6 +178,9 @@ const char*data_type_string(ivl_variable_type_t vtype)
 	  case IVL_VT_QUEUE:
 	    vt = "queue";
 	    break;
+	  case IVL_VT_AARRAY:
+	    vt = "aarray";
+	    break;
       }
 
       return vt;

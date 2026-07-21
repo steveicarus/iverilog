@@ -391,6 +391,15 @@ PENull::~PENull()
 {
 }
 
+PEAArrayKey::PEAArrayKey(key_kind_t kind)
+: kind_(kind)
+{
+}
+
+PEAArrayKey::~PEAArrayKey()
+{
+}
+
 PEFNumber::PEFNumber(verireal*v)
 : value_(v)
 {

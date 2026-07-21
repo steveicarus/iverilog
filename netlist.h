@@ -87,6 +87,7 @@ class data_type_t;
 struct enum_type_t;
 class netclass_t;
 class netdarray_t;
+class netaarray_t;
 class netparray_t;
 class netuarray_t;
 class netqueue_t;
@@ -756,6 +757,7 @@ class NetNet  : public NetObj, public PortType {
       const netenum_t*enumeration(void) const;
       const netstruct_t*struct_type(void) const;
       const netdarray_t*darray_type(void) const;
+      const netaarray_t*aarray_type(void) const;
       const netqueue_t*queue_type(void) const;
       const netclass_t*class_type(void) const;
       const netarray_t*array_type(void) const;

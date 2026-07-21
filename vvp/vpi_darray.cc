@@ -22,6 +22,7 @@
 # include  "vpi_priv.h"
 # include  "vvp_net_sig.h"
 # include  "vvp_darray.h"
+# include  "vvp_aarray.h"
 # include  "vvp_cobject.h"
 # include  "array_common.h"
 # include  "schedule.h"
@@ -292,6 +293,49 @@ vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net)
       __vpiDarrayVar*obj = new __vpiDarrayVar(scope, use_name, net);
 
       return obj;
+}
+
+class __vpiAarrayVar : public __vpiBaseVar {
+
+    public:
+      __vpiAarrayVar(__vpiScope*sc, const char*na, vvp_net_t*ne)
+      : __vpiBaseVar(sc, na, ne) { }
+
+      int get_type_code() const override { return vpiArrayVar; }
+
+      int vpi_get(int code) override {
+	    switch (code) {
+		case vpiArrayType:
+		  return vpiAssocArray;
+		case vpiSize: {
+		      const vvp_fun_signal_object*fun =
+			    dynamic_cast<const vvp_fun_signal_object*>(get_net()->fun);
+		      if (!fun) return 0;
+		      vvp_object_t val = fun->get_object();
+		      const vvp_aarray*aval = val.peek<vvp_aarray>();
+		      return aval ? (int)aval->get_size() : 0;
+		}
+		default:
+		  return 0;
+	    }
+      }
+
+      char* vpi_get_str(int code) override {
+	    if (code == vpiFile)
+		  return simple_set_rbuf_str(file_names[0]);
+	    return generic_get_str(code, scope_, name_, NULL);
+      }
+
+      void vpi_get_value(p_vpi_value val) override {
+	    val->format = vpiSuppressVal;
+      }
+};
+
+vpiHandle vpip_make_aarray_var(const char*name, vvp_net_t*net)
+{
+      __vpiScope*scope = vpip_peek_current_scope();
+      const char*use_name = name ? vpip_name_string(name) : NULL;
+      return new __vpiAarrayVar(scope, use_name, net);
 }
 
 __vpiQueueVar::__vpiQueueVar(__vpiScope*sc, const char*na, vvp_net_t*ne)
