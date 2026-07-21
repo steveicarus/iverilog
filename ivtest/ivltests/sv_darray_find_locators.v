@@ -12,6 +12,9 @@ module top;
 
   int array[] = '{4, 7, 2, 5, 7, 1, 6, 3, 1};
   int res[$];
+  string s[] = '{"hello", "sad", "hello", "world"};
+  string qs[$];
+  int qi[$];
 
   initial begin
     res = array.find() with (item > 3);
@@ -41,6 +44,30 @@ module top;
     res = array.find_last_index() with (item < 3);
     `CHK(res.size == 1);
     `CHK(res[0] == 8);
+
+    qs = s.find with (item == "sad");
+    `CHK(qs.size == 1);
+    `CHK(qs[0] == "sad");
+
+    qs = s.find_first with (item == "hello");
+    `CHK(qs.size == 1);
+    `CHK(qs[0] == "hello");
+
+    qs = s.find_last with (item == "hello");
+    `CHK(qs.size == 1);
+    `CHK(qs[0] == "hello");
+
+    qi = s.find_index with (item == "world");
+    `CHK(qi.size == 1);
+    `CHK(qi[0] == 3);
+
+    qi = s.find_first_index with (item == "hello");
+    `CHK(qi.size == 1);
+    `CHK(qi[0] == 0);
+
+    qi = s.find_last_index with (item == "hello");
+    `CHK(qi.size == 1);
+    `CHK(qi[0] == 2);
 
     if (!failed)
       $display("PASSED");

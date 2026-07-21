@@ -7343,9 +7343,27 @@ bool of_PUSH_IX_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_QUEUE_NEW_EMPTY_STR(vthread_t thr, vvp_code_t)
+{
+      thr->push_object(vvp_object_t(new vvp_queue_string()));
+      return true;
+}
+
 bool of_QUEUE_NEW_EMPTY_V(vthread_t thr, vvp_code_t)
 {
       thr->push_object(vvp_object_t(new vvp_queue_vec4()));
+      return true;
+}
+
+bool of_QUEUE_APPEND_WORD_STR(vthread_t thr, vvp_code_t)
+{
+      string elem = thr->pop_str();
+      vvp_object_t qobj;
+      thr->pop_object(qobj);
+      vvp_queue_string* q = qobj.peek<vvp_queue_string>();
+      assert(q);
+      q->push_back(elem, 0);
+      thr->push_object(qobj);
       return true;
 }
 

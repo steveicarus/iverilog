@@ -47,11 +47,106 @@
 using namespace std;
 
 static netqueue_t ivl_queue_unique_index_ret(&netvector_t::atom2s32, -1);
+static netqueue_t ivl_queue_string_ret(&netstring_t::type_string, -1);
 
 static bool queue_method_element_is_integral_vec4(ivl_type_t et)
 {
       ivl_variable_type_t bt = ivl_type_base(et);
       return bt == IVL_VT_BOOL || bt == IVL_VT_LOGIC;
+}
+
+/* Locator methods: integral vec4 always; string only for find*. */
+static bool locator_method_element_supported(ivl_type_t et, perm_string method)
+{
+      if (queue_method_element_is_integral_vec4(et))
+	    return true;
+      if (ivl_type_base(et) != IVL_VT_STRING)
+	    return false;
+      return method == "find" || method == "find_index" ||
+	     method == "find_first" || method == "find_first_index" ||
+	     method == "find_last" || method == "find_last_index";
+}
+
+/*
+ * No-parens forms (e.g. qi = s.unique) elaborate as PEIdent. Build the
+ * same NetESFunc used for s.unique() / queue methods.
+ */
+static NetExpr* elab_array_locator_noparens(Design* des, const LineInfo& loc,
+					    NetNet* net, perm_string method_name,
+					    const char* kind)
+{
+      const netdarray_t* dar = net->darray_type();
+      ivl_assert(loc, dar);
+      ivl_type_t element_type = dar->element_type();
+      const netqueue_t* queue = net->queue_type();
+      ivl_type_t value_rtype = queue
+	    ? static_cast<ivl_type_t>(queue)
+	    : (ivl_type_base(element_type) == IVL_VT_STRING
+		     ? static_cast<ivl_type_t>(&ivl_queue_string_ret)
+		     : static_cast<ivl_type_t>(dar));
+
+      if (method_name == "size") {
+	    NetESFunc*fun = new NetESFunc("$size", &netvector_t::atom2s32, 1);
+	    fun->set_line(loc);
+	    NetESignal*arg = new NetESignal(net);
+	    arg->set_line(*net);
+	    fun->parm(0, arg);
+	    return fun;
+      }
+
+      if (method_name == "unique" || method_name == "unique_index" ||
+	  method_name == "min" || method_name == "max" ||
+	  method_name == "sum" || method_name == "product") {
+	    if (method_name == "sum" || method_name == "product") {
+		  if (!queue_method_element_is_integral_vec4(element_type)) {
+			cerr << loc.get_fileline() << ": sorry: " << kind << " "
+			     << method_name << "() for this "
+			     << "element type is not yet supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+	    } else if (!queue_method_element_is_integral_vec4(element_type)) {
+		  cerr << loc.get_fileline() << ": sorry: " << kind << " "
+		       << method_name << "() for this "
+		       << "element type is not yet supported." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    ivl_type_t result_type;
+	    char sfunc[64];
+	    if (method_name == "unique_index") {
+		  result_type = &ivl_queue_unique_index_ret;
+		  snprintf(sfunc, sizeof sfunc, "$ivl_queue_method$unique_index");
+	    } else if (method_name == "sum" || method_name == "product") {
+		  result_type = element_type;
+		  snprintf(sfunc, sizeof sfunc, "$ivl_queue_method$%s",
+			   method_name.str());
+	    } else {
+		  result_type = value_rtype;
+		  snprintf(sfunc, sizeof sfunc, "$ivl_queue_method$%s",
+			   method_name.str());
+	    }
+	    NetESFunc*fun = new NetESFunc(sfunc, result_type, 1);
+	    fun->set_line(loc);
+	    NetESignal*arg = new NetESignal(net);
+	    arg->set_line(*net);
+	    fun->parm(0, arg);
+	    return fun;
+      }
+
+      if (method_name == "find" || method_name == "find_index" ||
+	  method_name == "find_first" || method_name == "find_first_index" ||
+	  method_name == "find_last" || method_name == "find_last_index") {
+	    cerr << loc.get_fileline() << ": error: Array locator method `"
+		 << method_name << "' must be called with one "
+		 << "argument, e.g. " << method_name << "(value)."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      return 0;
 }
 
 /* One argument: value to match using == (same as find with (item == arg)). */
@@ -91,12 +186,19 @@ static NetExpr* elab_queue_locator_with_predicate(
 				  NetScope::BEGIN_END);
       ws->set_line(&loc);
 
-      unsigned ew = ivl_type_packed_width(element_type);
-      const netvector_t* item_vec = new netvector_t(ivl_type_base(element_type),
-						    (long)ew - 1, 0,
-						    ivl_type_signed(element_type));
-      NetNet* item_net = new NetNet(ws, lex_strings.make("item"), NetNet::REG,
-				    item_vec);
+      NetNet* item_net;
+      unsigned ew = 0;
+      if (ivl_type_base(element_type) == IVL_VT_STRING) {
+	    item_net = new NetNet(ws, lex_strings.make("item"), NetNet::REG,
+				  &netstring_t::type_string);
+      } else {
+	    ew = ivl_type_packed_width(element_type);
+	    const netvector_t* item_vec = new netvector_t(ivl_type_base(element_type),
+							  (long)ew - 1, 0,
+							  ivl_type_signed(element_type));
+	    item_net = new NetNet(ws, lex_strings.make("item"), NetNet::REG,
+				  item_vec);
+      }
       item_net->set_line(loc);
       item_net->local_flag(true);
 
@@ -182,7 +284,7 @@ static NetExpr* elab_array_locator_method(Design* des, NetScope* scope,
 					  const vector<named_pexpr_t>& parms,
 					  PExpr* with_expr, const char* kind)
 {
-      if (!queue_method_element_is_integral_vec4(element_type)) {
+      if (!locator_method_element_supported(element_type, method_name)) {
 	    cerr << loc.get_fileline() << ": sorry: " << kind << " "
 		 << method_name << "() for this "
 		 << "element type is not yet supported." << endl;
@@ -190,9 +292,16 @@ static NetExpr* elab_array_locator_method(Design* des, NetScope* scope,
 	    return 0;
       }
 
+      ivl_type_t use_value_type = value_queue_type;
+      if (!locator_returns_indices(method_name) &&
+	  ivl_type_base(element_type) == IVL_VT_STRING &&
+	  ivl_type_base(value_queue_type) == IVL_VT_DARRAY) {
+	    use_value_type = &ivl_queue_string_ret;
+      }
+
       ivl_type_t result_type = locator_returns_indices(method_name)
 	    ? static_cast<ivl_type_t>(&ivl_queue_unique_index_ret)
-	    : value_queue_type;
+	    : use_value_type;
 
       char sfunc[64];
       snprintf(sfunc, sizeof sfunc, "$ivl_queue_method$%s", method_name.str());
@@ -5284,6 +5393,21 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    return 0;
       }
 
+	// Dynamic array methods without parentheses (e.g. qi = s.unique).
+	// Must run before the typed assign fallthrough that treats path_tail
+	// as a field and compares the array to the context queue type.
+      if (sr.net->darray_type() && !sr.net->queue_type() &&
+	  (path_.size() > 1 || !sr.path_tail.empty())) {
+	    const name_component_t member_comp = !sr.path_tail.empty()
+		  ? sr.path_tail.front()
+		  : path_.back();
+	    NetExpr*tmp = elab_array_locator_noparens(des, *this, sr.net,
+						      member_comp.name,
+						      "dynamic array");
+	    if (tmp) return tmp;
+	    if (des->errors) return 0;
+      }
+
       ivl_type_t check_type = ntype;
       if (const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype)) {
             if (array_type->type_compatible(net->net_type()) &&
@@ -5632,100 +5756,26 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 
 	      // Dynamic array (not queue) — array location / reduction methods.
 	    if (sr.net->darray_type() && !sr.net->queue_type() &&
-		!sr.path_tail.empty()) {
+		(path_.size() > 1 || !sr.path_tail.empty())) {
                   if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
 			        "Ident " << sr.path_head
-			     << " looking for array property " << sr.path_tail
+			     << " looking for array property "
+			     << (sr.path_tail.empty() ? path_.back().name
+						      : sr.path_tail.front().name)
 			     << endl;
                   }
 
-		  ivl_assert(*this, sr.path_tail.size() == 1);
-		  const name_component_t member_comp = sr.path_tail.front();
-		  if (member_comp.name == "size") {
-			NetESFunc*fun = new NetESFunc("$size",
-						      &netvector_t::atom2s32,
-						      1);
-			fun->set_line(*this);
+		  const name_component_t member_comp = !sr.path_tail.empty()
+			? sr.path_tail.front()
+			: path_.back();
+		  NetExpr*tmp = elab_array_locator_noparens(des, *this, sr.net,
+							    member_comp.name,
+							    "dynamic array");
+		  if (tmp) return tmp;
+		  if (des->errors) return 0;
 
-			NetESignal*arg = new NetESignal(sr.net);
-			arg->set_line(*sr.net);
-
-			fun->parm(0, arg);
-			return fun;
-		  } else if (member_comp.name == "find" ||
-			     member_comp.name == "find_index" ||
-			     member_comp.name == "find_first" ||
-			     member_comp.name == "find_first_index" ||
-			     member_comp.name == "find_last" ||
-			     member_comp.name == "find_last_index") {
-			cerr << get_fileline() << ": error: Array locator method `"
-			     << member_comp.name << "' must be called with one "
-			     << "argument, e.g. " << member_comp.name << "(value)."
-			     << endl;
-			des->errors += 1;
-			return 0;
-		  } else if (member_comp.name == "min") {
-			cerr << get_fileline() << ": sorry: 'min()' "
-			        "array location method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
-		  } else if (member_comp.name == "max") {
-			cerr << get_fileline() << ": sorry: 'max()' "
-			        "array location method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
-		  } else if (member_comp.name == "unique") {
-			cerr << get_fileline() << ": sorry: 'unique()' "
-			        "array location method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
-		  } else if (member_comp.name == "unique_index") {
-			cerr << get_fileline() << ": sorry: 'unique_index()' "
-			        "array location method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
-// FIXME: Check this is a real or integral type.
-		  } else if (member_comp.name == "sum") {
-			const netdarray_t* dar_sum = sr.net->darray_type();
-			ivl_assert(*this, dar_sum);
-			ivl_type_t element_type = dar_sum->element_type();
-			if (!queue_method_element_is_integral_vec4(element_type)) {
-			      cerr << get_fileline() << ": sorry: dynamic array sum() for this "
-				   << "element type is not yet supported." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			NetESFunc*fun = new NetESFunc("$ivl_queue_method$sum",
-						      element_type, 1);
-			fun->set_line(*this);
-			NetESignal*arg = new NetESignal(sr.net);
-			arg->set_line(*sr.net);
-			fun->parm(0, arg);
-			return fun;
-		  } else if (member_comp.name == "product") {
-			const netdarray_t* dar_sum = sr.net->darray_type();
-			ivl_assert(*this, dar_sum);
-			ivl_type_t element_type = dar_sum->element_type();
-			if (!queue_method_element_is_integral_vec4(element_type)) {
-			      cerr << get_fileline() << ": sorry: dynamic array product() for this "
-				   << "element type is not yet supported." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			NetESFunc*fun = new NetESFunc("$ivl_queue_method$product",
-						      element_type, 1);
-			fun->set_line(*this);
-			NetESignal*arg = new NetESignal(sr.net);
-			arg->set_line(*sr.net);
-			fun->parm(0, arg);
-			return fun;
-// FIXME: Check this is only an integral type.
-		  } else if (member_comp.name == "and") {
+		  if (member_comp.name == "and") {
 			cerr << get_fileline() << ": sorry: 'and()' "
 			        "array reduction method is not currently "
 			        "implemented." << endl;

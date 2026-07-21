@@ -25,6 +25,13 @@ module top;
     `CHK(r[0] == 7);
     `CHK(r[1] == 7);
 
+    r = a.min;
+    `CHK(r.size == 2);
+    `CHK(r[0] == 1);
+    r = a.max;
+    `CHK(r.size == 2);
+    `CHK(r[0] == 7);
+
     r = empty.min();
     `CHK(r.size == 0);
     r = empty.max();

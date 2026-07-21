@@ -23,6 +23,21 @@ module top;
     `CHK(ix[1] == 1);
     `CHK(ix[2] == 3);
 
+    // No-parentheses forms (sv-tests style), including assign to queue then sort.
+    u = a.unique;
+    u.sort;
+    `CHK(u.size == 3);
+    `CHK(u[0] == 1);
+    `CHK(u[1] == 2);
+    `CHK(u[2] == 3);
+
+    ix = a.unique_index;
+    ix.sort;
+    `CHK(ix.size == 3);
+    `CHK(ix[0] == 0);
+    `CHK(ix[1] == 1);
+    `CHK(ix[2] == 3);
+
     if (!failed)
       $display("PASSED");
   end
