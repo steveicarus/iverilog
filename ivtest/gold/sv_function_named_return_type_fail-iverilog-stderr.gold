@@ -1,0 +1,2 @@
+ivltests/sv_function_named_return_type_fail.v:5: error: `missing_type` is not a type.
+1 error(s) during elaboration.
