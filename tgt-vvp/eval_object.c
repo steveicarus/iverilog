@@ -359,6 +359,25 @@ static unsigned queue_unique_src_elem_wid(ivl_expr_t arg)
       return 0;
 }
 
+static int queue_src_elem_is_string(ivl_expr_t arg)
+{
+      ivl_type_t src_q = 0;
+      if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
+	    ivl_signal_t cl = ivl_expr_signal(arg);
+	    unsigned pidx = ivl_expr_property_idx(arg);
+	    src_q = ivl_type_prop_type(ivl_signal_net_type(cl), pidx);
+      } else if (ivl_expr_type(arg) == IVL_EX_SIGNAL) {
+	    src_q = ivl_signal_net_type(ivl_expr_signal(arg));
+      } else {
+	    return 0;
+      }
+      if (ivl_type_base(src_q) == IVL_VT_QUEUE ||
+	  ivl_type_base(src_q) == IVL_VT_DARRAY) {
+	    return ivl_type_base(ivl_type_element(src_q)) == IVL_VT_STRING;
+      }
+      return 0;
+}
+
 /*
  * Emit a queue locator opcode. Plain signal uses `op_v`; class property
  * uses `op_prop_v`. Returning a queue object leaves it on the object stack.
@@ -431,7 +450,10 @@ enum queue_locator_with_mode_e {
       QUEUE_WITH_UNIQUE,
       QUEUE_WITH_UNIQUE_INDEX,
       QUEUE_WITH_SUM,
-      QUEUE_WITH_PRODUCT
+      QUEUE_WITH_PRODUCT,
+      QUEUE_WITH_AND,
+      QUEUE_WITH_OR,
+      QUEUE_WITH_XOR
 };
 
 static enum queue_locator_with_mode_e queue_locator_with_mode_from_name(
@@ -461,6 +483,12 @@ static enum queue_locator_with_mode_e queue_locator_with_mode_from_name(
 	    return QUEUE_WITH_SUM;
       } else if (strcmp(name, "$ivl_queue_method$product_with") == 0) {
 	    return QUEUE_WITH_PRODUCT;
+      } else if (strcmp(name, "$ivl_queue_method$and_with") == 0) {
+	    return QUEUE_WITH_AND;
+      } else if (strcmp(name, "$ivl_queue_method$or_with") == 0) {
+	    return QUEUE_WITH_OR;
+      } else if (strcmp(name, "$ivl_queue_method$xor_with") == 0) {
+	    return QUEUE_WITH_XOR;
       }
       return (enum queue_locator_with_mode_e) -1;
 }
@@ -480,12 +508,19 @@ static int queue_with_multi(enum queue_locator_with_mode_e mode)
 	     mode == QUEUE_WITH_UNIQUE ||
 	     mode == QUEUE_WITH_UNIQUE_INDEX ||
 	     mode == QUEUE_WITH_SUM ||
-	     mode == QUEUE_WITH_PRODUCT;
+	     mode == QUEUE_WITH_PRODUCT ||
+	     mode == QUEUE_WITH_AND ||
+	     mode == QUEUE_WITH_OR ||
+	     mode == QUEUE_WITH_XOR;
 }
 
 static int queue_with_expr_value(enum queue_locator_with_mode_e mode)
 {
-      return mode == QUEUE_WITH_SUM || mode == QUEUE_WITH_PRODUCT;
+      return mode == QUEUE_WITH_SUM ||
+	     mode == QUEUE_WITH_PRODUCT ||
+	     mode == QUEUE_WITH_AND ||
+	     mode == QUEUE_WITH_OR ||
+	     mode == QUEUE_WITH_XOR;
 }
 
 static int queue_with_as_index(enum queue_locator_with_mode_e mode)
@@ -499,17 +534,24 @@ static int queue_with_as_index(enum queue_locator_with_mode_e mode)
 /* On predicate match: append value/index and continue or stop. */
 static void emit_queue_with_on_match(enum queue_locator_with_mode_e mode,
 				     ivl_signal_t item_sig, int i_reg,
-				     unsigned elem_wid, unsigned match_lab)
+				     unsigned elem_wid, unsigned match_lab,
+				     int is_string)
 {
       int multi = queue_with_multi(mode);
       int as_index = queue_with_as_index(mode);
 
       if (!multi) {
-	    fprintf(vvp_out, "    %%queue/new_empty/v;\n");
+	    if (is_string && !as_index)
+		  fprintf(vvp_out, "    %%queue/new_empty/str;\n");
+	    else
+		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
       }
       if (as_index) {
 	    fprintf(vvp_out, "    %%push/ix/vec4 %d, 32, 1;\n", i_reg);
 	    fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
+      } else if (is_string) {
+	    fprintf(vvp_out, "    %%load/str v%p_0;\n", item_sig);
+	    fprintf(vvp_out, "    %%queue/append_word/str;\n");
       } else {
 	    fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
 	    fprintf(vvp_out, "    %%queue/append_word/v %u;\n", elem_wid);
@@ -554,7 +596,8 @@ static void emit_queue_with_step_index(int reverse, int i_reg, unsigned lab_top)
 }
 
 static void emit_queue_with_finish(enum queue_locator_with_mode_e mode,
-				   int is_prop, unsigned elem_wid)
+				   int is_prop, unsigned elem_wid,
+				   int is_string)
 {
       if (mode == QUEUE_WITH_UNIQUE || mode == QUEUE_WITH_UNIQUE_INDEX) {
 	    unsigned wid = (mode == QUEUE_WITH_UNIQUE_INDEX) ? 32 : elem_wid;
@@ -586,13 +629,37 @@ static void emit_queue_with_finish(enum queue_locator_with_mode_e mode,
 	    }
 	    return;
       }
+      if (mode == QUEUE_WITH_AND) {
+	    fprintf(vvp_out, "    %%queue/and/obj/v %u;\n", elem_wid);
+	    if (is_prop) {
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    }
+	    return;
+      }
+      if (mode == QUEUE_WITH_OR) {
+	    fprintf(vvp_out, "    %%queue/or/obj/v %u;\n", elem_wid);
+	    if (is_prop) {
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    }
+	    return;
+      }
+      if (mode == QUEUE_WITH_XOR) {
+	    fprintf(vvp_out, "    %%queue/xor/obj/v %u;\n", elem_wid);
+	    if (is_prop) {
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    }
+	    return;
+      }
       if (queue_with_multi(mode)) {
 	    if (is_prop) {
 		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
 	    }
 	    return;
       }
-      fprintf(vvp_out, "    %%queue/new_empty/v;\n");
+      if (is_string && !queue_with_as_index(mode))
+	    fprintf(vvp_out, "    %%queue/new_empty/str;\n");
+      else
+	    fprintf(vvp_out, "    %%queue/new_empty/v;\n");
       if (is_prop) {
 	    fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
       }
@@ -610,12 +677,27 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
       ivl_expr_t pred = ivl_expr_parm(expr, 1);
       ivl_signal_t item_sig = ivl_expr_signal(ivl_expr_parm(expr, 2));
       ivl_signal_t idx_sig = ivl_expr_signal(ivl_expr_parm(expr, 3));
-      unsigned elem_wid = queue_unique_src_elem_wid(qarg);
-      if (elem_wid == 0) return 1;
+      int is_string = queue_src_elem_is_string(qarg);
+      unsigned elem_wid = is_string ? 0 : queue_unique_src_elem_wid(qarg);
+      if (!is_string && elem_wid == 0) return 1;
 
       enum queue_locator_with_mode_e mode =
 	    queue_locator_with_mode_from_name(name);
       if ((int) mode < 0) return 1;
+
+      /* String unique/min/max/sum/product/and/or/xor with() not implemented yet. */
+      if (is_string &&
+	  (mode == QUEUE_WITH_UNIQUE || mode == QUEUE_WITH_UNIQUE_INDEX ||
+	   mode == QUEUE_WITH_MIN || mode == QUEUE_WITH_MAX ||
+	   mode == QUEUE_WITH_SUM || mode == QUEUE_WITH_PRODUCT ||
+	   mode == QUEUE_WITH_AND || mode == QUEUE_WITH_OR ||
+	   mode == QUEUE_WITH_XOR)) {
+	    return 1;
+      }
+
+      /* Class-property string locators need %load/prop/dar/str (not yet). */
+      if (is_string && (ivl_expr_type(qarg) == IVL_EX_PROPERTY))
+	    return 1;
 
       int i_reg = allocate_word();
       int n_reg = allocate_word();
@@ -630,6 +712,10 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
       /* First/last stop label: property path needs an extra pop. */
       unsigned stop_lab = is_prop ? lab_found : lab_end;
       unsigned match_lab = multi ? lab_nom : stop_lab;
+      int as_index = queue_with_as_index(mode);
+      const char* new_empty = (is_string && !as_index)
+	    ? "%queue/new_empty/str"
+	    : "%queue/new_empty/v";
 
       if (is_prop) {
 	    ivl_signal_t cl = ivl_expr_signal(qarg);
@@ -638,7 +724,7 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%prop/queue/size %u;\n", pidx);
 	    fprintf(vvp_out, "    %%ix/vec4/s %d;\n", n_reg);
 	    if (multi) {
-		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
+		  fprintf(vvp_out, "    %s;\n", new_empty);
 	    }
 	    emit_queue_with_init_index(reverse, i_reg, n_reg);
 	    fprintf(vvp_out, "T_%u.%u ; queue with loop\n", thread_count, lab_top);
@@ -652,18 +738,27 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%queue/size/v v%p_0;\n", sig);
 	    fprintf(vvp_out, "    %%ix/vec4/s %d;\n", n_reg);
 	    if (multi) {
-		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
+		  fprintf(vvp_out, "    %s;\n", new_empty);
 	    }
 	    emit_queue_with_init_index(reverse, i_reg, n_reg);
 	    fprintf(vvp_out, "T_%u.%u ; queue with loop (var)\n", thread_count,
 		    lab_top);
 	    emit_queue_with_loop_test(reverse, i_reg, n_reg, lab_loop_end);
 	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
-	    fprintf(vvp_out, "    %%queue/word/v v%p_0, %u, %d;\n", sig, elem_wid,
-		    i_reg);
+	    if (is_string) {
+		  fprintf(vvp_out, "    %%ix/mov 3, %d;\n", i_reg);
+		  fprintf(vvp_out, "    %%load/dar/str v%p_0;\n", sig);
+	    } else {
+		  fprintf(vvp_out, "    %%queue/word/v v%p_0, %u, %d;\n", sig, elem_wid,
+			  i_reg);
+	    }
       }
 
-      fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", item_sig, elem_wid);
+      if (is_string) {
+	    fprintf(vvp_out, "    %%store/str v%p_0;\n", item_sig);
+      } else {
+	    fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", item_sig, elem_wid);
+      }
       fprintf(vvp_out, "    %%push/ix/vec4 %d, 32, 1;\n", i_reg);
       fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, 32;\n", idx_sig);
 
@@ -675,7 +770,8 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    int pf = draw_eval_condition(pred);
 	    fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_nom, pf);
 	    clr_flag(pf);
-	    emit_queue_with_on_match(mode, item_sig, i_reg, elem_wid, match_lab);
+	    emit_queue_with_on_match(mode, item_sig, i_reg, elem_wid, match_lab,
+				     is_string);
       }
 
       fprintf(vvp_out, "T_%u.%u ; nomatch\n", thread_count, lab_nom);
@@ -689,12 +785,12 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 
 	    fprintf(vvp_out, "T_%u.%u ; loop end (prop)\n", thread_count,
 		    lab_loop_end);
-	    emit_queue_with_finish(mode, 1, elem_wid);
+	    emit_queue_with_finish(mode, 1, elem_wid, is_string);
 	    fprintf(vvp_out, "T_%u.%u ; with end (prop)\n", thread_count, lab_end);
       } else {
 	    fprintf(vvp_out, "T_%u.%u ; loop end (var)\n", thread_count,
 		    lab_loop_end);
-	    emit_queue_with_finish(mode, 0, elem_wid);
+	    emit_queue_with_finish(mode, 0, elem_wid, is_string);
 	    fprintf(vvp_out, "T_%u.%u ; with end (var)\n", thread_count, lab_end);
       }
 

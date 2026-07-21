@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_darray_item_index.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "SystemVerilog array iterator item.index querying",
+        "type"          : "CE"
+    }
+}
