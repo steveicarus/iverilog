@@ -256,7 +256,7 @@ static const netclass_t* resolve_call_chain_prefix_class(Design*des, NetScope*sc
 	    NetFuncDef* fundef = sr.scope->func_def();
 	    ivl_assert(*link, fundef);
 	    NetScope* dscope = fundef->scope();
-	    NetNet* res = dscope->find_signal(dscope->basename());
+	    const NetNet* res = dscope->find_signal(dscope->basename());
 	    if (res == 0) return 0;
 	    return dynamic_cast<const netclass_t*>(res->net_type());
       }
@@ -271,9 +271,9 @@ static const netclass_t* resolve_call_chain_prefix_class(Design*des, NetScope*sc
       perm_string mname = peek_tail_name(link->peek_path());
       NetScope* mscope = recv_class->method_from_name(mname);
       if (mscope == 0) return 0;
-      NetFuncDef* mdef = mscope->func_def();
+      const NetFuncDef* mdef = mscope->func_def();
       if (mdef == 0) return 0;
-      NetNet* mres = mscope->find_signal(mscope->basename());
+      const NetNet* mres = mscope->find_signal(mscope->basename());
       if (mres == 0) return 0;
       return dynamic_cast<const netclass_t*>(mres->net_type());
 }
@@ -2040,10 +2040,10 @@ unsigned PECallFunction::test_width_chain_(Design*des, NetScope*scope,
       NetScope* mscope = cls->method_from_name(mname);
       if (mscope == 0) return 0;
 
-      NetFuncDef* mdef = mscope->func_def();
+      const NetFuncDef* mdef = mscope->func_def();
       if (mdef == 0 || mdef->is_void()) return 0;
 
-      NetNet* mres = mscope->find_signal(mscope->basename());
+      const NetNet* mres = mscope->find_signal(mscope->basename());
       if (mres == 0) return 0;
 
       expr_type_   = mres->data_type();
@@ -3723,7 +3723,7 @@ NetExpr* PECallFunction::elaborate_expr_method_chained_(Design*des, NetScope*sco
 	                                               method_name, &no_parms);
 	    if (step == 0) return 0;
 
-	    NetEUFunc*uf = dynamic_cast<NetEUFunc*> (step);
+	    const NetEUFunc*uf = dynamic_cast<NetEUFunc*> (step);
 	    if (uf == 0) {
 		  cerr << get_fileline() << ": internal error: "
 		       << "expected class method call to be NetEUFunc." << endl;

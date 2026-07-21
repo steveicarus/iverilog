@@ -518,7 +518,7 @@ bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 	    typedef list<PGenerate*>::const_iterator generate_it_t;
 	    for (generate_it_t cur = generate_schemes.begin()
 		       ; cur != generate_schemes.end() ; ++ cur ) {
-		  PGenerate*item = *cur;
+		  const PGenerate*item = *cur;
 		  if (item->directly_nested || !item->scope_list_.empty()) {
 			flag &= item->elaborate_sig(des, container);
 		  }
@@ -566,7 +566,7 @@ bool PGenerate::elaborate_sig_direct_(Design*des, NetScope*container) const
 	    if (item->scheme_type == PGenerate::GS_CASE) {
 		  for (generate_it_t icur = item->generate_schemes.begin()
 			     ; icur != item->generate_schemes.end() ; ++ icur ) {
-			PGenerate*case_item = *icur;
+			const PGenerate*case_item = *icur;
 			if (case_item->directly_nested || !case_item->scope_list_.empty()) {
 			      flag &= case_item->elaborate_sig(des, container);
 			}

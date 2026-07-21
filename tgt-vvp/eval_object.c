@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -463,7 +463,7 @@ static void emit_queue_with_on_match(enum queue_locator_with_mode_e mode,
 	    fprintf(vvp_out, "    %%queue/new_empty/v;\n");
       }
       if (as_index) {
-	    fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
+	    fprintf(vvp_out, "    %%push/ix/vec4 %d, 32, 1;\n", i_reg);
 	    fprintf(vvp_out, "    %%queue/append_word/v 32;\n");
       } else {
 	    fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", item_sig);
@@ -475,12 +475,12 @@ static void emit_queue_with_on_match(enum queue_locator_with_mode_e mode,
 static void emit_queue_with_init_index(int reverse, int i_reg, int n_reg)
 {
       if (!reverse) {
-	    fprintf(vvp_out, "    %%ix/load %u, 0, 0;\n", i_reg);
+	    fprintf(vvp_out, "    %%ix/load %d, 0, 0;\n", i_reg);
 	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
       } else {
-	    fprintf(vvp_out, "    %%ix/load %u, 0, 0;\n", i_reg);
-	    fprintf(vvp_out, "    %%ix/mov %u, %u;\n", i_reg, n_reg);
-	    fprintf(vvp_out, "    %%ix/sub %u, 1, 0;\n", i_reg);
+	    fprintf(vvp_out, "    %%ix/load %d, 0, 0;\n", i_reg);
+	    fprintf(vvp_out, "    %%ix/mov %d, %d;\n", i_reg, n_reg);
+	    fprintf(vvp_out, "    %%ix/sub %d, 1, 0;\n", i_reg);
       }
 }
 
@@ -488,11 +488,11 @@ static void emit_queue_with_loop_test(int reverse, int i_reg, int n_reg,
 				      unsigned lab_loop_end)
 {
       if (!reverse) {
-	    fprintf(vvp_out, "    %%cmpix/ltu %u, %u;\n", i_reg, n_reg);
+	    fprintf(vvp_out, "    %%cmpix/ltu %d, %d;\n", i_reg, n_reg);
 	    fprintf(vvp_out, "    %%jmp/0 T_%u.%u, 4;\n", thread_count,
 		    lab_loop_end);
       } else {
-	    fprintf(vvp_out, "    %%cmpix/slt0 %u;\n", i_reg);
+	    fprintf(vvp_out, "    %%cmpix/slt0 %d;\n", i_reg);
 	    fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n", thread_count,
 		    lab_loop_end);
       }
@@ -501,9 +501,9 @@ static void emit_queue_with_loop_test(int reverse, int i_reg, int n_reg,
 static void emit_queue_with_step_index(int reverse, int i_reg, unsigned lab_top)
 {
       if (!reverse) {
-	    fprintf(vvp_out, "    %%ix/add %u, 1, 0;\n", i_reg);
+	    fprintf(vvp_out, "    %%ix/add %d, 1, 0;\n", i_reg);
       } else {
-	    fprintf(vvp_out, "    %%ix/sub %u, 1, 0;\n", i_reg);
+	    fprintf(vvp_out, "    %%ix/sub %d, 1, 0;\n", i_reg);
       }
       fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
 }
@@ -577,7 +577,7 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    unsigned pidx = ivl_expr_property_idx(qarg);
 	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", cl);
 	    fprintf(vvp_out, "    %%prop/queue/size %u;\n", pidx);
-	    fprintf(vvp_out, "    %%ix/vec4/s %u;\n", n_reg);
+	    fprintf(vvp_out, "    %%ix/vec4/s %d;\n", n_reg);
 	    if (multi) {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
 	    }
@@ -586,12 +586,12 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    emit_queue_with_loop_test(reverse, i_reg, n_reg, lab_loop_end);
 	    /* cmpix leaves flag 4 set; %queue/word* uses flag 4 for X push */
 	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
-	    fprintf(vvp_out, "    %%queue/word/prop/v %u, %u, %u;\n", pidx,
+	    fprintf(vvp_out, "    %%queue/word/prop/v %u, %u, %d;\n", pidx,
 		    elem_wid, i_reg);
       } else {
 	    ivl_signal_t sig = ivl_expr_signal(qarg);
 	    fprintf(vvp_out, "    %%queue/size/v v%p_0;\n", sig);
-	    fprintf(vvp_out, "    %%ix/vec4/s %u;\n", n_reg);
+	    fprintf(vvp_out, "    %%ix/vec4/s %d;\n", n_reg);
 	    if (multi) {
 		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
 	    }
@@ -600,12 +600,12 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 		    lab_top);
 	    emit_queue_with_loop_test(reverse, i_reg, n_reg, lab_loop_end);
 	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
-	    fprintf(vvp_out, "    %%queue/word/v v%p_0, %u, %u;\n", sig, elem_wid,
+	    fprintf(vvp_out, "    %%queue/word/v v%p_0, %u, %d;\n", sig, elem_wid,
 		    i_reg);
       }
 
       fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", item_sig, elem_wid);
-      fprintf(vvp_out, "    %%push/ix/vec4 %u, 32, 1;\n", i_reg);
+      fprintf(vvp_out, "    %%push/ix/vec4 %d, 32, 1;\n", i_reg);
       fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, 32;\n", idx_sig);
 
       int pf = draw_eval_condition(pred);

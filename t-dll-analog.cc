@@ -32,7 +32,7 @@
 
 bool dll_target::process(const NetAnalogTop*net)
 {
-      bool rc_flag = true;
+      bool rc_flag;
 
       ivl_process_t obj = static_cast<struct ivl_process_s*>
                           (calloc(1, sizeof(struct ivl_process_s)));
@@ -50,7 +50,7 @@ bool dll_target::process(const NetAnalogTop*net)
 
       assert(stmt_cur_ == 0);
       stmt_cur_ = static_cast<struct ivl_statement_s*>(calloc(1, sizeof*stmt_cur_));
-      rc_flag = net->statement()->emit_proc(this) && rc_flag;
+      rc_flag = net->statement()->emit_proc(this);
 
       assert(stmt_cur_);
       obj->stmt_ = stmt_cur_;

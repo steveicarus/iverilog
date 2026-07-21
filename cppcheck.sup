@@ -15,9 +15,9 @@ constVariablePointer:main.cc:425
 constVariablePointer:main.cc:675
 
 // const auto should be const
-constVariablePointer:elab_expr.cc:344
-constVariablePointer:elab_expr.cc:347
-constVariablePointer:elab_expr.cc:416
+constVariablePointer:elab_expr.cc:566
+constVariablePointer:elab_expr.cc:569
+constVariablePointer:elab_expr.cc:638
 
 // The reference cannot be const since it is updated in the calling function.
 constParameterReference:net_udp.cc:37
@@ -36,7 +36,7 @@ uninitMemberVar:t-dll.cc:41
 uninitMemberVar:t-dll.cc:109
 
 // By convention we put statics at the top scope.
-variableScope:pform.cc:3499
+variableScope:pform.cc:3632
 
 // These are correct and are used to find the base (zero) pin.
 thisSubtraction:netlist.h:5376
@@ -52,7 +52,7 @@ knownConditionTrueFalse:elab_sig.cc:272
 knownConditionTrueFalse:elab_sig.cc:345
 
 // Yes, it's a duplicate
-duplicateCondition:elaborate.cc:8021
+duplicateCondition:elaborate.cc:8190
 
 // To complicated to use std::find_if()
 useStlAlgorithm:map_named_args.cc:38
@@ -718,9 +718,9 @@ unusedFunction:t-dll-api.cc:980
 // has_compat_attributes()
 unusedFunction:Attrib.cc:72
 // bl_type()
-unusedFunction:Statement.h:192
+unusedFunction:Statement.h:194
 // chain_args()
-unusedFunction:Statement.h:341
+unusedFunction:Statement.h:369
 // gn_modules_nest()
 unusedFunction:compiler.h:247
 // driven_mask()
@@ -734,7 +734,7 @@ unusedFunction:net_link.cc:687
 // get_def_fileline()
 unusedFunction:net_scope.cc:201
 // get_module_port_info()
-unusedFunction:net_scope.cc:600
+unusedFunction:net_scope.cc:617
 // find_link_signal()
 unusedFunction:netlist.cc:113
 // find_link()

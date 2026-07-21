@@ -5532,7 +5532,7 @@ module_item
    */
   | attribute_list_opt K_inout list_of_port_identifiers ';'
       { NetNet::Type use_type = $3.type ? NetNet::IMPLICIT : NetNet::NONE;
-	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3.type)) {
+	if (const vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3.type)) {
 	      if (dtype->implicit_flag)
 		    use_type = NetNet::NONE;
 	}
@@ -5544,7 +5544,7 @@ module_item
 
   | attribute_list_opt K_input list_of_port_identifiers ';'
       { NetNet::Type use_type = $3.type ? NetNet::IMPLICIT : NetNet::NONE;
-	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3.type)) {
+	if (const vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3.type)) {
 	      if (dtype->implicit_flag)
 		    use_type = NetNet::NONE;
 	}
@@ -5556,7 +5556,7 @@ module_item
 
   | attribute_list_opt K_output list_of_variable_port_identifiers ';'
       { NetNet::Type use_type = $3.type ? NetNet::IMPLICIT : NetNet::NONE;
-	if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3.type)) {
+	if (const vector_type_t*dtype = dynamic_cast<vector_type_t*> ($3.type)) {
 	      if (dtype->implicit_flag)
 		    use_type = NetNet::NONE;
 	      else

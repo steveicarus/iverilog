@@ -2133,7 +2133,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 		  local_errors += 1;
 	    }
 
-	    auto*pa = dynamic_cast<PAssign*>(init_expr);
+	    const auto*pa = dynamic_cast<PAssign*>(init_expr);
 	    if (!pa) {
 		  cerr << init_expr->get_fileline() << ": error: "
 		       << "Invalid initial statement for primitive "
@@ -3107,7 +3107,7 @@ void pform_set_parameter(const struct vlltype&loc,
 	    }
       }
 
-      vector_type_t*vt = dynamic_cast<vector_type_t*>(data_type);
+      const vector_type_t*vt = dynamic_cast<vector_type_t*>(data_type);
       if (vt && vt->pdims && vt->pdims->size() > 1) {
 	    if (pform_requires_sv(loc, "packed array parameter")) {
 		  VLerror(loc, "sorry: packed array parameters are not supported yet.");

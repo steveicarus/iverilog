@@ -797,7 +797,7 @@ bool NetForever::evaluate_function(const LineInfo&loc,
       }
 
       while (flag && !disable) {
-	    flag = flag && statement_->evaluate_function(loc, context_map);
+	    flag = statement_->evaluate_function(loc, context_map);
 
 	    if (loop_break) {
 		  loop_break = false;
@@ -903,7 +903,7 @@ bool NetRepeat::evaluate_function(const LineInfo&loc,
       }
 
       while ((count > 0) && flag && !disable) {
-	    flag = flag && statement_->evaluate_function(loc, context_map);
+	    flag = statement_->evaluate_function(loc, context_map);
 	    count -= 1;
 
 	    if (loop_break) {

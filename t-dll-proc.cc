@@ -34,7 +34,7 @@
 
 bool dll_target::process(const NetProcTop*net)
 {
-      bool rc_flag = true;
+      bool rc_flag;
 
       ivl_process_t obj = static_cast<struct ivl_process_s*>
                           (calloc(1, sizeof(struct ivl_process_s)));
@@ -62,7 +62,7 @@ bool dll_target::process(const NetProcTop*net)
 
       assert(stmt_cur_ == 0);
       stmt_cur_ = static_cast<struct ivl_statement_s*>(calloc(1, sizeof*stmt_cur_));
-      rc_flag = net->statement()->emit_proc(this) && rc_flag;
+      rc_flag = net->statement()->emit_proc(this);
 
       assert(stmt_cur_);
       obj->stmt_ = stmt_cur_;
@@ -733,7 +733,7 @@ void dll_target::proc_forever(const NetForever*net)
 bool dll_target::proc_forloop(const NetForLoop*net)
 {
       ivl_statement_t tmp;
-      bool rc, res=true;
+      bool rc, res;
 
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
@@ -753,7 +753,7 @@ bool dll_target::proc_forloop(const NetForLoop*net)
 	    free(tmp);
 	    save_cur_->u_.forloop_.init_stmt = nullptr;
       }
-      res = res && rc;
+      res = rc;
 
       tmp = static_cast<struct ivl_statement_s*>(calloc(1, sizeof(struct ivl_statement_s)));
       stmt_cur_ = tmp;

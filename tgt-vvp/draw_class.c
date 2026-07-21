@@ -36,7 +36,7 @@ static void show_prop_type_vector(ivl_type_t ptype)
 	    fprintf(vvp_out, "\"%s%c1\"", signed_flag, code);
 
       } else {
-	    fprintf(vvp_out, "\"%s%c%d\"", signed_flag, code,
+	    fprintf(vvp_out, "\"%s%c%u\"", signed_flag, code,
 		    ivl_type_packed_width(ptype));
       }
 }
