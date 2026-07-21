@@ -1945,6 +1945,146 @@ static int show_system_task_call(ivl_statement_t net)
 {
       const char*stmt_name = ivl_stmt_name(net);
 
+
+#define EMIT_MBX_PUSH_ITEM(item_expr) \
+      do { \
+	    ivl_expr_t _item = (item_expr); \
+	    if (_item) { \
+		  if (ivl_expr_value(_item) == IVL_VT_CLASS) { \
+			draw_eval_object(_item); \
+		  } else { \
+			unsigned _wid = ivl_expr_width(_item); \
+			if (!_wid) _wid = 32; \
+			draw_eval_vec4(_item); \
+			fprintf(vvp_out, "    %%box/vec4 %u;\n", _wid); \
+		  } \
+	    } else { \
+		  fprintf(vvp_out, "    %%null;\n"); \
+	    } \
+      } while(0)
+
+#define EMIT_MBX_STORE_ITEM(net_arg_idx) \
+      do { \
+	    if (ivl_stmt_parm_count(net) > (net_arg_idx)) { \
+		  ivl_expr_t _item = ivl_stmt_parm(net, net_arg_idx); \
+		  if (_item && ivl_expr_type(_item) == IVL_EX_SIGNAL) { \
+			ivl_signal_t _sig = ivl_expr_signal(_item); \
+			if (_sig && ivl_signal_data_type(_sig) == IVL_VT_CLASS) { \
+			      fprintf(vvp_out, "    %%store/obj v%p_0;\n", _sig); \
+			} else if (_sig) { \
+			      unsigned _wid = ivl_signal_width(_sig); \
+			      if (!_wid) _wid = 32; \
+			      fprintf(vvp_out, "    %%unbox/vec4 %u;\n", _wid); \
+			      fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", _sig, _wid); \
+			} else { \
+			      fprintf(vvp_out, "    %%pop/obj 1, 0;\n"); \
+			} \
+		  } else { \
+			fprintf(vvp_out, "    %%pop/obj 1, 0;\n"); \
+		  } \
+	    } else { \
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n"); \
+	    } \
+      } while(0)
+
+      if (strcmp(stmt_name, "$ivl_mailbox$put") == 0) {
+	    ivl_expr_t mbx  = ivl_stmt_parm(net, 0);
+	    ivl_expr_t item = ivl_stmt_parm_count(net) >= 2 ? ivl_stmt_parm(net, 1) : 0;
+	    if (mbx) draw_eval_object(mbx);
+	    EMIT_MBX_PUSH_ITEM(item);
+	    fprintf(vvp_out, "    %%mbx/put;\n");
+	    return 0;
+      }
+
+      if (strcmp(stmt_name, "$ivl_mailbox$get") == 0) {
+	    ivl_expr_t mbx = ivl_stmt_parm(net, 0);
+	    if (mbx) draw_eval_object(mbx);
+	    fprintf(vvp_out, "    %%mbx/get;\n");
+	    EMIT_MBX_STORE_ITEM(1);
+	    return 0;
+      }
+
+      if (strcmp(stmt_name, "$ivl_mailbox$peek") == 0) {
+	    ivl_expr_t mbx = ivl_stmt_parm(net, 0);
+	    if (mbx) draw_eval_object(mbx);
+	    fprintf(vvp_out, "    %%mbx/peek;\n");
+	    EMIT_MBX_STORE_ITEM(1);
+	    return 0;
+      }
+
+      if (strcmp(stmt_name, "$ivl_mailbox$try_put") == 0) {
+	    ivl_expr_t mbx  = ivl_stmt_parm(net, 0);
+	    ivl_expr_t item = ivl_stmt_parm_count(net) >= 2 ? ivl_stmt_parm(net, 1) : 0;
+	    if (mbx) draw_eval_object(mbx);
+	    EMIT_MBX_PUSH_ITEM(item);
+	    fprintf(vvp_out, "    %%mbx/try_put;\n");
+	    fprintf(vvp_out, "    %%pop/vec4 1;\n");
+	    return 0;
+      }
+
+      if (strcmp(stmt_name, "$ivl_mailbox$try_get") == 0) {
+	    ivl_expr_t mbx = ivl_stmt_parm(net, 0);
+	    if (mbx) draw_eval_object(mbx);
+	    fprintf(vvp_out, "    %%mbx/try_get;\n");
+	    fprintf(vvp_out, "    %%pop/vec4 1;\n");
+	    EMIT_MBX_STORE_ITEM(1);
+	    return 0;
+      }
+
+      if (strcmp(stmt_name, "$ivl_mailbox$try_peek") == 0) {
+	    ivl_expr_t mbx = ivl_stmt_parm(net, 0);
+	    if (mbx) draw_eval_object(mbx);
+	    fprintf(vvp_out, "    %%mbx/try_peek;\n");
+	    fprintf(vvp_out, "    %%pop/vec4 1;\n");
+	    EMIT_MBX_STORE_ITEM(1);
+	    return 0;
+      }
+
+      if (strcmp(stmt_name, "$ivl_mailbox$num") == 0) {
+	    ivl_expr_t mbx = ivl_stmt_parm(net, 0);
+	    if (mbx) draw_eval_object(mbx);
+	    fprintf(vvp_out, "    %%mbx/num;\n");
+	    fprintf(vvp_out, "    %%pop/vec4 1;\n");
+	    return 0;
+      }
+
+      if (strcmp(stmt_name, "$ivl_semaphore$get") == 0) {
+	    ivl_expr_t sem = ivl_stmt_parm(net, 0);
+	    if (sem) draw_eval_object(sem);
+	    if (ivl_stmt_parm_count(net) >= 2 && ivl_stmt_parm(net, 1)) {
+		  draw_eval_vec4(ivl_stmt_parm(net, 1));
+	    } else {
+		  fprintf(vvp_out, "    %%pushi/vec4 1, 0, 32;\n");
+	    }
+	    fprintf(vvp_out, "    %%sem/get;\n");
+	    return 0;
+      }
+
+      if (strcmp(stmt_name, "$ivl_semaphore$put") == 0) {
+	    ivl_expr_t sem = ivl_stmt_parm(net, 0);
+	    if (sem) draw_eval_object(sem);
+	    if (ivl_stmt_parm_count(net) >= 2 && ivl_stmt_parm(net, 1)) {
+		  draw_eval_vec4(ivl_stmt_parm(net, 1));
+	    } else {
+		  fprintf(vvp_out, "    %%pushi/vec4 1, 0, 32;\n");
+	    }
+	    fprintf(vvp_out, "    %%sem/put;\n");
+	    return 0;
+      }
+
+      if (strcmp(stmt_name, "$ivl_semaphore$try_get") == 0) {
+	    ivl_expr_t sem = ivl_stmt_parm(net, 0);
+	    if (sem) draw_eval_object(sem);
+	    if (ivl_stmt_parm_count(net) >= 2 && ivl_stmt_parm(net, 1)) {
+		  draw_eval_vec4(ivl_stmt_parm(net, 1));
+	    } else {
+		  fprintf(vvp_out, "    %%pushi/vec4 1, 0, 32;\n");
+	    }
+	    fprintf(vvp_out, "    %%sem/try_get;\n");
+	    fprintf(vvp_out, "    %%pop/vec4 1;\n");
+	    return 0;
+      }
+
       if (strcmp(stmt_name,"$ivl_vif_wait") == 0) {
 	    ivl_expr_t vif = ivl_stmt_parm(net, 0);
 	    ivl_expr_t edge_ex = ivl_stmt_parm(net, 1);

@@ -29,6 +29,7 @@
 # include  "vvp_darray.h"
 # include  "vvp_aarray.h"
 # include  "vvp_vif.h"
+# include  "vvp_mailbox.h"
 # include  "class_type.h"
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
@@ -8397,5 +8398,237 @@ bool of_REAP_UFUNC(vthread_t thr, vvp_code_t cp)
             thr->rd_context = 0;
       }
 
+      return true;
+}
+
+
+/*
+ * Push an object onto a thread's object stack (used when waking mailbox/semaphore waiters).
+ */
+void vthread_push_obj_item(vthread_t thr, const vvp_object_t& obj)
+{
+      thr->push_object(obj);
+}
+
+/* ================================================================
+ * Mailbox opcodes
+ * ================================================================ */
+
+bool of_MBX_NEW(vthread_t thr, vvp_code_t cp)
+{
+      size_t bound = cp->number;
+      vvp_object_t mbx(new vvp_mailbox(bound));
+      thr->push_object(mbx);
+      return true;
+}
+
+bool of_MBX_PUT(vthread_t thr, vvp_code_t)
+{
+      vvp_object_t item_obj;
+      thr->pop_object(item_obj);
+      vvp_object_t mbx_obj;
+      thr->pop_object(mbx_obj);
+
+      vvp_mailbox*mbx = mbx_obj.peek<vvp_mailbox>();
+      if (!mbx) return true;
+
+      bool done = mbx->put(thr, item_obj);
+      if (!done) return false;
+      return true;
+}
+
+bool of_MBX_GET(vthread_t thr, vvp_code_t)
+{
+      vvp_object_t mbx_obj;
+      thr->pop_object(mbx_obj);
+
+      vvp_mailbox*mbx = mbx_obj.peek<vvp_mailbox>();
+      if (!mbx) {
+	    thr->push_object(vvp_object_t());
+	    return true;
+      }
+
+      vvp_object_t item;
+      bool done = mbx->get(thr, item);
+      if (!done) return false;
+      thr->push_object(item);
+      return true;
+}
+
+bool of_MBX_PEEK(vthread_t thr, vvp_code_t)
+{
+      vvp_object_t mbx_obj;
+      thr->pop_object(mbx_obj);
+
+      vvp_mailbox*mbx = mbx_obj.peek<vvp_mailbox>();
+      if (!mbx) {
+	    thr->push_object(vvp_object_t());
+	    return true;
+      }
+
+      vvp_object_t item;
+      bool done = mbx->peek(thr, item);
+      if (!done) return false;
+      thr->push_object(item);
+      return true;
+}
+
+bool of_MBX_TRY_PUT(vthread_t thr, vvp_code_t)
+{
+      vvp_object_t item_obj;
+      thr->pop_object(item_obj);
+      vvp_object_t mbx_obj;
+      thr->pop_object(mbx_obj);
+
+      vvp_mailbox*mbx = mbx_obj.peek<vvp_mailbox>();
+      bool ok = mbx ? mbx->try_put(item_obj) : false;
+      vvp_vector4_t res(1, ok ? BIT4_1 : BIT4_0);
+      thr->push_vec4(res);
+      return true;
+}
+
+bool of_MBX_TRY_GET(vthread_t thr, vvp_code_t)
+{
+      vvp_object_t mbx_obj;
+      thr->pop_object(mbx_obj);
+
+      vvp_mailbox*mbx = mbx_obj.peek<vvp_mailbox>();
+      vvp_object_t item;
+      bool ok = mbx ? mbx->try_get(item) : false;
+      thr->push_object(ok ? item : vvp_object_t());
+      vvp_vector4_t res(1, ok ? BIT4_1 : BIT4_0);
+      thr->push_vec4(res);
+      return true;
+}
+
+bool of_MBX_TRY_PEEK(vthread_t thr, vvp_code_t)
+{
+      vvp_object_t mbx_obj;
+      thr->pop_object(mbx_obj);
+
+      vvp_mailbox*mbx = mbx_obj.peek<vvp_mailbox>();
+      vvp_object_t item;
+      bool ok = mbx ? mbx->try_peek(item) : false;
+      thr->push_object(ok ? item : vvp_object_t());
+      vvp_vector4_t res(1, ok ? BIT4_1 : BIT4_0);
+      thr->push_vec4(res);
+      return true;
+}
+
+bool of_MBX_NUM(vthread_t thr, vvp_code_t)
+{
+      vvp_object_t mbx_obj;
+      thr->pop_object(mbx_obj);
+
+      vvp_mailbox*mbx = mbx_obj.peek<vvp_mailbox>();
+      unsigned long cnt = mbx ? (unsigned long)mbx->num() : 0UL;
+      vvp_vector4_t res(32);
+      for (unsigned idx = 0 ; idx < 32 ; ++idx)
+	    res.set_bit(idx, (cnt >> idx) & 1 ? BIT4_1 : BIT4_0);
+      thr->push_vec4(res);
+      return true;
+}
+
+/* ================================================================
+ * Semaphore opcodes
+ * ================================================================ */
+
+bool of_SEM_NEW(vthread_t thr, vvp_code_t cp)
+{
+      size_t cnt = cp->number;
+      vvp_object_t sem(new vvp_semaphore(cnt));
+      thr->push_object(sem);
+      return true;
+}
+
+bool of_SEM_GET(vthread_t thr, vvp_code_t)
+{
+      unsigned long nval = 0;
+      {
+	    const vvp_vector4_t& nv = thr->peek_vec4(0);
+	    unsigned nbits = nv.size() < 32 ? nv.size() : 32;
+	    for (unsigned i = 0 ; i < nbits ; ++i)
+		  if (nv.value(i) == BIT4_1) nval |= (1UL << i);
+      }
+      thr->pop_vec4(1);
+
+      vvp_object_t sem_obj;
+      thr->pop_object(sem_obj);
+
+      vvp_semaphore*sem = sem_obj.peek<vvp_semaphore>();
+      if (!sem) return true;
+
+      bool done = sem->get(thr, nval ? nval : 1);
+      if (!done) return false;
+      return true;
+}
+
+bool of_SEM_PUT(vthread_t thr, vvp_code_t)
+{
+      unsigned long nval = 0;
+      {
+	    const vvp_vector4_t& nv = thr->peek_vec4(0);
+	    unsigned nbits = nv.size() < 32 ? nv.size() : 32;
+	    for (unsigned i = 0 ; i < nbits ; ++i)
+		  if (nv.value(i) == BIT4_1) nval |= (1UL << i);
+      }
+      thr->pop_vec4(1);
+
+      vvp_object_t sem_obj;
+      thr->pop_object(sem_obj);
+
+      vvp_semaphore*sem = sem_obj.peek<vvp_semaphore>();
+      if (sem) sem->put(nval ? nval : 1);
+      return true;
+}
+
+bool of_SEM_TRY_GET(vthread_t thr, vvp_code_t)
+{
+      unsigned long nval = 0;
+      {
+	    const vvp_vector4_t& nv = thr->peek_vec4(0);
+	    unsigned nbits = nv.size() < 32 ? nv.size() : 32;
+	    for (unsigned i = 0 ; i < nbits ; ++i)
+		  if (nv.value(i) == BIT4_1) nval |= (1UL << i);
+      }
+      thr->pop_vec4(1);
+
+      vvp_object_t sem_obj;
+      thr->pop_object(sem_obj);
+
+      vvp_semaphore*sem = sem_obj.peek<vvp_semaphore>();
+      bool ok = sem ? sem->try_get(nval ? nval : 1) : false;
+      vvp_vector4_t res(1, ok ? BIT4_1 : BIT4_0);
+      thr->push_vec4(res);
+      return true;
+}
+
+bool of_BOX_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->number;
+      vvp_vector4_t v(wid);
+      const vvp_vector4_t& top = thr->peek_vec4(0);
+      unsigned bits = top.size() < wid ? top.size() : wid;
+      for (unsigned i = 0 ; i < bits ; ++i)
+	    v.set_bit(i, top.value(i));
+      thr->pop_vec4(1);
+      vvp_object_t box(new vvp_boxed_vec4(v));
+      thr->push_object(box);
+      return true;
+}
+
+bool of_UNBOX_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->number;
+      vvp_object_t obj;
+      thr->pop_object(obj);
+      vvp_vector4_t res(wid, BIT4_0);
+      if (vvp_boxed_vec4*box = obj.peek<vvp_boxed_vec4>()) {
+	    const vvp_vector4_t& v = box->get_value();
+	    unsigned bits = v.size() < wid ? v.size() : wid;
+	    for (unsigned i = 0 ; i < bits ; ++i)
+		  res.set_bit(i, v.value(i));
+      }
+      thr->push_vec4(res);
       return true;
 }

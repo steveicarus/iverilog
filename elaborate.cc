@@ -4582,6 +4582,66 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
       }
 
       if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(sr.type)) {
+	    perm_string cname = class_type->get_name();
+	    if (cname == perm_string::literal("mailbox")) {
+		  if (method_name == perm_string::literal("put")) {
+			static const std::vector<perm_string> parm_names = {
+			      perm_string::literal("message")
+			};
+			return elaborate_sys_task_method_(des, scope, net, method_name,
+							  "$ivl_mailbox$put", parm_names);
+		  }
+		  if (method_name == perm_string::literal("get")
+		      || method_name == perm_string::literal("peek")) {
+			static const std::vector<perm_string> parm_names = {
+			      perm_string::literal("message")
+			};
+			const char*sname = method_name == perm_string::literal("get")
+			      ? "$ivl_mailbox$get" : "$ivl_mailbox$peek";
+			return elaborate_sys_task_method_(des, scope, net, method_name,
+							  sname, parm_names);
+		  }
+		  if (method_name == perm_string::literal("try_put")
+		      || method_name == perm_string::literal("try_get")
+		      || method_name == perm_string::literal("try_peek")) {
+			static const std::vector<perm_string> parm_names = {
+			      perm_string::literal("message")
+			};
+			const char*sname =
+			      method_name == perm_string::literal("try_put")
+			      ? "$ivl_mailbox$try_put"
+			      : (method_name == perm_string::literal("try_get")
+				 ? "$ivl_mailbox$try_get"
+				 : "$ivl_mailbox$try_peek");
+			return elaborate_sys_task_method_(des, scope, net, method_name,
+							  sname, parm_names);
+		  }
+		  if (method_name == perm_string::literal("num")) {
+			static const std::vector<perm_string> no_parm_names;
+			return elaborate_sys_task_method_(des, scope, net, method_name,
+							  "$ivl_mailbox$num", no_parm_names);
+		  }
+	    }
+	    if (cname == perm_string::literal("semaphore")) {
+		  static const std::vector<perm_string> sem_no_parms;
+		  static const std::vector<perm_string> sem_one_parm = {
+			perm_string::literal("keycount")
+		  };
+		  if (method_name == perm_string::literal("get")
+		      || method_name == perm_string::literal("put")
+		      || method_name == perm_string::literal("try_get")) {
+			const char*sname =
+			      method_name == perm_string::literal("get")
+			      ? "$ivl_semaphore$get"
+			      : (method_name == perm_string::literal("put")
+				 ? "$ivl_semaphore$put"
+				 : "$ivl_semaphore$try_get");
+			return elaborate_sys_task_method_(des, scope, net, method_name,
+							  sname,
+							  parms_.empty() ? sem_no_parms
+									 : sem_one_parm);
+		  }
+	    }
 	    NetScope*task = class_type->method_from_name(method_name);
 	    if (task == 0) {
 		    // If an implicit this was added it is not an error if we

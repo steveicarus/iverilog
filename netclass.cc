@@ -165,7 +165,9 @@ bool netclass_t::test_for_missing_initializers() const
 
 NetScope*netclass_t::method_from_name(perm_string name) const
 {
-      NetScope*task = class_scope_->child( hname_t(name) );
+      NetScope*task = 0;
+      if (class_scope_)
+	    task = class_scope_->child( hname_t(name) );
       if ((task == 0) && super_)
 	    task = super_->method_from_name(name);
       return task;
@@ -174,6 +176,9 @@ NetScope*netclass_t::method_from_name(perm_string name) const
 
 NetScope* netclass_t::get_constructor() const
 {
+      if (class_scope_ == 0)
+	    return nullptr;
+
       auto task = class_scope_->child(hname_t(perm_string::literal("new")));
       if (task)
 	    return task;

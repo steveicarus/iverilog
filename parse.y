@@ -1102,7 +1102,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <porttype> port_direction port_direction_opt clocking_direction
 %type <expr> clocking_skew_opt
 %type <vartype> integer_vector_type integer_vector_type_no_reg
-%type <parmvalue> parameter_value_opt
+%type <parmvalue> parameter_value_opt type_parameter_value
 
 %type <event_exprs> event_expression_list
 %type <event_expr> event_expression
@@ -1607,6 +1607,29 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
 	}
 	pform_makewire(@4, 0, str_strength, $5, NetNet::IMPLICIT_REG, data_type,
 		       $1, $2);
+	var_lifetime = LexicalScope::INHERITED;
+      }
+  /* Built-in / parameterized class types: `mailbox #(int) mb = new();` */
+  | attribute_list_opt K_const_opt variable_lifetime_opt TYPE_IDENTIFIER type_parameter_value list_of_variable_decl_assignments ';'
+      { typeref_t*tmp = new typeref_t($4.type);
+	FILE_NAME(tmp, @4);
+	pform_make_var(@4, $6, tmp, $1, $2);
+	if ($5) {
+	      if ($5->by_order) {
+		    for (std::list<PExpr*>::iterator i = $5->by_order->begin()
+			       ; i != $5->by_order->end() ; ++i)
+			  delete *i;
+		    delete $5->by_order;
+	      }
+	      if ($5->by_name) {
+		    for (std::list<named_pexpr_t>::iterator i = $5->by_name->begin()
+			       ; i != $5->by_name->end() ; ++i)
+			  delete i->parm;
+		    delete $5->by_name;
+	      }
+	      delete $5;
+	}
+	delete[]$4.text;
 	var_lifetime = LexicalScope::INHERITED;
       }
   | attribute_list_opt K_const_opt K_var variable_lifetime_opt list_of_variable_decl_assignments_with_type ';'
@@ -2360,6 +2383,30 @@ type_identifier_variable_decl_assignments_with_type
 	delete[]$1.text;
 	$$.decl_assignments = $3;
 	$$.type = pform_make_parray_type(@2, tmp, $2);
+      }
+  /* Built-in parameterized classes: `mailbox #(int) mb = new();` */
+  | TYPE_IDENTIFIER type_parameter_value list_of_variable_decl_assignments
+      { pform_set_type_referenced(@1, $1.text);
+	auto tmp = new typeref_t($1.type);
+	FILE_NAME(tmp, @1);
+	delete[]$1.text;
+	if ($2) {
+	      if ($2->by_order) {
+		    for (std::list<PExpr*>::iterator i = $2->by_order->begin()
+			       ; i != $2->by_order->end() ; ++i)
+			  delete *i;
+		    delete $2->by_order;
+	      }
+	      if ($2->by_name) {
+		    for (std::list<named_pexpr_t>::iterator i = $2->by_name->begin()
+			       ; i != $2->by_name->end() ; ++i)
+			  delete i->parm;
+		    delete $2->by_name;
+	      }
+	      delete $2;
+	}
+	$$.decl_assignments = $3;
+	$$.type = tmp;
       }
   | package_scope TYPE_IDENTIFIER dimensions_opt list_of_variable_decl_assignments
       { lex_in_package_scope(nullptr);
@@ -5866,6 +5913,7 @@ module_item
 		  delete[]$2;
       }
 
+
         | attribute_list_opt
 	  IDENTIFIER parameter_value_opt error ';'
       { yyerror(@2, "error: Invalid module instantiation");
@@ -6399,6 +6447,22 @@ from_exclude : K_from { $$ = false; } | K_exclude { $$ = true; } ;
 
      The parameter value by name syntax is OVI enhancement BTF-B06 as
      approved by WG1364 on 6/28/1998. */
+
+/* Required `#(...)` type/parameter override list (not optional). */
+type_parameter_value
+  : '#' '(' expression_list_with_nuls ')'
+      { struct parmvalue_t*tmp = new struct parmvalue_t;
+	tmp->by_order = $3;
+	tmp->by_name = 0;
+	$$ = tmp;
+      }
+  | '#' '(' parameter_value_byname_list ')'
+      { struct parmvalue_t*tmp = new struct parmvalue_t;
+	tmp->by_order = 0;
+	tmp->by_name = $3;
+	$$ = tmp;
+      }
+  ;
 
 parameter_value_opt
   : '#' '(' expression_list_with_nuls ')'
