@@ -3922,6 +3922,54 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 
       scope->calls_sys_task(true);
 
+      /* Task form of $cast(dest, src): same runtime as the function. */
+      if (name == "$cast") {
+	    if (parm_count != 2 || !parms_[0].parm || !parms_[1].parm) {
+		  cerr << get_fileline() << ": error: $cast takes exactly "
+		       << "two arguments: $cast(dest, src)." << endl;
+		  des->errors += 1;
+		  for (unsigned idx = 0 ; idx < parm_count ; idx += 1)
+			delete eparms[idx];
+		  return 0;
+	    }
+
+	    /* Re-elaborate dest/src with class-handle checks via a
+	       temporary function-style call path is awkward here; do
+	       lightweight validation and emit $ivl_cast. */
+	    NetExpr*dest_ex = eparms[0];
+	    NetExpr*src_ex  = eparms[1];
+	    NetESignal*dest_sig = dynamic_cast<NetESignal*>(dest_ex);
+	    const netclass_t*dest_cls = 0;
+	    if (dest_sig && dest_sig->sig())
+		  dest_cls = dynamic_cast<const netclass_t*>(dest_sig->sig()->net_type());
+
+	    if (!dest_sig || !dest_cls) {
+		  cerr << get_fileline() << ": sorry: $cast currently supports "
+		       << "class-handle destinations only." << endl;
+		  des->errors += 1;
+		  for (unsigned idx = 0 ; idx < parm_count ; idx += 1)
+			delete eparms[idx];
+		  return 0;
+	    }
+	    if (src_ex && src_ex->expr_type() != IVL_VT_CLASS
+		&& ! dynamic_cast<NetENull*>(src_ex)) {
+		  cerr << get_fileline() << ": sorry: $cast currently supports "
+		       << "class-handle sources only." << endl;
+		  des->errors += 1;
+		  for (unsigned idx = 0 ; idx < parm_count ; idx += 1)
+			delete eparms[idx];
+		  return 0;
+	    }
+
+	    vector<NetExpr*> cparms(2);
+	    cparms[0] = dest_ex;
+	    cparms[1] = src_ex;
+	    NetSTask*cur = new NetSTask("$ivl_cast",
+					def_sfunc_as_task, cparms);
+	    cur->set_line(*this);
+	    return cur;
+      }
+
       NetSTask*cur = new NetSTask(name, def_sfunc_as_task, eparms);
       cur->set_line(*this);
       return cur;

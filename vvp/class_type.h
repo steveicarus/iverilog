@@ -43,6 +43,12 @@ class class_type : public __vpiHandle {
 
 	// This is the name of the class type.
       inline const std::string&class_name(void) const { return class_name_; }
+	// Superclass (may be filled later via compile_vpi_lookup).
+      inline const class_type* get_super(void) const
+      { return dynamic_cast<const class_type*>(super_); }
+      inline vpiHandle* super_handle_ptr(void) { return &super_; }
+	/* True if this type is target or derived from target. */
+      bool is_a(const class_type*target) const;
 	// Number of properties in the class definition.
       inline size_t property_count(void) const { return properties_.size(); }
 
@@ -76,6 +82,7 @@ class class_type : public __vpiHandle {
 
     private:
       std::string class_name_;
+      vpiHandle super_;
 
       struct prop_t {
 	    std::string name;

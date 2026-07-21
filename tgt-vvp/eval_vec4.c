@@ -95,6 +95,45 @@ void draw_ivl_randomize(ivl_expr_t obj, int leave_result)
 }
 
 /*
+ * Class-handle $cast: evaluate src object, then %cast/cobj into dest.
+ * Leaves a 1-bit success flag when leave_result is set.
+ */
+void draw_ivl_cast(ivl_expr_t dest, ivl_expr_t src, int leave_result)
+{
+      ivl_signal_t dest_sig = 0;
+      ivl_type_t dest_type = 0;
+
+      if (dest && ivl_expr_type(dest) == IVL_EX_SIGNAL) {
+	    dest_sig = ivl_expr_signal(dest);
+	    if (dest_sig)
+		  dest_type = ivl_signal_net_type(dest_sig);
+      }
+
+      if (src)
+	    draw_eval_object(src);
+
+      if (dest_sig == 0 || dest_type == 0
+	  || ivl_type_base(dest_type) != IVL_VT_CLASS) {
+	    if (src)
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    if (leave_result)
+		  fprintf(vvp_out, "    %%pushi/vec4 0, 0, 1;\n");
+	    return;
+      }
+
+      if (! src) {
+	    /* No source: fail without touching dest. */
+	    if (leave_result)
+		  fprintf(vvp_out, "    %%pushi/vec4 0, 0, 1;\n");
+	    return;
+      }
+
+      fprintf(vvp_out, "    %%cast/cobj C%p, v%p_0;\n", dest_type, dest_sig);
+      if (! leave_result)
+	    fprintf(vvp_out, "    %%pop/vec4 1;\n");
+}
+
+/*
  * Test if the draw_immediate_vec4 instruction can be used.
  */
 int test_immediate_vec4_ok(ivl_expr_t re)
@@ -1333,6 +1372,16 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 		  draw_ivl_randomize(obj, 1);
 	    else
 		  fprintf(vvp_out, "    %%pushi/vec4 0, 0, 1;\n");
+	    if (ivl_expr_width(expr) > 1)
+		  fprintf(vvp_out, "    %%pad/u %u;\n", ivl_expr_width(expr));
+	    return;
+      }
+
+      /* Class-handle $cast(dest, src) -> $ivl_cast */
+      if (strcmp(ivl_expr_name(expr), "$ivl_cast") == 0) {
+	    ivl_expr_t dest = (parm_count > 0) ? ivl_expr_parm(expr, 0) : 0;
+	    ivl_expr_t src  = (parm_count > 1) ? ivl_expr_parm(expr, 1) : 0;
+	    draw_ivl_cast(dest, src, 1);
 	    if (ivl_expr_width(expr) > 1)
 		  fprintf(vvp_out, "    %%pad/u %u;\n", ivl_expr_width(expr));
 	    return;

@@ -916,6 +916,11 @@ statement
     class_properties_opt ';'
       { compile_class_done(); }
 
+  | T_LABEL K_CLASS T_STRING '[' T_NUMBER ']' ',' T_SYMBOL
+      { compile_class_start($1, $3, $5); compile_class_set_super($8); }
+    class_properties_opt ';'
+      { compile_class_done(); }
+
   | enum_type
       { ; }
 

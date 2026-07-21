@@ -10,7 +10,7 @@ Each item should be a dedicated `feat/<name>` branch, with tests/examples and a 
 4. **Clocking blocks** — enough for `@(vif.cb)` — **partial** (interface-local `@(bif.cb)`; see [clocking.md](clocking.md))
 5. **`mailbox` / `semaphore` builtins** (or solid class equivalents with blocking put/get) — **partial** (int mailbox + semaphore; see [mailbox-semaphore.md](mailbox-semaphore.md))
 6. **Constraints + `randomize()` / `randomize() with`** — **partial** (unconstrained `rand`/`randc` only; see [randomize.md](randomize.md)); solver / `with` still missing
-7. **`$cast` / `$typename` hardening** for factory patterns
+7. **`$cast` / `$typename` hardening** for factory patterns — **partial** (class-handle `$cast` + static `$typename`; see [cast-typename.md](cast-typename.md))
 8. **Covergroups** — functional coverage
 9. **DPI-C** — optional but common in real flows
 

@@ -2398,6 +2398,8 @@ extern int ivl_type_packed_msb(ivl_type_t net, unsigned dim);
 extern unsigned ivl_type_packed_width(ivl_type_t net);
 extern int ivl_type_signed(ivl_type_t net);
 extern const char* ivl_type_name(ivl_type_t net);
+/* Superclass for a class type, or 0 if none / not a class. */
+extern ivl_type_t  ivl_type_super(ivl_type_t net);
 extern int         ivl_type_properties(ivl_type_t net);
 extern const char* ivl_type_prop_name(ivl_type_t net, int idx);
 extern ivl_type_t  ivl_type_prop_type(ivl_type_t net, int idx);

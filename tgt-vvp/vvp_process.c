@@ -2055,6 +2055,15 @@ static int show_system_task_call(ivl_statement_t net)
 	    return 0;
       }
 
+      if (strcmp(stmt_name, "$ivl_cast") == 0) {
+	    ivl_expr_t dest = ivl_stmt_parm_count(net) > 0
+		  ? ivl_stmt_parm(net, 0) : 0;
+	    ivl_expr_t src = ivl_stmt_parm_count(net) > 1
+		  ? ivl_stmt_parm(net, 1) : 0;
+	    draw_ivl_cast(dest, src, 0);
+	    return 0;
+      }
+
       if (strcmp(stmt_name, "$ivl_semaphore$get") == 0) {
 	    ivl_expr_t sem = ivl_stmt_parm(net, 0);
 	    if (sem) draw_eval_object(sem);

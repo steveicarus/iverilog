@@ -1750,6 +1750,37 @@ bool of_CAST2(vthread_t thr, vvp_code_t)
       return true;
 }
 
+/*
+ * %cast/cobj <class_defn>, <dest_net>
+ *
+ * Pop a class object from the object stack. If its dynamic type is an
+ * instance of (or derived from) <class_defn>, store it into <dest_net>
+ * and push 1 onto the vec4 stack; otherwise leave dest unchanged and
+ * push 0. A null source fails the cast.
+ */
+bool of_CAST_COBJ(vthread_t thr, vvp_code_t cp)
+{
+      const class_type*dest_type = dynamic_cast<const class_type*>(cp->handle);
+      assert(dest_type);
+      assert(cp->net2);
+
+      vvp_object_t obj;
+      thr->pop_object(obj);
+
+      int ok = 0;
+      if (! obj.test_nil()) {
+	    vvp_cobject*cobj = obj.peek<vvp_cobject>();
+	    if (cobj && cobj->get_defn() && cobj->get_defn()->is_a(dest_type)) {
+		  vvp_net_ptr_t ptr(cp->net2, 0);
+		  vvp_send_object(ptr, obj, thr->wt_context);
+		  ok = 1;
+	    }
+      }
+
+      thr->push_vec4(vvp_vector4_t(1, ok ? BIT4_1 : BIT4_0));
+      return true;
+}
+
 bool do_cast_vec_dar(vthread_t thr, vvp_code_t cp, bool as_vec4)
 {
       unsigned wid = cp->number;

@@ -81,8 +81,16 @@ static void show_prop_type(ivl_type_t ptype)
 void draw_class_in_scope(ivl_type_t classtype)
 {
       int idx;
-      fprintf(vvp_out, "C%p  .class \"%s\" [%d]\n",
-	      classtype, ivl_type_name(classtype), ivl_type_properties(classtype));
+      ivl_type_t super = ivl_type_super(classtype);
+
+      if (super)
+	    fprintf(vvp_out, "C%p  .class \"%s\" [%d], C%p\n",
+		    classtype, ivl_type_name(classtype),
+		    ivl_type_properties(classtype), super);
+      else
+	    fprintf(vvp_out, "C%p  .class \"%s\" [%d]\n",
+		    classtype, ivl_type_name(classtype),
+		    ivl_type_properties(classtype));
 
       for (idx = 0 ; idx < ivl_type_properties(classtype) ; idx += 1) {
 	    fprintf(vvp_out, " %3d: \"%s\", ", idx, ivl_type_prop_name(classtype,idx));

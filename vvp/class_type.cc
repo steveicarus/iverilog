@@ -397,7 +397,7 @@ void property_object::copy(char*dst, char*src)
 /* **** */
 
 class_type::class_type(const string&nam, size_t nprop)
-: class_name_(nam), properties_(nprop)
+: class_name_(nam), super_(0), properties_(nprop)
 {
       instance_size_ = 0;
 }
@@ -406,6 +406,17 @@ class_type::~class_type()
 {
       for (size_t idx = 0 ; idx < properties_.size() ; idx += 1)
 	    delete properties_[idx].type;
+}
+
+bool class_type::is_a(const class_type*target) const
+{
+      if (target == 0)
+	    return false;
+      for (const class_type*cur = this; cur; cur = cur->get_super()) {
+	    if (cur == target)
+		  return true;
+      }
+      return false;
 }
 
 void class_type::set_property(size_t idx, const string&name, const string&type, uint64_t array_size)
@@ -594,6 +605,14 @@ void compile_class_property(unsigned idx, char*nam, char*typ, uint64_t array_siz
       compile_class->set_property(idx, nam, typ, array_size);
       delete[]nam;
       delete[]typ;
+}
+
+void compile_class_set_super(char*super_lab)
+{
+      assert(compile_class);
+      if (super_lab == 0)
+	    return;
+      compile_vpi_lookup(compile_class->super_handle_ptr(), super_lab);
 }
 
 void compile_class_done(void)

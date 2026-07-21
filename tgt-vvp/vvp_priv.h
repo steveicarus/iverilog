@@ -213,6 +213,10 @@ extern void draw_eval_vec4(ivl_expr_t ex);
  * Leaves a 1-bit success flag on the vec4 stack when leave_result!=0;
  * otherwise pops the result (task form). */
 extern void draw_ivl_randomize(ivl_expr_t obj, int leave_result);
+
+/* Emit class-handle $cast as $ivl_cast(dest, src). Stores src into dest
+ * when the dynamic type is compatible; leaves 1-bit ok when leave_result. */
+extern void draw_ivl_cast(ivl_expr_t dest, ivl_expr_t src, int leave_result);
 extern void resize_vec4_wid(ivl_expr_t expr, unsigned wid);
 
 /*

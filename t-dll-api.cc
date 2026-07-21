@@ -3290,6 +3290,14 @@ extern "C" const char* ivl_type_name(ivl_type_t net)
       return 0;
 }
 
+extern "C" ivl_type_t ivl_type_super(ivl_type_t net)
+{
+      if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(net))
+	    return class_type->get_super();
+
+      return 0;
+}
+
 extern "C" int ivl_type_properties(ivl_type_t net)
 {
       const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);

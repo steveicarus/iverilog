@@ -1775,6 +1775,34 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	    return expr_width_;
       }
 
+      if (name=="$cast") {
+	    /* Function form returns bit success; args are self-determined. */
+	    for (unsigned idx = 0 ; idx < parms_.size() ; idx += 1) {
+		  if (parms_[idx].parm) {
+			width_mode_t arg_mode = SIZED;
+			parms_[idx].parm->test_width(des, scope, arg_mode);
+		  }
+	    }
+	    expr_type_   = IVL_VT_BOOL;
+	    expr_width_  = 1;
+	    min_width_   = 1;
+	    signed_flag_ = false;
+	    return expr_width_;
+      }
+
+      if (name=="$typename") {
+	    if (parms_.size() >= 1 && parms_[0].parm) {
+		  width_mode_t arg_mode = SIZED;
+		  if (! dynamic_cast<PETypename*>(parms_[0].parm))
+			parms_[0].parm->test_width(des, scope, arg_mode);
+	    }
+	    expr_type_   = IVL_VT_STRING;
+	    expr_width_  = 1;
+	    min_width_   = 1;
+	    signed_flag_ = false;
+	    return expr_width_;
+      }
+
 	/* Get the return type of the system function by looking it up
 	   in the sfunc_table. */
       const struct sfunc_return_type*sfunc_info = lookup_sys_func(name);
@@ -2409,6 +2437,126 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 	    sub->set_line(*this);
 
 	    return cast_to_width_(sub, expr_wid);
+      }
+
+	/* $cast(dest, src): class-handle dynamic cast. Rewritten to
+	   $ivl_cast so codegen can assign dest and return success. */
+      if (name=="$cast") {
+	    if (parms_.size() != 2 || !parms_[0].parm || !parms_[1].parm) {
+		  cerr << get_fileline() << ": error: $cast takes exactly "
+		       << "two arguments: $cast(dest, src)." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    NetExpr*dest_ex = elab_sys_task_arg(des, scope, name, 0, parms_[0].parm);
+	    NetExpr*src_ex  = elab_sys_task_arg(des, scope, name, 1, parms_[1].parm);
+	    if (!dest_ex || !src_ex) {
+		  delete dest_ex;
+		  delete src_ex;
+		  return 0;
+	    }
+
+	    NetESignal*dest_sig = dynamic_cast<NetESignal*>(dest_ex);
+	    const netclass_t*dest_cls = 0;
+	    if (dest_sig && dest_sig->sig())
+		  dest_cls = dynamic_cast<const netclass_t*>(dest_sig->sig()->net_type());
+
+	    if (!dest_sig || !dest_cls) {
+		  cerr << get_fileline() << ": sorry: $cast currently supports "
+		       << "class-handle destinations only." << endl;
+		  des->errors += 1;
+		  delete dest_ex;
+		  delete src_ex;
+		  return 0;
+	    }
+
+	    if (src_ex->expr_type() != IVL_VT_CLASS
+		&& ! dynamic_cast<NetENull*>(src_ex)) {
+		  cerr << get_fileline() << ": sorry: $cast currently supports "
+		       << "class-handle sources only." << endl;
+		  des->errors += 1;
+		  delete dest_ex;
+		  delete src_ex;
+		  return 0;
+	    }
+
+	    NetESFunc*sys = new NetESFunc("$ivl_cast",
+					  &netvector_t::scalar_logic, 2);
+	    sys->set_line(*this);
+	    sys->parm(0, dest_ex);
+	    sys->parm(1, src_ex);
+	    return pad_to_width(sys, expr_wid, signed_flag_, *this);
+      }
+
+	/* $typename(expr): fold to a string describing the static type.
+	   Format for classes is "class <name>" (see docs/cast-typename.md). */
+      if (name=="$typename") {
+	    if (parms_.empty() || !parms_[0].parm) {
+		  cerr << get_fileline() << ": error: $typename takes at least "
+		       << "one argument." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    if (parms_.size() > 2) {
+		  cerr << get_fileline() << ": error: $typename takes one or "
+		       << "two arguments." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    PExpr*texpr = parms_[0].parm;
+	    string tname;
+
+	    if (const PETypename*type_expr = dynamic_cast<PETypename*>(texpr)) {
+		  ivl_type_t data_type = type_expr->get_type()->elaborate_type(des, scope);
+		  if (const netclass_t*cls = dynamic_cast<const netclass_t*>(data_type)) {
+			tname = string("class ") + cls->get_name().str();
+		  } else if (data_type && data_type->base_type() == IVL_VT_STRING) {
+			tname = "string";
+		  } else if (data_type && data_type->base_type() == IVL_VT_REAL) {
+			tname = "real";
+		  } else if (data_type && data_type->base_type() == IVL_VT_BOOL) {
+			tname = "bit";
+		  } else if (data_type && data_type->base_type() == IVL_VT_LOGIC) {
+			tname = "logic";
+		  } else {
+			tname = "unknown";
+		  }
+	    } else {
+		  NetExpr*ne = elab_sys_task_arg(des, scope, name, 0, texpr);
+		  if (!ne)
+			return 0;
+
+		  if (ne->expr_type() == IVL_VT_CLASS) {
+			const netclass_t*cls = dynamic_cast<const netclass_t*>(ne->net_type());
+			if (!cls) {
+			      if (NetESignal*sig = dynamic_cast<NetESignal*>(ne)) {
+				    if (sig->sig())
+					  cls = dynamic_cast<const netclass_t*>(sig->sig()->net_type());
+			      }
+			}
+			if (cls)
+			      tname = string("class ") + cls->get_name().str();
+			else
+			      tname = "class";
+		  } else if (ne->expr_type() == IVL_VT_STRING) {
+			tname = "string";
+		  } else if (ne->expr_type() == IVL_VT_REAL) {
+			tname = "real";
+		  } else if (ne->expr_type() == IVL_VT_BOOL) {
+			tname = "bit";
+		  } else if (ne->expr_type() == IVL_VT_LOGIC) {
+			tname = "logic";
+		  } else {
+			tname = "unknown";
+		  }
+		  delete ne;
+	    }
+
+	    NetECString*str = new NetECString(tname);
+	    str->set_line(*this);
+	    return str;
       }
 
       unsigned nparms = parms_.size();

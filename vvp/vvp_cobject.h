@@ -46,6 +46,8 @@ class vvp_cobject : public vvp_object {
 
       void shallow_copy(const vvp_object*that) override;
 
+      inline const class_type* get_defn(void) const { return defn_; }
+
     private:
       const class_type* defn_;
 	// For now, only support 32bit bool signed properties.
