@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_type_identifier_assert_item_label.v",
+    "iverilog-args" : [ "-g2012", "-gsupported-assertions" ]
+}
