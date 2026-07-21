@@ -64,6 +64,31 @@ void pform_start_class_declaration(const struct vlltype&loc,
       }
 }
 
+void pform_set_class_extends(const struct vlltype&loc,
+			     data_type_t*base_type,
+			     list<named_pexpr_t> *base_args)
+{
+      ivl_assert(loc, pform_cur_class);
+      class_type_t*type = pform_cur_class->type;
+      ivl_assert(loc, type);
+
+      if (base_type == 0 && (base_args == 0 || base_args->empty())) {
+	    if (base_args)
+		  delete base_args;
+	    return;
+      }
+
+      ivl_assert(loc, type->base_type == 0);
+      type->base_type.reset(base_type);
+
+      ivl_assert(loc, type->base_args.empty());
+      if (base_args) {
+	    type->base_args.insert(type->base_args.begin(), base_args->begin(),
+			           base_args->end());
+	    delete base_args;
+      }
+}
+
 void pform_class_property(const struct vlltype&loc,
 			  property_qualifier_t property_qual,
 			  data_type_t*data_type,
