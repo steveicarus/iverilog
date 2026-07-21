@@ -147,6 +147,10 @@ extern bool check_interface_modport_access(const LineInfo *li, Design *des,
 					   const symbol_search_results &res,
 					   bool is_write);
 
+class PClocking;
+extern const PClocking* find_scope_clocking(const NetScope*scope,
+					    perm_string name);
+
 /*
  * This function transforms an expression by either zero or sign extending
  * the high bits until the expression has the desired width. This may mean

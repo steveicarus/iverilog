@@ -1099,7 +1099,8 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 
 %type <nettype>  net_type net_type_opt net_type_or_var net_type_or_var_opt
 %type <gatetype> gatetype switchtype
-%type <porttype> port_direction port_direction_opt
+%type <porttype> port_direction port_direction_opt clocking_direction
+%type <expr> clocking_skew_opt
 %type <vartype> integer_vector_type integer_vector_type_no_reg
 %type <parmvalue> parameter_value_opt
 
@@ -2519,6 +2520,37 @@ modport_ports_declaration
 modport_tf_port
   : K_task IDENTIFIER tf_port_list_parens_opt
   | K_function data_type_or_implicit_or_void IDENTIFIER tf_port_list_parens_opt
+  ;
+
+  /* Minimal clocking-block items: direction [#skew] signals ; */
+clocking_item_list_opt
+  : clocking_item_list
+  |
+  ;
+
+clocking_item_list
+  : clocking_item
+  | clocking_item_list clocking_item
+  ;
+
+clocking_direction
+  : K_input  { $$ = NetNet::PINPUT; }
+  | K_output { $$ = NetNet::POUTPUT; }
+  | K_inout  { $$ = NetNet::PINOUT; }
+  ;
+
+clocking_skew_opt
+  : '#' delay_value_simple { $$ = $2; }
+  |                        { $$ = 0; }
+  ;
+
+clocking_item
+  : clocking_direction clocking_skew_opt list_of_identifiers ';'
+      { pform_add_clocking_signals(@1, $1, $2, $3); }
+  | error ';'
+      { yyerror(@1, "error: Invalid clocking block item.");
+	yyerrok;
+      }
   ;
 
 non_integer_type /* IEEE1800-2005: A.2.2.1 */
@@ -5934,6 +5966,13 @@ module_item
       }
 
   | modport_declaration
+
+  /* SystemVerilog clocking blocks (Tier A #4 vertical slice). */
+  | attribute_list_opt K_clocking identifier_name event_control ';'
+      { pform_start_clocking(@2, $3, $4); }
+    clocking_item_list_opt
+    K_endclocking
+      { pform_end_clocking(@8); }
 
   /* 1364-2001 and later allow specparam declarations outside specify blocks. */
 

@@ -508,6 +508,8 @@ class PEventStatement  : public Statement {
       NetProc* elaborate_wait(Design*des, NetScope*scope, NetProc*st) const;
       NetProc* elaborate_wait_fork(Design*des, const NetScope*scope) const;
 
+      const std::vector<PEEvent*>& get_events() const { return expr_; }
+
     private:
       std::vector<PEEvent*>expr_;
       Statement*statement_;

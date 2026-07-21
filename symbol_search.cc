@@ -26,9 +26,30 @@
 # include  "PPackage.h"
 # include  "PWire.h"
 # include  "PModport.h"
+# include  "PClocking.h"
+# include  "Module.h"
+# include  "parse_api.h"
 # include  "ivl_assert.h"
 
 using namespace std;
+
+const PClocking* find_scope_clocking(const NetScope*scope, perm_string name)
+{
+      if (!scope || scope->type() != NetScope::MODULE)
+	    return 0;
+
+      map<perm_string,Module*>::const_iterator mod =
+	    pform_modules.find(scope->module_name());
+      if (mod == pform_modules.end())
+	    return 0;
+
+      map<perm_string,PClocking*>::const_iterator cb =
+	    mod->second->clockings.find(name);
+      if (cb == mod->second->clockings.end())
+	    return 0;
+
+      return cb->second;
+}
 
 /*
  * Search for the hierarchical name. The path may have multiple components. If
@@ -338,6 +359,27 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 				   << " -> " << scope_path(alias->actual_scope) << endl;
 			}
 
+			return true;
+		  }
+
+		  /* Clocking blocks are transparent for hierarchical
+		     descent: bif.cb.req resolves to bif.req. Terminal
+		     @(bif.cb) is handled in event elaboration. */
+		  if (scope->type() == NetScope::MODULE &&
+		      find_scope_clocking(scope, path_tail.name)) {
+			path.push_back(path_tail);
+			res->scope = const_cast<NetScope*>(scope);
+			res->net = 0;
+			res->eve = 0;
+			res->par_val = 0;
+			res->type = 0;
+			res->path_head = path;
+			if (debug_scopes || debug_elaborate) {
+			      cerr << li->get_fileline() << ": symbol_search: "
+				   << "Clocking '" << path_tail.name
+				   << "' is transparent in "
+				   << scope_path(scope) << endl;
+			}
 			return true;
 		  }
 	    } else if (scope->find_interface_port_alias_array(path_tail.name)) {

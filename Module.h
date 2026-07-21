@@ -36,6 +36,7 @@ class PEIdent;
 class PGate;
 class PGenerate;
 class PModport;
+class PClocking;
 class PSpecPath;
 class PTimingCheck;
 class PTask;
@@ -153,6 +154,9 @@ class Module : public PScopeExtra, public PNamedItem {
            The parser will ensure these don't appear in modules or
            program blocks. */
       std::map<perm_string,PModport*> modports;
+
+	/* Clocking blocks (modules and interfaces). */
+      std::map<perm_string,PClocking*> clockings;
 
 	/* List for specify paths and timing checks */
       std::list<PSpecPath*> specify_paths;
