@@ -469,6 +469,7 @@ sbyte_test		normal,-g2005-sv	ivltests
 scalar_vector		normal,-g2005-sv	ivltests
 sf_countbits		normal,-g2012		ivltests
 sf_countones		normal,-g2009		ivltests
+sf_countones_inline	normal,-g2009		ivltests
 sf_isunknown		normal,-g2005-sv	ivltests
 sf_onehot		normal,-g2005-sv	ivltests
 sf_onehot0		normal,-g2005-sv	ivltests
