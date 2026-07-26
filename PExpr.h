@@ -36,6 +36,7 @@ class NetNet;
 class NetExpr;
 class NetScope;
 class PPackage;
+class netsarray_t;
 struct symbol_search_results;
 class netclass_t;
 
@@ -504,6 +505,13 @@ class PEIdent : public PExpr {
 					  bool packed_layout,
 					  NetExpr*sel,
 					  perm_string name) const;
+      NetExpr*elaborate_expr_param_uarray_(Design*des,
+					   NetScope*scope,
+					   const NetEConst*par_ex,
+					   const NetScope*found_in,
+					   const netsarray_t*par_arr,
+					   bool need_const,
+					   perm_string name) const;
       NetExpr*elaborate_expr_net(Design*des,
 				 NetScope*scope,
 				 NetNet*net,

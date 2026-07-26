@@ -73,6 +73,7 @@ br_gh1155			vvp_tests/br_gh1155.json
 br_gh1163			vvp_tests/br_gh1163.json
 br_gh1180a			vvp_tests/br_gh1180a.json
 br_gh1180b			vvp_tests/br_gh1180b.json
+br_gh1180c			vvp_tests/br_gh1180c.json
 param_array_packed		vvp_tests/param_array_packed.json
 param_array_unpacked		vvp_tests/param_array_unpacked.json
 br_gh1181			vvp_tests/br_gh1181.json

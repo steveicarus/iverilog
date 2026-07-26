@@ -500,33 +500,61 @@ void Design::evaluate_parameters()
 }
 
 /*
+ * Recursively collect the constant leaf elements of a (possibly nested) array
+ * assignment pattern in row-major order: outermost dimension first, and within
+ * each dimension lowest-array-index first (NetEArrayPattern item[k] is the
+ * value at array index min_index+k, independent of the declared index
+ * direction). Returns false if any leaf is not a foldable constant.
+ */
+static bool collect_pattern_leaves(const NetExpr*expr,
+				   std::vector<const NetEConst*>&leaves)
+{
+      if (const NetEConst*c = dynamic_cast<const NetEConst*>(expr)) {
+	    leaves.push_back(c);
+	    return true;
+      }
+      if (const NetEArrayPattern*p = dynamic_cast<const NetEArrayPattern*>(expr)) {
+	    for (size_t idx = 0 ; idx < p->item_size() ; idx += 1) {
+		  const NetExpr*it = p->item(idx);
+		  if (!it || !collect_pattern_leaves(it, leaves))
+			return false;
+	    }
+	    return true;
+      }
+      return false;
+}
+
+/*
  * A constant unpacked-array parameter, e.g.
  *   localparam logic [3:0] MEM [0:63] = '{ ... };
- * elaborates to a NetEArrayPattern rather than a foldable NetEConst. Flatten
- * that pattern of constant elements into a single packed constant. The pattern
- * items are already stored lowest-array-index first (NetEArrayPattern item[k]
- * is the value at array index min_index+k, independent of the declared index
- * direction), so lay item[k] at bit offset k*elem_w. Element index selects
- * undo this in elaborate_expr_param_slice_().
- * Returns nullptr if any element is not a foldable constant (e.g. a nested
- * unpacked array), in which case the caller falls back to the normal error.
+ * or a multi-dimension unpacked array, e.g.
+ *   localparam logic [3:0] TBL [0:3][0:15] = '{ '{...}, ... };
+ * elaborates to a (possibly nested) NetEArrayPattern rather than a foldable
+ * NetEConst. Flatten the pattern's constant leaf elements into a single packed
+ * constant, laying leaf k at bit offset k*elem_w where the leaves are in
+ * row-major order (see collect_pattern_leaves). Element index selects undo this
+ * in elaborate_expr_param_slice_().
+ * Returns nullptr if any leaf is not a foldable constant, in which case the
+ * caller falls back to the normal error.
  */
 static NetExpr* flatten_const_array_pattern(const NetEArrayPattern*pat,
 					    const netarray_t*arr,
 					    const LineInfo&loc)
 {
       unsigned long elem_w = arr->element_type()->packed_width();
-      size_t count = pat->item_size();
-      if (elem_w == 0 || count == 0)
+      if (elem_w == 0)
+	    return nullptr;
+
+      std::vector<const NetEConst*> leaves;
+      if (!collect_pattern_leaves(pat, leaves))
+	    return nullptr;
+      size_t count = leaves.size();
+      if (count == 0)
 	    return nullptr;
 
       verinum flat (verinum::Vx, elem_w * count, true);
       for (size_t idx = 0 ; idx < count ; idx += 1) {
-	    const NetEConst*item = dynamic_cast<const NetEConst*>(pat->item(idx));
-	    if (!item)
-		  return nullptr;
-
-	    const verinum&iv = item->value();
+	    const verinum&iv = leaves[idx]->value();
 	    unsigned long base = (unsigned long)idx * elem_w;
 	    for (unsigned long bit = 0 ; bit < elem_w ; bit += 1) {
 		  verinum::V val;
