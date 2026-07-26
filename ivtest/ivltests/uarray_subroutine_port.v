@@ -46,6 +46,15 @@ module top;
       n2d = s;
    endtask
 
+   // output and inout array ports, which need the copy in the other direction
+   task automatic fill_out(output logic [7:0] o [0:3]);
+      for (int i = 0; i < 4; i++) o[i] = 8'(i + 10);
+   endtask
+
+   task automatic bump_inout(inout logic [7:0] io [0:3]);
+      for (int i = 0; i < 4; i++) io[i] = io[i] + 8'd1;
+   endtask
+
    // A function used from a procedural context, taking an array argument.
    logic [7:0] comb_out;
    always_comb comb_out = sum4(asc);
@@ -89,6 +98,20 @@ module top;
       end
       if (rsum(rr) != 9.0) begin
 	 $display("FAILED -- rsum=%f", rsum(rr));
+	 errors = errors + 1;
+      end
+
+      // output port: callee writes the caller's array
+      fill_out(cpy);
+      if (cpy[0] !== 8'd10 || cpy[3] !== 8'd13) begin
+	 $display("FAILED -- output port cpy[0]=%0d cpy[3]=%0d", cpy[0], cpy[3]);
+	 errors = errors + 1;
+      end
+
+      // inout port: copied in, modified, copied back
+      bump_inout(cpy);
+      if (cpy[3] !== 8'd14) begin
+	 $display("FAILED -- inout port cpy[3]=%0d", cpy[3]);
 	 errors = errors + 1;
       end
 
