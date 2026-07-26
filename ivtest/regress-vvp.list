@@ -530,3 +530,4 @@ wreal				vvp_tests/wreal.json
 writemem-invalid		vvp_tests/writemem-invalid.json
 uarray_subroutine_port	vvp_tests/uarray_subroutine_port.json
 uarray_ca_fail		vvp_tests/uarray_ca_fail.json
+param_array_param_ref	vvp_tests/param_array_param_ref.json
