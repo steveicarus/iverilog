@@ -396,8 +396,8 @@ PReturn::~PReturn()
       delete expr_;
 }
 
-PTrigger::PTrigger(PPackage*pkg, const pform_name_t&ev, unsigned lexical_pos)
-: event_(pkg, ev), lexical_pos_(lexical_pos)
+PTrigger::PTrigger(PPackage*pkg, const pform_name_t&ev)
+: event_(pkg, ev)
 {
 }
 
@@ -405,8 +405,8 @@ PTrigger::~PTrigger()
 {
 }
 
-PNBTrigger::PNBTrigger(const pform_name_t&ev, unsigned lexical_pos, PExpr*dly)
-: event_(ev), lexical_pos_(lexical_pos), dly_(dly)
+PNBTrigger::PNBTrigger(const pform_name_t&ev, PExpr*dly)
+: event_(ev), dly_(dly)
 {
 }
 

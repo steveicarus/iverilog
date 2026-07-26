@@ -407,18 +407,20 @@ const verireal& PEFNumber::value() const
 }
 
 PEIdent::PEIdent(const pform_name_t&that, unsigned lexical_pos)
-: path_(that), lexical_pos_(lexical_pos), no_implicit_sig_(false)
+: path_(that), no_implicit_sig_(false)
 {
+      LineInfo::lexical_pos(lexical_pos);
 }
 
 PEIdent::PEIdent(perm_string s, unsigned lexical_pos, bool no_implicit_sig)
-: lexical_pos_(lexical_pos), no_implicit_sig_(no_implicit_sig)
+: no_implicit_sig_(no_implicit_sig)
 {
+      LineInfo::lexical_pos(lexical_pos);
       path_.name.push_back(name_component_t(s));
 }
 
-PEIdent::PEIdent(PPackage*pkg, const pform_name_t&that, unsigned lexical_pos)
-: path_(pkg, that), lexical_pos_(lexical_pos), no_implicit_sig_(true)
+PEIdent::PEIdent(PPackage*pkg, const pform_name_t&that)
+: path_(pkg, that), no_implicit_sig_(true)
 {
 }
 
@@ -469,9 +471,8 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 
                   ss = ss->parent_scope();
             }
-            PWire*net = new PWire(name, lexical_pos_, type, NetNet::NOT_A_PORT);
-            net->set_file(get_file());
-            net->set_lineno(get_lineno());
+            PWire*net = new PWire(name, lexical_pos(), type, NetNet::NOT_A_PORT);
+            net->set_line(*this);
             scope->wires[name] = net;
             if (warn_implicit) {
                   cerr << get_fileline() << ": warning: implicit "
@@ -483,7 +484,7 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 bool PEIdent::has_aa_term(Design*des, NetScope*scope) const
 {
       symbol_search_results sr;
-      if (!symbol_search(this, des, scope, path_, lexical_pos_, &sr))
+      if (!symbol_search(this, des, scope, path_, lexical_pos(), &sr))
 	    return false;
 
       // Class properties are not considered automatic since a non-blocking

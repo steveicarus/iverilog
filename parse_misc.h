@@ -45,6 +45,10 @@ inline void FILE_NAME(LineInfo*tmp, const struct vlltype&where)
 {
       tmp->set_lineno(where.first_line);
       tmp->set_file(filename_strings.make(where.text));
+	// Preserve a more precise identifier position supplied by a
+	// constructor instead of replacing it with the enclosing rule.
+      if (tmp->lexical_pos() == UINT_MAX)
+	    tmp->lexical_pos(where.lexical_pos);
 }
 
   /* This for compatibility with new and older bison versions. */

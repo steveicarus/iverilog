@@ -416,8 +416,9 @@ void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 		       << "." << endl;
 	    }
 
-	    /* NetNet*sig = */ new NetNet(class_scope_, cur->first, NetNet::REG,
-					  use_type);
+	    auto sig = new NetNet(class_scope_, cur->first, NetNet::REG,
+				  use_type);
+	    sig->set_line(cur->second);
       }
 
       for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
@@ -1227,7 +1228,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope)
       if (wtype == NetNet::WIRE) sig->devirtualize_pins();
       sig->set_line(*this);
       sig->port_type(port_type_);
-      sig->lexical_pos(lexical_pos_);
 
       if (ivl_discipline_t dis = get_discipline()) {
 	    sig->set_discipline(dis);

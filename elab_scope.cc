@@ -1640,7 +1640,6 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 void PEvent::elaborate_scope(Design*, NetScope*scope) const
 {
       NetEvent*ev = new NetEvent(name_);
-      ev->lexical_pos(lexical_pos_);
       ev->set_line(*this);
       scope->add_event(ev);
 }

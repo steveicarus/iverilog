@@ -22,7 +22,6 @@
 
 # include "config.h"
 
-# include  <climits>
 # include  <cstdarg>
 # include  "parse_misc.h"
 # include  "compiler.h"
@@ -2194,7 +2193,6 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	tmp_hident.push_back(name_component_t(lex_strings.make($5)));
 
 	PEIdent*tmp_ident = pform_new_ident(@5, tmp_hident);
-	FILE_NAME(tmp_ident, @5);
 
 	check_for_loop(@1, $8, $10, $12);
 	PForStatement*tmp_for = new PForStatement(tmp_ident, $8, $10, $12, $14);
@@ -3966,7 +3964,6 @@ clocking_event_opt /* */
 event_control /* A.K.A. clocking_event */
   : '@' hierarchy_identifier
       { PEIdent*tmpi = pform_new_ident(@2, *$2);
-	FILE_NAME(tmpi, @2);
 	PEEvent*tmpe = new PEEvent(PEEvent::ANYEDGE, tmpi);
 	PEventStatement*tmps = new PEventStatement(tmpe);
 	FILE_NAME(tmps, @1);
@@ -4546,7 +4543,6 @@ expr_primary
       }
   | hierarchy_identifier
       { PEIdent*tmp = pform_new_ident(@1, *$1);
-	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete $1;
       }
@@ -4555,7 +4551,6 @@ expr_primary
       { pform_name_t * nm = $1;
 	nm->push_back(name_component_t(lex_strings.make("and")));
 	PEIdent*tmp = pform_new_ident(@1, *nm);
-	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete nm;
       }
@@ -4563,7 +4558,6 @@ expr_primary
       { pform_name_t * nm = $1;
 	nm->push_back(name_component_t(lex_strings.make("or")));
 	PEIdent*tmp = pform_new_ident(@1, *nm);
-	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete nm;
       }
@@ -4571,7 +4565,6 @@ expr_primary
       { pform_name_t * nm = $1;
 	nm->push_back(name_component_t(lex_strings.make("xor")));
 	PEIdent*tmp = pform_new_ident(@1, *nm);
-	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete nm;
       }
@@ -5315,7 +5308,6 @@ atom_type
 lpvalue
   : hierarchy_identifier
       { PEIdent*tmp = pform_new_ident(@1, *$1);
-	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete $1;
       }
@@ -7467,35 +7459,35 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
   | K_TRIGGER hierarchy_identifier ';'
-      { PTrigger*tmp = pform_new_trigger(@2, 0, *$2, @2.lexical_pos);
+      { PTrigger*tmp = pform_new_trigger(@2, nullptr, *$2);
 	delete $2;
 	$$ = tmp;
       }
   | K_TRIGGER package_scope hierarchy_identifier
       { lex_in_package_scope(0);
-	PTrigger*tmp = pform_new_trigger(@3, $2, *$3, @3.lexical_pos);
+	PTrigger*tmp = pform_new_trigger(@3, $2, *$3);
 	delete $3;
 	$$ = tmp;
       }
     /* FIXME: Does this need support for package resolution like above? */
   | K_NB_TRIGGER hierarchy_identifier ';'
-      { PNBTrigger*tmp = pform_new_nb_trigger(@2, 0, *$2, @2.lexical_pos);
+      { PNBTrigger*tmp = pform_new_nb_trigger(@2, nullptr, *$2);
 	delete $2;
 	$$ = tmp;
       }
   | K_NB_TRIGGER delay1 hierarchy_identifier ';'
-      { PNBTrigger*tmp = pform_new_nb_trigger(@3, $2, *$3, @3.lexical_pos);
+      { PNBTrigger*tmp = pform_new_nb_trigger(@3, $2, *$3);
 	delete $3;
 	$$ = tmp;
       }
   | K_NB_TRIGGER event_control hierarchy_identifier ';'
-      { PNBTrigger*tmp = pform_new_nb_trigger(@3, 0, *$3, @3.lexical_pos);
+      { PNBTrigger*tmp = pform_new_nb_trigger(@3, nullptr, *$3);
 	delete $3;
 	$$ = tmp;
         yywarn(@1, "sorry: ->> with event control is not currently supported.");
       }
   | K_NB_TRIGGER K_repeat '(' expression ')' event_control hierarchy_identifier ';'
-      { PNBTrigger*tmp = pform_new_nb_trigger(@7, 0, *$7, @7.lexical_pos);
+      { PNBTrigger*tmp = pform_new_nb_trigger(@7, nullptr, *$7);
 	delete $7;
 	$$ = tmp;
         yywarn(@1, "sorry: ->> with repeat event control is not currently supported.");
