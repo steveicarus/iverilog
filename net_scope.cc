@@ -239,28 +239,39 @@ void NetScope::add_typedefs(const map<perm_string,typedef_t*>*typedefs)
 	    typedefs_ = *typedefs;
 }
 
+/*
+ * Type names are resolved to typedef_t objects during parsing. Locate the
+ * scope that owns that exact object instead of resolving its name again
+ * during elaboration. A name lookup here could follow an import that appears
+ * after the original type reference and select a different typedef.
+ */
 NetScope*NetScope::find_typedef_scope(const Design*des, const typedef_t*type_i)
 {
       ivl_assert(*this, type_i);
 
+	// First check the enclosing lexical scopes and compilation unit.
       NetScope *cur_scope = this;
       while (cur_scope) {
 	    auto it = cur_scope->typedefs_.find(type_i->name);
 	    if (it != cur_scope->typedefs_.end() && it->second == type_i)
 		  return cur_scope;
-	    NetScope*import_scope = cur_scope->find_import(des, type_i->name);
-	    if (import_scope)
-		  cur_scope = import_scope;
-	    else if (cur_scope == unit_)
-		  return 0;
-	    else
-		  cur_scope = cur_scope->parent();
 
-	    if (cur_scope == 0)
+	    if (cur_scope == unit_)
+		  break;
+
+	    cur_scope = cur_scope->parent();
+	    if (!cur_scope)
 		  cur_scope = unit_;
       }
 
-      return 0;
+	// Imported typedefs are owned by package scopes outside that chain.
+      for (auto package : des->find_package_scopes()) {
+	    auto it = package->typedefs_.find(type_i->name);
+	    if (it != package->typedefs_.end() && it->second == type_i)
+		  return package;
+      }
+
+      return nullptr;
 }
 
 /*
