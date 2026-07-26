@@ -499,6 +499,52 @@ void Design::evaluate_parameters()
       }
 }
 
+/*
+ * A constant unpacked-array parameter, e.g.
+ *   localparam logic [3:0] MEM [0:63] = '{ ... };
+ * elaborates to a NetEArrayPattern rather than a foldable NetEConst. Flatten
+ * that pattern of constant elements into a single packed constant. The pattern
+ * items are already stored lowest-array-index first (NetEArrayPattern item[k]
+ * is the value at array index min_index+k, independent of the declared index
+ * direction), so lay item[k] at bit offset k*elem_w. Element index selects
+ * undo this in elaborate_expr_param_slice_().
+ * Returns nullptr if any element is not a foldable constant (e.g. a nested
+ * unpacked array), in which case the caller falls back to the normal error.
+ */
+static NetExpr* flatten_const_array_pattern(const NetEArrayPattern*pat,
+					    const netarray_t*arr,
+					    const LineInfo&loc)
+{
+      unsigned long elem_w = arr->element_type()->packed_width();
+      size_t count = pat->item_size();
+      if (elem_w == 0 || count == 0)
+	    return nullptr;
+
+      verinum flat (verinum::Vx, elem_w * count, true);
+      for (size_t idx = 0 ; idx < count ; idx += 1) {
+	    const NetEConst*item = dynamic_cast<const NetEConst*>(pat->item(idx));
+	    if (!item)
+		  return nullptr;
+
+	    const verinum&iv = item->value();
+	    unsigned long base = (unsigned long)idx * elem_w;
+	    for (unsigned long bit = 0 ; bit < elem_w ; bit += 1) {
+		  verinum::V val;
+		  if (bit < iv.len())
+			val = iv.get(bit);
+		  else if (iv.has_sign() && iv.len() > 0)
+			val = iv.get(iv.len() - 1);
+		  else
+			val = verinum::V0;
+		  flat.set(base + bit, val);
+	    }
+      }
+
+      NetEConst*res = new NetEConst(flat);
+      res->set_line(loc);
+      return res;
+}
+
 void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 {
 	/* Evaluate the parameter expression. */
@@ -562,6 +608,18 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       }
       if (! expr)
             return;
+
+      // A constant unpacked-array parameter elaborates to a NetEArrayPattern.
+      // Flatten it into the packed-equivalent constant so it can be stored and
+      // indexed like any other packed value.
+      if (const NetEArrayPattern*pat = dynamic_cast<const NetEArrayPattern*>(expr)) {
+	    if (const netarray_t*arr = dynamic_cast<const netarray_t*>(param_type)) {
+		  if (NetExpr*flat = flatten_const_array_pattern(pat, arr, *expr)) {
+			delete expr;
+			expr = flat;
+		  }
+	    }
+      }
 
       // Make sure to carry the signed-ness from a vector type.
       if (param_vect)

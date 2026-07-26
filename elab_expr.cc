@@ -5048,9 +5048,17 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       }
 
       // The width of a parameter is the width of the parameter value
-      // (as evaluated earlier).
-      if (sr.par_val != 0)
-	    return test_width_parameter_(sr.par_val, mode);
+      // (as evaluated earlier). The exception is an indexed unpacked-array
+      // parameter: its stored value is the whole (flattened) array, but an
+      // element select has the width of a single element, which is computed
+      // from the resolved element type below.
+      if (sr.par_val != 0) {
+	    bool unpacked_elem_sel = use_sel != index_component_t::SEL_NONE
+		  && dynamic_cast<const netsarray_t*>(sr.type)
+		  && !dynamic_cast<const netparray_t*>(sr.type);
+	    if (!unpacked_elem_sel)
+		  return test_width_parameter_(sr.par_val, mode);
+      }
 
       // If the identifier has a type take the information from the type
       if (type) {
@@ -6011,29 +6019,32 @@ static NetExpr* scale_expr_by_const(NetExpr*expr, unsigned long val)
  * constant index we fold it directly, otherwise we build an indexed part
  * select over a NetEConstParam. Only the outermost dimension is indexed here
  * (the common ROM/LUT case, `name[idx]`); the selected element keeps the
- * remaining packed dimensions as its width.
+ * remaining dimensions as its width.
+ *
+ * The flat bit layout differs between packed and unpacked array parameters:
+ *   - packed (packed_layout true): the value comes from a concatenation, so
+ *     the element at index sel_v sits at bit (sel_v - lsb)*elem_w for an
+ *     ascending-LSB range, mirroring an ordinary packed part select.
+ *   - unpacked (packed_layout false): the value was flattened lowest-array-
+ *     index first, so the element at index sel_v sits at bit
+ *     (sel_v - min_index)*elem_w regardless of the declared range direction.
  */
 NetExpr* PEIdent::elaborate_expr_param_slice_(const NetEConst*par_ex,
 					      const NetScope*found_in,
-					      const netvector_t*par_vec,
+					      long msb0, long lsb0,
+					      unsigned long elem_w,
+					      bool packed_layout,
 					      NetExpr*sel,
 					      perm_string name) const
 {
-      const netranges_t&pdims = par_vec->packed_dims();
-      long msb0 = pdims[0].get_msb();
-      long lsb0 = pdims[0].get_lsb();
-      unsigned long outer_w = (msb0 >= lsb0) ? (unsigned long)(msb0 - lsb0 + 1)
-					     : (unsigned long)(lsb0 - msb0 + 1);
-      unsigned long full_w = par_vec->packed_width();
-
-	// The element width is the flat width divided by the number of
-	// elements in the outermost dimension.
-      unsigned long elem_w = full_w / outer_w;
+      long min_idx = (msb0 <= lsb0) ? msb0 : lsb0;
+      long max_idx = (msb0 <= lsb0) ? lsb0 : msb0;
 
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: Calculate element select "
 		 << name << "[" << *sel << "] element width " << elem_w
-		 << " from packed range [" << msb0 << ":" << lsb0 << "]." << endl;
+		 << " from " << (packed_layout ? "packed" : "unpacked")
+		 << " range [" << msb0 << ":" << lsb0 << "]." << endl;
 
 	// Constant index: fold to the selected element bits directly.
       if (const NetEConst*sel_c = dynamic_cast<NetEConst*>(sel)) {
@@ -6043,8 +6054,11 @@ NetExpr* PEIdent::elaborate_expr_param_slice_(const NetEConst*par_ex,
 		  return res;
 	    }
 	    long sel_v = sel_c->value().as_long();
-	      // Canonical element index counting from the LSB end.
-	    long cidx = (msb0 >= lsb0) ? (sel_v - lsb0) : (lsb0 - sel_v);
+	      // Canonical element index counting from the LSB end of the flat
+	      // value.
+	    long cidx = packed_layout
+		  ? ((msb0 >= lsb0) ? (sel_v - lsb0) : (lsb0 - sel_v))
+		  : (sel_v - min_idx);
 	    long lsv = cidx * (long)elem_w;
 	    verinum result = param_part_select_bits(par_ex->value(), elem_w, lsv);
 	    NetEConst*res = new NetEConst(result);
@@ -6054,10 +6068,10 @@ NetExpr* PEIdent::elaborate_expr_param_slice_(const NetEConst*par_ex,
 
 	// Variable index: build an indexed part select over the flat value.
 	// Normalize the outer index to a canonical element index, then scale
-	// it up to a bit offset by the element width (mirrors the outermost
-	// dimension handling in collapse_array_exprs()).
-      NetExpr*base = normalize_variable_base(sel, msb0, lsb0, elem_w,
-					     msb0 > lsb0);
+	// it up to a bit offset by the element width.
+      NetExpr*base = packed_layout
+	    ? normalize_variable_base(sel, msb0, lsb0, elem_w, msb0 > lsb0)
+	    : normalize_variable_base(sel, max_idx, min_idx, elem_w, true);
       base = scale_expr_by_const(base, elem_w);
 
       NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
@@ -6088,18 +6102,35 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 
       perm_string name = peek_tail_name(path_);
 
-	// A multi-dimension packed array parameter, e.g.
-	//   localparam logic [0:63][3:0] MEM = '{ ... };
-	// An index select MEM[idx] selects a whole element (a slice of the
-	// flat packed value that is the width of a single element), not a
-	// single bit. Handle that here before falling back to the single
-	// bit-select machinery used for ordinary packed vectors.
+	// An index select of an array parameter selects a whole element, not
+	// a single bit. This applies both to a multi-dimension packed array,
+	// e.g. localparam logic [0:63][3:0] MEM = '{...}, and to an unpacked
+	// array, e.g. localparam logic [3:0] MEM [0:63] = '{...} (whose value
+	// has been flattened to the packed-equivalent constant). The selected
+	// element keeps the remaining dimensions as its width.
       if (const netvector_t*par_vec = dynamic_cast<const netvector_t*>(par_type)) {
 	    if (par_vec->packed_dims().size() > 1) {
-		  NetExpr*res = elaborate_expr_param_slice_(par_ex, found_in,
-							    par_vec, sel, name);
-		  if (res) return res;
-		  return 0;
+		  const netranges_t&pdims = par_vec->packed_dims();
+		  long msb0 = pdims[0].get_msb();
+		  long lsb0 = pdims[0].get_lsb();
+		  unsigned long outer_w =
+			(msb0 >= lsb0) ? (unsigned long)(msb0 - lsb0 + 1)
+				       : (unsigned long)(lsb0 - msb0 + 1);
+		  unsigned long elem_w = par_vec->packed_width() / outer_w;
+		  return elaborate_expr_param_slice_(par_ex, found_in,
+						     msb0, lsb0, elem_w,
+						     true, sel, name);
+	    }
+      }
+      if (const netsarray_t*par_arr = dynamic_cast<const netsarray_t*>(par_type)) {
+	    if (!dynamic_cast<const netparray_t*>(par_arr)) {
+		  const netranges_t&udims = par_arr->static_dimensions();
+		  long msb0 = udims[0].get_msb();
+		  long lsb0 = udims[0].get_lsb();
+		  unsigned long elem_w = par_arr->element_type()->packed_width();
+		  return elaborate_expr_param_slice_(par_ex, found_in,
+						     msb0, lsb0, elem_w,
+						     false, sel, name);
 	    }
       }
 

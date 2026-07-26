@@ -499,7 +499,9 @@ class PEIdent : public PExpr {
 					      bool up, bool need_const) const;
       NetExpr*elaborate_expr_param_slice_(const NetEConst*par_ex,
 					  const NetScope*found_in,
-					  const netvector_t*par_vec,
+					  long msb0, long lsb0,
+					  unsigned long elem_w,
+					  bool packed_layout,
 					  NetExpr*sel,
 					  perm_string name) const;
       NetExpr*elaborate_expr_net(Design*des,
