@@ -3551,8 +3551,17 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
 	    PExpr *tmp = args[idx];
 
 	    if (tmp) {
-		  parms[pidx] = elaborate_rval_expr(des, scope,
-						    def->port(pidx)->net_type(),
+		    // For a formal with unpacked dimensions the context type is
+		    // the array type; net_type() would give the element type
+		    // and the actual would then be rejected as needing an
+		    // index.
+		  const NetNet*formal = def->port(pidx);
+		  ivl_type_t ctype = formal->net_type();
+		  if (formal->unpacked_dimensions() > 0) {
+			if (const netarray_t*at = formal->array_type())
+			      ctype = at;
+		  }
+		  parms[pidx] = elaborate_rval_expr(des, scope, ctype,
 						    tmp, need_const);
 		  if (parms[pidx] == 0) {
 			parm_errors += 1;

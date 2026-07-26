@@ -597,6 +597,67 @@ static void draw_stmt_assign_vector_opcode(unsigned char opcode, bool is_signed)
       }
 }
 
+/*
+ * Copy a whole unpacked array into another, element by element.
+ *
+ * The run-time has no bulk array-copy opcode, but it does have indexed word
+ * access, so emit the same %ix/load + %store/vec4a idiom draw_array_pattern
+ * uses, reading each word with %load/vec4a instead of evaluating a pattern
+ * element. Both arrays are known to have the same shape and element type:
+ * the elaborator checks that (IEEE 1800-2023 7.6) before we get here.
+ *
+ * Emitted straight-line rather than as a loop. That keeps this independent of
+ * the label allocator, and matches draw_array_pattern, which unrolls too.
+ */
+int draw_array_copy(ivl_signal_t dst, ivl_expr_t rval)
+{
+      ivl_signal_t src = ivl_expr_signal(rval);
+      unsigned count = ivl_signal_array_count(dst);
+
+      if (src == 0) {
+	    fprintf(stderr, "%s:%u: sorry: only a whole array variable can be "
+		    "copied to an unpacked array.\n",
+		    ivl_expr_file(rval), ivl_expr_lineno(rval));
+	    return 1;
+      }
+      if (ivl_signal_array_count(src) != count) {
+	    fprintf(stderr, "%s:%u: error: unpacked array copy needs matching "
+		    "sizes (%u versus %u).\n",
+		    ivl_expr_file(rval), ivl_expr_lineno(rval),
+		    ivl_signal_array_count(src), count);
+	    return 1;
+      }
+
+      switch (ivl_signal_data_type(dst)) {
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    for (unsigned idx = 0 ; idx < count ; idx += 1) {
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+		  fprintf(vvp_out, "    %%load/vec4a v%p, 3;\n", src);
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+		  fprintf(vvp_out, "    %%store/vec4a v%p, 3, 0;\n", dst);
+	    }
+	    return 0;
+	  case IVL_VT_REAL:
+	    for (unsigned idx = 0 ; idx < count ; idx += 1) {
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+		  fprintf(vvp_out, "    %%load/ar v%p, 3;\n", src);
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+		  fprintf(vvp_out, "    %%store/reala v%p, 3;\n", dst);
+	    }
+	    return 0;
+	  default:
+	    fprintf(stderr, "%s:%u: sorry: copying an unpacked array of this "
+		    "element type is not supported.\n",
+		    ivl_expr_file(rval), ivl_expr_lineno(rval));
+	    return 1;
+      }
+}
+
 static int show_stmt_assign_vector(ivl_statement_t net)
 {
       ivl_expr_t rval = ivl_stmt_rval(net);
@@ -609,15 +670,11 @@ static int show_stmt_assign_vector(ivl_statement_t net)
       }
 
 	/* A whole unpacked array as the r-value (IVL_EX_ARRAY with no index)
-	   means an array-to-array copy. The run-time has no vector opcode for
-	   this, so report it cleanly instead of trying (and failing) to draw it
-	   as a vector. Such a function is elaboration-time only (see
-	   skip_unpacked_array_func); a genuine run-time array copy lands here. */
+	   is an array-to-array copy. There is no bulk opcode for it, so copy
+	   word by word. */
       if (ivl_expr_type(rval) == IVL_EX_ARRAY) {
-	    fprintf(stderr, "%s:%u: sorry: run-time assignment of a whole "
-		    "unpacked array is not supported.\n",
-		    ivl_expr_file(rval), ivl_expr_lineno(rval));
-	    return 1;
+	    ivl_lval_t lval = ivl_stmt_lval(net, 0);
+	    return draw_array_copy(ivl_lval_sig(lval), rval);
       }
 
       unsigned wid = ivl_stmt_lwidth(net);
@@ -865,6 +922,11 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
 	    ivl_signal_t sig = ivl_lval_sig(lval);
 	    draw_array_pattern(sig, rval, 0);
 	    return 0;
+      }
+
+	/* A whole real array as the r-value is an array-to-array copy. */
+      if (ivl_expr_type(rval) == IVL_EX_ARRAY) {
+	    return draw_array_copy(ivl_lval_sig(lval), rval);
       }
 
 	/* If this is a compressed assignment, then get the contents
