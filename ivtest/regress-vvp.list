@@ -76,6 +76,9 @@ br_gh1180b			vvp_tests/br_gh1180b.json
 br_gh1180c			vvp_tests/br_gh1180c.json
 param_array_packed		vvp_tests/param_array_packed.json
 param_array_unpacked		vvp_tests/param_array_unpacked.json
+func_return_uarray		vvp_tests/func_return_uarray.json
+func_return_uarray_2d		vvp_tests/func_return_uarray_2d.json
+func_return_uarray_rt_fail	vvp_tests/func_return_uarray_rt_fail.json
 br_gh1181			vvp_tests/br_gh1181.json
 br_gh1184			vvp_tests/br_gh1184.json
 br_gh1242			vvp_tests/br_gh1242.json

@@ -3484,6 +3484,20 @@ NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*ds
 	   return value is the name within that scope. */
 
       if (NetNet*res = dscope->find_signal(dscope->basename())) {
+	      // A function that returns an unpacked array can be evaluated in a
+	      // constant context (its result is folded into a constant), but the
+	      // run-time code generator has no representation for returning a
+	      // whole unpacked array. Reject a run-time call with a clean
+	      // diagnostic rather than emitting something that cannot be drawn.
+	    bool res_is_uarray = res->unpacked_dimensions() > 0
+		  || dynamic_cast<const netuarray_t*>(res->net_type());
+	    if (res_is_uarray && !need_const) {
+		  cerr << get_fileline() << ": sorry: a function that returns an "
+		          "unpacked array can only be called in a constant context "
+		          "(such as a parameter or localparam initializer)." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
 	    NetESignal*eres = new NetESignal(res);
 	    NetEUFunc*func = new NetEUFunc(scope, dscope, eres, parms, need_const);
 	    func->set_line(*this);
@@ -5292,9 +5306,23 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      const name_component_t&use_comp = path_.back();
+
+	// When the whole net is referenced (no unpacked index), the type to
+	// compare against the context is the net's type as seen by the caller.
+	// For an unpacked array that is the array type, not the element
+	// (net_type()) type. This lets a whole unpacked array be used where an
+	// unpacked-array type is expected, e.g. `return r;` in a function that
+	// returns an unpacked-array typedef.
+      ivl_type_t net_ctype = net->net_type();
+      if (net->unpacked_dimensions() > 0 && use_comp.index.empty()) {
+	    if (const netarray_t*at = net->array_type())
+		  net_ctype = at;
+      }
+
       ivl_type_t check_type = ntype;
       if (const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype)) {
-            if (array_type->type_compatible(net->net_type()) &&
+            if (array_type->type_compatible(net_ctype) &&
 		sr.path_tail.empty()) {
                   NetESignal*tmp = new NetESignal(net);
                   tmp->set_line(*this);
@@ -5306,13 +5334,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    check_type = array_type->element_type();
       }
 
-      if (! check_type->type_compatible(net->net_type())) {
+      if (! check_type->type_compatible(net_ctype)) {
 	    cerr << get_fileline() << ": error: the type of the variable '"
 		 << path_ << "' doesn't match the context type." << endl;
 
 	    cerr << get_fileline() << ":      : " << "variable type=";
-	    if (net->net_type())
-		  net->net_type()->debug_dump(cerr);
+	    if (net_ctype)
+		  net_ctype->debug_dump(cerr);
 	    else
 		  cerr << "<nil>";
 	    cerr << endl;
@@ -5324,9 +5352,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return 0;
       }
-      ivl_assert(*this, ntype->type_compatible(net->net_type()));
-
-      const name_component_t&use_comp = path_.back();
+      ivl_assert(*this, ntype->type_compatible(net_ctype));
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PEIdent::elaborate_expr: "
@@ -5334,6 +5360,15 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		 << " with " << use_comp.index.size() << " indices"
 		 << " and " << net->unpacked_dimensions() << " expected."
 		 << endl;
+      }
+
+	// A reference to the whole net (no index) elaborates to the signal
+	// itself. This covers scalars, packed vectors and whole unpacked
+	// arrays (e.g. returning an unpacked array by value).
+      if (use_comp.index.empty()) {
+	    NetESignal*tmp = new NetESignal(net);
+	    tmp->set_line(*this);
+	    return tmp;
       }
 
 // FIXME: The real array to queue is failing here.
@@ -5345,12 +5380,6 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		 << endl;
 	    des->errors += 1;
 
-	    NetESignal*tmp = new NetESignal(net);
-	    tmp->set_line(*this);
-	    return tmp;
-      }
-
-      if (net->unpacked_dimensions() == 0) {
 	    NetESignal*tmp = new NetESignal(net);
 	    tmp->set_line(*this);
 	    return tmp;

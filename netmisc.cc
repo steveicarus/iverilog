@@ -969,8 +969,17 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 	// checking should be used for all expressions, but at the moment not
 	// all expressions do have a ivl_type_t attached to it.
       if (dynamic_cast<const netuarray_t*>(lv_net_type)) {
-	    if (tmp->net_type())
-		  compatible = lv_net_type->type_compatible(tmp->net_type());
+	      // A whole unpacked-array reference (e.g. `return arr;` or an
+	      // array-to-array copy) elaborates to a NetESignal whose net_type()
+	      // is the element type. Compare against the signal's array type so
+	      // the unpacked array is accepted where an unpacked array is wanted.
+	    ivl_type_t rtype = tmp->net_type();
+	    if (const NetESignal*esig = dynamic_cast<const NetESignal*>(tmp)) {
+		  if (esig->word_index() == 0 && esig->sig()->array_type())
+			rtype = esig->sig()->array_type();
+	    }
+	    if (rtype)
+		  compatible = lv_net_type->type_compatible(rtype);
 	    else
 		  compatible = false;
       } else if ((cast_type == IVL_VT_QUEUE || cast_type == IVL_VT_DARRAY) &&

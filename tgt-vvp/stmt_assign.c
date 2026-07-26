@@ -608,6 +608,18 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    return 0;
       }
 
+	/* A whole unpacked array as the r-value (IVL_EX_ARRAY with no index)
+	   means an array-to-array copy. The run-time has no vector opcode for
+	   this, so report it cleanly instead of trying (and failing) to draw it
+	   as a vector. Such a function is elaboration-time only (see
+	   skip_unpacked_array_func); a genuine run-time array copy lands here. */
+      if (ivl_expr_type(rval) == IVL_EX_ARRAY) {
+	    fprintf(stderr, "%s:%u: sorry: run-time assignment of a whole "
+		    "unpacked array is not supported.\n",
+		    ivl_expr_file(rval), ivl_expr_lineno(rval));
+	    return 1;
+      }
+
       unsigned wid = ivl_stmt_lwidth(net);
 
 	/* If this is a compressed assignment, then get the contents

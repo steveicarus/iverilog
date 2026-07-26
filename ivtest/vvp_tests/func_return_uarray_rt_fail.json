@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "func_return_uarray_rt_fail.v",
+    "iverilog-args" : [ "-g2012" ]
+}
