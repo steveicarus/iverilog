@@ -43,6 +43,16 @@ class PCallTask;
 class Design;
 class NetScope;
 
+struct package_import_t : public LineInfo {
+      package_import_t() = default;
+      explicit package_import_t(PPackage *pkg) : package(pkg) { }
+
+      PPackage *package = nullptr;
+	// LineInfo records where the imported name became locally visible.
+};
+
+using package_import_map_t = std::map<perm_string, package_import_t>;
+
 /*
  * The PScope class is a base representation of an object that
  * represents lexical scope. For example, a module, a function/task, a
@@ -71,7 +81,7 @@ class LexicalScope {
 	// Symbols that are explicitly imported. This contains the package where
 	// the symbol has been decelared. When using exports, this might not be
 	// the same as the package where it has been imported from.
-      std::map<perm_string,PPackage*>explicit_imports;
+      package_import_map_t explicit_imports;
         // Symbols that are explicitly imported. This contains the set of
 	// packages from which the symbol has been imported. When using exports
 	// the same identifier can be imported via multiple packages.
@@ -86,7 +96,7 @@ class LexicalScope {
 	// later in the scope. So here we stash the potential imports for
 	// task and function calls. They will be added to the explicit
 	// imports if we don't find a local definition.
-      std::map<perm_string,PPackage*>possible_imports;
+      package_import_map_t possible_imports;
 
       struct range_t {
 	      // True if this is an exclude

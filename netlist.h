@@ -26,6 +26,7 @@
  * can be passed around in this form to the various stages and design
  * processors.
  */
+# include  <climits>
 # include  <string>
 # include  <map>
 # include  <list>
@@ -997,8 +998,9 @@ class NetScope : public Definitions, public Attrib {
 	   if a unique name couldn't be generated. */
       bool auto_name(const char* prefix, char pad, const char* suffix);
 
-      void add_imports(const std::map<perm_string,PPackage*>*imports);
-      NetScope*find_import(const Design*des, perm_string name);
+      void add_imports(const package_import_map_t *imports);
+      NetScope *find_import(const Design *des, perm_string name,
+			    unsigned int lexical_pos = UINT_MAX);
 
       void add_typedefs(const std::map<perm_string,typedef_t*>*typedefs);
 
@@ -1377,7 +1379,7 @@ class NetScope : public Definitions, public Attrib {
       signed char time_unit_, time_prec_;
       bool time_from_timescale_;
 
-      const std::map<perm_string,PPackage*>*imports_;
+      const package_import_map_t *imports_ = nullptr;
 
       std::map<perm_string,typedef_t*>typedefs_;
 
