@@ -5975,6 +5975,99 @@ static verinum param_part_select_bits(const verinum&par_val, long wid,
       return result;
 }
 
+/*
+ * Multiply a base expression by an unsigned constant, widening losslessly so
+ * the product cannot overflow. This mirrors the (file-static) make_mult_expr()
+ * in netmisc.cc, which is not exported.
+ */
+static NetExpr* scale_expr_by_const(NetExpr*expr, unsigned long val)
+{
+      unsigned val_wid = 0;
+      for (unsigned long tmp = val ; tmp > 1 ; tmp >>= 1)
+	    val_wid += 1;
+      unsigned use_wid = expr->expr_width() + val_wid + 1;
+
+      verinum val_v (val, use_wid);
+      val_v.has_sign(expr->has_sign());
+      NetEConst*val_c = new NetEConst(val_v);
+      val_c->set_line(*expr);
+
+      expr = pad_to_width(expr, use_wid, *expr);
+
+      NetEBMult*res = new NetEBMult('*', expr, val_c, use_wid, expr->has_sign());
+      res->set_line(*expr);
+      return res;
+}
+
+/*
+ * Handle an index select of a multi-dimension packed array parameter, e.g.
+ *
+ *    localparam logic [0:63][3:0] MEM = '{ ... };
+ *    assign o = MEM[idx];
+ *
+ * Unlike an ordinary packed vector, MEM[idx] selects a whole element (here a
+ * 4-bit slice), not a single bit. The parameter value is a flat packed
+ * constant, so this becomes a fixed-width part select of the flat value: for a
+ * constant index we fold it directly, otherwise we build an indexed part
+ * select over a NetEConstParam. Only the outermost dimension is indexed here
+ * (the common ROM/LUT case, `name[idx]`); the selected element keeps the
+ * remaining packed dimensions as its width.
+ */
+NetExpr* PEIdent::elaborate_expr_param_slice_(const NetEConst*par_ex,
+					      const NetScope*found_in,
+					      const netvector_t*par_vec,
+					      NetExpr*sel,
+					      perm_string name) const
+{
+      const netranges_t&pdims = par_vec->packed_dims();
+      long msb0 = pdims[0].get_msb();
+      long lsb0 = pdims[0].get_lsb();
+      unsigned long outer_w = (msb0 >= lsb0) ? (unsigned long)(msb0 - lsb0 + 1)
+					     : (unsigned long)(lsb0 - msb0 + 1);
+      unsigned long full_w = par_vec->packed_width();
+
+	// The element width is the flat width divided by the number of
+	// elements in the outermost dimension.
+      unsigned long elem_w = full_w / outer_w;
+
+      if (debug_elaborate)
+	    cerr << get_fileline() << ": debug: Calculate element select "
+		 << name << "[" << *sel << "] element width " << elem_w
+		 << " from packed range [" << msb0 << ":" << lsb0 << "]." << endl;
+
+	// Constant index: fold to the selected element bits directly.
+      if (const NetEConst*sel_c = dynamic_cast<NetEConst*>(sel)) {
+	    if (! sel_c->value().is_defined()) {
+		  NetEConst*res = new NetEConst(verinum(verinum::Vx, elem_w, true));
+		  res->set_line(*this);
+		  return res;
+	    }
+	    long sel_v = sel_c->value().as_long();
+	      // Canonical element index counting from the LSB end.
+	    long cidx = (msb0 >= lsb0) ? (sel_v - lsb0) : (lsb0 - sel_v);
+	    long lsv = cidx * (long)elem_w;
+	    verinum result = param_part_select_bits(par_ex->value(), elem_w, lsv);
+	    NetEConst*res = new NetEConst(result);
+	    res->set_line(*this);
+	    return res;
+      }
+
+	// Variable index: build an indexed part select over the flat value.
+	// Normalize the outer index to a canonical element index, then scale
+	// it up to a bit offset by the element width (mirrors the outermost
+	// dimension handling in collapse_array_exprs()).
+      NetExpr*base = normalize_variable_base(sel, msb0, lsb0, elem_w,
+					     msb0 > lsb0);
+      base = scale_expr_by_const(base, elem_w);
+
+      NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
+      ptmp->set_line(found_in->get_parameter_line_info(name));
+
+      NetExpr*tmp = new NetESelect(ptmp, base, elem_w, IVL_SEL_IDX_UP);
+      tmp->set_line(*this);
+      return tmp;
+}
+
 NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 					    const NetExpr*par,
 					    const NetScope*found_in,
@@ -5983,10 +6076,6 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 {
       const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
       ivl_assert(*this, par_ex);
-
-      long par_msv, par_lsv;
-      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
-				 par_ex->value().len())) return 0;
 
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
@@ -5998,6 +6087,25 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
       if (sel == 0) return 0;
 
       perm_string name = peek_tail_name(path_);
+
+	// A multi-dimension packed array parameter, e.g.
+	//   localparam logic [0:63][3:0] MEM = '{ ... };
+	// An index select MEM[idx] selects a whole element (a slice of the
+	// flat packed value that is the width of a single element), not a
+	// single bit. Handle that here before falling back to the single
+	// bit-select machinery used for ordinary packed vectors.
+      if (const netvector_t*par_vec = dynamic_cast<const netvector_t*>(par_type)) {
+	    if (par_vec->packed_dims().size() > 1) {
+		  NetExpr*res = elaborate_expr_param_slice_(par_ex, found_in,
+							    par_vec, sel, name);
+		  if (res) return res;
+		  return 0;
+	    }
+      }
+
+      long par_msv, par_lsv;
+      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
+				 par_ex->value().len())) return 0;
 
       if (sel->expr_type() == IVL_VT_REAL) {
 	    cerr << get_fileline() << ": error: Index expression for "

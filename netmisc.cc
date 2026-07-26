@@ -1898,7 +1898,16 @@ bool calculate_param_range(const LineInfo&line, ivl_type_t par_type,
 	    par_lsv = 0;
 	    return true;
       }
-      ivl_assert(line, packed_dims.size() == 1);
+
+      // A multi-dimension packed array parameter has no single declared
+      // range. Index (element) selects are handled separately; for a flat
+      // part/bit select fall back to the canonical [width-1:0] range so we
+      // don't crash on the less common cases.
+      if (packed_dims.size() > 1) {
+	    par_msv = (long)vector_type->packed_width() - 1;
+	    par_lsv = 0;
+	    return true;
+      }
 
       netrange_t use_range = packed_dims[0];
       par_msv = use_range.get_msb();

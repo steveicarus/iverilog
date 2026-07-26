@@ -497,6 +497,11 @@ class PEIdent : public PExpr {
 					      const NetScope*found_in,
 					      ivl_type_t par_type,
 					      bool up, bool need_const) const;
+      NetExpr*elaborate_expr_param_slice_(const NetEConst*par_ex,
+					  const NetScope*found_in,
+					  const netvector_t*par_vec,
+					  NetExpr*sel,
+					  perm_string name) const;
       NetExpr*elaborate_expr_net(Design*des,
 				 NetScope*scope,
 				 NetNet*net,
