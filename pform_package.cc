@@ -232,7 +232,7 @@ PExpr* pform_package_ident(const struct vlltype&loc,
 			   PPackage*pkg, const pform_name_t*ident_name)
 {
       ivl_assert(loc, ident_name);
-      PEIdent*tmp = new PEIdent(pkg, *ident_name, loc.lexical_pos);
+      PEIdent*tmp = new PEIdent(pkg, *ident_name);
       FILE_NAME(tmp, loc);
       return tmp;
 }

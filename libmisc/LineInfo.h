@@ -20,6 +20,7 @@
  */
 
 # include  "StringHeap.h"
+# include  <climits>
 # include  <string>
 
 /*
@@ -38,18 +39,21 @@ class LineInfo {
 
 	// Get a fully formatted file/lineno
       std::string get_fileline() const;
-	// Set the file/line from another LineInfo object.
+	// Set the source location from another LineInfo object.
       void set_line(const LineInfo&that);
 
 	// Access parts of LineInfo data
       void set_file(perm_string f);
       void set_lineno(unsigned n);
+      void lexical_pos(unsigned int n);
 
       perm_string get_file() const { return file_; }
       unsigned  get_lineno() const { return lineno_; }
+      unsigned int lexical_pos() const { return lexical_pos_; }
     private:
       perm_string file_;
       unsigned lineno_;
+      unsigned int lexical_pos_ = UINT_MAX;
 };
 
 #endif /* IVL_LineInfo_H */

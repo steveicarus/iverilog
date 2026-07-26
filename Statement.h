@@ -660,7 +660,7 @@ class PReturn  : public Statement {
 class PTrigger  : public Statement {
 
     public:
-      explicit PTrigger(PPackage*pkg, const pform_name_t&ev, unsigned lexical_pos);
+      explicit PTrigger(PPackage*pkg, const pform_name_t&ev);
       ~PTrigger() override;
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
@@ -668,12 +668,11 @@ class PTrigger  : public Statement {
 
     private:
       pform_scoped_name_t event_;
-      unsigned lexical_pos_;
 };
 
 class PNBTrigger  : public Statement {
     public:
-      explicit PNBTrigger(const pform_name_t&ev, unsigned lexical_pos, PExpr*dly);
+      explicit PNBTrigger(const pform_name_t&ev, PExpr*dly);
       ~PNBTrigger() override;
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
@@ -681,7 +680,6 @@ class PNBTrigger  : public Statement {
 
     private:
       pform_name_t event_;
-      unsigned lexical_pos_;
       PExpr*dly_;
 };
 

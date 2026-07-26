@@ -176,7 +176,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
       symbol_search_results sr;
-      symbol_search(this, des, scope, path_, lexical_pos_, &sr);
+      symbol_search(this, des, scope, path_, lexical_pos(), &sr);
 
       NetNet *reg = sr.net;
       const pform_name_t &member_path = sr.path_tail;
