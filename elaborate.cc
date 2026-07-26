@@ -2775,8 +2775,7 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
 		tmp = new NetNet(scope, scope->local_symbol(), NetNet::REG, tmp_vec);
 	    }
 
-	    tmp->set_file(rval_->get_file());
-	    tmp->set_lineno(rval_->get_lineno());
+	    tmp->set_line(*rval_);
 	    NetAssign_*lv = new NetAssign_(tmp);
 	    return lv;
       }
@@ -4607,12 +4606,10 @@ NetProc *PCallTask::elaborate_non_void_function_(Design *des, NetScope *scope) c
 {
 	// Generate a function call version of this task call.
       PExpr*rval = new PECallFunction(package_, path_, parms_);
-      rval->set_file(get_file());
-      rval->set_lineno(get_lineno());
+      rval->set_line(*this);
 	// Generate an assign to nothing.
       PAssign*tmp = new PAssign(0, rval);
-      tmp->set_file(get_file());
-      tmp->set_lineno(get_lineno());
+      tmp->set_line(*this);
       if (!void_cast_) {
 	    cerr << get_fileline() << ": warning: User function '"
 		 << peek_tail_name(path_) << "' is being called as a task." << endl;
