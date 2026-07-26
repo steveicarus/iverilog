@@ -1006,7 +1006,7 @@ class NetScope : public Definitions, public Attrib {
 
       void add_typedefs(const std::map<perm_string,typedef_t*>*typedefs);
 
-        /* Search the scope hierarchy for the scope where 'type' was defined. */
+	/* Locate the scope that owns the resolved typedef object. */
       NetScope*find_typedef_scope(const Design*des, const typedef_t*type_i);
 
 	/* Parameters exist within a scope, and these methods allow
