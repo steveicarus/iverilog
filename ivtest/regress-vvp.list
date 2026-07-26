@@ -399,7 +399,10 @@ sv_module_port3			vvp_tests/sv_module_port3.json
 sv_module_port4			vvp_tests/sv_module_port4.json
 sv_net_array_decl_assign	vvp_tests/sv_net_array_decl_assign.json
 sv_net_decl_assign		vvp_tests/sv_net_decl_assign.json
+sv_package_import_order_dotstar	vvp_tests/sv_package_import_order_dotstar.json
+sv_package_import_order_explicit	vvp_tests/sv_package_import_order_explicit.json
 sv_package_import_order_typedef	vvp_tests/sv_package_import_order_typedef.json
+sv_package_import_order_wildcard	vvp_tests/sv_package_import_order_wildcard.json
 sv_package_lifetime		vvp_tests/sv_package_lifetime.json
 sv_package_lifetime_fail	vvp_tests/sv_package_lifetime_fail.json
 parameter_omit1			vvp_tests/parameter_omit1.json
