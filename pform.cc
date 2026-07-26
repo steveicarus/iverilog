@@ -412,10 +412,9 @@ LexicalScope* pform_peek_scope(void)
 
 static void pform_check_possible_imports(LexicalScope *scope)
 {
-      map<perm_string,PPackage*>::const_iterator cur;
-      for (cur = scope->possible_imports.begin(); cur != scope->possible_imports.end(); ++cur) {
-            if (scope->local_symbols.find(cur->first) == scope->local_symbols.end())
-                  scope->explicit_imports[cur->first] = cur->second;
+      for (const auto &cur : scope->possible_imports) {
+            if (!scope->local_symbols.count(cur.first))
+		  scope->explicit_imports[cur.first] = cur.second;
       }
       scope->possible_imports.clear();
 }
@@ -473,13 +472,12 @@ static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*it
       }
 
 	// Check for conflict with an explicit import.
-      map<perm_string,PPackage*>::const_iterator cur_pkg
-	    = scope->explicit_imports.find(name);
+      auto cur_pkg = scope->explicit_imports.find(name);
       if (cur_pkg != scope->explicit_imports.end()) {
 	    cerr << item->get_fileline() << ": error: "
 		    "'" << name << "' has already been "
 		    "imported into this scope from package '"
-		 << cur_pkg->second->pscope_name() << "'." << endl;
+		 << cur_pkg->second.package->pscope_name() << "'." << endl;
 	    error_count += 1;
 	    return;
       }
@@ -931,10 +929,9 @@ typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
 	      // something other than a type, then give up now because
 	      // the name has at least shadowed any other possible
 	      // meaning for this name.
-	    map<perm_string,PPackage*>::iterator cur_pkg;
-	    cur_pkg = cur_scope->explicit_imports.find(name);
+	    auto cur_pkg = cur_scope->explicit_imports.find(name);
 	    if (cur_pkg != cur_scope->explicit_imports.end()) {
-		  PPackage*pkg = cur_pkg->second;
+		  auto pkg = cur_pkg->second.package;
 		  cur = pkg->typedefs.find(name);
 		  if (cur != pkg->typedefs.end())
 			return cur->second;

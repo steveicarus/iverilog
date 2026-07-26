@@ -41,6 +41,14 @@ static map<perm_string,PPackage*> packages_by_name;
 
 static PPackage*pform_cur_package = 0;
 
+static package_import_t make_package_import(PPackage *pkg,
+					    const struct vlltype &loc)
+{
+      package_import_t import(pkg);
+      FILE_NAME(&import, loc);
+      return import;
+}
+
 void pform_start_package_declaration(const struct vlltype&loc, const char*name,
 				     LexicalScope::lifetime_t lifetime)
 {
@@ -97,10 +105,12 @@ PPackage *pform_find_potential_import(const struct vlltype&loc, LexicalScope*sco
 
 	    found_pkg = decl_pkg;
 	    if (make_explicit) {
-		  if (tf_call)
-			scope->possible_imports[name] = found_pkg;
-		  else {
-			scope->explicit_imports[name] = found_pkg;
+		  if (tf_call) {
+			scope->possible_imports.emplace(
+			      name, make_package_import(found_pkg, loc));
+		  } else {
+			scope->explicit_imports.emplace(
+			      name, make_package_import(found_pkg, loc));
 			scope->explicit_imports_from[name].insert(search_pkg);
 		  }
 	    }
@@ -122,9 +132,9 @@ PPackage *pform_package_importable(PPackage *pkg, perm_string name)
 		  // *::* will match all imports, P::* will match all imports
 		  // from a package and P::ID will match a specific identifier
 		  // from a package.
-		if ((!exp.pkg || exp.pkg == import_pkg->second) &&
+		if ((!exp.pkg || exp.pkg == import_pkg->second.package) &&
 		    (exp.name.nil() || exp.name == name))
-			return import_pkg->second;
+			return import_pkg->second.package;
 	}
 
 	return nullptr;
@@ -166,19 +176,20 @@ void pform_package_import(const struct vlltype&loc, PPackage*pkg, const char*ide
 	    }
 
 	      // Check for conflict with previous import.
-	    map<perm_string,PPackage*>::const_iterator cur_pkg
-		  = scope->explicit_imports.find(use_ident);
+	    auto cur_pkg = scope->explicit_imports.find(use_ident);
 	    if (cur_pkg != scope->explicit_imports.end()) {
-		  if (cur_pkg->second != pkg_decl) {
+		  if (cur_pkg->second.package != pkg_decl) {
 			cerr << loc.get_fileline() << ": error: "
 				"'" << use_ident << "' has already been "
 				"imported into this scope from package '"
-			     << cur_pkg->second->pscope_name() << "'." << endl;
+			     << cur_pkg->second.package->pscope_name()
+			     << "'." << endl;
 			error_count += 1;
 		  }
 	    }
 
-	    scope->explicit_imports[use_ident] = pkg_decl;
+	    scope->explicit_imports.emplace(
+		  use_ident, make_package_import(pkg_decl, loc));
 	    scope->explicit_imports_from[use_ident].insert(pkg);
 
       } else {

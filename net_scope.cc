@@ -111,7 +111,6 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, NetScope*in_u
 : type_(t), name_(n), nested_module_(nest), program_block_(program),
   is_interface_(interface), is_unit_(compilation_unit), unit_(in_unit), up_(up)
 {
-      imports_ = 0;
       events_ = 0;
       lcounter_ = 0;
       is_auto_ = false;
@@ -215,22 +214,26 @@ void NetScope::set_line(perm_string file, perm_string def_file,
       def_lineno_ = def_lineno;
 }
 
-void NetScope::add_imports(const map<perm_string,PPackage*>*imports)
+void NetScope::add_imports(const package_import_map_t *imports)
 {
       if (!imports->empty())
 	    imports_ = imports;
 }
 
-NetScope*NetScope::find_import(const Design*des, perm_string name)
+NetScope *NetScope::find_import(const Design *des, perm_string name,
+			       unsigned int lexical_pos)
 {
-      if (imports_ == 0)
-	    return 0;
+      if (!imports_)
+	    return nullptr;
 
-      map<perm_string,PPackage*>::const_iterator cur = imports_->find(name);
-      if (cur != imports_->end()) {
-            return des->find_package(cur->second->pscope_name());
-      } else
-            return 0;
+      auto cur = imports_->find(name);
+      if (cur == imports_->end())
+            return nullptr;
+
+      if (cur->second.lexical_pos() > lexical_pos)
+	    return nullptr;
+
+      return des->find_package(cur->second.package->pscope_name());
 }
 
 void NetScope::add_typedefs(const map<perm_string,typedef_t*>*typedefs)
