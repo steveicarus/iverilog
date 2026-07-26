@@ -1263,19 +1263,22 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
 	    for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
 		    // Handle wildcard named port.
 		  if (pins_[idx].name[0] == '*') {
+			const auto &wildcard = pins_[idx];
 			for (unsigned j = 0 ; j < nexp ; j += 1) {
 			      if (rmod->ports[j] && !pins[j] && !pins_is_explicitly_not_connected[j]) {
 				    pins_fromwc[j] = true;
 				    pform_name_t path_;
 				    path_.push_back(name_component_t(rmod->ports[j]->name));
 				    symbol_search_results sr;
-				    symbol_search(this, des, scope, path_, UINT_MAX, &sr);
+				    symbol_search(&wildcard, des, scope, path_,
+						  wildcard.lexical_pos(), &sr);
 				    if (sr.net != 0 ||
 					(rmod->ports[j]->is_interface_port() &&
 					 sr.scope != 0 && sr.scope->is_interface())) {
-					  pins[j] = new PEIdent(rmod->ports[j]->name, UINT_MAX, true);
-					  pins[j]->set_lineno(get_lineno());
-					  pins[j]->set_file(get_file());
+					  pins[j] = new PEIdent(
+						rmod->ports[j]->name,
+						wildcard.lexical_pos(), true);
+					  pins[j]->set_line(wildcard);
 				    }
 			      }
 			}
