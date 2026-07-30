@@ -3527,6 +3527,8 @@ class NetEvent : public LineInfo {
 	// Return the number of NetEvWait nodes that reference me.
       unsigned nwait() const;
       unsigned ntrig() const;
+      // Return the number of NetEvNBTrig nodes that reference me.
+      unsigned nnbtrig() const;
       unsigned nexpr() const;
 
       NetScope* scope();

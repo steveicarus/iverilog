@@ -49,7 +49,7 @@ void nodangle_f::event(Design*, NetEvent*ev)
 	/* If there are no references to this event, then go right
 	   ahead and delete it. There is no use looking further at
 	   it. */
-      if ((ev->nwait() + ev->ntrig() + ev->nexpr()) == 0) {
+      if ((ev->nwait() + ev->ntrig() + ev->nnbtrig() + ev->nexpr()) == 0) {
 	    delete ev;
 	    etotal += 1;
 	    return;
