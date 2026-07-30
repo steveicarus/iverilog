@@ -3516,6 +3516,10 @@ class NetEvent : public LineInfo {
 	// Return the number of NetEvWait nodes that reference me.
       unsigned nwait() const;
       unsigned ntrig() const;
+	// vibeic fork: number of non-blocking triggers (`->>`) that reference
+	// me. nodangle must count these too, else an event referenced only by
+	// a non-blocking trigger is wrongly deleted and vvp codegen crashes.
+      unsigned nnbtrig() const;
       unsigned nexpr() const;
 
       NetScope* scope();

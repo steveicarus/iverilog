@@ -114,6 +114,23 @@ unsigned NetEvent::ntrig() const
       return cnt;
 }
 
+/*
+ * vibeic fork: count the non-blocking triggers (`->>`) attached to me. Mirrors
+ * ntrig() but walks the nb_trig_ list. Used by nodangle so an event that is
+ * referenced only by a non-blocking trigger is not treated as dangling.
+ */
+unsigned NetEvent::nnbtrig() const
+{
+      unsigned cnt = 0;
+      const NetEvNBTrig*cur = nb_trig_;
+      while (cur) {
+	    cnt += 1;
+	    cur = cur->enext_;
+      }
+
+      return cnt;
+}
+
 unsigned NetEvent::nwait() const
 {
       return waitref_;
