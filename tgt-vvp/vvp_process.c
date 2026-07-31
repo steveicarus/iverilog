@@ -1581,10 +1581,11 @@ static int show_stmt_nb_trigger(ivl_statement_t net)
 
       fprintf(vvp_out, "    %%event/nb E_%p, %d;\n", ev, use_idx);
       clr_word(use_idx);
-	// FIXME: VVP needs to be updated to correctly support %event/nb
-      fprintf(stderr, "%s:%u: vvp.tgt sorry: ->> is not currently supported.\n",
-                      ivl_stmt_file(net), ivl_stmt_lineno(net));
-      vvp_errors += 1;
+	/* vibeic fork: the vvp runtime implements %event/nb (of_EVENT_NB in
+	   vvp/compile.cc, executed in vvp/vthread.cc), so the non-blocking
+	   event trigger `->>` is supported. Removed the stale "sorry: ->> is
+	   not currently supported" diagnostic + vvp_errors bump that failed
+	   code generation for a construct elaboration already accepts. */
       return 0;
 }
 

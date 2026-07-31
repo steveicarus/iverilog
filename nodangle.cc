@@ -49,7 +49,11 @@ void nodangle_f::event(Design*, NetEvent*ev)
 	/* If there are no references to this event, then go right
 	   ahead and delete it. There is no use looking further at
 	   it. */
-      if ((ev->nwait() + ev->ntrig() + ev->nexpr()) == 0) {
+	/* vibeic fork: include non-blocking triggers (`->>`, nnbtrig()) in the
+	   reference count. Omitting them let an event referenced only by a
+	   non-blocking trigger be deleted here, after which vvp code generation
+	   dereferenced the freed event and crashed (Signal 11). */
+      if ((ev->nwait() + ev->ntrig() + ev->nnbtrig() + ev->nexpr()) == 0) {
 	    delete ev;
 	    etotal += 1;
 	    return;

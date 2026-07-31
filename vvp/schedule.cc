@@ -440,6 +440,34 @@ void propagate_vector4_event_s::single_step_display(void)
 }
 
 /*
+ * vibeic fork: dedicated event object for the non-blocking event trigger
+ * (`->>`). Unlike propagate_vector4_event_s (which drives a net's OUTPUT and is
+ * reused for ordinary NBA net propagation), a named-event trigger must be
+ * delivered to the event functor's INPUT (port 0), exactly as the blocking
+ * `%event` (of_EVENT) does via vvp_send_vec4(vvp_net_ptr_t(net,0), ...). The
+ * old schedule_propagate_event used net->send_vec4(), which drove the event
+ * net's output instead of triggering the functor, so processes waiting on the
+ * event were never woken. This delivers the trigger to the functor input.
+ */
+struct nb_trigger_event_s : public event_s {
+      vvp_net_t*net;
+      void run_run(void) override;
+      void single_step_display(void) override;
+};
+
+void nb_trigger_event_s::run_run(void)
+{
+      vvp_net_ptr_t ptr (net, 0);
+      vvp_vector4_t tmp (1, BIT4_X);
+      vvp_send_vec4(ptr, tmp, 0);
+}
+
+void nb_trigger_event_s::single_step_display(void)
+{
+      cerr << "nb_trigger_event: Trigger event net=" << net << endl;
+}
+
+/*
  * This class supports the propagation of real outputs from a
  * vvp_net_t object.
  */
@@ -909,15 +937,16 @@ void schedule_propagate_vector(vvp_net_t*net,
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
 
-// FIXME: This needs to create a non-blocking event, but only one per time slot.
-//        Is schedule_event_ or execution actually filtering since the net is
-//        already X because this is not triggering?
+/*
+ * The non-blocking event trigger (`->>`) schedules the event to fire after the
+ * given delay (0 = end of current time step, NBA region). vibeic fork: deliver
+ * it through nb_trigger_event_s so the event functor is actually triggered and
+ * waiting processes are woken (see the note on nb_trigger_event_s above).
+ */
 void schedule_propagate_event(vvp_net_t*net,
                               vvp_time64_t delay)
 {
-      vvp_vector4_t tmp (1, BIT4_X);
-      struct propagate_vector4_event_s*cur
-	    = new struct propagate_vector4_event_s(tmp);
+      struct nb_trigger_event_s*cur = new struct nb_trigger_event_s;
       cur->net = net;
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
