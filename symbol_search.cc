@@ -42,7 +42,7 @@ using namespace std;
 bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		   pform_name_t path, unsigned lexical_pos,
 		   struct symbol_search_results*res,
-		   NetScope*start_scope, bool prefix_scope)
+		   NetScope*start_scope, bool scope_is_bound)
 {
       assert(scope);
 
@@ -72,7 +72,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       // for the tail key, but there are other special cases as well.
       if (! path.empty()) {
 	    bool flag = symbol_search(li, des, scope, path, lexical_pos,
-				      res, start_scope, prefix_scope);
+				      res, start_scope, scope_is_bound);
 	    if (! flag)
 		  return false;
 
@@ -106,12 +106,12 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  return true;
 	    }
 
-	    // The prefix is found to be a scope, so switch to that
-	    // scope, set the hier_path to turn off upwards searches,
-	    // and continue our search for the tail.
+	    // The prefix is found to be a scope, so switch to that scope,
+	    // bind the search to it to turn off upwards searches, and continue
+	    // our search for the tail.
 	    if (res->is_scope()) {
 		  scope = res->scope;
-		  prefix_scope = true;
+		  scope_is_bound = true;
 
 		  if (debug_scopes || debug_elaborate) {
 			cerr << li->get_fileline() << ": symbol_search: "
@@ -140,7 +140,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       // found the scope part of the path, or there is no scope part of the
       // path. For example, if the path in was s1.s2.x, we found the scope
       // s1.s2, res->is_scope() is true, and path_tail is x. We look for x
-      // now. The preceeding code set prefix_scope=true to ease our test below.
+      // now. The preceding code bound the search to that scope.
       //
       // If the input was x (without prefixes) then we don't know if x is a
       // scope or item. In this case, res->is_found() is false and we may need
@@ -150,7 +150,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  cerr << li->get_fileline() << ": symbol_search: "
 		       << "Looking for " << path_tail
 		       << " in scope " << scope_path(scope)
-		       << " prefix_scope=" << prefix_scope << endl;
+		       << " scope_is_bound=" << scope_is_bound << endl;
 	    }
             if (scope->genvar_tmp.str() && path_tail.name == scope->genvar_tmp)
                   return false;
@@ -193,7 +193,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 
 		  if (NetNet*net = scope->find_signal(path_tail.name)) {
-			bool decl_after_use = !prefix_scope && !(net->lexical_pos() <= lexical_pos);
+			bool decl_after_use = !scope_is_bound && !(net->lexical_pos() <= lexical_pos);
 			if (!gn_strict_net_var_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
 			      res->scope = scope;
@@ -216,7 +216,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 
 		  if (NetEvent*eve = scope->find_event(path_tail.name)) {
-			bool decl_after_use = !prefix_scope && !(eve->lexical_pos() <= lexical_pos);
+			bool decl_after_use = !scope_is_bound && !(eve->lexical_pos() <= lexical_pos);
 			if (!gn_strict_net_var_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
 			      res->scope = scope;
@@ -238,7 +238,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 
 		  if (const NetExpr*par = scope->get_parameter(des, path_tail.name, res->type)) {
-			bool decl_after_use = !prefix_scope
+			bool decl_after_use = !scope_is_bound
 			      && !(scope->get_parameter_lexical_pos(path_tail.name) <= lexical_pos);
 			if (!gn_strict_parameter_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
@@ -284,7 +284,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		    // Finally check the rare case of a signal that hasn't
 		    // been elaborated yet.
 		  if (PWire*wire = scope->find_signal_placeholder(path_tail.name)) {
-			if (prefix_scope || (wire->lexical_pos() <= lexical_pos)) {
+			if (scope_is_bound || (wire->lexical_pos() <= lexical_pos)) {
 			      NetNet*net = wire->elaborate_sig(des, scope);
 			      if (!net)
 				    return false;
@@ -367,8 +367,8 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 	    }
 
-	    // Don't scan up if we are searching within a prefixed scope.
-	    if (prefix_scope)
+	    // Don't scan up if the search is bound to the current scope.
+	    if (scope_is_bound)
 		  break;
 
 	    // Imports are not visible through hierachical names
@@ -431,8 +431,8 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 
       // Last chance: this is a single name, so it might be the name
       // of a root scope. Ask the design if this is a root
-      // scope. This is only possible if there is no prefix.
-      if (prefix_scope==false) {
+      // scope. This is only possible if the search is not already bound.
+      if (!scope_is_bound) {
 	    hname_t path_item (path_tail.name);
 	    scope = des->find_scope(path_item);
 	    if (scope) {
@@ -451,17 +451,17 @@ bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 		   struct symbol_search_results *res)
 {
       NetScope *search_scope = scope;
-      bool prefix_scope = false;
+      bool scope_is_bound = false;
 
       if (path.package) {
 	    search_scope = des->find_package(path.package->pscope_name());
 	    if (!search_scope)
 		  return false;
-	    prefix_scope = true;
+	    scope_is_bound = true;
       }
 
       return symbol_search(li, des, search_scope, path.name, lexical_pos,
-			   res, search_scope, prefix_scope);
+			   res, search_scope, scope_is_bound);
 }
 
 bool check_interface_modport_access(const LineInfo *li, Design *des,
