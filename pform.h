@@ -414,8 +414,8 @@ extern void pform_set_parameter(const struct vlltype&loc,
                                 PExpr*expr, LexicalScope::range_t*value_range);
 extern void pform_set_specparam(const struct vlltype&loc,
 				 perm_string name,
-				 std::list<pform_range_t>*range,
-				 PExpr*expr);
+				 std::list<pform_range_t> *range,
+				 PExpr *expr, bool check_decl_order);
 extern void pform_set_defparam(const pform_name_t&name, PExpr*expr);
 
 extern void pform_make_let(const struct vlltype&loc,

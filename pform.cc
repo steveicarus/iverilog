@@ -3167,7 +3167,8 @@ void pform_set_parameter(const struct vlltype&loc,
 }
 
 void pform_set_specparam(const struct vlltype&loc, perm_string name,
-			 list<pform_range_t>*range, PExpr*expr)
+			 list<pform_range_t> *range, PExpr *expr,
+			 bool check_decl_order)
 {
       ivl_assert(loc, !pform_cur_module.empty());
       Module*scope = pform_cur_module.front();
@@ -3186,6 +3187,10 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
 
       parm->expr = expr;
       parm->range = 0;
+
+      // Only module-body specparams follow lexical order.
+      if (check_decl_order)
+	    parm->lexical_pos = loc.lexical_pos;
 
       if (range) {
 	    ivl_assert(loc, range->size() == 1);
