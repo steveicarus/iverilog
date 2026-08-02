@@ -406,8 +406,9 @@ const verireal& PEFNumber::value() const
       return *value_;
 }
 
-PEIdent::PEIdent(const pform_name_t&that, unsigned lexical_pos)
-: path_(that), no_implicit_sig_(false)
+PEIdent::PEIdent(const pform_name_t&that, unsigned lexical_pos,
+		 bool no_implicit_sig)
+: path_(that), no_implicit_sig_(no_implicit_sig)
 {
       LineInfo::lexical_pos(lexical_pos);
 }

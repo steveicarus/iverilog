@@ -737,12 +737,13 @@ PBlock* pform_push_block_scope(const struct vlltype&loc, const char*name,
 /*
  * Create a new identifier.
  */
-PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&name)
+PEIdent *pform_new_ident(const struct vlltype&loc, const pform_name_t&name,
+			 bool no_implicit_sig)
 {
       if (gn_system_verilog())
 	    check_potential_imports(loc, name.front().name, false);
 
-      auto tmp = new PEIdent(name, loc.lexical_pos);
+      auto tmp = new PEIdent(name, loc.lexical_pos, no_implicit_sig);
       FILE_NAME(tmp, loc);
       return tmp;
 }
