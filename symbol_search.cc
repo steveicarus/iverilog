@@ -237,22 +237,30 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			}
 		  }
 
-		  if (const NetExpr*par = scope->get_parameter(des, path_tail.name, res->type)) {
+		  if (const NetExpr *par = scope->get_parameter(des, path_tail.name, res->type)) {
+			bool is_enum_name;
+			unsigned int declaration_pos =
+			      scope->get_constant_lexical_pos(path_tail.name,
+						      is_enum_name);
 			bool decl_after_use = !scope_is_bound
-			      && !(scope->get_parameter_lexical_pos(path_tail.name) <= lexical_pos);
+			      && !(declaration_pos <= lexical_pos);
 			if (!gn_strict_parameter_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
 			      res->scope = scope;
 			      res->par_val = par;
 			      res->path_head = path;
 			      if (warn_decl_after_use && decl_after_use) {
+				    const char *kind = is_enum_name
+					  ? "enum named constant" : "parameter";
 				    cerr << li->get_fileline()
-					 << ": warning: parameter `" << path_tail.name
+					 << ": warning: " << kind << " `"
+					 << path_tail.name
 					 << "` used before declaration." << endl;
 				    cerr << par->get_fileline()
-					 << ":        : the parameter is declared here." << endl;
-				    // suppress further warnings for this parameter
-				    scope->set_parameter_lexical_pos(path_tail.name, lexical_pos);
+					 << ":        : the " << kind
+					 << " is declared here." << endl;
+				    // suppress further warnings for this constant
+				    scope->set_constant_lexical_pos(path_tail.name, lexical_pos);
 			      }
 			      return true;
 			} else if (!res->decl_after_use) {
