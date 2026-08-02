@@ -137,7 +137,7 @@ static inline bool test_function_return_value(const symbol_search_results&search
 extern bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			  pform_name_t path, unsigned lexical_pos,
 			  struct symbol_search_results*res,
-			  NetScope*start_scope = nullptr, bool prefix_scope = false);
+			  NetScope*start_scope = nullptr, bool scope_is_bound = false);
 
 extern bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 			  const pform_scoped_name_t &path, unsigned lexical_pos,
