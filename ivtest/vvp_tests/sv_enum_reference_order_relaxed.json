@@ -1,0 +1,6 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_enum_reference_order_relaxed.v",
+    "iverilog-args" : [ "-g2005-sv", "-gno-strict-parameter-declaration" ],
+    "gold"          : "sv_enum_reference_order_relaxed"
+}
