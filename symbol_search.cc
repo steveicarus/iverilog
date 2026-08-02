@@ -374,7 +374,11 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	    // Imports are not visible through hierachical names
 	    if (auto import_scope = scope->find_import(
 		      des, path_tail.name, lexical_pos)) {
+		    // The import binds the name to the returned package. Continue
+		    // with the search bound to it, since lexical positions are
+		    // unit-local.
 		  scope = import_scope;
+		  scope_is_bound = true;
 		  continue;
 	    }
 
