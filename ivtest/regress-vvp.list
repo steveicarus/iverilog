@@ -234,6 +234,8 @@ sf_onehot_fail			vvp_tests/sf_onehot_fail.json
 sf_onehot0_fail			vvp_tests/sf_onehot0_fail.json
 shift6				vvp_tests/shift6.json
 single_element_array		vvp_tests/single_element_array.json
+specparam_reference_order_fail	vvp_tests/specparam_reference_order_fail.json
+specparam_specify_reference_order	vvp_tests/specparam_specify_reference_order.json
 struct_enum_partsel		vvp_tests/struct_enum_partsel.json
 struct_field_left_right		vvp_tests/struct_field_left_right.json
 struct_nested1			vvp_tests/struct_nested1.json
