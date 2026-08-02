@@ -152,6 +152,12 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		       << " in scope " << scope_path(scope)
 		       << " scope_is_bound=" << scope_is_bound << endl;
 	    }
+
+	    // An explicit $unit:: prefix only disambiguates the name and does
+	    // not allow forward references (LRM 3.12.1).
+	    const bool check_lexical_order =
+		  !scope_is_bound || scope->is_unit();
+
             if (scope->genvar_tmp.str() && path_tail.name == scope->genvar_tmp)
                   return false;
 
@@ -193,7 +199,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 
 		  if (NetNet*net = scope->find_signal(path_tail.name)) {
-			bool decl_after_use = !scope_is_bound && !(net->lexical_pos() <= lexical_pos);
+			bool decl_after_use = check_lexical_order && !(net->lexical_pos() <= lexical_pos);
 			if (!gn_strict_net_var_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
 			      res->scope = scope;
@@ -216,7 +222,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  }
 
 		  if (NetEvent*eve = scope->find_event(path_tail.name)) {
-			bool decl_after_use = !scope_is_bound && !(eve->lexical_pos() <= lexical_pos);
+			bool decl_after_use = check_lexical_order && !(eve->lexical_pos() <= lexical_pos);
 			if (!gn_strict_net_var_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
 			      res->scope = scope;
@@ -242,7 +248,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			unsigned int declaration_pos =
 			      scope->get_constant_lexical_pos(path_tail.name,
 						      is_enum_name);
-			bool decl_after_use = !scope_is_bound
+			bool decl_after_use = check_lexical_order
 			      && !(declaration_pos <= lexical_pos);
 			if (!gn_strict_parameter_declaration || !decl_after_use) {
 			      path.push_back(path_tail);
@@ -292,7 +298,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		    // Finally check the rare case of a signal that hasn't
 		    // been elaborated yet.
 		  if (PWire*wire = scope->find_signal_placeholder(path_tail.name)) {
-			if (scope_is_bound || (wire->lexical_pos() <= lexical_pos)) {
+			if (!check_lexical_order || (wire->lexical_pos() <= lexical_pos)) {
 			      NetNet*net = wire->elaborate_sig(des, scope);
 			      if (!net)
 				    return false;
