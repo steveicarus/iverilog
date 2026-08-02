@@ -355,7 +355,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	    }
 
 	    rc_flag = use_enum->insert_name(name_idx, cur->name, cur_value);
-	    rc_flag &= scope->add_enumeration_name(use_enum, cur->name);
+	    rc_flag &= scope->add_enumeration_name(use_enum, cur->name, *cur);
 
 	    if (! rc_flag) {
 		  cerr << use_enum->get_fileline()

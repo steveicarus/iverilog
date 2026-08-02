@@ -945,7 +945,9 @@ class Definitions {
 	// up this enumeration based on the pform type.
       void add_enumeration_set(const enum_type_t*key, netenum_t*enum_set);
 
-      bool add_enumeration_name(const netenum_t*enum_set, perm_string enum_name);
+      bool add_enumeration_name(const netenum_t *enum_set,
+				perm_string enum_name,
+				const LineInfo &location);
 
 	// Look up the enumeration set that was added with the given
 	// key. This is used by enum_type_t::elaborate_type to locate
@@ -1335,8 +1337,10 @@ class NetScope : public Definitions, public Attrib {
 
       LineInfo get_parameter_line_info(perm_string name) const;
 
-      unsigned get_parameter_lexical_pos(perm_string name) const;
-      void set_parameter_lexical_pos(perm_string name, unsigned lexical_pos);
+      unsigned int get_constant_lexical_pos(perm_string name,
+					    bool &is_enum_name) const;
+      void set_constant_lexical_pos(perm_string name,
+				    unsigned int lexical_pos);
 
 	/* Module instance arrays are collected here for access during
 	   the multiple elaboration passes. */

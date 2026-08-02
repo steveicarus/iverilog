@@ -52,15 +52,17 @@ void Definitions::add_enumeration_set(const enum_type_t*key, netenum_t*enum_set)
       tmp = enum_set;
 }
 
-bool Definitions::add_enumeration_name(const netenum_t*enum_set, perm_string name)
+bool Definitions::add_enumeration_name(const netenum_t *enum_set,
+				       perm_string name,
+				       const LineInfo &location)
 {
-      netenum_t::iterator enum_val = enum_set->find_name(name);
+      auto enum_val = enum_set->find_name(name);
       assert(enum_val != enum_set->end_name());
 
-      NetEConstEnum*val = new NetEConstEnum(name, enum_set, enum_val->second);
+      auto val = new NetEConstEnum(name, enum_set, enum_val->second);
+      val->set_line(location);
 
-      pair<map<perm_string,NetEConstEnum*>::iterator, bool> cur;
-      cur = enum_names_.insert(make_pair(name,val));
+      auto cur = enum_names_.insert(make_pair(name, val));
 
 	// Return TRUE if the name is added (i.e. is NOT a duplicate.)
       return cur.second;
@@ -466,23 +468,37 @@ LineInfo NetScope::get_parameter_line_info(perm_string key) const
       return LineInfo();
 }
 
-unsigned NetScope::get_parameter_lexical_pos(perm_string key) const
+unsigned int NetScope::get_constant_lexical_pos(perm_string key,
+						bool &is_enum_name) const
 {
       map<perm_string,param_expr_t>::const_iterator idx;
 
       idx = parameters.find(key);
-      if (idx != parameters.end()) return idx->second.lexical_pos;
+      if (idx != parameters.end()) {
+	    is_enum_name = false;
+	    return idx->second.lexical_pos;
+      }
 
-	// If we get here, assume an enumeration value.
-      return 0;
+      auto enum_idx = enum_names_.find(key);
+      assert(enum_idx != enum_names_.end());
+      is_enum_name = true;
+      return enum_idx->second->lexical_pos();
 }
 
-void NetScope::set_parameter_lexical_pos(perm_string key, unsigned lexical_pos)
+void NetScope::set_constant_lexical_pos(perm_string key,
+					unsigned int lexical_pos)
 {
       map<perm_string,param_expr_t>::iterator idx;
 
       idx = parameters.find(key);
-      if (idx != parameters.end()) idx->second.lexical_pos = lexical_pos;
+      if (idx != parameters.end()) {
+	    idx->second.lexical_pos = lexical_pos;
+	    return;
+      }
+
+      auto enum_idx = enum_names_.find(key);
+      assert(enum_idx != enum_names_.end());
+      enum_idx->second->lexical_pos(lexical_pos);
 }
 
 void NetScope::print_type(ostream&stream) const
