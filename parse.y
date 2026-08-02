@@ -1426,9 +1426,8 @@ class_new /* IEEE1800-2005 A.2.4 */
 	$$ = new_expr;
       }
   | K_new hierarchy_identifier
-      { PEIdent*tmpi = new PEIdent(*$2, @2.lexical_pos);
-	FILE_NAME(tmpi, @2);
-	PENewCopy*tmp = new PENewCopy(tmpi);
+      { auto tmpi = pform_new_ident(@2, *$2);
+	auto tmp = new PENewCopy(tmpi);
 	FILE_NAME(tmp, @1);
 	delete $2;
 	$$ = tmp;
