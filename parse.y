@@ -3774,8 +3774,8 @@ delay_value_simple
 	}
       }
   | identifier_name
-      { PEIdent*tmp = new PEIdent(lex_strings.make($1), @1.lexical_pos);
-	FILE_NAME(tmp, @1);
+      { pform_name_t tmp_name = { name_component_t(lex_strings.make($1)) };
+	auto tmp = pform_new_ident(@1, tmp_name);
 	$$ = tmp;
 	delete[]$1;
       }
