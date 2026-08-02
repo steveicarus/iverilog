@@ -48,6 +48,7 @@ static bool param_is_type = false;
 static type_restrict_t param_type_restrict;
 static bool in_gen_region = false;
 static std::list<pform_range_t>* specparam_active_range = 0;
+static bool in_specify_block = false;
 
 /* Port declaration lists use this structure for context. */
 static struct {
@@ -5887,12 +5888,15 @@ module_item
 	      yyerror(@1, "error: specify blocks are not allowed "
 			  "in interfaces.");
         pform_error_in_generate(@1, "specify block");
+        in_specify_block = true;
       }
 
     specify_item_list_opt K_endspecify
+      { in_specify_block = false; }
 
   | K_specify error K_endspecify
       { yyerror(@1, "error: Syntax error in specify block");
+	in_specify_block = false;
 	yyerrok;
       }
 
@@ -7005,7 +7009,8 @@ specify_path_identifiers
 
 specparam
   : identifier_name '=' expr_mintypmax
-      { pform_set_specparam(@1, lex_strings.make($1), specparam_active_range, $3);
+	{ pform_set_specparam(@1, lex_strings.make($1), specparam_active_range, $3,
+			      !in_specify_block);
 	delete[]$1;
       }
   | PATHPULSE_IDENTIFIER '=' expression
