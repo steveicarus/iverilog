@@ -6460,9 +6460,10 @@ port_name
       { pform_requires_sv(@3, "Implicit named port connections");
 	named_pexpr_t*tmp = new named_pexpr_t;
 	FILE_NAME(tmp, @$);
-	tmp->name = lex_strings.make($3);
-	tmp->parm = new PEIdent(lex_strings.make($3), @3.lexical_pos, true);
-	FILE_NAME(tmp->parm, @3);
+	auto name = lex_strings.make($3);
+	pform_name_t path = { name_component_t(name) };
+	tmp->name = name;
+	tmp->parm = pform_new_ident(@3, path, true);
 	delete[]$3;
 	delete $1;
 	$$ = tmp;

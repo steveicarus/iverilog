@@ -346,7 +346,8 @@ class PEIdent : public PExpr {
     public:
       explicit PEIdent(perm_string, unsigned lexical_pos, bool no_implicit_sig=false);
       explicit PEIdent(PPackage*pkg, const pform_name_t&name);
-      explicit PEIdent(const pform_name_t&, unsigned lexical_pos);
+      explicit PEIdent(const pform_name_t&, unsigned lexical_pos,
+		       bool no_implicit_sig = false);
       ~PEIdent() override;
 
 	// Add another name to the string of hierarchy that is the
