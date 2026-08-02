@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "specparam_reference_order_fail.v",
+    "iverilog-args" : [ "-g2001" ]
+}
