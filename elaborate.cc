@@ -2085,7 +2085,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		    // We do not support automatic bits to real conversion
 		    // for inout ports.
 		  if ((sig->data_type() == IVL_VT_REAL ) &&
-		      !prts.empty() && (prts[0]->data_type() != IVL_VT_REAL )) {
+		      (prts[0]->data_type() != IVL_VT_REAL )) {
 			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "Cannot automatically connect bit based "
 			        "inout port " << (idx+1) << " (" << port_name
@@ -2096,7 +2096,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		  }
 
 		    // We do not support real inout ports at all.
-		  if (!prts.empty() && (prts[0]->data_type() == IVL_VT_REAL )) {
+		  if (prts[0]->data_type() == IVL_VT_REAL ) {
 			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "No support for connecting real inout ports ("
 			        "port " << (idx+1) << " (" << port_name
@@ -2150,7 +2150,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		    // width cast. Since a real is only one bit the whole
 		    // thing needs to go to each instance when arrayed.
 		  if ((sig->data_type() != IVL_VT_REAL ) &&
-		      !prts.empty() && (prts[0]->data_type() == IVL_VT_REAL )) {
+		      (prts[0]->data_type() == IVL_VT_REAL )) {
 			if (sig->vector_width() % instance.size() != 0) {
 			      cerr << pins[idx]->get_fileline() << ": error: "
 			              "When automatically converting a real "
@@ -2175,7 +2175,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		    // If we have a bit/vector port driving a single real
 		    // signal then we convert the value to a real.
 		  if ((sig->data_type() == IVL_VT_REAL ) &&
-		      !prts.empty() && (prts[0]->data_type() != IVL_VT_REAL )) {
+		      (prts[0]->data_type() != IVL_VT_REAL )) {
 			prts_vector_width -= prts[0]->vector_width() - 1;
 			prts[0] = cast_to_real(des, scope, prts[0]);
 			  // No support for multiple real drivers.
@@ -2193,7 +2193,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		    // If we have a 4-state bit/vector port driving a
 		    // 2-state signal then we convert the value to 2-state.
 		  if ((sig->data_type() == IVL_VT_BOOL ) &&
-		      !prts.empty() && (prts[0]->data_type() == IVL_VT_LOGIC )) {
+		      (prts[0]->data_type() == IVL_VT_LOGIC )) {
 			for (unsigned pidx = 0; pidx < prts.size(); pidx += 1) {
 			      prts[pidx] = cast_to_int2(des, scope, prts[pidx],
 			                                prts[pidx]->vector_width());
@@ -2203,7 +2203,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		    // A real to real connection is not allowed for arrayed
 		    // instances. You cannot have multiple real drivers.
 		  if ((sig->data_type() == IVL_VT_REAL ) &&
-		      !prts.empty() && (prts[0]->data_type() == IVL_VT_REAL ) &&
+		      (prts[0]->data_type() == IVL_VT_REAL ) &&
 		      instance.size() != 1) {
 			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "An arrayed instance of " << rmod->mod_name()
@@ -4689,6 +4689,11 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 		       << peek_tail_name(path_) << "' is not allowed." << endl;
 		  des->errors++;
 	    }
+      } else {
+	    cerr << get_fileline() << ": error: trying to generate a call to '"
+	         << peek_tail_name(path_) << "' which is not a task of function." << endl;
+	    des->errors++;
+	    return nullptr;
       }
 
 	/* The caller has checked the parms_ size to make sure it

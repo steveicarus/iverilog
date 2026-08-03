@@ -627,7 +627,7 @@ static char *pform_start_block_with_labels(
 
 static PBlock *pform_finish_block(const YYLTYPE&block_loc,
 				  const YYLTYPE&end_loc, const char *type,
-				  char *raw_name, char *end_label,
+				  char *raw_name, const char *end_label,
 				  PBlock::BL_TYPE block_type,
 				  procedural_item_list_t *raw_items)
 {
