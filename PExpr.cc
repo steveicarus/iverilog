@@ -139,31 +139,12 @@ bool PEBinary::has_aa_term(Design*des, NetScope*scope) const
       return left_->has_aa_term(des, scope) || right_->has_aa_term(des, scope);
 }
 
-PECastSize::PECastSize(PExpr*si, PExpr*b)
-: size_(si), base_(b)
+PECast::PECast(PExpr *target, PExpr *base)
+: target_(target), base_(base)
 {
 }
 
-PECastSize::~PECastSize()
-{
-}
-
-bool PECastSize::has_aa_term(Design *des, NetScope *scope) const
-{
-	return base_->has_aa_term(des, scope);
-}
-
-PECastType::PECastType(data_type_t*t, PExpr*b)
-: target_(t), base_(b)
-{
-      target_type_ = nullptr;
-}
-
-PECastType::~PECastType()
-{
-}
-
-bool PECastType::has_aa_term(Design *des, NetScope *scope) const
+bool PECast::has_aa_term(Design *des, NetScope *scope) const
 {
 	return base_->has_aa_term(des, scope);
 }

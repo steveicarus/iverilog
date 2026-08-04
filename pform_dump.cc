@@ -431,16 +431,9 @@ void PECallFunction::dump(ostream &out) const
       }
 }
 
-void PECastSize::dump(ostream &out) const
+void PECast::dump(ostream &out) const
 {
-      out << *size_ << "'(";
-      base_->dump(out);
-      out << ")";
-}
-
-void PECastType::dump(ostream &out) const
-{
-      target_->pform_dump(out, 0);
+      target_->dump(out);
       out << "'(";
       base_->dump(out);
       out << ")";
@@ -533,7 +526,7 @@ void PETernary::dump(ostream&out) const
 
 void PETypename::dump(ostream&fd) const
 {
-      fd << "<type>";
+      data_type_->pform_dump(fd, 0);
 }
 
 void PEUnary::dump(ostream&out) const

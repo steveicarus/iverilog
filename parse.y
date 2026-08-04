@@ -1235,7 +1235,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <data_type>  data_type data_type_opt data_type_or_implicit data_type_or_implicit_or_void
 %type <data_type>  block_reg_data_type
 %type <data_type>  implicit_type
-%type <data_type>  reg_prefixed_atomic_type simple_type_or_string let_formal_type
+%type <data_type>  reg_prefixed_atomic_type let_formal_type
 %type <data_type>  packed_array_data_type atomic_type
 
 %type <data_type>  ps_type_identifier ps_type_identifier_dim
@@ -2898,35 +2898,6 @@ simple_immediate_assertion_statement /* IEEE1800-2012 A.6.10 */
       { yyerror(@1, "error: Malformed conditional expression.");
 	$$ = $5;
       }
-  ;
-
-simple_type_or_string /* IEEE1800-2005: A.2.2.1 */
-  : integer_vector_type
-      { vector_type_t*tmp = new vector_type_t($1, false, 0);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | non_integer_type
-      { real_type_t*tmp = new real_type_t($1);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | atom_type
-      { atom_type_t*tmp = new atom_type_t($1, true);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | K_time
-      { atom_type_t*tmp = new atom_type_t(atom_type_t::TIME, false);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | K_string
-      { string_type_t*tmp = new string_type_t;
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | ps_type_identifier
   ;
 
   /* Many places where statements are allowed can actually take a
@@ -4983,24 +4954,14 @@ expr_primary
 
   /* Cast expressions are primaries */
 
-  | expr_primary '\'' '(' expression ')'
-      { PExpr*base = $4;
-	if (pform_requires_sv(@1, "Size cast")) {
-	      PECastSize*tmp = new PECastSize($1, base);
+  | expr_primary_or_typename '\'' '(' expression ')'
+      { auto base = $4;
+	if (pform_requires_sv(@1, "Cast expression")) {
+	      auto tmp = new PECast($1, base);
 	      FILE_NAME(tmp, @1);
 	      $$ = tmp;
 	} else {
-	      $$ = base;
-	}
-      }
-
-  | simple_type_or_string '\'' '(' expression ')'
-      { PExpr*base = $4;
-	if (pform_requires_sv(@1, "Type cast")) {
-	      PECastType*tmp = new PECastType($1, base);
-	      FILE_NAME(tmp, @1);
-	      $$ = tmp;
-	} else {
+	      delete $1;
 	      $$ = base;
 	}
       }
