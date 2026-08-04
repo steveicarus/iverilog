@@ -51,6 +51,11 @@ class PExpr : public LineInfo {
 	// Mode values used by test_width() (see below for description).
       enum width_mode_t { SIZED, UNSIZED, EXPAND, LOSSLESS, UPSIZE };
 
+      enum class type_elaboration_context_t {
+	    DEFAULT,
+	    CAST_TARGET
+      };
+
         // Flag values that can be passed to elaborate_expr().
       static const unsigned NO_FLAGS     = 0x0;
       static const unsigned NEED_CONST   = 0x1;
@@ -132,8 +137,12 @@ class PExpr : public LineInfo {
 	// may cache lookup state for a subsequent elaborate_type() call.
       virtual bool test_type(Design *des, NetScope *scope);
 
-	// Elaborate this expression as a type. Return null on failure.
-      virtual ivl_type_t elaborate_type(Design *des, NetScope *scope) const;
+	// Elaborate this expression as a type in a specific context. Return
+	// null if the expression is not a type or elaboration fails.
+      virtual ivl_type_t elaborate_type(
+		Design *des, NetScope *scope,
+		type_elaboration_context_t context =
+		      type_elaboration_context_t::DEFAULT) const;
 
 	// After the test_width method is complete, these methods
 	// return valid results.
@@ -385,7 +394,10 @@ class PEIdent : public PExpr {
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     ivl_type_t type, unsigned flags) const override;
       bool test_type(Design *des, NetScope *scope) override;
-      ivl_type_t elaborate_type(Design *des, NetScope *scope) const override;
+      ivl_type_t elaborate_type(
+		Design *des, NetScope *scope,
+		type_elaboration_context_t context =
+		      type_elaboration_context_t::DEFAULT) const override;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
                                      unsigned flags) const override;
@@ -732,7 +744,10 @@ class PETypename : public PExpr {
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     ivl_type_t type, unsigned flags) const override;
       bool test_type(Design *des, NetScope *scope) override;
-      ivl_type_t elaborate_type(Design *des, NetScope *scope) const override;
+      ivl_type_t elaborate_type(
+		Design *des, NetScope *scope,
+		type_elaboration_context_t context =
+		      type_elaboration_context_t::DEFAULT) const override;
 
     private:
       data_type_t*data_type_;
@@ -1041,57 +1056,64 @@ class PECallFunction : public PExpr {
       unsigned test_width_chain_(Design*des, NetScope*scope, width_mode_t&mode);
 };
 
-/*
- * Support the SystemVerilog cast to size.
- */
-class PECastSize  : public PExpr {
+/* Support SystemVerilog size and type casts. */
+class PECast : public PExpr {
 
     public:
-      explicit PECastSize(PExpr*size, PExpr*base);
-      ~PECastSize() override;
+      explicit PECast(PExpr *target, PExpr *base);
+      ~PECast() override = default;
 
       void dump(std::ostream &out) const override;
 
-      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
-				     unsigned expr_wid,
-                                     unsigned flags) const override;
+      NetExpr *elaborate_expr(Design *des, NetScope *scope,
+			      ivl_type_t type, unsigned int flags) const override;
 
-      virtual bool has_aa_term(Design *des, NetScope *scope) const override;
+      NetExpr *elaborate_expr(Design *des, NetScope *scope,
+			      unsigned int expr_wid,
+			      unsigned int flags) const override;
 
-      virtual unsigned test_width(Design*des, NetScope*scope,
-				  width_mode_t&mode) override;
+      bool has_aa_term(Design *des, NetScope *scope) const override;
 
-    private:
-      PExpr* size_;
-      PExpr* base_;
-};
-
-/*
- * Support the SystemVerilog cast to a different type.
- */
-class PECastType  : public PExpr {
-
-    public:
-      explicit PECastType(data_type_t*target, PExpr*base);
-      ~PECastType() override;
-
-      void dump(std::ostream &out) const override;
-
-      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
-				     ivl_type_t type, unsigned flags) const override;
-
-      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
-				     unsigned expr_wid, unsigned flags) const override;
-
-      virtual bool has_aa_term(Design *des, NetScope *scope) const override;
-
-      virtual unsigned test_width(Design*des, NetScope*scope,
-				  width_mode_t&mode) override;
+      unsigned int test_width(Design *des, NetScope *scope,
+			      width_mode_t &mode) override;
 
     private:
-      data_type_t* target_;
-      ivl_type_t target_type_;
-      PExpr* base_;
+      NetExpr *elaborate_size_cast_(Design *des, NetScope *scope,
+				    unsigned int expr_wid,
+				    unsigned int target_width,
+				    bool signed_flag,
+				    unsigned int flags) const;
+      NetExpr *elaborate_type_cast_(Design *des, NetScope *scope,
+				    unsigned int expr_wid,
+				    ivl_type_t target_type,
+				    unsigned int target_width,
+				    bool signed_flag,
+				    unsigned int flags) const;
+
+      enum class target_kind_t {
+	    ERROR,
+	    SIZE,
+	    TYPE
+      };
+
+      struct target_info_t {
+	    target_kind_t kind = target_kind_t::ERROR;
+	    ivl_type_t type = nullptr;
+	    unsigned int width = 0;
+      };
+
+      target_info_t resolve_target_(Design *des, NetScope *scope) const;
+      target_info_t target_for_scope_(Design *des, NetScope *scope) const;
+
+      std::unique_ptr<PExpr> target_;
+      std::unique_ptr<PExpr> base_;
+
+	// Cast targets can depend on parameters in the instance scope. Width
+	// testing and expression elaboration run sequentially for one scope, so
+	// retain only the most recent result.
+      const NetScope *target_scope_ = nullptr;
+      target_info_t target_info_;
+      bool target_resolved_ = false;
 };
 
 /*
