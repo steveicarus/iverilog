@@ -3340,9 +3340,12 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 		 use_search_results.scope = scope;
 		 use_search_results.path_tail.push_back(search_results.path_head.back());
 		 use_search_results.path_head.push_back(name_component_t(perm_string::literal(THIS_TOKEN)));
-		 use_search_results.net = scope->find_signal(perm_string::literal(THIS_TOKEN));
-		 use_search_results.type = use_search_results.net->net_type();
+		 NetScope *method_scope = find_method_containing_scope(*this, scope);
+		 ivl_assert(*this, method_scope);
+		 use_search_results.net = method_scope->find_signal(
+		       perm_string::literal(THIS_TOKEN));
 		 ivl_assert(*this, use_search_results.net);
+		 use_search_results.type = use_search_results.net->net_type();
 
 		 return elaborate_expr_method_(des, scope, use_search_results);
            }
