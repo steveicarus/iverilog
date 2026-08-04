@@ -1095,14 +1095,15 @@ bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
       } else {
             NetExpr*texpr = elab_and_eval(des, scope, range.first, -1, true);
             if (! eval_as_long(index_l, texpr)) {
-                  cerr << range.first->get_fileline() << ": error: "
-                          "Dimensions must be constant." << endl;
-                  cerr << range.first->get_fileline() << "       : "
-                       << (range.second ? "This MSB" : "This size")
-                       << " expression violates the rule: "
-                       << *range.first << endl;
-                  dimension_ok = false;
-                  des->errors += 1;
+		  cerr << range.first->get_fileline() << ": error: "
+		          "Dimensions must be a constant with no unknown or high-Z bits."
+		       << endl;
+		  cerr << range.first->get_fileline() << "       : "
+		       << (range.second ? "This MSB" : "This size")
+		       << " expression violates the rule: "
+		       << *range.first << endl;
+		  dimension_ok = false;
+		  des->errors += 1;
             }
             delete texpr;
 
@@ -1118,7 +1119,7 @@ bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
                   } else {
                         cerr << range.first->get_fileline() << ": error: "
                                 "Dimension size must be greater than zero." << endl;
-                        cerr << range.first->get_fileline() << "       : "
+                        cerr << range.first->get_fileline() << ":      : "
                                 "This size expression violates the rule: "
                              << *range.first << endl;
                         dimension_ok = false;
@@ -1127,13 +1128,14 @@ bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
             } else {
                   texpr = elab_and_eval(des, scope, range.second, -1, true);
                   if (! eval_as_long(index_r, texpr)) {
-                        cerr << range.second->get_fileline() << ": error: "
-                                "Dimensions must be constant." << endl;
-                        cerr << range.second->get_fileline() << "       : "
-                                "This LSB expression violates the rule: "
-                             << *range.second << endl;
-                        dimension_ok = false;
-                        des->errors += 1;
+			cerr << range.second->get_fileline() << ": error: "
+			        "Dimensions must be a constant with no unknown or high-Z bits."
+			     << endl;
+			cerr << range.second->get_fileline() << ":      : "
+			        "This LSB expression violates the rule: "
+			     << *range.second << endl;
+			dimension_ok = false;
+			des->errors += 1;
                   }
                   delete texpr;
             }
@@ -1196,7 +1198,7 @@ bool eval_as_long(long&value, const NetExpr*expr)
 {
       if (const NetEConst*tmp = dynamic_cast<const NetEConst*>(expr) ) {
 	    value = tmp->value().as_long();
-	    return true;
+	    return tmp->value().is_defined();
       }
 
       if (const NetECReal*rtmp = dynamic_cast<const NetECReal*>(expr)) {
@@ -1530,8 +1532,8 @@ bool evaluate_index_prefix(Design*des, NetScope*scope,
 	    assert(icur != indices.end());
 	    if (icur->sel != index_component_t::SEL_BIT) {
 		  cerr << icur->msb->get_fileline() << ": error: "
-			"All but the final index in a chain of indices must be "
-			"a single value, not a range." << endl;
+		          "All but the final index in a chain of indices must "
+		          "be a single value, not a range." << endl;
 		  des->errors += 1;
 		  return false;
 	    }
@@ -1540,7 +1542,12 @@ bool evaluate_index_prefix(Design*des, NetScope*scope,
 	    long tmp;
 	    if (texpr == 0 || !eval_as_long(tmp, texpr)) {
 		  cerr << icur->msb->get_fileline() << ": error: "
-			"Array index expressions must be constant here." << endl;
+		          "All but the final index in a chain of indices must "
+		          "be a constant with no unknown or high-Z bits."
+		       << endl;
+		  cerr << icur->msb->get_fileline() << ":      : "
+			  "This index expressions violate the rule: "
+		       << *icur->msb << endl;
 		  des->errors += 1;
 		  return false;
 	    }
@@ -1622,7 +1629,7 @@ NetExpr*collapse_array_indices(Design*des, NetScope*scope, const NetNet*net,
 {
       list<long>prefix_indices;
       bool rc = evaluate_index_prefix(des, scope, prefix_indices, indices);
-      assert(rc);
+      if (! rc) return nullptr;
 
       const index_component_t&back_index = indices.back();
       assert(back_index.sel == index_component_t::SEL_BIT);

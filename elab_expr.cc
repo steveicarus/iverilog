@@ -1674,21 +1674,30 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	    PExpr *pexpr = parms_[1].parm;
 	    if (pexpr == 0) {
 		  cerr << get_fileline() << ": error: "
-		       << "Missing $ivlh_to_unsigned width." << endl;
+		       << "The width is missing for " << name << "()." << endl;
+		  des->errors += 1;
 		  return 0;
 	    }
 
 	    const NetExpr*nexpr = elab_and_eval(des, scope, pexpr, -1, true);
 	    if (nexpr == 0) {
 		  cerr << get_fileline() << ": error: "
-		       << "Unable to evaluate " << name
-		       << " width argument: " << *pexpr << endl;
+		       << "Unable to evaluate width argument for " << name
+		       << "(): " << *pexpr << endl;
+		  des->errors += 1;
 		  return 0;
 	    }
 
 	    long value = 0;
 	    bool rc = eval_as_long(value, nexpr);
-	    ivl_assert(*this, rc && value>=0);
+	    if (! rc || value < 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "The width argument for " << name
+		       << "() must be defined and greater than or equal to zero, given: "
+		       << *pexpr << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
 
 	      // The argument width is self-determined and doesn't
 	      // affect the result width.
@@ -2756,7 +2765,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		 << "Unpacked structures not supported here."
 		 << endl;
 	    des->errors += 1;
-	    return 0;
+	    return nullptr;
       }
 
 	// These make up the "part" select that is the equivilent of
@@ -2796,7 +2805,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		       << net->name()
 		       << "." << completed_path << endl;
 		  des->errors += 1;
-		  return 0;
+		  return nullptr;
 	    }
 	    member_type = member->net_type;
 	    if (debug_elaborate) {
@@ -2837,13 +2846,13 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 			      cerr << li->get_fileline() << ": error: "
 				   << "Too many index expressions for enum member." << endl;
 			      des->errors += 1;
-			      return 0;
+			      return nullptr;
 			}
 
 			long tail_off = 0;
 			unsigned long tail_wid = 0;
 			bool rc = calculate_part(li, des, scope, member_comp.index.back(), tail_off, tail_wid);
-			if (! rc) return 0;
+			if (! rc) return nullptr;
 
 			off += tail_off;
 			use_width = tail_wid;
@@ -2882,7 +2891,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 			      cerr << li->get_fileline() << ": error: "
 				   << "Too many index expressions for member." << endl;
 			      des->errors += 1;
-			      return 0;
+			      return nullptr;
 			}
 
 			  // Evaluate all but the last index expression, into prefix_indices.
@@ -2900,7 +2909,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 			long tail_off = 0;
 			unsigned long tail_wid = 0;
 			rc = calculate_part(li, des, scope, member_comp.index.back(), tail_off, tail_wid);
-			if (! rc) return 0;
+			if (! rc) return nullptr;
 
 			if (debug_elaborate) {
 			      cerr << li->get_fileline() << ": check_for_struct_member: "
@@ -2962,7 +2971,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 			     << "Too many index expressions for member "
 			     << member_name << "." << endl;
 			des->errors += 1;
-			return 0;
+			return nullptr;
 		  }
 
 		    // Evaluate all but the last index expression, into prefix_indices.
@@ -2978,7 +2987,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 			     << "Array index expressions for member " << member_name
 			     << " must be constant here." << endl;
 			des->errors += 1;
-			return 0;
+			return nullptr;
 		  }
 
 		  delete texpr;
