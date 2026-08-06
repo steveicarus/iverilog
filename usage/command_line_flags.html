@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en" data-accent-color="violet" data-content_root="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>iverilog Command Line Flags - Icarus Verilog documentation</title><link rel="shortcut icon" href="../_static/favicon.ico"/><link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Command File Format" href="command_files.html" /><link rel="prev" title="Simulation Using Icarus Verilog" href="simulation.html" /><script>
+    function setColorMode(t){let e=document.documentElement;e.setAttribute("data-color-mode",t);let a=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,s=t;"auto"===t&&(s=a?"dark":"light"),"light"===s?(e.classList.remove("dark"),e.classList.add("light")):(e.classList.remove("light"),e.classList.add("dark"))}
+    setColorMode(localStorage._theme||"auto");
+  </script><link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=ad592e98" />
+    <link rel="stylesheet" type="text/css" href="../_static/shibuya.css?v=44020203" />
+    <link media="print" rel="stylesheet" type="text/css" href="../_static/print.css?v=20ff2c19" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sy-f-text: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+  --sy-f-heading: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+}
+</style>
+    <meta property="og:type" content="website"/><meta property="og:title" content="iverilog Command Line Flags"/>
+    <meta name="twitter:card" content="summary"/>
+  </head>
+<body><div class="sy-head">
+  <div class="sy-head-blur"></div>
+  <div class="sy-head-inner sy-container mx-auto">
+    <a class="sy-head-brand" href="../index.html">
+      
+      
+      <strong>Icarus Verilog</strong>
+    </a>
+    <div class="sy-head-nav" id="head-nav">
+      <nav class="sy-head-links"></nav>
+      <div class="sy-head-extra flex items-center print:hidden"><form class="searchbox flex items-center" action="../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <kbd>/</kbd>
+</form><div class="sy-head-socials">
+  <a href="https://github.com/steveicarus/iverilog" aria-label="GitHub">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </a></div></div>
+    </div>
+    <div class="sy-head-actions flex items-center shrink-0 print:hidden"><button class="js-theme theme-switch flex items-center"
+data-aria-auto="Switch to light color mode"
+data-aria-light="Switch to dark color mode"
+data-aria-dark="Switch to auto color mode">
+<i class="i-lucide theme-icon"></i>
+</button><button class="md:hidden flex items-center js-menu" aria-label="Menu" type="button" aria-controls="head-nav" aria-expanded="false">
+        <div class="hamburger">
+          <span class="hamburger_1"></span>
+          <span class="hamburger_2"></span>
+          <span class="hamburger_3"></span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+<div class="sy-page sy-container flex mx-auto">
+  <aside id="lside" class="sy-lside md:w-72 md:shrink-0 print:hidden">
+    <div class="sy-lside-inner md:sticky">
+      <div class="sy-scrollbar p-6">
+        <div class="globaltoc" data-expand-depth="0"><p class="caption" role="heading" aria-level="3"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../releases/index.html">Icarus Verilog Release Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../releases/v13-0-release-note.html">🎉 Release V13.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../releases/v13-0-release-note.html#major-changes-in-v13">🔄 Major Changes in V13</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="waveform_viewer.html">Viewing Waveforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-vvp.html">The vvp Code Generator (-tvvp)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-stub.html">The stub Code Generator (-tstub)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-null.html">The null Code Generator (-tnull)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-vhdl.html">The VHDL Code Generator (-tvhdl)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-vlog95.html">The Verilog ‘95 Code Generator (-tvlog95)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-pcb.html">The PCB Code Generator (-tpcb)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-fpga.html">The FPGA Code Generator (-tfpga)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-pal.html">The PAL Code Generator (-tpal)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-sizer.html">The sizer Code Analyzer (-tsizer)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-verilog.html">The Verilog Code Generator (-tverilog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-blif.html">The BLIF Code Generator (-tblif)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/getting_started.html">Getting Started as a Contributor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/guide/index.html">Developer Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/ivl/index.html">IVL - The Core Compiler</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/netlist.html">Netlist Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/attributes.html">Icarus Verilog Attributes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/ivl_target.html">Loadable Target API (ivl_target)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/lpm.html">What Is LPM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/t-dll.html">Loadable Targets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/vvp/index.html">VVP - Verilog Virtual Processor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/vvp.html">VVP Simulation Engine</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/opcodes.html">Executable Instruction Opcodes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/vpi.html">VPI Within VVP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/vthread.html">Thread Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/debug.html">Debug Aids For VVP</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/tgt-vvp/tgt-vvp.html">The VVP Target</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/vpi/index.html">VPI in Icarus Verilog</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vpi/vpi.html">VPI Modules in Icarus Verilog</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vpi/va_math.html">Verilog-A math library</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/cadpli/cadpli.html">Cadence PLI1 Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/misc/index.html">Miscellaneous</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/misc/ieee1364-notes.html">IEEE1364 Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/misc/swift.html">Swift Model Support (Preliminary)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/misc/xilinx-hint.html">Xilinx Hint</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="lside-overlay js-menu" role="button" aria-label="Close left sidebar" aria-controls="lside" aria-expanded="false"></div>
+  <aside id="rside" class="sy-rside pb-3 w-64 shrink-0 order-last">
+    <button class="rside-close js-menu xl:hidden" aria-label="Close Table of Contents" type="button" aria-controls="rside" aria-expanded="false">
+      <i class="i-lucide close"></i>
+    </button>
+    <div class="sy-scrollbar sy-rside-inner px-6 xl:top-16 xl:sticky xl:pl-0 pt-6 pb-4"><div class="localtoc"><h3>On this page</h3><ul>
+<li><a class="reference internal" href="#general">General</a></li>
+<li><a class="reference internal" href="#preprocessor-flags">Preprocessor Flags</a></li>
+<li><a class="reference internal" href="#elaboration-flags">Elaboration Flags</a></li>
+<li><a class="reference internal" href="#target-flags">Target Flags</a></li>
+</ul>
+</div><a class="js-repo-stats repo-stats flex items-center" href="https://github.com/steveicarus/iverilog"
+  data-type="github" data-user="steveicarus" data-repo="iverilog">
+  <span class="w-8 flex items-center justify-around shrink-0 text-3xl">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </span>
+  <span class="flex-grow px-2 break-all">
+    
+    
+      <span>iverilog</span>
+    
+    <span class="flex text-sm repo-stats-count">
+      <span class="flex items-center pr-3">
+        <iconify-icon icon="lucide:star"></iconify-icon>
+        <strong class="js-repo-stars ml-1">0</strong>
+      </span>
+      <span class="flex items-center">
+        <iconify-icon icon="lucide:git-fork"></iconify-icon>
+        <strong class="js-repo-forks ml-1">0</strong>
+      </span>
+    </span>
+  </span>
+</a><div class="edit-this-page">
+  <a href="https://github.com/steveicarus/iverilog/blob/master/Documentation/usage/command_line_flags.rst">Edit this page</a>
+</div><div id="ethical-ad-placement" data-ea-publisher="readthedocs"></div></div>
+  </aside>
+  <div class="rside-overlay js-menu" role="button" aria-label="Close Table of Contents" aria-controls="rside" aria-expanded="false"></div>
+  <main class="sy-main w-full max-sm:max-w-full print:pt-6">
+<div class="sy-breadcrumbs" role="navigation">
+  <div class="sy-breadcrumbs-inner flex items-center">
+    <div class="md:hidden mr-3">
+      <button class="js-menu" aria-label="Menu" type="button" aria-controls="lside" aria-expanded="false">
+        <i class="i-lucide menu"></i>
+      </button>
+    </div>
+    <ol class="flex-1" itemscope itemtype="https://schema.org/BreadcrumbList"><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../index.html"><span itemprop="name">Icarus Verilog</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="1" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="index.html"><span itemprop="name">Icarus Verilog Usage</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="2" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <strong itemprop="name">iverilog Command Line Flags</strong>
+        <meta itemprop="position" content="3" />
+      </li></ol>
+    <div class="xl:hidden ml-1">
+      <button class="js-menu" aria-label="Show table of contents" type="button" aria-controls="rside"
+        aria-expanded="false">
+        <i class="i-lucide outdent"></i>
+      </button>
+    </div>
+  </div>
+</div><div class="flex flex-col break-words justify-between">
+      <div class="relative min-w-0 max-w-6xl px-6 pb-6 pt-8 xl:px-12">
+  <div class="copy-page-wrapper relative pb-4 lg:absolute lg:top-8 lg:right-6 xl:right-12">
+  <div id="copy-page-trigger">
+    <button
+      type="button"
+      class="js-copy px-3 py-1 inline-flex items-center gap-1"
+      data-url="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/command_line_flags.rst.txt"
+    >
+      <i class="i-lucide" data-icon="copy"></i>
+      <span>Copy page</span>
+    </button>
+    <button class="js-menu px-2 py-1" type="button" aria-label="More actions"
+      aria-haspopup="menu" aria-expanded="false" aria-controls="copy-page-content">
+      <i class="i-lucide chevron-down"></i>
+    </button>
+  </div>
+  <div id="copy-page-content" role="menu" aria-orientation="vertical" aria-hidden="true">
+    <div role="presentation">
+      <div class="flex flex-col" role="group">
+        <button class="js-copy" type="button" role="menuitem"
+          data-url="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/command_line_flags.rst.txt">
+          <span class="iconify-icon">
+            <i class="i-lucide" data-icon="copy"></i>
+          </span>
+          <span>Copy page</span>
+        </button>
+        <a role="menuitem" href="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/command_line_flags.rst.txt" target="_blank" rel="nofollow"><iconify-icon icon="bi:code-slash"></iconify-icon>
+            <span>View Source</span></a><a role="menuitem" href="https://chatgpt.com/?hints=search&q=Read%20https%3A//raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/command_line_flags.rst.txt%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:openai"></iconify-icon>
+          <span>Open in ChatGPT</span>
+        </a><a role="menuitem" href="https://claude.ai/new?q=Read%20https%3A//raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/command_line_flags.rst.txt%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:claude"></iconify-icon>
+          <span>Open in Claude</span>
+        </a></div>
+    </div>
+  </div>
+</div><article class="yue" role="main">
+          <section id="iverilog-command-line-flags">
+<h1>iverilog Command Line Flags<a class="headerlink" href="#iverilog-command-line-flags" title="Link to this heading">¶</a></h1>
+<p>The iverilog command is the compiler/driver that takes the Verilog input and
+generates the output format, whether the simulation file or synthesis
+results. This information is at least summarized in the iverilog man page
+distributed in typical installations, but here we try to include more detail.</p>
+<section id="general">
+<h2>General<a class="headerlink" href="#general" title="Link to this heading">¶</a></h2>
+<p>These flags affect the general behavior of the compiler.</p>
+<ul>
+<li><p>-c &lt;cmdfile&gt;</p>
+<p>This flag selects the command file to use. The command file is an
+alternative to writing a long command line with a lot of file names and
+compiler flags. See the Command File Format page for more information.</p>
+</li>
+<li><p>-d &lt;flag&gt;</p>
+<p>Enable compiler debug output. These are aids for debugging Icarus Verilog,
+and this flag is not commonly used.
+The flag is one of these debug classes:</p>
+<ul class="simple">
+<li><p>scope</p></li>
+<li><p>eval_tree</p></li>
+<li><p>elaborate</p></li>
+<li><p>synth2</p></li>
+</ul>
+</li>
+<li><p>-g &lt;generation flag&gt;
+the generation is the compiler language, and specifies the language and
+extensions to use during the compile. The language level can be selected
+by a major level selector, and by controlling various features. Various
+“-g” flags can be compined. For example, to get Verilog 2001 without
+specify supoprt, use “-g2001 -gno-specify”.</p>
+<p>The supported flags are:</p>
+<ul>
+<li><p>1995</p>
+<p>This flag enables the IEEE1364-1995 standard.</p>
+</li>
+<li><p>2001</p>
+<p>This flag enables the IEEE1364-2001 standard.</p>
+</li>
+<li><p>2001-noconfig</p>
+<p>This flag enables the IEEE1364-2001 standard with config file support
+disabled. This eliminates the config file keywords from the language and
+so helps some programs written to older 2001 support compile.</p>
+</li>
+<li><p>2005
+This flag enables the IEEE1364-2005 standard. This is default enabled
+after v0.9.</p></li>
+<li><p>2009
+This flag enables the IEEE1800-2009 standard, which includes
+SystemVerilog. The SystemVerilog support is not present in v0.9 and
+earlier. It is new to git master as of November 2009. Actual SystemVerilog
+support is ongoing.</p></li>
+<li><p>2012</p>
+<p>This flag enables the IEEE1800-2012 standard, which includes
+SystemVerilog.</p>
+</li>
+<li><p>2017</p>
+<p>This flag enables the IEEE1800-2017 standard, which includes
+SystemVerilog.</p>
+</li>
+<li><p>2023</p>
+<p>This flag enables the IEEE1800-2023 standard, which includes
+SystemVerilog.</p>
+</li>
+<li><p>verilog-ams</p>
+<p>This flag enables Verilog-AMS features that are supported by Icarus
+Verilog. (This is new as of 5 May 2008.)</p>
+</li>
+<li><p>assertions/supported-assertions/no-assertions</p>
+<p>Enable or disable SystemVerilog assertions. When enabled, assertion
+statements are elaborated. When disabled, assertion statements are parsed
+but ignored. The supported-assertions option only enables assertions that
+are currently supported by the compiler.</p>
+</li>
+<li><p>specify/no-specify</p>
+<p>Enable or disable support for specify block timing controls. When
+disabled, specify blocks are parsed but ignored. When enabled, specify
+blocks cause timing path and timing checks to be active.</p>
+</li>
+<li><p>std-include/no-std-include</p>
+<p>Enable or disable the search of a standard installation include directory
+after all other explicit include directories. This standard include
+directory is a convenient place to install standard header files that a
+Verilog program may include.</p>
+</li>
+<li><p>relative-include/no-relative-include</p>
+<p>Enable or disable adding the local files directory to the beginning of the
+include file search path. This allows files to be included relative to the
+current file.</p>
+</li>
+<li><p>xtypes/no-xtypes</p>
+<p>Enable or disable support for extended types. Enabling types allows for
+new types and type syntax that are Icarus Verilog extensions.</p>
+</li>
+<li><p>io-range-error/no-io-range-error</p>
+<p>When enabled the range for a port and any associated net declaration must
+match exactly. When disabled a scalar port is allowed to have a net
+declaration with a range (obsolete usage). A warning message will be
+printed for this combination. All other permutations are still considered
+an error.</p>
+</li>
+<li><p>strict-ca-eval/no-strict-ca-eval</p>
+<p>The standard requires that if any input to a continuous assignment
+expression changes value, the entire expression is re-evaluated. By
+default, parts of the expression that do not depend on the changed input
+value(s) are not re-evaluated. If an expression contains a call to a
+function that doesn’t depend solely on its input values or that has side
+effects, the resulting behavior will differ from that required by the
+standard. Enabling strict-ca-eval will force standard compliant behavior
+(with some loss in performance).</p>
+</li>
+<li><p>strict-expr-width/no-strict-expr-width</p>
+<p>Enable or disable strict compliance with the standard rules for
+determining expression bit lengths. When disabled, the RHS of a parameter
+assignment is evaluated as a lossless expression, as is any expression
+containing an unsized constant number, and unsized constant numbers are
+not truncated to integer width.</p>
+</li>
+<li><p>strict-declaration/no-strict-declaration</p></li>
+<li><p>strict-net-var-declaration/no-strict-net-var-declaration</p></li>
+<li><p>strict-parameter-declaration/no-strict-parameter-declaration</p>
+<p>The standards require that nets, variables, and parameters must be
+declared lexically before they are used.  Using -gno-strict-declaration
+will allow using a data object before declaration, with a warning. The
+warning can be suppressed with -Wno-declaration-after-use.  The option
+can be applied for nets and variables and for parameters separately.</p>
+</li>
+<li><p>shared-loop-index/no-shared-loop-index</p>
+<p>Enable or disable the exclusion of for-loop control variables from
+implicit event_expression lists. When enabled, if a for-loop control
+variable (loop index) is only used inside the for-loop statement, the
+compiler will not include it in an implicit event_expression list it
+calculates for that statement or any enclosing statement. This allows the
+same control variable to be used in multiple processes without risk of
+entering an infinite loop caused by each process triggering all other
+processes that use the same variable. For strict compliance with the
+standards, this behaviour should be disabled.</p>
+</li>
+</ul>
+</li>
+<li><p>-i</p>
+<p>Ignore missing modules. Normally it is an error if a module instantiation
+refers to an undefined module. This option causes the compiler to skip over
+that instantiation. It will also stop the compiler returning an error if
+there are no top level modules. This allows the compiler to be used to check
+incomplete designs for errors.</p>
+<p>NOTE: The “-i” flag was added in v11.0.</p>
+</li>
+<li><p>-L &lt;path&gt;</p>
+<p>Add the specified directory to the path list used to locate VPI modules. The
+default path includes only the install directory for the system.vpi module,
+but this flag can add other directories. Multiple paths are allowed, and the
+paths will be searched in order.</p>
+<p>NOTE: The “-L” flag was added in v11.0.</p>
+</li>
+<li><p>-l &lt;path&gt;</p>
+<p>Add the specified file to the list of source files to be compiled, but mark
+it as a library file. All modules contained within that file will be treated
+as library modules, and only elaborated if they are instantiated by other
+modules in the design.</p>
+<p>NOTE: The “-l” flag is new as of 2 October 2016. It will become available in
+releases and snapshots made after that date.</p>
+</li>
+<li><p>-M&lt;mode&gt;=&lt;path&gt;</p>
+<p>Write into the file specified by path a list of files that contribute to the
+compilation of the design.</p>
+<p>If _mode_ is <em>all</em> or <em>prefix</em>, this includes files that are included by
+include directives and files that are automatically loaded by library
+support as well as the files explicitly specified by the user.</p>
+<p>If _mode_ is <em>include</em>, only files that are included by include directives
+are listed.</p>
+<p>If _mode_ is <em>module</em>, only files that are specified by the user or that are
+automatically loaded by library support are listed. The output is one file
+name per line, with no leading or trailing space.</p>
+<p>If _mode_ is <em>prefix</em>, files that are included by include directives are
+prefixed by “I “ and other files are prefixed by “M “.</p>
+</li>
+<li><p>-m&lt;module&gt;</p>
+<p>Add this module to the list of VPI modules to be loaded by the
+simulation. Many modules can be specified, and all will be loaded, in the
+order specified. The system module is implicit and always included (and
+loaded last).</p>
+<p>If the specified name includes at least one directory character, it is
+assumed to be prefixed by the path to the module, otherwise the module is
+searched for in the paths specified by preceding -L options, and if not
+found there, in the iverilog base directory.</p>
+<p>NOTE: The “-m” flag was added in v11.0.</p>
+</li>
+<li><p>-o &lt;path&gt;</p>
+<p>Specify the output file. The &lt;path&gt; is the name of the file to hold the
+output. The default is “a.out”.</p>
+</li>
+<li><p>-S</p>
+<p>Activate synthesis. This flag tells the compiler to do what synthesis it can
+do before calling the code generator. This flag is rarely used explicitly,
+and certain code generators will implicitly enable this flag.</p>
+</li>
+<li><p>-u</p>
+<p>Treat each source file as a separate compilation unit (as defined in
+SystemVerilog). If compiling for an IEEE1364 generation, this will just
+reset all compiler directives (including macro definitions) before each new
+file is processed.</p>
+<p>NOTE: The “-u” flag was added in v11.0.</p>
+</li>
+<li><p>-v</p>
+<p>Be verbose. Print copyright information, progress messages, and some timing
+information about various compilation phases.</p>
+<p>(New in snapshots after 2014-12-16) If the selected target is vvp, the -v
+switch is appended to the shebang line in the compiler output file, so
+directly executing the compiler output file will turn on verbose messages in
+vvp. This extra verbosity can be avoided by using the vvp command to
+indirectly execute the compiler output file.</p>
+</li>
+<li><p>-V</p>
+<p>Print the version information. This skips all compilation. Just print the
+version information, including version details for the various components of
+the compiler.</p>
+</li>
+<li><p>-R</p>
+<p>Print the runtime paths of the compiler. This can be useful to find, e.g.,
+the include path of vpi_user.h.</p>
+</li>
+<li><p>-W&lt;warning class&gt;</p>
+<p>Enable/disable warnings. All the warning types (other then “all”) can be
+prefixed with no- to disable that warning.</p>
+<ul>
+<li><p>all</p>
+<p>This enables almost all of the available warnings. More specifically, it
+enables these warnings:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">-Wanachronisms
+</span><span data-line="2">-Wimplicit
+</span><span data-line="3">-Wimplicit-dimensions
+</span><span data-line="4">-Wdeclaration-after-use
+</span><span data-line="5">-Wmacro-replacement
+</span><span data-line="6">-Wportbind
+</span><span data-line="7">-Wselect-range
+</span><span data-line="8">-Wtimescale
+</span><span data-line="9">-Wsensitivity-entire-array
+</span></pre></div>
+</div>
+</li>
+<li><p>anachronisms</p>
+<p>This enables warnings for use of features that have been deprecated or
+removed in the selected generation of the Verilog language.</p>
+</li>
+<li><p>implicit</p>
+<p>This enables warnings for creation of implicit declarations. For example,
+if a scalar wire X is used but not declared in the Verilog source, this
+will print a warning at its first use.</p>
+</li>
+<li><p>implicit-dimensions</p>
+<p>This enables warnings for the case where a port declaration or a var/net
+declaration for the same name is missing dimensions. Normally, Verilog
+allows you to do this (the undecorated declaration gets its dimensions
+form the decorated declaration) but this is no longer common, and some
+other tools (notable Xilix synthesizers) do not handle this correctly.</p>
+<p>This flag is supported in release 10.1 or master branch snapshots after
+2016-02-06.</p>
+</li>
+<li><p>declaration-after-use</p>
+<p>This enables warnings for declarations after use, when those are not
+flagged as errors (enabled by default). Use no-declaration-after-use
+to disable this.</p>
+<p>This flag was added in version 14.0 or later (and is in the master branch
+as of 2026-03-21).</p>
+</li>
+<li><p>macro-redefinition</p>
+<p>This enables warnings when a macro is redefined, even if the macro text
+remains the same.</p>
+<p>NOTE: The “macro-redefinition” flag was added in v11.0.</p>
+</li>
+<li><p>macro-replacement</p>
+<p>This enables warnings when a macro is redefined and the macro text
+changes. Use no-macro-redefinition to disable this,</p>
+<p>NOTE: The “macro-replacement” flag was added in v11.0.</p>
+</li>
+<li><p>portbind</p>
+<p>This enables warnings for ports of module instantiations that are not
+connected properly, but probably should be. Dangling input ports, for
+example, will generate a warning.</p>
+</li>
+<li><p>select-range</p>
+<p>This enables warnings for constant out-of-bound selects. This includes
+partial or fully out-of-bound select as well as a select containing a ‘bx
+or ‘bz in the index.</p>
+</li>
+<li><p>timescale</p>
+<p>This enables warnings for inconsistent use of the timescale directive. It
+detects if some modules have no timescale, or if modules inherit timescale
+from another file. Both probably mean that timescales are inconsistent,
+and simulation timing can be confusing and dependent on compilation order.</p>
+</li>
+<li><p>infloop</p>
+<p>This enables warnings for always statements that may have runtime infinite
+loops (i.e. has paths with zero or no delay). This class of warnings is
+not included in -Wall and hence does not have a no- variant. A fatal error
+message will always be printed when the compiler can determine that there
+will definitely be an infinite loop (all paths have no or zero delay).</p>
+<p>When you suspect an always statement is producing a runtine infinite loop,
+use this flag to find the always statements that need to have their logic
+verified. it is expected that many of the warnings will be false
+positives, since the code treats the value of all variables and signals as
+indeterninite.</p>
+</li>
+<li><p>sensitivity-entire-vector</p>
+<p>This enables warnings for when a part select with an “always &#64;*” statement
+results in the entire vector being added to the implicit sensitivity
+list. Although this behavior is prescribed by the IEEE standard, it is not
+what might be expected and can have performance implications if the vector
+is large.</p>
+</li>
+<li><p>sensitivity-entire-array</p>
+<p>This enables warnings for when a word select with an “always &#64;*” statement
+results in the entire array being added to the implicit sensitivity
+list. Although this behavior is prescribed by the IEEE standard, it is not
+what might be expected and can have performance implications if the array
+is large.</p>
+</li>
+<li><p>floating-nets</p>
+<p>This enables warnings for nets that are present but have no drivers.</p>
+<p>This flag was added in version 11.0 or later (and is in the master branch
+as of 2015-10-01).</p>
+</li>
+</ul>
+</li>
+<li><p>-y&lt;libdir&gt;</p>
+<p>Append the directory to the library module search path. When the compiler
+finds an undefined module, it looks in these directories for files with the
+right name.</p>
+</li>
+<li><p>-Y&lt;suf&gt;</p>
+<p>Appends suf to the list of file extensions that are used to resolve an
+undefined module to a file name. Should be specified before any -y flag. For
+example, this command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">% iverilog -Y .sv -y sources src.v
+</span></pre></div>
+</div>
+<p>will try to resolve any undefined module m by looking into the directory
+sources and checking if there exist files named m.v or m.sv.</p>
+</li>
+</ul>
+</section>
+<section id="preprocessor-flags">
+<h2>Preprocessor Flags<a class="headerlink" href="#preprocessor-flags" title="Link to this heading">¶</a></h2>
+<p>These flags control the behavior of the preprocessor. They are similar to
+flags for the typical “C” compiler, so C programmers will find them familiar.</p>
+<ul>
+<li><p>-E</p>
+<p>This flag is special in that it tells the compiler to only run the
+preprocessor. This is useful for example as a way to resolve preprocessing
+for other tools. For example, this command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">% iverilog -E -ofoo.v -DKEY=10 src1.v src2.v
+</span></pre></div>
+</div>
+<p>runs the preprocessor on the source files src1.v and src2.v and produces the
+single output file foo.v that has all the preprocessing (including header
+includes and ifdefs) processed.</p>
+</li>
+<li><p>-D&lt;macro&gt;</p>
+<p>Assign a value to the macro name. The format of this flag is one of:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">-Dkey=value
+</span><span data-line="2">-Dkey
+</span></pre></div>
+</div>
+<p>The key is defined to have the given value. If no value is given, then it is
+assumed to be “1”. The above examples are the same as these defines in
+Verilog source:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">`define key value
+</span><span data-line="2">`define key
+</span></pre></div>
+</div>
+</li>
+<li><p>-I&lt;path&gt;</p>
+<p>Append directory &lt;path&gt; to list of directories searched for Verilog include
+files. The -I switch may be used many times to specify several directories
+to search, the directories are searched in the order they appear on the
+command line.</p>
+</li>
+</ul>
+</section>
+<section id="elaboration-flags">
+<h2>Elaboration Flags<a class="headerlink" href="#elaboration-flags" title="Link to this heading">¶</a></h2>
+<p>These are flags that pass information to the elaboration steps.</p>
+<ul>
+<li><p>-P&lt;symbol&gt;=&lt;value&gt;</p>
+<p>Define a parameter using the defparam behavior to override a parameter
+values. This can only be used for parameters of root module instances.</p>
+</li>
+<li><p>-s &lt;topmodule&gt;</p>
+<p>Specify the top level module to elaborate. Icarus Verilog will by default
+choose modules that are not instantiated in any other modules, but sometimes
+that is not sufficient, or instantiates too many modules. If the user
+specifies one or more root modules with “-s” flags, then they will be used
+as root modules instead.</p>
+</li>
+<li><p>-Tmin, -Ttyp, -Tmax</p>
+<p>Select the timings to use. The Verilog language allows many timings to be
+specified as three numbers, min:typical:max, but for simulation you need to
+choose which set to use. The “-Tmin” flag tells the compiler to at
+elaboration time choose “min” times. The default is “-Ttyp”.</p>
+</li>
+</ul>
+</section>
+<section id="target-flags">
+<h2>Target Flags<a class="headerlink" href="#target-flags" title="Link to this heading">¶</a></h2>
+</section>
+</section>
+
+        </article><button class="back-to-top" type="button">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+  </svg>
+  <span>Back to top</span>
+</button><div class="navigation flex print:hidden"><div class="navigation-prev">
+    <a href="simulation.html">
+      <i class="i-lucide chevron-left"></i>
+      <div class="page-info">
+        <span>Previous</span><div class="title">Simulation Using Icarus Verilog</div></div>
+    </a>
+  </div><div class="navigation-next">
+    <a href="command_files.html">
+      <div class="page-info">
+        <span>Next</span>
+        <div class="title">Command File Format</div>
+      </div>
+      <i class="i-lucide chevron-right"></i>
+    </a>
+  </div></div></div>
+    </div>
+  </main>
+</div>
+<footer class="sy-foot">
+  <div class="sy-foot-inner sy-container mx-auto">
+    <div class="sy-foot-reserved md:flex justify-between items-center">
+      <div class="sy-foot-copyright"><p>2024-2026, Stephen Williams</p>
+  
+  <p>
+    Made with
+    
+    <a href="https://www.sphinx-doc.org/">Sphinx</a> and
+    
+    <a href="https://shibuya.lepture.com">Shibuya theme</a>.
+  </p>
+</div>
+      <div class="sy-foot-socials">
+<a href="https://github.com/steveicarus/iverilog" aria-label="GitHub">
+  <iconify-icon icon="simple-icons:github"></iconify-icon>
+</a></div>
+    </div>
+  </div>
+</footer>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/shibuya.js?v=cac61aee"></script></body>
+</html>

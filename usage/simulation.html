@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en" data-accent-color="violet" data-content_root="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Simulation Using Icarus Verilog - Icarus Verilog documentation</title><link rel="shortcut icon" href="../_static/favicon.ico"/><link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="iverilog Command Line Flags" href="command_line_flags.html" /><link rel="prev" title="Getting Started With Icarus Verilog" href="getting_started.html" /><script>
+    function setColorMode(t){let e=document.documentElement;e.setAttribute("data-color-mode",t);let a=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,s=t;"auto"===t&&(s=a?"dark":"light"),"light"===s?(e.classList.remove("dark"),e.classList.add("light")):(e.classList.remove("light"),e.classList.add("dark"))}
+    setColorMode(localStorage._theme||"auto");
+  </script><link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=ad592e98" />
+    <link rel="stylesheet" type="text/css" href="../_static/shibuya.css?v=44020203" />
+    <link media="print" rel="stylesheet" type="text/css" href="../_static/print.css?v=20ff2c19" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sy-f-text: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+  --sy-f-heading: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+}
+</style>
+    <meta property="og:type" content="website"/><meta property="og:title" content="Simulation Using Icarus Verilog"/>
+    <meta name="twitter:card" content="summary"/>
+  </head>
+<body><div class="sy-head">
+  <div class="sy-head-blur"></div>
+  <div class="sy-head-inner sy-container mx-auto">
+    <a class="sy-head-brand" href="../index.html">
+      
+      
+      <strong>Icarus Verilog</strong>
+    </a>
+    <div class="sy-head-nav" id="head-nav">
+      <nav class="sy-head-links"></nav>
+      <div class="sy-head-extra flex items-center print:hidden"><form class="searchbox flex items-center" action="../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <kbd>/</kbd>
+</form><div class="sy-head-socials">
+  <a href="https://github.com/steveicarus/iverilog" aria-label="GitHub">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </a></div></div>
+    </div>
+    <div class="sy-head-actions flex items-center shrink-0 print:hidden"><button class="js-theme theme-switch flex items-center"
+data-aria-auto="Switch to light color mode"
+data-aria-light="Switch to dark color mode"
+data-aria-dark="Switch to auto color mode">
+<i class="i-lucide theme-icon"></i>
+</button><button class="md:hidden flex items-center js-menu" aria-label="Menu" type="button" aria-controls="head-nav" aria-expanded="false">
+        <div class="hamburger">
+          <span class="hamburger_1"></span>
+          <span class="hamburger_2"></span>
+          <span class="hamburger_3"></span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+<div class="sy-page sy-container flex mx-auto">
+  <aside id="lside" class="sy-lside md:w-72 md:shrink-0 print:hidden">
+    <div class="sy-lside-inner md:sticky">
+      <div class="sy-scrollbar p-6">
+        <div class="globaltoc" data-expand-depth="0"><p class="caption" role="heading" aria-level="3"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../releases/index.html">Icarus Verilog Release Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../releases/v13-0-release-note.html">🎉 Release V13.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../releases/v13-0-release-note.html#major-changes-in-v13">🔄 Major Changes in V13</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="waveform_viewer.html">Viewing Waveforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-vvp.html">The vvp Code Generator (-tvvp)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-stub.html">The stub Code Generator (-tstub)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-null.html">The null Code Generator (-tnull)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-vhdl.html">The VHDL Code Generator (-tvhdl)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-vlog95.html">The Verilog ‘95 Code Generator (-tvlog95)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-pcb.html">The PCB Code Generator (-tpcb)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-fpga.html">The FPGA Code Generator (-tfpga)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-pal.html">The PAL Code Generator (-tpal)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-sizer.html">The sizer Code Analyzer (-tsizer)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-verilog.html">The Verilog Code Generator (-tverilog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-blif.html">The BLIF Code Generator (-tblif)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/getting_started.html">Getting Started as a Contributor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/guide/index.html">Developer Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/ivl/index.html">IVL - The Core Compiler</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/netlist.html">Netlist Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/attributes.html">Icarus Verilog Attributes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/ivl_target.html">Loadable Target API (ivl_target)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/lpm.html">What Is LPM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/t-dll.html">Loadable Targets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/vvp/index.html">VVP - Verilog Virtual Processor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/vvp.html">VVP Simulation Engine</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/opcodes.html">Executable Instruction Opcodes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/vpi.html">VPI Within VVP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/vthread.html">Thread Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/debug.html">Debug Aids For VVP</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/tgt-vvp/tgt-vvp.html">The VVP Target</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/vpi/index.html">VPI in Icarus Verilog</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vpi/vpi.html">VPI Modules in Icarus Verilog</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vpi/va_math.html">Verilog-A math library</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/cadpli/cadpli.html">Cadence PLI1 Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/misc/index.html">Miscellaneous</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/misc/ieee1364-notes.html">IEEE1364 Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/misc/swift.html">Swift Model Support (Preliminary)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/misc/xilinx-hint.html">Xilinx Hint</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="lside-overlay js-menu" role="button" aria-label="Close left sidebar" aria-controls="lside" aria-expanded="false"></div>
+  <aside id="rside" class="sy-rside pb-3 w-64 shrink-0 order-last">
+    <button class="rside-close js-menu xl:hidden" aria-label="Close Table of Contents" type="button" aria-controls="rside" aria-expanded="false">
+      <i class="i-lucide close"></i>
+    </button>
+    <div class="sy-scrollbar sy-rside-inner px-6 xl:top-16 xl:sticky xl:pl-0 pt-6 pb-4"><div class="localtoc"><h3>On this page</h3><ul>
+<li><a class="reference internal" href="#compilation-and-elaboration">Compilation and Elaboration</a></li>
+<li><a class="reference internal" href="#making-and-using-libraries">Making and Using Libraries</a><ul>
+<li><a class="reference internal" href="#the-macro-preprocessor">The Macro Preprocessor</a></li>
+<li><a class="reference internal" href="#automatic-module-libraries">Automatic Module Libraries</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#advanced-command-files">Advanced Command Files</a></li>
+<li><a class="reference internal" href="#input-data-at-runtime">Input Data at Runtime</a></li>
+</ul>
+</div><a class="js-repo-stats repo-stats flex items-center" href="https://github.com/steveicarus/iverilog"
+  data-type="github" data-user="steveicarus" data-repo="iverilog">
+  <span class="w-8 flex items-center justify-around shrink-0 text-3xl">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </span>
+  <span class="flex-grow px-2 break-all">
+    
+    
+      <span>iverilog</span>
+    
+    <span class="flex text-sm repo-stats-count">
+      <span class="flex items-center pr-3">
+        <iconify-icon icon="lucide:star"></iconify-icon>
+        <strong class="js-repo-stars ml-1">0</strong>
+      </span>
+      <span class="flex items-center">
+        <iconify-icon icon="lucide:git-fork"></iconify-icon>
+        <strong class="js-repo-forks ml-1">0</strong>
+      </span>
+    </span>
+  </span>
+</a><div class="edit-this-page">
+  <a href="https://github.com/steveicarus/iverilog/blob/master/Documentation/usage/simulation.rst">Edit this page</a>
+</div><div id="ethical-ad-placement" data-ea-publisher="readthedocs"></div></div>
+  </aside>
+  <div class="rside-overlay js-menu" role="button" aria-label="Close Table of Contents" aria-controls="rside" aria-expanded="false"></div>
+  <main class="sy-main w-full max-sm:max-w-full print:pt-6">
+<div class="sy-breadcrumbs" role="navigation">
+  <div class="sy-breadcrumbs-inner flex items-center">
+    <div class="md:hidden mr-3">
+      <button class="js-menu" aria-label="Menu" type="button" aria-controls="lside" aria-expanded="false">
+        <i class="i-lucide menu"></i>
+      </button>
+    </div>
+    <ol class="flex-1" itemscope itemtype="https://schema.org/BreadcrumbList"><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../index.html"><span itemprop="name">Icarus Verilog</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="1" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="index.html"><span itemprop="name">Icarus Verilog Usage</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="2" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <strong itemprop="name">Simulation Using Icarus Verilog</strong>
+        <meta itemprop="position" content="3" />
+      </li></ol>
+    <div class="xl:hidden ml-1">
+      <button class="js-menu" aria-label="Show table of contents" type="button" aria-controls="rside"
+        aria-expanded="false">
+        <i class="i-lucide outdent"></i>
+      </button>
+    </div>
+  </div>
+</div><div class="flex flex-col break-words justify-between">
+      <div class="relative min-w-0 max-w-6xl px-6 pb-6 pt-8 xl:px-12">
+  <div class="copy-page-wrapper relative pb-4 lg:absolute lg:top-8 lg:right-6 xl:right-12">
+  <div id="copy-page-trigger">
+    <button
+      type="button"
+      class="js-copy px-3 py-1 inline-flex items-center gap-1"
+      data-url="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/simulation.rst.txt"
+    >
+      <i class="i-lucide" data-icon="copy"></i>
+      <span>Copy page</span>
+    </button>
+    <button class="js-menu px-2 py-1" type="button" aria-label="More actions"
+      aria-haspopup="menu" aria-expanded="false" aria-controls="copy-page-content">
+      <i class="i-lucide chevron-down"></i>
+    </button>
+  </div>
+  <div id="copy-page-content" role="menu" aria-orientation="vertical" aria-hidden="true">
+    <div role="presentation">
+      <div class="flex flex-col" role="group">
+        <button class="js-copy" type="button" role="menuitem"
+          data-url="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/simulation.rst.txt">
+          <span class="iconify-icon">
+            <i class="i-lucide" data-icon="copy"></i>
+          </span>
+          <span>Copy page</span>
+        </button>
+        <a role="menuitem" href="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/simulation.rst.txt" target="_blank" rel="nofollow"><iconify-icon icon="bi:code-slash"></iconify-icon>
+            <span>View Source</span></a><a role="menuitem" href="https://chatgpt.com/?hints=search&q=Read%20https%3A//raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/simulation.rst.txt%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:openai"></iconify-icon>
+          <span>Open in ChatGPT</span>
+        </a><a role="menuitem" href="https://claude.ai/new?q=Read%20https%3A//raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/simulation.rst.txt%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:claude"></iconify-icon>
+          <span>Open in Claude</span>
+        </a></div>
+    </div>
+  </div>
+</div><article class="yue" role="main">
+          <section id="simulation-using-icarus-verilog">
+<h1>Simulation Using Icarus Verilog<a class="headerlink" href="#simulation-using-icarus-verilog" title="Link to this heading">¶</a></h1>
+<p>Simulation is the process of creating models that mimic the behavior of the
+device you are designing (simulation models) and creating models to exercise
+the device (test benches). The simulation model need not reflect any
+understanding of the underlying technology, and the simulator need not know
+that the design is intended for any specific technology.</p>
+<p>The Verilog simulator, in fact, is usually a different program than the
+synthesizer. It may even come from a different vendor. The simulator need not
+know of or generate netlists for the target technology, so it is possible to
+write one simulator that can be used to model designs intended for a wide
+variety of technologies. A synthesizer, on the other hand, does need to know a
+great deal about the target technology in order to generate efficient
+netlists. Synthesizers are often technology specific and come from vendors
+with specialized knowledge, whereas simulators are more general purpose.</p>
+<p>Simulation models and test benches, therefore, can use the full range of
+Verilog features to model the intended design as clearly as possible. This is
+the time to test the algorithms of the design using language that is
+relatively easy for humans to read. The simulator, along with the test bench,
+can test that the clearly written model really does behave as intended, and
+that the intended behavior really does meet expectations.</p>
+<p>The test benches model the world outside the design, so they are rarely
+destined for real hardware. They are written in Verilog simply as a matter of
+convenience, and sometimes they are not written in Verilog at all. The test
+benches are not throw-away code either, as they are used to retest the device
+under test as it is transformed from a simulation model to a synthesizeable
+description.</p>
+<section id="compilation-and-elaboration">
+<h2>Compilation and Elaboration<a class="headerlink" href="#compilation-and-elaboration" title="Link to this heading">¶</a></h2>
+<p>Simulation of a design amounts to compiling and executing a program. The
+Verilog source that represents the simulation model and the test bench is
+compiled into an executable form and executed by a simulation
+engine. Internally, Icarus Verilog divides the compilation of program source
+to an executable form into several steps, and basic understanding of these
+steps helps understand the nature of failures and errors. The first step is
+macro preprocessing, then compilation, elaboration, optional optimizations and
+finally code generation. The boundary between these steps is often blurred,
+but this progression remains a useful model of the compilation process.</p>
+<p>The macro preprocessing step performs textual substitutions of macros defined
+with “`define” statements, textual inclusion with “`include” statements, and
+conditional compilation by “`ifdef” and “`ifndef” statements. The
+macropreprocessor for Icarus Verilog is internally a separate program that can
+be accessed independently by using the “-E” flag to the “iverilog” command,
+like so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">% iverilog -E -o out.v example.v
+</span></pre></div>
+</div>
+<p>This command causes the input Verilog file “example.v” to be preprocessed, and
+the output, a Verilog file without preprocessor statements, written into
+“out.v”. The “`include” and “`ifdef” directives in the input file are interpreted,
+and defined macros substituted, so that the output, a single file, is the same
+Verilog but with the preprocessor directives gone. All the explicitly
+specified source files are also combined by the preprocessor, so that the
+preprocessed result is a single Verilog stream.</p>
+<p>Normally, however, the “-E” flag is not used and the preprocessed Verilog is
+instead sent directly to the next step, the compiler. The compiler core takes
+as input preprocessed Verilog and generates an internal parsed form. The
+parsed form is an internal representation of the Verilog source, in a format
+convenient for further processing, and is not accessible to the user.</p>
+<p>The next step, elaboration, takes the parsed form, chooses the root modules,
+and instantiates (makes <em>instances</em> of) those roots. The root instances may
+contain instances of other modules, which may in turn contain instances of yet
+other modules. The elaboration process creates a hierarchy of module instances
+that ends with primitive gates and statements.</p>
+<p>Note that there is a difference between a module and a module instance. A
+module is a type. It is a description of the contents of module instances that
+have its type. When a module is instantiated within another module, the module
+name identifies the type of the instance, and the instance name identifies the
+specific instance of the module. There can be many instances of any given
+module.</p>
+<p>Root modules are a special case, in that the programmer does not give them
+instance names. Instead, the instance names of root modules are the same as
+the name of the module. This is valid because, due to the nature of the
+Verilog syntax, a module can be a root module only once, so the module name
+itself is a safe instance name.</p>
+<p>Elaboration creates a hierarchy of scopes. Each module instance creates a new
+scope within its parent module, with each root module starting a
+hierarchy. Every module instance in the elaborated program has a unique scope
+path, a hierarchical name, that starts with its root scope and ends with its
+own instance name. Every named object, including variables, parameters, nets
+and gates, also has a hierarchical name that starts with a root scope and ends
+with its own base name. The compiler uses hierarchical names in error messages
+generated during or after elaboration, so that erroneous items can be
+completely identified. These hierarchical names are also used by waveform
+viewers that display waveform output from simulations.</p>
+<p>The elaboration process creates from the parsed form the scope hierarchy
+including the primitive objects within each scope. The elaborated design then
+is optimized to reduce it to a more optimal, but equivalent design. The
+optimization step takes the fully elaborated design and transforms it to an
+equivalent design that is smaller or more efficient. These optimizations are,
+for example, forms of constant propagation and dead code elimination. Useless
+logic is eliminated, and constant expressions are pre-calculated. The
+resulting design behaves as if the optimizations were not performed, but is
+smaller and more efficient. The elimination (and spontaneous creation) of
+gates and statements only affects the programmer when writing VPI modules,
+which through the API have limited access to the structures of the design.</p>
+<p>Finally, the optimized design, which is still in an internal form not
+accessible to users, is passed to a code generator that writes the design into
+an executable form. For simulation, the code generator is selected to generate
+the vvp format–a text format that can be executed by the simulation
+engine. Other code generators may be selected by the Icarus Verilog user, even
+third party code generators, but the vvp code generator is the default for
+simulation purposes.</p>
+</section>
+<section id="making-and-using-libraries">
+<h2>Making and Using Libraries<a class="headerlink" href="#making-and-using-libraries" title="Link to this heading">¶</a></h2>
+<p>Although simple programs may be written into a single source file, this gets
+inconvenient as the designs get larger. Also, writing the entire program into
+a single file makes it difficult for different programs to share common
+code. It therefore makes sense to divide large programs into several source
+files, and to put generally useful source code files somewhere accessible to
+multiple designs.</p>
+<p>Once the program is divided into many files, the compiler needs to be told how
+to find the files of the program. The simplest way to do that is to list the
+source files on the command line or in a command file. This is for example the
+best way to divide up and integrate test bench code with the simulation model
+of the device under test.</p>
+<section id="the-macro-preprocessor">
+<h3>The Macro Preprocessor<a class="headerlink" href="#the-macro-preprocessor" title="Link to this heading">¶</a></h3>
+<p>Another technique is to use the macro preprocessor to include library files
+into a main file. The <cite>include</cite> directive takes the name of a source file to
+include. The preprocessor inserts the entire contents of the included file in
+place of the <cite>include</cite> directive. The preprocessor normally looks in the
+current working directory (the current working directory of the running
+compiler, and not the directory where the source file is located) for the
+included file, but the “-I” switch to “iverilog” can add directories to the
+search locations list.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">% iverilog -I/directory/to/search example.v
+</span></pre></div>
+</div>
+<p>It is common to create include directories shared by a set of programs. The
+preprocessor <cite>include</cite> directive can be used by the individual programs to
+include the source files that it needs.</p>
+<p>The preprocessor method of placing source code into libraries is general
+(arbitrary source code can be placed in the included files) but is static, in
+the sense that the programmer must explicitly include the desired library
+files. The automatic module library is a bit more constrained, but is
+automatic.</p>
+</section>
+<section id="automatic-module-libraries">
+<h3>Automatic Module Libraries<a class="headerlink" href="#automatic-module-libraries" title="Link to this heading">¶</a></h3>
+<p>A common use for libraries is to store module definitions that may be of use
+to a variety of programs. If modules are divided into a single module per
+file, and the files are named appropriately, and the compiler is told where to
+look, then the compiler can automatically locate library files when it finds
+that a module definition is missing.</p>
+<p>For this to work properly, the library files must be Verilog source, they
+should contain a single module definition, and the files must be named after
+the module they contain. For example, if the module “AND2” is a module in the
+library, then it belongs in a file called “AND2.v” and that file contains only
+the “AND2” module. A library, then, is a directory that contains properly
+named and formatted source files.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">% iverilog -y/library/to/search example.v
+</span></pre></div>
+</div>
+<p>The “-y” flag to “iverilog” tells the compiler to look in the specified
+directory for library modules whenever the program instantiates a module that
+is not otherwise defined. The programmer may include several “-y” flags on the
+command line (or in a command file) and the compiler will search each
+directory in order until an appropriate library file is found to resolve the
+module.</p>
+<p>Once a module is defined, either in the program or by reading a library
+module, the loaded definition is used from then on within the program. If the
+module is defined within a program file or within an included file, then the
+included definition is used instead of any library definition. If a module is
+defined in multiple libraries, then the first definition that the compiler
+finds is used, and later definitions are never read.</p>
+<p>Icarus Verilog accesses automatic libraries during elaboration, after it has
+already preprocessed and parsed the non-library source files. Modules in
+libraries are not candidates for root modules, and are not even parsed unless
+they are instantiated in other source files. However, a library module may
+reference other library modules, and reading in a library module causes it to
+be parsed and elaborated, and further library references resolved, just like a
+non-library module. The library lookup and resolution process iterates until
+all referenced modules are resolved, or known to be missing from the
+libraries.</p>
+<p>The automatic module library technique is useful for including vendor or
+technology libraries into a program. Many EDA vendors offer module libraries
+that are formatted appropriately; and with this technique, Icarus Verilog can
+use them for simulation.</p>
+</section>
+</section>
+<section id="advanced-command-files">
+<h2>Advanced Command Files<a class="headerlink" href="#advanced-command-files" title="Link to this heading">¶</a></h2>
+<p>Command files were mentioned in the “Getting Started” chapter, but only
+briefly. In practice, Verilog programs quickly grow far beyond the usefulness
+of simple command line options, and even the macro preprocessor lacks the
+flexibility to combine source and library modules according to the advancing
+development process.</p>
+<p>The main contents of a command file is a list of Verilog source files. You can
+name in a command file all the source files that make up your design. This is
+a convenient way to collect together all the files that make up your
+design. Compiling the design can then be reduced to a simple command line like
+the following:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">% iverilog -c example.cf
+</span></pre></div>
+</div>
+<p>The command file describes a configuration. That is, it lists the specific
+files that make up your design. It is reasonable, during the course of
+development, to have a set of different but similar variations of your
+design. These variations may have different source files but also many common
+source files. A command file can be written for each variation, and each
+command file lists the source file names used by each variation.</p>
+<p>A configuration may also specify the use of libraries. For example, different
+configurations may be implementations for different technologies so may use
+different parts libraries. To make this work, command files may include “-y”
+statements. These work in command files exactly how they work on “iverilog”
+command line. Each “-y” flag is followed by a directory name, and the
+directories are searched for library modules in the order that they are listed
+in the command file.</p>
+<p>The include search path can also be specified in configuration files with
+“+incdir+” tokens. These tokens start with the “+incdir+” string, then
+continue with directory paths, separated from each other with “+” characters
+(not spaces) for the length of the line.</p>
+<p>Other information can be included in the command file. See the section Command
+File Format for complete details on what can go in a command file.</p>
+</section>
+<section id="input-data-at-runtime">
+<h2>Input Data at Runtime<a class="headerlink" href="#input-data-at-runtime" title="Link to this heading">¶</a></h2>
+<p>Often, it is useful to compile a program into an executable simulation, then
+run the simulation with various inputs. This requires some means to pass data
+and arguments to the compiled program each time it is executed. For example,
+if the design models a micro-controller, one would like to run the compiled
+simulation against a variety of different ROM images.</p>
+<p>There are a variety of ways for a Verilog program to get data from the outside
+world into the program at run time. Arguments can be entered on the command
+line, and larger amounts of data can be read from files. The simplest method
+is to take arguments from the command line.</p>
+<p>Consider this running example of a square root calculator</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="k">module</span><span class="w"> </span><span class="n">sqrt32</span><span class="p">(</span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">rdy</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="p">.</span><span class="n">y</span><span class="p">(</span><span class="n">acc</span><span class="p">));</span>
+</span><span data-line="2"><span class="w">  </span><span class="k">input</span><span class="w">  </span><span class="n">clk</span><span class="p">;</span>
+</span><span data-line="3"><span class="w">  </span><span class="k">output</span><span class="w"> </span><span class="n">rdy</span><span class="p">;</span>
+</span><span data-line="4"><span class="w">  </span><span class="k">input</span><span class="w">  </span><span class="n">reset</span><span class="p">;</span>
+</span><span data-line="5">
+</span><span data-line="6"><span class="w">  </span><span class="k">input</span><span class="w"> </span><span class="p">[</span><span class="mh">31</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">x</span><span class="p">;</span>
+</span><span data-line="7"><span class="w">  </span><span class="k">output</span><span class="w"> </span><span class="p">[</span><span class="mh">15</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">acc</span><span class="p">;</span>
+</span><span data-line="8">
+</span><span data-line="9"><span class="w">  </span><span class="c1">// acc holds the accumulated result, and acc2 is</span>
+</span><span data-line="10"><span class="w">  </span><span class="c1">//  the accumulated square of the accumulated result.</span>
+</span><span data-line="11"><span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="p">[</span><span class="mh">15</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">acc</span><span class="p">;</span>
+</span><span data-line="12"><span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="p">[</span><span class="mh">31</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">acc2</span><span class="p">;</span>
+</span><span data-line="13">
+</span><span data-line="14"><span class="w">  </span><span class="c1">// Keep track of which bit I&#39;m working on.</span>
+</span><span data-line="15"><span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="p">[</span><span class="mh">4</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w">  </span><span class="n">bitl</span><span class="p">;</span>
+</span><span data-line="16"><span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">15</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="kt">bit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">1</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">bitl</span><span class="p">;</span>
+</span><span data-line="17"><span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">31</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">bit2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">1</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="p">(</span><span class="n">bitl</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="mh">1</span><span class="p">);</span>
+</span><span data-line="18">
+</span><span data-line="19"><span class="w">  </span><span class="c1">// The output is ready when the bitl counter underflows.</span>
+</span><span data-line="20"><span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="n">rdy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bitl</span><span class="p">[</span><span class="mh">4</span><span class="p">];</span>
+</span><span data-line="21">
+</span><span data-line="22"><span class="w">  </span><span class="c1">// guess holds the potential next values for acc,</span>
+</span><span data-line="23"><span class="w">  </span><span class="c1">// and guess2 holds the square of that guess.</span>
+</span><span data-line="24"><span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">15</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">guess</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">acc</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kt">bit</span><span class="p">;</span>
+</span><span data-line="25"><span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">31</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">guess2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">acc2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">bit2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">((</span><span class="n">acc</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">bitl</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="mh">1</span><span class="p">);</span>
+</span><span data-line="26">
+</span><span data-line="27"><span class="w">  </span><span class="k">task</span><span class="w"> </span><span class="n">clear</span><span class="p">;</span>
+</span><span data-line="28"><span class="w">     </span><span class="k">begin</span>
+</span><span data-line="29"><span class="w">        </span><span class="n">acc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span>
+</span><span data-line="30"><span class="w">        </span><span class="n">acc2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span>
+</span><span data-line="31"><span class="w">        </span><span class="n">bitl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">15</span><span class="p">;</span>
+</span><span data-line="32"><span class="w">     </span><span class="k">end</span>
+</span><span data-line="33"><span class="w">  </span><span class="k">endtask</span>
+</span><span data-line="34">
+</span><span data-line="35"><span class="w">  </span><span class="k">initial</span><span class="w"> </span><span class="n">clear</span><span class="p">;</span>
+</span><span data-line="36">
+</span><span data-line="37"><span class="w">  </span><span class="k">always</span><span class="w"> </span><span class="p">@(</span><span class="n">reset</span><span class="w"> </span><span class="k">or</span><span class="w"> </span><span class="k">posedge</span><span class="w"> </span><span class="n">clk</span><span class="p">)</span>
+</span><span data-line="38"><span class="w">     </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">reset</span><span class="p">)</span>
+</span><span data-line="39"><span class="w">      </span><span class="n">clear</span><span class="p">;</span>
+</span><span data-line="40"><span class="w">     </span><span class="k">else</span><span class="w"> </span><span class="k">begin</span>
+</span><span data-line="41"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">guess2</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="k">begin</span>
+</span><span data-line="42"><span class="w">           </span><span class="n">acc</span><span class="w">  </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">guess</span><span class="p">;</span>
+</span><span data-line="43"><span class="w">           </span><span class="n">acc2</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">guess2</span><span class="p">;</span>
+</span><span data-line="44"><span class="w">        </span><span class="k">end</span>
+</span><span data-line="45"><span class="w">        </span><span class="n">bitl</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">bitl</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mh">1</span><span class="p">;</span>
+</span><span data-line="46"><span class="w">     </span><span class="k">end</span>
+</span><span data-line="47">
+</span><span data-line="48"><span class="k">endmodule</span>
+</span></pre></div>
+</div>
+<p>One could write the test bench as a program that passes a representative set
+of input values into the device and checks the output result. However, we can
+also write a program that takes on the command line an integer value to be
+used as input to the device. We can write and compile this program, then pass
+different input values on the run time command line without recompiling the
+simulation.</p>
+<p>This example demonstrates the use of the “$value$plusargs” to access command
+line arguments of a simulation</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="k">module</span><span class="w"> </span><span class="n">main</span><span class="p">;</span>
+</span><span data-line="2">
+</span><span data-line="3"><span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">;</span>
+</span><span data-line="4"><span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="p">[</span><span class="mh">31</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">x</span><span class="p">;</span>
+</span><span data-line="5"><span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">15</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">y</span><span class="p">;</span>
+</span><span data-line="6"><span class="w">  </span><span class="kt">wire</span><span class="w">        </span><span class="n">rdy</span><span class="p">;</span>
+</span><span data-line="7">
+</span><span data-line="8"><span class="w">  </span><span class="n">sqrt32</span><span class="w"> </span><span class="n">dut</span><span class="w"> </span><span class="p">(</span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">rdy</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">);</span>
+</span><span data-line="9">
+</span><span data-line="10"><span class="w">  </span><span class="k">always</span><span class="w"> </span><span class="p">#</span><span class="mh">10</span><span class="w"> </span><span class="n">clk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">~</span><span class="n">clk</span><span class="p">;</span>
+</span><span data-line="11">
+</span><span data-line="12"><span class="w">  </span><span class="k">initial</span><span class="w"> </span><span class="k">begin</span>
+</span><span data-line="13"><span class="w">     </span><span class="n">clk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span>
+</span><span data-line="14"><span class="w">     </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">1</span><span class="p">;</span>
+</span><span data-line="15">
+</span><span data-line="16"><span class="w">     </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="w"> </span><span class="n">$value$plusargs</span><span class="p">(</span><span class="s">&quot;x=%d&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="p">))</span><span class="w"> </span><span class="k">begin</span>
+</span><span data-line="17"><span class="w">        </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;ERROR: please specify +x=&lt;value&gt; to start.&quot;</span><span class="p">);</span>
+</span><span data-line="18"><span class="w">        </span><span class="nb">$finish</span><span class="p">;</span>
+</span><span data-line="19"><span class="w">     </span><span class="k">end</span>
+</span><span data-line="20">
+</span><span data-line="21"><span class="w">     </span><span class="p">#</span><span class="mh">35</span><span class="w"> </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span>
+</span><span data-line="22">
+</span><span data-line="23"><span class="w">     </span><span class="k">wait</span><span class="w"> </span><span class="p">(</span><span class="n">rdy</span><span class="p">)</span><span class="w"> </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;y=%d&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">);</span>
+</span><span data-line="24"><span class="w">     </span><span class="nb">$finish</span><span class="p">;</span>
+</span><span data-line="25"><span class="w">  </span><span class="k">end</span><span class="w"> </span><span class="c1">// initial begin</span>
+</span><span data-line="26">
+</span><span data-line="27"><span class="k">endmodule</span><span class="w"> </span><span class="c1">// main</span>
+</span></pre></div>
+</div>
+<p>The “$value$plusargs” system function takes a string pattern that describes
+the format of the command line argument, and a reference to a variable that
+receives the value. The “sqrt_plusargs” program can be compiled and executed
+like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">% iverilog -osqrt_plusargs.vvp sqrt_plusargs.v sqrt.v
+</span><span data-line="2">% vvp sqrt_plusargs.vvp +x=81
+</span><span data-line="3">y=    9
+</span></pre></div>
+</div>
+<p>Notice that the “x=%d” string of the “$value$plusargs” function describes the
+format of the argument. The “%d” matches a decimal value, which in the sample
+run is “81”. This gets assigned to “x” by the “$value$plusargs” function,
+which returns TRUE, and the simulation continues from there.</p>
+<p>If two arguments have to be passed to the testbench then the main module would
+be modified as follows</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="k">module</span><span class="w"> </span><span class="n">main</span><span class="p">;</span>
+</span><span data-line="2">
+</span><span data-line="3"><span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">;</span>
+</span><span data-line="4"><span class="w">  </span><span class="kt">reg</span><span class="w">  </span><span class="p">[</span><span class="mh">31</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">x</span><span class="p">;</span>
+</span><span data-line="5"><span class="w">  </span><span class="kt">reg</span><span class="w">  </span><span class="p">[</span><span class="mh">31</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">z</span><span class="p">;</span>
+</span><span data-line="6"><span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">15</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">y1</span><span class="p">,</span><span class="n">y2</span><span class="p">;</span>
+</span><span data-line="7"><span class="w">  </span><span class="kt">wire</span><span class="w">        </span><span class="n">rdy1</span><span class="p">,</span><span class="n">rdy2</span><span class="p">;</span>
+</span><span data-line="8">
+</span><span data-line="9"><span class="w">  </span><span class="n">sqrt32</span><span class="w"> </span><span class="n">dut1</span><span class="w"> </span><span class="p">(</span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">rdy1</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y1</span><span class="p">);</span>
+</span><span data-line="10"><span class="w">  </span><span class="n">sqrt32</span><span class="w"> </span><span class="n">dut2</span><span class="w"> </span><span class="p">(</span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">rdy2</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="p">,</span><span class="w"> </span><span class="n">y2</span><span class="p">);</span>
+</span><span data-line="11">
+</span><span data-line="12"><span class="w">  </span><span class="k">always</span><span class="w"> </span><span class="p">#</span><span class="mh">10</span><span class="w"> </span><span class="n">clk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">~</span><span class="n">clk</span><span class="p">;</span>
+</span><span data-line="13">
+</span><span data-line="14"><span class="w">  </span><span class="k">initial</span><span class="w"> </span><span class="k">begin</span>
+</span><span data-line="15"><span class="w">     </span><span class="n">clk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span>
+</span><span data-line="16"><span class="w">     </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">1</span><span class="p">;</span>
+</span><span data-line="17">
+</span><span data-line="18"><span class="w">     </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="w"> </span><span class="n">$value$plusargs</span><span class="p">(</span><span class="s">&quot;x=%d&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="p">))</span><span class="w"> </span><span class="k">begin</span>
+</span><span data-line="19"><span class="w">        </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;ERROR: please specify +x=&lt;value&gt; to start.&quot;</span><span class="p">);</span>
+</span><span data-line="20"><span class="w">        </span><span class="nb">$finish</span><span class="p">;</span>
+</span><span data-line="21"><span class="w">     </span><span class="k">end</span>
+</span><span data-line="22">
+</span><span data-line="23"><span class="w">     </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="w"> </span><span class="n">$value$plusargs</span><span class="p">(</span><span class="s">&quot;z=%d&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="p">))</span><span class="w"> </span><span class="k">begin</span>
+</span><span data-line="24"><span class="w">        </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;ERROR: please specify +z=&lt;value&gt; to start.&quot;</span><span class="p">);</span>
+</span><span data-line="25"><span class="w">        </span><span class="nb">$finish</span><span class="p">;</span>
+</span><span data-line="26"><span class="w">     </span><span class="k">end</span>
+</span><span data-line="27">
+</span><span data-line="28">
+</span><span data-line="29"><span class="w">     </span><span class="p">#</span><span class="mh">35</span><span class="w"> </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span>
+</span><span data-line="30">
+</span><span data-line="31"><span class="w">     </span><span class="k">wait</span><span class="w"> </span><span class="p">(</span><span class="n">rdy1</span><span class="p">)</span><span class="w"> </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;y1=%d&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">y1</span><span class="p">);</span>
+</span><span data-line="32"><span class="w">     </span><span class="k">wait</span><span class="w"> </span><span class="p">(</span><span class="n">rdy2</span><span class="p">)</span><span class="w"> </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;y2=%d&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">y2</span><span class="p">);</span>
+</span><span data-line="33"><span class="w">     </span><span class="nb">$finish</span><span class="p">;</span>
+</span><span data-line="34"><span class="w">  </span><span class="k">end</span><span class="w"> </span><span class="c1">// initial begin</span>
+</span><span data-line="35">
+</span><span data-line="36"><span class="k">endmodule</span><span class="w"> </span><span class="c1">// main</span>
+</span></pre></div>
+</div>
+<p>and the “sqrt_plusargs” program would be compiled and executed as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">% iverilog -osqrt_plusargs.vvp sqrt_plusargs.v sqrt.v
+</span><span data-line="2">% vvp sqrt_plusargs.vvp +x=81 +z=64
+</span><span data-line="3">y1=    9
+</span><span data-line="4">y2=    8
+</span></pre></div>
+</div>
+<p>In general, the “vvp” command that executes the compiled simulation takes a
+few predefined argument flags, then the file name of the simulation. All the
+arguments after the simulation file name are extended arguments to “vvp” and
+are passed to the executed design. Extended arguments that start with a “+”
+character are accessible through the “$test$plusargs” and “$value$plusargs”
+system functions. Extended arguments that do not start with a “+” character
+are only accessible to system tasks and functions written in C using the VPI.</p>
+<p>In the previous example, the program pulls the argument from the command line,
+assigns it to the variable “x”, and runs the sqrt device under test with that
+value. This program can take the integer square root of any single value. Of
+course, if you wish to test with a large number of input values, executing the
+program many times may become tedious.</p>
+<p>Another technique would be to put a set of input values into a data file, and
+write the test bench to read the file. We can then edit the file to add new
+input values, then rerun the simulation without compiling it again. The
+advantage of this technique is that we can accumulate a large set of test
+input values, and run the lot as a batch.</p>
+<p>This example</p>
+<div class="highlight-verilog notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="k">module</span><span class="w"> </span><span class="n">main</span><span class="p">;</span>
+</span><span data-line="2">
+</span><span data-line="3"><span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">;</span>
+</span><span data-line="4"><span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="p">[</span><span class="mh">31</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="mh">4</span><span class="o">:</span><span class="mh">0</span><span class="p">];</span>
+</span><span data-line="5"><span class="w">  </span><span class="kt">reg</span><span class="w"> </span><span class="p">[</span><span class="mh">31</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">x</span><span class="p">;</span>
+</span><span data-line="6"><span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">15</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">y</span><span class="p">;</span>
+</span><span data-line="7"><span class="w">  </span><span class="kt">wire</span><span class="w">        </span><span class="n">rdy</span><span class="p">;</span>
+</span><span data-line="8">
+</span><span data-line="9"><span class="w">  </span><span class="n">sqrt32</span><span class="w"> </span><span class="n">dut</span><span class="w"> </span><span class="p">(</span><span class="n">clk</span><span class="p">,</span><span class="w"> </span><span class="n">rdy</span><span class="p">,</span><span class="w"> </span><span class="n">reset</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">);</span>
+</span><span data-line="10">
+</span><span data-line="11"><span class="w">  </span><span class="k">always</span><span class="w"> </span><span class="p">#</span><span class="mh">10</span><span class="w"> </span><span class="n">clk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">~</span><span class="n">clk</span><span class="p">;</span>
+</span><span data-line="12">
+</span><span data-line="13"><span class="w">  </span><span class="k">integer</span><span class="w"> </span><span class="n">i</span><span class="p">;</span>
+</span><span data-line="14"><span class="w">  </span><span class="k">initial</span><span class="w"> </span><span class="k">begin</span>
+</span><span data-line="15"><span class="w">     </span><span class="cm">/* Load the data set from the hex file. */</span>
+</span><span data-line="16"><span class="w">     </span><span class="nb">$readmemh</span><span class="p">(</span><span class="s">&quot;sqrt.hex&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="p">);</span>
+</span><span data-line="17"><span class="w">     </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="w"> </span><span class="p">;</span><span class="w">  </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mh">4</span><span class="w"> </span><span class="p">;</span><span class="w">  </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">1</span><span class="p">)</span><span class="w"> </span><span class="k">begin</span>
+</span><span data-line="18"><span class="w">       </span><span class="n">clk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span>
+</span><span data-line="19"><span class="w">       </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">1</span><span class="p">;</span>
+</span><span data-line="20">
+</span><span data-line="21"><span class="w">       </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span><span data-line="22">
+</span><span data-line="23"><span class="w">       </span><span class="p">#</span><span class="mh">35</span><span class="w"> </span><span class="n">reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span>
+</span><span data-line="24">
+</span><span data-line="25"><span class="w">       </span><span class="k">wait</span><span class="w"> </span><span class="p">(</span><span class="n">rdy</span><span class="p">)</span><span class="w"> </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;y=%d&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">);</span>
+</span><span data-line="26"><span class="w">     </span><span class="k">end</span>
+</span><span data-line="27"><span class="w">     </span><span class="nb">$finish</span><span class="p">;</span>
+</span><span data-line="28"><span class="w">  </span><span class="k">end</span><span class="w"> </span><span class="c1">// initial begin</span>
+</span><span data-line="29">
+</span><span data-line="30"><span class="k">endmodule</span><span class="w"> </span><span class="c1">// main</span>
+</span></pre></div>
+</div>
+<p>demonstrates the use of “$readmemh” to read data samples from a file into a
+Verilog array. Start by putting into the file “sqrt.hex” the numbers:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">51
+</span><span data-line="2">19
+</span><span data-line="3">1a
+</span><span data-line="4">18
+</span><span data-line="5">1
+</span></pre></div>
+</div>
+<p>Then run the simulation with the command sequence:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">% iverilog -osqrt_readmem.vvp sqrt_readmem.vl sqrt.vl
+</span><span data-line="2">% vvp sqrt_readmem.vvp
+</span><span data-line="3">y=    9
+</span><span data-line="4">y=    5
+</span><span data-line="5">y=    5
+</span><span data-line="6">y=    4
+</span><span data-line="7">y=    1
+</span></pre></div>
+</div>
+<p>It is easy enough to change this program to work with larger data sets, or to
+change the “data.hex” file to contain different data. This technique is also
+common for simulating algorithms that take in larger data sets. One can extend
+this idea slightly by using a “$value$plusargs” statement to select the file
+to read.</p>
+</section>
+</section>
+
+        </article><button class="back-to-top" type="button">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+  </svg>
+  <span>Back to top</span>
+</button><div class="navigation flex print:hidden"><div class="navigation-prev">
+    <a href="getting_started.html">
+      <i class="i-lucide chevron-left"></i>
+      <div class="page-info">
+        <span>Previous</span><div class="title">Getting Started With Icarus Verilog</div></div>
+    </a>
+  </div><div class="navigation-next">
+    <a href="command_line_flags.html">
+      <div class="page-info">
+        <span>Next</span>
+        <div class="title">iverilog Command Line Flags</div>
+      </div>
+      <i class="i-lucide chevron-right"></i>
+    </a>
+  </div></div></div>
+    </div>
+  </main>
+</div>
+<footer class="sy-foot">
+  <div class="sy-foot-inner sy-container mx-auto">
+    <div class="sy-foot-reserved md:flex justify-between items-center">
+      <div class="sy-foot-copyright"><p>2024-2026, Stephen Williams</p>
+  
+  <p>
+    Made with
+    
+    <a href="https://www.sphinx-doc.org/">Sphinx</a> and
+    
+    <a href="https://shibuya.lepture.com">Shibuya theme</a>.
+  </p>
+</div>
+      <div class="sy-foot-socials">
+<a href="https://github.com/steveicarus/iverilog" aria-label="GitHub">
+  <iconify-icon icon="simple-icons:github"></iconify-icon>
+</a></div>
+    </div>
+  </div>
+</footer>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/shibuya.js?v=cac61aee"></script></body>
+</html>

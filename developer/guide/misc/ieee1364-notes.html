@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en" data-accent-color="violet" data-content_root="../../../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>IEEE1364 Notes - Icarus Verilog documentation</title><link rel="shortcut icon" href="../../../_static/favicon.ico"/><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" /><link rel="next" title="Swift Model Support (Preliminary)" href="swift.html" /><link rel="prev" title="Miscellaneous" href="index.html" /><script>
+    function setColorMode(t){let e=document.documentElement;e.setAttribute("data-color-mode",t);let a=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,s=t;"auto"===t&&(s=a?"dark":"light"),"light"===s?(e.classList.remove("dark"),e.classList.add("light")):(e.classList.remove("light"),e.classList.add("dark"))}
+    setColorMode(localStorage._theme||"auto");
+  </script><link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=ad592e98" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/shibuya.css?v=44020203" />
+    <link media="print" rel="stylesheet" type="text/css" href="../../../_static/print.css?v=20ff2c19" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sy-f-text: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+  --sy-f-heading: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+}
+</style>
+    <meta property="og:type" content="website"/><meta property="og:title" content="IEEE1364 Notes"/>
+    <meta name="twitter:card" content="summary"/>
+  </head>
+<body><div class="sy-head">
+  <div class="sy-head-blur"></div>
+  <div class="sy-head-inner sy-container mx-auto">
+    <a class="sy-head-brand" href="../../../index.html">
+      
+      
+      <strong>Icarus Verilog</strong>
+    </a>
+    <div class="sy-head-nav" id="head-nav">
+      <nav class="sy-head-links"></nav>
+      <div class="sy-head-extra flex items-center print:hidden"><form class="searchbox flex items-center" action="../../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <kbd>/</kbd>
+</form><div class="sy-head-socials">
+  <a href="https://github.com/steveicarus/iverilog" aria-label="GitHub">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </a></div></div>
+    </div>
+    <div class="sy-head-actions flex items-center shrink-0 print:hidden"><button class="js-theme theme-switch flex items-center"
+data-aria-auto="Switch to light color mode"
+data-aria-light="Switch to dark color mode"
+data-aria-dark="Switch to auto color mode">
+<i class="i-lucide theme-icon"></i>
+</button><button class="md:hidden flex items-center js-menu" aria-label="Menu" type="button" aria-controls="head-nav" aria-expanded="false">
+        <div class="hamburger">
+          <span class="hamburger_1"></span>
+          <span class="hamburger_2"></span>
+          <span class="hamburger_3"></span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+<div class="sy-page sy-container flex mx-auto">
+  <aside id="lside" class="sy-lside md:w-72 md:shrink-0 print:hidden">
+    <div class="sy-lside-inner md:sticky">
+      <div class="sy-scrollbar p-6">
+        <div class="globaltoc" data-expand-depth="0"><p class="caption" role="heading" aria-level="3"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../releases/index.html">Icarus Verilog Release Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../releases/v13-0-release-note.html">🎉 Release V13.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../releases/v13-0-release-note.html#major-changes-in-v13">🔄 Major Changes in V13</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage/index.html">Icarus Verilog Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/waveform_viewer.html">Viewing Waveforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../targets/index.html">The Icarus Verilog Targets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-vvp.html">The vvp Code Generator (-tvvp)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-stub.html">The stub Code Generator (-tstub)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-null.html">The null Code Generator (-tnull)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-vhdl.html">The VHDL Code Generator (-tvhdl)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-vlog95.html">The Verilog ‘95 Code Generator (-tvlog95)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-pcb.html">The PCB Code Generator (-tpcb)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-fpga.html">The FPGA Code Generator (-tfpga)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-pal.html">The PAL Code Generator (-tpal)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-sizer.html">The sizer Code Analyzer (-tsizer)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-verilog.html">The Verilog Code Generator (-tverilog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-blif.html">The BLIF Code Generator (-tblif)</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html">Getting Started as a Contributor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Developer Guide</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ivl/index.html">IVL - The Core Compiler</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../ivl/netlist.html">Netlist Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ivl/attributes.html">Icarus Verilog Attributes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ivl/ivl_target.html">Loadable Target API (ivl_target)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ivl/lpm.html">What Is LPM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ivl/t-dll.html">Loadable Targets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../vvp/index.html">VVP - Verilog Virtual Processor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/vvp.html">VVP Simulation Engine</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/opcodes.html">Executable Instruction Opcodes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/vpi.html">VPI Within VVP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/vthread.html">Thread Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/debug.html">Debug Aids For VVP</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../tgt-vvp/tgt-vvp.html">The VVP Target</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vpi/index.html">VPI in Icarus Verilog</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../vpi/vpi.html">VPI Modules in Icarus Verilog</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vpi/va_math.html">Verilog-A math library</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../cadpli/cadpli.html">Cadence PLI1 Modules</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Miscellaneous</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">IEEE1364 Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="swift.html">Swift Model Support (Preliminary)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xilinx-hint.html">Xilinx Hint</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="lside-overlay js-menu" role="button" aria-label="Close left sidebar" aria-controls="lside" aria-expanded="false"></div>
+  <aside id="rside" class="sy-rside pb-3 w-64 shrink-0 order-last">
+    <button class="rside-close js-menu xl:hidden" aria-label="Close Table of Contents" type="button" aria-controls="rside" aria-expanded="false">
+      <i class="i-lucide close"></i>
+    </button>
+    <div class="sy-scrollbar sy-rside-inner px-6 xl:top-16 xl:sticky xl:pl-0 pt-6 pb-4"><div class="localtoc"><h3>On this page</h3><ul>
+<li><a class="reference internal" href="#standardization-issues">Standardization Issues</a></li>
+</ul>
+</div><a class="js-repo-stats repo-stats flex items-center" href="https://github.com/steveicarus/iverilog"
+  data-type="github" data-user="steveicarus" data-repo="iverilog">
+  <span class="w-8 flex items-center justify-around shrink-0 text-3xl">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </span>
+  <span class="flex-grow px-2 break-all">
+    
+    
+      <span>iverilog</span>
+    
+    <span class="flex text-sm repo-stats-count">
+      <span class="flex items-center pr-3">
+        <iconify-icon icon="lucide:star"></iconify-icon>
+        <strong class="js-repo-stars ml-1">0</strong>
+      </span>
+      <span class="flex items-center">
+        <iconify-icon icon="lucide:git-fork"></iconify-icon>
+        <strong class="js-repo-forks ml-1">0</strong>
+      </span>
+    </span>
+  </span>
+</a><div class="edit-this-page">
+  <a href="https://github.com/steveicarus/iverilog/blob/master/Documentation/developer/guide/misc/ieee1364-notes.rst">Edit this page</a>
+</div><div id="ethical-ad-placement" data-ea-publisher="readthedocs"></div></div>
+  </aside>
+  <div class="rside-overlay js-menu" role="button" aria-label="Close Table of Contents" aria-controls="rside" aria-expanded="false"></div>
+  <main class="sy-main w-full max-sm:max-w-full print:pt-6">
+<div class="sy-breadcrumbs" role="navigation">
+  <div class="sy-breadcrumbs-inner flex items-center">
+    <div class="md:hidden mr-3">
+      <button class="js-menu" aria-label="Menu" type="button" aria-controls="lside" aria-expanded="false">
+        <i class="i-lucide menu"></i>
+      </button>
+    </div>
+    <ol class="flex-1" itemscope itemtype="https://schema.org/BreadcrumbList"><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../../../index.html"><span itemprop="name">Icarus Verilog</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="1" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../../index.html"><span itemprop="name">Icarus Verilog Developer Support</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="2" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../index.html"><span itemprop="name">Developer Guide</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="3" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="index.html"><span itemprop="name">Miscellaneous</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="4" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <strong itemprop="name">IEEE1364 Notes</strong>
+        <meta itemprop="position" content="5" />
+      </li></ol>
+    <div class="xl:hidden ml-1">
+      <button class="js-menu" aria-label="Show table of contents" type="button" aria-controls="rside"
+        aria-expanded="false">
+        <i class="i-lucide outdent"></i>
+      </button>
+    </div>
+  </div>
+</div><div class="flex flex-col break-words justify-between">
+      <div class="relative min-w-0 max-w-6xl px-6 pb-6 pt-8 xl:px-12">
+  <div class="copy-page-wrapper relative pb-4 lg:absolute lg:top-8 lg:right-6 xl:right-12">
+  <div id="copy-page-trigger">
+    <button
+      type="button"
+      class="js-copy px-3 py-1 inline-flex items-center gap-1"
+      data-url="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/misc/ieee1364-notes.rst.txt"
+    >
+      <i class="i-lucide" data-icon="copy"></i>
+      <span>Copy page</span>
+    </button>
+    <button class="js-menu px-2 py-1" type="button" aria-label="More actions"
+      aria-haspopup="menu" aria-expanded="false" aria-controls="copy-page-content">
+      <i class="i-lucide chevron-down"></i>
+    </button>
+  </div>
+  <div id="copy-page-content" role="menu" aria-orientation="vertical" aria-hidden="true">
+    <div role="presentation">
+      <div class="flex flex-col" role="group">
+        <button class="js-copy" type="button" role="menuitem"
+          data-url="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/misc/ieee1364-notes.rst.txt">
+          <span class="iconify-icon">
+            <i class="i-lucide" data-icon="copy"></i>
+          </span>
+          <span>Copy page</span>
+        </button>
+        <a role="menuitem" href="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/misc/ieee1364-notes.rst.txt" target="_blank" rel="nofollow"><iconify-icon icon="bi:code-slash"></iconify-icon>
+            <span>View Source</span></a><a role="menuitem" href="https://chatgpt.com/?hints=search&q=Read%20https%3A//raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/misc/ieee1364-notes.rst.txt%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:openai"></iconify-icon>
+          <span>Open in ChatGPT</span>
+        </a><a role="menuitem" href="https://claude.ai/new?q=Read%20https%3A//raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/misc/ieee1364-notes.rst.txt%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:claude"></iconify-icon>
+          <span>Open in Claude</span>
+        </a></div>
+    </div>
+  </div>
+</div><article class="yue" role="main">
+          <section id="ieee1364-notes">
+<h1>IEEE1364 Notes<a class="headerlink" href="#ieee1364-notes" title="Link to this heading">¶</a></h1>
+<p>The IEEE1364 standard is the bible that defines the correctness of the
+Icarus Verilog implementation and behavior of the compiled
+program. The IEEE1364.1 is also referenced for matters of
+synthesis. So the ultimate definition of right and wrong comes from
+those documents.</p>
+<p>That does not mean that a Verilog implementation is fully
+constrained. The standard document allows for implementation specific
+behavior that, when properly accounted for, does not effect the
+intended semantics of the specified language. It is therefore possible
+and common to write programs that produce different results when run
+by different Verilog implementations.</p>
+<section id="standardization-issues">
+<h2>Standardization Issues<a class="headerlink" href="#standardization-issues" title="Link to this heading">¶</a></h2>
+<p>These are some issues where the IEEE1364 left unclear, unspecified or
+simply wrong. I’ll try to be precise as I can, and reference the
+standard as needed. I’ve made implementation decisions for Icarus
+Verilog, and I will make clear what those decisions are and how they
+affect the language.</p>
+<ul class="simple">
+<li><p>OBJECTS CAN BE DECLARED ANYWHERE IN THE MODULE</p></li>
+</ul>
+<p>Consider this module:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">module sample1;
+</span><span data-line="2">    initial foo = 1;
+</span><span data-line="3">reg foo;
+</span><span data-line="4">wire tmp = bar;
+</span><span data-line="5">initial #1 $display(&quot;foo = %b, bar = %b&quot;, foo, tmp);
+</span><span data-line="6">endmodule
+</span></pre></div>
+</div>
+<p>Notice that the <cite>reg foo;</cite> declaration is placed after the first
+initial statement. It turns out that this is a perfectly legal module
+according to the -1995 and -2000 versions of the standard. The
+statement <cite>reg foo;</cite> is a module_item_declaration which is in turn a
+module_item. The BNF in the appendix of IEEE1364-1995 treats all
+module_item statements equally, so no order is imposed.</p>
+<p>Furthermore, there is no text (that I can find) elsewhere in the
+standard that imposes any ordering restriction. The sorts of
+restrictions I would look for are “module_item_declarations must
+appear before all other module_items” or “variables must be declared
+textually before they are referenced.” Such statements simply do not
+exist. (Personally, I think it is fine that they don’t.)</p>
+<p>The closest is the rules for implicit declarations of variables that
+are otherwise undeclared. In the above example, <cite>bar</cite> is implicitly
+declared and is therefore a wire. However, although <cite>initial foo = 1;</cite>
+is written before foo is declared, foo <em>is</em> declared within the
+module, and declared legally by the BNF of the standard.</p>
+<p>Here is another example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">module sample2;
+</span><span data-line="2">    initial x.foo = 1;
+</span><span data-line="3">    test x;
+</span><span data-line="4">    initial #1 $display(&quot;foo = %b&quot;, x.foo);
+</span><span data-line="5">endmodule
+</span><span data-line="6">
+</span><span data-line="7">module test;
+</span><span data-line="8">    reg foo;
+</span><span data-line="9">endmodule;
+</span></pre></div>
+</div>
+<p>From this example one can clearly see that foo is once again declared
+after its use in behavioral code. One also sees a forward reference of
+an entire module. Once again, the standard places no restriction on
+the order of module declarations in a source file, so this program is,
+according to the standard, perfectly well formed.</p>
+<p>Icarus Verilog interprets both of these examples according to “The
+Standard As I Understand It.” However, commercial tools in general
+break down with these programs. In particular, the first example
+may generate different errors depending on the tool. The most common
+error is to claim that <cite>foo</cite> is declared twice, once (implicitly) as
+a wire and once as a reg.</p>
+<p>So the question now becomes, “Is the standard broken, or are the tools
+limited?” Coverage of the standard seems to vary widely from tool to
+tool so it is not clear that the standard really is at fault. It is
+clear, however, that somebody goofed somewhere.</p>
+<p>My personal opinion is that there is no logical need to require that
+all module_item_declarations precede any other module items. I
+personally would oppose such a restriction. It may make sense to
+require that declarations of variables within a module be preceded by
+their use, although even that is not necessary for the implementation
+of efficient compilers.</p>
+<p>However, the existence hierarchical naming syntax as demonstrated in
+sample2 can have implications that affect any declaration order
+rules. When reaching into a module with a hierarchical name, the
+module being referenced is already completely declared (or not
+declared at all, as in sample2) so module_item order is completely
+irrelevant. But a “declare before use” rule would infect module
+ordering, by requiring that modules that are used be first defined.</p>
+<ul class="simple">
+<li><p>TASK AND FUNCTION PARAMETERS CANNOT HAVE EXPLICIT TYPES</p></li>
+</ul>
+<p>Consider a function negate that wants to take a signed integer value
+and return its negative:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">function integer negate;
+</span><span data-line="2">    input [15:0] val;
+</span><span data-line="3">    negate = -val;
+</span><span data-line="4">endfunction
+</span></pre></div>
+</div>
+<p>This is not quite right, because the input is implicitly a reg type,
+which is unsigned. The result, then, will always be a negative value,
+even if a negative val is passed in.</p>
+<p>It is possible to fix up this specific example to work properly with
+the bit pattern of a 16bit number, but that is not the point. What’s
+needed is clarification on whether an input can be declared in the
+port declaration as well as in the contained block declaration.</p>
+<p>As I understand the situation, this should be allowed:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">function integer negate;
+</span><span data-line="2">    input [15:0] val;
+</span><span data-line="3">    reg signed [15:0] val;
+</span><span data-line="4">    negate = -val;
+</span><span data-line="5">endfunction
+</span></pre></div>
+</div>
+<p>In the -1995 standard, the variable is already implicitly a reg if
+declared within a function or task. However, in the -2000 standard
+there is now (as in this example) a reason why one might want to
+actually declare the type explicitly.</p>
+<p>I think that a port <em>cannot</em> be declared as an integer or time type
+(though the result can) because the range of the port declaration must
+match the range of the integer/time declaration, but the range of
+integers is unspecified. This, by the way, also applies to module
+ports.</p>
+<p>With the above in mind, I have decided to <em>allow</em> function and task
+ports to be declared with types, as long as the types are variable
+types, such as reg or integer. Without this, there would be no
+portable way to pass integers into functions/tasks. The standard does
+not say it is allowed, but it doesn’t <em>disallow</em> it, and other
+commercial tools seem to work similarly.</p>
+<ul class="simple">
+<li><p>ROUNDING OF TIME</p></li>
+</ul>
+<p>When the `timescale directive is present, the compiler is supposed to
+round fractional times (after scaling) to the nearest integer. The
+confusing bit here is that it is apparently conventional that if the
+`timescale directive is <em>not</em> present, times are rounded towards zero
+always.</p>
+<ul class="simple">
+<li><p>VALUE OF X IN PRIMITIVE OUTPUTS</p></li>
+</ul>
+<p>The IEEE1364-1995 standard clearly states in Table 8-1 that the x
+symbols is allowed in input columns, but is not allowed in
+outputs. Furthermore, none of the examples have an x in the output of
+a primitive. Table 8-1 in the IEEE1364-2000 also says the same thing.</p>
+<p>However, the BNF clearly states that 0, 1, x and X are valid
+output_symbol characters. The standard is self contradictory. So I
+take it that x is allowed, as that is what Verilog-XL does.</p>
+<ul class="simple">
+<li><p>REPEAT LOOPS vs. REPEAT EVENT CONTROL</p></li>
+</ul>
+<p>There seems to be ambiguity in how code like this should be parsed:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">repeat (5) @(posedge clk) &lt;statement&gt;;
+</span></pre></div>
+</div>
+<p>There are two valid interpretations of this code, from the
+IEEE1364-1995 standard. One looks like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">procedural_timing_control_statement ::=
+</span><span data-line="2">      delay_or_event_control  statement_or_null
+</span><span data-line="3">
+</span><span data-line="4">delay_or_event_control ::=
+</span><span data-line="5">      event_control
+</span><span data-line="6">      | repeat ( expression ) event_control
+</span></pre></div>
+</div>
+<p>If this interpretation is used, then the statement &lt;statement&gt; should
+be executed after the 5th posedge of clk. However, there is also this
+interpretation:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">loop_statement ::=
+</span><span data-line="2">     repeat ( expression ) statement
+</span></pre></div>
+</div>
+<p>If <em>this</em> interpretation is used, then &lt;statement&gt; should be executed
+5 times on the posedge of clk. The way the -1995 standard is written,
+these are both equally valid interpretations of the example, yet they
+produce very different results. The standard offers no guidance on how
+to resolve this conflict, and the IEEE1364-2000 DRAFT does not improve
+the situation.</p>
+<p>Practice suggests that a repeat followed by an event control should be
+interpreted as a loop head, and this is what Icarus Verilog does, as
+well as all the other major Verilog tools, but the standard does not
+say this.</p>
+<ul class="simple">
+<li><p>UNSIZED NUMERIC CONSTANTS ARE NOT LIMITED TO 32 BITS</p></li>
+</ul>
+<p>The Verilog standard allows Verilog implementations to limit the size
+of unsized constants to a bit width of at least 32. That means that a
+constant 17179869183 (36’h3_ffff_ffff) may overflow some compilers. In
+fact, it is common to limit these values to 32bits. However, a
+compiler may just as easily choose another width limit, for example
+64bits. That value is equally good.</p>
+<p>However, it is not <em>required</em> that an implementation truncate at 32
+bits, and in fact Icarus Verilog does not truncate at all. It will
+make the unsized constant as big as it needs to be to hold the value
+accurately. This is especially useful in situations like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">reg [width-1:0] foo = 17179869183;
+</span></pre></div>
+</div>
+<p>The programmer wants the constant to take on the width of the reg,
+which in this example is parameterized. Since constant sizes cannot be
+parameterized, the programmer ideally gives an unsized constant, which
+the compiler then expands/contracts to match the l-value.</p>
+<p>Also, by choosing to not ever truncate, Icarus Verilog can handle code
+written for a 64bit compiler as easily as for a 32bit compiler. In
+particular, any constants that the user does not expect to be
+arbitrarily truncated by his compiler will also not be truncated by
+Icarus Verilog, no matter what that other compiler chooses as a
+truncation point.</p>
+<ul class="simple">
+<li><p>UNSIZED EXPRESSIONS AS PARAMETERS TO CONCATENATION {}</p></li>
+</ul>
+<p>The Verilog standard clearly states in 4.1.14:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">&quot;Unsized constant numbers shall not be allowed in
+</span><span data-line="2">concatenations. This is because the size of each
+</span><span data-line="3">operand in the concatenation is needed to calculate
+</span><span data-line="4">the complete size of the concatenation.&quot;
+</span></pre></div>
+</div>
+<p>So for example the expression {1’b0, 16} is clearly illegal. It
+also stands to reason that {1’b0, 15+1} is illegal, for exactly the
+same justification. What is the size of the expression (15+1)?
+Furthermore, it is reasonable to expect that (16) and (15+1) are
+exactly the same so far as the compiler is concerned.</p>
+<p>Unfortunately, Cadence seems to feel otherwise. In particular, it has
+been reported that although {1’b0, 16} causes an error, {1’b0, 15+1}
+is accepted. Further testing shows that any expression other than a
+simple unsized constant is accepted there, even if all the operands of
+all the operators that make up the expression are unsized integers.</p>
+<p>This is a semantic problem. Icarus Verilog doesn’t limit the size of
+integer constants. This is valid as stated in 2.5.1 Note 3:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">&quot;The number of bits that make up an unsized number
+</span><span data-line="2">(which is a simple decimal number or a number without
+</span><span data-line="3">the size specification) shall be *at*least* 32.&quot;
+</span><span data-line="4">[emphasis added]
+</span></pre></div>
+</div>
+<p>Icarus Verilog will hold any integer constant, so the size will be as
+large as it needs to be, whether that is 64bits, 128bits, or
+more. With this in mind, what is the value of these expressions?</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">{&#39;h1_00_00_00_00}
+</span><span data-line="2">{&#39;h1 &lt;&lt; 32}
+</span><span data-line="3">{&#39;h0_00_00_00_01 &lt;&lt; 32}
+</span><span data-line="4">{&#39;h5_00_00_00_00 + 1}
+</span></pre></div>
+</div>
+<p>These examples show that the standard is justified in requiring that
+the operands of concatenation have size. The dispute is what it takes
+to cause an expression to have a size, and what that size is.
+Verilog-XL claims that (16) does not have a size, but (15+1) does. The
+size of the expression (15+1) is the size of the adder that is
+created, but how wide is the adder when adding unsized constants?</p>
+<p>One might note that the quote from section 4.1.14 says “Unsized
+<em>constant*numbers</em> shall not be allowed.” It does not say “Unsized
+expressions…”, so arguably accepting (15+1) or even (16+0) as an
+operand to a concatenation is not a violation of the letter of the
+law. However, the very next sentence of the quote expresses the
+intent, and accepting (15+1) as having a more defined size than (16)
+seems to be a violation of that intent.</p>
+<p>Whatever a compiler decides the size is, the user has no way to
+predict it, and the compiler should not have the right to treat (15+1)
+any differently than (16). Therefore, Icarus Verilog takes the
+position that such expressions are <em>unsized</em> and are not allowed as
+operands to concatenations. Icarus Verilog will in general assume that
+operations on unsized numbers produce unsized results. There are
+exceptions when the operator itself does define a size, such as the
+comparison operators or the reduction operators. Icarus Verilog will
+generate appropriate error messages.</p>
+<ul class="simple">
+<li><p>MODULE INSTANCE WITH WRONG SIZE PORT LIST</p></li>
+</ul>
+<p>A module declaration like this declares a module that takes three ports:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">module three (a, b, c);
+</span><span data-line="2">  input a, b, c;
+</span><span data-line="3">  reg x;
+</span><span data-line="4">endmodule
+</span></pre></div>
+</div>
+<p>This is fine and obvious. It is also clear from the standard that
+these are legal instantiations of this module:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">three u1 (x,y,z);
+</span><span data-line="2">three u2 ( ,y, );
+</span><span data-line="3">three u3 ( , , );
+</span><span data-line="4">three u4 (.b(y));
+</span></pre></div>
+</div>
+<p>In some of the above examples, there are unconnected ports. In the
+case of u4, the pass by name connects only port b, and leaves a and c
+unconnected. u2 and u4 are the same thing, in fact, but using
+positional or by-name syntax. The next example is a little less
+obvious:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">three u4 ();
+</span></pre></div>
+</div>
+<p>The trick here is that strictly speaking, the parser cannot tell
+whether this is a list of no pass by name ports (that is, all
+unconnected) or an empty positional list. If this were an empty
+positional list, then the wrong number of ports is given, but if it is
+an empty by-name list, it is an obviously valid instantiation. So it
+is fine to accept this case as valid.</p>
+<p>These are more doubtful:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">three u5(x,y);
+</span><span data-line="2">three u6(,);
+</span></pre></div>
+</div>
+<p>These are definitely positional port lists, and they are definitely
+the wrong length. In this case, the standard is not explicit about
+what to do about positional port lists in module instantiations,
+except that the first is connected to the first, second to second,
+etc. It does not say that the list must be the right length, but every
+example of unconnected ports used by-name syntax, and every example of
+ordered list has the right size list.</p>
+<p>Icarus Verilog takes the (very weak) hint that ordered lists should be
+the right length, and will therefore flag instances u5 and u6 as
+errors. The IEEE1364 standard should be more specific one way or the
+other.</p>
+<ul class="simple">
+<li><p>UNKNOWN VALUES IN L-VALUE BIT SELECTS</p></li>
+</ul>
+<p>Consider this example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">reg [7:0] vec;
+</span><span data-line="2">wire [4:0] idx = &lt;expr&gt;;
+</span><span data-line="3">[...]
+</span><span data-line="4">vec[idx] = 1;
+</span></pre></div>
+</div>
+<p>So long as the value of idx is a valid bit select address, the
+behavior of this assignment is obvious. However, there is no explicit
+word in the standard as to what happens if the value is out of
+range. The standard clearly states the value of an expression when the
+bit-select or part select is out of range (the value is x) but does
+not address the behavior when the expression is an l-value.</p>
+<p>Icarus Verilog will take the position that bit select expressions in
+the l-value will select oblivion if it is out of range. That is, if
+idx has a value that is not a valid bit select of vec, then the
+assignment will have no effect.</p>
+<ul class="simple">
+<li><p>SCHEDULING VALUES IN LOGIC</p></li>
+</ul>
+<p>The interaction between blocking assignments in procedural code and
+logic gates in gate-level code and expressions is poorly defined in
+Verilog. Consider this example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">reg a;
+</span><span data-line="2">reg b;
+</span><span data-line="3">wire q = a &amp; b;
+</span><span data-line="4">
+</span><span data-line="5">initial begin
+</span><span data-line="6">   a = 1;
+</span><span data-line="7">   b = 0;
+</span><span data-line="8">   #1 b = 1;
+</span><span data-line="9">   if (q !== 0) begin
+</span><span data-line="10">      $display(&quot;FAILED -- q changed too soon? %b&quot;, q);
+</span><span data-line="11">      $finish;
+</span><span data-line="12">   end
+</span><span data-line="13">end
+</span></pre></div>
+</div>
+<p>This is a confusing situation. It is clear from the Verilog standard
+that an assignment to a variable using a blocking assign causes the
+l-value to receive the value before the assignment completes. This
+means that a subsequent read of the assigned variable <em>must</em> read back
+what was blocking-assigned.</p>
+<p>However, in the example above, the “wire q = a &amp; b” expresses some
+gate logic between a/b and q. The standard does not say whether a read
+out of logic should read the value computed from previous assigns to
+the input from the same thread. Specifically, when “a” and “b” are
+assigned by blocking assignments, will a read of “q” get the computed
+value or the existing value?</p>
+<p>In fact, existing commercial tools do it both ways. Some tools print
+the FAILED message in the above example, and some do not. Icarus
+Verilog does not print the FAILED message in the above example,
+because the gate value change is <em>scheduled</em> when inputs are assigned,
+but not propagated until the thread gives up the processor.</p>
+<p>Icarus Verilog chooses this behavior in order to filter out zero-width
+pulses as early as possible. The implication of this is that a read of
+the output of combinational logic will most likely <em>not</em> reflect the
+changes in inputs until the thread that changed the inputs yields
+execution.</p>
+<ul class="simple">
+<li><p>BIT AND PART SELECTS OF PARAMETERS</p></li>
+</ul>
+<p>Bit and part selects are supposed to only be supported on vector nets
+and variables (wires, regs, etc.) However, it is common for Verilog
+compilers to also support bit and part select on parameters. Icarus
+Verilog also chooses to support bit and part selects on parameter
+names, but we need to define what that means.</p>
+<p>A bit or a part select on a parameter expression returns an unsigned
+value with a defined size. The parameter value is considered be a
+constant vector of bits foo[X:0]. That is, zero based. The bit and
+part selects operate from that assumption.</p>
+<p>Verilog 2001 adds syntax to allow the user to explicitly declare the
+parameter range (i.e. parameter [5:0] foo = 9;) so Icarus Verilog will
+(or should) use the explicitly declared vector dimensions to interpret
+bit and part selects.</p>
+<ul class="simple">
+<li><p>EDGES OF VECTORS</p></li>
+</ul>
+<p>Consider this example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">reg [ 5:0] clock;
+</span><span data-line="2">always @(posedge clock) [do stuff]
+</span></pre></div>
+</div>
+<p>The IEEE1364 standard clearly states that the &#64;(posedge clock) looks
+only at the bit clock[0] (the least significant bit) to search for
+edges. It has been pointed out by some that Verilog XL instead
+implements it as <cite>&#64;(posedge |clock)</cite>: it looks for a rise in the
+reduction or of the vector. Cadence Design Systems technical support
+has been rumored to claim that the IEEE1364 specification is wrong,
+but NC-Verilog behaves according to the specification, and thus
+different from XL.</p>
+<p>Icarus Verilog, therefore, takes the position that the specification
+is clear and correct, and it behaves as does NC-Verilog in this
+matter.</p>
+<ul class="simple">
+<li><p>REAL VARIABLES IN $dumpoff DEAD-ZONES</p></li>
+</ul>
+<p>The IEEE1364 standard clearly states that in VCD files, the $dumpoff
+section checkpoints all the dumped variables as X values. For reg and
+wire bits/vectors, this obviously means ‘bx values. Icarus Verilog
+does this, for example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">$dumpoff
+</span><span data-line="2">x!
+</span><span data-line="3">x&quot;
+</span><span data-line="4">$end
+</span></pre></div>
+</div>
+<p>Real variables can also be included in VCD dumps, but it is not at
+all obvious what is supposed to be dumped into the $dumpoff-$end
+section of the VCD file. Verilog-XL dumps “r0 !” to set the real
+variables to the dead-zone value of 0.0, whereas other tools, such as
+ModelTech, ignore real variables in this section.</p>
+<p>For example (from XL):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">$dumpoff
+</span><span data-line="2">r0 !
+</span><span data-line="3">r0 &quot;
+</span><span data-line="4">$end
+</span></pre></div>
+</div>
+<p>Icarus Verilog dumps NaN values for real variables in the
+$dumpoff-$end section of the VCD file. The NaN value is the IEEE754
+equivalent of an unknown value, and so better reflects the unknown
+(during the dead zone) status of the variable, like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">$dumpoff
+</span><span data-line="2">rNaN !
+</span><span data-line="3">rNaN &quot;
+</span><span data-line="4">$end
+</span></pre></div>
+</div>
+<p>It turns out that NaN is conventionally accepted by scanf functions,
+and viewers that support real variables support NaN values. So while
+the IEEE1364 doesn’t require this behavior, and given the variety that
+already seems to exist amongst VCD viewers in the wild, this behavior
+seems to be acceptable according to the standard, is a better mirror
+of 4-value behavior in the dead zone, and appears more user friendly
+when viewed by reasonable viewers.</p>
+</section>
+</section>
+
+        </article><button class="back-to-top" type="button">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+  </svg>
+  <span>Back to top</span>
+</button><div class="navigation flex print:hidden"><div class="navigation-prev">
+    <a href="index.html">
+      <i class="i-lucide chevron-left"></i>
+      <div class="page-info">
+        <span>Previous</span><div class="title">Miscellaneous</div></div>
+    </a>
+  </div><div class="navigation-next">
+    <a href="swift.html">
+      <div class="page-info">
+        <span>Next</span>
+        <div class="title">Swift Model Support (Preliminary)</div>
+      </div>
+      <i class="i-lucide chevron-right"></i>
+    </a>
+  </div></div></div>
+    </div>
+  </main>
+</div>
+<footer class="sy-foot">
+  <div class="sy-foot-inner sy-container mx-auto">
+    <div class="sy-foot-reserved md:flex justify-between items-center">
+      <div class="sy-foot-copyright"><p>2024-2026, Stephen Williams</p>
+  
+  <p>
+    Made with
+    
+    <a href="https://www.sphinx-doc.org/">Sphinx</a> and
+    
+    <a href="https://shibuya.lepture.com">Shibuya theme</a>.
+  </p>
+</div>
+      <div class="sy-foot-socials">
+<a href="https://github.com/steveicarus/iverilog" aria-label="GitHub">
+  <iconify-icon icon="simple-icons:github"></iconify-icon>
+</a></div>
+    </div>
+  </div>
+</footer>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/shibuya.js?v=cac61aee"></script></body>
+</html>
