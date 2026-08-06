@@ -73,6 +73,12 @@ br_gh1155			vvp_tests/br_gh1155.json
 br_gh1163			vvp_tests/br_gh1163.json
 br_gh1180a			vvp_tests/br_gh1180a.json
 br_gh1180b			vvp_tests/br_gh1180b.json
+br_gh1180c			vvp_tests/br_gh1180c.json
+param_array_packed		vvp_tests/param_array_packed.json
+param_array_unpacked		vvp_tests/param_array_unpacked.json
+func_return_uarray		vvp_tests/func_return_uarray.json
+func_return_uarray_2d		vvp_tests/func_return_uarray_2d.json
+func_return_uarray_rt_fail	vvp_tests/func_return_uarray_rt_fail.json
 br_gh1181			vvp_tests/br_gh1181.json
 br_gh1184			vvp_tests/br_gh1184.json
 br_gh1242			vvp_tests/br_gh1242.json
@@ -542,3 +548,6 @@ vvp_quiet_mode			vvp_tests/vvp_quiet_mode.json
 warn_opt_sys_tf			vvp_tests/warn_opt_sys_tf.json
 wreal				vvp_tests/wreal.json
 writemem-invalid		vvp_tests/writemem-invalid.json
+uarray_subroutine_port	vvp_tests/uarray_subroutine_port.json
+uarray_ca_fail		vvp_tests/uarray_ca_fail.json
+param_array_param_ref	vvp_tests/param_array_param_ref.json

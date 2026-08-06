@@ -171,8 +171,15 @@ NetExpr* NetEBAdd::eval_tree()
 
             unsigned wid = expr_width();
             ivl_assert(*this, wid > 0);
-            ivl_assert(*this, lval.len() == wid);
-            ivl_assert(*this, rval.len() == wid);
+	      // Constant folding during compile-time function evaluation can
+	      // deliver operands whose width does not match the node width
+	      // (e.g. an int loop variable used in a narrower index
+	      // expression). Resize to the node width; for the elaboration-time
+	      // callers the operands already match, so this is a no-op.
+	    if (lval.len() != wid)
+		  lval = verinum(lval, wid);
+	    if (rval.len() != wid)
+		  rval = verinum(rval, wid);
 
 	    verinum val;
 	    if (op_ == se->op_) {
@@ -214,8 +221,15 @@ NetExpr* NetEBAdd::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
             unsigned wid = expr_width();
             ivl_assert(*this, wid > 0);
-            ivl_assert(*this, lval.len() == wid);
-            ivl_assert(*this, rval.len() == wid);
+	      // Constant folding during compile-time function evaluation can
+	      // deliver operands whose width does not match the node width
+	      // (e.g. an int loop variable used in a narrower index
+	      // expression). Resize to the node width; for the elaboration-time
+	      // callers the operands already match, so this is a no-op.
+	    if (lval.len() != wid)
+		  lval = verinum(lval, wid);
+	    if (rval.len() != wid)
+		  rval = verinum(rval, wid);
 
 	    verinum val;
 	    switch (op_) {

@@ -499,6 +499,80 @@ void Design::evaluate_parameters()
       }
 }
 
+/*
+ * Recursively collect the constant leaf elements of a (possibly nested) array
+ * assignment pattern in row-major order: outermost dimension first, and within
+ * each dimension lowest-array-index first (NetEArrayPattern item[k] is the
+ * value at array index min_index+k, independent of the declared index
+ * direction). Returns false if any leaf is not a foldable constant.
+ */
+static bool collect_pattern_leaves(const NetExpr*expr,
+				   std::vector<const NetEConst*>&leaves)
+{
+      if (const NetEConst*c = dynamic_cast<const NetEConst*>(expr)) {
+	    leaves.push_back(c);
+	    return true;
+      }
+      if (const NetEArrayPattern*p = dynamic_cast<const NetEArrayPattern*>(expr)) {
+	    for (size_t idx = 0 ; idx < p->item_size() ; idx += 1) {
+		  const NetExpr*it = p->item(idx);
+		  if (!it || !collect_pattern_leaves(it, leaves))
+			return false;
+	    }
+	    return true;
+      }
+      return false;
+}
+
+/*
+ * A constant unpacked-array parameter, e.g.
+ *   localparam logic [3:0] MEM [0:63] = '{ ... };
+ * or a multi-dimension unpacked array, e.g.
+ *   localparam logic [3:0] TBL [0:3][0:15] = '{ '{...}, ... };
+ * elaborates to a (possibly nested) NetEArrayPattern rather than a foldable
+ * NetEConst. Flatten the pattern's constant leaf elements into a single packed
+ * constant, laying leaf k at bit offset k*elem_w where the leaves are in
+ * row-major order (see collect_pattern_leaves). Element index selects undo this
+ * in elaborate_expr_param_slice_().
+ * Returns nullptr if any leaf is not a foldable constant, in which case the
+ * caller falls back to the normal error.
+ */
+static NetExpr* flatten_const_array_pattern(const NetEArrayPattern*pat,
+					    const netarray_t*arr,
+					    const LineInfo&loc)
+{
+      unsigned long elem_w = arr->element_type()->packed_width();
+      if (elem_w == 0)
+	    return nullptr;
+
+      std::vector<const NetEConst*> leaves;
+      if (!collect_pattern_leaves(pat, leaves))
+	    return nullptr;
+      size_t count = leaves.size();
+      if (count == 0)
+	    return nullptr;
+
+      verinum flat (verinum::Vx, elem_w * count, true);
+      for (size_t idx = 0 ; idx < count ; idx += 1) {
+	    const verinum&iv = leaves[idx]->value();
+	    unsigned long base = (unsigned long)idx * elem_w;
+	    for (unsigned long bit = 0 ; bit < elem_w ; bit += 1) {
+		  verinum::V val;
+		  if (bit < iv.len())
+			val = iv.get(bit);
+		  else if (iv.has_sign() && iv.len() > 0)
+			val = iv.get(iv.len() - 1);
+		  else
+			val = verinum::V0;
+		  flat.set(base + bit, val);
+	    }
+      }
+
+      NetEConst*res = new NetEConst(flat);
+      res->set_line(loc);
+      return res;
+}
+
 void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 {
 	/* Evaluate the parameter expression. */
@@ -562,6 +636,18 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       }
       if (! expr)
             return;
+
+      // A constant unpacked-array parameter elaborates to a NetEArrayPattern.
+      // Flatten it into the packed-equivalent constant so it can be stored and
+      // indexed like any other packed value.
+      if (const NetEArrayPattern*pat = dynamic_cast<const NetEArrayPattern*>(expr)) {
+	    if (const netarray_t*arr = dynamic_cast<const netarray_t*>(param_type)) {
+		  if (NetExpr*flat = flatten_const_array_pattern(pat, arr, *expr)) {
+			delete expr;
+			expr = flat;
+		  }
+	    }
+      }
 
       // Make sure to carry the signed-ness from a vector type.
       if (param_vect)

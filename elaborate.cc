@@ -4776,7 +4776,14 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	    NetExpr*rv = 0;
 
 	    if (args[parms_idx]) {
-		  rv = elaborate_rval_expr(des, scope, port->net_type(),
+		    // As for functions: an unpacked-array formal takes the
+		    // array type as its context, not the element type.
+		  ivl_type_t ctype = port->net_type();
+		  if (port->unpacked_dimensions() > 0) {
+			if (const netarray_t*at = port->array_type())
+			      ctype = at;
+		  }
+		  rv = elaborate_rval_expr(des, scope, ctype,
 					   args[parms_idx]);
 		  if (const NetEEvent*evt = dynamic_cast<NetEEvent*> (rv)) {
 			cerr << evt->get_fileline() << ": error: An event '"
