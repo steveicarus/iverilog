@@ -87,13 +87,14 @@ void pform_class_property(const struct vlltype&loc,
 	    }
 
 	    pform_cur_class->type->properties[curp->name.first]
-		  = class_type_t::prop_info_t(property_qual,use_type);
+		  = class_type_t::prop_info_t(property_qual, use_type,
+					    curp->expr != nullptr);
 	    FILE_NAME(&pform_cur_class->type->properties[curp->name.first], loc);
 
 	    if (PExpr*rval = curp->expr.release()) {
 		  PExpr*lval = new PEIdent(curp->name.first, curp->name.second);
 		  FILE_NAME(lval, loc);
-		  PAssign*tmp = new PAssign(lval, rval);
+		  auto tmp = new PAssign(lval, rval, false, true);
 		  FILE_NAME(tmp, loc);
 
 		  if (property_qual.test_static())
