@@ -419,6 +419,14 @@ void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 	    auto sig = new NetNet(class_scope_, cur->first, NetNet::REG,
 				  use_type);
 	    sig->set_line(cur->second);
+	    sig->set_const(cur->second.qual.test_const());
+
+	    if (cur->second.qual.test_const() &&
+		cur->second.has_initializer) {
+		  int pidx = property_idx_from_name(cur->first);
+		  ivl_assert(cur->second, pidx >= 0);
+		  set_prop_initialized(pidx);
+	    }
       }
 
       for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
