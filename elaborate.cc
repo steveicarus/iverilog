@@ -3850,7 +3850,7 @@ NetProc* PCallTask::elaborate(Design*des, NetScope*scope) const
 {
       if (peek_tail_name(path_)[0] == '$') {
 	    if (void_cast_)
-		  return elaborate_non_void_function_(des, scope);
+		  return elaborate_non_void_function_(des, scope, path_);
 	    else
 		  return elaborate_sys(des, scope);
       } else {
@@ -4571,6 +4571,14 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 		       << " method " << task->basename() << endl;
 	    }
 
+	    /* Preserve the resolved object path, including an implicit this,
+	     * when rebuilding a non-void function call as an expression. */
+	    if (task->type() == NetScope::FUNC &&
+		!task->func_def()->is_void()) {
+		  use_path.push_back(name_component_t(method_name));
+		  return elaborate_non_void_function_(des, scope, use_path);
+	    }
+
 	    NetESignal*use_this = new NetESignal(net);
 	    use_this->set_line(*this);
 
@@ -4605,17 +4613,18 @@ bool PCallTask::test_task_calls_ok_(Design*des, const NetScope*scope) const
       return true;
 }
 
-NetProc *PCallTask::elaborate_non_void_function_(Design *des, NetScope *scope) const
+NetProc *PCallTask::elaborate_non_void_function_(Design *des, NetScope *scope,
+						 const pform_name_t &path) const
 {
 	// Generate a function call version of this task call.
-      PExpr*rval = new PECallFunction(package_, path_, parms_);
+      auto rval = new PECallFunction(package_, path, parms_);
       rval->set_line(*this);
 	// Generate an assign to nothing.
-      PAssign*tmp = new PAssign(0, rval);
+      auto tmp = new PAssign(nullptr, rval);
       tmp->set_line(*this);
       if (!void_cast_) {
 	    cerr << get_fileline() << ": warning: User function '"
-		 << peek_tail_name(path_) << "' is being called as a task." << endl;
+		 << peek_tail_name(path) << "' is being called as a task." << endl;
       }
 
 	// Elaborate the assignment to a dummy variable.
@@ -4634,7 +4643,7 @@ NetProc* PCallTask::elaborate_function_(Design*des, NetScope*scope) const
       if (gn_system_verilog() && func->is_void())
 	    return elaborate_void_function_(des, scope, func);
 
-      return elaborate_non_void_function_(des, scope);
+      return elaborate_non_void_function_(des, scope, path_);
 }
 
 NetProc* PCallTask::elaborate_void_function_(Design*des, NetScope*scope,
@@ -4681,7 +4690,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
       } else if (task->type() == NetScope::FUNC) {
 	    const NetFuncDef*tmp = task->func_def();
 	    if (!tmp->is_void())
-		  return elaborate_non_void_function_(des, scope);
+		  return elaborate_non_void_function_(des, scope, path_);
 	    def = tmp;
 
 	    if (void_cast_) {
