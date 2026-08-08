@@ -1374,6 +1374,13 @@ int main(int argc, char **argv)
 	    }
       }
 
+      if (version_flag) {
+	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
+	    printf("%s\n\n", COPYRIGHT);
+	    puts(NOTICE);
+	    return 0;
+      }
+
       if (strcmp(gen_verilog_ams,"verilog-ams") == 0)
 	    fprintf(defines_file, "D:__VAMS_ENABLE__=1\n");
       if (synth_flag)
@@ -1390,12 +1397,6 @@ int main(int argc, char **argv)
       if (tconfig_dir == 0)
 	    tconfig_dir = base;
 
-      if (version_flag || verbose_flag) {
-	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
-	    printf("%s\n\n", COPYRIGHT);
-	    puts(NOTICE);
-      }
-
 	/* Make a common conf file path to reflect the target. */
       snprintf(iconfig_common_path, sizeof iconfig_common_path, "%s%c%s%s.conf",
 	      tconfig_dir, sep, targ, synth_flag? "-s" : "");
@@ -1403,10 +1404,20 @@ int main(int argc, char **argv)
 	/* Write values to the iconfig file. */
       fprintf(iconfig_file, "basedir:%s\n", base);
 
-	/* Tell the core where to find the system VPI modules. */
-      fprintf(iconfig_file, "module:%s%csystem.vpi\n", vpi_dir, sep);
-      fprintf(iconfig_file, "module:%s%cvhdl_sys.vpi\n", vpi_dir, sep);
-      fprintf(iconfig_file, "module:%s%cvhdl_textio.vpi\n", vpi_dir, sep);
+      char module_prefix[1024];
+      const char *module_suffix;
+      if (strcmp(vpi_dir, base) != 0) {
+	    snprintf(module_prefix, sizeof(module_prefix), "module:%s%c", vpi_dir, sep);
+	    module_suffix = ".vpi";
+      } else {
+	    snprintf(module_prefix, sizeof(module_prefix), "module:");
+	    module_suffix = "";
+      }
+
+	/* Tell the core where to find the built-in VPI modules. */
+      fprintf(iconfig_file, "%ssystem%s\n", module_prefix, module_suffix);
+      fprintf(iconfig_file, "%svhdl_sys%s\n", module_prefix, module_suffix);
+      fprintf(iconfig_file, "%svhdl_textio%s\n", module_prefix, module_suffix);
 
 	/* If verilog-2005/09/12/17/23 is enabled or icarus-misc or verilog-ams,
 	 * then include the v2005_math library. */
@@ -1417,13 +1428,13 @@ int main(int argc, char **argv)
           strcmp(generation, "2023") == 0 ||
           strcmp(gen_icarus, "icarus-misc") == 0 ||
           strcmp(gen_verilog_ams, "verilog-ams") == 0) {
-	    fprintf(iconfig_file, "module:%s%cv2005_math.vpi\n", vpi_dir, sep);
+	    fprintf(iconfig_file, "%sv2005_math%s\n", module_prefix, module_suffix);
       }
 	/* If verilog-ams or icarus_misc is enabled, then include the
 	 * va_math module as well. */
       if (strcmp(gen_verilog_ams,"verilog-ams") == 0 ||
           strcmp(gen_icarus, "icarus-misc") == 0) {
-	    fprintf(iconfig_file, "module:%s%cva_math.vpi\n", vpi_dir, sep);
+	    fprintf(iconfig_file, "%sva_math%s\n", module_prefix, module_suffix);
       }
       /* If verilog-2009 (SystemVerilog) is enabled, then include the
          v2009 module. */
@@ -1432,7 +1443,7 @@ int main(int argc, char **argv)
           strcmp(generation, "2012") == 0 ||
           strcmp(generation, "2017") == 0 ||
           strcmp(generation, "2023") == 0) {
-	    fprintf(iconfig_file, "module:%s%cv2009.vpi\n", vpi_dir, sep);
+	    fprintf(iconfig_file, "%sv2009%s\n", module_prefix, module_suffix);
       }
 
       if (mtm != 0) fprintf(iconfig_file, "-T:%s\n", mtm);
@@ -1547,8 +1558,14 @@ int main(int argc, char **argv)
 	/* Write the preprocessor command needed to preprocess a
 	   single file. This may be used to preprocess library
 	   files. */
-      fprintf(iconfig_file, "ivlpp:%s%civlpp %s -L -F\"%s\" -P\"%s\"\n",
-	      ivlpp_dir, sep,
+      char ivlpp_prefix[1024];
+      if (strcmp(ivlpp_dir, base) != 0)
+	    snprintf(ivlpp_prefix, sizeof(ivlpp_prefix), "%s%c", ivlpp_dir, sep);
+      else
+	    *ivlpp_prefix = '\0';
+
+      fprintf(iconfig_file, "ivlpp:%sivlpp %s -L -F\"%s\" -P\"%s\"\n",
+	          ivlpp_prefix,
               strchr(warning_flags, 'r') ? "-Wredef-all" :
               strchr(warning_flags, 'R') ? "-Wredef-chg" : "",
               defines_path, compiled_defines_path

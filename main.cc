@@ -131,18 +131,35 @@ map<string,const char*> flags;
 char*vpi_module_list = 0;
 void add_vpi_module(const char*name)
 {
+      const char*module_name = strrchr(name, '/');
+#ifdef __MINGW32__
+      const char*module_name2 = strrchr(name, '\\');
+      if (!module_name || (module_name2 && module_name2 > module_name))
+	    module_name = module_name2;
+#endif
+      module_name = module_name ? module_name + 1 : name;
+
+      char*module_base = strdup(module_name);
+      size_t module_len = strlen(module_base);
+      if (module_len > 4 && strcmp(module_base + module_len - 4, ".vpi") == 0) {
+	    module_base[module_len - 4] = 0;
+      } else if (module_len > 4 && strcmp(module_base + module_len - 4, ".vpl") == 0) {
+	    module_base[module_len - 4] = 0;
+      }
+
       if (vpi_module_list == 0) {
-	    vpi_module_list = strdup(name);
+	    vpi_module_list = strdup(module_base);
 
       } else {
 	    char*tmp = static_cast<char*>(realloc(vpi_module_list,
 	                                  strlen(vpi_module_list)
-	                                  + strlen(name)
+	                                  + strlen(module_base)
 	                                  + 2));
 	    strcat(tmp, ",");
-	    strcat(tmp, name);
+	    strcat(tmp, module_base);
 	    vpi_module_list = tmp;
       }
+      free(module_base);
       flags["VPI_MODULE_LIST"] = vpi_module_list;
       load_vpi_module(name);
 }
