@@ -401,11 +401,14 @@ struct class_type_t : public data_type_t {
 	// This is a map of the properties. Map the name to the type.
       struct prop_info_t : public LineInfo {
 	    inline prop_info_t() : qual(property_qualifier_t::make_none()) { }
-	    inline prop_info_t(property_qualifier_t q, data_type_t*t) : qual(q), type(t) { }
+	    inline prop_info_t(property_qualifier_t q, data_type_t *t,
+			       bool init)
+	    : qual(q), type(t), has_initializer(init) { }
 	    prop_info_t(prop_info_t&&) = default;
 	    prop_info_t& operator=(prop_info_t&&) = default;
 	    property_qualifier_t qual;
 	    std::unique_ptr<data_type_t> type;
+	    bool has_initializer = false;
       };
       std::map<perm_string, struct prop_info_t> properties;
 

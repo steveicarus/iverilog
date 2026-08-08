@@ -136,7 +136,7 @@ bool netclass_t::get_prop_initialized(size_t idx) const
       if (idx < super_size)
 	    return super_->get_prop_initialized(idx);
       else
-	    return property_table_[idx].initialized_flag;
+	    return property_table_[idx-super_size].initialized_flag;
 }
 
 void netclass_t::set_prop_initialized(size_t idx) const

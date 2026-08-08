@@ -1132,18 +1132,27 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 		    // part of the sig, as the l-value.
 		  NetNet*psig = class_type->find_static_property(method_name);
 		  ivl_assert(*this, psig);
+		  if (psig->get_const()) {
+			cerr << get_fileline() << ": error: Assignment to const signal `"
+			     << psig->name() << "` is not allowed." << endl;
+			des->errors++;
+			return nullptr;
+		  }
 
 		  lv = new NetAssign_(psig);
 		  return lv;
 
 	    } else if (qual.test_const()) {
+		 auto method_scope = find_method_containing_scope(*this, scope);
 		 if (class_type->get_prop_initialized(pidx)) {
 		       cerr << get_fileline() << ": error: "
 			    << "Property " << class_type->get_prop_name(pidx)
 			    << " is constant in this method."
 			    << " (scope=" << scope_path(scope) << ")" << endl;
 		       des->errors++;
-		 } else if (scope->basename() != "new" && scope->basename() != "new@") {
+		 } else if (!method_scope ||
+			    (method_scope->basename() != "new" &&
+			     method_scope->basename() != "new@")) {
 		       cerr << get_fileline() << ": error: "
 			    << "Property " << class_type->get_prop_name(pidx)
 			    << " is constant in this method."
