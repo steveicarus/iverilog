@@ -403,13 +403,14 @@ struct class_type_t : public data_type_t {
       bool virtual_class;
 
 	// This is a map of the properties. Map the name to the type.
-      struct prop_info_t : public LineInfo {
+      struct prop_info_t : public PNamedItem {
 	    inline prop_info_t() : qual(property_qualifier_t::make_none()) { }
 	    inline prop_info_t(property_qualifier_t q, data_type_t *t,
 			       bool init)
 	    : qual(q), type(t), has_initializer(init) { }
 	    prop_info_t(prop_info_t&&) = default;
 	    prop_info_t& operator=(prop_info_t&&) = default;
+	    SymbolType symbol_type() const override { return CLASS_PROPERTY; }
 	    property_qualifier_t qual;
 	    std::unique_ptr<data_type_t> type;
 	    bool has_initializer = false;

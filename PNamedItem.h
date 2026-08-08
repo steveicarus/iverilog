@@ -31,7 +31,7 @@ class PNamedItem : virtual public LineInfo {
       enum SymbolType { ANY, PARAM, NET, VAR, GENVAR, EVENT, TYPE, ENUM,
                         CLASS, FUNCTION, TASK, BLOCK, GENBLOCK, MODPORT,
                         PACKAGE, MODULE, PROGRAM, INTERFACE, PRIMITIVE,
-                        INSTANCE };
+                        INSTANCE, CLASS_PROPERTY };
 
       explicit PNamedItem();
       virtual ~PNamedItem() override;

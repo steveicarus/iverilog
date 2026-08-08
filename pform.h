@@ -259,6 +259,9 @@ extern void pform_pop_block_scope(bool keep_scope);
  */
 extern LexicalScope* pform_peek_scope();
 
+extern bool pform_check_local_symbol(LexicalScope *scope, perm_string name,
+				     const PNamedItem *item);
+
 extern PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name);
 
 extern PFunction*pform_push_constructor_scope(const struct vlltype&loc);
