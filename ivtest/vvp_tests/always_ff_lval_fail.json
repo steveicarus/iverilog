@@ -1,0 +1,6 @@
+{
+    "type"   : "CE",
+    "source" : "always_ff_lval_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "gold"   : "always_ff_lval_fail"
+}

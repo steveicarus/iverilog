@@ -1,0 +1,7 @@
+ivltests/always_ff_lval_fail.v:33: error: variable 'ff_ff_driver.q' written in an always_ff process may not be written by any other process.
+ivltests/always_ff_lval_fail.v:29:      : process also writes variable 'ff_ff_driver.q'.
+ivltests/always_ff_lval_fail.v:6: error: variable 'ff_initial_driver.a' written in an always_ff process may not be written by any other process.
+ivltests/always_ff_lval_fail.v:4:      : process also writes variable 'ff_initial_driver.a'.
+ivltests/always_ff_lval_fail.v:19: error: variable 'ff_always_driver.q' written in an always_ff process may not be written by any other process.
+ivltests/always_ff_lval_fail.v:15:      : process also writes variable 'ff_always_driver.q'.
+Elaboration failed
