@@ -453,7 +453,8 @@ static PGenerate* current_generate_scope()
       return lexical_scope == pform_cur_generate ? pform_cur_generate : nullptr;
 }
 
-static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*item)
+bool pform_check_local_symbol(LexicalScope *scope, perm_string name,
+			      const PNamedItem *item)
 {
       assert(scope);
 
@@ -468,7 +469,7 @@ static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*it
 		    "It was declared here as "
 		 << cur_sym->second->symbol_type() << "." << endl;
 	    error_count += 1;
-	    return;
+	    return false;
       }
 
 	// Check for conflict with an explicit import.
@@ -479,8 +480,16 @@ static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*it
 		    "imported into this scope from package '"
 		 << cur_pkg->second.package->pscope_name() << "'." << endl;
 	    error_count += 1;
-	    return;
+	    return false;
       }
+
+      return true;
+}
+
+static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*item)
+{
+      if (!pform_check_local_symbol(scope, name, item))
+	    return;
 
       scope->local_symbols[name] = item;
 }
@@ -950,16 +959,6 @@ typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
 	    auto sym = cur_scope->local_symbols.find(name);
 	    if (sym != cur_scope->local_symbols.end())
 		  return nullptr;
-
-	    // Class properties are tracked in the class type, not in
-	    // local_symbols, but still shadow type names before lookup falls
-	    // through to wildcard imports.
-	    if (auto cur_class = dynamic_cast<PClass*> (cur_scope)) {
-		  if (cur_class->type &&
-		      cur_class->type->properties.find(name) !=
-		      cur_class->type->properties.end())
-			return nullptr;
-	    }
 
             PPackage*pkg = pform_find_potential_import(loc, cur_scope, name, false, false);
             if (pkg) {

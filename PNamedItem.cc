@@ -48,6 +48,9 @@ std::ostream& operator << (std::ostream&o, PNamedItem::SymbolType st)
           case PNamedItem::VAR:
             o << "a variable";
             break;
+          case PNamedItem::CLASS_PROPERTY:
+            o << "a class property";
+            break;
           case PNamedItem::GENVAR:
             o << "a genvar";
             break;
