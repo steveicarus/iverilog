@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "hier_index_empty_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
