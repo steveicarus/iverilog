@@ -3197,7 +3197,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
   | '[' '$' ']'
       { // SystemVerilog queue
 	list<pform_range_t> *tmp = new std::list<pform_range_t>;
-	pform_range_t index (new PENull,0);
+	pform_range_t index (new PEQueueDimension,0);
 	pform_requires_sv(@$, "Queue declaration");
 	tmp->push_back(index);
 	$$ = tmp;
@@ -3205,7 +3205,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
   | '[' '$' ':' expression ']'
       { // SystemVerilog queue with a max size
 	list<pform_range_t> *tmp = new std::list<pform_range_t>;
-	pform_range_t index (new PENull,$4);
+	pform_range_t index (new PEQueueDimension,$4);
 	pform_requires_sv(@$, "Queue declaration");
 	tmp->push_back(index);
 	$$ = tmp;

@@ -1087,7 +1087,7 @@ bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
                     "An unsized dimension is not allowed here." << endl;
             dimension_ok = false;
             des->errors += 1;
-      } else if (dynamic_cast<PENull*>(range.first)) {
+      } else if (dynamic_cast<PEQueueDimension*>(range.first)) {
             cerr << li->get_fileline() << ": error: "
                     "A queue dimension is not allowed here." << endl;
             dimension_ok = false;

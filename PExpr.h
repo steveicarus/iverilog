@@ -635,6 +635,12 @@ class PENull : public PExpr {
                                      unsigned flags) const override;
 };
 
+// Internal marker for the '$' in a queue dimension.
+class PEQueueDimension : public PExpr {
+    public:
+      void dump(std::ostream&) const override;
+};
+
 class PENumber : public PExpr {
 
     public:
