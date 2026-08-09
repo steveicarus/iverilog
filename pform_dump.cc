@@ -506,6 +506,11 @@ void PENull::dump(ostream&out) const
       out << "null";
 }
 
+void PEQueueDimension::dump(ostream&out) const
+{
+      out << "$";
+}
+
 void PENumber::dump(ostream&out) const
 {
       out << value();

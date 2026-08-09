@@ -91,8 +91,12 @@ typedef std::pair<perm_string, unsigned> pform_ident_t;
  *       second = 0
  *
  *   [ $ ] -- Queue type
- *       first = PENull
+ *       first = PEQueueDimension
  *       second = 0
+ *
+ *   [ $ : <expr> ] -- Bounded queue type
+ *       first = PEQueueDimension
+ *       second = <expr>
  */
 typedef std::pair<PExpr*,PExpr*> pform_range_t;
 
