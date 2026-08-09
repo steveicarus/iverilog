@@ -133,16 +133,21 @@ struct pform_port_t {
  *
  * - The SEL_BIT_LAST index component is an array/queue [$] index,
  * that is the last item in the variable.
+ *
+ * - SEL_NONE represents an empty [] dimension and SEL_QUEUE_BOUND represents
+ * a bounded queue dimension [$:<expr>]. These forms are parsed together with
+ * the other index components and validated when their context is known.
  */
-struct index_component_t {
-      enum ctype_t { SEL_NONE, SEL_BIT, SEL_BIT_LAST, SEL_PART, SEL_IDX_UP, SEL_IDX_DO };
+struct index_component_t : public LineInfo {
+      enum ctype_t { SEL_NONE, SEL_BIT, SEL_BIT_LAST, SEL_PART,
+		     SEL_QUEUE_BOUND, SEL_IDX_UP, SEL_IDX_DO };
 
-      index_component_t() : sel(SEL_NONE), msb(0), lsb(0) { };
-      ~index_component_t() { }
+      index_component_t() = default;
+      ~index_component_t() override = default;
 
-      ctype_t sel;
-      class PExpr*msb;
-      class PExpr*lsb;
+      ctype_t sel = SEL_NONE;
+      PExpr *msb = nullptr;
+      PExpr *lsb = nullptr;
 };
 
 struct name_component_t {

@@ -164,6 +164,134 @@ static void delete_type_id_range(T&value)
       value.ranges = nullptr;
 }
 
+static index_component_t *make_index_component(const struct vlltype &loc,
+					       index_component_t::ctype_t sel,
+					       PExpr *msb = nullptr,
+					       PExpr *lsb = nullptr)
+{
+      auto component = new index_component_t;
+      FILE_NAME(component, loc);
+      component->sel = sel;
+      component->msb = msb;
+      component->lsb = lsb;
+      return component;
+}
+
+static void index_component_requires_sv(const index_component_t &component,
+					const char *feature)
+{
+      if (gn_system_verilog())
+	    return;
+
+      cerr << component.get_fileline() << ": error: " << feature
+	   << " requires SystemVerilog." << endl;
+      error_count += 1;
+}
+
+static void index_component_error(const index_component_t &component,
+				  const char *message)
+{
+      cerr << component.get_fileline() << ": error: " << message << endl;
+      error_count += 1;
+}
+
+static void validate_hierarchy_index_components(
+				std::list<index_component_t> &components)
+{
+      for (auto cur = components.begin(); cur != components.end();) {
+	    bool invalid = false;
+
+	    if (cur->sel == index_component_t::SEL_NONE) {
+		  index_component_error(*cur,
+			"Empty index is not allowed in a hierarchy identifier.");
+		  invalid = true;
+	    } else if (cur->sel == index_component_t::SEL_QUEUE_BOUND) {
+		  index_component_error(*cur,
+			"Queue bounds are not allowed in a hierarchy identifier.");
+		  invalid = true;
+	    } else if (cur->sel == index_component_t::SEL_BIT_LAST) {
+		  index_component_requires_sv(*cur,
+					      "Last element expression ($)");
+	    }
+
+	    if (invalid) {
+		  delete cur->msb;
+		  delete cur->lsb;
+		  cur = components.erase(cur);
+	    } else {
+		  ++cur;
+	    }
+      }
+}
+
+static void append_hierarchy_identifier_component(
+				pform_name_t &path, perm_string name,
+				std::list<index_component_t> *components)
+{
+      path.emplace_back(name);
+
+      std::unique_ptr<std::list<index_component_t>> component_list(components);
+      if (!component_list)
+	    return;
+
+      validate_hierarchy_index_components(*component_list);
+      path.back().index.splice(path.back().index.end(), *component_list);
+}
+
+static std::list<pform_range_t> *
+make_dimensions(std::list<index_component_t> *components)
+{
+      std::unique_ptr<std::list<index_component_t>> component_list(components);
+
+      if (!component_list)
+	    return nullptr;
+
+      auto dimensions = new std::list<pform_range_t>;
+
+      for (auto &component : *component_list) {
+	    switch (component.sel) {
+		case index_component_t::SEL_NONE:
+		  index_component_requires_sv(component,
+					      "Dynamic array declaration");
+		  dimensions->push_back(pform_range_t(nullptr, nullptr));
+		  break;
+		case index_component_t::SEL_BIT:
+		  if (!gn_system_verilog()) {
+			warn_count += 1;
+			cerr << component.get_fileline()
+			     << ": warning: Use of SystemVerilog [size] dimension. "
+			     << "Use at least -g2005-sv to remove this warning."
+			     << endl;
+		  }
+		  dimensions->push_back(pform_range_t(component.msb, nullptr));
+		  break;
+		case index_component_t::SEL_BIT_LAST:
+		  index_component_requires_sv(component, "Queue declaration");
+		  dimensions->push_back(pform_range_t(new PEQueueDimension,
+						   nullptr));
+		  break;
+		case index_component_t::SEL_PART:
+		  dimensions->push_back(pform_range_t(component.msb,
+						   component.lsb));
+		  break;
+		case index_component_t::SEL_QUEUE_BOUND:
+		  index_component_requires_sv(component, "Queue declaration");
+		  dimensions->push_back(pform_range_t(new PEQueueDimension,
+						   component.lsb));
+		  break;
+		case index_component_t::SEL_IDX_UP:
+		case index_component_t::SEL_IDX_DO:
+		  index_component_error(component,
+			"An indexed part select is not allowed in a dimension.");
+		  dimensions->push_back(pform_range_t(component.msb,
+						   component.lsb));
+		  break;
+	    }
+      }
+
+      return dimensions;
+}
+
 /* The rules sometimes push attributes into a global context where
    sub-rules may grab them. This makes parser rules a little easier to
    write in some cases. */
@@ -797,6 +925,8 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
       std::list<named_pexpr_t>*named_pexprs;
       struct parmvalue_t*parmvalue;
       std::list<pform_range_t>*ranges;
+      index_component_t *index_component;
+      std::list<index_component_t> *index_components;
 
       PExpr*expr;
       std::list<PExpr*>*exprs;
@@ -1045,7 +1175,10 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <let_port_lst> let_port_list_opt let_port_list
 %type <let_port_itm> let_port_item
 
-%type <pform_name> hierarchy_identifier implicit_class_handle class_hierarchy_identifier
+%type <pform_name> hierarchy_identifier hierarchy_identifier_component
+%type <pform_name> implicit_class_handle class_hierarchy_identifier
+%type <index_component> index_component
+%type <index_components> index_components_opt index_components
 %type <pform_name> spec_notifier_opt spec_notifier
 %type <timing_check_event> spec_reference_event
 %type <spec_optional_args> setuphold_opt_args recrem_opt_args setuphold_recrem_opt_notifier
@@ -1093,7 +1226,6 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <property_qualifier> class_item_qualifier_opt property_qualifier_opt
 %type <property_qualifier> random_qualifier
 
-%type <ranges> variable_dimension
 %type <ranges> dimensions_opt dimensions
 
 %type <nettype>  net_type net_type_opt net_type_or_var net_type_or_var_opt
@@ -3168,47 +3300,29 @@ value_range /* IEEE1800-2005: A.8.3 */
       { }
   ;
 
-variable_dimension /* IEEE1800-2005: A.2.5 */
-  : '[' expression ':' expression ']'
-      { std::list<pform_range_t> *tmp = new std::list<pform_range_t>;
-	pform_range_t index ($2,$4);
-	tmp->push_back(index);
-	$$ = tmp;
-      }
-  | '[' expression ']'
-      { // SystemVerilog canonical range
-	if (!gn_system_verilog()) {
-	      warn_count += 1;
-	      cerr << @2 << ": warning: Use of SystemVerilog [size] dimension. "
-		   << "Use at least -g2005-sv to remove this warning." << endl;
-	}
-	list<pform_range_t> *tmp = new std::list<pform_range_t>;
-	pform_range_t index ($2,0);
-	tmp->push_back(index);
-	$$ = tmp;
-      }
-  | '[' ']'
-      { std::list<pform_range_t> *tmp = new std::list<pform_range_t>;
-	pform_range_t index (0,0);
-	pform_requires_sv(@$, "Dynamic array declaration");
-	tmp->push_back(index);
-	$$ = tmp;
+index_component
+  : '[' expression ']'
+      { $$ = make_index_component(@$, index_component_t::SEL_BIT, $2);
       }
   | '[' '$' ']'
-      { // SystemVerilog queue
-	list<pform_range_t> *tmp = new std::list<pform_range_t>;
-	pform_range_t index (new PEQueueDimension,0);
-	pform_requires_sv(@$, "Queue declaration");
-	tmp->push_back(index);
-	$$ = tmp;
+      { $$ = make_index_component(@$, index_component_t::SEL_BIT_LAST);
+      }
+  | '[' expression ':' expression ']'
+      { $$ = make_index_component(@$, index_component_t::SEL_PART, $2, $4);
+      }
+  | '[' ']'
+      { $$ = make_index_component(@$, index_component_t::SEL_NONE);
       }
   | '[' '$' ':' expression ']'
-      { // SystemVerilog queue with a max size
-	list<pform_range_t> *tmp = new std::list<pform_range_t>;
-	pform_range_t index (new PEQueueDimension,$4);
-	pform_requires_sv(@$, "Queue declaration");
-	tmp->push_back(index);
-	$$ = tmp;
+      { $$ = make_index_component(@$,
+				 index_component_t::SEL_QUEUE_BOUND,
+				 nullptr, $4);
+      }
+  | '[' expression K_PO_POS expression ']'
+      { $$ = make_index_component(@$, index_component_t::SEL_IDX_UP, $2, $4);
+      }
+  | '[' expression K_PO_NEG expression ']'
+      { $$ = make_index_component(@$, index_component_t::SEL_IDX_DO, $2, $4);
       }
   ;
 
@@ -5026,72 +5140,46 @@ switchtype
      names. */
 
 hierarchy_identifier
-  : IDENTIFIER
-      { $$ = new pform_name_t;
-	$$->push_back(name_component_t(lex_strings.make($1)));
-	delete[]$1;
-      }
-  | hierarchy_identifier '.' identifier_name
-      { pform_name_t * tmp = $1;
-	tmp->push_back(name_component_t(lex_strings.make($3)));
+  : hierarchy_identifier_component
+  | hierarchy_identifier '.' identifier_name index_components_opt
+      { auto tmp = $1;
+	append_hierarchy_identifier_component(*tmp, lex_strings.make($3), $4);
 	delete[]$3;
 	$$ = tmp;
       }
   /* "unique" is a keyword (K_unique) but also a queue/array method name. */
-  | hierarchy_identifier '.' K_unique
-      { pform_name_t * tmp = $1;
-	tmp->push_back(name_component_t(lex_strings.make("unique")));
+  | hierarchy_identifier '.' K_unique index_components_opt
+      { auto tmp = $1;
+	append_hierarchy_identifier_component(*tmp, lex_strings.make("unique"),
+					      $4);
 	$$ = tmp;
       }
-  | hierarchy_identifier '[' expression ']'
-      { pform_name_t * tmp = $1;
-	name_component_t&tail = tmp->back();
-	index_component_t itmp;
-	itmp.sel = index_component_t::SEL_BIT;
-	itmp.msb = $3;
-	tail.index.push_back(itmp);
-	$$ = tmp;
+  ;
+
+hierarchy_identifier_component
+  : IDENTIFIER index_components_opt
+      { $$ = new pform_name_t;
+	append_hierarchy_identifier_component(*$$, lex_strings.make($1), $2);
+	delete[]$1;
       }
-  | hierarchy_identifier '[' '$' ']'
-      { pform_requires_sv(@3, "Last element expression ($)");
-        pform_name_t * tmp = $1;
-	name_component_t&tail = tmp->back();
-	index_component_t itmp;
-	itmp.sel = index_component_t::SEL_BIT_LAST;
-	itmp.msb = 0;
-	itmp.lsb = 0;
-	tail.index.push_back(itmp);
-	$$ = tmp;
+  ;
+
+index_components_opt
+  : index_components
+  |
+      { $$ = nullptr; }
+  ;
+
+index_components
+  : index_components index_component
+      { $1->push_back(*$2);
+	delete $2;
+	$$ = $1;
       }
-  | hierarchy_identifier '[' expression ':' expression ']'
-      { pform_name_t * tmp = $1;
-	name_component_t&tail = tmp->back();
-	index_component_t itmp;
-	itmp.sel = index_component_t::SEL_PART;
-	itmp.msb = $3;
-	itmp.lsb = $5;
-	tail.index.push_back(itmp);
-	$$ = tmp;
-      }
-  | hierarchy_identifier '[' expression K_PO_POS expression ']'
-      { pform_name_t * tmp = $1;
-	name_component_t&tail = tmp->back();
-	index_component_t itmp;
-	itmp.sel = index_component_t::SEL_IDX_UP;
-	itmp.msb = $3;
-	itmp.lsb = $5;
-	tail.index.push_back(itmp);
-	$$ = tmp;
-      }
-  | hierarchy_identifier '[' expression K_PO_NEG expression ']'
-      { pform_name_t * tmp = $1;
-	name_component_t&tail = tmp->back();
-	index_component_t itmp;
-	itmp.sel = index_component_t::SEL_IDX_DO;
-	itmp.msb = $3;
-	itmp.lsb = $5;
-	tail.index.push_back(itmp);
-	$$ = tmp;
+  | index_component
+      { $$ = new std::list<index_component_t>;
+	$$->push_back(*$1);
+	delete $1;
       }
   ;
 
@@ -6607,20 +6695,14 @@ port_reference_list
 
   /* The range is a list of variable dimensions. */
 dimensions_opt
-  :            { $$ = 0; }
-  | dimensions { $$ = $1; }
+  : index_components_opt
+      { $$ = make_dimensions($1);
+      }
   ;
 
 dimensions
-  : variable_dimension
-      { $$ = $1; }
-  | dimensions variable_dimension
-      { std::list<pform_range_t> *tmp = $1;
-	if ($2) {
-	      tmp->splice(tmp->end(), *$2);
-	      delete $2;
-	}
-	$$ = tmp;
+  : index_components
+      { $$ = make_dimensions($1);
       }
   ;
 
