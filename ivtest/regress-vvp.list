@@ -137,6 +137,8 @@ dffsynth8			vvp_tests/dffsynth8.json
 dffsynth9			vvp_tests/dffsynth9.json
 dffsynth10			vvp_tests/dffsynth10.json
 dffsynth11			vvp_tests/dffsynth11.json
+dimension_idx_down_fail		vvp_tests/dimension_idx_down_fail.json
+dimension_idx_up_fail		vvp_tests/dimension_idx_up_fail.json
 drive_strength4			vvp_tests/drive_strength4.json
 dumpfile			vvp_tests/dumpfile.json
 early_sig_elab1			vvp_tests/early_sig_elab1.json
@@ -150,6 +152,8 @@ fmonitor1			vvp_tests/fmonitor1.json
 fmonitor2			vvp_tests/fmonitor2.json
 fread-error			vvp_tests/fread-error.json
 func_nested_block_nb_fail	vvp_tests/func_nested_block_nb_fail.json
+hier_index_empty_fail		vvp_tests/hier_index_empty_fail.json
+hier_index_queue_fail		vvp_tests/hier_index_queue_fail.json
 line_directive			vvp_tests/line_directive.json
 localparam_type			vvp_tests/localparam_type.json
 macro_str_esc			vvp_tests/macro_str_esc.json
