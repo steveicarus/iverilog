@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_type_identifier_procedural_lvalue_fail.v",
+    "gold"          : "sv_type_identifier_procedural_lvalue_fail",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
