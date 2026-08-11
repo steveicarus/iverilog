@@ -1,0 +1,2 @@
+ivltests/sv_type_identifier_dim_indexed_fail.v:6: error: An indexed part select is not allowed in a dimension.
+1 error(s) during elaboration.

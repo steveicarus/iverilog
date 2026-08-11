@@ -1,0 +1,2 @@
+ivltests/sv_type_identifier_dim_unpacked_fail.v:6: error: Packed array base-type `byte_array_t` is not packed.
+1 error(s) during elaboration.
