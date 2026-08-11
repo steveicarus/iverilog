@@ -251,7 +251,8 @@ class PCallTask  : public Statement {
 
       NetProc*elaborate_method_(Design*des, NetScope*scope,
                                 bool add_this_flag = false) const;
-      NetProc*elaborate_function_(Design*des, NetScope*scope) const;
+      NetProc *elaborate_function_(
+	    Design *des, NetScope *scope, NetScope *func_scope) const;
       NetProc*elaborate_void_function_(Design*des, NetScope*scope,
 				       NetFuncDef*def) const;
       NetProc *elaborate_non_void_function_(Design *des, NetScope *scope,

@@ -1030,38 +1030,6 @@ NetNet* Design::find_signal(NetScope*scope, pform_name_t path)
       return 0;
 }
 
-NetFuncDef* Design::find_function(NetScope*scope, const pform_name_t&name)
-{
-      assert(scope);
-
-      std::list<hname_t> eval_path = eval_scope_path(this, scope, name);
-      NetScope*func = find_scope(scope, eval_path, NetScope::FUNC);
-      if (func && (func->type() == NetScope::FUNC)) {
-              // If a function is used in a parameter definition or in
-              // a signal declaration, it is possible to get here before
-              // the function's signals have been elaborated. If this is
-              // the case, elaborate them now.
-            if (func->elab_stage() < 2) {
-		  func->need_const_func(true);
-                  const PFunction*pfunc = func->func_pform();
-                  assert(pfunc);
-                  pfunc->elaborate_sig(this, func);
-            }
-	    return func->func_def();
-      }
-      return 0;
-}
-
-NetScope* Design::find_task(NetScope*scope, const pform_name_t&name)
-{
-      std::list<hname_t> eval_path = eval_scope_path(this, scope, name);
-      NetScope*task = find_scope(scope, eval_path, NetScope::TASK);
-      if (task && (task->type() == NetScope::TASK))
-	    return task;
-
-      return 0;
-}
-
 void Design::add_node(NetNode*net)
 {
       assert(net->design_ == 0);
