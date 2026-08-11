@@ -178,6 +178,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       symbol_search_results sr;
       symbol_search(this, des, scope, path_, lexical_pos(), &sr);
 
+      if (!sr.require_non_type(this, des, "as a procedural l-value"))
+	    return nullptr;
+
       NetNet *reg = sr.net;
       const pform_name_t &member_path = sr.path_tail;
 

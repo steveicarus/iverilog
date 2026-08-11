@@ -1274,7 +1274,7 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
 						  wildcard.lexical_pos(), &sr);
 				    if (sr.net != 0 ||
 					(rmod->ports[j]->is_interface_port() &&
-					 sr.scope != 0 && sr.scope->is_interface())) {
+					 sr.is_scope() && sr.scope->is_interface())) {
 					  pins[j] = new PEIdent(
 						rmod->ports[j]->name,
 						wildcard.lexical_pos(), true);
@@ -1450,7 +1450,8 @@ static bool resolve_interface_actual_scope(const PExpr*actual,
 		  symbol_search_results sr;
 		  symbol_search(actual, des, parent_scope, actual_ident->path(),
 				actual_ident->lexical_pos(), &sr);
-		  res.scope = sr.scope;
+		  if (sr.is_scope())
+			res.scope = sr.scope;
 		  if (sr.through_interface_alias())
 			res.modport = sr.interface_alias_modport;
 	    }
@@ -1462,7 +1463,8 @@ static bool resolve_interface_actual_scope(const PExpr*actual,
       symbol_search(actual, des, parent_scope, actual_ident->path(),
 		    actual_ident->lexical_pos(), &sr);
 
-      res.scope = sr.scope;
+      if (sr.is_scope())
+	    res.scope = sr.scope;
       if (sr.through_interface_alias())
 	    res.modport = sr.interface_alias_modport;
       else if (NetScope*child = parent_scope->child(hname_t(res.display_name)))
@@ -3956,6 +3958,10 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       NetScope *func_scope = nullptr;
       if (symbol_search(this, des, scope, call_path, lexical_pos(),
 			&search_results, true)) {
+	    if (!search_results.require_non_type(
+			this, des, "in a task or function call"))
+		  return nullptr;
+
 	    if (search_results.is_scope()) {
 		  if (search_results.scope->type() == NetScope::TASK)
 			task = search_results.scope;
@@ -5264,6 +5270,10 @@ NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return 0;
       }
+      if (!search_results.require_non_type(this, des,
+					    "as a disable target"))
+	    return nullptr;
+
       if (!search_results.is_scope()) {
 	    cerr << get_fileline() << ": error: Cannot disable "
 		 << search_results.result_type() << " `" << scope_ << "'."
@@ -6669,6 +6679,8 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return 0;
       }
+      if (!sr.require_non_type(this, des, "as a named event"))
+	    return nullptr;
 
       if (!sr.eve) {
 	    cerr << get_fileline() << ": error:  <" << event_ << ">"
@@ -6698,6 +6710,8 @@ NetProc* PNBTrigger::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return 0;
       }
+      if (!sr.require_non_type(this, des, "as a named event"))
+	    return nullptr;
 
       if (sr.eve == 0) {
 	    cerr << get_fileline() << ": error:  <" << event_ << ">"

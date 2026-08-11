@@ -1006,6 +1006,11 @@ class NetScope : public Definitions, public Attrib {
 
       void add_typedefs(const std::map<perm_string,typedef_t*>*typedefs);
 
+	/* Find a type declared in this scope and visible at the given source
+	   position. */
+      typedef_t *lookup_typedef(perm_string name,
+				unsigned int lexical_pos) const;
+
 	/* Locate the scope that owns the resolved typedef object. */
       NetScope*find_typedef_scope(const Design*des, const typedef_t*type_i);
 

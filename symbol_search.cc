@@ -30,6 +30,21 @@
 
 using namespace std;
 
+bool symbol_search_results::require_non_type(const LineInfo *li,
+					      Design *des,
+					      const char *use) const
+{
+      if (!type_def)
+	    return true;
+
+      cerr << li->get_fileline() << ": error: Type name `" << path_head
+	   << "' cannot be used " << use << "." << endl;
+      cerr << type_def->get_fileline() << ":      : The type was declared here."
+	   << endl;
+      des->errors += 1;
+      return false;
+}
+
 enum class scope_object_search_result_t {
       not_found,
       found,
@@ -39,8 +54,8 @@ enum class scope_object_search_result_t {
 static scope_object_search_result_t symbol_search_scope_objects(
       const LineInfo *li, Design *des, NetScope *scope,
       NetScope *start_scope, const pform_name_t &path,
-      const name_component_t &path_tail, unsigned int lexical_pos,
-      bool check_lexical_order, struct symbol_search_results *res)
+      const name_component_t &path_tail, unsigned int visibility_pos,
+      struct symbol_search_results *res)
 {
       // Special case `super` keyword. Return the `this` object, but
       // with the type of the base class.
@@ -70,8 +85,7 @@ static scope_object_search_result_t symbol_search_scope_objects(
       }
 
       if (NetNet *net = scope->find_signal(path_tail.name)) {
-	    bool decl_after_use = check_lexical_order
-		  && !(net->lexical_pos() <= lexical_pos);
+	    bool decl_after_use = !(net->lexical_pos() <= visibility_pos);
 	    if (!gn_strict_net_var_declaration || !decl_after_use) {
 		  pform_name_t path_head = path;
 		  path_head.push_back(path_tail);
@@ -87,7 +101,7 @@ static scope_object_search_result_t symbol_search_scope_objects(
 			     << ":        : the net/variable is declared here."
 			     << endl;
 			// suppress further warnings for this net
-			net->lexical_pos(lexical_pos);
+			net->lexical_pos(visibility_pos);
 		  }
 		  return scope_object_search_result_t::found;
 	    } else if (!res->decl_after_use) {
@@ -96,8 +110,7 @@ static scope_object_search_result_t symbol_search_scope_objects(
       }
 
       if (NetEvent *eve = scope->find_event(path_tail.name)) {
-	    bool decl_after_use = check_lexical_order
-		  && !(eve->lexical_pos() <= lexical_pos);
+	    bool decl_after_use = !(eve->lexical_pos() <= visibility_pos);
 	    if (!gn_strict_net_var_declaration || !decl_after_use) {
 		  pform_name_t path_head = path;
 		  path_head.push_back(path_tail);
@@ -111,12 +124,25 @@ static scope_object_search_result_t symbol_search_scope_objects(
 			cerr << eve->get_fileline()
 			     << ":        : the event is declared here." << endl;
 			// suppress further warnings for this event
-			eve->lexical_pos(lexical_pos);
+			eve->lexical_pos(visibility_pos);
 		  }
 		  return scope_object_search_result_t::found;
 	    } else if (!res->decl_after_use) {
 		  res->decl_after_use = eve;
 	    }
+      }
+
+      // Types and data objects share a namespace. Return a visible
+      // type even when the caller requires a value so it cannot
+      // incorrectly continue searching an outer scope.
+      if (auto type_def = scope->lookup_typedef(
+	    path_tail.name, visibility_pos)) {
+	    pform_name_t path_head = path;
+	    path_head.push_back(path_tail);
+	    res->scope = scope;
+	    res->type_def = type_def;
+	    res->path_head = path_head;
+	    return scope_object_search_result_t::found;
       }
 
       if (const NetExpr *par = scope->get_parameter(
@@ -125,8 +151,7 @@ static scope_object_search_result_t symbol_search_scope_objects(
 	    unsigned int declaration_pos =
 		  scope->get_constant_lexical_pos(path_tail.name,
 					  is_enum_name);
-	    bool decl_after_use = check_lexical_order
-		  && !(declaration_pos <= lexical_pos);
+	    bool decl_after_use = !(declaration_pos <= visibility_pos);
 	    if (!gn_strict_parameter_declaration || !decl_after_use) {
 		  pform_name_t path_head = path;
 		  path_head.push_back(path_tail);
@@ -145,7 +170,7 @@ static scope_object_search_result_t symbol_search_scope_objects(
 			     << " is declared here." << endl;
 			// suppress further warnings for this constant
 			scope->set_constant_lexical_pos(
-			      path_tail.name, lexical_pos);
+			      path_tail.name, visibility_pos);
 		  }
 		  return scope_object_search_result_t::found;
 	    } else if (!res->decl_after_use) {
@@ -180,7 +205,7 @@ static scope_object_search_result_t symbol_search_scope_objects(
       // Finally check the rare case of a signal that hasn't
       // been elaborated yet.
       if (PWire *wire = scope->find_signal_placeholder(path_tail.name)) {
-	    if (!check_lexical_order || (wire->lexical_pos() <= lexical_pos)) {
+	    if (wire->lexical_pos() <= visibility_pos) {
 		  NetNet *net = wire->elaborate_sig(des, scope);
 		  if (!net)
 			return scope_object_search_result_t::failed;
@@ -413,8 +438,8 @@ static bool symbol_search_(const LineInfo *li, Design *des, NetScope *scope,
 
 	    // An explicit $unit:: prefix only disambiguates the name and does
 	    // not allow forward references (LRM 3.12.1).
-	    const bool check_lexical_order =
-		  !scope_is_bound || scope->is_unit();
+	    const unsigned int visibility_pos =
+		  (!scope_is_bound || scope->is_unit()) ? lexical_pos : UINT_MAX;
 
             if (scope->genvar_tmp.str() && path_tail.name == scope->genvar_tmp)
                   return false;
@@ -435,7 +460,7 @@ static bool symbol_search_(const LineInfo *li, Design *des, NetScope *scope,
 		  scope_object_search_result_t object_result =
 			symbol_search_scope_objects(
 			      li, des, scope, start_scope, path, path_tail,
-			      lexical_pos, check_lexical_order, res);
+			      visibility_pos, res);
 		  if (object_result == scope_object_search_result_t::found)
 			return true;
 		  if (object_result == scope_object_search_result_t::failed)

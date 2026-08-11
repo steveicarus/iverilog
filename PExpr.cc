@@ -488,6 +488,9 @@ bool PEIdent::has_aa_term(Design*des, NetScope*scope) const
       if (!symbol_search(this, des, scope, path_, lexical_pos(), &sr))
 	    return false;
 
+      if (sr.type_def)
+	    return false;
+
       // Class properties are not considered automatic since a non-blocking
       // assignment to an object stored in an automatic variable is supposed to
       // capture a reference to the object, not the variable.

@@ -3271,6 +3271,9 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      if (!search_results.require_non_type(this, des, "in a function call"))
+	    return 0;
+
       // If the symbol is found, but is not a scope...
       if (! search_results.is_scope() && !test_function_return_value(search_results)) {
 
@@ -5146,6 +5149,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       symbol_search_results sr;
       symbol_search(this, des, scope, path_, lexical_pos(), &sr);
 
+      if (!sr.require_non_type(this, des, "in an expression"))
+	    return nullptr;
+
       if (!sr.net) {
             cerr << get_fileline() << ": error: Unable to bind variable `"
 	         << path_ << "' in `" << scope_path(scope) << "'" << endl;
@@ -5465,6 +5471,9 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 	// named "c". symbol_search() handles this for us.
       symbol_search_results sr;
       symbol_search(this, des, scope, path_, lexical_pos(), &sr);
+
+      if (!sr.require_non_type(this, des, "in an expression"))
+	    return 0;
 
 	// If the identifier name is a parameter name, then return
 	// the parameter value.
