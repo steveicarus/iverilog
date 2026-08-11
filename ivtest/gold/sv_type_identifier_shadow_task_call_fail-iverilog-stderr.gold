@@ -1,0 +1,3 @@
+ivltests/sv_type_identifier_shadow_task_call_fail.v:8: error: Type name `value' cannot be used in a task or function call.
+ivltests/sv_type_identifier_shadow_task_call_fail.v:10:      : The type was declared here.
+Elaboration failed
