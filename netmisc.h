@@ -48,6 +48,7 @@ struct symbol_search_results {
 	    net = 0;
 	    par_val = 0;
 	    type = 0;
+	    type_def = nullptr;
 	    eve = 0;
 	    decl_after_use = 0;
 	    interface_alias_scope = 0;
@@ -59,6 +60,7 @@ struct symbol_search_results {
 	    if (net) return false;
 	    if (eve) return false;
 	    if (par_val) return false;
+	    if (type_def) return false;
 	    if (scope) return true;
 	    return false;
       }
@@ -67,6 +69,7 @@ struct symbol_search_results {
 	    if (net) return true;
 	    if (eve) return true;
 	    if (par_val) return true;
+	    if (type_def) return true;
 	    if (scope) return true;
 	    return false;
       }
@@ -75,9 +78,13 @@ struct symbol_search_results {
 	    if (net)     return "net";
 	    if (eve)     return "named event";
 	    if (par_val) return "parameter";
+	    if (type_def) return "type";
 	    if (scope)   return "scope";
 	    return "nothing found";
       }
+
+      bool require_non_type(const LineInfo *li, Design *des,
+			    const char *use) const;
 
       inline bool through_interface_alias() const {
 	    return interface_alias_target != 0;
@@ -92,6 +99,8 @@ struct symbol_search_results {
 	// optional value dimensions.
       const NetExpr*par_val;
       ivl_type_t type;
+	// If this is a type, the parsed type declaration.
+      typedef_t *type_def;
 	// If this is a named event, ...
       NetEvent*eve;
 	// If a symbol was located but skipped because its lexical position

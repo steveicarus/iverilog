@@ -244,6 +244,19 @@ void NetScope::add_typedefs(const map<perm_string,typedef_t*>*typedefs)
 	    typedefs_ = *typedefs;
 }
 
+typedef_t *NetScope::lookup_typedef(perm_string name,
+				    unsigned int lexical_pos) const
+{
+      auto type = typedefs_.find(name);
+      if (type == typedefs_.end())
+	    return nullptr;
+
+      if (type->second->lexical_pos() > lexical_pos)
+	    return nullptr;
+
+      return type->second;
+}
+
 /*
  * Type names are resolved to typedef_t objects during parsing. Locate the
  * scope that owns that exact object instead of resolving its name again
