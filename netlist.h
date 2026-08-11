@@ -5215,12 +5215,6 @@ class Design {
 
       NetNet*find_signal(NetScope*scope, pform_name_t path);
 
-	// Functions
-      NetFuncDef* find_function(NetScope*scope, const pform_name_t&key);
-
-	// Tasks
-      NetScope* find_task(NetScope*scope, const pform_name_t&name);
-
 	// NODES
       void add_node(NetNode*);
       void del_node(NetNode*);

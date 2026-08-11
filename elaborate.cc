@@ -3950,25 +3950,35 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 {
       ivl_assert(*this, scope);
 
-      NetScope*pscope = scope;
-      if (package_) {
-	    pscope = des->find_package(package_->pscope_name());
-	    ivl_assert(*this, pscope);
+      symbol_search_results search_results;
+      pform_scoped_name_t call_path(package_, path_);
+      NetScope *task = nullptr;
+      NetScope *func_scope = nullptr;
+      if (symbol_search(this, des, scope, call_path, lexical_pos(),
+			&search_results, true)) {
+	    if (search_results.is_scope()) {
+		  if (search_results.scope->type() == NetScope::TASK)
+			task = search_results.scope;
+		  else if (search_results.scope->type() == NetScope::FUNC)
+			func_scope = search_results.scope;
+	    } else if (test_function_return_value(search_results)) {
+		    // A recursive function call resolves to the function return
+		    // variable. Its containing scope is the function being called.
+		  func_scope = search_results.scope;
+	    }
       }
 
-      NetScope*task = des->find_task(pscope, path_);
-      if (task == 0) {
+      if (!task) {
 	      // For SystemVerilog this may be a few other things.
 	    if (gn_system_verilog()) {
-		  NetProc *tmp;
 		    // This could be a method attached to a signal
 		    // or defined in this object?
 		  bool try_implicit_this = scope->get_class_scope() && path_.size() == 1;
-		  tmp = elaborate_method_(des, scope, try_implicit_this);
+		  NetProc *tmp = elaborate_method_(des, scope, try_implicit_this);
 		  if (tmp) return tmp;
 		    // Or it could be a function call ignoring the return?
-		  tmp = elaborate_function_(des, scope);
-		  if (tmp) return tmp;
+		  if (func_scope)
+			return elaborate_function_(des, scope, func_scope);
 	    }
 
 	    cerr << get_fileline() << ": error: Enable of unknown task "
@@ -4307,7 +4317,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	// (internally represented as "@") is handled by there being a
 	// "this" object in the instance scope.
       symbol_search_results sr;
-      symbol_search(this, des, scope, use_path, UINT_MAX, &sr);
+      symbol_search(this, des, scope, use_path, lexical_pos(), &sr);
 
       NetNet*net = sr.net;
       if (net == 0)
@@ -4631,14 +4641,21 @@ NetProc *PCallTask::elaborate_non_void_function_(Design *des, NetScope *scope,
       return tmp->elaborate(des, scope);
 }
 
-NetProc* PCallTask::elaborate_function_(Design*des, NetScope*scope) const
+NetProc *PCallTask::elaborate_function_(
+      Design *des, NetScope *scope, NetScope *func_scope) const
 {
-      NetFuncDef*func = des->find_function(scope, path_);
+      ivl_assert(*this, func_scope);
+      ivl_assert(*this, func_scope->type() == NetScope::FUNC);
 
-	// This is not a function, so this task call cannot be a function
-	// call with a missing return assignment.
-      if (!func)
-	    return nullptr;
+	// The function signals might not have been elaborated yet.
+      if (func_scope->elab_stage() < 2) {
+	    func_scope->need_const_func(true);
+	    const PFunction *pfunc = func_scope->func_pform();
+	    ivl_assert(*this, pfunc);
+	    pfunc->elaborate_sig(des, func_scope);
+      }
+      NetFuncDef *func = func_scope->func_def();
+      ivl_assert(*this, func);
 
       if (gn_system_verilog() && func->is_void())
 	    return elaborate_void_function_(des, scope, func);
