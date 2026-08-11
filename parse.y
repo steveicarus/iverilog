@@ -224,7 +224,7 @@ static void validate_hierarchy_index_components(
       }
 }
 
-static void append_hierarchy_identifier_component(
+static void append_identifier_component(
 				pform_name_t &path, perm_string name,
 				std::list<index_component_t> *components)
 {
@@ -234,8 +234,35 @@ static void append_hierarchy_identifier_component(
       if (!component_list)
 	    return;
 
-      validate_hierarchy_index_components(*component_list);
       path.back().index.splice(path.back().index.end(), *component_list);
+}
+
+static void append_hierarchy_identifier_component(
+				pform_name_t &path, perm_string name,
+				std::list<index_component_t> *components)
+{
+      if (components)
+	    validate_hierarchy_index_components(*components);
+
+      append_identifier_component(path, name, components);
+}
+
+static PExpr *make_type_identifier_expression(
+				const struct vlltype &loc, PPackage *package,
+				char *text,
+				std::list<index_component_t> *components)
+{
+      pform_name_t name;
+      append_identifier_component(name, lex_strings.make(text), components);
+
+      PExpr *expr;
+      if (package)
+	    expr = pform_package_ident(loc, package, &name);
+      else
+	    expr = pform_new_ident(loc, name, true);
+
+      delete[]text;
+      return expr;
 }
 
 static std::list<pform_range_t> *
@@ -1189,7 +1216,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <spec_optional_args> timeskew_fullskew_opt_remain_active_flag
 
 %type <expr>  assignment_pattern expression expression_opt expr_mintypmax
-%type <expr>  expr_primary_or_typename expr_primary call_chain_expr
+%type <expr>  expr_primary_or_typename expr_primary call_chain_expr type_value
 %type <expr>  class_new dynamic_array_new
 %type <expr>  net_decl_initializer_opt var_decl_initializer_opt initializer_opt
 %type <expr>  inc_or_dec_expression inside_expression lpvalue
@@ -4540,12 +4567,22 @@ expr_primary_or_typename
 
   /* There are a few special cases (notably $bits argument) where the
      expression may be a type name. Let the elaborator sort this out. */
-  | data_type
-      { PETypename*tmp = new PETypename($1);
+  | type_value
+  ;
+
+type_value
+  : atomic_type
+      { auto tmp = new PETypename($1);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-
+  | TYPE_IDENTIFIER index_components_opt
+      { $$ = make_type_identifier_expression(@1, nullptr, $1.text, $2);
+      }
+  | package_scope TYPE_IDENTIFIER index_components_opt
+      { lex_in_package_scope(nullptr);
+	$$ = make_type_identifier_expression(@2, $1, $2.text, $3);
+      }
   ;
 
   /* SystemVerilog: a().b() — call a function, then invoke a method on the

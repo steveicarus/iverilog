@@ -128,6 +128,13 @@ class PExpr : public LineInfo {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
 
+	// Return true if this expression represents a type in this scope. This
+	// may cache lookup state for a subsequent elaborate_type() call.
+      virtual bool test_type(Design *des, NetScope *scope);
+
+	// Elaborate this expression as a type. Return null on failure.
+      virtual ivl_type_t elaborate_type(Design *des, NetScope *scope) const;
+
 	// After the test_width method is complete, these methods
 	// return valid results.
       ivl_variable_type_t expr_type() const { return expr_type_; }
@@ -377,6 +384,8 @@ class PEIdent : public PExpr {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     ivl_type_t type, unsigned flags) const override;
+      bool test_type(Design *des, NetScope *scope) override;
+      ivl_type_t elaborate_type(Design *des, NetScope *scope) const override;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
                                      unsigned flags) const override;
@@ -396,10 +405,22 @@ class PEIdent : public PExpr {
       const pform_scoped_name_t& path() const { return path_; }
 
     private:
+      // Type testing and elaboration normally happen as a pair. Preserve the
+      // lookup result between them, but only reuse it in the same scope.
+      struct type_lookup_t {
+            const NetScope *lookup_scope = nullptr;
+            NetScope *declaration_scope = nullptr;
+            typedef_t *type_def = nullptr;
+            bool valid = false;
+      };
+
       pform_scoped_name_t path_;
       bool no_implicit_sig_;
+      type_lookup_t type_lookup_;
 
-    private:
+	bool find_type_(Design *des, NetScope *scope,
+			struct symbol_search_results &search_results) const;
+
 	// Common functions to calculate parts of part/bit
 	// selects. These methods return true if the expressions
 	// elaborate/calculate, or false if there is some sort of
@@ -710,8 +731,8 @@ class PETypename : public PExpr {
 				  width_mode_t&mode) override;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     ivl_type_t type, unsigned flags) const override;
-
-      inline data_type_t* get_type() const { return data_type_; }
+      bool test_type(Design *des, NetScope *scope) override;
+      ivl_type_t elaborate_type(Design *des, NetScope *scope) const override;
 
     private:
       data_type_t*data_type_;

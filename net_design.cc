@@ -822,8 +822,7 @@ void NetScope::evaluate_parameter_string_(Design*des, param_ref_t cur)
 
 void NetScope::evaluate_type_parameter_(Design *des, param_ref_t cur)
 {
-      const PETypename *type_expr = dynamic_cast<const PETypename*>(cur->second.val_expr);
-      if (!type_expr) {
+      if (!cur->second.val_expr->test_type(des, cur->second.val_scope)) {
 	    cerr << this->get_fileline() << ": error: "
 		 << "Type parameter `" << cur->first << "` value `"
 	         << *cur->second.val_expr << "` is not a type."
@@ -835,14 +834,13 @@ void NetScope::evaluate_type_parameter_(Design *des, param_ref_t cur)
 	    return;
       }
 
-      data_type_t *ptype = type_expr->get_type();
-      NetScope *type_scope = cur->second.val_scope;
-      cur->second.ivl_type = ptype->elaborate_type(des, type_scope);
+      cur->second.ivl_type = cur->second.val_expr->elaborate_type(
+	    des, cur->second.val_scope);
       if (!cur->second.ivl_type)
 	    return;
 
       if (!cur->second.type_restrict.matches(cur->second.ivl_type)) {
-	    cerr << type_expr->get_fileline() << ": error: "
+	    cerr << cur->second.val_expr->get_fileline() << ": error: "
 		 << "Type parameter `" << cur->first << "` expects a `"
 		 << cur->second.type_restrict << "` type, got `"
 		 << *cur->second.ivl_type << "`." << endl;

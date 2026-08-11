@@ -488,6 +488,16 @@ unsigned PExpr::test_width(Design*des, NetScope*, width_mode_t&)
       return 1;
 }
 
+ivl_type_t PExpr::elaborate_type(Design *, NetScope *) const
+{
+      return nullptr;
+}
+
+bool PExpr::test_type(Design *, NetScope *)
+{
+      return false;
+}
+
 NetExpr* PExpr::elaborate_expr(Design*des, NetScope*scope, ivl_type_t, unsigned flags) const
 {
 	// Fall back to the old method. Currently the new method won't be used
@@ -1735,7 +1745,7 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	    if (expr == 0)
 		  return 0;
 
-	    if (! dynamic_cast<PETypename*>(expr)) {
+	    if (!expr->test_type(des, scope)) {
 		    // The argument type/width is self-determined and doesn't
 		    // affect the result type/width. Note that if the
 		    // argument is a type name (a special case) then
@@ -2332,9 +2342,10 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 	    PExpr *expr = parms_[0].parm;
 
 	    uint64_t use_width = 0;
-	    if (const PETypename*type_expr = dynamic_cast<PETypename*>(expr)) {
-		  ivl_type_t data_type = type_expr->get_type()->elaborate_type(des, scope);
-		  ivl_assert(*this, data_type);
+	    if (expr->test_type(des, scope)) {
+		  ivl_type_t data_type = expr->elaborate_type(des, scope);
+		  if (!data_type)
+			return nullptr;
 		  use_width = 1;
 		  while (const netuarray_t *utype =
 			 dynamic_cast<const netuarray_t*>(data_type)) {
@@ -4989,6 +5000,137 @@ ivl_type_t PEIdent::resolve_type_(Design *des, const symbol_search_results &sr,
       }
 
       return type;
+}
+
+bool PEIdent::find_type_(Design *des, NetScope *scope,
+			 struct symbol_search_results &search_results) const
+{
+      return symbol_search(this, des, scope, path_, lexical_pos(),
+			   &search_results,
+			   SYMBOL_SEARCH_NO_SIGNAL_ELABORATION)
+	    && search_results.type_def;
+}
+
+bool PEIdent::test_type(Design *des, NetScope *scope)
+{
+      if (type_lookup_.valid && type_lookup_.lookup_scope == scope)
+	    return type_lookup_.type_def != nullptr;
+
+      symbol_search_results search_results;
+      find_type_(des, scope, search_results);
+
+      type_lookup_.lookup_scope = scope;
+      type_lookup_.declaration_scope = search_results.scope;
+      type_lookup_.type_def = search_results.type_def;
+      type_lookup_.valid = true;
+
+      return type_lookup_.type_def != nullptr;
+}
+
+static bool elaborate_type_dimensions(Design *des, NetScope *scope,
+		const std::list<index_component_t> &indices,
+		netranges_t &dimensions)
+{
+      dimensions.reserve(indices.size());
+      bool dimensions_ok = true;
+
+      for (const auto &index : indices) {
+	    PExpr *range_msb = index.msb;
+	    PExpr *range_lsb = nullptr;
+
+	    switch (index.sel) {
+		case index_component_t::SEL_BIT:
+		  break;
+		case index_component_t::SEL_PART:
+		  range_lsb = index.lsb;
+		  break;
+		case index_component_t::SEL_NONE:
+		  cerr << index.get_fileline() << ": error: "
+		       << "An unsized dimension is not allowed here." << endl;
+		  des->errors++;
+		  dimensions_ok = false;
+		  continue;
+		case index_component_t::SEL_BIT_LAST:
+		case index_component_t::SEL_QUEUE_BOUND:
+		  cerr << index.get_fileline() << ": error: "
+		       << "A queue dimension is not allowed here." << endl;
+		  des->errors++;
+		  dimensions_ok = false;
+		  continue;
+		case index_component_t::SEL_IDX_UP:
+		case index_component_t::SEL_IDX_DO:
+		  cerr << index.get_fileline() << ": error: "
+		       << "An indexed part select is not allowed in a dimension."
+		       << endl;
+		  des->errors++;
+		  dimensions_ok = false;
+		  continue;
+	    }
+
+	    long range_msb_value = 0;
+	    long range_lsb_value = 0;
+	    pform_range_t range(range_msb, range_lsb);
+	    dimensions_ok &= evaluate_range(des, scope, &index, range,
+				    range_msb_value, range_lsb_value);
+	    dimensions.emplace_back(range_msb_value, range_lsb_value);
+      }
+
+      return dimensions_ok;
+}
+
+ivl_type_t PEIdent::elaborate_type(Design *des, NetScope *scope) const
+{
+      symbol_search_results search_results;
+      NetScope *declaration_scope;
+      typedef_t *type_def;
+
+      if (type_lookup_.valid && type_lookup_.lookup_scope == scope) {
+	    declaration_scope = type_lookup_.declaration_scope;
+	    type_def = type_lookup_.type_def;
+      } else {
+	    if (!find_type_(des, scope, search_results))
+		  return nullptr;
+	    declaration_scope = search_results.scope;
+	    type_def = search_results.type_def;
+      }
+
+      if (!type_def)
+	    return nullptr;
+
+      // Recognize types at the end of hierarchical paths during lookup so
+      // they are not mistaken for values, but reject the hierarchical type
+      // reference during elaboration.
+      if (path_.name.size() != 1) {
+	    cerr << get_fileline() << ": error: Type name `" << path_
+		 << "' cannot be referenced through a hierarchical path."
+		 << endl;
+	    cerr << type_def->get_fileline()
+		 << ":      : The type was declared here." << endl;
+	    des->errors++;
+	    return nullptr;
+      }
+
+      ivl_type_t base_type = type_def->elaborate_type(des, declaration_scope);
+      if (!base_type)
+	    return nullptr;
+
+      const auto &name = path_.name.front();
+      netranges_t packed_dimensions;
+      if (!elaborate_type_dimensions(des, scope, name.index,
+				     packed_dimensions))
+	    return nullptr;
+
+      if (packed_dimensions.empty())
+	    return base_type;
+
+      if (!base_type->packed()) {
+	    cerr << get_fileline() << ": error: Packed array base-type `"
+		 << name.name << "` is not packed." << endl;
+	    des->errors++;
+	    return nullptr;
+      }
+
+      return new netparray_t(packed_dimensions, base_type);
 }
 
 unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
@@ -7881,6 +8023,16 @@ NetExpr* PETernary::elab_and_eval_alternative_(Design*des, NetScope*scope,
  * A typename expression is only legal in very narrow cases. This is
  * just a placeholder.
  */
+ivl_type_t PETypename::elaborate_type(Design *des, NetScope *scope) const
+{
+      return data_type_->elaborate_type(des, scope);
+}
+
+bool PETypename::test_type(Design *, NetScope *)
+{
+      return true;
+}
+
 unsigned PETypename::test_width(Design*des, NetScope*, width_mode_t&)
 {
       cerr << get_fileline() << ": error: "
