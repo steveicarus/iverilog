@@ -5256,15 +5256,23 @@ NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
 	    }
       }
 
-      list<hname_t> spath = eval_scope_path(des, scope, scope_);
-
-      NetScope*target = des->find_scope(scope, spath);
-      if (target == 0) {
+      symbol_search_results search_results;
+      if (!symbol_search(this, des, scope, scope_, lexical_pos(),
+			 &search_results)) {
 	    cerr << get_fileline() << ": error: Cannot find scope "
 		 << scope_ << " in " << scope_path(scope) << endl;
 	    des->errors += 1;
 	    return 0;
       }
+      if (!search_results.is_scope()) {
+	    cerr << get_fileline() << ": error: Cannot disable "
+		 << search_results.result_type() << " `" << scope_ << "'."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetScope *target = search_results.scope;
 
       switch (target->type()) {
 	  case NetScope::FUNC:
