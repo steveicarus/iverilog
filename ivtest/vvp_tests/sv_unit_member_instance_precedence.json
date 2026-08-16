@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_unit_member_instance_precedence.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Packed structures are not supported",
+        "type"      : "CE"
+    }
+}
