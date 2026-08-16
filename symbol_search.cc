@@ -30,6 +30,173 @@
 
 using namespace std;
 
+enum class scope_object_search_result_t {
+      not_found,
+      found,
+      failed
+};
+
+static scope_object_search_result_t symbol_search_scope_objects(
+      const LineInfo *li, Design *des, NetScope *scope,
+      NetScope *start_scope, const pform_name_t &path,
+      const name_component_t &path_tail, unsigned int lexical_pos,
+      bool check_lexical_order, struct symbol_search_results *res)
+{
+      // Special case `super` keyword. Return the `this` object, but
+      // with the type of the base class.
+      if (path_tail.name == "#") {
+	    if (NetNet *net = scope->find_signal(
+		      perm_string::literal(THIS_TOKEN))) {
+		  const netclass_t *class_type =
+			dynamic_cast<const netclass_t*>(net->net_type());
+		  ivl_assert(*li, class_type);
+		  if (!class_type->get_super()) {
+			cerr << li->get_fileline() << ": error: "
+			     << "Class " << class_type->get_name()
+			     << " uses `super` without a base class."
+			     << endl;
+			des->errors += 1;
+			return scope_object_search_result_t::failed;
+		  }
+		  pform_name_t path_head = path;
+		  path_head.push_back(path_tail);
+		  res->scope = scope;
+		  res->net = net;
+		  res->type = class_type->get_super();
+		  res->path_head = path_head;
+		  return scope_object_search_result_t::found;
+	    }
+	    return scope_object_search_result_t::failed;
+      }
+
+      if (NetNet *net = scope->find_signal(path_tail.name)) {
+	    bool decl_after_use = check_lexical_order
+		  && !(net->lexical_pos() <= lexical_pos);
+	    if (!gn_strict_net_var_declaration || !decl_after_use) {
+		  pform_name_t path_head = path;
+		  path_head.push_back(path_tail);
+		  res->scope = scope;
+		  res->net = net;
+		  res->type = net->net_type();
+		  res->path_head = path_head;
+		  if (warn_decl_after_use && decl_after_use) {
+			cerr << li->get_fileline()
+			     << ": warning: net/variable `" << path_tail.name
+			     << "` used before declaration." << endl;
+			cerr << net->get_fileline()
+			     << ":        : the net/variable is declared here."
+			     << endl;
+			// suppress further warnings for this net
+			net->lexical_pos(lexical_pos);
+		  }
+		  return scope_object_search_result_t::found;
+	    } else if (!res->decl_after_use) {
+		  res->decl_after_use = net;
+	    }
+      }
+
+      if (NetEvent *eve = scope->find_event(path_tail.name)) {
+	    bool decl_after_use = check_lexical_order
+		  && !(eve->lexical_pos() <= lexical_pos);
+	    if (!gn_strict_net_var_declaration || !decl_after_use) {
+		  pform_name_t path_head = path;
+		  path_head.push_back(path_tail);
+		  res->scope = scope;
+		  res->eve = eve;
+		  res->path_head = path_head;
+		  if (warn_decl_after_use && decl_after_use) {
+			cerr << li->get_fileline()
+			     << ": warning: event `" << path_tail.name
+			     << "` used before declaration." << endl;
+			cerr << eve->get_fileline()
+			     << ":        : the event is declared here." << endl;
+			// suppress further warnings for this event
+			eve->lexical_pos(lexical_pos);
+		  }
+		  return scope_object_search_result_t::found;
+	    } else if (!res->decl_after_use) {
+		  res->decl_after_use = eve;
+	    }
+      }
+
+      if (const NetExpr *par = scope->get_parameter(
+		des, path_tail.name, res->type)) {
+	    bool is_enum_name;
+	    unsigned int declaration_pos =
+		  scope->get_constant_lexical_pos(path_tail.name,
+					  is_enum_name);
+	    bool decl_after_use = check_lexical_order
+		  && !(declaration_pos <= lexical_pos);
+	    if (!gn_strict_parameter_declaration || !decl_after_use) {
+		  pform_name_t path_head = path;
+		  path_head.push_back(path_tail);
+		  res->scope = scope;
+		  res->par_val = par;
+		  res->path_head = path_head;
+		  if (warn_decl_after_use && decl_after_use) {
+			const char *kind = is_enum_name
+			      ? "enum named constant" : "parameter";
+			cerr << li->get_fileline()
+			     << ": warning: " << kind << " `"
+			     << path_tail.name
+			     << "` used before declaration." << endl;
+			cerr << par->get_fileline()
+			     << ":        : the " << kind
+			     << " is declared here." << endl;
+			// suppress further warnings for this constant
+			scope->set_constant_lexical_pos(
+			      path_tail.name, lexical_pos);
+		  }
+		  return scope_object_search_result_t::found;
+	    } else if (!res->decl_after_use) {
+		  res->decl_after_use = par;
+	    }
+      }
+
+      // Static items are just normal signals and are found above.
+      if (scope->type() == NetScope::CLASS) {
+	    const netclass_t *clsnet = scope->class_def();
+	    int pidx = clsnet->property_idx_from_name(path_tail.name);
+	    if (pidx >= 0) {
+		  // This is a class property being accessed in a
+		  // class method. Return `this` for the net and the
+		  // property name for the path tail.
+		  NetScope *scope_method =
+			find_method_containing_scope(*li, start_scope);
+		  ivl_assert(*li, scope_method);
+		  res->net = scope_method->find_signal(
+			perm_string::literal(THIS_TOKEN));
+		  ivl_assert(*li, res->net);
+		  res->scope = scope;
+		  ivl_assert(*li, path.empty());
+		  res->path_head.push_back(name_component_t(
+			perm_string::literal(THIS_TOKEN)));
+		  res->path_tail.push_front(path_tail);
+		  res->type = clsnet;
+		  return scope_object_search_result_t::found;
+	    }
+      }
+
+      // Finally check the rare case of a signal that hasn't
+      // been elaborated yet.
+      if (PWire *wire = scope->find_signal_placeholder(path_tail.name)) {
+	    if (!check_lexical_order || (wire->lexical_pos() <= lexical_pos)) {
+		  NetNet *net = wire->elaborate_sig(des, scope);
+		  if (!net)
+			return scope_object_search_result_t::failed;
+		  pform_name_t path_head = path;
+		  path_head.push_back(path_tail);
+		  res->scope = scope;
+		  res->net = net;
+		  res->type = net->net_type();
+		  res->path_head = path_head;
+		  return scope_object_search_result_t::found;
+	    }
+      }
+
+      return scope_object_search_result_t::not_found;
+}
+
 /*
  * Search for the hierarchical name. The path may have multiple components. If
  * that's the case, then recursively pull the path apart until we find the
@@ -174,142 +341,14 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	    //        ... top.not_ok; // Matches.
 	    //    endmodule
 	    if (!passed_module_boundary) {
-		  // Special case `super` keyword. Return the `this` object, but
-		  // with the type of the base class.
-		  if (path_tail.name == "#") {
-			if (NetNet *net = scope->find_signal(perm_string::literal(THIS_TOKEN))) {
-			      const netclass_t *class_type = dynamic_cast<const netclass_t*>(net->net_type());
-			      ivl_assert(*li, class_type);
-			      if (!class_type->get_super()) {
-				    cerr << li->get_fileline() << ": error: "
-					 << "Class " << class_type->get_name()
-					 << " uses `super` without a base class."
-					 << endl;
-				    des->errors += 1;
-				    return false;
-			      }
-			      path.push_back(path_tail);
-			      res->scope = scope;
-			      res->net = net;
-			      res->type = class_type->get_super();
-			      res->path_head = path;
-			      return true;
-			}
+		  scope_object_search_result_t object_result =
+			symbol_search_scope_objects(
+			      li, des, scope, start_scope, path, path_tail,
+			      lexical_pos, check_lexical_order, res);
+		  if (object_result == scope_object_search_result_t::found)
+			return true;
+		  if (object_result == scope_object_search_result_t::failed)
 			return false;
-		  }
-
-		  if (NetNet*net = scope->find_signal(path_tail.name)) {
-			bool decl_after_use = check_lexical_order && !(net->lexical_pos() <= lexical_pos);
-			if (!gn_strict_net_var_declaration || !decl_after_use) {
-			      path.push_back(path_tail);
-			      res->scope = scope;
-			      res->net = net;
-			      res->type = net->net_type();
-			      res->path_head = path;
-			      if (warn_decl_after_use && decl_after_use) {
-				    cerr << li->get_fileline()
-					 << ": warning: net/variable `" << path_tail.name
-					 << "` used before declaration." << endl;
-				    cerr << net->get_fileline()
-					 << ":        : the net/variable is declared here." << endl;
-				    // suppress further warnings for this net
-				    net->lexical_pos(lexical_pos);
-			      }
-			      return true;
-			} else if (!res->decl_after_use) {
-			      res->decl_after_use = net;
-			}
-		  }
-
-		  if (NetEvent*eve = scope->find_event(path_tail.name)) {
-			bool decl_after_use = check_lexical_order && !(eve->lexical_pos() <= lexical_pos);
-			if (!gn_strict_net_var_declaration || !decl_after_use) {
-			      path.push_back(path_tail);
-			      res->scope = scope;
-			      res->eve = eve;
-			      res->path_head = path;
-			      if (warn_decl_after_use && decl_after_use) {
-				    cerr << li->get_fileline()
-					 << ": warning: event `" << path_tail.name
-					 << "` used before declaration." << endl;
-				    cerr << eve->get_fileline()
-					 << ":        : the event is declared here." << endl;
-				    // suppress further warnings for this event
-				    eve->lexical_pos(lexical_pos);
-			      }
-			      return true;
-			} else if (!res->decl_after_use) {
-			      res->decl_after_use = eve;
-			}
-		  }
-
-		  if (const NetExpr *par = scope->get_parameter(des, path_tail.name, res->type)) {
-			bool is_enum_name;
-			unsigned int declaration_pos =
-			      scope->get_constant_lexical_pos(path_tail.name,
-						      is_enum_name);
-			bool decl_after_use = check_lexical_order
-			      && !(declaration_pos <= lexical_pos);
-			if (!gn_strict_parameter_declaration || !decl_after_use) {
-			      path.push_back(path_tail);
-			      res->scope = scope;
-			      res->par_val = par;
-			      res->path_head = path;
-			      if (warn_decl_after_use && decl_after_use) {
-				    const char *kind = is_enum_name
-					  ? "enum named constant" : "parameter";
-				    cerr << li->get_fileline()
-					 << ": warning: " << kind << " `"
-					 << path_tail.name
-					 << "` used before declaration." << endl;
-				    cerr << par->get_fileline()
-					 << ":        : the " << kind
-					 << " is declared here." << endl;
-				    // suppress further warnings for this constant
-				    scope->set_constant_lexical_pos(path_tail.name, lexical_pos);
-			      }
-			      return true;
-			} else if (!res->decl_after_use) {
-			      res->decl_after_use = par;
-			}
-		  }
-
-		    // Static items are just normal signals and are found above.
-		  if (scope->type() == NetScope::CLASS) {
-			const netclass_t *clsnet = scope->class_def();
-			int pidx = clsnet->property_idx_from_name(path_tail.name);
-			if (pidx >= 0) {
-			      // This is a class property being accessed in a
-			      // class method. Return `this` for the net and the
-			      // property name for the path tail.
-			      NetScope *scope_method = find_method_containing_scope(*li, start_scope);
-			      ivl_assert(*li, scope_method);
-			      res->net = scope_method->find_signal(perm_string::literal(THIS_TOKEN));
-			      ivl_assert(*li, res->net);
-			      res->scope = scope;
-			      ivl_assert(*li, path.empty());
-			      res->path_head.push_back(name_component_t(perm_string::literal(THIS_TOKEN)));
-			      res->path_tail.push_front(path_tail);
-			      res->type = clsnet;
-			      return true;
-			}
-		  }
-
-		    // Finally check the rare case of a signal that hasn't
-		    // been elaborated yet.
-		  if (PWire*wire = scope->find_signal_placeholder(path_tail.name)) {
-			if (!check_lexical_order || (wire->lexical_pos() <= lexical_pos)) {
-			      NetNet*net = wire->elaborate_sig(des, scope);
-			      if (!net)
-				    return false;
-			      path.push_back(path_tail);
-			      res->scope = scope;
-			      res->net = net;
-			      res->type = net->net_type();
-			      res->path_head = path;
-			      return true;
-			}
-		  }
 	    }
 
 	    // Could not find an object. Maybe this is a child scope name? If
