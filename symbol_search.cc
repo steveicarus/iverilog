@@ -321,6 +321,9 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       if (start_scope==0)
 	    start_scope = scope;
 
+      NetScope *unit_scope = start_scope->unit();
+      bool searched_unit_scope = false;
+
       // If there are components ahead of the tail, symbol_search
       // recursively. Ideally, the result is a scope that we search
       // for the tail key, but there are other special cases as well.
@@ -500,9 +503,9 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	    //        ... = ok; // This reference is OK
 	    //        ... = not_ok; // This reference is NOT OK.
 	    //    endmodule
-	    if (scope == 0 && start_scope != 0) {
-		  scope = start_scope->unit();
-		  start_scope = 0;
+	    if (scope == nullptr && !searched_unit_scope) {
+		  scope = unit_scope;
+		  searched_unit_scope = true;
 		  search_objects = true;
 	    }
       }
