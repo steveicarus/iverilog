@@ -197,6 +197,93 @@ static scope_object_search_result_t symbol_search_scope_objects(
       return scope_object_search_result_t::not_found;
 }
 
+static bool symbol_search_child_scope(
+      const LineInfo *li, Design *des, NetScope *scope,
+      NetScope *start_scope, const pform_name_t &path,
+      const name_component_t &path_tail, struct symbol_search_results *res)
+{
+      // Could not find an object. Maybe this is a child scope name? If
+      // so, evaluate the path components to find the exact scope this
+      // refers to. This item might be:
+      //     <scope>.s
+      //     <scope>.s[n]
+      // etc. The scope->child_byname tests if the name exists, and if
+      // it does, the eval_path_component() evaluates any [n]
+      // expressions to constants to generate an hname_t object for a
+      // more complete scope name search. Note that the index
+      // expressions for scope names must be constant.
+      if (scope->child_byname(path_tail.name)) {
+	    bool flag = false;
+	    hname_t path_item = eval_path_component(
+		  des, start_scope, path_tail, flag);
+	    if (flag) {
+		  cerr << li->get_fileline()
+		       << ": XXXXX: Errors evaluating scope index" << endl;
+	    } else if (NetScope *child = scope->child(path_item)) {
+		  pform_name_t path_head = path;
+		  path_head.push_back(path_tail);
+		  res->scope = child;
+		  res->path_head = path_head;
+		  return true;
+	    }
+      }
+
+      if (path_tail.index.empty()) {
+	    if (const NetScope::interface_port_alias_t *alias =
+		scope->find_interface_port_alias(path_tail.name)) {
+		  pform_name_t path_head = path;
+		  path_head.push_back(path_tail);
+		  res->scope = alias->actual_scope;
+		  res->path_head = path_head;
+		  res->interface_alias_scope = scope;
+		  res->interface_alias_name = path_tail.name;
+		  res->interface_alias_target = alias->actual_scope;
+		  res->interface_alias_modport = alias->modport;
+
+		  if (debug_scopes || debug_elaborate) {
+			cerr << li->get_fileline() << ": symbol_search: "
+			     << "Interface alias " << path_tail.name
+			     << " -> " << scope_path(alias->actual_scope)
+			     << endl;
+		  }
+
+		  return true;
+	    }
+      } else if (scope->find_interface_port_alias_array(path_tail.name)) {
+	    bool flag = false;
+	    hname_t path_item = eval_path_component(
+		  des, start_scope, path_tail, flag);
+	    if (!flag && path_item.has_numbers() == 1) {
+		  const NetScope::interface_port_alias_t *alias =
+			scope->find_interface_port_alias_element(
+			      path_tail.name, path_item.peek_number(0));
+		  if (alias) {
+			pform_name_t path_head = path;
+			path_head.push_back(path_tail);
+			res->scope = alias->actual_scope;
+			res->path_head = path_head;
+			res->interface_alias_scope = scope;
+			res->interface_alias_name = path_tail.name;
+			res->interface_alias_target = alias->actual_scope;
+			res->interface_alias_modport = alias->modport;
+
+			if (debug_scopes || debug_elaborate) {
+			      cerr << li->get_fileline()
+				   << ": symbol_search: Interface alias "
+				   << path_tail.name << "["
+				   << path_item.peek_number(0) << "]"
+				   << " -> "
+				   << scope_path(alias->actual_scope) << endl;
+			}
+
+			return true;
+		  }
+	    }
+      }
+
+      return false;
+}
+
 /*
  * Search for the hierarchical name. The path may have multiple components. If
  * that's the case, then recursively pull the path apart until we find the
@@ -351,74 +438,9 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			return false;
 	    }
 
-	    // Could not find an object. Maybe this is a child scope name? If
-	    // so, evaluate the path components to find the exact scope this
-	    // refers to. This item might be:
-	    //     <scope>.s
-	    //     <scope>.s[n]
-	    // etc. The scope->child_byname tests if the name exists, and if
-	    // it does, the eval_path_component() evaluates any [n]
-	    // expressions to constants to generate an hname_t object for a
-	    // more complete scope name search. Note that the index
-	    // expressions for scope names must be constant.
-	    if (scope->child_byname(path_tail.name)) {
-		  bool flag = false;
-		  hname_t path_item = eval_path_component(des, start_scope, path_tail, flag);
-		  if (flag) {
-			cerr << li->get_fileline() << ": XXXXX: Errors evaluating scope index" << endl;
-		  } else if (NetScope*chld = scope->child(path_item)) {
-			path.push_back(path_tail);
-			res->scope = chld;
-			res->path_head = path;
-			return true;
-		  }
-	    }
-
-	    if (path_tail.index.empty()) {
-		  if (const NetScope::interface_port_alias_t*alias =
-		      scope->find_interface_port_alias(path_tail.name)) {
-			path.push_back(path_tail);
-			res->scope = alias->actual_scope;
-			res->path_head = path;
-			res->interface_alias_scope = scope;
-			res->interface_alias_name = path_tail.name;
-			res->interface_alias_target = alias->actual_scope;
-			res->interface_alias_modport = alias->modport;
-
-			if (debug_scopes || debug_elaborate) {
-			      cerr << li->get_fileline() << ": symbol_search: "
-				   << "Interface alias " << path_tail.name
-				   << " -> " << scope_path(alias->actual_scope) << endl;
-			}
-
-			return true;
-		  }
-	    } else if (scope->find_interface_port_alias_array(path_tail.name)) {
-		  bool flag = false;
-		  hname_t path_item = eval_path_component(des, start_scope, path_tail, flag);
-		  if (!flag && path_item.has_numbers() == 1) {
-			if (const NetScope::interface_port_alias_t*alias =
-			    scope->find_interface_port_alias_element(path_tail.name,
-								     path_item.peek_number(0))) {
-			      path.push_back(path_tail);
-			      res->scope = alias->actual_scope;
-			      res->path_head = path;
-			      res->interface_alias_scope = scope;
-			      res->interface_alias_name = path_tail.name;
-			      res->interface_alias_target = alias->actual_scope;
-			      res->interface_alias_modport = alias->modport;
-
-			      if (debug_scopes || debug_elaborate) {
-				    cerr << li->get_fileline() << ": symbol_search: "
-					 << "Interface alias " << path_tail.name
-					 << "[" << path_item.peek_number(0) << "]"
-					 << " -> " << scope_path(alias->actual_scope) << endl;
-			      }
-
-			      return true;
-			}
-		  }
-	    }
+	    if (symbol_search_child_scope(
+		      li, des, scope, start_scope, path, path_tail, res))
+		  return true;
 
 	    // Don't scan up if the search is bound to the current scope.
 	    if (scope_is_bound)
