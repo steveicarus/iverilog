@@ -293,10 +293,11 @@ static bool symbol_search_child_scope(
  * the initial caller.
  */
 
-bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
-		   pform_name_t path, unsigned lexical_pos,
-		   struct symbol_search_results*res,
-		   NetScope*start_scope, bool scope_is_bound)
+static bool symbol_search_(const LineInfo *li, Design *des, NetScope *scope,
+			   pform_name_t path, unsigned int lexical_pos,
+			   unsigned int prefix_lexical_pos,
+			   struct symbol_search_results *res,
+			   NetScope *start_scope, bool scope_is_bound)
 {
       assert(scope);
 
@@ -315,21 +316,18 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       name_component_t path_tail = path.back();
       path.pop_back();
 
-      // If this is a recursive call, then we need to know that so
-      // that we can enable the search for scopes. Set the
-      // recurse_flag to true if this is a recurse.
-      if (start_scope==0)
-	    start_scope = scope;
-
       NetScope *unit_scope = start_scope->unit();
       bool searched_unit_scope = false;
+      NetScope *instance_parent = nullptr;
 
       // If there are components ahead of the tail, symbol_search
       // recursively. Ideally, the result is a scope that we search
       // for the tail key, but there are other special cases as well.
       if (! path.empty()) {
-	    bool flag = symbol_search(li, des, scope, path, lexical_pos,
-				      res, start_scope, scope_is_bound);
+	    bool flag = symbol_search_(li, des, scope, path,
+				       prefix_lexical_pos,
+				       prefix_lexical_pos, res,
+				       start_scope, scope_is_bound);
 	    if (! flag)
 		  return false;
 
@@ -403,6 +401,9 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       // scope or item. In this case, res->is_found() is false and we may need
       // to scan upwards to find the scope or item.
       while (scope) {
+	    if (scope == unit_scope)
+		  searched_unit_scope = true;
+
 	    if (debug_scopes || debug_elaborate) {
 		  cerr << li->get_fileline() << ": symbol_search: "
 		       << "Looking for " << path_tail
@@ -480,6 +481,21 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  return true;
 	    }
 
+	    // Lookup leaves a design unit through its lexical parent, the
+	    // compilation-unit scope, before continuing up the instance hierarchy
+	    // (LRM 3.12.1).
+	    const bool is_design_unit =
+		  (scope->type() == NetScope::MODULE && !scope->nested_module())
+		  || scope->type() == NetScope::PACKAGE;
+	    if (!scope_is_bound && !searched_unit_scope && is_design_unit
+		&& unit_scope && scope != unit_scope) {
+		  instance_parent = scope->parent();
+		  scope = unit_scope;
+		  searched_unit_scope = true;
+		  search_objects = true;
+		  continue;
+	    }
+
 	    // If there is no prefix, then we are free to scan upwards looking
 	    // for a scope name. Note that only scopes can be searched for up
 	    // past module boundaries. Stop searching for objects after leaving
@@ -488,6 +504,12 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  search_objects = false;
 
 	    scope = scope->parent();
+
+	    if (scope == nullptr && instance_parent) {
+		  scope = instance_parent;
+		  instance_parent = nullptr;
+		  search_objects = false;
+	    }
 
 	    // Last chance - try the compilation unit. Note that modules may
 	    // reference nets/variables in the compilation unit, even if they
@@ -529,8 +551,17 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 }
 
 bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
-		   const pform_scoped_name_t &path, unsigned lexical_pos,
+		   pform_name_t path, unsigned int lexical_pos,
 		   struct symbol_search_results *res)
+{
+      return symbol_search_(li, des, scope, path, lexical_pos, lexical_pos,
+			    res, scope, false);
+}
+
+bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
+		   const pform_scoped_name_t &path, unsigned int lexical_pos,
+		   struct symbol_search_results *res,
+		   bool allow_terminal_forward_reference)
 {
       NetScope *search_scope = scope;
       bool scope_is_bound = false;
@@ -542,8 +573,11 @@ bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 	    scope_is_bound = true;
       }
 
-      return symbol_search(li, des, search_scope, path.name, lexical_pos,
-			   res, search_scope, scope_is_bound);
+      const unsigned int terminal_lexical_pos = allow_terminal_forward_reference
+	    ? UINT_MAX : lexical_pos;
+      return symbol_search_(li, des, search_scope, path.name,
+			    terminal_lexical_pos, lexical_pos, res,
+			    search_scope, scope_is_bound);
 }
 
 bool check_interface_modport_access(const LineInfo *li, Design *des,
