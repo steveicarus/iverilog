@@ -388,7 +388,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	    }
       }
 
-      bool passed_module_boundary = false;
+      bool search_objects = true;
 
       // At this point, we've stripped right-most components until the search
       // found the scope part of the path, or there is no scope part of the
@@ -427,7 +427,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	    //        ... not_ok; // <-- Should NOT match.
 	    //        ... top.not_ok; // Matches.
 	    //    endmodule
-	    if (!passed_module_boundary) {
+	    if (search_objects) {
 		  scope_object_search_result_t object_result =
 			symbol_search_scope_objects(
 			      li, des, scope, start_scope, path, path_tail,
@@ -479,10 +479,10 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 
 	    // If there is no prefix, then we are free to scan upwards looking
 	    // for a scope name. Note that only scopes can be searched for up
-	    // past module boundaries. To handle that, set a flag to indicate
-	    // that we passed a module boundary on the way up.
+	    // past module boundaries. Stop searching for objects after leaving
+	    // the module, but continue searching for matching scope names.
 	    if (scope->type()==NetScope::MODULE && !scope->nested_module())
-		  passed_module_boundary = true;
+		  search_objects = false;
 
 	    scope = scope->parent();
 
@@ -503,7 +503,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	    if (scope == 0 && start_scope != 0) {
 		  scope = start_scope->unit();
 		  start_scope = 0;
-		  passed_module_boundary = false;
+		  search_objects = true;
 	    }
       }
 
