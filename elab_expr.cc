@@ -310,7 +310,8 @@ static const netclass_t* resolve_call_chain_prefix_class(Design*des, NetScope*sc
       if (link->peek_chain_prefix() == 0) {
 	    symbol_search_results sr;
 	    if (!symbol_search(link, des, scope, link->peek_path(),
-			       link->lexical_pos(), &sr, true)) {
+			       link->lexical_pos(), &sr,
+			       SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE)) {
 		  return 0;
 		}
 	    if (!sr.is_scope() || sr.scope->type() != NetScope::FUNC) {
@@ -2102,7 +2103,8 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
       // Search for the symbol. This should turn up a scope.
       symbol_search_results search_results;
       bool search_flag = symbol_search(this, des, scope, path_, lexical_pos(),
-				       &search_results, true);
+				       &search_results,
+				       SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PECallFunction::test_width: "
@@ -3242,7 +3244,8 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
       // Search for the symbol. This should turn up a scope.
       symbol_search_results search_results;
       bool search_flag = symbol_search(this, des, scope, path_, lexical_pos(),
-				       &search_results, true);
+				       &search_results,
+				       SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PECallFunction::elaborate_expr: "

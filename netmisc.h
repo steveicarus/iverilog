@@ -129,6 +129,11 @@ struct symbol_search_results {
       pform_name_t path_head;
 };
 
+enum symbol_search_flag_t {
+      SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE = 1U << 0,
+      SYMBOL_SEARCH_NO_SIGNAL_ELABORATION = 1U << 1
+};
+
 /*
  * Test the search results and return true if this represents a function
  * return value. That will be the case if the object is a net, the scope
@@ -145,15 +150,16 @@ static inline bool test_function_return_value(const symbol_search_results&search
 
 extern bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 			  pform_name_t path, unsigned int lexical_pos,
-			  struct symbol_search_results *res);
+			  struct symbol_search_results *res,
+			  unsigned int flags = 0);
 
 /* The forward-reference flag applies only to the terminal name. Prefix
-   components still use lexical_pos. */
+   components still use lexical_pos. Other flags apply to the complete path. */
 extern bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 			  const pform_scoped_name_t &path,
 			  unsigned int lexical_pos,
 			  struct symbol_search_results *res,
-			  bool allow_terminal_forward_reference = false);
+			  unsigned int flags = 0);
 
 extern bool check_interface_modport_access(const LineInfo *li, Design *des,
 					   const symbol_search_results &res,

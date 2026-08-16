@@ -3957,7 +3957,8 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       NetScope *task = nullptr;
       NetScope *func_scope = nullptr;
       if (symbol_search(this, des, scope, call_path, lexical_pos(),
-			&search_results, true)) {
+			&search_results,
+			SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE)) {
 	    if (!search_results.require_non_type(
 			this, des, "in a task or function call"))
 		  return nullptr;
