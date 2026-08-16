@@ -7420,6 +7420,14 @@ subroutine_call
 	delete $2;
 	$$ = tmp;
       }
+  | package_scope hierarchy_identifier { lex_in_package_scope(nullptr); }
+    argument_list_parens_opt
+      { auto tmp = new PCallTask($1, *$2, *$4);
+	FILE_NAME(tmp, @2);
+	delete $2;
+	delete $4;
+	$$ = tmp;
+      }
   | class_hierarchy_identifier argument_list_parens_opt
       { PCallTask*tmp = new PCallTask(*$1, *$2);
 	FILE_NAME(tmp, @1);
