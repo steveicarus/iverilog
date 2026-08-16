@@ -134,14 +134,17 @@ static inline bool test_function_return_value(const symbol_search_results&search
       return true;
 }
 
-extern bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
-			  pform_name_t path, unsigned lexical_pos,
-			  struct symbol_search_results*res,
-			  NetScope*start_scope = nullptr, bool scope_is_bound = false);
-
 extern bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
-			  const pform_scoped_name_t &path, unsigned lexical_pos,
-			  struct symbol_search_results*res);
+			  pform_name_t path, unsigned int lexical_pos,
+			  struct symbol_search_results *res);
+
+/* The forward-reference flag applies only to the terminal name. Prefix
+   components still use lexical_pos. */
+extern bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
+			  const pform_scoped_name_t &path,
+			  unsigned int lexical_pos,
+			  struct symbol_search_results *res,
+			  bool allow_terminal_forward_reference = false);
 
 extern bool check_interface_modport_access(const LineInfo *li, Design *des,
 					   const symbol_search_results &res,
