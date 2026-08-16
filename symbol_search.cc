@@ -55,7 +55,7 @@ static scope_object_search_result_t symbol_search_scope_objects(
       const LineInfo *li, Design *des, NetScope *scope,
       NetScope *start_scope, const pform_name_t &path,
       const name_component_t &path_tail, unsigned int visibility_pos,
-      struct symbol_search_results *res)
+      struct symbol_search_results *res, unsigned int flags)
 {
       // Special case `super` keyword. Return the `this` object, but
       // with the type of the base class.
@@ -206,6 +206,12 @@ static scope_object_search_result_t symbol_search_scope_objects(
       // been elaborated yet.
       if (PWire *wire = scope->find_signal_placeholder(path_tail.name)) {
 	    if (wire->lexical_pos() <= visibility_pos) {
+		  if (flags & SYMBOL_SEARCH_NO_SIGNAL_ELABORATION) {
+			// The signal still hides matching symbols in outer
+			// scopes. Stop the lookup without elaborating it.
+			return scope_object_search_result_t::failed;
+		  }
+
 		  NetNet *net = wire->elaborate_sig(des, scope);
 		  if (!net)
 			return scope_object_search_result_t::failed;
@@ -322,7 +328,8 @@ static bool symbol_search_(const LineInfo *li, Design *des, NetScope *scope,
 			   pform_name_t path, unsigned int lexical_pos,
 			   unsigned int prefix_lexical_pos,
 			   struct symbol_search_results *res,
-			   NetScope *start_scope, bool scope_is_bound)
+			   NetScope *start_scope, bool scope_is_bound,
+			   unsigned int flags)
 {
       assert(scope);
 
@@ -349,10 +356,12 @@ static bool symbol_search_(const LineInfo *li, Design *des, NetScope *scope,
       // recursively. Ideally, the result is a scope that we search
       // for the tail key, but there are other special cases as well.
       if (! path.empty()) {
+	    const unsigned int prefix_flags =
+		  flags & ~SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE;
 	    bool flag = symbol_search_(li, des, scope, path,
 				       prefix_lexical_pos,
 				       prefix_lexical_pos, res,
-				       start_scope, scope_is_bound);
+				       start_scope, scope_is_bound, prefix_flags);
 	    if (! flag)
 		  return false;
 
@@ -460,7 +469,7 @@ static bool symbol_search_(const LineInfo *li, Design *des, NetScope *scope,
 		  scope_object_search_result_t object_result =
 			symbol_search_scope_objects(
 			      li, des, scope, start_scope, path, path_tail,
-			      visibility_pos, res);
+			      visibility_pos, res, flags);
 		  if (object_result == scope_object_search_result_t::found)
 			return true;
 		  if (object_result == scope_object_search_result_t::failed)
@@ -577,16 +586,20 @@ static bool symbol_search_(const LineInfo *li, Design *des, NetScope *scope,
 
 bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 		   pform_name_t path, unsigned int lexical_pos,
-		   struct symbol_search_results *res)
+		   struct symbol_search_results *res, unsigned int flags)
 {
-      return symbol_search_(li, des, scope, path, lexical_pos, lexical_pos,
-			    res, scope, false);
+      const bool allow_forward_reference =
+	    flags & SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE;
+      const unsigned int terminal_lexical_pos = allow_forward_reference
+	    ? UINT_MAX : lexical_pos;
+      return symbol_search_(li, des, scope, path, terminal_lexical_pos,
+			    lexical_pos,
+			    res, scope, false, flags);
 }
 
 bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 		   const pform_scoped_name_t &path, unsigned int lexical_pos,
-		   struct symbol_search_results *res,
-		   bool allow_terminal_forward_reference)
+		   struct symbol_search_results *res, unsigned int flags)
 {
       NetScope *search_scope = scope;
       bool scope_is_bound = false;
@@ -598,11 +611,13 @@ bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 	    scope_is_bound = true;
       }
 
-      const unsigned int terminal_lexical_pos = allow_terminal_forward_reference
+      const bool allow_forward_reference =
+	    flags & SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE;
+      const unsigned int terminal_lexical_pos = allow_forward_reference
 	    ? UINT_MAX : lexical_pos;
       return symbol_search_(li, des, search_scope, path.name,
 			    terminal_lexical_pos, lexical_pos, res,
-			    search_scope, scope_is_bound);
+			    search_scope, scope_is_bound, flags);
 }
 
 bool check_interface_modport_access(const LineInfo *li, Design *des,
