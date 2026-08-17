@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "nb_event_trigger.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

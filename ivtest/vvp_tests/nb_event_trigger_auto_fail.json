@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "nb_event_trigger_auto_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "gold"          : "nb_event_trigger_auto_fail"
+}

@@ -1,0 +1,3 @@
+ivltests/nb_event_trigger_auto_fail.v:7: error: automatically allocated events may not be triggered using non-blocking event triggers.
+ivltests/nb_event_trigger_auto_fail.v:7: Unable to elaborate statement in task nb_event_trigger_auto_fail.trigger_event at ivltests/nb_event_trigger_auto_fail.v:5.
+1 error(s) during elaboration.
