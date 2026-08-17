@@ -6721,6 +6721,14 @@ NetProc* PNBTrigger::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
+      if (sr.eve->scope()->is_auto()) {
+	    cerr << get_fileline() << ": error: automatically allocated "
+	            "events may not be triggered using non-blocking event "
+	            "triggers." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       NetExpr*dly = 0;
       if (dly_) dly = elab_and_eval(des, scope, dly_, -1);
       NetEvNBTrig*trig = new NetEvNBTrig(sr.eve, dly);
