@@ -25,6 +25,7 @@
 
 # include  "compiler.h"
 # include  "PExpr.h"
+# include  "PPackage.h"
 # include  "PWire.h"
 # include  "Module.h"
 # include  "ivl_assert.h"
@@ -419,6 +420,29 @@ static bool find_enum_constant(LexicalScope*scope, perm_string name)
       });
 }
 
+static bool is_typedef_identifier(LexicalScope *scope, perm_string name)
+{
+      while (scope) {
+            auto import = scope->explicit_imports.find(name);
+            if (import != scope->explicit_imports.end()) {
+                  // An explicit import shadows declarations in outer scopes.
+                  const auto &typedefs = import->second.package->typedefs;
+                  return typedefs.find(name) != typedefs.end();
+            }
+
+            if (scope->typedefs.find(name) != scope->typedefs.end())
+                  return true;
+
+            // A local non-type declaration also hides outer typedefs.
+            if (scope->local_symbols.find(name) != scope->local_symbols.end())
+                  return false;
+
+            scope = scope->parent_scope();
+      }
+
+      return false;
+}
+
 void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
         /* We create an implicit wire if:
@@ -432,6 +456,9 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 	    return;
      if (path_.name.size() == 1 && path_.name.front().index.empty()) {
             perm_string name = path_.name.front().name;
+            if (is_typedef_identifier(scope, name))
+                  return;
+
             LexicalScope*ss = scope;
             while (ss) {
                   if (ss->wires.find(name) != ss->wires.end())
