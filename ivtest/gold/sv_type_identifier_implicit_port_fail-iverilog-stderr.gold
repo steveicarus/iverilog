@@ -1,0 +1,2 @@
+ivltests/sv_type_identifier_implicit_port_fail.v:12: syntax error
+ivltests/sv_type_identifier_implicit_port_fail.v:12: error: Syntax error in instance port expression(s).
