@@ -7569,13 +7569,13 @@ statement_item /* This is roughly statement_item in the LRM */
       { PNBTrigger*tmp = pform_new_nb_trigger(@3, nullptr, *$3);
 	delete $3;
 	$$ = tmp;
-        yywarn(@1, "sorry: ->> with event control is not currently supported.");
+        yyerror(@1, "sorry: ->> with event control is not currently supported.");
       }
   | K_NB_TRIGGER K_repeat '(' expression ')' event_control hierarchy_identifier ';'
       { PNBTrigger*tmp = pform_new_nb_trigger(@7, nullptr, *$7);
 	delete $7;
 	$$ = tmp;
-        yywarn(@1, "sorry: ->> with repeat event control is not currently supported.");
+        yyerror(@1, "sorry: ->> with repeat event control is not currently supported.");
       }
 
   | procedural_assertion_statement

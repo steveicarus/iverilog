@@ -231,7 +231,7 @@ NexusSet* NetEvent::nex_async_()
 {
 	/* If there are behavioral trigger statements attached to me,
 	   then this is not an asynchronous event. */
-      if (trig_ != 0)
+      if ((trig_ != 0) || (nb_trig_ != 0))
 	    return 0;
 
 

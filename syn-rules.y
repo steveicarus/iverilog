@@ -137,6 +137,9 @@ static void make_DFF_CE(Design*des, NetProcTop*top,
       assert(asn);
 
       NetEvProbe*pclk = eclk->probe(0);
+      if (pclk == 0)
+	    return;
+
       NetESignal*d = dynamic_cast<NetESignal*> (asn->rval());
       NetNet*ce = cexp? cexp->synthesize(des, top->scope(), cexp) : 0;
 

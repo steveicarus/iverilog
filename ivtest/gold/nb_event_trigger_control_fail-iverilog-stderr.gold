@@ -1,0 +1,2 @@
+ivltests/nb_event_trigger_control_fail.v:9: sorry: ->> with event control is not currently supported.
+ivltests/nb_event_trigger_control_fail.v:10: sorry: ->> with repeat event control is not currently supported.

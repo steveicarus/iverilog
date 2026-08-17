@@ -183,6 +183,8 @@ monitor4			vvp_tests/monitor4.json
 nb_ec_repeat_auto		vvp_tests/nb_ec_repeat_auto.json
 nb_event_trigger		vvp_tests/nb_event_trigger.json
 nb_event_trigger_auto_fail	vvp_tests/nb_event_trigger_auto_fail.json
+nb_event_trigger_control_fail	vvp_tests/nb_event_trigger_control_fail.json
+nb_event_trigger_synth		vvp_tests/nb_event_trigger_synth.json
 named_event_edge_fail		vvp_tests/named_event_edge_fail.json
 named_event_negedge_fail	vvp_tests/named_event_negedge_fail.json
 named_event_posedge_fail	vvp_tests/named_event_posedge_fail.json
