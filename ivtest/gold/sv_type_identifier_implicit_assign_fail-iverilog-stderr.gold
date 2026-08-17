@@ -1,0 +1,2 @@
+ivltests/sv_type_identifier_implicit_assign_fail.v:6: syntax error
+ivltests/sv_type_identifier_implicit_assign_fail.v:6: error: Syntax error in left side of continuous assignment.
