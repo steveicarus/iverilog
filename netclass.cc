@@ -23,8 +23,8 @@
 
 using namespace std;
 
-netclass_t::netclass_t(perm_string name, const netclass_t*super)
-: name_(name), super_(super), class_scope_(0), definition_scope_(0), virtual_class_(false)
+netclass_t::netclass_t(perm_string name)
+: name_(name), super_(nullptr), class_scope_(0), definition_scope_(0), virtual_class_(false)
 {
 }
 
