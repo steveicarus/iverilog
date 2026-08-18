@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_class_extends_nonclass_fail.v",
+    "gold"          : "sv_class_extends_nonclass_fail",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

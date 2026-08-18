@@ -1,0 +1,2 @@
+ivltests/sv_class_extends_nonclass_fail.v:5: error: Base type of Derived is not a class.
+2 error(s) during elaboration.
