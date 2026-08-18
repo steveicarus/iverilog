@@ -41,7 +41,7 @@ class Design;
 class NetScope;
 class Definitions;
 class PExpr;
-class PScope;
+class PEIdent;
 class PPackage;
 class PWire;
 class Statement;
@@ -224,17 +224,17 @@ public:
       perm_string name;
 };
 
-struct typeref_t : public data_type_t {
-      explicit typeref_t(typedef_t *t, PScope *s = 0) : scope(s), type(t) {}
+/* A data type whose identifier is resolved during elaboration. */
+struct type_identifier_t : public data_type_t {
+      explicit type_identifier_t(PEIdent *identifier);
+      ~type_identifier_t() override;
 
-      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
-      NetScope *find_scope(Design* des, NetScope *scope) const override;
+      ivl_type_t elaborate_type_raw(Design *des, NetScope *scope) const override;
 
       std::ostream& debug_dump(std::ostream&out) const override;
 
 private:
-      PScope *scope;
-      typedef_t *type;
+      std::unique_ptr<PEIdent> identifier_;
 };
 
 struct type_parameter_t : data_type_t {

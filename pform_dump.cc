@@ -217,12 +217,9 @@ ostream& data_type_t::debug_dump(ostream&out) const
       return out;
 }
 
-std::ostream& typeref_t::debug_dump(ostream&out) const
+std::ostream& type_identifier_t::debug_dump(ostream&out) const
 {
-      if (scope)
-	    out << scope->pscope_name() << "::";
-      out << type->name;
-
+      out << *identifier_;
       return out;
 }
 

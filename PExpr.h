@@ -53,7 +53,8 @@ class PExpr : public LineInfo {
 
       enum class type_elaboration_context_t {
 	    DEFAULT,
-	    CAST_TARGET
+	    CAST_TARGET,
+	    REQUIRED_TYPE
       };
 
         // Flag values that can be passed to elaborate_expr().
@@ -431,7 +432,8 @@ class PEIdent : public PExpr {
       type_lookup_t type_lookup_;
 
 	bool find_type_(Design *des, NetScope *scope,
-			struct symbol_search_results &search_results) const;
+			struct symbol_search_results &search_results,
+			bool strict_declaration_order) const;
 
 	// Common functions to calculate parts of part/bit
 	// selects. These methods return true if the expressions

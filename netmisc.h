@@ -131,7 +131,10 @@ struct symbol_search_results {
 
 enum symbol_search_flag_t {
       SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE = 1U << 0,
-      SYMBOL_SEARCH_NO_SIGNAL_ELABORATION = 1U << 1
+      SYMBOL_SEARCH_NO_SIGNAL_ELABORATION = 1U << 1,
+        // Ignore relaxed declaration-order compatibility options and require
+        // data objects to be declared before they are used.
+      SYMBOL_SEARCH_STRICT_DECLARATION_ORDER = 1U << 2
 };
 
 /*
