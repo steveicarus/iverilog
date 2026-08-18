@@ -5118,11 +5118,16 @@ ivl_type_t PEIdent::resolve_type_(Design *des, const symbol_search_results &sr,
 }
 
 bool PEIdent::find_type_(Design *des, NetScope *scope,
-			 struct symbol_search_results &search_results) const
+			 struct symbol_search_results &search_results,
+			 bool strict_declaration_order) const
 {
+      unsigned int flags = SYMBOL_SEARCH_NO_SIGNAL_ELABORATION;
+      if (strict_declaration_order) {
+	    flags |= SYMBOL_SEARCH_STRICT_DECLARATION_ORDER;
+      }
+
       return symbol_search(this, des, scope, path_, lexical_pos(),
-			   &search_results,
-			   SYMBOL_SEARCH_NO_SIGNAL_ELABORATION)
+			   &search_results, flags)
 	    && search_results.type_def;
 }
 
@@ -5132,7 +5137,7 @@ bool PEIdent::test_type(Design *des, NetScope *scope)
 	    return type_lookup_.type_def != nullptr;
 
       symbol_search_results search_results;
-      find_type_(des, scope, search_results);
+      find_type_(des, scope, search_results, false);
 
       type_lookup_.lookup_scope = scope;
       type_lookup_.declaration_scope = search_results.scope;
@@ -5200,13 +5205,23 @@ ivl_type_t PEIdent::elaborate_type(
       symbol_search_results search_results;
       NetScope *declaration_scope;
       typedef_t *type_def;
+      const bool strict_declaration_order =
+	    context == type_elaboration_context_t::REQUIRED_TYPE;
 
-      if (type_lookup_.valid && type_lookup_.lookup_scope == scope) {
+      if (!strict_declaration_order && type_lookup_.valid &&
+	  type_lookup_.lookup_scope == scope) {
 	    declaration_scope = type_lookup_.declaration_scope;
 	    type_def = type_lookup_.type_def;
       } else {
-	    if (!find_type_(des, scope, search_results))
+	    if (!find_type_(des, scope, search_results,
+			    strict_declaration_order)) {
+		  if (strict_declaration_order) {
+			cerr << get_fileline() << ": error: `" << *this
+			     << "` is not a type." << endl;
+			des->errors += 1;
+		  }
 		  return nullptr;
+	    }
 	    declaration_scope = search_results.scope;
 	    type_def = search_results.type_def;
       }

@@ -1342,8 +1342,9 @@ class NetScope : public Definitions, public Attrib {
 
       LineInfo get_parameter_line_info(perm_string name) const;
 
-      unsigned int get_constant_lexical_pos(perm_string name,
-					    bool &is_enum_name) const;
+      bool get_constant_lexical_pos(perm_string name,
+				    unsigned int &lexical_pos,
+				    bool &is_enum_name) const;
       void set_constant_lexical_pos(perm_string name,
 				    unsigned int lexical_pos);
 

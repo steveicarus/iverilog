@@ -57,6 +57,13 @@ static scope_object_search_result_t symbol_search_scope_objects(
       const name_component_t &path_tail, unsigned int visibility_pos,
       struct symbol_search_results *res, unsigned int flags)
 {
+      const bool strict_declaration_order =
+	    flags & SYMBOL_SEARCH_STRICT_DECLARATION_ORDER;
+      const bool enforce_net_var_declaration_order =
+	    gn_strict_net_var_declaration || strict_declaration_order;
+      const bool enforce_parameter_declaration_order =
+	    gn_strict_parameter_declaration || strict_declaration_order;
+
       // Special case `super` keyword. Return the `this` object, but
       // with the type of the base class.
       if (path_tail.name == "#") {
@@ -86,7 +93,7 @@ static scope_object_search_result_t symbol_search_scope_objects(
 
       if (NetNet *net = scope->find_signal(path_tail.name)) {
 	    bool decl_after_use = !(net->lexical_pos() <= visibility_pos);
-	    if (!gn_strict_net_var_declaration || !decl_after_use) {
+	    if (!enforce_net_var_declaration_order || !decl_after_use) {
 		  pform_name_t path_head = path;
 		  path_head.push_back(path_tail);
 		  res->scope = scope;
@@ -111,7 +118,7 @@ static scope_object_search_result_t symbol_search_scope_objects(
 
       if (NetEvent *eve = scope->find_event(path_tail.name)) {
 	    bool decl_after_use = !(eve->lexical_pos() <= visibility_pos);
-	    if (!gn_strict_net_var_declaration || !decl_after_use) {
+	    if (!enforce_net_var_declaration_order || !decl_after_use) {
 		  pform_name_t path_head = path;
 		  path_head.push_back(path_tail);
 		  res->scope = scope;
@@ -145,14 +152,22 @@ static scope_object_search_result_t symbol_search_scope_objects(
 	    return scope_object_search_result_t::found;
       }
 
-      if (const NetExpr *par = scope->get_parameter(
-		des, path_tail.name, res->type)) {
-	    bool is_enum_name;
-	    unsigned int declaration_pos =
-		  scope->get_constant_lexical_pos(path_tail.name,
-					  is_enum_name);
+      bool is_enum_name = false;
+      unsigned int declaration_pos = UINT_MAX;
+      const bool has_constant = scope->get_constant_lexical_pos(
+	    path_tail.name, declaration_pos, is_enum_name);
+      const bool constant_decl_after_use = has_constant &&
+	    !(declaration_pos <= visibility_pos);
+
+      // get_parameter() elaborates parameters on demand. Check declaration
+      // visibility first so a later declaration cannot recursively elaborate
+      // when strict ordering applies.
+      const NetExpr*par =
+	    enforce_parameter_declaration_order && constant_decl_after_use
+	    ? nullptr : scope->get_parameter(des, path_tail.name, res->type);
+      if (par) {
 	    bool decl_after_use = !(declaration_pos <= visibility_pos);
-	    if (!gn_strict_parameter_declaration || !decl_after_use) {
+	    if (!enforce_parameter_declaration_order || !decl_after_use) {
 		  pform_name_t path_head = path;
 		  path_head.push_back(path_tail);
 		  res->scope = scope;

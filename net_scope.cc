@@ -481,21 +481,26 @@ LineInfo NetScope::get_parameter_line_info(perm_string key) const
       return LineInfo();
 }
 
-unsigned int NetScope::get_constant_lexical_pos(perm_string key,
-						bool &is_enum_name) const
+bool NetScope::get_constant_lexical_pos(perm_string key,
+					unsigned int &lexical_pos,
+					bool &is_enum_name) const
 {
       map<perm_string,param_expr_t>::const_iterator idx;
 
       idx = parameters.find(key);
       if (idx != parameters.end()) {
 	    is_enum_name = false;
-	    return idx->second.lexical_pos;
+	    lexical_pos = idx->second.lexical_pos;
+	    return true;
       }
 
       auto enum_idx = enum_names_.find(key);
-      assert(enum_idx != enum_names_.end());
+      if (enum_idx == enum_names_.end())
+	    return false;
+
       is_enum_name = true;
-      return enum_idx->second->lexical_pos();
+      lexical_pos = enum_idx->second->lexical_pos();
+      return true;
 }
 
 void NetScope::set_constant_lexical_pos(perm_string key,

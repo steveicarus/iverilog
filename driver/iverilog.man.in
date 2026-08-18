@@ -183,6 +183,10 @@ lexically before they are used.  Using \fB\-gno\-strict\-declaration\fP
 will allow using a data object before declaration, with a warning. The
 warning can be suppressed with -Wno-declaration-after-use. The option
 can be applied for nets and variables and for parameters separately.
+When an identifier can denote either a data object or a type, such as an
+argument to \fB$bits()\fP, relaxed lookup can select a later data object
+instead of an otherwise visible type. Contexts that require a data type
+always use strict lexical ordering.
 .TP 8
 .B -gshared-loop-index\fI|\fP-gno-shared-loop-index
 Enable (default) or disable the exclusion of for-loop control variables

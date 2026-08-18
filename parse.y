@@ -164,6 +164,27 @@ static void delete_type_id_range(T&value)
       value.ranges = nullptr;
 }
 
+static data_type_t *pform_new_type_identifier(const struct vlltype &loc,
+					     PPackage *package,
+					     char *text)
+{
+      std::unique_ptr<char[]> owned_text(text);
+      pform_name_t path;
+      path.emplace_back(lex_strings.make(owned_text.get()));
+
+      PEIdent *identifier;
+      if (package) {
+	    identifier = new PEIdent(package, path);
+	    FILE_NAME(identifier, loc);
+      } else {
+	    identifier = pform_new_ident(loc, path, true);
+      }
+
+      auto tmp = new type_identifier_t(identifier);
+      FILE_NAME(tmp, loc);
+      return tmp;
+}
+
 static index_component_t *make_index_component(const struct vlltype &loc,
 					       index_component_t::ctype_t sel,
 					       PExpr *msb = nullptr,
@@ -1762,33 +1783,22 @@ package_scope
   // Type identifiers with and without attached packed dimensions.
 ps_type_identifier /* IEEE1800-2017: A.9.3 */
  : TYPE_IDENTIFIER
-      { pform_set_type_referenced(@1, $1.text);
-	delete[]$1.text;
-	$$ = new typeref_t($1.type);
-	FILE_NAME($$, @1);
-      }
+      { $$ = pform_new_type_identifier(@1, nullptr, $1.text); }
   | package_scope TYPE_IDENTIFIER
       { lex_in_package_scope(0);
-	$$ = new typeref_t($2.type, $1);
-	FILE_NAME($$, @2);
-	delete[] $2.text;
+	$$ = pform_new_type_identifier(@2, $1, $2.text);
       }
   ;
 
 ps_type_identifier_dim /* IEEE1800-2017: A.9.3 */
  : TYPE_IDENTIFIER dimensions_opt
-      { pform_set_type_referenced(@1, $1.text);
-	data_type_t*tmp = new typeref_t($1.type);
-	FILE_NAME(tmp, @1);
-	delete[]$1.text;
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1.text);
 	$$ = pform_make_parray_type(@2, tmp, $2);
       }
   | package_scope TYPE_IDENTIFIER dimensions_opt
       { lex_in_package_scope(nullptr);
-	data_type_t*tmp = new typeref_t($2.type, $1);
-	FILE_NAME(tmp, @2);
+	auto tmp = pform_new_type_identifier(@2, $1, $2.text);
 	$$ = pform_make_parray_type(@3, tmp, $3);
-	delete[]$2.text;
       }
   ;
 
@@ -2468,18 +2478,13 @@ list_of_variable_decl_assignments /* IEEE1800-2005 A.2.3 */
 
 type_identifier_variable_decl_assignments_with_type
   : TYPE_IDENTIFIER dimensions_opt list_of_variable_decl_assignments
-      { pform_set_type_referenced(@1, $1.text);
-	auto tmp = new typeref_t($1.type);
-	FILE_NAME(tmp, @1);
-	delete[]$1.text;
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1.text);
 	$$.decl_assignments = $3;
 	$$.type = pform_make_parray_type(@2, tmp, $2);
       }
   | package_scope TYPE_IDENTIFIER dimensions_opt list_of_variable_decl_assignments
       { lex_in_package_scope(nullptr);
-	auto tmp = new typeref_t($2.type, $1);
-	FILE_NAME(tmp, @2);
-	delete[]$2.text;
+	auto tmp = pform_new_type_identifier(@2, $1, $2.text);
 	$$.decl_assignments = $4;
 	$$.type = pform_make_parray_type(@3, tmp, $3);
       }
@@ -3135,18 +3140,13 @@ partial_port_name_dim
 
 partial_port_typedef_plus_id_dim
   : TYPE_IDENTIFIER dimensions_opt identifier_name dimensions_opt
-      { pform_set_type_referenced(@1, $1.text);
-	data_type_t*tmp = new typeref_t($1.type);
-	FILE_NAME(tmp, @1);
-	delete[]$1.text;
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1.text);
 	tmp = pform_make_parray_type(@2, tmp, $2);
 	set_type_id_range($$, tmp, $3, @3, $4);
       }
   | package_scope TYPE_IDENTIFIER dimensions_opt identifier_name dimensions_opt
       { lex_in_package_scope(nullptr);
-	data_type_t*tmp = new typeref_t($2.type, $1);
-	FILE_NAME(tmp, @2);
-	delete[]$2.text;
+	auto tmp = pform_new_type_identifier(@2, $1, $2.text);
 	tmp = pform_make_parray_type(@3, tmp, $3);
 	set_type_id_range($$, tmp, $4, @4, $5);
       }

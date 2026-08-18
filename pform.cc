@@ -919,12 +919,6 @@ void pform_set_typedef(const struct vlltype&loc, perm_string name,
       }
 }
 
-void pform_set_type_referenced(const struct vlltype&loc, const char*name)
-{
-      perm_string lex_name = lex_strings.make(name);
-      check_potential_imports(loc, lex_name, false);
-}
-
 typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
 {
       perm_string name = lex_strings.make(txt);

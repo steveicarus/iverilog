@@ -330,8 +330,6 @@ extern void pform_set_typedef(const struct vlltype&loc, perm_string name,
 extern void pform_forward_typedef(const struct vlltype&loc, perm_string name,
 			      type_restrict_t basic_type);
 
-extern void pform_set_type_referenced(const struct vlltype&loc, const char*name);
-
 /*
  * This function makes a PECallFunction of the named function.
  */
