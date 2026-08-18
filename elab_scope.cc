@@ -487,19 +487,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       }
 
 
-      const netclass_t*use_base_class = 0;
-      if (use_type->base_type) {
-	    ivl_type_t base_type = use_type->base_type->elaborate_type(des, scope);
-	    use_base_class = dynamic_cast<const netclass_t *>(base_type);
-	    if (!use_base_class) {
-		  cerr << pclass->get_fileline() << ": error: "
-		       << "Base type of " << use_type->name
-		       << " is not a class." << endl;
-		  des->errors += 1;
-	    }
-      }
-
-      netclass_t*use_class = new netclass_t(use_type->name, use_base_class);
+      netclass_t*use_class = new netclass_t(use_type->name);
 
       NetScope*class_scope = new NetScope(scope, hname_t(pclass->pscope_name()),
 					  NetScope::CLASS, scope->unit());
@@ -583,6 +571,43 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       scope->add_class(use_class);
 }
 
+static void elaborate_scope_class_bind_super(Design *des, NetScope *scope,
+					     PClass *pclass)
+{
+      auto *class_type = pclass->type;
+
+      if (!class_type->base_type)
+	    return;
+
+      ivl_type_t elaborated_base_type =
+	    class_type->base_type->elaborate_type(des, scope);
+      const auto *base_class =
+	    dynamic_cast<const netclass_t *>(elaborated_base_type);
+      if (!base_class) {
+	    cerr << pclass->get_fileline() << ": error: "
+		 << "Base type of " << class_type->name
+		 << " is not a class." << endl;
+	    des->errors += 1;
+	    return;
+      }
+
+      auto *derived_class = scope->find_class(des, class_type->name);
+      ivl_assert(*pclass, derived_class);
+
+      for (auto ancestor = base_class; ancestor;
+	   ancestor = ancestor->get_super()) {
+	    if (ancestor == derived_class) {
+		  cerr << pclass->get_fileline() << ": error: "
+		       << "Inheritance cycle detected for class `"
+		       << class_type->name << "`." << endl;
+		  des->errors += 1;
+		  return;
+	    }
+      }
+
+      derived_class->set_super(base_class);
+}
+
 static void elaborate_scope_classes(Design*des, NetScope*scope,
 				    const vector<PClass*>&classes)
 {
@@ -597,6 +622,9 @@ static void elaborate_scope_classes(Design*des, NetScope*scope,
 	    blend_class_constructors(classes[idx]);
 	    elaborate_scope_class(des, scope, classes[idx]);
       }
+
+      for (auto pclass : classes)
+	    elaborate_scope_class_bind_super(des, scope, pclass);
 }
 
 static void replace_scope_parameters(Design *des, NetScope*scope, const LineInfo&loc,
