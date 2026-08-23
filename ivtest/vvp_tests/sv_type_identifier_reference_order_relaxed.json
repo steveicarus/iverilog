@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_type_identifier_reference_order_relaxed.v",
+    "iverilog-args" : [ "-g2005-sv", "-gno-strict-net-var-declaration" ]
+}
