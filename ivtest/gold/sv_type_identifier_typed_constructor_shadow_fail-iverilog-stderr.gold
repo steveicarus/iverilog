@@ -1,0 +1,4 @@
+ivltests/sv_type_identifier_typed_constructor_shadow_fail.v:12: error: `T` is not a type.
+ivltests/sv_type_identifier_typed_constructor_shadow_fail.v:12: error: Incompatible type in typed constructor call.
+ivltests/sv_type_identifier_typed_constructor_shadow_fail.v:12:      : Constructor type `netvector_t:logic unsigned` is not a class type.
+Elaboration failed
