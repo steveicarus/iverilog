@@ -217,7 +217,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, const NetNet*sig,
 {
       list<long> prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, sig, prefix_indices);
-      ivl_assert(*this, rc);
+      if (!rc) return false;
 
       const name_component_t&name_tail = path_.back();
 	// Only treat as part/bit selects any index that is beyond the

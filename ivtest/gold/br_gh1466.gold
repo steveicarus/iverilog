@@ -1,0 +1,4 @@
+./ivltests/br_gh1466.v:2: warning: Array dimensions in incomplete port declarations are currently ignored.
+./ivltests/br_gh1466.v:2:        : The dimensions specified in the net or variable declaration will be used.
+./ivltests/br_gh1466.v:3: error: the number of indices (2) is greater than the number of dimensions (1).
+1 error(s) during elaboration.
