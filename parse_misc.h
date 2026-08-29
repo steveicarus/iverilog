@@ -45,6 +45,10 @@ inline void FILE_NAME(LineInfo*tmp, const struct vlltype&where)
 {
       tmp->set_lineno(where.first_line);
       tmp->set_file(filename_strings.make(where.text));
+	// Preserve a more precise identifier position supplied by a
+	// constructor instead of replacing it with the enclosing rule.
+      if (tmp->lexical_pos() == UINT_MAX)
+	    tmp->lexical_pos(where.lexical_pos);
 }
 
   /* This for compatibility with new and older bison versions. */
@@ -84,13 +88,6 @@ extern UCDriveType uc_drive;
 extern void lex_in_package_scope(PPackage*pkg);
 
 /*
- * The parser signals when the lexor is scanning a module/interface/program
- * port list so that ambiguous SystemVerilog interface formals can be
- * tokenized without depending on declaration order.
- */
-extern void lex_in_module_port_list(bool flag);
-
-/*
  * Test if this identifier is a type identifier in the current
  * context. The pform code needs to help the lexor here because the
  * parser detects typedefs and marks the typedef'ed identifiers as
@@ -98,11 +95,6 @@ extern void lex_in_module_port_list(bool flag);
  */
 extern typedef_t* pform_test_type_identifier(const YYLTYPE&loc, const char*txt);
 extern typedef_t* pform_test_type_identifier(PPackage*pkg, const char*txt);
-
-/*
- * Test if this identifier is a previously declared interface name.
- */
-extern bool pform_test_interface_identifier(const char*txt);
 
 /*
  * Test if this identifier is a package name. The pform needs to help

@@ -374,9 +374,8 @@ ivl_type_t elaborate_array_type(Design *des, NetScope *scope,
 		  type = elaborate_darray_check_type(des, li, type, "Dynamic array");
 		  type = new netdarray_t(type);
 		  continue;
-	    } else if (dynamic_cast<PENull*>(lidx)) {
-		    // Special case: Detect the mark for a QUEUE declaration,
-		    // which is the dimensions [null:max_idx].
+	    } else if (dynamic_cast<PEQueueDimension*>(lidx)) {
+		    // Special case: Detect the mark for a QUEUE declaration.
 		  type = elaborate_static_array_type(des, li, type, dimensions);
 		  type = elaborate_queue_type(des, scope, li, type, ridx);
 		  continue;

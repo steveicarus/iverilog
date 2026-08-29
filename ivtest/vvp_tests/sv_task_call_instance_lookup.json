@@ -1,0 +1,8 @@
+{
+    "type"   : "normal",
+    "source" : "sv_task_call_instance_lookup.v",
+    "vlog95" : {
+        "__comment" : "vlog95 cannot preserve instance-dependent subroutine binding",
+        "type"      : "NI"
+    }
+}

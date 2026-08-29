@@ -52,15 +52,17 @@ void Definitions::add_enumeration_set(const enum_type_t*key, netenum_t*enum_set)
       tmp = enum_set;
 }
 
-bool Definitions::add_enumeration_name(const netenum_t*enum_set, perm_string name)
+bool Definitions::add_enumeration_name(const netenum_t *enum_set,
+				       perm_string name,
+				       const LineInfo &location)
 {
-      netenum_t::iterator enum_val = enum_set->find_name(name);
+      auto enum_val = enum_set->find_name(name);
       assert(enum_val != enum_set->end_name());
 
-      NetEConstEnum*val = new NetEConstEnum(name, enum_set, enum_val->second);
+      auto val = new NetEConstEnum(name, enum_set, enum_val->second);
+      val->set_line(location);
 
-      pair<map<perm_string,NetEConstEnum*>::iterator, bool> cur;
-      cur = enum_names_.insert(make_pair(name,val));
+      auto cur = enum_names_.insert(make_pair(name, val));
 
 	// Return TRUE if the name is added (i.e. is NOT a duplicate.)
       return cur.second;
@@ -111,7 +113,6 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, NetScope*in_u
 : type_(t), name_(n), nested_module_(nest), program_block_(program),
   is_interface_(interface), is_unit_(compilation_unit), unit_(in_unit), up_(up)
 {
-      imports_ = 0;
       events_ = 0;
       lcounter_ = 0;
       is_auto_ = false;
@@ -215,22 +216,26 @@ void NetScope::set_line(perm_string file, perm_string def_file,
       def_lineno_ = def_lineno;
 }
 
-void NetScope::add_imports(const map<perm_string,PPackage*>*imports)
+void NetScope::add_imports(const package_import_map_t *imports)
 {
       if (!imports->empty())
 	    imports_ = imports;
 }
 
-NetScope*NetScope::find_import(const Design*des, perm_string name)
+NetScope *NetScope::find_import(const Design *des, perm_string name,
+			       unsigned int lexical_pos)
 {
-      if (imports_ == 0)
-	    return 0;
+      if (!imports_)
+	    return nullptr;
 
-      map<perm_string,PPackage*>::const_iterator cur = imports_->find(name);
-      if (cur != imports_->end()) {
-            return des->find_package(cur->second->pscope_name());
-      } else
-            return 0;
+      auto cur = imports_->find(name);
+      if (cur == imports_->end())
+            return nullptr;
+
+      if (cur->second.lexical_pos() > lexical_pos)
+	    return nullptr;
+
+      return des->find_package(cur->second.package->pscope_name());
 }
 
 void NetScope::add_typedefs(const map<perm_string,typedef_t*>*typedefs)
@@ -239,28 +244,52 @@ void NetScope::add_typedefs(const map<perm_string,typedef_t*>*typedefs)
 	    typedefs_ = *typedefs;
 }
 
+typedef_t *NetScope::lookup_typedef(perm_string name,
+				    unsigned int lexical_pos) const
+{
+      auto type = typedefs_.find(name);
+      if (type == typedefs_.end())
+	    return nullptr;
+
+      if (type->second->lexical_pos() > lexical_pos)
+	    return nullptr;
+
+      return type->second;
+}
+
+/*
+ * Type names are resolved to typedef_t objects during parsing. Locate the
+ * scope that owns that exact object instead of resolving its name again
+ * during elaboration. A name lookup here could follow an import that appears
+ * after the original type reference and select a different typedef.
+ */
 NetScope*NetScope::find_typedef_scope(const Design*des, const typedef_t*type_i)
 {
       ivl_assert(*this, type_i);
 
+	// First check the enclosing lexical scopes and compilation unit.
       NetScope *cur_scope = this;
       while (cur_scope) {
 	    auto it = cur_scope->typedefs_.find(type_i->name);
 	    if (it != cur_scope->typedefs_.end() && it->second == type_i)
 		  return cur_scope;
-	    NetScope*import_scope = cur_scope->find_import(des, type_i->name);
-	    if (import_scope)
-		  cur_scope = import_scope;
-	    else if (cur_scope == unit_)
-		  return 0;
-	    else
-		  cur_scope = cur_scope->parent();
 
-	    if (cur_scope == 0)
+	    if (cur_scope == unit_)
+		  break;
+
+	    cur_scope = cur_scope->parent();
+	    if (!cur_scope)
 		  cur_scope = unit_;
       }
 
-      return 0;
+	// Imported typedefs are owned by package scopes outside that chain.
+      for (auto package : des->find_package_scopes()) {
+	    auto it = package->typedefs_.find(type_i->name);
+	    if (it != package->typedefs_.end() && it->second == type_i)
+		  return package;
+      }
+
+      return nullptr;
 }
 
 /*
@@ -452,23 +481,37 @@ LineInfo NetScope::get_parameter_line_info(perm_string key) const
       return LineInfo();
 }
 
-unsigned NetScope::get_parameter_lexical_pos(perm_string key) const
+unsigned int NetScope::get_constant_lexical_pos(perm_string key,
+						bool &is_enum_name) const
 {
       map<perm_string,param_expr_t>::const_iterator idx;
 
       idx = parameters.find(key);
-      if (idx != parameters.end()) return idx->second.lexical_pos;
+      if (idx != parameters.end()) {
+	    is_enum_name = false;
+	    return idx->second.lexical_pos;
+      }
 
-	// If we get here, assume an enumeration value.
-      return 0;
+      auto enum_idx = enum_names_.find(key);
+      assert(enum_idx != enum_names_.end());
+      is_enum_name = true;
+      return enum_idx->second->lexical_pos();
 }
 
-void NetScope::set_parameter_lexical_pos(perm_string key, unsigned lexical_pos)
+void NetScope::set_constant_lexical_pos(perm_string key,
+					unsigned int lexical_pos)
 {
       map<perm_string,param_expr_t>::iterator idx;
 
       idx = parameters.find(key);
-      if (idx != parameters.end()) idx->second.lexical_pos = lexical_pos;
+      if (idx != parameters.end()) {
+	    idx->second.lexical_pos = lexical_pos;
+	    return;
+      }
+
+      auto enum_idx = enum_names_.find(key);
+      assert(enum_idx != enum_names_.end());
+      enum_idx->second->lexical_pos(lexical_pos);
 }
 
 void NetScope::print_type(ostream&stream) const

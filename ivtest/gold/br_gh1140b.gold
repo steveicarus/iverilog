@@ -1,0 +1,17 @@
+./ivltests/br_gh1140b.v:10: error: Dimensions must be a constant with no unknown or high-Z bits.
+./ivltests/br_gh1140b.v:10       : This MSB expression violates the rule: LPX
+./ivltests/br_gh1140b.v:11: error: Dimensions must be a constant with no unknown or high-Z bits.
+./ivltests/br_gh1140b.v:11       : This MSB expression violates the rule: LPZ
+./ivltests/br_gh1140b.v:12: error: Dimensions must be a constant with no unknown or high-Z bits.
+./ivltests/br_gh1140b.v:12:      : This LSB expression violates the rule: LPX
+./ivltests/br_gh1140b.v:13: error: Dimensions must be a constant with no unknown or high-Z bits.
+./ivltests/br_gh1140b.v:13:      : This LSB expression violates the rule: LPZ
+./ivltests/br_gh1140b.v:5: error: Dimensions must be a constant with no unknown or high-Z bits.
+./ivltests/br_gh1140b.v:5       : This MSB expression violates the rule: LPX
+./ivltests/br_gh1140b.v:6: error: Dimensions must be a constant with no unknown or high-Z bits.
+./ivltests/br_gh1140b.v:6       : This MSB expression violates the rule: LPZ
+./ivltests/br_gh1140b.v:7: error: Dimensions must be a constant with no unknown or high-Z bits.
+./ivltests/br_gh1140b.v:7:      : This LSB expression violates the rule: LPX
+./ivltests/br_gh1140b.v:8: error: Dimensions must be a constant with no unknown or high-Z bits.
+./ivltests/br_gh1140b.v:8:      : This LSB expression violates the rule: LPZ
+8 error(s) during elaboration.

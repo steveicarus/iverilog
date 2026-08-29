@@ -44,6 +44,8 @@ void LineInfo::set_line(const LineInfo&that)
 {
       file_ = that.file_;
       lineno_ = that.lineno_;
+      if (lexical_pos_ == UINT_MAX)
+	    lexical_pos_ = that.lexical_pos_;
 }
 
 void LineInfo::set_file(perm_string f)
@@ -54,4 +56,9 @@ void LineInfo::set_file(perm_string f)
 void LineInfo::set_lineno(unsigned n)
 {
       lineno_ = n;
+}
+
+void LineInfo::lexical_pos(unsigned int n)
+{
+      lexical_pos_ = n;
 }

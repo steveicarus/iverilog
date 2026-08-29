@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "dimension_idx_up_fail.v",
+    "iverilog-args" : [ "-g2001" ]
+}

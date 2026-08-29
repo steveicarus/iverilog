@@ -236,14 +236,15 @@ extern void pform_add_modport_port(const struct vlltype&loc,
  * This creates an identifier aware of names that may have been
  * imported from other packages.
  */
-extern PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&name);
+extern PEIdent *pform_new_ident(const struct vlltype&loc,
+			       const pform_name_t&name,
+			       bool no_implicit_sig = false);
 
 extern PTrigger* pform_new_trigger(const struct vlltype&loc, PPackage*pkg,
-				   const pform_name_t&name, unsigned lexical_pos);
+				   const pform_name_t&name);
 extern PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
 				        const std::list<PExpr*>*dly,
-				        const pform_name_t&name,
-				        unsigned lexical_pos);
+				        const pform_name_t&name);
 
 /*
  * Enter/exit name scopes. The push_scope function pushes the scope
@@ -251,11 +252,15 @@ extern PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
  * deletes it. Thus, the string pushed must be allocated.
  */
 extern void pform_pop_scope();
+extern void pform_pop_block_scope(bool keep_scope);
 
 /*
  * Peek at the current (most recently active) scope.
  */
 extern LexicalScope* pform_peek_scope();
+
+extern bool pform_check_local_symbol(LexicalScope *scope, perm_string name,
+				     const PNamedItem *item);
 
 extern PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name);
 
@@ -333,6 +338,10 @@ extern void pform_set_type_referenced(const struct vlltype&loc, const char*name)
 extern PECallFunction* pform_make_call_function(const struct vlltype&loc,
 						const pform_name_t&name,
 						const std::list<named_pexpr_t> &parms);
+extern PECallFunction* pform_make_chained_call_function(const struct vlltype&loc,
+							PExpr*prefix,
+							const pform_name_t&method,
+							const std::list<named_pexpr_t> &parms);
 extern PCallTask* pform_make_call_task(const struct vlltype&loc,
 				       const pform_name_t&name,
 				       const std::list<named_pexpr_t> &parms);
@@ -410,8 +419,8 @@ extern void pform_set_parameter(const struct vlltype&loc,
                                 PExpr*expr, LexicalScope::range_t*value_range);
 extern void pform_set_specparam(const struct vlltype&loc,
 				 perm_string name,
-				 std::list<pform_range_t>*range,
-				 PExpr*expr);
+				 std::list<pform_range_t> *range,
+				 PExpr *expr, bool check_decl_order);
 extern void pform_set_defparam(const pform_name_t&name, PExpr*expr);
 
 extern void pform_make_let(const struct vlltype&loc,

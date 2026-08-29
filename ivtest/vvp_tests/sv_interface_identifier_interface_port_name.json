@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_interface_identifier_interface_port_name.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "vlog95 redeclares connected interface instances as nets",
+        "type"          : "TE"
+    }
+}

@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_enum_reference_order.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

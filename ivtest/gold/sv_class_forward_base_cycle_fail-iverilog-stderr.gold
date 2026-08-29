@@ -1,0 +1,2 @@
+ivltests/sv_class_forward_base_cycle_fail.v:12: error: Inheritance cycle detected for class `C`.
+2 error(s) during elaboration.

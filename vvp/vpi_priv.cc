@@ -128,7 +128,7 @@ struct vpip_string_chunk {
       char data[64*1024 - sizeof (struct vpip_string_chunk*)];
 };
 
-unsigned vpip_size(__vpiSignal *sig)
+unsigned vpip_size(const __vpiSignal *sig)
 {
       return abs(sig->msb.get_value() - sig->lsb.get_value()) + 1;
 }

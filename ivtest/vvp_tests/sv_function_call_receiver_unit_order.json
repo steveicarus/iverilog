@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_function_call_receiver_unit_order.v",
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "__comment" : "Class scopes are not currently translated",
+        "type"      : "CE"
+    }
+}

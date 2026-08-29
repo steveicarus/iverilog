@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -462,6 +462,8 @@ static void draw_binary_vec4_logical(ivl_expr_t expr, char op)
 	    jmp_type = "1";
 	    break;
 	  default:
+	    opcode = "<invalid>";
+	    jmp_type = "<invalid>";
 	    assert(0);
 	    break;
       }
@@ -1108,6 +1110,14 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 	    return;
       }
 
+	/* find*_with has four parameters and is lowered in eval_object.c */
+      if (parm_count == 4 &&
+	  strncmp(ivl_expr_name(expr), "$ivl_queue_method$",
+		  sizeof("$ivl_queue_method$") - 1) == 0 &&
+	  strstr(ivl_expr_name(expr), "_with") != 0) {
+	    if (draw_queue_method_find_sfunc(expr) == 0) return;
+      }
+
       if (strcmp(ivl_expr_name(expr), "$size")==0 && parm_count==1) {
 	    ivl_expr_t arg = ivl_expr_parm(expr, 0);
 	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
@@ -1118,6 +1128,28 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 		  return;
 	    }
+      }
+
+      if ((strcmp(ivl_expr_name(expr), "$ivl_queue_method$sum") == 0 ||
+	   strcmp(ivl_expr_name(expr), "$ivl_queue_method$product") == 0) &&
+	  parm_count == 1) {
+	    ivl_expr_t arg = ivl_expr_parm(expr, 0);
+	    unsigned wid = ivl_expr_width(expr);
+	    const char* op = strcmp(ivl_expr_name(expr), "$ivl_queue_method$product") == 0
+			       ? "product"
+			       : "sum";
+	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
+		  ivl_signal_t clas = ivl_expr_signal(arg);
+		  unsigned pidx = ivl_expr_property_idx(arg);
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
+		  fprintf(vvp_out, "    %%queue/%s/prop/v %u, %u;\n", op, pidx, wid);
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  return;
+	    }
+	    assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
+	    fprintf(vvp_out, "    %%queue/%s/v v%p_0, %u;\n",
+	            op, ivl_expr_signal(arg), wid);
+	    return;
       }
 
       draw_vpi_func_call(expr);

@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_task_call_object_shadow.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Class scopes are not currently translated",
+        "type"      : "CE"
+    }
+}

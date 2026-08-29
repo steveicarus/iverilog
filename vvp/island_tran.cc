@@ -196,7 +196,7 @@ void vvp_island_tran::count_drivers(vvp_island_port*port, unsigned bit_idx,
 
 void vvp_island_branch_tran::run_test_enabled()
 {
-      vvp_island_port*ep = en? dynamic_cast<vvp_island_port*> (en->fun) : NULL;
+      const vvp_island_port*ep = en? dynamic_cast<vvp_island_port*> (en->fun) : NULL;
 
 	// If there is no ep port (no "enabled" input) then this is a
 	// tran branch. Assume it is always enabled.
@@ -243,7 +243,7 @@ void vvp_island_branch_tran::run_test_enabled()
 
 bool vvp_island_branch_tran::rerun_test_enabled()
 {
-      vvp_island_port*ep = en? dynamic_cast<vvp_island_port*> (en->fun) : NULL;
+      const vvp_island_port*ep = en? dynamic_cast<vvp_island_port*> (en->fun) : NULL;
 
       if (ep == 0)
 	    return false;

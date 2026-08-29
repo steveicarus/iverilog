@@ -21,7 +21,7 @@
 ./ivltests/always_latch_warn.v:32: warning: A for statement step must be a simple binary +/- to be synthesized in an always_latch process.
 ./ivltests/always_latch_warn.v:32: warning: System task ($display) cannot be synthesized in an always_latch process.
 ./ivltests/always_latch_warn.v:33: warning: System task ($display) cannot be synthesized in an always_latch process.
-./ivltests/always_latch_warn.v:34: warning: Dynamic array delete method cannot be synthesized in an always_latch process.
+./ivltests/always_latch_warn.v:34: warning: Dynamic array ordering/delete method cannot be synthesized in an always_latch process.
 ./ivltests/always_latch_warn.v:35: warning: System task ($display) cannot be synthesized in an always_latch process.
 ./ivltests/always_latch_warn.v:14: warning: An event (tevt) cannot be synthesized in an always_latch process.
 ./ivltests/always_latch_warn.v:13: warning: A non-integral variable (trl) cannot be synthesized in an always_latch process.

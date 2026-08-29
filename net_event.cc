@@ -30,7 +30,6 @@ using namespace std;
 NetEvent::NetEvent(perm_string n)
 : name_(n)
 {
-      lexical_pos_ = 0;
       local_flag_ = false;
       scope_ = 0;
       snext_ = 0;

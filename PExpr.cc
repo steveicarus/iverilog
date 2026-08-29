@@ -25,6 +25,7 @@
 
 # include  "compiler.h"
 # include  "PExpr.h"
+# include  "PPackage.h"
 # include  "PWire.h"
 # include  "Module.h"
 # include  "ivl_assert.h"
@@ -139,31 +140,12 @@ bool PEBinary::has_aa_term(Design*des, NetScope*scope) const
       return left_->has_aa_term(des, scope) || right_->has_aa_term(des, scope);
 }
 
-PECastSize::PECastSize(PExpr*si, PExpr*b)
-: size_(si), base_(b)
+PECast::PECast(PExpr *target, PExpr *base)
+: target_(target), base_(base)
 {
 }
 
-PECastSize::~PECastSize()
-{
-}
-
-bool PECastSize::has_aa_term(Design *des, NetScope *scope) const
-{
-	return base_->has_aa_term(des, scope);
-}
-
-PECastType::PECastType(data_type_t*t, PExpr*b)
-: target_(t), base_(b)
-{
-      target_type_ = nullptr;
-}
-
-PECastType::~PECastType()
-{
-}
-
-bool PECastType::has_aa_term(Design *des, NetScope *scope) const
+bool PECast::has_aa_term(Design *des, NetScope *scope) const
 {
 	return base_->has_aa_term(des, scope);
 }
@@ -271,26 +253,60 @@ PECallFunction::PECallFunction(perm_string n, const list<named_pexpr_t> &parms)
 {
 }
 
+PECallFunction::PECallFunction(PExpr* chain_prefix, const pform_name_t &method,
+			       const vector<named_pexpr_t> &parms)
+: path_(method), parms_(parms), chain_prefix_(chain_prefix), is_overridden_(false)
+{
+}
+
+PECallFunction::PECallFunction(PExpr* chain_prefix, const pform_name_t &method,
+			       const list<named_pexpr_t> &parms)
+: path_(method), parms_(parms.begin(), parms.end()),
+  chain_prefix_(chain_prefix), is_overridden_(false)
+{
+}
+
+void PECallFunction::set_with_clause(PExpr* with_expr)
+{
+      delete with_expr_;
+      with_expr_ = with_expr;
+}
+
 PECallFunction::~PECallFunction()
 {
+      delete chain_prefix_;
+      delete with_expr_;
 }
 
 void PECallFunction::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
+      if (chain_prefix_) {
+	    chain_prefix_->declare_implicit_nets(scope, type);
+      }
+      if (with_expr_) {
+	    with_expr_->declare_implicit_nets(scope, type);
+      }
       for (const auto &parm : parms_) {
-	    if (parm.parm)
+	    if (parm.parm) {
 		  parm.parm->declare_implicit_nets(scope, type);
+		}
       }
 }
 
 bool PECallFunction::has_aa_term(Design*des, NetScope*scope) const
 {
-      bool flag = false;
-      for (const auto &parm : parms_) {
-	    if (parm.parm)
-		  flag |= parm.parm->has_aa_term(des, scope);
+      if (chain_prefix_ && chain_prefix_->has_aa_term(des, scope)) {
+	    return true;
       }
-      return flag;
+      if (with_expr_ && with_expr_->has_aa_term(des, scope)) {
+	    return true;
+      }
+      for (const auto &parm : parms_) {
+	    if (parm.parm && parm.parm->has_aa_term(des, scope)) {
+		  return true;
+		}
+      }
+      return false;
 }
 
 PEConcat::PEConcat(const list<PExpr*>&p, PExpr*r)
@@ -372,19 +388,22 @@ const verireal& PEFNumber::value() const
       return *value_;
 }
 
-PEIdent::PEIdent(const pform_name_t&that, unsigned lexical_pos)
-: path_(that), lexical_pos_(lexical_pos), no_implicit_sig_(false)
+PEIdent::PEIdent(const pform_name_t&that, unsigned lexical_pos,
+		 bool no_implicit_sig)
+: path_(that), no_implicit_sig_(no_implicit_sig)
 {
+      LineInfo::lexical_pos(lexical_pos);
 }
 
 PEIdent::PEIdent(perm_string s, unsigned lexical_pos, bool no_implicit_sig)
-: lexical_pos_(lexical_pos), no_implicit_sig_(no_implicit_sig)
+: no_implicit_sig_(no_implicit_sig)
 {
+      LineInfo::lexical_pos(lexical_pos);
       path_.name.push_back(name_component_t(s));
 }
 
-PEIdent::PEIdent(PPackage*pkg, const pform_name_t&that, unsigned lexical_pos)
-: path_(pkg, that), lexical_pos_(lexical_pos), no_implicit_sig_(true)
+PEIdent::PEIdent(PPackage*pkg, const pform_name_t&that)
+: path_(pkg, that), no_implicit_sig_(true)
 {
 }
 
@@ -401,6 +420,29 @@ static bool find_enum_constant(LexicalScope*scope, perm_string name)
       });
 }
 
+static bool is_typedef_identifier(LexicalScope *scope, perm_string name)
+{
+      while (scope) {
+            auto import = scope->explicit_imports.find(name);
+            if (import != scope->explicit_imports.end()) {
+                  // An explicit import shadows declarations in outer scopes.
+                  const auto &typedefs = import->second.package->typedefs;
+                  return typedefs.find(name) != typedefs.end();
+            }
+
+            if (scope->typedefs.find(name) != scope->typedefs.end())
+                  return true;
+
+            // A local non-type declaration also hides outer typedefs.
+            if (scope->local_symbols.find(name) != scope->local_symbols.end())
+                  return false;
+
+            scope = scope->parent_scope();
+      }
+
+      return false;
+}
+
 void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
         /* We create an implicit wire if:
@@ -414,6 +456,9 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 	    return;
      if (path_.name.size() == 1 && path_.name.front().index.empty()) {
             perm_string name = path_.name.front().name;
+            if (is_typedef_identifier(scope, name))
+                  return;
+
             LexicalScope*ss = scope;
             while (ss) {
                   if (ss->wires.find(name) != ss->wires.end())
@@ -435,9 +480,8 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 
                   ss = ss->parent_scope();
             }
-            PWire*net = new PWire(name, lexical_pos_, type, NetNet::NOT_A_PORT);
-            net->set_file(get_file());
-            net->set_lineno(get_lineno());
+            PWire*net = new PWire(name, lexical_pos(), type, NetNet::NOT_A_PORT);
+            net->set_line(*this);
             scope->wires[name] = net;
             if (warn_implicit) {
                   cerr << get_fileline() << ": warning: implicit "
@@ -449,7 +493,10 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 bool PEIdent::has_aa_term(Design*des, NetScope*scope) const
 {
       symbol_search_results sr;
-      if (!symbol_search(this, des, scope, path_, lexical_pos_, &sr))
+      if (!symbol_search(this, des, scope, path_, lexical_pos(), &sr))
+	    return false;
+
+      if (sr.type_def)
 	    return false;
 
       // Class properties are not considered automatic since a non-blocking
