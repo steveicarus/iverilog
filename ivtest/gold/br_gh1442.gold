@@ -1,0 +1,2 @@
+./ivltests/br_gh1442.v:7: error: Unable to bind variable `memName' in `top.m'
+1 error(s) during elaboration.
