@@ -139,16 +139,18 @@ char *generic_get_str(int code, vpiHandle ref, const char *name, const char *ind
 
 static vpiHandle fill_in_net4(struct __vpiSignal*obj, __vpiScope*scope,
                               const char*name, int msb, int lsb,
-                              bool signed_flag, vvp_net_t*node);
+                              bool signed_flag, bool vector_flag,
+                              vvp_net_t*node);
 
 static vpiHandle fill_in_var4(struct __vpiSignal*obj,
                               const char*name, int msb, int lsb,
-                              bool signed_flag, vvp_net_t*node)
+                              bool signed_flag, bool vector_flag,
+                              vvp_net_t*node)
 {
 	// Variable declarations are always resolved immediately,
 	// so we can assume they belong in the current scope.
       return fill_in_net4(obj, vpip_peek_current_scope(),
-			  name, msb, lsb, signed_flag, node);
+			  name, msb, lsb, signed_flag, vector_flag, node);
 }
 
 /*
@@ -581,9 +583,11 @@ static int signal_get(int code, vpiHandle ref)
             return rfp->lsb.get_value();
 
 	  case vpiScalar:
-	    return (rfp->msb.get_value() == 0 && rfp->lsb.get_value() == 0);
+	    return !rfp->is_vector &&
+	           rfp->msb.get_value() == 0 && rfp->lsb.get_value() == 0;
 	  case vpiVector:
-	    return (rfp->msb.get_value() != rfp->lsb.get_value());
+	    return rfp->is_vector ||
+	           rfp->msb.get_value() != rfp->lsb.get_value();
 
           case vpiAutomatic:
             return vpip_scope(rfp)->is_automatic() ? 1  : 0;
@@ -1142,10 +1146,11 @@ struct signal_longint : public __vpiSignal {
  * to minimize the code modifications. Icarus implements integers
  * as 'reg signed [31:0]'.
  */
-vpiHandle vpip_make_int4(const char*name, int msb, int lsb, vvp_net_t*vec)
+vpiHandle vpip_make_int4(const char*name, int msb, int lsb,
+                         bool vector_flag, vvp_net_t*vec)
 {
       __vpiSignal*obj = new signal_integer;
-      return fill_in_var4(obj, name, msb, lsb, true, vec);
+      return fill_in_var4(obj, name, msb, lsb, true, vector_flag, vec);
 }
 
 /*
@@ -1186,20 +1191,22 @@ static __vpiSignal* make_int2_signal(int msb, int lsb, bool signed_flag)
 }
 
 vpiHandle vpip_make_int2(const char*name, int msb, int lsb, bool signed_flag,
-                         vvp_net_t*vec)
+                         bool vector_flag, vvp_net_t*vec)
 {
       __vpiSignal*obj = make_int2_signal(msb, lsb, signed_flag);
-      return fill_in_var4(obj, name, msb, lsb, signed_flag, vec);
+      return fill_in_var4(obj, name, msb, lsb, signed_flag, vector_flag, vec);
 }
 
 /*
  * Construct a vpiReg/vpiLogicVar object. It's like a net, except for the type.
  */
 vpiHandle vpip_make_var4(const char*name, int msb, int lsb,
-			bool signed_flag, vvp_net_t*vec)
+			bool signed_flag, bool vector_flag,
+			vvp_net_t*vec)
 {
       __vpiSignal*obj = new signal_reg;
-      return fill_in_var4(obj, name, msb, lsb, signed_flag, vec);
+      return fill_in_var4(obj, name, msb, lsb, signed_flag,
+			  vector_flag, vec);
 }
 
 #ifdef CHECK_WITH_VALGRIND
@@ -1304,13 +1311,15 @@ void signal_pool_delete()
  */
 static vpiHandle fill_in_net4(struct __vpiSignal*obj, __vpiScope*scope,
 			      const char*name, int msb, int lsb,
-			      bool signed_flag, vvp_net_t*node)
+			      bool signed_flag, bool vector_flag,
+			      vvp_net_t*node)
 {
       obj->id.name = name? vpip_name_string(name) : NULL;
       obj->msb = __vpiDecConst(msb);
       obj->lsb = __vpiDecConst(lsb);
       obj->signed_flag = signed_flag? 1 : 0;
       obj->is_netarray = 0;
+      obj->is_vector = vector_flag? 1 : 0;
       obj->node = node;
 
 	// Place this object within a scope. If this object is
@@ -1325,7 +1334,8 @@ static vpiHandle fill_in_net4(struct __vpiSignal*obj, __vpiScope*scope,
 
 vpiHandle vpip_make_net4(__vpiScope*scope,
 			 const char*name, int msb, int lsb,
-			 bool signed_flag, vvp_net_t*node,
+			 bool signed_flag, bool vector_flag,
+			 vvp_net_t*node,
 			 int reported_type_code)
 {
       struct __vpiSignal*obj;
@@ -1345,7 +1355,8 @@ vpiHandle vpip_make_net4(__vpiScope*scope,
 	    std::abort();
       }
       obj->net_semantics = 1;
-      return fill_in_net4(obj, scope, name, msb, lsb, signed_flag, node);
+      return fill_in_net4(obj, scope, name, msb, lsb, signed_flag,
+			  vector_flag, node);
 }
 
 static int PV_get_base(struct __vpiPV*rfp)

@@ -384,6 +384,7 @@ struct __vpiSignal : public __vpiHandle {
 	/* Flags */
       unsigned signed_flag  : 1;
       unsigned is_netarray  : 1; // This is word of a net array
+      unsigned is_vector    : 1; // Source has an explicit packed dimension
       unsigned net_semantics : 1; // Runtime value is still resolved as a net
 	/* The represented value is here. */
       vvp_net_t*node;
@@ -392,7 +393,7 @@ struct __vpiSignal : public __vpiHandle {
       static void*operator new(std::size_t size);
       static void operator delete(void*); // not implemented
     protected:
-      inline __vpiSignal() : bits(NULL), net_semantics(0) { }
+      inline __vpiSignal() : bits(NULL), is_vector(0), net_semantics(0) { }
     private: // Not implemented
       static void*operator new[] (std::size_t size);
       static void operator delete[](void*);
@@ -401,14 +402,17 @@ extern unsigned vpip_size(const __vpiSignal *sig);
 extern __vpiScope* vpip_scope(__vpiSignal*sig);
 
 extern vpiHandle vpip_make_int2(const char*name, int msb, int lsb,
-			       bool signed_flag, vvp_net_t*vec);
-extern vpiHandle vpip_make_int4(const char*name, int msb, int lsb,
+			       bool signed_flag, bool vector_flag,
 			       vvp_net_t*vec);
+extern vpiHandle vpip_make_int4(const char*name, int msb, int lsb,
+			       bool vector_flag, vvp_net_t*vec);
 extern vpiHandle vpip_make_var4(const char*name, int msb, int lsb,
-			       bool signed_flag, vvp_net_t*net);
+			       bool signed_flag, bool vector_flag,
+			       vvp_net_t*net);
 extern vpiHandle vpip_make_net4(__vpiScope*scope,
 				const char*name, int msb, int lsb,
-				bool signed_flag, vvp_net_t*node,
+				bool signed_flag, bool vector_flag,
+				vvp_net_t*node,
 				int reported_type_code);
 
 /*

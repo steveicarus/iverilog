@@ -509,7 +509,8 @@ extern void compile_thread(char*start_sym, char*flag);
  */
 extern void compile_variable(char*label, char*name,
 			     int msb, int lsb, int vpi_type_code,
-			     bool signed_flag, bool local_flag);
+			     bool signed_flag, bool vector_flag,
+			     bool local_flag);
 
 extern void compile_var_real(char*label, char*name, bool local_flag);
 extern void compile_var_string(char*label, char*name);
@@ -540,7 +541,8 @@ extern void compile_port_info( unsigned index, int vpi_port_type, unsigned width
  *  -vpiLogic  -- 8-value (i.e. strength aware) logic
  */
 extern void compile_net(char*label, char*name, int msb, int lsb,
-			int vpi_type_code, bool signed_flag, bool local_flag,
+			int vpi_type_code, bool signed_flag, bool vector_flag,
+			bool local_flag,
 			bool variable_flag,
 			unsigned argc, struct symb_s*argv);
 
@@ -550,6 +552,7 @@ extern void compile_net_real(char*label, char*name,
 
 extern void compile_netw(char*label, char*array_label, unsigned long array_addr,
 			 int msb, int lsb, int vpi_type_code, bool signed_flag,
+			 bool vector_flag,
 			 bool variable_flag,
 			 unsigned argc, struct symb_s*argv);
 
