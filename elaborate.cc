@@ -7286,6 +7286,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 		    // is evaluated after the complete module has been declared.
 		  PEIdent*top_lval = new PEIdent(lval->path().name, ~0U);
 		  top_lval->set_line(*lval);
+		  top_lval->lexical_pos(~0U);
 		  assign_pins->push_back(top_lval);
 		  assign_pins->push_back(port->default_value);
 		  PGAssign*pa = new PGAssign(assign_pins);
