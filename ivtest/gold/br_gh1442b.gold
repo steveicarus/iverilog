@@ -1,1 +1,2 @@
 ./ivltests/br_gh1442b.v:7: internal error: I don't know how to elaborate(ivl_type_t) this expression: {memName, "_", "0"}
+1 error(s) during elaboration.

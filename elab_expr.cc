@@ -4765,6 +4765,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	    cerr << get_fileline() << ": internal error: "
 		 << "I don't know how to elaborate(ivl_type_t)"
 		 << " this expression: " << *this << endl;
+	    des->errors += 1;
 	    return 0;
       }
 }
