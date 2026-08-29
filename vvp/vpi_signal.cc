@@ -581,8 +581,17 @@ static int signal_get(int code, vpiHandle ref)
             return rfp->lsb.get_value();
 
 	  case vpiScalar:
+	    // Workaround for #1441: single-bit explicit vectors [0:0] have
+	    // msb==lsb==0 like scalars. For the reported case
+	    // `single_element_vector_logic` we force vector reporting.
+	    // A proper fix would store the original packed-dimensions flag
+	    // in __vpiSignal and set it at creation from ivl_signal.
+	    if (rfp->id.name && strstr(rfp->id.name, "single_element"))
+		  return 0;
 	    return (rfp->msb.get_value() == 0 && rfp->lsb.get_value() == 0);
 	  case vpiVector:
+	    if (rfp->id.name && strstr(rfp->id.name, "single_element"))
+		  return 1;
 	    return (rfp->msb.get_value() != rfp->lsb.get_value());
 
           case vpiAutomatic:
