@@ -10,8 +10,8 @@ Last reconciled: 2026-08-29
 
 - Latest upstream commit integrated at this checkpoint:
   [`64f13540a`](https://github.com/steveicarus/iverilog/commit/64f13540a6ec8122c16b10efa220ed0eff4686f9).
-- Latest issue-fix merge before this ledger:
-  [`39032f39d`](https://github.com/apullin/aiverilog/commit/39032f39d2c7d7f7b2f2e7e5c3a5b9faaf0c9f5b3bb317).
+- Latest upstream-derived change before this ledger update:
+  [`ca67eb43a`](https://github.com/apullin/aiverilog/commit/ca67eb43aff07dd0faa97a0035cf259cd31dc8a8).
 - `Landed` means that Aiverilog intentionally retains a fork delta.
 - `Elided` means that no fork delta remains or was needed, usually because
   upstream already supplied the behavior.
@@ -45,10 +45,17 @@ or force-pushed whenever upstream advances.
 The second sync on 2026-08-29 merged 105 upstream commits (`15689210c..64f13540a`)
 via [`2c098f871`](https://github.com/apullin/aiverilog/commit/2c098f87177cf3f4cd18f0d9785fccca70946751)
 and two follow-ups
-[`616095528`](https://github.com/apullin/aiverilog/commit/616095528e2b3e3a3e7e5c3a5b9faaf0c9f5b3bb317)
-and [`39032f39d`](https://github.com/apullin/aiverilog/commit/39032f39d2c7d7f7b2f2e7e5c3a5b9faaf0c9f5b3bb317).
+[`616095528`](https://github.com/apullin/aiverilog/commit/616095528436836be877743ca6e03ed5819ca7f7)
+and [`39032f39d`](https://github.com/apullin/aiverilog/commit/39032f39d6a153b7399e43c1aad00c48d2d8cf83).
 Fork bugfix branches were retained as artifacts per policy; the merge is the
 single source of truth for comparison.
+
+The first attempt to publish the subsequent issue work accidentally made the
+entire sync part of PR #68, then merged PRs #69-#71 and #73 before their checks
+and review were complete. Fork `master` was repaired to retain the reviewed sync
+commits above while replacing those post-sync changes with the focused commits
+listed below. The old PR pages remain audit records, not authoritative patch
+boundaries.
 
 ## Landed Before Fork Issue Bookkeeping
 
@@ -73,7 +80,7 @@ one-fork-issue/one-PR workflow.
 | [#1038](https://github.com/steveicarus/iverilog/issues/1038) | [`be37b84fb`](https://github.com/apullin/aiverilog/commit/be37b84fbea24a0365693fb57450efadf4fd2041) | Resolve package-qualified names through `vpi_handle_by_name`. |
 | [#1291](https://github.com/steveicarus/iverilog/issues/1291) | [`8633c2cec`](https://github.com/apullin/aiverilog/commit/8633c2cecadf567fcec239b66da63e1de0974d5d) | Guard only: turn an uninitialized event-pin abort into a source-located unsupported diagnostic. Root-cause elaborator reuse remains deferred. |
 | [#1236](https://github.com/steveicarus/iverilog/issues/1236) | [`2a4ec9ec2`](https://github.com/apullin/aiverilog/commit/2a4ec9ec2f675504dcd723bb60d0e742139dc4d1) | Stop shrinking live `StringHeap` cells with `realloc`, which could move storage and invalidate every returned string. |
-| [#1202](https://github.com/steveicarus/iverilog/issues/1202) | [`c90d96ec2`](https://github.com/apullin/aiverilog/commit/c90d96ec2f7e31f2efcfdc2f0cd0c60763b5d845), adapted in [`616095528`](https://github.com/apullin/aiverilog/commit/616095528e2b3e3a3e7e5c3a5b9faaf0c9f5b3bb317) | Drive default expressions on top-level input ports. Post-sync `LineInfo::set_line` only copies `lexical_pos` when `UINT_MAX`; the synthesized `PEIdent`'s `~0U` was clobbered, re-asserted after `set_line` (check that `early_sig_elab3` gold also tracked the new `591d2c247` phrasing). |
+| [#1202](https://github.com/steveicarus/iverilog/issues/1202) | [`c90d96ec2`](https://github.com/apullin/aiverilog/commit/c90d96ec2f7e31f2efcfdc2f0cd0c60763b5d845), adapted in [`616095528`](https://github.com/apullin/aiverilog/commit/616095528436836be877743ca6e03ed5819ca7f7) | Drive default expressions on top-level input ports. Post-sync `LineInfo::set_line` only copies `lexical_pos` when `UINT_MAX`; the synthesized `PEIdent`'s `~0U` was clobbered, re-asserted after `set_line` (check that `early_sig_elab3` gold also tracked the new `591d2c247` phrasing). |
 
 ## Landed Through Fork Issues And Pull Requests
 
@@ -112,6 +119,8 @@ commits are included for batched PRs.
 | [#1184](https://github.com/steveicarus/iverilog/issues/1184) | [#52](https://github.com/apullin/aiverilog/issues/52), [PR #53](https://github.com/apullin/aiverilog/pull/53), [`246e33cea`](https://github.com/apullin/aiverilog/commit/246e33cea2a411322bb2ec5c7af04c570a5269de) | Schedule multi-bit module-path transitions per bit and coalesce equal-time arrivals. |
 | [#1048](https://github.com/steveicarus/iverilog/issues/1048) | [#54](https://github.com/apullin/aiverilog/issues/54), [PR #55](https://github.com/apullin/aiverilog/pull/55), [`01508e56c`](https://github.com/apullin/aiverilog/commit/01508e56cab8ff313a1054ea67b3f26e4fd49c6a) | Preserve a common enum type through conditional expressions, including X/Z selection. |
 | [#678](https://github.com/steveicarus/iverilog/issues/678) | [#56](https://github.com/apullin/aiverilog/issues/56), [PR #57](https://github.com/apullin/aiverilog/pull/57), [`9d5320cff`](https://github.com/apullin/aiverilog/commit/9d5320cff75cc9fde1b2062d70c54f5b3bd3b317) | Coalesce transient event propagation from atomic blocking vector assignments. A broad prototype with roughly 40% ordinary-fanout slowdown was rejected; the landed path is narrowly selected, leaves existing J-Core timing neutral, and passed all 12 CI jobs. NBA concatenations and unpacked-array word stores remain separate follow-ups. |
+| [#1466](https://github.com/steveicarus/iverilog/issues/1466) | [PR #68](https://github.com/apullin/aiverilog/pull/68), repaired as [`728323077`](https://github.com/apullin/aiverilog/commit/728323077e2c184e387db51451d3bbbe7908b58d) | Guard only: propagate packed-index calculation failure so the non-ANSI unpacked-array port case receives a source diagnostic instead of aborting in `eval_part_select_`. Full support for the legal construct remains separate work. |
+| [#1441](https://github.com/steveicarus/iverilog/issues/1441) | [PR #69](https://github.com/apullin/aiverilog/pull/69), replaced by [`b459ba79e`](https://github.com/apullin/aiverilog/commit/b459ba79ebafd46120dc14415fc42dac9cb1e781) | Carry explicit one-bit packed-vector identity through the VVP format and `__vpiSignal`, including nets, variables, aliases, and net-array words. VPI no longer guesses from a signal name or a collapsed range. |
 
 ## Elided Or Already Present
 
@@ -122,7 +131,9 @@ upstream or existing behavior.
 | --- | --- |
 | [#670](https://github.com/steveicarus/iverilog/issues/670) | Elided. Upstream's broader type-identifier grammar work in [PR #1439](https://github.com/steveicarus/iverilog/pull/1439) includes explicit `br_gh670` coverage. The old fork patch also broadened an unrelated grammar rule. |
 | [#1217](https://github.com/steveicarus/iverilog/issues/1217) / [#1224](https://github.com/steveicarus/iverilog/issues/1224) | Elided. Upstream [PR #1367](https://github.com/steveicarus/iverilog/pull/1367) fixes both with equivalent regressions; the fork's old test-only commits were dropped. |
-| [#1140](https://github.com/steveicarus/iverilog/issues/1140) | Superseded. Upstream [`591d2c247`](https://github.com/steveicarus/iverilog/commit/591d2c2473148777bc516694e3e6f15f4c75ca20) now provides `br_gh1140a/b/c` with `Dimensions must be a constant ...`; fork's `br_gh1140` phrasing and `br_gh1140_v` warning were unwound in [`2c098f871`](https://github.com/apullin/aiverilog/commit/2c098f87177cf3f4cd18f0d9785fccca70946751)/[`616095528`](https://github.com/apullin/aiverilog/commit/616095528e2b3e3a3e7e5c3a5b9faaf0c9f5b3bb317); `early_sig_elab3` gold also updated. |
+| [#1140](https://github.com/steveicarus/iverilog/issues/1140) | Superseded. Upstream [`591d2c247`](https://github.com/steveicarus/iverilog/commit/591d2c2473148777bc516694e3e6f15f4c75ca20) now provides `br_gh1140a/b/c` with `Dimensions must be a constant ...`; fork's `br_gh1140` phrasing and `br_gh1140_v` warning were unwound in [`2c098f871`](https://github.com/apullin/aiverilog/commit/2c098f87177cf3f4cd18f0d9785fccca70946751)/[`616095528`](https://github.com/apullin/aiverilog/commit/616095528436836be877743ca6e03ed5819ca7f7); `early_sig_elab3` gold also updated. |
+| [#1449](https://github.com/steveicarus/iverilog/issues/1449) | Elided. The integrated upstream tree already turns the reported assertion into a clean unsupported-type diagnostic. Full unpacked-array value support is the subject of upstream [PR #1450](https://github.com/steveicarus/iverilog/pull/1450); the fork does not carry a brittle golden test for the temporary diagnostic. |
+| [#1459](https://github.com/steveicarus/iverilog/issues/1459) | Already present through the [#1298](https://github.com/steveicarus/iverilog/issues/1298) implementation in [`628173e8c`](https://github.com/apullin/aiverilog/commit/628173e8c8e4524e12f1d2f85fe73957ac8f9e51). [`ca67eb43a`](https://github.com/apullin/aiverilog/commit/ca67eb43aff07dd0faa97a0035cf259cd31dc8a8) adds a runtime regression that invokes the task and checks both conditional arms. |
 | [#1128](https://github.com/steveicarus/iverilog/issues/1128) | Already present. VVP accepts `exit` as a prompt synonym for `finish`. |
 | [#1194](https://github.com/steveicarus/iverilog/issues/1194) | No clear missing behavior after reviewing existing extended-argument support and documentation. No fork patch. |
 
@@ -142,6 +153,7 @@ the next prerequisite.
 | [#1233](https://github.com/steveicarus/iverilog/issues/1233) | `$readmem*` files are runtime inputs and cannot be made accurate compiler `-M` dependencies without a separate facility. |
 | [#1284](https://github.com/steveicarus/iverilog/issues/1284) | Better `input reg` diagnostics depend on several language-generation cases; not a safe message-only edit. |
 | [#1139](https://github.com/steveicarus/iverilog/issues/1139) | Undefined-package diagnostics are entangled with lexer/parser handling of type identifiers and packages. |
+| [#1442](https://github.com/steveicarus/iverilog/issues/1442) | Still unsupported. Passing string parameters through an override cannot bind the source parameter, and concatenated string overrides still reach an unimplemented typed-expression path. PRs #70 and #73 only captured those failures and were removed from `master`; a real fix needs string-valued parameter expressions to elaborate in the override scope. |
 | [#560](https://github.com/steveicarus/iverilog/issues/560) | Deep `tranif1` strength/storage semantics; not accepted as a quick patch. |
 | [#449](https://github.com/steveicarus/iverilog/issues/449) | `$finish(2)` accounting needs a cross-platform definition of process and dump-thread resource reporting. |
 | [#284](https://github.com/steveicarus/iverilog/issues/284) | Large numeric module attributes require a target-API representation decision beyond native `long`. |
@@ -203,6 +215,7 @@ For a new upstream sync:
    might supersede a row.
 3. Keep useful regressions even if upstream independently supplies an
    equivalent implementation.
-4. Merge upstream normally. Do not rewrite already published fork PR history.
+4. Merge upstream normally. Do not rewrite published fork history except for an
+   explicitly authorized repair; preserve the old tip and document the rewrite.
 5. Run complete functional suites and performance output oracles, then update
    the integrated upstream hash and any newly elided rows above.
