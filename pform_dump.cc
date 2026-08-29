@@ -421,19 +421,19 @@ void PEConcat::dump(ostream&out) const
 
 void PECallFunction::dump(ostream &out) const
 {
+      if (peek_chain_prefix()) {
+	    peek_chain_prefix()->dump(out);
+	    out << ".";
+      }
       out << path_ << "(" << parms_ << ")";
+      if (peek_with_clause()) {
+	    out << " with (" << *peek_with_clause() << ")";
+      }
 }
 
-void PECastSize::dump(ostream &out) const
+void PECast::dump(ostream &out) const
 {
-      out << *size_ << "'(";
-      base_->dump(out);
-      out << ")";
-}
-
-void PECastType::dump(ostream &out) const
-{
-      target_->pform_dump(out, 0);
+      target_->dump(out);
       out << "'(";
       base_->dump(out);
       out << ")";
@@ -499,6 +499,11 @@ void PENull::dump(ostream&out) const
       out << "null";
 }
 
+void PEQueueDimension::dump(ostream&out) const
+{
+      out << "$";
+}
+
 void PENumber::dump(ostream&out) const
 {
       out << value();
@@ -521,7 +526,7 @@ void PETernary::dump(ostream&out) const
 
 void PETypename::dump(ostream&fd) const
 {
-      fd << "<type>";
+      data_type_->pform_dump(fd, 0);
 }
 
 void PEUnary::dump(ostream&out) const

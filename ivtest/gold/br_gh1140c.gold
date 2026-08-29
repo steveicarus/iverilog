@@ -1,0 +1,9 @@
+./ivltests/br_gh1140c.v:8: error: Dimensions must be a constant with no unknown or high-Z bits.
+./ivltests/br_gh1140c.v:8       : This size expression violates the rule: LPX
+./ivltests/br_gh1140c.v:9: error: Dimensions must be a constant with no unknown or high-Z bits.
+./ivltests/br_gh1140c.v:9       : This size expression violates the rule: LPZ
+./ivltests/br_gh1140c.v:5: error: Dimensions must be a constant with no unknown or high-Z bits.
+./ivltests/br_gh1140c.v:5       : This size expression violates the rule: LPX
+./ivltests/br_gh1140c.v:6: error: Dimensions must be a constant with no unknown or high-Z bits.
+./ivltests/br_gh1140c.v:6       : This size expression violates the rule: LPZ
+4 error(s) during elaboration.

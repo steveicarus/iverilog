@@ -1,5 +1,5 @@
 ivltests/early_sig_elab3.v:8: error: Circular dependency detected in declaration of 'a'.
 ivltests/early_sig_elab3.v:9: error: A hierarchical reference (`test.a') is not allowed in a constant expression.
-ivltests/early_sig_elab3.v:9: error: Dimensions must be constant.
+ivltests/early_sig_elab3.v:9: error: Dimensions must be a constant with no unknown or high-Z bits.
 ivltests/early_sig_elab3.v:9       : This MSB expression violates the rule: $bits(test.a)
 3 error(s) during elaboration.

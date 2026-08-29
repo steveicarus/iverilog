@@ -566,7 +566,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	       const netranges_t&unpacked, ivl_type_t use_net_type)
 : NetObj(s, n, calculate_count(unpacked)),
     type_(t), port_type_(NOT_A_PORT), coerced_to_uwire_(false),
-    local_flag_(false), lexical_pos_(0), net_type_(use_net_type),
+    local_flag_(false), net_type_(use_net_type),
     discipline_(0), unpacked_dims_(unpacked),
     eref_count_(0), lref_count_(0)
 {
@@ -589,7 +589,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 NetNet::NetNet(NetScope*s, perm_string n, Type t, ivl_type_t type)
 : NetObj(s, n, 1),
     type_(t), port_type_(NOT_A_PORT), coerced_to_uwire_(false),
-    local_flag_(false), lexical_pos_(0), net_type_(type),
+    local_flag_(false), net_type_(type),
     discipline_(0),
     eref_count_(0), lref_count_(0)
 {
@@ -3458,9 +3458,13 @@ bool NetScope::check_synth(ivl_process_type_t pr_type,
 bool NetSTask::check_synth(ivl_process_type_t pr_type,
                            const NetScope* /* scope */) const
 {
-      if (strcmp(name(), "$ivl_darray_method$delete") == 0) {
+      if (strcmp(name(), "$ivl_darray_method$delete") == 0 ||
+          strcmp(name(), "$ivl_darray_method$reverse") == 0 ||
+          strcmp(name(), "$ivl_darray_method$sort") == 0 ||
+          strcmp(name(), "$ivl_darray_method$rsort") == 0 ||
+          strcmp(name(), "$ivl_darray_method$shuffle") == 0) {
 	    cerr << get_fileline() << ": warning: Dynamic array "
-	            "delete method cannot be synthesized "
+	            "ordering/delete method cannot be synthesized "
 	         << get_process_type_as_string(pr_type) << endl;
       } else {
 	    cerr << get_fileline() << ": warning: System task ("

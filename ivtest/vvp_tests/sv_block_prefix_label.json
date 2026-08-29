@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_block_prefix_label.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

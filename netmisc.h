@@ -48,6 +48,7 @@ struct symbol_search_results {
 	    net = 0;
 	    par_val = 0;
 	    type = 0;
+	    type_def = nullptr;
 	    eve = 0;
 	    decl_after_use = 0;
 	    interface_alias_scope = 0;
@@ -59,6 +60,7 @@ struct symbol_search_results {
 	    if (net) return false;
 	    if (eve) return false;
 	    if (par_val) return false;
+	    if (type_def) return false;
 	    if (scope) return true;
 	    return false;
       }
@@ -67,6 +69,7 @@ struct symbol_search_results {
 	    if (net) return true;
 	    if (eve) return true;
 	    if (par_val) return true;
+	    if (type_def) return true;
 	    if (scope) return true;
 	    return false;
       }
@@ -75,9 +78,13 @@ struct symbol_search_results {
 	    if (net)     return "net";
 	    if (eve)     return "named event";
 	    if (par_val) return "parameter";
+	    if (type_def) return "type";
 	    if (scope)   return "scope";
 	    return "nothing found";
       }
+
+      bool require_non_type(const LineInfo *li, Design *des,
+			    const char *use) const;
 
       inline bool through_interface_alias() const {
 	    return interface_alias_target != 0;
@@ -92,6 +99,8 @@ struct symbol_search_results {
 	// optional value dimensions.
       const NetExpr*par_val;
       ivl_type_t type;
+	// If this is a type, the parsed type declaration.
+      typedef_t *type_def;
 	// If this is a named event, ...
       NetEvent*eve;
 	// If a symbol was located but skipped because its lexical position
@@ -120,6 +129,11 @@ struct symbol_search_results {
       pform_name_t path_head;
 };
 
+enum symbol_search_flag_t {
+      SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE = 1U << 0,
+      SYMBOL_SEARCH_NO_SIGNAL_ELABORATION = 1U << 1
+};
+
 /*
  * Test the search results and return true if this represents a function
  * return value. That will be the case if the object is a net, the scope
@@ -134,14 +148,18 @@ static inline bool test_function_return_value(const symbol_search_results&search
       return true;
 }
 
-extern bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
-			  pform_name_t path, unsigned lexical_pos,
-			  struct symbol_search_results*res,
-			  NetScope*start_scope = nullptr, bool prefix_scope = false);
-
 extern bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
-			  const pform_scoped_name_t &path, unsigned lexical_pos,
-			  struct symbol_search_results*res);
+			  pform_name_t path, unsigned int lexical_pos,
+			  struct symbol_search_results *res,
+			  unsigned int flags = 0);
+
+/* The forward-reference flag applies only to the terminal name. Prefix
+   components still use lexical_pos. Other flags apply to the complete path. */
+extern bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
+			  const pform_scoped_name_t &path,
+			  unsigned int lexical_pos,
+			  struct symbol_search_results *res,
+			  unsigned int flags = 0);
 
 extern bool check_interface_modport_access(const LineInfo *li, Design *des,
 					   const symbol_search_results &res,

@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_cast_type_error_once_fail.v",
+    "gold"          : "sv_cast_type_error_once_fail",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

@@ -23,8 +23,8 @@
 
 using namespace std;
 
-netclass_t::netclass_t(perm_string name, const netclass_t*super)
-: name_(name), super_(super), class_scope_(0), definition_scope_(0), virtual_class_(false)
+netclass_t::netclass_t(perm_string name)
+: name_(name), super_(nullptr), class_scope_(0), definition_scope_(0), virtual_class_(false)
 {
 }
 
@@ -136,7 +136,7 @@ bool netclass_t::get_prop_initialized(size_t idx) const
       if (idx < super_size)
 	    return super_->get_prop_initialized(idx);
       else
-	    return property_table_[idx].initialized_flag;
+	    return property_table_[idx-super_size].initialized_flag;
 }
 
 void netclass_t::set_prop_initialized(size_t idx) const

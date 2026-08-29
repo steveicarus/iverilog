@@ -63,8 +63,6 @@ class PWire : public PNamedItem {
 	// Return a hierarchical name.
       perm_string basename() const;
 
-      unsigned lexical_pos() const { return lexical_pos_; }
-
       NetNet::Type get_wire_type() const;
       bool set_wire_type(NetNet::Type);
 
@@ -105,7 +103,6 @@ class PWire : public PNamedItem {
 
     private:
       perm_string name_;
-      unsigned lexical_pos_;
       NetNet::Type type_;
       NetNet::PortType port_type_;
       bool signed_;

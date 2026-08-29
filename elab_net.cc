@@ -217,7 +217,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, const NetNet*sig,
 {
       list<long> prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, sig, prefix_indices);
-      ivl_assert(*this, rc);
+      if (!rc) return false;
 
       const name_component_t&name_tail = path_.back();
 	// Only treat as part/bit selects any index that is beyond the
@@ -533,7 +533,11 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       ivl_assert(*this, scope);
 
       symbol_search_results sr;
-      symbol_search(this, des, scope, path_.name, lexical_pos_, &sr);
+      symbol_search(this, des, scope, path_.name, lexical_pos(), &sr);
+
+      if (!sr.require_non_type(this, des,
+			       "as a continuous assignment l-value"))
+	    return nullptr;
 
       if (sr.eve != 0) {
 	    cerr << get_fileline() << ": error: named events (" << path_
@@ -1173,7 +1177,7 @@ NetNet* PEIdent::elaborate_subport(Design*des, NetScope*scope) const
 NetNet*PEIdent::elaborate_unpacked_net(Design*des, NetScope*scope) const
 {
       symbol_search_results sr;
-      symbol_search(this, des, scope, path_, lexical_pos_, &sr);
+      symbol_search(this, des, scope, path_, lexical_pos(), &sr);
       if (!sr.net) {
 	    cerr << get_fileline() << ": error: Net " << path_
 		 << " is not defined in this context." << endl;
@@ -1207,7 +1211,7 @@ bool PEIdent::is_collapsible_net(Design*des, NetScope*scope,
       ivl_assert(*this, scope);
 
       symbol_search_results sr;
-      symbol_search(this, des, scope, path_.name, lexical_pos_, &sr);
+      symbol_search(this, des, scope, path_.name, lexical_pos(), &sr);
 
       if (sr.eve != 0)
             return false;

@@ -822,8 +822,7 @@ void NetScope::evaluate_parameter_string_(Design*des, param_ref_t cur)
 
 void NetScope::evaluate_type_parameter_(Design *des, param_ref_t cur)
 {
-      const PETypename *type_expr = dynamic_cast<const PETypename*>(cur->second.val_expr);
-      if (!type_expr) {
+      if (!cur->second.val_expr->test_type(des, cur->second.val_scope)) {
 	    cerr << this->get_fileline() << ": error: "
 		 << "Type parameter `" << cur->first << "` value `"
 	         << *cur->second.val_expr << "` is not a type."
@@ -835,14 +834,13 @@ void NetScope::evaluate_type_parameter_(Design *des, param_ref_t cur)
 	    return;
       }
 
-      data_type_t *ptype = type_expr->get_type();
-      NetScope *type_scope = cur->second.val_scope;
-      cur->second.ivl_type = ptype->elaborate_type(des, type_scope);
+      cur->second.ivl_type = cur->second.val_expr->elaborate_type(
+	    des, cur->second.val_scope);
       if (!cur->second.ivl_type)
 	    return;
 
       if (!cur->second.type_restrict.matches(cur->second.ivl_type)) {
-	    cerr << type_expr->get_fileline() << ": error: "
+	    cerr << cur->second.val_expr->get_fileline() << ": error: "
 		 << "Type parameter `" << cur->first << "` expects a `"
 		 << cur->second.type_restrict << "` type, got `"
 		 << *cur->second.ivl_type << "`." << endl;
@@ -1026,38 +1024,6 @@ NetNet* Design::find_signal(NetScope*scope, pform_name_t path)
 
 	    scope = scope->parent();
       }
-
-      return 0;
-}
-
-NetFuncDef* Design::find_function(NetScope*scope, const pform_name_t&name)
-{
-      assert(scope);
-
-      std::list<hname_t> eval_path = eval_scope_path(this, scope, name);
-      NetScope*func = find_scope(scope, eval_path, NetScope::FUNC);
-      if (func && (func->type() == NetScope::FUNC)) {
-              // If a function is used in a parameter definition or in
-              // a signal declaration, it is possible to get here before
-              // the function's signals have been elaborated. If this is
-              // the case, elaborate them now.
-            if (func->elab_stage() < 2) {
-		  func->need_const_func(true);
-                  const PFunction*pfunc = func->func_pform();
-                  assert(pfunc);
-                  pfunc->elaborate_sig(this, func);
-            }
-	    return func->func_def();
-      }
-      return 0;
-}
-
-NetScope* Design::find_task(NetScope*scope, const pform_name_t&name)
-{
-      std::list<hname_t> eval_path = eval_scope_path(this, scope, name);
-      NetScope*task = find_scope(scope, eval_path, NetScope::TASK);
-      if (task && (task->type() == NetScope::TASK))
-	    return task;
 
       return 0;
 }

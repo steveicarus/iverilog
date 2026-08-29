@@ -1,0 +1,1 @@
+ivltests/sv_type_identifier_hier_empty_fail.v:11: error: Empty index is not allowed in a hierarchy identifier.

@@ -1,9 +1,9 @@
-./ivltests/br_gh1140_v.v:6: warning: Dimension value contains undefined (x/z) bits and will be treated as zero.
-./ivltests/br_gh1140_v.v:6       : This LSB expression violates the rule: Z
-./ivltests/br_gh1140_v.v:5: warning: Dimension value contains undefined (x/z) bits and will be treated as zero.
+./ivltests/br_gh1140_v.v:6: error: Dimensions must be a constant with no unknown or high-Z bits.
+./ivltests/br_gh1140_v.v:6:      : This LSB expression violates the rule: Z
+./ivltests/br_gh1140_v.v:5: error: Dimensions must be a constant with no unknown or high-Z bits.
 ./ivltests/br_gh1140_v.v:5       : This MSB expression violates the rule: X
-./ivltests/br_gh1140_v.v:8: warning: Dimension value contains undefined (x/z) bits and will be treated as zero.
-./ivltests/br_gh1140_v.v:8       : This LSB expression violates the rule: Z
-./ivltests/br_gh1140_v.v:7: warning: Dimension value contains undefined (x/z) bits and will be treated as zero.
+./ivltests/br_gh1140_v.v:8: error: Dimensions must be a constant with no unknown or high-Z bits.
+./ivltests/br_gh1140_v.v:8:      : This LSB expression violates the rule: Z
+./ivltests/br_gh1140_v.v:7: error: Dimensions must be a constant with no unknown or high-Z bits.
 ./ivltests/br_gh1140_v.v:7       : This MSB expression violates the rule: X
-PASSED
+4 error(s) during elaboration.

@@ -899,32 +899,38 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
       if (tmp == 0) return 0;
 
       if ((cast_type != IVL_VT_NO_TYPE) && (cast_type != tmp->expr_type())) {
-            switch (tmp->expr_type()) {
-                case IVL_VT_BOOL:
-                case IVL_VT_LOGIC:
-                case IVL_VT_REAL:
-                  break;
-                default:
-                  cerr << tmp->get_fileline() << ": error: "
-                          "The expression '" << *pe << "' cannot be implicitly "
-                          "cast to the target type." << endl;
-                  des->errors += 1;
-                  delete tmp;
-                  return 0;
-            }
-            switch (cast_type) {
-                case IVL_VT_REAL:
-                  tmp = cast_to_real(tmp);
-                  break;
-                case IVL_VT_BOOL:
-                  tmp = cast_to_int2(tmp, pos_context_width);
-                  break;
-                case IVL_VT_LOGIC:
-                  tmp = cast_to_int4(tmp, pos_context_width);
-                  break;
-                default:
-                  break;
-            }
+	    bool qdar_mix = (cast_type == IVL_VT_QUEUE ||
+			     cast_type == IVL_VT_DARRAY) &&
+			    (tmp->expr_type() == IVL_VT_QUEUE ||
+			     tmp->expr_type() == IVL_VT_DARRAY);
+	    if (!qdar_mix) {
+		  switch (tmp->expr_type()) {
+		      case IVL_VT_BOOL:
+		      case IVL_VT_LOGIC:
+		      case IVL_VT_REAL:
+			break;
+		      default:
+			cerr << tmp->get_fileline() << ": error: "
+				"The expression '" << *pe << "' cannot be implicitly "
+				"cast to the target type." << endl;
+			des->errors += 1;
+			delete tmp;
+			return 0;
+		  }
+		  switch (cast_type) {
+		      case IVL_VT_REAL:
+			tmp = cast_to_real(tmp);
+			break;
+		      case IVL_VT_BOOL:
+			tmp = cast_to_int2(tmp, pos_context_width);
+			break;
+		      case IVL_VT_LOGIC:
+			tmp = cast_to_int4(tmp, pos_context_width);
+			break;
+		      default:
+			break;
+		  }
+	    }
       }
 
       eval_expr(tmp, context_width);
@@ -967,10 +973,23 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 		  compatible = lv_net_type->type_compatible(tmp->net_type());
 	    else
 		  compatible = false;
+      } else if ((cast_type == IVL_VT_QUEUE || cast_type == IVL_VT_DARRAY) &&
+		 (expr_type == IVL_VT_QUEUE || expr_type == IVL_VT_DARRAY)) {
+	    if (tmp->net_type()) {
+		  compatible = lv_net_type->type_compatible(tmp->net_type());
+	    } else {
+		  compatible = cast_type == expr_type;
+	    }
       } else if (cast_type == IVL_VT_NO_TYPE) {
 	    compatible = true;
       } else {
 	    compatible = cast_type == expr_type;
+      }
+
+	/* R-value may report a coarse expr_type while net_type matches (e.g.
+	 * queue locators); prefer structural compatibility when available. */
+      if (!compatible && tmp->net_type()) {
+	    compatible = lv_net_type->type_compatible(tmp->net_type());
       }
 
       if (!compatible) {
@@ -1055,27 +1074,6 @@ NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
       return tmp;
 }
 
-static bool check_range_expr_defined(Design*des, const PExpr*pexpr,
-				     const NetExpr*nexpr, const char*position)
-{
-      const NetEConst*value = dynamic_cast<const NetEConst*>(nexpr);
-      if (!value || value->value().is_defined())
-	    return true;
-
-      const bool is_error = gn_system_verilog();
-      cerr << pexpr->get_fileline() << (is_error ? ": error: " : ": warning: ")
-	   << "Dimension value contains undefined (x/z) bits";
-      if (!is_error)
-	    cerr << " and will be treated as zero";
-      cerr << "." << endl;
-      cerr << pexpr->get_fileline() << "       : This " << position
-	   << " expression violates the rule: " << *pexpr << endl;
-
-      if (is_error)
-	    des->errors += 1;
-      return !is_error;
-}
-
 bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
 		    const pform_range_t&range, long&index_l, long&index_r)
 {
@@ -1089,24 +1087,23 @@ bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
                     "An unsized dimension is not allowed here." << endl;
             dimension_ok = false;
             des->errors += 1;
-      } else if (dynamic_cast<PENull*>(range.first)) {
+      } else if (dynamic_cast<PEQueueDimension*>(range.first)) {
             cerr << li->get_fileline() << ": error: "
                     "A queue dimension is not allowed here." << endl;
             dimension_ok = false;
             des->errors += 1;
       } else {
             NetExpr*texpr = elab_and_eval(des, scope, range.first, -1, true);
-            dimension_ok &= check_range_expr_defined(des, range.first, texpr,
-                                                      range.second ? "MSB" : "size");
             if (! eval_as_long(index_l, texpr)) {
-                  cerr << range.first->get_fileline() << ": error: "
-                          "Dimensions must be constant." << endl;
-                  cerr << range.first->get_fileline() << "       : "
-                       << (range.second ? "This MSB" : "This size")
-                       << " expression violates the rule: "
-                       << *range.first << endl;
-                  dimension_ok = false;
-                  des->errors += 1;
+		  cerr << range.first->get_fileline() << ": error: "
+		          "Dimensions must be a constant with no unknown or high-Z bits."
+		       << endl;
+		  cerr << range.first->get_fileline() << "       : "
+		       << (range.second ? "This MSB" : "This size")
+		       << " expression violates the rule: "
+		       << *range.first << endl;
+		  dimension_ok = false;
+		  des->errors += 1;
             }
             delete texpr;
 
@@ -1122,7 +1119,7 @@ bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
                   } else {
                         cerr << range.first->get_fileline() << ": error: "
                                 "Dimension size must be greater than zero." << endl;
-                        cerr << range.first->get_fileline() << "       : "
+                        cerr << range.first->get_fileline() << ":      : "
                                 "This size expression violates the rule: "
                              << *range.first << endl;
                         dimension_ok = false;
@@ -1130,16 +1127,15 @@ bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
                   }
             } else {
                   texpr = elab_and_eval(des, scope, range.second, -1, true);
-                  dimension_ok &= check_range_expr_defined(des, range.second,
-                                                           texpr, "LSB");
                   if (! eval_as_long(index_r, texpr)) {
-                        cerr << range.second->get_fileline() << ": error: "
-                                "Dimensions must be constant." << endl;
-                        cerr << range.second->get_fileline() << "       : "
-                                "This LSB expression violates the rule: "
-                             << *range.second << endl;
-                        dimension_ok = false;
-                        des->errors += 1;
+			cerr << range.second->get_fileline() << ": error: "
+			        "Dimensions must be a constant with no unknown or high-Z bits."
+			     << endl;
+			cerr << range.second->get_fileline() << ":      : "
+			        "This LSB expression violates the rule: "
+			     << *range.second << endl;
+			dimension_ok = false;
+			des->errors += 1;
                   }
                   delete texpr;
             }
@@ -1202,7 +1198,7 @@ bool eval_as_long(long&value, const NetExpr*expr)
 {
       if (const NetEConst*tmp = dynamic_cast<const NetEConst*>(expr) ) {
 	    value = tmp->value().as_long();
-	    return true;
+	    return tmp->value().is_defined();
       }
 
       if (const NetECReal*rtmp = dynamic_cast<const NetECReal*>(expr)) {
@@ -1536,8 +1532,8 @@ bool evaluate_index_prefix(Design*des, NetScope*scope,
 	    assert(icur != indices.end());
 	    if (icur->sel != index_component_t::SEL_BIT) {
 		  cerr << icur->msb->get_fileline() << ": error: "
-			"All but the final index in a chain of indices must be "
-			"a single value, not a range." << endl;
+		          "All but the final index in a chain of indices must "
+		          "be a single value, not a range." << endl;
 		  des->errors += 1;
 		  return false;
 	    }
@@ -1546,7 +1542,12 @@ bool evaluate_index_prefix(Design*des, NetScope*scope,
 	    long tmp;
 	    if (texpr == 0 || !eval_as_long(tmp, texpr)) {
 		  cerr << icur->msb->get_fileline() << ": error: "
-			"Array index expressions must be constant here." << endl;
+		          "All but the final index in a chain of indices must "
+		          "be a constant with no unknown or high-Z bits."
+		       << endl;
+		  cerr << icur->msb->get_fileline() << ":      : "
+			  "This index expressions violate the rule: "
+		       << *icur->msb << endl;
 		  des->errors += 1;
 		  return false;
 	    }
@@ -1650,7 +1651,7 @@ NetExpr*collapse_array_indices(Design*des, NetScope*scope, const NetNet*net,
 {
       list<long>prefix_indices;
       bool rc = evaluate_index_prefix(des, scope, prefix_indices, indices);
-      assert(rc);
+      if (! rc) return nullptr;
 
       const index_component_t&back_index = indices.back();
       assert(back_index.sel == index_component_t::SEL_BIT);

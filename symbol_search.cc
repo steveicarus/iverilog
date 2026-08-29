@@ -30,6 +30,291 @@
 
 using namespace std;
 
+bool symbol_search_results::require_non_type(const LineInfo *li,
+					      Design *des,
+					      const char *use) const
+{
+      if (!type_def)
+	    return true;
+
+      cerr << li->get_fileline() << ": error: Type name `" << path_head
+	   << "' cannot be used " << use << "." << endl;
+      cerr << type_def->get_fileline() << ":      : The type was declared here."
+	   << endl;
+      des->errors += 1;
+      return false;
+}
+
+enum class scope_object_search_result_t {
+      not_found,
+      found,
+      failed
+};
+
+static scope_object_search_result_t symbol_search_scope_objects(
+      const LineInfo *li, Design *des, NetScope *scope,
+      NetScope *start_scope, const pform_name_t &path,
+      const name_component_t &path_tail, unsigned int visibility_pos,
+      struct symbol_search_results *res, unsigned int flags)
+{
+      // Special case `super` keyword. Return the `this` object, but
+      // with the type of the base class.
+      if (path_tail.name == "#") {
+	    if (NetNet *net = scope->find_signal(
+		      perm_string::literal(THIS_TOKEN))) {
+		  const netclass_t *class_type =
+			dynamic_cast<const netclass_t*>(net->net_type());
+		  ivl_assert(*li, class_type);
+		  if (!class_type->get_super()) {
+			cerr << li->get_fileline() << ": error: "
+			     << "Class " << class_type->get_name()
+			     << " uses `super` without a base class."
+			     << endl;
+			des->errors += 1;
+			return scope_object_search_result_t::failed;
+		  }
+		  pform_name_t path_head = path;
+		  path_head.push_back(path_tail);
+		  res->scope = scope;
+		  res->net = net;
+		  res->type = class_type->get_super();
+		  res->path_head = path_head;
+		  return scope_object_search_result_t::found;
+	    }
+	    return scope_object_search_result_t::failed;
+      }
+
+      if (NetNet *net = scope->find_signal(path_tail.name)) {
+	    bool decl_after_use = !(net->lexical_pos() <= visibility_pos);
+	    if (!gn_strict_net_var_declaration || !decl_after_use) {
+		  pform_name_t path_head = path;
+		  path_head.push_back(path_tail);
+		  res->scope = scope;
+		  res->net = net;
+		  res->type = net->net_type();
+		  res->path_head = path_head;
+		  if (warn_decl_after_use && decl_after_use) {
+			cerr << li->get_fileline()
+			     << ": warning: net/variable `" << path_tail.name
+			     << "` used before declaration." << endl;
+			cerr << net->get_fileline()
+			     << ":        : the net/variable is declared here."
+			     << endl;
+			// suppress further warnings for this net
+			net->lexical_pos(visibility_pos);
+		  }
+		  return scope_object_search_result_t::found;
+	    } else if (!res->decl_after_use) {
+		  res->decl_after_use = net;
+	    }
+      }
+
+      if (NetEvent *eve = scope->find_event(path_tail.name)) {
+	    bool decl_after_use = !(eve->lexical_pos() <= visibility_pos);
+	    if (!gn_strict_net_var_declaration || !decl_after_use) {
+		  pform_name_t path_head = path;
+		  path_head.push_back(path_tail);
+		  res->scope = scope;
+		  res->eve = eve;
+		  res->path_head = path_head;
+		  if (warn_decl_after_use && decl_after_use) {
+			cerr << li->get_fileline()
+			     << ": warning: event `" << path_tail.name
+			     << "` used before declaration." << endl;
+			cerr << eve->get_fileline()
+			     << ":        : the event is declared here." << endl;
+			// suppress further warnings for this event
+			eve->lexical_pos(visibility_pos);
+		  }
+		  return scope_object_search_result_t::found;
+	    } else if (!res->decl_after_use) {
+		  res->decl_after_use = eve;
+	    }
+      }
+
+      // Types and data objects share a namespace. Return a visible
+      // type even when the caller requires a value so it cannot
+      // incorrectly continue searching an outer scope.
+      if (auto type_def = scope->lookup_typedef(
+	    path_tail.name, visibility_pos)) {
+	    pform_name_t path_head = path;
+	    path_head.push_back(path_tail);
+	    res->scope = scope;
+	    res->type_def = type_def;
+	    res->path_head = path_head;
+	    return scope_object_search_result_t::found;
+      }
+
+      if (const NetExpr *par = scope->get_parameter(
+		des, path_tail.name, res->type)) {
+	    bool is_enum_name;
+	    unsigned int declaration_pos =
+		  scope->get_constant_lexical_pos(path_tail.name,
+					  is_enum_name);
+	    bool decl_after_use = !(declaration_pos <= visibility_pos);
+	    if (!gn_strict_parameter_declaration || !decl_after_use) {
+		  pform_name_t path_head = path;
+		  path_head.push_back(path_tail);
+		  res->scope = scope;
+		  res->par_val = par;
+		  res->path_head = path_head;
+		  if (warn_decl_after_use && decl_after_use) {
+			const char *kind = is_enum_name
+			      ? "enum named constant" : "parameter";
+			cerr << li->get_fileline()
+			     << ": warning: " << kind << " `"
+			     << path_tail.name
+			     << "` used before declaration." << endl;
+			cerr << par->get_fileline()
+			     << ":        : the " << kind
+			     << " is declared here." << endl;
+			// suppress further warnings for this constant
+			scope->set_constant_lexical_pos(
+			      path_tail.name, visibility_pos);
+		  }
+		  return scope_object_search_result_t::found;
+	    } else if (!res->decl_after_use) {
+		  res->decl_after_use = par;
+	    }
+      }
+
+      // Static items are just normal signals and are found above.
+      if (scope->type() == NetScope::CLASS) {
+	    const netclass_t *clsnet = scope->class_def();
+	    int pidx = clsnet->property_idx_from_name(path_tail.name);
+	    if (pidx >= 0) {
+		  // This is a class property being accessed in a
+		  // class method. Return `this` for the net and the
+		  // property name for the path tail.
+		  NetScope *scope_method =
+			find_method_containing_scope(*li, start_scope);
+		  ivl_assert(*li, scope_method);
+		  res->net = scope_method->find_signal(
+			perm_string::literal(THIS_TOKEN));
+		  ivl_assert(*li, res->net);
+		  res->scope = scope;
+		  ivl_assert(*li, path.empty());
+		  res->path_head.push_back(name_component_t(
+			perm_string::literal(THIS_TOKEN)));
+		  res->path_tail.push_front(path_tail);
+		  res->type = clsnet;
+		  return scope_object_search_result_t::found;
+	    }
+      }
+
+      // Finally check the rare case of a signal that hasn't
+      // been elaborated yet.
+      if (PWire *wire = scope->find_signal_placeholder(path_tail.name)) {
+	    if (wire->lexical_pos() <= visibility_pos) {
+		  if (flags & SYMBOL_SEARCH_NO_SIGNAL_ELABORATION) {
+			// The signal still hides matching symbols in outer
+			// scopes. Stop the lookup without elaborating it.
+			return scope_object_search_result_t::failed;
+		  }
+
+		  NetNet *net = wire->elaborate_sig(des, scope);
+		  if (!net)
+			return scope_object_search_result_t::failed;
+		  pform_name_t path_head = path;
+		  path_head.push_back(path_tail);
+		  res->scope = scope;
+		  res->net = net;
+		  res->type = net->net_type();
+		  res->path_head = path_head;
+		  return scope_object_search_result_t::found;
+	    }
+      }
+
+      return scope_object_search_result_t::not_found;
+}
+
+static bool symbol_search_child_scope(
+      const LineInfo *li, Design *des, NetScope *scope,
+      NetScope *start_scope, const pform_name_t &path,
+      const name_component_t &path_tail, struct symbol_search_results *res)
+{
+      // Could not find an object. Maybe this is a child scope name? If
+      // so, evaluate the path components to find the exact scope this
+      // refers to. This item might be:
+      //     <scope>.s
+      //     <scope>.s[n]
+      // etc. The scope->child_byname tests if the name exists, and if
+      // it does, the eval_path_component() evaluates any [n]
+      // expressions to constants to generate an hname_t object for a
+      // more complete scope name search. Note that the index
+      // expressions for scope names must be constant.
+      if (scope->child_byname(path_tail.name)) {
+	    bool flag = false;
+	    hname_t path_item = eval_path_component(
+		  des, start_scope, path_tail, flag);
+	    if (flag) {
+		  cerr << li->get_fileline()
+		       << ": XXXXX: Errors evaluating scope index" << endl;
+	    } else if (NetScope *child = scope->child(path_item)) {
+		  pform_name_t path_head = path;
+		  path_head.push_back(path_tail);
+		  res->scope = child;
+		  res->path_head = path_head;
+		  return true;
+	    }
+      }
+
+      if (path_tail.index.empty()) {
+	    if (const NetScope::interface_port_alias_t *alias =
+		scope->find_interface_port_alias(path_tail.name)) {
+		  pform_name_t path_head = path;
+		  path_head.push_back(path_tail);
+		  res->scope = alias->actual_scope;
+		  res->path_head = path_head;
+		  res->interface_alias_scope = scope;
+		  res->interface_alias_name = path_tail.name;
+		  res->interface_alias_target = alias->actual_scope;
+		  res->interface_alias_modport = alias->modport;
+
+		  if (debug_scopes || debug_elaborate) {
+			cerr << li->get_fileline() << ": symbol_search: "
+			     << "Interface alias " << path_tail.name
+			     << " -> " << scope_path(alias->actual_scope)
+			     << endl;
+		  }
+
+		  return true;
+	    }
+      } else if (scope->find_interface_port_alias_array(path_tail.name)) {
+	    bool flag = false;
+	    hname_t path_item = eval_path_component(
+		  des, start_scope, path_tail, flag);
+	    if (!flag && path_item.has_numbers() == 1) {
+		  const NetScope::interface_port_alias_t *alias =
+			scope->find_interface_port_alias_element(
+			      path_tail.name, path_item.peek_number(0));
+		  if (alias) {
+			pform_name_t path_head = path;
+			path_head.push_back(path_tail);
+			res->scope = alias->actual_scope;
+			res->path_head = path_head;
+			res->interface_alias_scope = scope;
+			res->interface_alias_name = path_tail.name;
+			res->interface_alias_target = alias->actual_scope;
+			res->interface_alias_modport = alias->modport;
+
+			if (debug_scopes || debug_elaborate) {
+			      cerr << li->get_fileline()
+				   << ": symbol_search: Interface alias "
+				   << path_tail.name << "["
+				   << path_item.peek_number(0) << "]"
+				   << " -> "
+				   << scope_path(alias->actual_scope) << endl;
+			}
+
+			return true;
+		  }
+	    }
+      }
+
+      return false;
+}
+
 /*
  * Search for the hierarchical name. The path may have multiple components. If
  * that's the case, then recursively pull the path apart until we find the
@@ -39,10 +324,12 @@ using namespace std;
  * the initial caller.
  */
 
-bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
-		   pform_name_t path, unsigned lexical_pos,
-		   struct symbol_search_results*res,
-		   NetScope*start_scope, bool prefix_scope)
+static bool symbol_search_(const LineInfo *li, Design *des, NetScope *scope,
+			   pform_name_t path, unsigned int lexical_pos,
+			   unsigned int prefix_lexical_pos,
+			   struct symbol_search_results *res,
+			   NetScope *start_scope, bool scope_is_bound,
+			   unsigned int flags)
 {
       assert(scope);
 
@@ -61,18 +348,20 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       name_component_t path_tail = path.back();
       path.pop_back();
 
-      // If this is a recursive call, then we need to know that so
-      // that we can enable the search for scopes. Set the
-      // recurse_flag to true if this is a recurse.
-      if (start_scope==0)
-	    start_scope = scope;
+      NetScope *unit_scope = start_scope->unit();
+      bool searched_unit_scope = false;
+      NetScope *instance_parent = nullptr;
 
       // If there are components ahead of the tail, symbol_search
       // recursively. Ideally, the result is a scope that we search
       // for the tail key, but there are other special cases as well.
       if (! path.empty()) {
-	    bool flag = symbol_search(li, des, scope, path, lexical_pos,
-				      res, start_scope, prefix_scope);
+	    const unsigned int prefix_flags =
+		  flags & ~SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE;
+	    bool flag = symbol_search_(li, des, scope, path,
+				       prefix_lexical_pos,
+				       prefix_lexical_pos, res,
+				       start_scope, scope_is_bound, prefix_flags);
 	    if (! flag)
 		  return false;
 
@@ -106,12 +395,12 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  return true;
 	    }
 
-	    // The prefix is found to be a scope, so switch to that
-	    // scope, set the hier_path to turn off upwards searches,
-	    // and continue our search for the tail.
+	    // The prefix is found to be a scope, so switch to that scope,
+	    // bind the search to it to turn off upwards searches, and continue
+	    // our search for the tail.
 	    if (res->is_scope()) {
 		  scope = res->scope;
-		  prefix_scope = true;
+		  scope_is_bound = true;
 
 		  if (debug_scopes || debug_elaborate) {
 			cerr << li->get_fileline() << ": symbol_search: "
@@ -134,24 +423,33 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	    }
       }
 
-      bool passed_module_boundary = false;
+      bool search_objects = true;
 
       // At this point, we've stripped right-most components until the search
       // found the scope part of the path, or there is no scope part of the
       // path. For example, if the path in was s1.s2.x, we found the scope
       // s1.s2, res->is_scope() is true, and path_tail is x. We look for x
-      // now. The preceeding code set prefix_scope=true to ease our test below.
+      // now. The preceding code bound the search to that scope.
       //
       // If the input was x (without prefixes) then we don't know if x is a
       // scope or item. In this case, res->is_found() is false and we may need
       // to scan upwards to find the scope or item.
       while (scope) {
+	    if (scope == unit_scope)
+		  searched_unit_scope = true;
+
 	    if (debug_scopes || debug_elaborate) {
 		  cerr << li->get_fileline() << ": symbol_search: "
 		       << "Looking for " << path_tail
 		       << " in scope " << scope_path(scope)
-		       << " prefix_scope=" << prefix_scope << endl;
+		       << " scope_is_bound=" << scope_is_bound << endl;
 	    }
+
+	    // An explicit $unit:: prefix only disambiguates the name and does
+	    // not allow forward references (LRM 3.12.1).
+	    const unsigned int visibility_pos =
+		  (!scope_is_bound || scope->is_unit()) ? lexical_pos : UINT_MAX;
+
             if (scope->genvar_tmp.str() && path_tail.name == scope->genvar_tmp)
                   return false;
 
@@ -167,213 +465,33 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	    //        ... not_ok; // <-- Should NOT match.
 	    //        ... top.not_ok; // Matches.
 	    //    endmodule
-	    if (!passed_module_boundary) {
-		  // Special case `super` keyword. Return the `this` object, but
-		  // with the type of the base class.
-		  if (path_tail.name == "#") {
-			if (NetNet *net = scope->find_signal(perm_string::literal(THIS_TOKEN))) {
-			      const netclass_t *class_type = dynamic_cast<const netclass_t*>(net->net_type());
-			      ivl_assert(*li, class_type);
-			      if (!class_type->get_super()) {
-				    cerr << li->get_fileline() << ": error: "
-					 << "Class " << class_type->get_name()
-					 << " uses `super` without a base class."
-					 << endl;
-				    des->errors += 1;
-				    return false;
-			      }
-			      path.push_back(path_tail);
-			      res->scope = scope;
-			      res->net = net;
-			      res->type = class_type->get_super();
-			      res->path_head = path;
-			      return true;
-			}
+	    if (search_objects) {
+		  scope_object_search_result_t object_result =
+			symbol_search_scope_objects(
+			      li, des, scope, start_scope, path, path_tail,
+			      visibility_pos, res, flags);
+		  if (object_result == scope_object_search_result_t::found)
+			return true;
+		  if (object_result == scope_object_search_result_t::failed)
 			return false;
-		  }
-
-		  if (NetNet*net = scope->find_signal(path_tail.name)) {
-			bool decl_after_use = !prefix_scope && !(net->lexical_pos() <= lexical_pos);
-			if (!gn_strict_net_var_declaration || !decl_after_use) {
-			      path.push_back(path_tail);
-			      res->scope = scope;
-			      res->net = net;
-			      res->type = net->net_type();
-			      res->path_head = path;
-			      if (warn_decl_after_use && decl_after_use) {
-				    cerr << li->get_fileline()
-					 << ": warning: net/variable `" << path_tail.name
-					 << "` used before declaration." << endl;
-				    cerr << net->get_fileline()
-					 << ":        : the net/variable is declared here." << endl;
-				    // suppress further warnings for this net
-				    net->lexical_pos(lexical_pos);
-			      }
-			      return true;
-			} else if (!res->decl_after_use) {
-			      res->decl_after_use = net;
-			}
-		  }
-
-		  if (NetEvent*eve = scope->find_event(path_tail.name)) {
-			bool decl_after_use = !prefix_scope && !(eve->lexical_pos() <= lexical_pos);
-			if (!gn_strict_net_var_declaration || !decl_after_use) {
-			      path.push_back(path_tail);
-			      res->scope = scope;
-			      res->eve = eve;
-			      res->path_head = path;
-			      if (warn_decl_after_use && decl_after_use) {
-				    cerr << li->get_fileline()
-					 << ": warning: event `" << path_tail.name
-					 << "` used before declaration." << endl;
-				    cerr << eve->get_fileline()
-					 << ":        : the event is declared here." << endl;
-				    // suppress further warnings for this event
-				    eve->lexical_pos(lexical_pos);
-			      }
-			      return true;
-			} else if (!res->decl_after_use) {
-			      res->decl_after_use = eve;
-			}
-		  }
-
-		  if (const NetExpr*par = scope->get_parameter(des, path_tail.name, res->type)) {
-			bool decl_after_use = !prefix_scope
-			      && !(scope->get_parameter_lexical_pos(path_tail.name) <= lexical_pos);
-			if (!gn_strict_parameter_declaration || !decl_after_use) {
-			      path.push_back(path_tail);
-			      res->scope = scope;
-			      res->par_val = par;
-			      res->path_head = path;
-			      if (warn_decl_after_use && decl_after_use) {
-				    cerr << li->get_fileline()
-					 << ": warning: parameter `" << path_tail.name
-					 << "` used before declaration." << endl;
-				    cerr << par->get_fileline()
-					 << ":        : the parameter is declared here." << endl;
-				    // suppress further warnings for this parameter
-				    scope->set_parameter_lexical_pos(path_tail.name, lexical_pos);
-			      }
-			      return true;
-			} else if (!res->decl_after_use) {
-			      res->decl_after_use = par;
-			}
-		  }
-
-		    // Static items are just normal signals and are found above.
-		  if (scope->type() == NetScope::CLASS) {
-			const netclass_t *clsnet = scope->class_def();
-			int pidx = clsnet->property_idx_from_name(path_tail.name);
-			if (pidx >= 0) {
-			      // This is a class property being accessed in a
-			      // class method. Return `this` for the net and the
-			      // property name for the path tail.
-			      NetScope *scope_method = find_method_containing_scope(*li, start_scope);
-			      ivl_assert(*li, scope_method);
-			      res->net = scope_method->find_signal(perm_string::literal(THIS_TOKEN));
-			      ivl_assert(*li, res->net);
-			      res->scope = scope;
-			      ivl_assert(*li, path.empty());
-			      res->path_head.push_back(name_component_t(perm_string::literal(THIS_TOKEN)));
-			      res->path_tail.push_front(path_tail);
-			      res->type = clsnet;
-			      return true;
-			}
-		  }
-
-		    // Finally check the rare case of a signal that hasn't
-		    // been elaborated yet.
-		  if (PWire*wire = scope->find_signal_placeholder(path_tail.name)) {
-			if (prefix_scope || (wire->lexical_pos() <= lexical_pos)) {
-			      NetNet*net = wire->elaborate_sig(des, scope);
-			      if (!net)
-				    return false;
-			      path.push_back(path_tail);
-			      res->scope = scope;
-			      res->net = net;
-			      res->type = net->net_type();
-			      res->path_head = path;
-			      return true;
-			}
-		  }
 	    }
 
-	    // Could not find an object. Maybe this is a child scope name? If
-	    // so, evaluate the path components to find the exact scope this
-	    // refers to. This item might be:
-	    //     <scope>.s
-	    //     <scope>.s[n]
-	    // etc. The scope->child_byname tests if the name exists, and if
-	    // it does, the eval_path_component() evaluates any [n]
-	    // expressions to constants to generate an hname_t object for a
-	    // more complete scope name search. Note that the index
-	    // expressions for scope names must be constant.
-	    if (scope->child_byname(path_tail.name)) {
-		  bool flag = false;
-		  hname_t path_item = eval_path_component(des, start_scope, path_tail, flag);
-		  if (flag) {
-			cerr << li->get_fileline() << ": XXXXX: Errors evaluating scope index" << endl;
-		  } else if (NetScope*chld = scope->child(path_item)) {
-			path.push_back(path_tail);
-			res->scope = chld;
-			res->path_head = path;
-			return true;
-		  }
-	    }
+	    if (symbol_search_child_scope(
+		      li, des, scope, start_scope, path, path_tail, res))
+		  return true;
 
-	    if (path_tail.index.empty()) {
-		  if (const NetScope::interface_port_alias_t*alias =
-		      scope->find_interface_port_alias(path_tail.name)) {
-			path.push_back(path_tail);
-			res->scope = alias->actual_scope;
-			res->path_head = path;
-			res->interface_alias_scope = scope;
-			res->interface_alias_name = path_tail.name;
-			res->interface_alias_target = alias->actual_scope;
-			res->interface_alias_modport = alias->modport;
-
-			if (debug_scopes || debug_elaborate) {
-			      cerr << li->get_fileline() << ": symbol_search: "
-				   << "Interface alias " << path_tail.name
-				   << " -> " << scope_path(alias->actual_scope) << endl;
-			}
-
-			return true;
-		  }
-	    } else if (scope->find_interface_port_alias_array(path_tail.name)) {
-		  bool flag = false;
-		  hname_t path_item = eval_path_component(des, start_scope, path_tail, flag);
-		  if (!flag && path_item.has_numbers() == 1) {
-			if (const NetScope::interface_port_alias_t*alias =
-			    scope->find_interface_port_alias_element(path_tail.name,
-								     path_item.peek_number(0))) {
-			      path.push_back(path_tail);
-			      res->scope = alias->actual_scope;
-			      res->path_head = path;
-			      res->interface_alias_scope = scope;
-			      res->interface_alias_name = path_tail.name;
-			      res->interface_alias_target = alias->actual_scope;
-			      res->interface_alias_modport = alias->modport;
-
-			      if (debug_scopes || debug_elaborate) {
-				    cerr << li->get_fileline() << ": symbol_search: "
-					 << "Interface alias " << path_tail.name
-					 << "[" << path_item.peek_number(0) << "]"
-					 << " -> " << scope_path(alias->actual_scope) << endl;
-			      }
-
-			      return true;
-			}
-		  }
-	    }
-
-	    // Don't scan up if we are searching within a prefixed scope.
-	    if (prefix_scope)
+	    // Don't scan up if the search is bound to the current scope.
+	    if (scope_is_bound)
 		  break;
 
 	    // Imports are not visible through hierachical names
-	    if (NetScope*import_scope = scope->find_import(des, path_tail.name)) {
+	    if (auto import_scope = scope->find_import(
+		      des, path_tail.name, lexical_pos)) {
+		    // The import binds the name to the returned package. Continue
+		    // with the search bound to it, since lexical positions are
+		    // unit-local.
 		  scope = import_scope;
+		  scope_is_bound = true;
 		  continue;
 	    }
 
@@ -397,14 +515,35 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		  return true;
 	    }
 
+	    // Lookup leaves a design unit through its lexical parent, the
+	    // compilation-unit scope, before continuing up the instance hierarchy
+	    // (LRM 3.12.1).
+	    const bool is_design_unit =
+		  (scope->type() == NetScope::MODULE && !scope->nested_module())
+		  || scope->type() == NetScope::PACKAGE;
+	    if (!scope_is_bound && !searched_unit_scope && is_design_unit
+		&& unit_scope && scope != unit_scope) {
+		  instance_parent = scope->parent();
+		  scope = unit_scope;
+		  searched_unit_scope = true;
+		  search_objects = true;
+		  continue;
+	    }
+
 	    // If there is no prefix, then we are free to scan upwards looking
 	    // for a scope name. Note that only scopes can be searched for up
-	    // past module boundaries. To handle that, set a flag to indicate
-	    // that we passed a module boundary on the way up.
+	    // past module boundaries. Stop searching for objects after leaving
+	    // the module, but continue searching for matching scope names.
 	    if (scope->type()==NetScope::MODULE && !scope->nested_module())
-		  passed_module_boundary = true;
+		  search_objects = false;
 
 	    scope = scope->parent();
+
+	    if (scope == nullptr && instance_parent) {
+		  scope = instance_parent;
+		  instance_parent = nullptr;
+		  search_objects = false;
+	    }
 
 	    // Last chance - try the compilation unit. Note that modules may
 	    // reference nets/variables in the compilation unit, even if they
@@ -420,18 +559,18 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	    //        ... = ok; // This reference is OK
 	    //        ... = not_ok; // This reference is NOT OK.
 	    //    endmodule
-	    if (scope == 0 && start_scope != 0) {
-		  scope = start_scope->unit();
-		  start_scope = 0;
-		  passed_module_boundary = false;
+	    if (scope == nullptr && !searched_unit_scope) {
+		  scope = unit_scope;
+		  searched_unit_scope = true;
+		  search_objects = true;
 	    }
       }
 
 
       // Last chance: this is a single name, so it might be the name
       // of a root scope. Ask the design if this is a root
-      // scope. This is only possible if there is no prefix.
-      if (prefix_scope==false) {
+      // scope. This is only possible if the search is not already bound.
+      if (!scope_is_bound) {
 	    hname_t path_item (path_tail.name);
 	    scope = des->find_scope(path_item);
 	    if (scope) {
@@ -446,21 +585,39 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 }
 
 bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
-		   const pform_scoped_name_t &path, unsigned lexical_pos,
-		   struct symbol_search_results *res)
+		   pform_name_t path, unsigned int lexical_pos,
+		   struct symbol_search_results *res, unsigned int flags)
+{
+      const bool allow_forward_reference =
+	    flags & SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE;
+      const unsigned int terminal_lexical_pos = allow_forward_reference
+	    ? UINT_MAX : lexical_pos;
+      return symbol_search_(li, des, scope, path, terminal_lexical_pos,
+			    lexical_pos,
+			    res, scope, false, flags);
+}
+
+bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
+		   const pform_scoped_name_t &path, unsigned int lexical_pos,
+		   struct symbol_search_results *res, unsigned int flags)
 {
       NetScope *search_scope = scope;
-      bool prefix_scope = false;
+      bool scope_is_bound = false;
 
       if (path.package) {
 	    search_scope = des->find_package(path.package->pscope_name());
 	    if (!search_scope)
 		  return false;
-	    prefix_scope = true;
+	    scope_is_bound = true;
       }
 
-      return symbol_search(li, des, search_scope, path.name, lexical_pos,
-			   res, search_scope, prefix_scope);
+      const bool allow_forward_reference =
+	    flags & SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE;
+      const unsigned int terminal_lexical_pos = allow_forward_reference
+	    ? UINT_MAX : lexical_pos;
+      return symbol_search_(li, des, search_scope, path.name,
+			    terminal_lexical_pos, lexical_pos, res,
+			    search_scope, scope_is_bound, flags);
 }
 
 bool check_interface_modport_access(const LineInfo *li, Design *des,

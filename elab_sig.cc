@@ -416,8 +416,17 @@ void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 		       << "." << endl;
 	    }
 
-	    /* NetNet*sig = */ new NetNet(class_scope_, cur->first, NetNet::REG,
-					  use_type);
+	    auto sig = new NetNet(class_scope_, cur->first, NetNet::REG,
+				  use_type);
+	    sig->set_line(cur->second);
+	    sig->set_const(cur->second.qual.test_const());
+
+	    if (cur->second.qual.test_const() &&
+		cur->second.has_initializer) {
+		  int pidx = property_idx_from_name(cur->first);
+		  ivl_assert(cur->second, pidx >= 0);
+		  set_prop_initialized(pidx);
+	    }
       }
 
       for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
@@ -518,7 +527,7 @@ bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 	    typedef list<PGenerate*>::const_iterator generate_it_t;
 	    for (generate_it_t cur = generate_schemes.begin()
 		       ; cur != generate_schemes.end() ; ++ cur ) {
-		  PGenerate*item = *cur;
+		  const PGenerate*item = *cur;
 		  if (item->directly_nested || !item->scope_list_.empty()) {
 			flag &= item->elaborate_sig(des, container);
 		  }
@@ -563,7 +572,7 @@ bool PGenerate::elaborate_sig_direct_(Design*des, NetScope*container) const
 	    if (item->scheme_type == PGenerate::GS_CASE) {
 		  for (generate_it_t icur = item->generate_schemes.begin()
 			     ; icur != item->generate_schemes.end() ; ++ icur ) {
-			PGenerate*case_item = *icur;
+			const PGenerate*case_item = *icur;
 			if (case_item->directly_nested || !case_item->scope_list_.empty()) {
 			      flag &= case_item->elaborate_sig(des, container);
 			}
@@ -1225,7 +1234,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope)
 	    sig->devirtualize_pins();
       sig->set_line(*this);
       sig->port_type(port_type_);
-      sig->lexical_pos(lexical_pos_);
 
       if (ivl_discipline_t dis = get_discipline()) {
 	    sig->set_discipline(dis);

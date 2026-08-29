@@ -231,6 +231,8 @@ br_gh782b		normal,-g2009		ivltests gold=br_gh782b.gold
 br_gh800		normal,-g2009		ivltests
 br_gh801		normal,-g2012		ivltests
 br_gh801b		normal,-g2012		ivltests
+br_gh1140c		CE,-g2009		ivltests gold=br_gh1140c.gold
+br_gh1466		CE,-g2012		ivltests gold=br_gh1466.gold
 br_gh1220		normal,-g2012		ivltests
 br_gh1222		CE,-g2009		ivltests gold=br_gh1222.gold
 br_gh1223a		normal,-g2009		ivltests
@@ -973,7 +975,6 @@ wild_cmp_err2		CE,-g2009		ivltests gold=wild_cmp_err2.gold
 gh161a			normal,-g2012		ivltests
 gh161b			normal,-g2012		ivltests
 pull371b		normal,-g2012		ivltests
-
 br_gh175		normal,-g2012		ivltests
 br_gh307		normal,-g2012		ivltests
 br_gh390a		CE,-g2012		ivltests

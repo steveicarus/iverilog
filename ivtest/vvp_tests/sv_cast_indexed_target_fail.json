@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_cast_indexed_target_fail.v",
+    "gold"          : "sv_cast_indexed_target_fail",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

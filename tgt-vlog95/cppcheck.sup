@@ -1,8 +1,11 @@
 // We use guarded memory allocation routines, but cppcheck is not
 // noticing this so it is complaining we could return a NULL value.
-nullPointerOutOfMemory:logic_lpm.c:2143  // strdup @ 2140
-nullPointerOutOfMemory:logic_lpm.c:2247  // strdup @ 2244
+nullPointerOutOfMemory:logic_lpm.c:2148  // strdup @ 2145
+nullPointerOutOfMemory:logic_lpm.c:2252  // strdup @ 2249
 nullPointerOutOfMemory:misc.c:39         // malloc @   38
+nullPointerOutOfMemory:misc.c:44         // malloc @   38
+nullPointerOutOfMemory:misc.c:45         // malloc @   38
+nullPointerOutOfMemory:misc.c:48         // malloc @   38
 nullPointerOutOfMemory:misc.c:794        // malloc @  793
 nullPointerOutOfMemory:misc.c:795        // malloc @  793
 nullPointerOutOfMemory:numbers.c:362     // strdup @  359

@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_darray_unique_with.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "SystemVerilog darray unique with predicate",
+        "type"          : "CE"
+    }
+}

@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_interface_identifier_member_name.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

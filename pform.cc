@@ -412,10 +412,9 @@ LexicalScope* pform_peek_scope(void)
 
 static void pform_check_possible_imports(LexicalScope *scope)
 {
-      map<perm_string,PPackage*>::const_iterator cur;
-      for (cur = scope->possible_imports.begin(); cur != scope->possible_imports.end(); ++cur) {
-            if (scope->local_symbols.find(cur->first) == scope->local_symbols.end())
-                  scope->explicit_imports[cur->first] = cur->second;
+      for (const auto &cur : scope->possible_imports) {
+            if (!scope->local_symbols.count(cur.first))
+		  scope->explicit_imports[cur.first] = cur.second;
       }
       scope->possible_imports.clear();
 }
@@ -454,7 +453,8 @@ static PGenerate* current_generate_scope()
       return lexical_scope == pform_cur_generate ? pform_cur_generate : nullptr;
 }
 
-static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*item)
+bool pform_check_local_symbol(LexicalScope *scope, perm_string name,
+			      const PNamedItem *item)
 {
       assert(scope);
 
@@ -469,22 +469,52 @@ static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*it
 		    "It was declared here as "
 		 << cur_sym->second->symbol_type() << "." << endl;
 	    error_count += 1;
-	    return;
+	    return false;
       }
 
 	// Check for conflict with an explicit import.
-      map<perm_string,PPackage*>::const_iterator cur_pkg
-	    = scope->explicit_imports.find(name);
+      auto cur_pkg = scope->explicit_imports.find(name);
       if (cur_pkg != scope->explicit_imports.end()) {
 	    cerr << item->get_fileline() << ": error: "
 		    "'" << name << "' has already been "
 		    "imported into this scope from package '"
-		 << cur_pkg->second->pscope_name() << "'." << endl;
+		 << cur_pkg->second.package->pscope_name() << "'." << endl;
 	    error_count += 1;
-	    return;
+	    return false;
       }
 
+      return true;
+}
+
+static void add_local_symbol(LexicalScope*scope, perm_string name, PNamedItem*item)
+{
+      if (!pform_check_local_symbol(scope, name, item))
+	    return;
+
       scope->local_symbols[name] = item;
+}
+
+/*
+ * Pop the scope used while parsing a block. If the block does not keep that
+ * scope, move any nested named scopes to the enclosing scope before the caller
+ * discards it.
+ */
+void pform_pop_block_scope(bool keep_scope)
+{
+      auto scope = lexical_scope;
+      assert(scope);
+
+      pform_pop_scope();
+
+      if (keep_scope)
+	    return;
+
+      for (const auto& symbol : scope->local_symbols) {
+	    auto nested_scope = dynamic_cast<LexicalScope *> (symbol.second);
+	    assert(nested_scope);
+	    nested_scope->set_parent_scope(lexical_scope);
+	    add_local_symbol(lexical_scope, symbol.first, symbol.second);
+      }
 }
 
 static void check_potential_imports(const struct vlltype&loc, perm_string name, bool tf_call)
@@ -716,29 +746,31 @@ PBlock* pform_push_block_scope(const struct vlltype&loc, const char*name,
 /*
  * Create a new identifier.
  */
-PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&name)
+PEIdent *pform_new_ident(const struct vlltype&loc, const pform_name_t&name,
+			 bool no_implicit_sig)
 {
       if (gn_system_verilog())
 	    check_potential_imports(loc, name.front().name, false);
 
-      return new PEIdent(name, loc.lexical_pos);
+      auto tmp = new PEIdent(name, loc.lexical_pos, no_implicit_sig);
+      FILE_NAME(tmp, loc);
+      return tmp;
 }
 
 PTrigger* pform_new_trigger(const struct vlltype&loc, PPackage*pkg,
-			    const pform_name_t&name, unsigned lexical_pos)
+			    const pform_name_t&name)
 {
       if (gn_system_verilog())
 	    check_potential_imports(loc, name.front().name, false);
 
-      PTrigger*tmp = new PTrigger(pkg, name, lexical_pos);
+      PTrigger*tmp = new PTrigger(pkg, name);
       FILE_NAME(tmp, loc);
       return tmp;
 }
 
 PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
 			         const list<PExpr*>*dly,
-			         const pform_name_t&name,
-			         unsigned lexical_pos)
+			         const pform_name_t&name)
 {
       if (gn_system_verilog())
 	    check_potential_imports(loc, name.front().name, false);
@@ -749,7 +781,7 @@ PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
 	    tmp_dly = dly->front();
       }
 
-      PNBTrigger*tmp = new PNBTrigger(name, lexical_pos, tmp_dly);
+      PNBTrigger*tmp = new PNBTrigger(name, tmp_dly);
       FILE_NAME(tmp, loc);
       return tmp;
 }
@@ -907,10 +939,9 @@ typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
 	      // something other than a type, then give up now because
 	      // the name has at least shadowed any other possible
 	      // meaning for this name.
-	    map<perm_string,PPackage*>::iterator cur_pkg;
-	    cur_pkg = cur_scope->explicit_imports.find(name);
+	    auto cur_pkg = cur_scope->explicit_imports.find(name);
 	    if (cur_pkg != cur_scope->explicit_imports.end()) {
-		  PPackage*pkg = cur_pkg->second;
+		  auto pkg = cur_pkg->second.package;
 		  cur = pkg->typedefs.find(name);
 		  if (cur != pkg->typedefs.end())
 			return cur->second;
@@ -929,16 +960,6 @@ typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
 	    if (sym != cur_scope->local_symbols.end())
 		  return nullptr;
 
-	    // Class properties are tracked in the class type, not in
-	    // local_symbols, but still shadow type names before lookup falls
-	    // through to wildcard imports.
-	    if (auto cur_class = dynamic_cast<PClass*> (cur_scope)) {
-		  if (cur_class->type &&
-		      cur_class->type->properties.find(name) !=
-		      cur_class->type->properties.end())
-			return nullptr;
-	    }
-
             PPackage*pkg = pform_find_potential_import(loc, cur_scope, name, false, false);
             if (pkg) {
 	          cur = pkg->typedefs.find(name);
@@ -955,14 +976,6 @@ typedef_t* pform_test_type_identifier(const struct vlltype&loc, const char*txt)
       return 0;
 }
 
-bool pform_test_interface_identifier(const char*txt)
-{
-      perm_string name = lex_strings.make(txt);
-      map<perm_string,Module*>::const_iterator cur = pform_modules.find(name);
-
-      return cur != pform_modules.end() && cur->second->is_interface;
-}
-
 PECallFunction* pform_make_call_function(const struct vlltype&loc,
 					 const pform_name_t&name,
 					 const list<named_pexpr_t> &parms)
@@ -971,6 +984,24 @@ PECallFunction* pform_make_call_function(const struct vlltype&loc,
 	    check_potential_imports(loc, name.front().name, true);
 
       PECallFunction*tmp = new PECallFunction(name, parms);
+      FILE_NAME(tmp, loc);
+      return tmp;
+}
+
+PECallFunction* pform_make_chained_call_function(const struct vlltype&loc,
+						 PExpr*prefix,
+						 const pform_name_t&method,
+						 const list<named_pexpr_t> &parms)
+{
+      if (!gn_system_verilog()) {
+	    pform_requires_sv(loc, "Chained calls like a().b()");
+	    delete prefix;
+	    return new PECallFunction(method, parms);
+      }
+
+      check_potential_imports(loc, method.front().name, true);
+
+      PECallFunction*tmp = new PECallFunction(prefix, method, parms);
       FILE_NAME(tmp, loc);
       return tmp;
 }
@@ -2115,7 +2146,7 @@ void pform_make_udp(const struct vlltype&loc, perm_string name,
 		  local_errors += 1;
 	    }
 
-	    auto*pa = dynamic_cast<PAssign*>(init_expr);
+	    const auto*pa = dynamic_cast<PAssign*>(init_expr);
 	    if (!pa) {
 		  cerr << init_expr->get_fileline() << ": error: "
 		       << "Invalid initial statement for primitive "
@@ -3102,7 +3133,7 @@ void pform_set_parameter(const struct vlltype&loc,
 	    }
       }
 
-      vector_type_t*vt = dynamic_cast<vector_type_t*>(data_type);
+      const vector_type_t*vt = dynamic_cast<vector_type_t*>(data_type);
       if (vt && vt->pdims && vt->pdims->size() > 1) {
 	    if (pform_requires_sv(loc, "packed array parameter")) {
 		  VLerror(loc, "sorry: packed array parameters are not supported yet.");
@@ -3164,7 +3195,8 @@ void pform_set_parameter(const struct vlltype&loc,
 }
 
 void pform_set_specparam(const struct vlltype&loc, perm_string name,
-			 list<pform_range_t>*range, PExpr*expr)
+			 list<pform_range_t> *range, PExpr *expr,
+			 bool check_decl_order)
 {
       ivl_assert(loc, !pform_cur_module.empty());
       Module*scope = pform_cur_module.front();
@@ -3183,6 +3215,10 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
 
       parm->expr = expr;
       parm->range = 0;
+
+      // Only module-body specparams follow lexical order.
+      if (check_decl_order)
+	    parm->lexical_pos = loc.lexical_pos;
 
       if (range) {
 	    ivl_assert(loc, range->size() == 1);

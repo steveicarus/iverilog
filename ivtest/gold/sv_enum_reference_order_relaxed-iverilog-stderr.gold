@@ -1,0 +1,2 @@
+ivltests/sv_enum_reference_order_relaxed.v:7: warning: enum named constant `VALUE` used before declaration.
+ivltests/sv_enum_reference_order_relaxed.v:10:        : the enum named constant is declared here.

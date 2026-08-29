@@ -5,7 +5,7 @@ nullPointerOutOfMemory
 memleakOnRealloc
 
 // We check memory allocation with valgrind
-nullPointer:sys_display.c:931
+nullPointer:sys_display.c:960
 
 // Skip asctime() obsolete for now.
 asctimeCalled:sys_fst.c:381
@@ -38,10 +38,10 @@ uninitvar:sys_random.c:267
 
 // The interface is from the standard.
 constParameterCallback:sys_convert.c:150
-constParameterCallback:sys_display.c:1281
-constParameterCallback:sys_display.c:1379
-constParameterCallback:sys_display.c:1553
-constParameterCallback:sys_display.c:2174
+constParameterCallback:sys_display.c:1311
+constParameterCallback:sys_display.c:1409
+constParameterCallback:sys_display.c:1583
+constParameterCallback:sys_display.c:2204
 constParameterCallback:sys_fileio.c:261
 constParameterCallback:sys_random.c:497
 constParameterCallback:sys_sdf.c:437

@@ -1,6 +1,6 @@
 // cppcheck is wrong this is correct usage
-syntaxError:main.c:410
-syntaxError:main.c:413
+syntaxError:main.c:415
+syntaxError:main.c:412
 
 // cppcheck is missing the code adds a \0 at the previous location.
 knownConditionTrueFalse:main.c:1123

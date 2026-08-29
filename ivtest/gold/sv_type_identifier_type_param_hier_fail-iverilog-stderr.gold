@@ -1,0 +1,2 @@
+ivltests/sv_type_identifier_type_param_hier_fail.v:3: error: Type parameter `T` value `value.invalid` is not a type.
+1 error(s) during elaboration.

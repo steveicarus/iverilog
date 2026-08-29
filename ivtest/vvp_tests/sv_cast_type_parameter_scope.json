@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_cast_type_parameter_scope.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
