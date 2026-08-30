@@ -146,6 +146,7 @@ struct vvp_nexus_data {
       unsigned net_word;
 };
 #define VVP_NEXUS_DATA_STR 0x0001
+#define VVP_NEXUS_DATA_NO_VAR_MASK 0x0002
 
 
 /*
@@ -157,7 +158,8 @@ struct vvp_nexus_data {
  * cache it.
  */
 extern const char* draw_net_input(ivl_nexus_t nex);
-extern char* nexus_variable_state_mask(ivl_nexus_t nex);
+extern char* nexus_variable_state_mask(ivl_nexus_t nex,
+				       struct vvp_nexus_data*nex_data);
 void EOC_cleanup_drivers(void);
 
 /*

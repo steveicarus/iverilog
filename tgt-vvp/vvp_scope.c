@@ -631,10 +631,10 @@ static void draw_net_in_scope(ivl_signal_t sig)
 	      /* Connect the pin of the signal to something. */
 	    ivl_nexus_t nex = ivl_signal_nex(sig, iword);
 	    const char*driver = draw_net_input(nex);
-	    char*variable_mask = nexus_variable_state_mask(nex);
 
 	    nex_data = (struct vvp_nexus_data*)ivl_nexus_get_private(nex);
 	    assert(nex_data);
+	    char*variable_mask = nexus_variable_state_mask(nex, nex_data);
 
 	    if (nex_data->net == 0) {
 		  int strength_aware_flag = 0;
