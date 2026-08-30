@@ -131,6 +131,11 @@ struct vthread_s {
       {
 	    stack_vec4_.push_back(std::move(val));
       }
+      inline vvp_vector4_t& push_vec4(void)
+      {
+	    stack_vec4_.emplace_back();
+	    return stack_vec4_.back();
+      }
       inline const vvp_vector4_t& peek_vec4(unsigned depth)
       {
 	    unsigned size = stack_vec4_.size();
@@ -4333,30 +4338,13 @@ bool of_LOAD_STRA(vthread_t thr, vvp_code_t cp)
  */
 bool of_LOAD_VEC4(vthread_t thr, vvp_code_t cp)
 {
-	// Push a placeholder onto the stack in order to reserve the
-	// stack space. Use a reference for the stack top as a target
-	// for the load.
-      thr->push_vec4(vvp_vector4_t());
-      vvp_vector4_t&sig_value = thr->peek_vec4();
-
-      vvp_net_t*net = cp->net;
-
-	// For the %load to work, the functor must actually be a
-	// signal functor. Only signals save their vector value.
-      vvp_signal_value*sig = net->fil? net->fil->as_signal_value() : 0;
-      if (sig == 0) {
-	    cerr << thr->get_fileline()
-	         << "%load/v error: Net arg not a signal? "
-		 << (net->fil ? typeid(*net->fil).name() :
-	                        typeid(*net->fun).name())
-	         << endl;
-	    assert(sig);
-	    return true;
-      }
+	// Push a placeholder onto the stack and use it directly as the
+	// target for the load.
+      vvp_vector4_t&sig_value = thr->push_vec4();
 
 	// Extract the value from the signal and directly into the
 	// target stack position.
-      sig->vec4_value(sig_value);
+      cp->signal->vec4_value(sig_value);
 
       return true;
 }
@@ -4832,24 +4820,12 @@ static bool of_LOAD_PARTI_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
       uint32_t base = cp->bit_idx[0];
       uint32_t bwid = cp->bit_idx[1] & 63;
 
-      vvp_net_t*net = cp->net;
-      vvp_signal_value*sig = net->fil? net->fil->as_signal_value() : 0;
-      if (sig == 0) {
-	    cerr << thr->get_fileline()
-	         << "%load/parti error: Net arg not a signal? "
-		 << (net->fil ? typeid(*net->fil).name() :
-	                        typeid(*net->fun).name())
-	         << endl;
-	    assert(sig);
-	    return true;
-      }
+      vvp_signal_value*sig = cp->signal;
 
       int32_t use_base = base;
       if (signed_flag && bwid < 32 && (base&(1<<(bwid-1)))) {
 	    use_base |= -1UL << bwid;
       }
-
-      unsigned sig_size = sig->value_size();
 
 	// Common case: the select lies entirely inside the signal
 	// (subvalue X-pads any excess exactly like the %parti result),
@@ -4870,6 +4846,7 @@ static bool of_LOAD_PARTI_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
       wid -= vbase;
       use_base = 0;
 
+      unsigned sig_size = sig->value_size();
       if ((use_base+wid) > sig_size) {
 	    wid = sig_size - use_base;
       }
@@ -4898,21 +4875,9 @@ bool of_LOAD_PARTI_U(vthread_t thr, vvp_code_t cp)
  */
 bool of_LOAD_FLAG(vthread_t thr, vvp_code_t cp)
 {
-      vvp_net_t*net = cp->net;
-      vvp_signal_value*sig = net->fil? net->fil->as_signal_value() : 0;
-      if (sig == 0) {
-	    cerr << thr->get_fileline()
-	         << "%load/flag error: Net arg not a signal? "
-		 << (net->fil ? typeid(*net->fil).name() :
-	                        typeid(*net->fun).name())
-	         << endl;
-	    assert(sig);
-	    return true;
-      }
-
       int flag = cp->bit_idx[0];
       assert(flag < vthread_s::FLAGS_COUNT);
-      thr->flags[flag] = sig->value(0);
+      thr->flags[flag] = cp->signal->value(0);
       return true;
 }
 
@@ -6097,7 +6062,7 @@ bool of_SHIFTR(vthread_t thr, vvp_code_t cp)
       int use_index = cp->number;
       uint64_t shift = thr->words[use_index].w_uint;
 
-      vvp_vector4_t val = thr->pop_vec4();
+      vvp_vector4_t&val = thr->peek_vec4();
       unsigned wid  = val.size();
 
       if (thr->flags[4] == BIT4_1) {
@@ -6107,13 +6072,9 @@ bool of_SHIFTR(vthread_t thr, vvp_code_t cp)
 	    val = vvp_vector4_t(wid, BIT4_0);
 
       } else if (shift > 0) {
-	    vvp_vector4_t blk = val.subvalue(shift, wid-shift);
-	    vvp_vector4_t tmp (shift, BIT4_0);
-	    val.set_vec(0, blk);
-	    val.set_vec(wid-shift, tmp);
+	    val.shiftr(shift, BIT4_0);
       }
 
-      thr->push_vec4(val);
       return true;
 }
 
@@ -6125,7 +6086,7 @@ bool of_SHIFTR_S(vthread_t thr, vvp_code_t cp)
       int use_index = cp->number;
       uint64_t shift = thr->words[use_index].w_uint;
 
-      vvp_vector4_t val = thr->pop_vec4();
+      vvp_vector4_t&val = thr->peek_vec4();
       unsigned wid  = val.size();
 
       vvp_bit4_t sign_bit = val.value(val.size()-1);
@@ -6137,13 +6098,9 @@ bool of_SHIFTR_S(vthread_t thr, vvp_code_t cp)
 	    val = vvp_vector4_t(wid, sign_bit);
 
       } else if (shift > 0) {
-	    vvp_vector4_t blk = val.subvalue(shift, wid-shift);
-	    vvp_vector4_t tmp (shift, sign_bit);
-	    val.set_vec(0, blk);
-	    val.set_vec(wid-shift, tmp);
+	    val.shiftr(shift, sign_bit);
       }
 
-      thr->push_vec4(val);
       return true;
 }
 

@@ -306,6 +306,9 @@ class vvp_vector4_t {
 	// Move bits within this vector.
       void mov(unsigned dst, unsigned src, unsigned cnt);
 
+	// Shift bits right in place, filling the vacated high bits.
+      void shiftr(unsigned shift, vvp_bit4_t pad_bit);
+
 	// Add that to this in the Verilog way.
       void add(const vvp_vector4_t&that);
 

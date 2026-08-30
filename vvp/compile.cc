@@ -72,6 +72,8 @@ enum operand_e {
       OA_CODE_PTR2,
 	/* The operand is a variable or net pointer */
       OA_FUNC_PTR,
+	/* The operand is a signal-value pointer */
+      OA_SIGNAL_PTR,
 	/* The operand is a second functor pointer */
       OA_FUNC_PTR2,
 	/* The operand is a VPI handle */
@@ -218,7 +220,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%load/real",  of_LOAD_REAL, 1,{OA_VPI_PTR, OA_NONE, OA_NONE} },
       { "%load/str",   of_LOAD_STR,  1,{OA_FUNC_PTR,OA_NONE, OA_NONE} },
       { "%load/stra",  of_LOAD_STRA, 2,{OA_ARR_PTR, OA_BIT1, OA_NONE} },
-      { "%load/vec4",  of_LOAD_VEC4, 1,{OA_FUNC_PTR,OA_NONE,  OA_NONE} },
+      { "%load/vec4",  of_LOAD_VEC4, 1,{OA_SIGNAL_PTR,OA_NONE,OA_NONE} },
       { "%load/vec4a", of_LOAD_VEC4A,2,{OA_ARR_PTR, OA_BIT1, OA_NONE} },
       { "%max/wr", of_MAX_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%min/wr", of_MIN_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
@@ -644,6 +646,40 @@ void functor_ref_lookup(vvp_net_t**ref, char*lab)
 
       res->ref    = ref;
 
+      resolv_submit(res);
+}
+
+struct signal_value_resolv_list_s: public resolv_list_s {
+      explicit signal_value_resolv_list_s(char*txt) : resolv_list_s(txt) {
+	    ref = 0;
+      }
+      vvp_signal_value**ref;
+      virtual bool resolve(bool mes) override;
+};
+
+bool signal_value_resolv_list_s::resolve(bool mes)
+{
+      vvp_net_t*net = vvp_net_lookup(label());
+      vvp_signal_value*sig = net && net->fil
+	    ? net->fil->as_signal_value() : 0;
+
+      if (sig) {
+	    *ref = sig;
+	    return true;
+      }
+
+      if (mes)
+	    fprintf(stderr, "unresolved signal reference: %s\n", label());
+
+      return false;
+}
+
+static void signal_value_ref_lookup(vvp_signal_value**ref, char*lab)
+{
+      struct signal_value_resolv_list_s*res =
+	    new struct signal_value_resolv_list_s(lab);
+
+      res->ref = ref;
       resolv_submit(res);
 }
 
@@ -1944,6 +1980,16 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  }
 
 		  functor_ref_lookup(&code->net, opa->argv[idx].symb.text);
+		  break;
+
+		case OA_SIGNAL_PTR:
+		  if (opa->argv[idx].ltype != L_SYMB) {
+			yyerror("operand format");
+			break;
+		  }
+
+		  signal_value_ref_lookup(&code->signal,
+				          opa->argv[idx].symb.text);
 		  break;
 
 		case OA_FUNC_PTR2:

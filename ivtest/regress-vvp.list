@@ -251,6 +251,7 @@ sf_isunknown_fail		vvp_tests/sf_isunknown_fail.json
 sf_onehot_fail			vvp_tests/sf_onehot_fail.json
 sf_onehot0_fail			vvp_tests/sf_onehot0_fail.json
 shift6				vvp_tests/shift6.json
+shiftr_wide			vvp_tests/shiftr_wide.json
 single_element_array		vvp_tests/single_element_array.json
 specparam_reference_order_fail	vvp_tests/specparam_reference_order_fail.json
 specparam_specify_reference_order	vvp_tests/specparam_specify_reference_order.json

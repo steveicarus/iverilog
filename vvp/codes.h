@@ -358,6 +358,7 @@ struct vvp_code_s {
       union {
 	    unsigned long number;
 	    vvp_net_t    *net;
+	    class vvp_signal_value*signal;
 	    vvp_code_t   cptr;
 	    vvp_array_t array;
 	    class __vpiHandle*handle;
