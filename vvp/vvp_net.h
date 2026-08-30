@@ -213,16 +213,11 @@ inline void update_driver_counts(vvp_bit4_t bit, unsigned counts[3])
 static inline unsigned long add_with_carry(unsigned long a, unsigned long b,
 					   unsigned long&carry)
 {
-      unsigned long tmp = b + carry;
-      unsigned long sum = a + tmp;
-      carry = 0;
-      if (tmp < b)
-	    carry = 1;
-      if (sum < tmp)
-	    carry = 1;
-      if (sum < a)
-	    carry = 1;
-      return sum;
+      // Detect carry from each addition without a data-dependent branch.
+      unsigned long sum = a + b;
+      unsigned long result = sum + carry;
+      carry = (sum < a) | (result < sum);
+      return result;
 }
 
 extern unsigned long multiply_with_carry(unsigned long a, unsigned long b,
