@@ -1726,6 +1726,23 @@ void vvp_vector4_t::shiftr(unsigned shift, vvp_bit4_t pad_bit)
 	    return;
       }
 
+      if (shift < BITS_PER_WORD && size_ % BITS_PER_WORD == 0) {
+	    const unsigned words = size_ / BITS_PER_WORD;
+	    const unsigned reverse_shift = BITS_PER_WORD - shift;
+	    for (unsigned dst = 0 ; dst+1 < words ; dst += 1) {
+		  abits_ptr_[dst] = (abits_ptr_[dst] >> shift)
+			| (abits_ptr_[dst+1] << reverse_shift);
+		  bbits_ptr_[dst] = (bbits_ptr_[dst] >> shift)
+			| (bbits_ptr_[dst+1] << reverse_shift);
+	    }
+	    const unsigned long pad_mask = -1UL << reverse_shift;
+	    abits_ptr_[words-1] = (abits_ptr_[words-1] >> shift)
+		  | (pad_abits & pad_mask);
+	    bbits_ptr_[words-1] = (bbits_ptr_[words-1] >> shift)
+		  | (pad_bbits & pad_mask);
+	    return;
+      }
+
       if (keep > 0)
 	    mov(0, shift, keep);
 
