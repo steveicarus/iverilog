@@ -2114,13 +2114,17 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	  && code->number < (1UL<<26) && code->bit_idx[1] < 64) {
 	    /* The %load's net pointer shares a union with `number`,
 	       so the fused operands live entirely in bit_idx:
-	       bit_idx[0] is the select base, bit_idx[1] packs
-	       (wid << 6) | base_wid. */
+	       bit_idx[0] is the already sign-extended select base and
+	       bit_idx[1] is the result width. */
+	    uint32_t base = code->bit_idx[0];
+	    uint32_t bwid = code->bit_idx[1];
+	    if (code->opcode == &of_PARTI_S && bwid > 0 && bwid < 32
+		&& (base & (1U << (bwid-1))))
+		  base |= ~0U << bwid;
 	    peep_prev_code_->opcode = (code->opcode == &of_PARTI_S)
 		  ? &of_LOAD_PARTI_S : &of_LOAD_PARTI_U;
-	    peep_prev_code_->bit_idx[0] = code->bit_idx[0];
-	    peep_prev_code_->bit_idx[1] =
-		  (uint32_t)((code->number << 6) | code->bit_idx[1]);
+	    peep_prev_code_->bit_idx[0] = base;
+	    peep_prev_code_->bit_idx[1] = code->number;
 	    code->opcode = &of_NOOP;
 	    peep_prev_code_ = 0;
       } else {

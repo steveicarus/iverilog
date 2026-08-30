@@ -4827,23 +4827,16 @@ bool of_PARTI_U(vthread_t thr, vvp_code_t cp)
  * that adjacent pair into this operation, which reads only the
  * selected part of the signal instead of copying the whole vector to
  * the stack and cutting it down. Operands: net from the %load,
- * number/bit_idx[0]/bit_idx[1] from the %parti.
+ * sign-extended base in bit_idx[0], and result width in bit_idx[1].
  */
-static bool of_LOAD_PARTI_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
+static bool of_LOAD_PARTI_base(vthread_t thr, vvp_code_t cp)
 {
-	// The net pointer shares a union with `number`, so the
-	// loader packed the part-select operands into bit_idx:
-	// bit_idx[0] is the base, bit_idx[1] is (wid << 6) | bwid.
-      unsigned wid = cp->bit_idx[1] >> 6;
-      uint32_t base = cp->bit_idx[0];
-      uint32_t bwid = cp->bit_idx[1] & 63;
+	// The loader precomputes the signed base because these operands
+	// are constants and this instruction can execute very frequently.
+	unsigned wid = cp->bit_idx[1];
+	int32_t use_base = static_cast<int32_t>(cp->bit_idx[0]);
 
       vvp_signal_value*sig = cp->signal;
-
-      int32_t use_base = base;
-      if (signed_flag && bwid < 32 && (base&(1<<(bwid-1)))) {
-	    use_base |= -1UL << bwid;
-      }
 
 	// Common case: the select lies entirely inside the signal
 	// (subvalue X-pads any excess exactly like the %parti result),
@@ -4876,12 +4869,12 @@ static bool of_LOAD_PARTI_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
 
 bool of_LOAD_PARTI_S(vthread_t thr, vvp_code_t cp)
 {
-      return of_LOAD_PARTI_base(thr, cp, true);
+	return of_LOAD_PARTI_base(thr, cp);
 }
 
 bool of_LOAD_PARTI_U(vthread_t thr, vvp_code_t cp)
 {
-      return of_LOAD_PARTI_base(thr, cp, false);
+	return of_LOAD_PARTI_base(thr, cp);
 }
 
 /*
