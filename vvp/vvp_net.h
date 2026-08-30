@@ -225,8 +225,24 @@ static inline unsigned long add_with_carry(unsigned long a, unsigned long b,
       return sum;
 }
 
+/* Use a native double-width product when the compiler has one. The portable
+ * half-word implementation remains in vvp_net.cc for other targets. */
+#if defined(__SIZEOF_INT128__) && defined(__SIZEOF_LONG__) \
+    && __SIZEOF_INT128__ >= 2 * __SIZEOF_LONG__
+static inline unsigned long multiply_with_carry(unsigned long a,
+						unsigned long b,
+						unsigned long&carry)
+{
+      typedef unsigned __int128 wide_word_t;
+      wide_word_t product = static_cast<wide_word_t>(a) * b;
+      carry = static_cast<unsigned long>(
+	    product >> (8 * sizeof(unsigned long)));
+      return static_cast<unsigned long>(product);
+}
+#else
 extern unsigned long multiply_with_carry(unsigned long a, unsigned long b,
 					 unsigned long&carry);
+#endif
 
 /*
  * This class represents scalar values collected into vectors. The
