@@ -588,15 +588,14 @@ class anyedge_vec4_value : public anyedge_value {
       vvp_vector4_t old_bits;
 };
 
+// Each event input has one value type fixed by its net connection, so an
+// allocated state object cannot later change concrete type.
 static anyedge_vec4_value*get_vec4_value(anyedge_value*&value)
 {
-      anyedge_vec4_value*vec4_value = dynamic_cast<anyedge_vec4_value*>(value);
-      if (!value) {
-	    vec4_value = new anyedge_vec4_value();
-	    delete value;
-	    value = vec4_value;
-      }
-      return vec4_value;
+      if (!value)
+	    value = new anyedge_vec4_value();
+
+      return static_cast<anyedge_vec4_value*>(value);
 }
 
 class anyedge_real_value : public anyedge_value {
@@ -619,13 +618,10 @@ class anyedge_real_value : public anyedge_value {
 
 static anyedge_real_value*get_real_value(anyedge_value*&value)
 {
-      anyedge_real_value*real_value = dynamic_cast<anyedge_real_value*>(value);
-      if (!value) {
-	    real_value = new anyedge_real_value();
-	    delete value;
-	    value = real_value;
-      }
-      return real_value;
+      if (!value)
+	    value = new anyedge_real_value();
+
+      return static_cast<anyedge_real_value*>(value);
 }
 
 class anyedge_string_value : public anyedge_value {
@@ -648,13 +644,10 @@ class anyedge_string_value : public anyedge_value {
 
 static anyedge_string_value*get_string_value(anyedge_value*&value)
 {
-      anyedge_string_value*string_value = dynamic_cast<anyedge_string_value*>(value);
-      if (!value) {
-	    string_value = new anyedge_string_value();
-	    delete value;
-	    value = string_value;
-      }
-      return string_value;
+      if (!value)
+	    value = new anyedge_string_value();
+
+      return static_cast<anyedge_string_value*>(value);
 }
 
 struct vvp_fun_anyedge_state_s : public waitable_state_s {
