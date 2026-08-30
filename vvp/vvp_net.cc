@@ -1532,6 +1532,61 @@ void vvp_vector4_t::sub(const vvp_vector4_t&that)
 
 }
 
+void vvp_vector4_t::shiftl(unsigned shift)
+{
+      assert(shift <= size_);
+      if (shift == 0)
+	    return;
+
+      if (shift == size_) {
+	    fill_bits(BIT4_0);
+	    return;
+      }
+
+      if (size_ <= BITS_PER_WORD) {
+	    unsigned long size_mask = size_ == BITS_PER_WORD
+		  ? -1UL : (1UL << size_) - 1UL;
+	    abits_val_ = (abits_val_ << shift) & size_mask;
+	    bbits_val_ = (bbits_val_ << shift) & size_mask;
+	    return;
+      }
+
+      const unsigned words = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
+      const unsigned word_shift = shift / BITS_PER_WORD;
+      const unsigned bit_shift = shift % BITS_PER_WORD;
+
+	// Copy from high words to low words so the overlapping in-place
+	// shift never overwrites a source word before it is read.
+      for (unsigned dst = words; dst > word_shift;) {
+	    dst -= 1;
+	    const unsigned src = dst - word_shift;
+	    unsigned long aval = abits_ptr_[src] << bit_shift;
+	    unsigned long bval = bbits_ptr_[src] << bit_shift;
+	    if (bit_shift && src > 0) {
+		  aval |= abits_ptr_[src-1] >> (BITS_PER_WORD-bit_shift);
+		  bval |= bbits_ptr_[src-1] >> (BITS_PER_WORD-bit_shift);
+	    }
+	    abits_ptr_[dst] = aval;
+	    bbits_ptr_[dst] = bval;
+      }
+
+      for (unsigned dst = 0 ; dst < word_shift ; dst += 1) {
+	    abits_ptr_[dst] = 0;
+	    bbits_ptr_[dst] = 0;
+      }
+      if (bit_shift) {
+	    unsigned long mask = (1UL << bit_shift) - 1UL;
+	    abits_ptr_[word_shift] &= ~mask;
+	    bbits_ptr_[word_shift] &= ~mask;
+      }
+
+      if (unsigned tail = size_ % BITS_PER_WORD) {
+	    unsigned long mask = (1UL << tail) - 1UL;
+	    abits_ptr_[words-1] &= mask;
+	    bbits_ptr_[words-1] &= mask;
+      }
+}
+
 void vvp_vector4_t::mov(unsigned dst, unsigned src, unsigned cnt)
 {
       assert(dst+cnt <= size_);

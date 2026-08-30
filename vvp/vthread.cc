@@ -6042,10 +6042,7 @@ bool of_SHIFTL(vthread_t thr, vvp_code_t cp)
 	    val = vvp_vector4_t(wid, BIT4_0);
 
       } else if (shift > 0) {
-	    vvp_vector4_t blk = val.subvalue(0, wid-shift);
-	    vvp_vector4_t tmp (shift, BIT4_0);
-	    val.set_vec(0, tmp);
-	    val.set_vec(shift, blk);
+	    val.shiftl(shift);
       }
 
       return true;

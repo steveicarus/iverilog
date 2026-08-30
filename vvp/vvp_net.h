@@ -314,6 +314,9 @@ class vvp_vector4_t {
         // Get the bits from another vector, but keep my size.
       void copy_bits(const vvp_vector4_t&that);
 
+	// Shift bits left in place, filling the vacated low bits with zero.
+      void shiftl(unsigned shift);
+
 	// Move bits within this vector.
       void mov(unsigned dst, unsigned src, unsigned cnt);
 
