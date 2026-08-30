@@ -474,8 +474,25 @@ inline vvp_vector4_t& vvp_vector4_t::operator= (const vvp_vector4_t&that)
       if (this == &that)
 	    return *this;
 
-      if (size_ > BITS_PER_WORD)
+	// Reuse an existing wide allocation when it has the same number of
+	// words as the new value. Signal updates commonly assign vectors of
+	// the same width, so replacing the block only adds allocator traffic.
+      if (size_ > BITS_PER_WORD) {
+	    if (that.size_ > BITS_PER_WORD) {
+		  const unsigned old_words =
+			(size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
+		  const unsigned new_words =
+			(that.size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
+		  if (old_words == new_words) {
+			size_ = that.size_;
+			memcpy(abits_ptr_, that.abits_ptr_,
+			       2 * new_words * sizeof(unsigned long));
+			bbits_ptr_ = abits_ptr_ + new_words;
+			return *this;
+		  }
+	    }
 	    free_block_((size_+BITS_PER_WORD-1)/BITS_PER_WORD, abits_ptr_);
+      }
 
       copy_from_(that);
 
