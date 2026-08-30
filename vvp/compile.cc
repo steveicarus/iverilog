@@ -2036,7 +2036,12 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	    }
       }
 
-	/* Peephole: fuse an adjacent %load/vec4 + %parti/s|u pair
+	/* Peephole: fuse adjacent instruction pairs. Fusions that execute in
+	   the first slot require physical adjacency as well as logical
+	   adjacency, so they can skip the dead second slot without crossing
+	   a code-space chunk link.
+
+	   Fuse an adjacent %load/vec4 + %parti/s|u pair
 	   into one operation that reads only the selected part of
 	   the signal. Requires the pair to occupy adjacent slots
 	   with no label bound to the second instruction, so nothing
@@ -2078,6 +2083,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
       }
 
       if (!peep_disable && peep_prev_code_ && code == peep_fuse_slot_
+	  && code == peep_prev_code_ + 1
 	  && peep_prev_code_->opcode == &of_LOAD_VEC4
 	  && code->opcode == &of_FLAG_SET_VEC4) {
 	      /* Fuse %load/vec4 + %flag_set/vec4: read the signal
@@ -2095,6 +2101,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
       }
 
       if (!peep_disable && peep_prev_code_ && code == peep_fuse_slot_
+	  && code == peep_prev_code_ + 1
 	  && peep_prev_code_->opcode == &of_FLAG_SET_VEC4
 	  && code->opcode == &of_FLAG_GET_VEC4
 	  && peep_prev_code_->number == code->number) {
@@ -2109,6 +2116,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
       }
 
       if (!peep_disable && peep_prev_code_ && code == peep_fuse_slot_
+	  && code == peep_prev_code_ + 1
 	  && peep_prev_code_->opcode == &of_LOAD_VEC4
 	  && (code->opcode == &of_PARTI_S || code->opcode == &of_PARTI_U)
 	  && code->number < (1UL<<26) && code->bit_idx[1] < 64) {
