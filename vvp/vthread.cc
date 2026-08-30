@@ -2434,24 +2434,8 @@ bool of_CONCAT_VEC4(vthread_t thr, vvp_code_t)
       const vvp_vector4_t&lsb = thr->peek_vec4(0);
       vvp_vector4_t&msb = thr->peek_vec4_mutable(1);
 
-      if (msb.size() + lsb.size() <= CPU_WORD_BITS) {
-	    msb.concat_word(lsb);
-	    thr->pop_vec4(1);
-	    return true;
-      }
-
-	// The result is the size of the top two vectors in the stack.
-      vvp_vector4_t res (msb.size() + lsb.size(), BIT4_X);
-
-	// Build up the result.
-      res.set_vec(0, lsb);
-      res.set_vec(lsb.size(), msb);
-
-	// Rearrange the stack to pop the inputs and push the
-	// result. Do that by actually popping only 1 stack position
-	// and replacing the new top with the new value.
+      msb.concat(lsb);
       thr->pop_vec4(1);
-      thr->peek_vec4() = res;
 
       return true;
 }
@@ -2474,16 +2458,7 @@ bool of_CONCATI_VEC4(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t lsb (wid, BIT4_0);
       get_immediate_rval (cp, lsb);
 
-      if (msb.size() + lsb.size() <= CPU_WORD_BITS) {
-	    msb.concat_word(lsb);
-	    return true;
-      }
-
-      vvp_vector4_t res (msb.size()+lsb.size(), BIT4_X);
-      res.set_vec(0, lsb);
-      res.set_vec(lsb.size(), msb);
-
-      msb = res;
+      msb.concat(lsb);
       return true;
 }
 
