@@ -1620,6 +1620,77 @@ void vvp_vector4_t::mov(unsigned dst, unsigned src, unsigned cnt)
       }
 }
 
+void vvp_vector4_t::shiftr(unsigned shift, vvp_bit4_t pad_bit)
+{
+      assert(shift <= size_);
+      if (shift == 0)
+	    return;
+
+      unsigned keep = size_ - shift;
+      unsigned long pad_abits;
+      unsigned long pad_bbits;
+      switch (pad_bit) {
+	  case BIT4_0:
+	    pad_abits = WORD_0_ABITS;
+	    pad_bbits = WORD_0_BBITS;
+	    break;
+	  case BIT4_1:
+	    pad_abits = WORD_1_ABITS;
+	    pad_bbits = WORD_1_BBITS;
+	    break;
+	  case BIT4_X:
+	    pad_abits = WORD_X_ABITS;
+	    pad_bbits = WORD_X_BBITS;
+	    break;
+	  case BIT4_Z:
+	    pad_abits = WORD_Z_ABITS;
+	    pad_bbits = WORD_Z_BBITS;
+	    break;
+	  default:
+	    assert(0);
+	    return;
+      }
+
+      if (size_ <= BITS_PER_WORD) {
+	    unsigned long size_mask = size_ == BITS_PER_WORD
+		  ? -1UL : (1UL << size_) - 1UL;
+	    if (keep == 0) {
+		  abits_val_ = pad_abits & size_mask;
+		  bbits_val_ = pad_bbits & size_mask;
+		  return;
+	    }
+	    unsigned long keep_mask = (1UL << keep) - 1UL;
+	    abits_val_ = ((abits_val_ >> shift) & keep_mask)
+		  | (pad_abits & size_mask & ~keep_mask);
+	    bbits_val_ = ((bbits_val_ >> shift) & keep_mask)
+		  | (pad_bbits & size_mask & ~keep_mask);
+	    return;
+      }
+
+      if (keep > 0)
+	    mov(0, shift, keep);
+
+      unsigned base = keep;
+      unsigned remain = shift;
+      while (remain > 0) {
+	    unsigned wdx = base / BITS_PER_WORD;
+	    unsigned off = base % BITS_PER_WORD;
+	    unsigned trans = BITS_PER_WORD - off;
+	    if (trans > remain)
+		  trans = remain;
+
+	    unsigned long mask = trans == BITS_PER_WORD
+		  ? -1UL : ((1UL << trans) - 1UL) << off;
+	    abits_ptr_[wdx] = (abits_ptr_[wdx] & ~mask)
+		  | (pad_abits & mask);
+	    bbits_ptr_[wdx] = (bbits_ptr_[wdx] & ~mask)
+		  | (pad_bbits & mask);
+
+	    base += trans;
+	    remain -= trans;
+      }
+}
+
 void vvp_vector4_t::mul(const vvp_vector4_t&that)
 {
       assert(size_ == that.size_);
