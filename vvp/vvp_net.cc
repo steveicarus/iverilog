@@ -1834,9 +1834,11 @@ void vvp_vector4_t::mul(const vvp_vector4_t&that)
 		  int base = mul_a + mul_b;
 		  unsigned long carry = 0;
 		  res[base] = add_with_carry(res[base], tmp, carry);
-		  for (int add_idx = base+1 ; add_idx < cnt ; add_idx += 1) {
+		  int add_idx = base + 1;
+		  if (add_idx < cnt) {
 			res[add_idx] = add_with_carry(res[add_idx], sum, carry);
-			sum = 0;
+			for (add_idx += 1; carry && add_idx < cnt; add_idx += 1)
+			      res[add_idx] = add_with_carry(res[add_idx], 0, carry);
 		  }
 	    }
       }
