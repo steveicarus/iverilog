@@ -181,13 +181,21 @@ ivl_scope_t dll_target::find_scope(ivl_design_s &des, const NetScope*cur)
 {
       assert(cur);
 
+      // Emission commonly resolves many consecutive objects in one scope.
+      if (cur == cached_scope_)
+	    return cached_ivl_scope_;
+
 	// If the scope is a PACKAGE, then it is a special kind of
 	// root scope and it in the packages array instead.
       if (cur->type() == NetScope::PACKAGE) {
 	    perm_string cur_name = cur->module_name();
 	    for (size_t idx = 0 ; idx < des.packages.size() ; idx += 1) {
-		  if (des.packages[idx]->name_ == cur_name)
-			return des.packages[idx];
+		  if (des.packages[idx]->name_ == cur_name) {
+			ivl_scope_t scope = des.packages[idx];
+			cached_scope_ = cur;
+			cached_ivl_scope_ = scope;
+			return scope;
+		  }
 	    }
 	    return 0;
       }
@@ -195,15 +203,21 @@ ivl_scope_t dll_target::find_scope(ivl_design_s &des, const NetScope*cur)
       for (unsigned idx = 0; idx < des.roots.size(); idx += 1) {
 	    assert(des.roots[idx]);
 	    ivl_scope_t scop = find_scope_from_root(des.roots[idx], cur);
-	    if (scop)
+	    if (scop) {
+		  cached_scope_ = cur;
+		  cached_ivl_scope_ = scop;
 		  return scop;
+	    }
       }
 
       for (size_t idx = 0; idx < des.packages.size(); idx += 1) {
 	    assert(des.packages[idx]);
 	    ivl_scope_t scop = find_scope_from_root(des.packages[idx], cur);
-	    if (scop)
+	    if (scop) {
+		  cached_scope_ = cur;
+		  cached_ivl_scope_ = scop;
 		  return scop;
+	    }
       }
 
       return 0;
@@ -218,9 +232,9 @@ ivl_scope_t dll_target::lookup_scope_(const NetScope*cur)
  * This is a convenience function to locate an ivl_signal_t object
  * given the NetESignal that has the signal name.
  */
-ivl_signal_t dll_target::find_signal(ivl_design_s &des, const NetNet*net)
+ivl_signal_t dll_target::find_signal(const NetNet*net)
 {
-      ivl_scope_t scop = find_scope(des, net->scope());
+      ivl_scope_t scop = lookup_scope_(net->scope());
       assert(scop);
 
       perm_string nname = net->name();
@@ -594,10 +608,16 @@ void dll_target::add_root(const NetScope *s)
 	    assert(0);
 	    break;
       }
+
+      cached_scope_ = s;
+      cached_ivl_scope_ = root_;
 }
 
 bool dll_target::start_design(const Design*des)
 {
+      cached_scope_ = nullptr;
+      cached_ivl_scope_ = nullptr;
+
       const char*dll_path_ = des->get_flag("DLL");
 
       dll_ = ivl_dlopen(dll_path_, false);
@@ -1543,7 +1563,7 @@ bool dll_target::lpm_array_dq(const NetArrayDq*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type = IVL_LPM_ARRAY;
       obj->name = net->name();
-      obj->u_.array.sig = find_signal(des_, net->mem());
+      obj->u_.array.sig = find_signal(net->mem());
       assert(obj->u_.array.sig);
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -2430,6 +2450,8 @@ void dll_target::scope(const NetScope*net)
 	    assert(scop->parent);
 	    scop->parent->children[net->fullname()] = scop;
 	    scop->parent->child .push_back(scop);
+	    cached_scope_ = net;
+	    cached_ivl_scope_ = scop;
 	    scop->nlog_ = 0;
 	    scop->log_ = 0;
 	    scop->nevent_ = 0;
@@ -2505,7 +2527,7 @@ void dll_target::convert_module_ports(const NetScope*net)
 	    NetNet**nets = scop->u_.net;
 	    scop->u_.nex = new ivl_nexus_t[scop->ports];
 	    for (unsigned idx = 0; idx < scop->ports; idx += 1) {
-		  ivl_signal_t sig = find_signal(des_, nets[idx]);
+		  ivl_signal_t sig = find_signal(nets[idx]);
 		  scop->u_.nex[idx] = nexus_sig_make(sig, 0);
 	    }
 	    delete [] nets;
@@ -2739,7 +2761,7 @@ bool dll_target::signal_paths(const NetNet*net)
       if (net->delay_paths() == 0)
 	    return true;
 
-      ivl_signal_t obj = find_signal(des_, net);
+      ivl_signal_t obj = find_signal(net);
       assert(obj);
 
 	/* We cannot have already set up the paths for this signal. */
