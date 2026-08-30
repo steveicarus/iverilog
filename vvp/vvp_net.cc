@@ -1733,6 +1733,29 @@ void vvp_vector4_t::mul(const vvp_vector4_t&that)
 	    }
       }
 
+	// Ignore leading zero words. Expression sizing often widens operands
+	// before multiplication, and those zero-extension words cannot
+	// contribute to the truncated result.
+      int lcnt = cnt;
+      while (lcnt > 0) {
+	    unsigned long value = abits_ptr_[lcnt-1];
+	    if (lcnt == cnt)
+		  value &= mask;
+	    if (value)
+		  break;
+	    lcnt -= 1;
+      }
+
+      int rcnt = cnt;
+      while (rcnt > 0) {
+	    unsigned long value = that.abits_ptr_[rcnt-1];
+	    if (rcnt == cnt)
+		  value &= mask;
+	    if (value)
+		  break;
+	    rcnt -= 1;
+      }
+
 	// Calculate the result into a res array. We need to keep is
 	// separate from the "this" array because we are making
 	// multiple passes.
@@ -1740,12 +1763,13 @@ void vvp_vector4_t::mul(const vvp_vector4_t&that)
       for (int idx = 0 ; idx < cnt ; idx += 1)
 	    res[idx] = 0;
 
-      for (int mul_a = 0 ; mul_a < cnt ; mul_a += 1) {
+      for (int mul_a = 0 ; mul_a < lcnt ; mul_a += 1) {
 	    unsigned long lval = abits_ptr_[mul_a];
 	    if (mul_a == (cnt-1))
 		  lval &= mask;
 
-	    for (int mul_b = 0 ; mul_b < (cnt-mul_a) ; mul_b += 1) {
+	    for (int mul_b = 0 ; mul_b < rcnt && mul_b < (cnt-mul_a);
+		 mul_b += 1) {
 		  unsigned long rval = that.abits_ptr_[mul_b];
 		  if (mul_b == (cnt-1))
 			rval &= mask;
