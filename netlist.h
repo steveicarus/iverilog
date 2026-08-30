@@ -5244,6 +5244,7 @@ class Design {
 	// Iterate over the design...
       void dump(std::ostream&) const;
       void functor(struct functor_t*);
+      void functor_nodes(struct functor_t*);
       void join_islands(void);
       int emit(struct target_t*) const;
 
