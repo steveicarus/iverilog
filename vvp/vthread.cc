@@ -7914,6 +7914,15 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
 	    val.resize(wid);
       }
 
+	// A zero-offset value that already matches the destination width is
+	// the overwhelmingly common case. Avoid routing it through the
+	// partial-assignment clipping path.
+      if (off_index == 0 && val.size() == wid && wid == sig_value_size) {
+	    vvp_send_vec4(ptr, val, thr->wt_context);
+	    thr->pop_vec4(1);
+	    return true;
+      }
+
 	// If there is a problem loading the index register, flags-4
 	// will be set to 1, and we know here to skip the actual assignment.
       if (off_index!=0 && thr->flags[4] == BIT4_1) {
