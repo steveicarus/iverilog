@@ -261,6 +261,10 @@ class vvp_vector4_t {
     public:
       explicit vvp_vector4_t(unsigned size =0, vvp_bit4_t bits =BIT4_X);
 
+      // Construct a vector from immediate A/B bit planes in the low word.
+      // Bits above the encoded value are zero-filled.
+      vvp_vector4_t(unsigned size, unsigned long aval, unsigned long bval);
+
       explicit vvp_vector4_t(unsigned size, double val);
 
 	// Construct a vector4 from the subvalue of another
@@ -498,6 +502,23 @@ inline vvp_vector4_t::vvp_vector4_t(unsigned size__, vvp_bit4_t val)
 	    WORD_X_BBITS };
 
       allocate_words_(init_atable[val], init_btable[val]);
+}
+
+inline vvp_vector4_t::vvp_vector4_t(unsigned size__, unsigned long aval,
+				    unsigned long bval)
+: size_(size__)
+{
+      allocate_words_(WORD_0_ABITS, WORD_0_BBITS);
+
+      const unsigned long mask = size_ < BITS_PER_WORD
+	    ? (1UL << size_) - 1UL : -1UL;
+      if (size_ > BITS_PER_WORD) {
+	    abits_ptr_[0] = aval & mask;
+	    bbits_ptr_[0] = bval & mask;
+      } else {
+	    abits_val_ = aval & mask;
+	    bbits_val_ = bval & mask;
+      }
 }
 
 inline vvp_vector4_t::~vvp_vector4_t()
