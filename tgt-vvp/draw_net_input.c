@@ -100,19 +100,21 @@ static ivl_variable_type_t signal_data_type_of_nexus(ivl_nexus_t nex)
 
 /* Encode structural bits as 1 and unassigned variable bits as their X/0
    default. The VVP runtime uses both pieces of information. */
-char* nexus_variable_state_mask(ivl_nexus_t nex)
+char* nexus_variable_state_mask(ivl_nexus_t nex,
+				struct vvp_nexus_data*nex_data)
 {
-      unsigned wid = width_of_nexus(nex);
-      char*result = malloc(wid + 5);
-      strcpy(result, "C4<");
-      memset(result + 3, 'x', wid);
-      result[wid + 3] = '>';
-      result[wid + 4] = 0;
+      assert(nex_data);
+      if (nex_data->flags & VVP_NEXUS_DATA_NO_VAR_MASK)
+	    return 0;
+
+      unsigned nptrs = ivl_nexus_ptrs(nex);
+      unsigned wid = 0;
+      char*result = 0;
 
       int found = 0;
       int four_state = 0;
       int driven = 0;
-      for (unsigned idx = 0 ; idx < ivl_nexus_ptrs(nex) ; idx += 1) {
+      for (unsigned idx = 0 ; idx < nptrs ; idx += 1) {
 	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
 	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
 	    if (!sig || !ivl_signal_coerced_to_uwire(sig))
@@ -121,7 +123,15 @@ char* nexus_variable_state_mask(ivl_nexus_t nex)
 	    if (data_type != IVL_VT_LOGIC && data_type != IVL_VT_BOOL)
 		  continue;
 
-	    found = 1;
+	    if (!found) {
+		  wid = width_of_nexus(nex);
+		  result = malloc(wid + 5);
+		  strcpy(result, "C4<");
+		  memset(result + 3, 'x', wid);
+		  result[wid + 3] = '>';
+		  result[wid + 4] = 0;
+		  found = 1;
+	    }
 	    if (data_type != IVL_VT_BOOL)
 		  four_state = 1;
 	    unsigned sig_wid = ivl_signal_width(sig);
@@ -136,13 +146,15 @@ char* nexus_variable_state_mask(ivl_nexus_t nex)
       }
 
       if (!found) {
-	    free(result);
+	      /* The target representation is immutable, so aliases of this
+	         nexus cannot discover a variable on a later lookup. */
+	    nex_data->flags |= VVP_NEXUS_DATA_NO_VAR_MASK;
 	    return 0;
       }
       /* Port connections can coerce a variable without populating its
          per-bit continuous-assignment mask. */
       if (!driven) {
-	    for (unsigned idx = 0 ; idx < ivl_nexus_ptrs(nex) ; idx += 1) {
+	    for (unsigned idx = 0 ; idx < nptrs ; idx += 1) {
 		  ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
 		  if (ivl_nexus_ptr_drive0(ptr) != IVL_DR_HiZ ||
 		      ivl_nexus_ptr_drive1(ptr) != IVL_DR_HiZ) {
@@ -644,7 +656,7 @@ static void draw_net_input_x(ivl_nexus_t nex,
       unsigned idx;
       char**driver_labels;
       unsigned ndrivers = 0;
-      char*variable_mask = nexus_variable_state_mask(nex);
+      char*variable_mask = nexus_variable_state_mask(nex, nex_data);
       int variable_init = variable_mask != 0;
 
       const char*resolv_type;
