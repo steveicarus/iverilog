@@ -53,9 +53,14 @@ class vvp_vpi_callback {
     protected:
 	// Derived classes call this method to indicate that it is
 	// time to call the callback.
-      void run_vpi_callbacks();
+      void run_vpi_callbacks()
+      {
+	    if (vpi_callbacks_ || array_words_)
+		  run_vpi_callbacks_slow_();
+      }
 
     private:
+      void run_vpi_callbacks_slow_();
       value_callback*vpi_callbacks_;
       struct __vpi_array_word*array_words_;
 };

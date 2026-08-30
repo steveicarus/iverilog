@@ -879,7 +879,7 @@ void vvp_vpi_callback::clear_all_callbacks()
  * callback function. If the cb_rtn pointer is nil, then the object
  * has been marked for deletion. Free it.
  */
-void vvp_vpi_callback::run_vpi_callbacks()
+void vvp_vpi_callback::run_vpi_callbacks_slow_()
 {
       struct __vpi_array_word*array_word = array_words_;
       while (array_word) {
