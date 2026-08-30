@@ -1229,6 +1229,8 @@ class vvp_net_t {
 
     public: // Methods to propagate output from this node.
       void send_vec4(const vvp_vector4_t&val, vvp_context_t context);
+      void send_vec4_from_signal(const vvp_vector4_t&val,
+				 vvp_context_t context, bool known_changed);
       void send_vec8(const vvp_vector8_t&val);
       void send_real(double val, vvp_context_t context);
       void send_string(const std::string&val, vvp_context_t context);
@@ -1388,6 +1390,14 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 	// nothing to propagate.
       virtual prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
 				 unsigned base, unsigned vwid);
+	// Static signal functors suppress duplicate updates before sending.
+	// Let filters reuse that result when their tracked value is known to
+	// still match the functor's previous value.
+      virtual prop_t filter_vec4_from_signal(const vvp_vector4_t&bit,
+					     vvp_vector4_t&rep,
+					     unsigned base, unsigned vwid,
+					     bool)
+      { return filter_vec4(bit, rep, base, vwid); }
       virtual prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep,
 				 unsigned base, unsigned vwid);
       virtual prop_t filter_real(double&val);
@@ -1723,6 +1733,29 @@ inline void vvp_net_t::send_vec4(const vvp_vector4_t&val, vvp_context_t context)
 
       vvp_vector4_t rep;
       switch (fil->filter_vec4(val, rep, 0, val.size())) {
+	  case vvp_net_fil_t::STOP:
+	    break;
+	  case vvp_net_fil_t::PROP:
+	    vvp_send_vec4(out_, val, context);
+	    break;
+	  case vvp_net_fil_t::REPL:
+	    vvp_send_vec4(out_, rep, context);
+	    break;
+      }
+}
+
+inline void vvp_net_t::send_vec4_from_signal(const vvp_vector4_t&val,
+					      vvp_context_t context,
+					      bool known_changed)
+{
+      if (fil == 0) {
+	    vvp_send_vec4(out_, val, context);
+	    return;
+      }
+
+      vvp_vector4_t rep;
+      switch (fil->filter_vec4_from_signal(val, rep, 0, val.size(),
+					    known_changed)) {
 	  case vvp_net_fil_t::STOP:
 	    break;
 	  case vvp_net_fil_t::PROP:

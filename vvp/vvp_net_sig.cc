@@ -177,11 +177,12 @@ void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 		 copy the bits, otherwise we need to see if there are
 		 any holes in the mask so we can set those bits. */
 	    if (assign_mask_.size() == 0) {
-                  if (needs_init_ || !bits4_.eeq(bit)) {
+		  bool changed = !bits4_.eeq(bit);
+                  if (needs_init_ || changed) {
 			assert(bit.size() == bits4_.size());
 			bits4_ = bit;
 			needs_init_ = false;
-			ptr.ptr()->send_vec4(bits4_, 0);
+			ptr.ptr()->send_vec4_from_signal(bits4_, 0, changed);
 		  }
 	    } else {
 		  bool changed = false;
@@ -194,7 +195,7 @@ void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 		  }
 		  if (changed) {
 			needs_init_ = false;
-			ptr.ptr()->send_vec4(bits4_, 0);
+			ptr.ptr()->send_vec4_from_signal(bits4_, 0, false);
 		  }
 	    }
 	    break;
@@ -206,7 +207,7 @@ void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 	      // the case of an expression being assigned.
 	    bits4_ = coerce_to_width(bit, bits4_.size());
 	    assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL1, bits4_.size());
-	    ptr.ptr()->send_vec4(bits4_, 0);
+	    ptr.ptr()->send_vec4_from_signal(bits4_, 0, false);
 	    break;
 
 	  default:
@@ -247,7 +248,7 @@ void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit
 		    // initial value still needs to propagate).
 		  if (needs_init_ || changed) {
 			needs_init_ = false;
-			ptr.ptr()->send_vec4(bits4_,0);
+			ptr.ptr()->send_vec4_from_signal(bits4_, 0, changed);
 		  }
 	    } else {
 		  bool changed = false;
@@ -260,7 +261,7 @@ void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit
 		  }
 		  if (changed) {
 			needs_init_ = false;
-			ptr.ptr()->send_vec4(bits4_,0);
+			ptr.ptr()->send_vec4_from_signal(bits4_, 0, false);
 		  }
 	    }
 	    break;
@@ -274,7 +275,7 @@ void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit
 		  bits4_.set_bit(base+idx, bit.value(idx));
 		  assign_mask_.set_bit(base+idx, 1);
 	    }
-	    ptr.ptr()->send_vec4(bits4_,0);
+	    ptr.ptr()->send_vec4_from_signal(bits4_, 0, false);
 	    break;
 
 	  default:
@@ -884,6 +885,7 @@ vvp_wire_vec4::vvp_wire_vec4(unsigned wid, vvp_bit4_t init)
 : bits4_(wid, init)
 {
       needs_init_ = true;
+      signal_value_synced_ = false;
 }
 
 void vvp_wire_vec4::set_variable_mask(const vvp_vector4_t&state_mask)
@@ -918,6 +920,7 @@ void vvp_wire_vec4::assign_variable(vvp_net_t*net,
 				    unsigned base, unsigned vwid,
 				    vvp_context_t context)
 {
+      signal_value_synced_ = false;
       assert(net);
       assert(driver_mask_.size() == bits4_.size());
       assert(vwid == bits4_.size());
@@ -951,6 +954,7 @@ void vvp_wire_vec4::assign_variable(vvp_net_t*net,
 vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
 						 unsigned base, unsigned vwid)
 {
+      signal_value_synced_ = false;
 	// Special case! the input bit is 0 wid. Interpret this as a
 	// vector of BIT4_X to match the width of the bits4_ vector.
 	// FIXME! This is a hack to work around some buggy gate
@@ -1006,11 +1010,34 @@ vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec4(const vvp_vector4_t&bit, vvp_ve
       return filter_mask_(bit, force4_, rep, base);
 }
 
+vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec4_from_signal(
+		const vvp_vector4_t&bit, vvp_vector4_t&rep,
+		unsigned base, unsigned vwid, bool known_changed)
+{
+      if (driver_mask_.size() || base != 0 || bit.size() != vwid)
+	    return filter_vec4(bit, rep, base, vwid);
+
+      assert(bits4_.size() == vwid);
+	// A generic filter call can update bits4_ without updating the paired
+	// signal functor. Only trust its comparison while the two are synced.
+      if ((!signal_value_synced_ || !known_changed)
+	  && bits4_.eeq(bit) && !needs_init_) {
+	    signal_value_synced_ = true;
+	    return STOP;
+      }
+
+      bits4_ = bit;
+      needs_init_ = false;
+      signal_value_synced_ = true;
+      return filter_mask_(bit, force4_, rep, 0);
+}
+
 vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec8(const vvp_vector8_t&bit,
                                                  vvp_vector8_t&rep,
                                                  unsigned base,
                                                  unsigned vwid)
 {
+      signal_value_synced_ = false;
       assert(bits4_.size() == vwid);
 
       if (driver_mask_.size()) {
