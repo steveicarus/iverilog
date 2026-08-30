@@ -1555,6 +1555,25 @@ void vvp_vector4_t::shiftl(unsigned shift)
       const unsigned word_shift = shift / BITS_PER_WORD;
       const unsigned bit_shift = shift % BITS_PER_WORD;
 
+      if (word_shift == 0) {
+	    const unsigned reverse_shift = BITS_PER_WORD - bit_shift;
+	    for (unsigned dst = words-1 ; dst > 0 ; dst -= 1) {
+		  abits_ptr_[dst] = (abits_ptr_[dst] << bit_shift)
+			| (abits_ptr_[dst-1] >> reverse_shift);
+		  bbits_ptr_[dst] = (bbits_ptr_[dst] << bit_shift)
+			| (bbits_ptr_[dst-1] >> reverse_shift);
+	    }
+	    abits_ptr_[0] <<= bit_shift;
+	    bbits_ptr_[0] <<= bit_shift;
+
+	    if (unsigned tail = size_ % BITS_PER_WORD) {
+		  unsigned long mask = (1UL << tail) - 1UL;
+		  abits_ptr_[words-1] &= mask;
+		  bbits_ptr_[words-1] &= mask;
+	    }
+	    return;
+      }
+
 	// Copy from high words to low words so the overlapping in-place
 	// shift never overwrites a source word before it is read.
       for (unsigned dst = words; dst > word_shift;) {
