@@ -1039,56 +1039,6 @@ bool of_AND(vthread_t thr, vvp_code_t)
 }
 
 /*
- * This function must ALWAYS be called with the val set to the right
- * size, and initialized with BIT4_0 bits. Certain optimizations rely
- * on that.
- */
-static void get_immediate_rval(vvp_code_t cp, vvp_vector4_t&val)
-{
-      uint32_t vala = cp->bit_idx[0];
-      uint32_t valb = cp->bit_idx[1];
-      unsigned wid  = cp->number;
-
-      if (valb == 0) {
-	      // Special case: if the value is zero, we are done
-	      // before we start.
-	    if (vala == 0) return;
-
-	      // Special case: The value has no X/Z bits, so we can
-	      // use the setarray method to write the value all at once.
-	    unsigned use_wid = 8*sizeof(unsigned long);
-	    if (wid < use_wid)
-		  use_wid = wid;
-	    unsigned long tmp[1];
-	    tmp[0] = vala;
-	    val.setarray(0, use_wid, tmp);
-	    return;
-      }
-
-	// The immediate value can be values bigger then 32 bits, but
-	// only if the high bits are zero. So at most we need to run
-	// through the loop below 32 times. Maybe less, if the target
-	// width is less. We don't have to do anything special on that
-	// because vala/valb bits will shift away so (vala|valb) will
-	// turn to zero at or before 32 shifts.
-
-      for (unsigned idx = 0 ; idx < wid && (vala|valb) ; idx += 1) {
-	    uint32_t ba = 0;
-	      // Convert the vala/valb bits to a ba number that
-	      // matches the encoding of the vvp_bit4_t enumeration.
-	    ba = (valb & 1) << 1;
-	    ba |= vala & 1;
-
-	      // Note that the val is already pre-filled with BIT4_0
-	      // bits, os we only need to set non-zero bit values.
-	    if (ba) val.set_bit(idx, (vvp_bit4_t)ba);
-
-	    vala >>= 1;
-	    valb >>= 1;
-      }
-}
-
-/*
  * %add
  *
  * Pop r,
@@ -1123,11 +1073,7 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t&l = thr->peek_vec4();
 
-	// I expect that most of the bits of an immediate value are
-	// going to be zero, so start the result vector with all zero
-	// bits. Then we only need to replace the bits that are different.
-      vvp_vector4_t r (wid, BIT4_0);
-      get_immediate_rval (cp, r);
+      vvp_vector4_t r (wid, cp->bit_idx[0], cp->bit_idx[1]);
 
       l.add(r);
 
@@ -1978,11 +1924,7 @@ bool of_CMPIE(vthread_t thr, vvp_code_t cp)
 
       const vvp_vector4_t&lval = thr->peek_vec4();
 
-	// I expect that most of the bits of an immediate value are
-	// going to be zero, so start the result vector with all zero
-	// bits. Then we only need to replace the bits that are different.
-      vvp_vector4_t rval (wid, BIT4_0);
-      get_immediate_rval (cp, rval);
+      vvp_vector4_t rval (wid, cp->bit_idx[0], cp->bit_idx[1]);
 
       do_CMPE(thr, lval, rval);
 
@@ -1996,11 +1938,7 @@ bool of_CMPINE(vthread_t thr, vvp_code_t cp)
 
       const vvp_vector4_t&lval = thr->peek_vec4();
 
-	// I expect that most of the bits of an immediate value are
-	// going to be zero, so start the result vector with all zero
-	// bits. Then we only need to replace the bits that are different.
-      vvp_vector4_t rval (wid, BIT4_0);
-      get_immediate_rval (cp, rval);
+      vvp_vector4_t rval (wid, cp->bit_idx[0], cp->bit_idx[1]);
 
       do_CMPE(thr, lval, rval);
 
@@ -2128,11 +2066,7 @@ bool of_CMPIS(vthread_t thr, vvp_code_t cp)
 
       const vvp_vector4_t&lval = thr->peek_vec4();
 
-	// I expect that most of the bits of an immediate value are
-	// going to be zero, so start the result vector with all zero
-	// bits. Then we only need to replace the bits that are different.
-      vvp_vector4_t rval (wid, BIT4_0);
-      get_immediate_rval (cp, rval);
+      vvp_vector4_t rval (wid, cp->bit_idx[0], cp->bit_idx[1]);
 
       do_CMPS(thr, lval, rval);
 
@@ -2264,11 +2198,7 @@ bool of_CMPIU(vthread_t thr, vvp_code_t cp)
 
       const vvp_vector4_t&lval = thr->peek_vec4();
 
-	// I expect that most of the bits of an immediate value are
-	// going to be zero, so start the result vector with all zero
-	// bits. Then we only need to replace the bits that are different.
-      vvp_vector4_t rval (wid, BIT4_0);
-      get_immediate_rval (cp, rval);
+      vvp_vector4_t rval (wid, cp->bit_idx[0], cp->bit_idx[1]);
 
       do_CMPU(thr, lval, rval);
 
@@ -2452,11 +2382,7 @@ bool of_CONCATI_VEC4(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t&msb = thr->peek_vec4();
 
-	// I expect that most of the bits of an immediate value are
-	// going to be zero, so start the result vector with all zero
-	// bits. Then we only need to replace the bits that are different.
-      vvp_vector4_t lsb (wid, BIT4_0);
-      get_immediate_rval (cp, lsb);
+      vvp_vector4_t lsb (wid, cp->bit_idx[0], cp->bit_idx[1]);
 
       msb.concat(lsb);
       return true;
@@ -4908,17 +4834,7 @@ bool of_ASSIGNI_VEC4(vthread_t, vvp_code_t cp)
       vvp_net_ptr_t ptr (cp->net, 0);
       unsigned wid = cp->bit_idx[1] >> 6;
       unsigned delay = cp->bit_idx[1] & 63;
-      unsigned long vala = cp->bit_idx[0];
-
-      vvp_vector4_t val (wid, BIT4_0);
-      if (vala) {
-	    unsigned use_wid = 8*sizeof(unsigned long);
-	    if (wid < use_wid)
-		  use_wid = wid;
-	    unsigned long tmp[1];
-	    tmp[0] = vala;
-	    val.setarray(0, use_wid, tmp);
-      }
+      vvp_vector4_t val (wid, cp->bit_idx[0], 0UL);
 
       schedule_assign_vector(ptr, 0, 0, val, delay);
       return true;
@@ -4951,11 +4867,7 @@ bool of_MULI(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t&l = thr->peek_vec4();
 
-	// I expect that most of the bits of an immediate value are
-	// going to be zero, so start the result vector with all zero
-	// bits. Then we only need to replace the bits that are different.
-      vvp_vector4_t r (wid, BIT4_0);
-      get_immediate_rval (cp, r);
+      vvp_vector4_t r (wid, cp->bit_idx[0], cp->bit_idx[1]);
 
       l.mul(r);
       return true;
@@ -5416,11 +5328,7 @@ bool of_PUSHI_VEC4(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid  = cp->number;
 
-	// I expect that most of the bits of an immediate value are
-	// going to be zero, so start the result vector with all zero
-	// bits. Then we only need to replace the bits that are different.
-      vvp_vector4_t val (wid, BIT4_0);
-      get_immediate_rval (cp, val);
+      vvp_vector4_t val (wid, cp->bit_idx[0], cp->bit_idx[1]);
 
       thr->push_vec4(std::move(val));
 
@@ -8001,11 +7909,7 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t&l = thr->peek_vec4();
 
-	// I expect that most of the bits of an immediate value are
-	// going to be zero, so start the result vector with all zero
-	// bits. Then we only need to replace the bits that are different.
-      vvp_vector4_t r (wid, BIT4_0);
-      get_immediate_rval (cp, r);
+      vvp_vector4_t r (wid, cp->bit_idx[0], cp->bit_idx[1]);
 
       l.sub(r);
 
