@@ -40,11 +40,12 @@ using namespace std;
 struct cprop_functor  : public functor_t {
 
       unsigned count;
+      vector<NetConst*> constants;
 
-      virtual void signal(Design*des, NetNet*obj) override;
       virtual void lpm_add_sub(Design*des, NetAddSub*obj) override;
       virtual void lpm_compare(Design*des, const NetCompare*obj) override;
       virtual void lpm_concat(Design*des, NetConcat*obj) override;
+      virtual void lpm_const(Design*des, NetConst*obj) override;
       virtual void lpm_ff(Design*des, NetFF*obj) override;
       virtual void lpm_logic(Design*des, NetLogic*obj) override;
       virtual void lpm_mux(Design*des, NetMux*obj) override;
@@ -53,12 +54,13 @@ struct cprop_functor  : public functor_t {
       static void lpm_compare_eq_(Design*des, const NetCompare*obj);
  };
 
-void cprop_functor::signal(Design*, NetNet*)
+void cprop_functor::lpm_add_sub(Design*, NetAddSub*)
 {
 }
 
-void cprop_functor::lpm_add_sub(Design*, NetAddSub*)
+void cprop_functor::lpm_const(Design*, NetConst*obj)
 {
+      constants.push_back(obj);
 }
 
 void cprop_functor::lpm_compare(Design*des, const NetCompare*obj)
@@ -346,23 +348,18 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
 }
 
 /*
- * This functor looks to see if the constant is connected to nothing
- * but signals. If that is the case, delete the dangling constant and
- * the now useless signals. This functor is applied after the regular
- * functor to clean up dangling constants that might be left behind.
+ * Look to see if the constant is connected to nothing but signals. If
+ * that is the case, delete the dangling constant and the now useless
+ * signals. This is applied after constant propagation reaches a fixed
+ * point to clean up dangling constants that might be left behind.
  */
-struct cprop_dc_functor  : public functor_t {
-
-      virtual void lpm_const(Design*des, NetConst*obj) override;
-};
-
 struct nexus_info_s {
       Nexus*nex;
       unsigned inp;
       unsigned out;
 };
 
-void cprop_dc_functor::lpm_const(Design*, NetConst*obj)
+static void delete_dangling_const(NetConst*obj)
 {
 	// 'bz constant values drive high impedance to whatever is
 	// connected to it. In other words, it is a noop. But that is
@@ -449,7 +446,8 @@ void cprop(Design*des)
       cprop_functor prop;
       do {
 	    prop.count = 0;
-	    des->functor(&prop);
+	    prop.constants.clear();
+	    des->functor_nodes(&prop);
 	    if (verbose_flag) {
 		  cout << " ... Iteration detected "
 		       << prop.count << " optimizations." << endl << flush;
@@ -459,8 +457,11 @@ void cprop(Design*des)
       if (verbose_flag) {
 	    cout << " ... Look for dangling constants" << endl << flush;
       }
-      cprop_dc_functor dc;
-      des->functor(&dc);
+	// The fixed-point scan saw every surviving constant. Reuse that list
+	// instead of walking the complete node list one more time.
+      for (vector<NetConst*>::iterator cur = prop.constants.begin()
+		 ; cur != prop.constants.end() ; ++ cur)
+	    delete_dangling_const(*cur);
 
       if (verbose_flag) {
 	    cout << " ... done" << endl << flush;

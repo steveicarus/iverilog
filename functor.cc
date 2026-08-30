@@ -153,7 +153,12 @@ void Design::functor(functor_t*fun)
 	    fun->process(this, idx);
       }
 
-	// apply to nodes
+      functor_nodes(fun);
+}
+
+void Design::functor_nodes(functor_t*fun)
+{
+	// Apply to nodes while allowing the current node to delete itself.
       if (nodes_) {
 	    assert(nodes_functor_cur_ == 0);
 	    assert(nodes_functor_nxt_ == 0);
