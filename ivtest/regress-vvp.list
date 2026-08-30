@@ -662,6 +662,7 @@ va_math				vvp_tests/va_math.json
 vvp_quiet_mode			vvp_tests/vvp_quiet_mode.json
 warn_opt_sys_tf			vvp_tests/warn_opt_sys_tf.json
 wide_carry_arith		vvp_tests/wide_carry_arith.json
+wide_multiply_carry		vvp_tests/wide_multiply_carry.json
 word_concat			vvp_tests/word_concat.json
 wreal				vvp_tests/wreal.json
 writemem-invalid		vvp_tests/writemem-invalid.json
