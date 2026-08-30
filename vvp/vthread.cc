@@ -4797,6 +4797,12 @@ bool of_PARTI_U(vthread_t thr, vvp_code_t cp)
       return of_PARTI_base(thr, cp, false);
 }
 
+/* The loader leaves a dead second slot behind each two-op fusion. */
+static inline void skip_fused_noop(vthread_t thr)
+{
+      thr->pc += 1;
+}
+
 /*
  * Fused %load/vec4 + %parti/s (or /u). The loader's peephole rewrites
  * that adjacent pair into this operation, which reads only the
@@ -4806,6 +4812,8 @@ bool of_PARTI_U(vthread_t thr, vvp_code_t cp)
  */
 static bool of_LOAD_PARTI_base(vthread_t thr, vvp_code_t cp)
 {
+      skip_fused_noop(thr);
+
 	// The loader precomputes the signed base because these operands
 	// are constants and this instruction can execute very frequently.
 	unsigned wid = cp->bit_idx[1];
@@ -4861,6 +4869,8 @@ bool of_LOAD_PARTI_U(vthread_t thr, vvp_code_t cp)
  */
 bool of_LOAD_FLAG(vthread_t thr, vvp_code_t cp)
 {
+      skip_fused_noop(thr);
+
       int flag = cp->bit_idx[0];
       assert(flag < vthread_s::FLAGS_COUNT);
       thr->flags[flag] = cp->signal->value(0);
@@ -4874,6 +4884,8 @@ bool of_LOAD_FLAG(vthread_t thr, vvp_code_t cp)
  */
 bool of_FLAG_SETGET_VEC4(vthread_t thr, vvp_code_t cp)
 {
+      skip_fused_noop(thr);
+
       int flag = cp->number;
       assert(flag < vthread_s::FLAGS_COUNT);
 
