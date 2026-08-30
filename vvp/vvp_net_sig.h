@@ -438,6 +438,10 @@ class vvp_wire_vec4 : public vvp_wire_base {
 	// that when a force is released, we can revert to the driven value.
       prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
 			 unsigned base, unsigned vwid) override;
+      prop_t filter_vec4_from_signal(const vvp_vector4_t&bit,
+				     vvp_vector4_t&rep,
+				     unsigned base, unsigned vwid,
+				     bool known_changed) override;
       prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep,
 			 unsigned base, unsigned vwid) override;
 
@@ -467,6 +471,7 @@ class vvp_wire_vec4 : public vvp_wire_base {
 
     private:
       bool needs_init_;
+      bool signal_value_synced_;
       vvp_vector4_t bits4_; // The tracked driven value
       vvp_vector4_t force4_; // the value being forced
       vvp_vector2_t driver_mask_; // Bits with structural drivers
