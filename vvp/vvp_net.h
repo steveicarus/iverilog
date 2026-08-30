@@ -314,8 +314,8 @@ class vvp_vector4_t {
         // Get the bits from another vector, but keep my size.
       void copy_bits(const vvp_vector4_t&that);
 
-	// Replace this word-sized vector with the concatenation {this, lsb}.
-      void concat_word(const vvp_vector4_t&lsb);
+	// Replace this vector with the concatenation {this, lsb}.
+      void concat(const vvp_vector4_t&lsb);
 
 	// Shift bits left in place, filling the vacated low bits with zero.
       void shiftl(unsigned shift);
@@ -573,25 +573,38 @@ inline vvp_vector4_t& vvp_vector4_t::operator= (vvp_vector4_t&&that) noexcept
       return *this;
 }
 
-inline void vvp_vector4_t::concat_word(const vvp_vector4_t&lsb)
+inline void vvp_vector4_t::concat(const vvp_vector4_t&lsb)
 {
-      assert(size_ + lsb.size_ <= BITS_PER_WORD);
+      const unsigned lsb_size = lsb.size_;
+      const unsigned new_size = size_ + lsb_size;
 
-      if (lsb.size_ == BITS_PER_WORD) {
+      if (new_size > BITS_PER_WORD) {
+	    if (size_ == 0) {
+		  *this = lsb;
+		  return;
+	    }
+
+	    resize(new_size, BIT4_0);
+	    shiftl(lsb_size);
+	    set_vec(0, lsb);
+	    return;
+      }
+
+      if (lsb_size == BITS_PER_WORD) {
 	    abits_val_ = lsb.abits_val_;
 	    bbits_val_ = lsb.bbits_val_;
 	    size_ = BITS_PER_WORD;
 	    return;
       }
 
-      const unsigned long lmask = (1UL << lsb.size_) - 1UL;
+      const unsigned long lmask = (1UL << lsb_size) - 1UL;
       const unsigned long mmask = size_ == BITS_PER_WORD
 	    ? -1UL : (1UL << size_) - 1UL;
-      abits_val_ = ((abits_val_ & mmask) << lsb.size_)
+      abits_val_ = ((abits_val_ & mmask) << lsb_size)
 	    | (lsb.abits_val_ & lmask);
-      bbits_val_ = ((bbits_val_ & mmask) << lsb.size_)
+      bbits_val_ = ((bbits_val_ & mmask) << lsb_size)
 	    | (lsb.bbits_val_ & lmask);
-      size_ += lsb.size_;
+      size_ = new_size;
 }
 
 inline void vvp_vector4_t::copy_from_(const vvp_vector4_t&that)
