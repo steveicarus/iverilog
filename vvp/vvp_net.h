@@ -443,6 +443,26 @@ class vvp_vector4_t {
       };
 };
 
+/* Make sure to set size_ before calling this routine. Keep the definition
+ * visible so the common single-word initialization path can be inlined. */
+inline void vvp_vector4_t::allocate_words_(unsigned long inita,
+                                           unsigned long initb)
+{
+      if (size_ > BITS_PER_WORD) {
+	    unsigned cnt = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
+	    abits_ptr_ = alloc_block_(cnt);
+	    bbits_ptr_ = abits_ptr_ + cnt;
+	    for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+		  abits_ptr_[idx] = inita;
+	    for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+		  bbits_ptr_[idx] = initb;
+
+      } else {
+	    abits_val_ = inita;
+	    bbits_val_ = initb;
+      }
+}
+
 inline vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that)
 {
       copy_from_(that);
