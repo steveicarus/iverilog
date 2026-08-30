@@ -830,24 +830,37 @@ vvp_vector4_t::vvp_vector4_t(unsigned size__, double val)
 vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
 			    unsigned adr, unsigned wid)
 {
-	// Set up and initialize the destination.
+      // Out-of-range selections need the X fill. Fully contained selections
+      // overwrite every destination word, so avoid initializing storage that
+      // will immediately be replaced.
       size_ = wid;
-      allocate_words_(WORD_X_ABITS, WORD_X_BBITS);
 
 	// Special case: selecting from far beyond the source vector,
 	// to the result is all X bits. We're done.
-      if (adr >= that.size_)
+      if (wid == 0 || adr >= that.size_) {
+	    allocate_words_(WORD_X_ABITS, WORD_X_BBITS);
 	    return;
+      }
 
 	// Special case: The source is not quite big enough to supply
 	// all bits, so get the bits that we can. The remainder will
 	// be left at BIT4_X.
-      if ((adr + wid) > that.size_) {
+      if (wid > that.size_ - adr) {
+	    allocate_words_(WORD_X_ABITS, WORD_X_BBITS);
 	    unsigned use_wid = that.size_ - adr;
 	    for (unsigned idx = 0 ; idx < use_wid ; idx += 1)
 		  set_bit(idx, that.value(adr+idx));
 
 	    return;
+      }
+
+      if (wid > BITS_PER_WORD) {
+	    unsigned words = (wid + BITS_PER_WORD - 1) / BITS_PER_WORD;
+	    abits_ptr_ = alloc_block_(words);
+	    bbits_ptr_ = abits_ptr_ + words;
+      } else {
+	    abits_val_ = 0;
+	    bbits_val_ = 0;
       }
 
 	// At the point, we know that the source part is entirely
@@ -859,6 +872,15 @@ vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
 		 long. Do the transfer reasonably efficiently. */
 	    unsigned ptr = adr / BITS_PER_WORD;
 	    unsigned long off = adr % BITS_PER_WORD;
+	    if (off == 0) {
+		  unsigned words = (wid + BITS_PER_WORD - 1) / BITS_PER_WORD;
+		  memcpy(abits_ptr_, that.abits_ptr_ + ptr,
+			 words * sizeof(unsigned long));
+		  memcpy(bbits_ptr_, that.bbits_ptr_ + ptr,
+			 words * sizeof(unsigned long));
+		  return;
+	    }
+
 	    unsigned long noff = BITS_PER_WORD - off;
 	    unsigned long lmask = (1UL << off) - 1UL;
 	    unsigned trans = 0;
@@ -874,13 +896,10 @@ vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
 
 		  ptr += 1;
 
-		    // The high bits of the result. Skip this if the
-		    // source and destination are perfectly aligned.
-		  if (noff != BITS_PER_WORD) {
-			abits_ptr_[dst] |= (that.abits_ptr_[ptr]&lmask) << noff;
-			bbits_ptr_[dst] |= (that.bbits_ptr_[ptr]&lmask) << noff;
-			trans += off;
-		  }
+		    // The high bits of the result.
+		  abits_ptr_[dst] |= (that.abits_ptr_[ptr]&lmask) << noff;
+		  bbits_ptr_[dst] |= (that.bbits_ptr_[ptr]&lmask) << noff;
+		  trans += off;
 
 		  dst += 1;
 	    }

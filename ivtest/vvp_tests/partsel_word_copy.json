@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "partsel_word_copy.v",
+    "iverilog-args" : [ "-g2012" ]
+}
