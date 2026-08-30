@@ -544,6 +544,8 @@ int edge(vvp_bit4_t from, vvp_bit4_t to)
       return 0;
 }
 
+#if !defined(__SIZEOF_INT128__) || !defined(__SIZEOF_LONG__) \
+    || __SIZEOF_INT128__ < 2 * __SIZEOF_LONG__
 unsigned long multiply_with_carry(unsigned long a, unsigned long b,
 				  unsigned long&carry)
 {
@@ -585,6 +587,7 @@ unsigned long multiply_with_carry(unsigned long a, unsigned long b,
       carry = (r3 << (CPU_WORD_BITS/2)) + r2;
       return (r1 << (CPU_WORD_BITS/2)) + r00;
 }
+#endif
 
 
 void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val)
