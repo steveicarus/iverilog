@@ -1,16 +1,17 @@
 #!/bin/sh
 # Build the performance-tuned iverilog/vvp installation: clang +
-# ThinLTO + PGO, trained on the benchmark suite. Frame pointers are
-# kept so perf call graphs remain usable.
+# ThinLTO + PGO, trained on the benchmark suite. The default flags favor
+# maximum runtime performance; set PERF_BASEFLAGS to override them (for
+# example, use -fno-omit-frame-pointer when collecting perf call graphs).
 #
 # Usage: scripts/perf-build.sh BUILDDIR [JOBS]
 #
 # Requirements: clang/clang++ 15+ with matching llvm-ar, llvm-ranlib
 # and llvm-profdata (override with CLANG=, CLANGXX=, LLVM_AR=,
-# LLVM_RANLIB=, LLVM_PROFDATA=). If the host's plain clang++ is
-# shadowed by another toolchain (e.g. Xilinx Vitis), pass absolute
-# paths. Extra include/library dirs for bison/readline/bzip2 etc. can
-# be passed with PERF_CPPFLAGS= and PERF_LDFLAGS=.
+# LLVM_RANLIB=, LLVM_PROFDATA=, PERF_BASEFLAGS=). If the host's plain
+# clang++ is shadowed by another toolchain (e.g. Xilinx Vitis), pass
+# absolute paths. Extra include/library dirs for bison/readline/bzip2
+# etc. can be passed with PERF_CPPFLAGS= and PERF_LDFLAGS=.
 #
 # The result installs into BUILDDIR/final/install. The user-facing
 # iverilog-vpi keeps LTO flags out of user VPI module builds (see
@@ -30,7 +31,7 @@ LLVM_PROFDATA=${LLVM_PROFDATA:-llvm-profdata}
 PERF_CPPFLAGS=${PERF_CPPFLAGS:-}
 PERF_LDFLAGS=${PERF_LDFLAGS:-}
 
-BASEFLAGS="-O2 -g -fno-omit-frame-pointer -flto=thin"
+BASEFLAGS=${PERF_BASEFLAGS:--O3 -g -fomit-frame-pointer -flto=thin}
 PROFDIR="$BUILDDIR/profiles"
 PROFDATA="$BUILDDIR/pgo.profdata"
 
