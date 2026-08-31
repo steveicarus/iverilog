@@ -616,6 +616,32 @@ void vvp_send_real(vvp_net_ptr_t ptr, double val, vvp_context_t context)
 
 const vvp_vector4_t vvp_vector4_t::nil;
 
+void vvp_vector4_t::concat_inplace_(const vvp_vector4_t&lsb,
+                                    unsigned lsb_size,
+                                    unsigned new_size, unsigned words)
+{
+      const unsigned reverse_shift = BITS_PER_WORD - lsb_size;
+      for (unsigned dst = words - 1; dst > 0; dst -= 1) {
+	    abits_ptr_[dst] = (abits_ptr_[dst] << lsb_size)
+		  | (abits_ptr_[dst-1] >> reverse_shift);
+	    bbits_ptr_[dst] = (bbits_ptr_[dst] << lsb_size)
+		  | (bbits_ptr_[dst-1] >> reverse_shift);
+      }
+
+      const unsigned long lmask = (1UL << lsb_size) - 1UL;
+      abits_ptr_[0] = (abits_ptr_[0] << lsb_size)
+	    | (lsb.abits_val_ & lmask);
+      bbits_ptr_[0] = (bbits_ptr_[0] << lsb_size)
+	    | (lsb.bbits_val_ & lmask);
+      size_ = new_size;
+
+      if (unsigned tail = new_size % BITS_PER_WORD) {
+	    const unsigned long mask = (1UL << tail) - 1UL;
+	    abits_ptr_[words-1] &= mask;
+	    bbits_ptr_[words-1] &= mask;
+      }
+}
+
 void vvp_vector4_t::copy_bits(const vvp_vector4_t&that)
 {
 

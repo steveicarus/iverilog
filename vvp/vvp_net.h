@@ -425,6 +425,8 @@ class vvp_vector4_t {
       void copy_from_(const vvp_vector4_t&that);
       void copy_from_big_(const vvp_vector4_t&that);
       void copy_inverted_from_(const vvp_vector4_t&that);
+      void concat_inplace_(const vvp_vector4_t&lsb, unsigned lsb_size,
+                           unsigned new_size, unsigned words);
 
       void allocate_words_(unsigned long inita, unsigned long initb);
 
@@ -629,6 +631,17 @@ inline void vvp_vector4_t::concat(const vvp_vector4_t&lsb)
       if (new_size > BITS_PER_WORD) {
 	    if (size_ == 0) {
 		  *this = lsb;
+		  return;
+	    }
+
+	    const unsigned old_words =
+		  (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
+	    const unsigned new_words =
+		  (new_size + BITS_PER_WORD - 1) / BITS_PER_WORD;
+	      // When the allocation already has enough words, combine the
+	      // zero-extension, shift, and low-part insertion in one pass.
+	    if (old_words == new_words && lsb_size != 0) {
+		  concat_inplace_(lsb, lsb_size, new_size, old_words);
 		  return;
 	    }
 
