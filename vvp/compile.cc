@@ -2084,6 +2084,8 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	    vvp_code_fun fused_opcode = 0;
 	    if (code->opcode == &of_CONCAT_VEC4)
 		  fused_opcode = &of_LOAD_PARTI_CONCAT;
+	    else if (code->opcode == &of_ADD)
+		  fused_opcode = &of_LOAD_PARTI_ADD;
 	    else if (code->opcode == &of_XOR)
 		  fused_opcode = &of_LOAD_PARTI_XOR;
 

@@ -189,6 +189,7 @@ extern bool of_LOAD_PARTI_S(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_PARTI_U(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_PARTI_PAIR(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_PARTI_PAIR_CONCAT(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_PARTI_ADD(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_PARTI_CONCAT(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_PARTI_XOR(vthread_t thr, vvp_code_t code);
 extern bool of_PARTI_S(vthread_t thr, vvp_code_t code);

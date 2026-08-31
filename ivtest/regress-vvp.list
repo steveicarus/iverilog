@@ -202,6 +202,7 @@ named_event_edge_fail		vvp_tests/named_event_edge_fail.json
 named_event_negedge_fail	vvp_tests/named_event_negedge_fail.json
 named_event_posedge_fail	vvp_tests/named_event_posedge_fail.json
 non-polymorphic-abs		vvp_tests/non-polymorphic-abs.json
+parti_add_fusion		vvp_tests/parti_add_fusion.json
 parti_concat_fusion		vvp_tests/parti_concat_fusion.json
 parti_pair_fusion		vvp_tests/parti_pair_fusion.json
 parti_xor_fusion		vvp_tests/parti_xor_fusion.json

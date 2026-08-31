@@ -4818,6 +4818,21 @@ bool of_LOAD_PARTI_PAIR_CONCAT(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/* Fused %load/vec4 + %parti/s|u + %add. */
+bool of_LOAD_PARTI_ADD(vthread_t thr, vvp_code_t cp)
+{
+      // Skip the dead %parti and %add slots.
+      thr->pc += 2;
+
+      unsigned wid = cp->bit_idx[1];
+      unsigned use_base = cp->bit_idx[0];
+      vvp_vector4_t rhs = cp->signal->vec4_subvalue(use_base, wid);
+      vvp_vector4_t&lhs = thr->peek_vec4();
+      assert(lhs.size() == rhs.size());
+      lhs.add(rhs);
+      return true;
+}
+
 /* Fused %load/vec4 + %parti/s|u + %concat/vec4. */
 bool of_LOAD_PARTI_CONCAT(vthread_t thr, vvp_code_t cp)
 {
