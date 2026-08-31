@@ -2036,20 +2036,33 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	    }
       }
 
-	/* Peephole: fuse adjacent instruction pairs. Fusions that execute in
-	   the first slot require physical adjacency as well as logical
-	   adjacency, so they can skip the dead second slot without crossing
-	   a code-space chunk link.
-
-	   Fuse an adjacent %load/vec4 + %parti/s|u pair
-	   into one operation that reads only the selected part of
-	   the signal. Requires the pair to occupy adjacent slots
-	   with no label bound to the second instruction, so nothing
-	   can jump between them. The second slot becomes a %noop so
-	   code addresses are unchanged. */
+	/* Peephole: fuse adjacent instructions. Fusions that execute in the
+	   first slot require physical adjacency as well as logical adjacency,
+	   so they can skip dead slots without crossing a code-space chunk
+	   link. Labels clear peep_prev_code_, preventing a fusion from hiding
+	   a branch target. */
       static int peep_disable = -1;
       if (peep_disable < 0)
 	    peep_disable = (getenv("VVP_NO_FUSE") != 0);
+
+	/* Extend a fused %load/vec4 + %parti/s|u with an adjacent %xor.
+	   The part-select result is the right operand, so the combined opcode
+	   can apply it directly to the left operand already on the stack. */
+      if (!peep_disable && peep_prev_code_ && code == peep_fuse_slot_
+	  && code == peep_prev_code_ + 2
+	  && (peep_prev_code_->opcode == &of_LOAD_PARTI_S
+	      || peep_prev_code_->opcode == &of_LOAD_PARTI_U)
+	  && code->opcode == &of_XOR
+	  && static_cast<int32_t>(peep_prev_code_->bit_idx[0]) >= 0) {
+	    peep_prev_code_->opcode = &of_LOAD_PARTI_XOR;
+	    code->opcode = &of_NOOP;
+	    peep_prev_code_ = 0;
+	    peep_fuse_slot_ = codespace_next();
+	    free(opa);
+	    free(mnem);
+	    return;
+      }
+
       if (!peep_disable && peep_prev_code_ && code == peep_fuse_slot_
 	  && peep_prev_code_->opcode == &of_PUSHI_VEC4
 	  && code->opcode == &of_ASSIGN_VEC4
@@ -2120,6 +2133,10 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	  && peep_prev_code_->opcode == &of_LOAD_VEC4
 	  && (code->opcode == &of_PARTI_S || code->opcode == &of_PARTI_U)
 	  && code->number < (1UL<<26) && code->bit_idx[1] < 64) {
+	    /* Read only the selected part of the signal. The pair must occupy
+	       adjacent slots with no label bound to the second instruction.
+	       Keep the dead %parti slot as %noop so code addresses remain
+	       stable. */
 	    /* The %load's net pointer shares a union with `number`,
 	       so the fused operands live entirely in bit_idx:
 	       bit_idx[0] is the already sign-extended select base and
@@ -2134,7 +2151,8 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	    peep_prev_code_->bit_idx[0] = base;
 	    peep_prev_code_->bit_idx[1] = code->number;
 	    code->opcode = &of_NOOP;
-	    peep_prev_code_ = 0;
+	    // Keep the fused instruction available for a possible following
+	    // %xor, which can consume the selected value without stack traffic.
       } else {
 	    peep_prev_code_ = code;
       }
