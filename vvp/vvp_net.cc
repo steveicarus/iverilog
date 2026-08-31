@@ -1866,10 +1866,11 @@ void vvp_vector4_t::mul(const vvp_vector4_t&that)
 	    rcnt -= 1;
       }
 
-	// Calculate the result into a res array. We need to keep is
-	// separate from the "this" array because we are making
-	// multiple passes.
-      unsigned long*res = new unsigned long[cnt];
+	// Calculate the result in the B-bit plane. The X/Z pass above
+	// proved that plane is clear, and keeping the result separate from
+	// the A-bit plane lets the multiply make multiple passes over the
+	// original left operand without allocating a temporary array.
+      unsigned long*res = bbits_ptr_;
       for (int idx = 0 ; idx < cnt ; idx += 1)
 	    res[idx] = 0;
 
@@ -1898,13 +1899,13 @@ void vvp_vector4_t::mul(const vvp_vector4_t&that)
 	    }
       }
 
-	// Replace the "this" value with the calculated result. We
-	// know a-priori that the bbits are zero and unchanged.
+	// Move the result back to the A-bit plane and restore the B-bit
+	// plane to the known-zero state.
       res[cnt-1] &= mask;
-      for (int idx = 0 ; idx < cnt ; idx += 1)
+      for (int idx = 0 ; idx < cnt ; idx += 1) {
 	    abits_ptr_[idx] = res[idx];
-
-      delete[]res;
+	    bbits_ptr_[idx] = 0;
+      }
       return;
 
 
