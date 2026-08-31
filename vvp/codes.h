@@ -187,6 +187,7 @@ extern bool of_LOAD_FLAG(vthread_t thr, vvp_code_t code);
 extern bool of_FLAG_SETGET_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_PARTI_S(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_PARTI_U(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_PARTI_CONCAT(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_PARTI_XOR(vthread_t thr, vvp_code_t code);
 extern bool of_PARTI_S(vthread_t thr, vvp_code_t code);
 extern bool of_PARTI_U(vthread_t thr, vvp_code_t code);

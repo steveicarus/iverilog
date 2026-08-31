@@ -2045,22 +2045,28 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
       if (peep_disable < 0)
 	    peep_disable = (getenv("VVP_NO_FUSE") != 0);
 
-	/* Extend a fused %load/vec4 + %parti/s|u with an adjacent %xor.
-	   The part-select result is the right operand, so the combined opcode
-	   can apply it directly to the left operand already on the stack. */
+	/* Extend a fused %load/vec4 + %parti/s|u when the selected value
+	   is immediately consumed as the right operand. */
       if (!peep_disable && peep_prev_code_ && code == peep_fuse_slot_
 	  && code == peep_prev_code_ + 2
 	  && (peep_prev_code_->opcode == &of_LOAD_PARTI_S
 	      || peep_prev_code_->opcode == &of_LOAD_PARTI_U)
-	  && code->opcode == &of_XOR
 	  && static_cast<int32_t>(peep_prev_code_->bit_idx[0]) >= 0) {
-	    peep_prev_code_->opcode = &of_LOAD_PARTI_XOR;
-	    code->opcode = &of_NOOP;
-	    peep_prev_code_ = 0;
-	    peep_fuse_slot_ = codespace_next();
-	    free(opa);
-	    free(mnem);
-	    return;
+	    vvp_code_fun fused_opcode = 0;
+	    if (code->opcode == &of_CONCAT_VEC4)
+		  fused_opcode = &of_LOAD_PARTI_CONCAT;
+	    else if (code->opcode == &of_XOR)
+		  fused_opcode = &of_LOAD_PARTI_XOR;
+
+	    if (fused_opcode) {
+		  peep_prev_code_->opcode = fused_opcode;
+		  code->opcode = &of_NOOP;
+		  peep_prev_code_ = 0;
+		  peep_fuse_slot_ = codespace_next();
+		  free(opa);
+		  free(mnem);
+		  return;
+	    }
       }
 
       if (!peep_disable && peep_prev_code_ && code == peep_fuse_slot_
