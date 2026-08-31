@@ -1891,6 +1891,7 @@ char **compile_udp_table(char **table, char *row)
    suppresses fusion. */
 static vvp_code_t peep_prev_code_ = 0;
 static vvp_code_t peep_fuse_slot_ = 0;
+static vvp_code_t peep_parti_pair_lhs_ = 0;
 
 void compile_code(char*label, char*mnem, comp_operands_t opa)
 {
@@ -2045,6 +2046,34 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
       if (peep_disable < 0)
 	    peep_disable = (getenv("VVP_NO_FUSE") != 0);
 
+      vvp_code_t parti_pair_lhs = peep_parti_pair_lhs_;
+      peep_parti_pair_lhs_ = 0;
+
+	/* Remember a selected signal value followed immediately by another
+	   signal load. If that load is also part-selected, the second
+	   %parti will combine the two selections. */
+      if (!peep_disable && peep_prev_code_
+	  && code == peep_fuse_slot_ && code == peep_prev_code_ + 2
+	  && (peep_prev_code_->opcode == &of_LOAD_PARTI_S
+	      || peep_prev_code_->opcode == &of_LOAD_PARTI_U)
+	  && static_cast<int32_t>(peep_prev_code_->bit_idx[0]) >= 0
+	  && code->opcode == &of_LOAD_VEC4)
+	    peep_parti_pair_lhs_ = peep_prev_code_;
+
+	/* Extend two adjacent selected signal loads through a concatenation. */
+      if (!peep_disable && peep_prev_code_
+	  && code == peep_fuse_slot_ && code == peep_prev_code_ + 4
+	  && peep_prev_code_->opcode == &of_LOAD_PARTI_PAIR
+	  && code->opcode == &of_CONCAT_VEC4) {
+	    peep_prev_code_->opcode = &of_LOAD_PARTI_PAIR_CONCAT;
+	    code->opcode = &of_NOOP;
+	    peep_prev_code_ = 0;
+	    peep_fuse_slot_ = codespace_next();
+	    free(opa);
+	    free(mnem);
+	    return;
+      }
+
 	/* Extend a fused %load/vec4 + %parti/s|u when the selected value
 	   is immediately consumed as the right operand. */
       if (!peep_disable && peep_prev_code_ && code == peep_fuse_slot_
@@ -2157,8 +2186,17 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	    peep_prev_code_->bit_idx[0] = base;
 	    peep_prev_code_->bit_idx[1] = code->number;
 	    code->opcode = &of_NOOP;
+
+	    if (parti_pair_lhs
+		&& peep_prev_code_ == parti_pair_lhs + 2
+		&& code == parti_pair_lhs + 3
+		&& static_cast<int32_t>(peep_prev_code_->bit_idx[0]) >= 0) {
+		  parti_pair_lhs->opcode = &of_LOAD_PARTI_PAIR;
+		  peep_prev_code_->opcode = &of_NOOP;
+		  peep_prev_code_ = parti_pair_lhs;
+	    }
 	    // Keep the fused instruction available for a possible following
-	    // %xor, which can consume the selected value without stack traffic.
+	    // consumer, which can avoid additional stack traffic.
       } else {
 	    peep_prev_code_ = code;
       }
@@ -2172,6 +2210,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 void compile_codelabel(char*label)
 {
       peep_prev_code_ = 0;
+      peep_parti_pair_lhs_ = 0;
       symbol_value_t val;
       vvp_code_t ptr = codespace_next();
 

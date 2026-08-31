@@ -4786,6 +4786,38 @@ bool of_LOAD_PARTI_U(vthread_t thr, vvp_code_t cp)
 	return of_LOAD_PARTI_base(thr, cp);
 }
 
+/* Fused adjacent %load/vec4 + %parti/s|u pairs. The second load retains
+ * its operands in the third slot of the four-instruction sequence.
+ */
+bool of_LOAD_PARTI_PAIR(vthread_t thr, vvp_code_t cp)
+{
+      // Skip the first %parti and the second %load/vec4 + %parti pair.
+      thr->pc += 3;
+
+      vvp_code_t rhs = cp + 2;
+      thr->push_vec4(cp->signal->vec4_subvalue(cp->bit_idx[0],
+					       cp->bit_idx[1]));
+      thr->push_vec4(rhs->signal->vec4_subvalue(rhs->bit_idx[0],
+					        rhs->bit_idx[1]));
+      return true;
+}
+
+/* Fused adjacent selected signal loads followed by %concat/vec4. */
+bool of_LOAD_PARTI_PAIR_CONCAT(vthread_t thr, vvp_code_t cp)
+{
+      // Skip both %parti pairs and the %concat/vec4.
+      thr->pc += 4;
+
+      vvp_code_t rhs_code = cp + 2;
+      vvp_vector4_t result = cp->signal->vec4_subvalue(cp->bit_idx[0],
+						       cp->bit_idx[1]);
+      vvp_vector4_t rhs = rhs_code->signal->vec4_subvalue(
+	    rhs_code->bit_idx[0], rhs_code->bit_idx[1]);
+      result.concat(rhs);
+      thr->push_vec4(std::move(result));
+      return true;
+}
+
 /* Fused %load/vec4 + %parti/s|u + %concat/vec4. */
 bool of_LOAD_PARTI_CONCAT(vthread_t thr, vvp_code_t cp)
 {
