@@ -8151,11 +8151,14 @@ bool of_XNOR(vthread_t thr, vvp_code_t)
  */
 bool of_XOR(vthread_t thr, vvp_code_t)
 {
-      vvp_vector4_t valr = thr->pop_vec4();
-      vvp_vector4_t&vall = thr->peek_vec4();
+      // Keep the right operand in its stack slot while applying it. This
+      // avoids moving it through a temporary before the slot is discarded.
+      const vvp_vector4_t&valr = thr->peek_vec4(0);
+      vvp_vector4_t&vall = thr->peek_vec4_mutable(1);
       assert(vall.size() == valr.size());
 
       vall ^= valr;
+      thr->pop_vec4(1);
 
       return true;
 }
