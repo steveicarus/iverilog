@@ -25,6 +25,7 @@ begin_keywords_1800_2012	vvp_tests/begin_keywords_1800_2012.json
 begin_keywords_1800_2017	vvp_tests/begin_keywords_1800_2017.json
 begin_keywords_1800_2023	vvp_tests/begin_keywords_1800_2023.json
 begin_keywords_vams_2_3	vvp_tests/begin_keywords_vams_2_3.json
+binary_xor_stack		vvp_tests/binary_xor_stack.json
 bits4				vvp_tests/bits4.json
 bitsel11			vvp_tests/bitsel11.json
 br_gh13a			vvp_tests/br_gh13a.json
