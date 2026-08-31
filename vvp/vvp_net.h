@@ -239,6 +239,33 @@ extern unsigned long multiply_with_carry(unsigned long a, unsigned long b,
 					 unsigned long&carry);
 #endif
 
+/* Multiply two words, add an existing result word and an incoming carry,
+ * then return the low word and replace carry with the high word. */
+static inline unsigned long multiply_add_with_carry(unsigned long a,
+						    unsigned long b,
+						    unsigned long addend,
+						    unsigned long&carry)
+{
+#if defined(__SIZEOF_INT128__) && defined(__SIZEOF_LONG__) \
+    && __SIZEOF_INT128__ >= 2 * __SIZEOF_LONG__
+      typedef unsigned __int128 wide_word_t;
+      wide_word_t product = static_cast<wide_word_t>(a) * b + addend + carry;
+      carry = static_cast<unsigned long>(
+	    product >> (8 * sizeof(unsigned long)));
+      return static_cast<unsigned long>(product);
+#else
+      unsigned long high;
+      unsigned long low = multiply_with_carry(a, b, high);
+      unsigned long overflow = 0;
+      low = add_with_carry(low, addend, overflow);
+      high += overflow;
+      overflow = 0;
+      low = add_with_carry(low, carry, overflow);
+      carry = high + overflow;
+      return low;
+#endif
+}
+
 /*
  * This class represents scalar values collected into vectors. The
  * vector values can be accessed individually, or treated as a

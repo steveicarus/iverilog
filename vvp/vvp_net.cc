@@ -1879,23 +1879,24 @@ void vvp_vector4_t::mul(const vvp_vector4_t&that)
 	    if (mul_a == (cnt-1))
 		  lval &= mask;
 
-	    for (int mul_b = 0 ; mul_b < rcnt && mul_b < (cnt-mul_a);
-		 mul_b += 1) {
+	    unsigned long carry = 0;
+	    int mul_b = 0;
+	    for ( ; mul_b < rcnt && mul_b < (cnt-mul_a); mul_b += 1) {
 		  unsigned long rval = that.abits_ptr_[mul_b];
 		  if (mul_b == (cnt-1))
 			rval &= mask;
 
-		  unsigned long sum;
-		  unsigned long tmp = multiply_with_carry(lval, rval, sum);
 		  int base = mul_a + mul_b;
-		  unsigned long carry = 0;
-		  res[base] = add_with_carry(res[base], tmp, carry);
-		  int add_idx = base + 1;
-		  if (add_idx < cnt) {
-			res[add_idx] = add_with_carry(res[add_idx], sum, carry);
-			for (add_idx += 1; carry && add_idx < cnt; add_idx += 1)
-			      res[add_idx] = add_with_carry(res[add_idx], 0, carry);
-		  }
+		  res[base] = multiply_add_with_carry(
+			lval, rval, res[base], carry);
+	    }
+
+	    int base = mul_a + mul_b;
+	    while (carry && base < cnt) {
+		  unsigned long next = 0;
+		  res[base] = add_with_carry(res[base], carry, next);
+		  carry = next;
+		  base += 1;
 	    }
       }
 
