@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "parti_add_fusion.v",
+    "iverilog-args" : [ "-g2012" ]
+}
