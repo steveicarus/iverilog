@@ -4787,6 +4787,24 @@ bool of_LOAD_PARTI_U(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * Fused %load/vec4 + %parti/s|u + %xor. The selected signal value is the
+ * right-hand operand, so apply it directly to the value already on the stack.
+ */
+bool of_LOAD_PARTI_XOR(vthread_t thr, vvp_code_t cp)
+{
+      // Skip the dead %parti and %xor slots.
+      thr->pc += 2;
+
+      unsigned wid = cp->bit_idx[1];
+      unsigned use_base = cp->bit_idx[0];
+      vvp_vector4_t rhs = cp->signal->vec4_subvalue(use_base, wid);
+      vvp_vector4_t&lhs = thr->peek_vec4();
+      assert(lhs.size() == rhs.size());
+      lhs ^= rhs;
+      return true;
+}
+
+/*
  * Fused %load/vec4 + %flag_set/vec4. The loader's peephole rewrites
  * the pair into this operation, which reads bit 0 of the signal
  * directly into the flag with no value-stack traffic. The flag index
