@@ -360,6 +360,9 @@ class vvp_vector4_t {
 	// Add that to this in the Verilog way.
       void add(const vvp_vector4_t&that);
 
+	// Add an immediate value to a vector that fits in one storage word.
+      void add_immediate(unsigned long aval, unsigned long bval);
+
 	// Subtract that from this in the Verilog way.
       void sub(const vvp_vector4_t&that);
 
@@ -556,6 +559,21 @@ inline vvp_vector4_t::~vvp_vector4_t()
 	    free_block_((size_+BITS_PER_WORD-1)/BITS_PER_WORD, abits_ptr_);
 	      // bbits_ptr_ actually points half-way into a
 	      // double-length array started at abits_ptr_
+      }
+}
+
+inline void vvp_vector4_t::add_immediate(unsigned long aval,
+					 unsigned long bval)
+{
+      assert(size_ <= BITS_PER_WORD);
+
+      const unsigned long mask = size_ < BITS_PER_WORD
+	    ? (1UL << size_) - 1UL : -1UL;
+      if ((bbits_val_ | bval) & mask) {
+	    abits_val_ |= mask;
+	    bbits_val_ |= mask;
+      } else {
+	    abits_val_ = (abits_val_ + aval) & mask;
       }
 }
 

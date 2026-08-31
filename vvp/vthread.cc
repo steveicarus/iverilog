@@ -1073,6 +1073,12 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t&l = thr->peek_vec4();
 
+      if (wid <= CPU_WORD_BITS) {
+	    assert(l.size() == wid);
+	    l.add_immediate(cp->bit_idx[0], cp->bit_idx[1]);
+	    return true;
+      }
+
       vvp_vector4_t r (wid, cp->bit_idx[0], cp->bit_idx[1]);
 
       l.add(r);
