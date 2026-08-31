@@ -3,7 +3,10 @@ module parti_pair_fusion;
 
   reg [319:0] source_a;
   reg [319:0] source_b;
+  reg [31:0] source_word;
+  reg [63:0] source_native;
   reg [1:0] actual2;
+  reg [31:0] actual32;
   reg [63:0] actual64;
   reg [65:0] actual66;
   reg [128:0] actual129;
@@ -65,6 +68,12 @@ module parti_pair_fusion;
     source_a[145] = 1'bz;
     source_b[75] = 1'bz;
     source_b[200] = 1'bx;
+    source_word = 32'h89abcdef;
+    source_word[5] = 1'bx;
+    source_word[27] = 1'bz;
+    source_native = 64'h0123456789abcdef;
+    source_native[9] = 1'bx;
+    source_native[54] = 1'bz;
 
     // Differently sized selected signals consumed by concatenation.
     actual64 = {source_a[3 +: 31], source_b[69 +: 33]};
@@ -115,6 +124,24 @@ module parti_pair_fusion;
     actual64 = {source_a[31 +: 32], source_b[63 +: 32]};
     check(actual64, reference_concat(source_a, source_b, 31, 32,
                                      63, 32), 10);
+
+    // Same-source subword pairs can be assembled from one signal read.
+    actual32 = {source_word[0 +: 7], source_word[7 +: 25]};
+    check(actual32, reference_concat(source_word, source_word, 0, 7,
+                                     7, 25), 11);
+
+    // The direct path must still observe forced values.
+    force source_word[20] = 1'bx;
+    actual32 = {source_word[16 +: 16], source_word[0 +: 16]};
+    check(actual32, reference_concat(source_word, source_word, 16, 16,
+                                     0, 16), 12);
+    release source_word[20];
+
+    // Fill a native word on 64-bit hosts; this remains a generic-path
+    // correctness check on 32-bit hosts.
+    actual64 = {source_native[0 +: 32], source_native[32 +: 32]};
+    check(actual64, reference_concat(source_native, source_native, 0, 32,
+                                     32, 32), 13);
 
     if (failed == 0)
       $display("PASSED");

@@ -29,6 +29,7 @@
 # include  "codes.h"
 # include  "schedule.h"
 # include  "vpi_priv.h"
+# include  "vvp_net_sig.h"
 # include  "parse_misc.h"
 # include  "statistics.h"
 # include  "schedule.h"
@@ -2065,7 +2066,22 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	  && code == peep_fuse_slot_ && code == peep_prev_code_ + 4
 	  && peep_prev_code_->opcode == &of_LOAD_PARTI_PAIR
 	  && code->opcode == &of_CONCAT_VEC4) {
+	    vvp_code_t rhs_code = peep_prev_code_ + 2;
+	    unsigned lhs_base = peep_prev_code_->bit_idx[0];
+	    unsigned lhs_wid = peep_prev_code_->bit_idx[1];
+	    unsigned rhs_base = rhs_code->bit_idx[0];
+	    unsigned rhs_wid = rhs_code->bit_idx[1];
+	    unsigned signal_wid = peep_prev_code_->signal->value_size();
+	    const unsigned word_bits = 8 * sizeof(unsigned long);
+	    const bool one_word = peep_prev_code_->signal == rhs_code->signal
+		  && lhs_wid > 0 && lhs_wid < word_bits
+		  && rhs_wid > 0 && rhs_wid <= word_bits-lhs_wid
+		  && signal_wid <= word_bits
+		  && lhs_base <= signal_wid && lhs_wid <= signal_wid-lhs_base
+		  && rhs_base <= signal_wid && rhs_wid <= signal_wid-rhs_base;
 	    peep_prev_code_->opcode = &of_LOAD_PARTI_PAIR_CONCAT;
+	    /* Record the direct-word case in the first dead %parti slot. */
+	    (peep_prev_code_ + 1)->number = one_word;
 	    code->opcode = &of_NOOP;
 	    peep_prev_code_ = 0;
 	    peep_fuse_slot_ = codespace_next();

@@ -4809,6 +4809,27 @@ bool of_LOAD_PARTI_PAIR_CONCAT(vthread_t thr, vvp_code_t cp)
       thr->pc += 4;
 
       vvp_code_t rhs_code = cp + 2;
+
+      // The loader uses the first dead %parti slot as a direct-word flag.
+      if ((cp + 1)->number) {
+	    unsigned lhs_base = cp->bit_idx[0];
+	    unsigned lhs_wid = cp->bit_idx[1];
+	    unsigned rhs_base = rhs_code->bit_idx[0];
+	    unsigned rhs_wid = rhs_code->bit_idx[1];
+	    vvp_vector4_t source;
+	    cp->signal->vec4_value(source);
+	    unsigned long lhs_mask = (1UL << lhs_wid) - 1UL;
+	    unsigned long rhs_mask = (1UL << rhs_wid) - 1UL;
+	    unsigned long aval = ((source.abits_word(0) >> lhs_base) & lhs_mask)
+		  << rhs_wid;
+	    unsigned long bval = ((source.bbits_word(0) >> lhs_base) & lhs_mask)
+		  << rhs_wid;
+	    aval |= (source.abits_word(0) >> rhs_base) & rhs_mask;
+	    bval |= (source.bbits_word(0) >> rhs_base) & rhs_mask;
+	    thr->push_vec4(vvp_vector4_t(lhs_wid + rhs_wid, aval, bval));
+	    return true;
+      }
+
       vvp_vector4_t result = cp->signal->vec4_subvalue(cp->bit_idx[0],
 						       cp->bit_idx[1]);
       vvp_vector4_t rhs = rhs_code->signal->vec4_subvalue(
