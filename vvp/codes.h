@@ -374,6 +374,7 @@ struct vvp_code_s {
       union {
 	    uint32_t    bit_idx[2];
 	    vvp_net_t   *net2;
+	    struct waitable_hooks_s*waitable;
 	    vvp_code_t   cptr2;
 	    class ufunc_core*ufunc_core_ptr;
       };
