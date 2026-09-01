@@ -35,6 +35,9 @@
 extern void schedule_vthread(vthread_t thr, vvp_time64_t delay,
 			     bool push_flag =false);
 
+/* Queue a wait_next list whose thread state is already marked ready. */
+extern void schedule_vthread_list_ready(vthread_t thr);
+
 extern void schedule_inactive(vthread_t thr);
 
 extern void schedule_init_vthread(vthread_t thr);

@@ -1424,3 +1424,15 @@ void schedule_delete(void)
       event_time_heap.delete_pool();
 }
 #endif
+
+/* Event wakeup has already prepared every thread in this wait_next list. */
+#if defined(__ELF__)
+/* Do not perturb the layout of the existing interpreter and scheduler code. */
+__attribute__((section(".vvp_text_tail")))
+#endif
+void schedule_vthread_list_ready(vthread_t thr)
+{
+      struct vthread_event_s*cur = new vthread_event_s;
+      cur->thr = thr;
+      schedule_event_(cur, 0, SEQ_ACTIVE);
+}
