@@ -807,10 +807,15 @@ bool code_label_resolv_list_s::resolve(bool mes)
 {
       symbol_value_t val = sym_get_value(sym_codespace, label());
       if (val.ptr) {
-	    if (cptr2_flag)
+	    if (cptr2_flag) {
 		  code->cptr2 = reinterpret_cast<vvp_code_t>(val.ptr);
-	    else
-		  code->cptr = reinterpret_cast<vvp_code_t>(val.ptr);
+	    } else {
+		  vvp_code_t target = reinterpret_cast<vvp_code_t>(val.ptr);
+		  code->cptr = target;
+		  /* A direct jump to %wait can suspend in one dispatch. */
+		  if (code->opcode == &of_JMP && target->opcode == &of_WAIT)
+			code->opcode = &of_JMP_WAIT;
+	    }
 	    return true;
       }
 
