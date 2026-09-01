@@ -114,60 +114,70 @@ struct vthread_s {
       vector<unsigned> args_vec4;
 
     private:
+      // Keep popped slots so later pushes can reuse wide-vector storage.
+      // Only slots below stack_vec4_top_ contain live stack values.
       vector<vvp_vector4_t>stack_vec4_;
+      size_t stack_vec4_top_;
     public:
       inline vvp_vector4_t pop_vec4(void)
       {
-	    assert(! stack_vec4_.empty());
-	    vvp_vector4_t val = std::move(stack_vec4_.back());
-	    stack_vec4_.pop_back();
+	    assert(stack_vec4_top_ > 0);
+	    stack_vec4_top_ -= 1;
+	    vvp_vector4_t val = std::move(stack_vec4_[stack_vec4_top_]);
 	    return val;
       }
       inline void push_vec4(const vvp_vector4_t&val)
       {
-	    stack_vec4_.push_back(val);
+	    if (stack_vec4_top_ < stack_vec4_.size())
+		  stack_vec4_[stack_vec4_top_] = val;
+	    else
+		  stack_vec4_.push_back(val);
+	    stack_vec4_top_ += 1;
       }
       inline void push_vec4(vvp_vector4_t&&val)
       {
-	    stack_vec4_.push_back(std::move(val));
+	    if (stack_vec4_top_ < stack_vec4_.size())
+		  stack_vec4_[stack_vec4_top_] = std::move(val);
+	    else
+		  stack_vec4_.push_back(std::move(val));
+	    stack_vec4_top_ += 1;
       }
       inline vvp_vector4_t& push_vec4(void)
       {
-	    stack_vec4_.emplace_back();
-	    return stack_vec4_.back();
+	    if (stack_vec4_top_ == stack_vec4_.size())
+		  stack_vec4_.emplace_back();
+	    stack_vec4_top_ += 1;
+	    return stack_vec4_[stack_vec4_top_-1];
       }
       inline const vvp_vector4_t& peek_vec4(unsigned depth)
       {
-	    unsigned size = stack_vec4_.size();
+	    size_t size = stack_vec4_top_;
 	    assert(depth < size);
-	    unsigned use_index = size-1-depth;
+	    size_t use_index = size-1-depth;
 	    return stack_vec4_[use_index];
       }
       inline vvp_vector4_t& peek_vec4_mutable(unsigned depth)
       {
-	    unsigned size = stack_vec4_.size();
+	    size_t size = stack_vec4_top_;
 	    assert(depth < size);
-	    unsigned use_index = size-1-depth;
+	    size_t use_index = size-1-depth;
 	    return stack_vec4_[use_index];
       }
       inline vvp_vector4_t& peek_vec4(void)
       {
-	    unsigned use_index = stack_vec4_.size();
-	    assert(use_index >= 1);
-	    return stack_vec4_[use_index-1];
+	    assert(stack_vec4_top_ >= 1);
+	    return stack_vec4_[stack_vec4_top_-1];
       }
       inline void poke_vec4(unsigned depth, const vvp_vector4_t&val)
       {
-	    assert(depth < stack_vec4_.size());
-	    unsigned use_index = stack_vec4_.size()-1-depth;
+	    assert(depth < stack_vec4_top_);
+	    size_t use_index = stack_vec4_top_-1-depth;
 	    stack_vec4_[use_index] = val;
       }
       inline void pop_vec4(unsigned cnt)
       {
-	    while (cnt > 0) {
-		  stack_vec4_.pop_back();
-		  cnt -= 1;
-	    }
+	    assert(cnt <= stack_vec4_top_);
+	    stack_vec4_top_ -= cnt;
       }
 
 
@@ -315,13 +325,14 @@ struct vthread_s {
       {
 	    if (i_was_disabled) {
 		  stack_vec4_.clear();
+		  stack_vec4_top_ = 0;
 		  stack_real_.clear();
 		  stack_str_.clear();
 		  pop_object(stack_obj_size_);
 	    }
 	    free(filenm_);
 	    filenm_ = 0;
-	    assert(stack_vec4_.empty());
+	    assert(stack_vec4_top_ == 0);
 	    assert(stack_real_.empty());
 	    assert(stack_str_.empty());
 	    assert(stack_obj_size_ == 0);
@@ -330,6 +341,7 @@ struct vthread_s {
 
 inline vthread_s::vthread_s()
 {
+      stack_vec4_top_ = 0;
       stack_obj_size_ = 0;
       filenm_ = 0;
       lineno_ = 0;
@@ -365,8 +377,8 @@ void vthread_s::debug_dump(ostream&fd, const char*label)
 	    fd << flags[idx];
       fd << endl;
       fd << "**** vec4 stack..." << endl;
-      for (size_t idx = stack_vec4_.size() ; idx > 0 ; idx -= 1)
-	    fd << "    " << (stack_vec4_.size()-idx) << ": " << stack_vec4_[idx-1] << endl;
+      for (size_t idx = stack_vec4_top_ ; idx > 0 ; idx -= 1)
+	    fd << "    " << (stack_vec4_top_-idx) << ": " << stack_vec4_[idx-1] << endl;
       fd << "**** str stack (" << stack_str_.size() << ")..." << endl;
       fd << "**** obj stack (" << stack_obj_size_ << ")..." << endl;
       fd << "**** args_vec4 array (" << args_vec4.size() << ")..." << endl;
