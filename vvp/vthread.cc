@@ -8393,3 +8393,21 @@ bool of_REAP_UFUNC(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
+
+/* An unconditional jump to %wait can suspend directly instead of
+   returning to the interpreter for another indirect dispatch. Keep this
+   helper after the regular opcode handlers so it does not perturb their
+   layout. */
+bool of_JMP_WAIT(vthread_t thr, vvp_code_t cp)
+{
+      thr->pc = cp->cptr;
+
+      if (schedule_stopped()) {
+	    schedule_vthread(thr, 0, false);
+	    return false;
+      }
+
+      vvp_code_t wait = thr->pc;
+      thr->pc += 1;
+      return of_WAIT(thr, wait);
+}
