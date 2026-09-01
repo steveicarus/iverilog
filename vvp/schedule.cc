@@ -862,6 +862,27 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
       }
 }
 
+/*
+ * A zero-delay nonblocking assignment normally targets the time step that is
+ * already being processed. Avoid walking the general delta-time queue in that
+ * common case.
+ */
+static inline void schedule_nbassign_(struct event_s*cur, vvp_time64_t delay)
+{
+      if ((delay != 0) || (sched_list == 0) || (sched_list->delay != 0)) {
+	    schedule_event_(cur, delay, SEQ_NBASSIGN);
+	    return;
+      }
+
+      cur->next = cur;
+      struct event_s*&queue = sched_list->nbassign;
+      if (queue) {
+	    cur->next = queue->next;
+	    queue->next = cur;
+      }
+      queue = cur;
+}
+
 static void schedule_event_push_(struct event_s*cur)
 {
       if ((sched_list == 0) || (sched_list->delay > 0)) {
@@ -957,7 +978,7 @@ void schedule_assign_vector(vvp_net_ptr_t ptr,
       cur->ptr = ptr;
       cur->base = base;
       cur->vwid = vwid;
-      schedule_event_(cur, delay, SEQ_NBASSIGN);
+      schedule_nbassign_(cur, delay);
 }
 
 void schedule_force_vector(vvp_net_t*net,
@@ -969,7 +990,7 @@ void schedule_force_vector(vvp_net_t*net,
       cur->net = net;
       cur->base = base;
       cur->vwid = vwid;
-      schedule_event_(cur, delay, SEQ_NBASSIGN);
+      schedule_nbassign_(cur, delay);
 }
 
 void schedule_propagate_vector(vvp_net_t*net,
@@ -979,7 +1000,7 @@ void schedule_propagate_vector(vvp_net_t*net,
       struct propagate_vector4_event_s*cur
 	    = new struct propagate_vector4_event_s(src);
       cur->net = net;
-      schedule_event_(cur, delay, SEQ_NBASSIGN);
+      schedule_nbassign_(cur, delay);
 }
 
 // FIXME: This needs to create a non-blocking event, but only one per time slot.
@@ -992,7 +1013,7 @@ void schedule_propagate_event(vvp_net_t*net,
       struct propagate_vector4_event_s*cur
 	    = new struct propagate_vector4_event_s(tmp);
       cur->net = net;
-      schedule_event_(cur, delay, SEQ_NBASSIGN);
+      schedule_nbassign_(cur, delay);
 }
 
 void schedule_assign_array_word(vvp_array_t mem,
@@ -1006,7 +1027,7 @@ void schedule_assign_array_word(vvp_array_t mem,
       cur->adr = word_addr;
       cur->off = off;
       cur->val = val;
-      schedule_event_(cur, delay, SEQ_NBASSIGN);
+      schedule_nbassign_(cur, delay);
 }
 
 void schedule_assign_array_word(vvp_array_t mem,
@@ -1018,7 +1039,7 @@ void schedule_assign_array_word(vvp_array_t mem,
       cur->mem = mem;
       cur->adr = word_addr;
       cur->val = val;
-      schedule_event_(cur, delay, SEQ_NBASSIGN);
+      schedule_nbassign_(cur, delay);
 }
 
 void schedule_set_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
