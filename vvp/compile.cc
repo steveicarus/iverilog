@@ -2038,6 +2038,11 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	    }
       }
 
+	/* %wait uses its otherwise unused second operand to cache the
+	   resolved waitable interface after its first execution. */
+      if (code->opcode == &of_WAIT)
+	    code->waitable = 0;
+
 	/* Peephole: fuse adjacent instructions. Fusions that execute in the
 	   first slot require physical adjacency as well as logical adjacency,
 	   so they can skip dead slots without crossing a code-space chunk

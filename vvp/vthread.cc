@@ -8203,8 +8203,12 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
       thr->waiting_for_event = 1;
 
 	/* Add this thread to the list in the event. */
-      waitable_hooks_s*ep = cp->net->fun? cp->net->fun->as_waitable() : 0;
-      assert(ep);
+      waitable_hooks_s*ep = cp->waitable;
+      if (!ep) {
+	    ep = cp->net->fun? cp->net->fun->as_waitable() : 0;
+	    assert(ep);
+	    cp->waitable = ep;
+      }
       thr->wait_next = ep->add_waiting_thread(thr);
 
 	/* Return false to suspend this thread. */
