@@ -346,6 +346,7 @@ extern bool of_XNOR(vthread_t thr, vvp_code_t code);
 extern bool of_XNORR(vthread_t thr, vvp_code_t code);
 extern bool of_XOR(vthread_t thr, vvp_code_t code);
 extern bool of_XORR(vthread_t thr, vvp_code_t code);
+extern bool of_XORI(vthread_t thr, vvp_code_t code);
 
 extern bool of_ZOMBIE(vthread_t thr, vvp_code_t code);
 

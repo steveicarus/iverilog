@@ -394,11 +394,11 @@ static const struct opcode_table_s opcode_table[] = {
       { "%xnor/r", of_XNORR,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%xor",    of_XOR,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%xor/r",  of_XORR,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { 0, of_NOOP, 0, {OA_NONE, OA_NONE, OA_NONE} }
+      { "%xori",   of_XORI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
 };
 
 static const unsigned opcode_count =
-                    sizeof(opcode_table)/sizeof(*opcode_table) - 1;
+                    sizeof(opcode_table)/sizeof(*opcode_table);
 
 static int opcode_compare(const void*k, const void*r)
 {
