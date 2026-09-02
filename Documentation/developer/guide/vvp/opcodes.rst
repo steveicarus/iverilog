@@ -1328,6 +1328,7 @@ table for the xor is:
 
 
 * %xor
+* %xori <vala>, <valb>, <wid>
 
 This instruction pops two vectors from the vec4 stack, does a bitwise
 exclusive or (^) of the vectors, and pushes the result. The truth
@@ -1338,6 +1339,9 @@ table for the xor is:
 	1 xor 0 --> 1
 	1 xor 1 --> 0
 	otherwise   x
+
+The %xori variant applies an immediate vec4 value (see %pushi/vec4) to
+the value on top of the vec4 stack. The result replaces that stack value.
 
 ::
 

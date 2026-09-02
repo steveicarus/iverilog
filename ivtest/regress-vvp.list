@@ -171,6 +171,7 @@ func_nested_block_nb_fail	vvp_tests/func_nested_block_nb_fail.json
 hier_index_empty_fail		vvp_tests/hier_index_empty_fail.json
 hier_index_queue_fail		vvp_tests/hier_index_queue_fail.json
 immediate_vec4			vvp_tests/immediate_vec4.json
+immediate_xor			vvp_tests/immediate_xor.json
 line_directive			vvp_tests/line_directive.json
 localparam_type			vvp_tests/localparam_type.json
 macro_str_esc			vvp_tests/macro_str_esc.json

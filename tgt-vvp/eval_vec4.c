@@ -187,8 +187,21 @@ static void draw_binary_vec4_arith(ivl_expr_t expr)
 
 static void draw_binary_vec4_bitwise(ivl_expr_t expr)
 {
-      draw_eval_vec4(ivl_expr_oper1(expr));
-      draw_eval_vec4(ivl_expr_oper2(expr));
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+      unsigned ewid = ivl_expr_width(expr);
+
+      draw_eval_vec4(le);
+
+      if (ivl_expr_opcode(expr) == '^'
+	  && ivl_expr_width(re) == ewid
+	  && ewid <= 8*sizeof(unsigned long)
+	  && test_immediate_vec4_ok(re)) {
+	    draw_immediate_vec4(re, "%xori");
+	    return;
+      }
+
+      draw_eval_vec4(re);
 
       switch (ivl_expr_opcode(expr)) {
 	  case '&':

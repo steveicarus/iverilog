@@ -362,6 +362,8 @@ class vvp_vector4_t {
 
 	// Add an immediate value to a vector that fits in one storage word.
       void add_immediate(unsigned long aval, unsigned long bval);
+	// XOR an immediate value into a vector that fits in one storage word.
+      void xor_immediate(unsigned long aval, unsigned long bval, unsigned wid);
 
 	// Subtract that from this in the Verilog way.
       void sub(const vvp_vector4_t&that);
@@ -575,6 +577,18 @@ inline void vvp_vector4_t::add_immediate(unsigned long aval,
       } else {
 	    abits_val_ = (abits_val_ + aval) & mask;
       }
+}
+
+inline void vvp_vector4_t::xor_immediate(unsigned long aval,
+					 unsigned long bval, unsigned wid)
+{
+      assert(size_ == wid && size_ <= BITS_PER_WORD);
+
+      const unsigned long mask = size_ < BITS_PER_WORD
+	    ? (1UL << size_) - 1UL : -1UL;
+      bval &= mask;
+      bbits_val_ |= bval;
+      abits_val_ = (abits_val_ ^ (aval & mask)) | bbits_val_;
 }
 
 inline vvp_vector4_t& vvp_vector4_t::operator= (const vvp_vector4_t&that)
