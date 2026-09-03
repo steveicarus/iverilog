@@ -26,6 +26,7 @@
 # include  "compile.h"
 # include  "event.h"
 # include  <new>
+# include  <utility>
 # include  <typeinfo>
 # include  <csignal>
 # include  <cstdlib>
@@ -173,6 +174,12 @@ void del_thr_event_s::single_step_display(void)
 struct assign_vector4_event_s  : public event_s {
 	/* The default constructor. */
       explicit assign_vector4_event_s(const vvp_vector4_t&that) : val(that) {
+	    base = 0;
+	    vwid = 0;
+	    next = NULL;
+      }
+      explicit assign_vector4_event_s(vvp_vector4_t&&that)
+      : val(std::move(that)) {
 	    base = 0;
 	    vwid = 0;
 	    next = NULL;
@@ -975,6 +982,31 @@ void schedule_assign_vector(vvp_net_ptr_t ptr,
 			    vvp_time64_t delay)
 {
       struct assign_vector4_event_s*cur = new struct assign_vector4_event_s(bit);
+      cur->ptr = ptr;
+      cur->base = base;
+      cur->vwid = vwid;
+      schedule_nbassign_(cur, delay);
+}
+
+#if defined(__ELF__)
+/* Keep this specialized path from shifting established hot VVP code. */
+__attribute__((section(".vvp_text_tail")))
+#endif
+void schedule_assign_vector(vvp_net_ptr_t ptr,
+			    unsigned base, unsigned vwid,
+			    vvp_vector4_t&&bit,
+			    vvp_time64_t delay)
+{
+	/* Moving an inline value saves neither an allocation nor a bulk copy. Keep
+	   those on the established path, which also preserves reusable stack
+	   storage. */
+      if (bit.size() <= 8 * sizeof(unsigned long)) {
+	    schedule_assign_vector(ptr, base, vwid, bit, delay);
+	    return;
+      }
+
+      struct assign_vector4_event_s*cur =
+	    new struct assign_vector4_event_s(std::move(bit));
       cur->ptr = ptr;
       cur->base = base;
       cur->vwid = vwid;
