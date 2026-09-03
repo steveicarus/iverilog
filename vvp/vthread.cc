@@ -6043,10 +6043,22 @@ bool of_SET_DAR_OBJ_VEC4(vthread_t thr, vvp_code_t cp)
       return set_dar_obj<vvp_vector4_t>(thr, cp);
 }
 
+static inline void shift_left(vvp_vector4_t&val, uint64_t shift)
+{
+      unsigned wid = val.size();
+
+	// Shift is so big that all value is shifted out.
+      if (shift >= wid) {
+	    val = vvp_vector4_t(wid, BIT4_0);
+      } else if (shift > 0) {
+	    val.shiftl(shift);
+      }
+}
+
 /*
  * %shiftl <idx>
  *
- * Pop the operand, then push the result.
+ * Shift the top vector by the amount in an index register.
  */
 bool of_SHIFTL(vthread_t thr, vvp_code_t cp)
 {
@@ -6054,22 +6066,41 @@ bool of_SHIFTL(vthread_t thr, vvp_code_t cp)
       uint64_t shift = thr->words[use_index].w_uint;
 
       vvp_vector4_t&val = thr->peek_vec4();
-      unsigned wid  = val.size();
 
       if (thr->flags[4] == BIT4_1) {
-	      // The result is 'bx if the shift amount is undefined
-	    val = vvp_vector4_t(wid, BIT4_X);
-
-      } else if (thr->flags[4] == BIT4_X || shift >= wid) {
-	      // Shift is so big that all value is shifted out. Write
-	      // a constant 0 result.
-	    val = vvp_vector4_t(wid, BIT4_0);
-
-      } else if (shift > 0) {
-	    val.shiftl(shift);
+	      // The result is 'bx if the shift amount is undefined.
+	    val = vvp_vector4_t(val.size(), BIT4_X);
+      } else if (thr->flags[4] == BIT4_X) {
+	    val = vvp_vector4_t(val.size(), BIT4_0);
+      } else {
+	    shift_left(val, shift);
       }
 
       return true;
+}
+
+/*
+ * %shiftli <amount>
+ *
+ * Shift the top vector by a known immediate amount.
+ */
+bool of_SHIFTLI(vthread_t thr, vvp_code_t cp)
+{
+      shift_left(thr->peek_vec4(), cp->number);
+
+      return true;
+}
+
+static inline void shift_right(vvp_vector4_t&val, uint64_t shift,
+	                       vvp_bit4_t pad)
+{
+      unsigned wid = val.size();
+
+      if (shift > wid) {
+	    val = vvp_vector4_t(wid, pad);
+      } else if (shift > 0) {
+	    val.shiftr(shift, pad);
+      }
 }
 
 /*
@@ -6084,23 +6115,30 @@ bool of_SHIFTR(vthread_t thr, vvp_code_t cp)
       uint64_t shift = thr->words[use_index].w_uint;
 
       vvp_vector4_t&val = thr->peek_vec4();
-      unsigned wid  = val.size();
 
       if (thr->flags[4] == BIT4_1) {
-	    val = vvp_vector4_t(wid, BIT4_X);
-
-      } else if (thr->flags[4] == BIT4_X || shift > wid) {
-	    val = vvp_vector4_t(wid, BIT4_0);
-
-      } else if (shift > 0) {
-	    val.shiftr(shift, BIT4_0);
+	    val = vvp_vector4_t(val.size(), BIT4_X);
+      } else if (thr->flags[4] == BIT4_X) {
+	    val = vvp_vector4_t(val.size(), BIT4_0);
+      } else {
+	    shift_right(val, shift, BIT4_0);
       }
 
       return true;
 }
 
 /*
- *  %shiftr/s <wid>
+ * %shiftri <amount>
+ */
+bool of_SHIFTRI(vthread_t thr, vvp_code_t cp)
+{
+      shift_right(thr->peek_vec4(), cp->number, BIT4_0);
+
+      return true;
+}
+
+/*
+ * %shiftr/s <idx>
  */
 bool of_SHIFTR_S(vthread_t thr, vvp_code_t cp)
 {
@@ -6108,19 +6146,26 @@ bool of_SHIFTR_S(vthread_t thr, vvp_code_t cp)
       uint64_t shift = thr->words[use_index].w_uint;
 
       vvp_vector4_t&val = thr->peek_vec4();
-      unsigned wid  = val.size();
-
       vvp_bit4_t sign_bit = val.value(val.size()-1);
 
       if (thr->flags[4] == BIT4_1) {
-	    val = vvp_vector4_t(wid, BIT4_X);
-
-      } else if (thr->flags[4] == BIT4_X || shift > wid) {
-	    val = vvp_vector4_t(wid, sign_bit);
-
-      } else if (shift > 0) {
-	    val.shiftr(shift, sign_bit);
+	    val = vvp_vector4_t(val.size(), BIT4_X);
+      } else if (thr->flags[4] == BIT4_X) {
+	    val = vvp_vector4_t(val.size(), sign_bit);
+      } else {
+	    shift_right(val, shift, sign_bit);
       }
+
+      return true;
+}
+
+/*
+ * %shiftri/s <amount>
+ */
+bool of_SHIFTRI_S(vthread_t thr, vvp_code_t cp)
+{
+      vvp_vector4_t&val = thr->peek_vec4();
+      shift_right(val, cp->number, val.value(val.size()-1));
 
       return true;
 }

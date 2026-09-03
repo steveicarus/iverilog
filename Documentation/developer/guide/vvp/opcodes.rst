@@ -1109,14 +1109,20 @@ variable.
 * %shiftl <idx>
 * %shiftr <idx>
 * %shiftr/s <idx>
+* %shiftli <amount>
+* %shiftri <amount>
+* %shiftri/s <amount>
 
 These instructions shift the top value in the vec4 stack left (towards
 MSB) or right, possibly signed. The <idx> is the address of the index
 register that contains the amount to shift.
 
-The instruction also checks flag bit 4. If it is true, the result is
-replaced with X instead of a shifted result. This is intended to
-detect that the index contents were not valid.
+The index-register instructions also check flag bit 4. If it is true,
+the result is replaced with X instead of a shifted result. This is
+intended to detect that the index contents were not valid.
+
+The immediate variants take the shift amount directly and do not inspect
+flag bit 4.
 
 * %split/vec4 <wid>
 

@@ -260,6 +260,7 @@ sf_isunknown_fail		vvp_tests/sf_isunknown_fail.json
 sf_onehot_fail			vvp_tests/sf_onehot_fail.json
 sf_onehot0_fail			vvp_tests/sf_onehot0_fail.json
 shift6				vvp_tests/shift6.json
+shift_immediate			vvp_tests/shift_immediate.json
 shiftl_wide			vvp_tests/shiftl_wide.json
 shiftr_wide			vvp_tests/shiftr_wide.json
 single_element_array		vvp_tests/single_element_array.json
