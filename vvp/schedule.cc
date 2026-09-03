@@ -1434,5 +1434,18 @@ void schedule_vthread_list_ready(vthread_t thr)
 {
       struct vthread_event_s*cur = new vthread_event_s;
       cur->thr = thr;
-      schedule_event_(cur, 0, SEQ_ACTIVE);
+
+      /* Event wakeups normally target the active queue being drained. */
+      if ((sched_list == 0) || (sched_list->delay != 0)) {
+	    schedule_event_(cur, 0, SEQ_ACTIVE);
+	    return;
+      }
+
+      cur->next = cur;
+      struct event_s*&queue = sched_list->active;
+      if (queue) {
+	    cur->next = queue->next;
+	    queue->next = cur;
+      }
+      queue = cur;
 }
