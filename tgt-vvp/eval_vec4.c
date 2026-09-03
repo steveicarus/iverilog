@@ -690,6 +690,35 @@ static void draw_binary_vec4_lrs(ivl_expr_t expr)
 	// Push the left expression onto the stack.
       draw_eval_vec4(le);
 
+	/* Constant shift distances do not need an index register or the
+	 * accompanying validity flag. Keep unusual constants on the generic
+	 * path so that negative, wide, and X/Z values retain exactly the same
+	 * conversion semantics as dynamic expressions. */
+      if ((ivl_expr_type(re) == IVL_EX_NUMBER
+	   || ivl_expr_type(re) == IVL_EX_ULONG)
+	  && number_is_immediate(re, IMM_WID, 0)
+	  && !number_is_unknown(re)) {
+	    unsigned long shift = (unsigned long)get_number_immediate64(re);
+
+	    if (shift == 0)
+		  return;
+
+	    switch (ivl_expr_opcode(expr)) {
+		case 'l': /* << */
+		  fprintf(vvp_out, "    %%shiftli %lu;\n", shift);
+		  return;
+		case 'r': /* >> */
+		  fprintf(vvp_out, "    %%shiftri %lu;\n", shift);
+		  return;
+		case 'R': /* >>> */
+		  fprintf(vvp_out, "    %%shiftri%s %lu;\n",
+		          ivl_expr_signed(le)? "/s" : "", shift);
+		  return;
+		default:
+		  assert(0);
+	    }
+      }
+
 	// Calculate the shift amount into an index register.
       int use_index_reg = allocate_word();
       assert(use_index_reg >= 0);
