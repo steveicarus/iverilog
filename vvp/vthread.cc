@@ -115,68 +115,71 @@ struct vthread_s {
 
     private:
       // Keep popped slots so later pushes can reuse wide-vector storage.
-      // Only slots below stack_vec4_top_ contain live stack values.
+      // stack_vec4_top_ points just past the last live stack value.
       vector<vvp_vector4_t>stack_vec4_;
-      size_t stack_vec4_top_;
+      vector<vvp_vector4_t>::iterator stack_vec4_top_;
     public:
       inline vvp_vector4_t pop_vec4(void)
       {
-	    assert(stack_vec4_top_ > 0);
+	    assert(stack_vec4_top_ != stack_vec4_.begin());
 	    stack_vec4_top_ -= 1;
-	    vvp_vector4_t val = std::move(stack_vec4_[stack_vec4_top_]);
+	    vvp_vector4_t val = std::move(*stack_vec4_top_);
 	    return val;
       }
       inline void push_vec4(const vvp_vector4_t&val)
       {
-	    if (stack_vec4_top_ < stack_vec4_.size())
-		  stack_vec4_[stack_vec4_top_] = val;
-	    else
+	    if (stack_vec4_top_ != stack_vec4_.end()) {
+		  *stack_vec4_top_ = val;
+		  stack_vec4_top_ += 1;
+	    } else {
 		  stack_vec4_.push_back(val);
-	    stack_vec4_top_ += 1;
+		  stack_vec4_top_ = stack_vec4_.end();
+	    }
       }
       inline void push_vec4(vvp_vector4_t&&val)
       {
-	    if (stack_vec4_top_ < stack_vec4_.size())
-		  stack_vec4_[stack_vec4_top_] = std::move(val);
-	    else
+	    if (stack_vec4_top_ != stack_vec4_.end()) {
+		  *stack_vec4_top_ = std::move(val);
+		  stack_vec4_top_ += 1;
+	    } else {
 		  stack_vec4_.push_back(std::move(val));
-	    stack_vec4_top_ += 1;
+		  stack_vec4_top_ = stack_vec4_.end();
+	    }
       }
       inline vvp_vector4_t& push_vec4(void)
       {
-	    if (stack_vec4_top_ == stack_vec4_.size())
+	    if (stack_vec4_top_ == stack_vec4_.end()) {
 		  stack_vec4_.emplace_back();
+		  stack_vec4_top_ = stack_vec4_.end();
+		  return stack_vec4_.back();
+	    }
+	    vvp_vector4_t&val = *stack_vec4_top_;
 	    stack_vec4_top_ += 1;
-	    return stack_vec4_[stack_vec4_top_-1];
+	    return val;
       }
       inline const vvp_vector4_t& peek_vec4(unsigned depth)
       {
-	    size_t size = stack_vec4_top_;
-	    assert(depth < size);
-	    size_t use_index = size-1-depth;
-	    return stack_vec4_[use_index];
+	    assert(stack_vec4_top_ > stack_vec4_.begin() + depth);
+	    return *(stack_vec4_top_-1-depth);
       }
       inline vvp_vector4_t& peek_vec4_mutable(unsigned depth)
       {
-	    size_t size = stack_vec4_top_;
-	    assert(depth < size);
-	    size_t use_index = size-1-depth;
-	    return stack_vec4_[use_index];
+	    assert(stack_vec4_top_ > stack_vec4_.begin() + depth);
+	    return *(stack_vec4_top_-1-depth);
       }
       inline vvp_vector4_t& peek_vec4(void)
       {
-	    assert(stack_vec4_top_ >= 1);
-	    return stack_vec4_[stack_vec4_top_-1];
+	    assert(stack_vec4_top_ != stack_vec4_.begin());
+	    return *(stack_vec4_top_-1);
       }
       inline void poke_vec4(unsigned depth, const vvp_vector4_t&val)
       {
-	    assert(depth < stack_vec4_top_);
-	    size_t use_index = stack_vec4_top_-1-depth;
-	    stack_vec4_[use_index] = val;
+	    assert(stack_vec4_top_ > stack_vec4_.begin() + depth);
+	    *(stack_vec4_top_-1-depth) = val;
       }
       inline void pop_vec4(unsigned cnt)
       {
-	    assert(cnt <= stack_vec4_top_);
+	    assert(stack_vec4_top_ >= stack_vec4_.begin() + cnt);
 	    stack_vec4_top_ -= cnt;
       }
 
@@ -325,14 +328,14 @@ struct vthread_s {
       {
 	    if (i_was_disabled) {
 		  stack_vec4_.clear();
-		  stack_vec4_top_ = 0;
+		  stack_vec4_top_ = stack_vec4_.begin();
 		  stack_real_.clear();
 		  stack_str_.clear();
 		  pop_object(stack_obj_size_);
 	    }
 	    free(filenm_);
 	    filenm_ = 0;
-	    assert(stack_vec4_top_ == 0);
+	    assert(stack_vec4_top_ == stack_vec4_.begin());
 	    assert(stack_real_.empty());
 	    assert(stack_str_.empty());
 	    assert(stack_obj_size_ == 0);
@@ -341,7 +344,7 @@ struct vthread_s {
 
 inline vthread_s::vthread_s()
 {
-      stack_vec4_top_ = 0;
+      stack_vec4_top_ = stack_vec4_.begin();
       stack_obj_size_ = 0;
       filenm_ = 0;
       lineno_ = 0;
@@ -377,8 +380,12 @@ void vthread_s::debug_dump(ostream&fd, const char*label)
 	    fd << flags[idx];
       fd << endl;
       fd << "**** vec4 stack..." << endl;
-      for (size_t idx = stack_vec4_top_ ; idx > 0 ; idx -= 1)
-	    fd << "    " << (stack_vec4_top_-idx) << ": " << stack_vec4_[idx-1] << endl;
+      size_t depth = 0;
+      for (vector<vvp_vector4_t>::iterator idx = stack_vec4_top_;
+	   idx != stack_vec4_.begin(); depth += 1) {
+	    idx -= 1;
+	    fd << "    " << depth << ": " << *idx << endl;
+      }
       fd << "**** str stack (" << stack_str_.size() << ")..." << endl;
       fd << "**** obj stack (" << stack_obj_size_ << ")..." << endl;
       fd << "**** args_vec4 array (" << args_vec4.size() << ")..." << endl;
