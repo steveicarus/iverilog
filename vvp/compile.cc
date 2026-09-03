@@ -35,6 +35,7 @@
 # include  "schedule.h"
 # include  <iostream>
 # include  <list>
+# include  <vector>
 # include  <cstdlib>
 # include  <cstring>
 # include  <cassert>
@@ -558,6 +559,7 @@ vvp_net_t* vvp_net_lookup(const char*label)
  * it must print an error message and return false.
  */
 static resolv_list_s*resolv_list = 0;
+static std::vector<vvp_code_t> full_width_store_candidates;
 
 resolv_list_s::~resolv_list_s()
 {
@@ -919,6 +921,23 @@ void compile_cleanup(void)
       } while (nerrs && !last);
 
       compile_errors += nerrs;
+
+	/* Resolve-time specialization keeps the bytecode format generic while
+	   removing signal type and width queries from full-width stores. */
+      for (vvp_code_t code : full_width_store_candidates) {
+	    if (!code->net || !code->net->fil)
+		  continue;
+
+	    const vvp_signal_value*sig = code->net->fil->as_signal_value();
+	    if (!sig || sig->value_size() != code->bit_idx[1])
+		  continue;
+
+	    if (code->opcode == &of_STORE_VEC4)
+		  code->opcode = &of_STORE_VEC4_FULL;
+	    else if (code->opcode == &of_STORE_VEC4_EVENT)
+		  code->opcode = &of_STORE_VEC4_FULL_EVENT;
+      }
+      full_width_store_candidates.clear();
 
       if (verbose_flag) {
 	    fprintf(stderr, " ... Removing symbol tables\n");
@@ -2232,6 +2251,14 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	    peep_prev_code_ = code;
       }
       peep_fuse_slot_ = codespace_next();
+
+	/* The destination is resolved only after the complete file is loaded.
+	   Record zero-offset stores now so compile_cleanup() can prove whether
+	   they cover the entire signal and select the direct handler. */
+      if (code->bit_idx[0] == 0
+	  && (code->opcode == &of_STORE_VEC4
+	      || code->opcode == &of_STORE_VEC4_EVENT))
+	    full_width_store_candidates.push_back(code);
 
       free(opa);
 

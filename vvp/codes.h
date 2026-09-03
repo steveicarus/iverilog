@@ -332,6 +332,8 @@ extern bool of_STORE_STR(vthread_t thr, vvp_code_t code);
 extern bool of_STORE_STRA(vthread_t thr, vvp_code_t code);
 extern bool of_STORE_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_STORE_VEC4_EVENT(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_VEC4_FULL(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_VEC4_FULL_EVENT(vthread_t thr, vvp_code_t code);
 extern bool of_STORE_VEC4A(vthread_t thr, vvp_code_t code);
 extern bool of_SUB(vthread_t thr, vvp_code_t code);
 extern bool of_SUBI(vthread_t thr, vvp_code_t code);

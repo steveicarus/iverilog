@@ -8009,6 +8009,26 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/* The loader selects this handler only when the instruction has a zero
+   offset and its declared width exactly matches the resolved signal. */
+bool of_STORE_VEC4_FULL(vthread_t thr, vvp_code_t cp)
+{
+      unsigned int wid = cp->bit_idx[1];
+      vvp_vector4_t&val = thr->peek_vec4();
+      unsigned int val_size = val.size();
+
+	/* Preserve the generic handler's diagnostics and recovery for malformed
+	   bytecode whose stack value is narrower than the declared width. */
+      if (val_size < wid)
+	    return of_STORE_VEC4(thr, cp);
+      if (val_size > wid)
+	    val.resize(wid);
+
+      vvp_send_vec4(vvp_net_ptr_t(cp->net, 0), val, thr->wt_context);
+      thr->pop_vec4(1);
+      return true;
+}
+
 bool of_STORE_VEC4_EVENT(vthread_t thr, vvp_code_t cp)
 {
       if (vvp_event_defer_active())
@@ -8016,6 +8036,17 @@ bool of_STORE_VEC4_EVENT(vthread_t thr, vvp_code_t cp)
 
       vvp_event_defer_begin();
       bool res = of_STORE_VEC4(thr, cp);
+      vvp_event_defer_end();
+      return res;
+}
+
+bool of_STORE_VEC4_FULL_EVENT(vthread_t thr, vvp_code_t cp)
+{
+      if (vvp_event_defer_active())
+	    return of_STORE_VEC4_FULL(thr, cp);
+
+      vvp_event_defer_begin();
+      bool res = of_STORE_VEC4_FULL(thr, cp);
       vvp_event_defer_end();
       return res;
 }
