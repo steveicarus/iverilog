@@ -549,16 +549,15 @@ void __vpiVThrVec4Stack::vpi_get_value_vector_(p_vpi_value vp, const vvp_vector4
       unsigned wid = val.size();
 
       unsigned hwid = (wid+31)/32;
+      assert(hwid > 0);
       vp->value.vector = static_cast<s_vpi_vecval*>
                          (need_result_buf(hwid*sizeof(s_vpi_vecval), RBUF_VAL));
       assert(vp->value.vector);
 
-	/* Zero the reused result buffer first; the fill loop below only writes
-	   bits 0..wid-1, leaving stale data in the unused high bits otherwise. */
-      for (unsigned word = 0 ;  word < hwid ;  word += 1) {
-	    vp->value.vector[word].aval = 0;
-	    vp->value.vector[word].bval = 0;
-      }
+	/* Zero the top of the result buffer first since the fill loop below only writes
+	   bits 0..wid-1, which can leave stale data in the unused high bits. */
+      vp->value.vector[hwid-1].aval = 0;
+      vp->value.vector[hwid-1].bval = 0;
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    int word = idx/32;
