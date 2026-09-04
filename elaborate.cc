@@ -4915,9 +4915,19 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 			rv = cast_to_int4(rv, lv_width);
 			break;
 		      default:
-			  /* Don't yet know how to handle this. */
-			ivl_assert(*this, 0);
-			break;
+			cerr << get_fileline() << ": error: "
+			     << "Argument " << (idx+1) << " for task '"
+			     << task->basename() << "' is called with '";
+			lv->dump_lval(cerr);
+			cerr << "' which has type '"
+			     << lv->expr_type() << "'." << endl;
+			cerr << get_fileline() << ":      : "
+			        "The task expects to return type '"
+			     << rv->expr_type() << "'." << endl;
+			des->errors += 1;
+			delete lv;
+			delete rv;
+			continue;
 		  }
 	    }
 	    rv = pad_to_width(rv, lv_width, *this);

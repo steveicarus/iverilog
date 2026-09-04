@@ -148,6 +148,7 @@ br_gh4a			normal,-g2009		ivltests
 br_gh72a		normal,-g2009		ivltests gold=br_gh72a.gold
 br_gh72b		normal,-g2009		ivltests gold=br_gh72b.gold
 br_gh72b_fail		CE,-g2009		ivltests gold=br_gh72b_fail.gold
+br_gh716		CE,-g2009		ivltests gold=br_gh716.gold
 br_gh104a		normal,-g2009		ivltests
 br_gh104b		normal,-g2009		ivltests
 br_gh105a		normal,-g2009		ivltests gold=br_gh105a.gold

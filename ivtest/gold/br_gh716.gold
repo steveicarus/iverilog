@@ -1,0 +1,3 @@
+./ivltests/br_gh716.v:8: error: Argument 1 for task 't1' is called with 'bf' which has type 'darray'.
+./ivltests/br_gh716.v:8:      : The task expects to return type 'logic'.
+1 error(s) during elaboration.
