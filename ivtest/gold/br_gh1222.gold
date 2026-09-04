@@ -2,8 +2,4 @@
 ./ivltests/br_gh1222.v:6: error: Variable 'rout_ca2' cannot be driven by a primitive or continuous assignment with non-default strength.
 ./ivltests/br_gh1222.v:7: error: Variable 'lout_ca1' cannot be driven by a primitive or continuous assignment with non-default strength.
 ./ivltests/br_gh1222.v:7: error: Variable 'lout_ca2' cannot be driven by a primitive or continuous assignment with non-default strength.
-./ivltests/br_gh1222.v:12: error: Variable 'rout_gt' cannot be driven by a primitive or continuous assignment with non-default strength.
-./ivltests/br_gh1222.v:12: error: Failed to elaborate primitive output expression top.rout_gt.
-./ivltests/br_gh1222.v:13: error: Variable 'lout_gt' cannot be driven by a primitive or continuous assignment with non-default strength.
-./ivltests/br_gh1222.v:13: error: Failed to elaborate primitive output expression top.lout_gt.
-12 error(s) during elaboration.
+8 error(s) during elaboration.

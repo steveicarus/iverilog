@@ -777,11 +777,14 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  return;
 	    }
-	      // Gates can never have variable output ports.
+	      // Normal gates cannot have variable output ports except for
+	      // SystemVerilog. See: 1800-2023 section 10.3.2. Bi-directional
+	      // (tran) gates can never have their output ports connected to
+	      // a variable.
             if (lval_count > gate_count)
 	          lval_sigs[idx] = pin(idx)->elaborate_bi_net(des, scope, false);
             else
-	          lval_sigs[idx] = pin(idx)->elaborate_lnet(des, scope, false);
+	          lval_sigs[idx] = pin(idx)->elaborate_lnet(des, scope, gn_system_verilog());
 
 	      // The only way this should return zero is if an error
 	      // happened, so for that case just return.
