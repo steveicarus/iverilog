@@ -190,8 +190,9 @@ void compile_variable(char*label, char*name,
 	    net->fil = tmp;
             net->fun = tmp;
       } else {
-	    net->fil = new vvp_wire_vec4(wid, init);
-            net->fun = new vvp_fun_signal4_sa(wid);
+	    vvp_wire_vec4*tmp = new vvp_wire_vec4(wid, init);
+	    net->fil = tmp;
+            net->fun = new vvp_fun_signal4_sa(*tmp);
       }
       const vvp_signal_value*vfil = dynamic_cast<vvp_signal_value*>(net->fil);
 
@@ -372,7 +373,9 @@ static void do_compile_net(vvp_net_t*node, vvp_array_t array,
       if (variable_init) {
 	    vvp_wire_vec4*vec4 = dynamic_cast<vvp_wire_vec4*>(vsig);
 	    assert(vec4);
-	    vec4->set_variable_mask(variable_mask);
+	    vvp_fun_signal4_sa*signal =
+		  dynamic_cast<vvp_fun_signal4_sa*>(node->fun);
+	    vec4->set_variable_mask(variable_mask, signal);
       }
 
       vpiHandle obj = 0;
