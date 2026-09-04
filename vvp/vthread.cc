@@ -1236,9 +1236,8 @@ bool of_ASSIGN_VEC4(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_ptr_t ptr (cp->net, 0);
       unsigned delay = cp->bit_idx[0];
-      const vvp_vector4_t&val = thr->peek_vec4();
-
-      schedule_assign_vector(ptr, 0, 0, val, delay);
+      schedule_assign_vector(ptr, 0, 0,
+			     std::move(thr->peek_vec4()), delay);
       thr->pop_vec4(1);
       return true;
 }

@@ -57,6 +57,10 @@ extern void schedule_assign_vector(vvp_net_ptr_t ptr,
 				   unsigned base, unsigned vwid,
 				   const vvp_vector4_t&val,
 				   vvp_time64_t  delay);
+extern void schedule_assign_vector(vvp_net_ptr_t ptr,
+				   unsigned base, unsigned vwid,
+				   vvp_vector4_t&&val,
+				   vvp_time64_t  delay);
 
 extern void schedule_assign_array_word(vvp_array_t mem,
 				       unsigned word_address,
