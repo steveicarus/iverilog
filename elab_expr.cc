@@ -2357,7 +2357,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 		  if (!data_type->packed()) {
 			use_width = 0;
 			cerr << get_fileline() << ": error: "
-			     << "Invalid data type for $bits()."
+			     << "Invalid data type for " << name << "()."
 			     << endl;
 			des->errors++;
 		  } else {
@@ -2369,6 +2369,31 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 		  }
 
 	    } else {
+		  switch(expr->expr_type()) {
+		    case IVL_VT_BOOL:
+		    case IVL_VT_LOGIC: // This also covers IVL_VT_VECTOR
+		    case IVL_VT_STRING:
+			break;
+		    case IVL_VT_NO_TYPE:
+			cerr << get_fileline() << ": error: Argument with no known data type '"
+			     << *expr << "' passed to " << name << "()." << endl;
+			des->errors++;
+			break;
+		    case IVL_VT_REAL:
+			  // Traditionally iverilog returned 1 for the width of a real.
+			  // Since 1800-2012 this is now forbidden by the standard.
+			  // To support older code skip the error when requested.
+			if (gn_allow_real_arg_to_bits) break;
+			cerr << get_fileline() << ": error: Real argument '"
+			     << *expr << "' passed to " << name << "()." << endl;
+			des->errors++;
+			break;
+		    default:
+			cerr << get_fileline() << ": sorry: Argument '" << *expr << "' of type '"
+			     << expr->expr_type() << "' passed to " << name << "(). is not "
+			        "currently supported" << endl;
+			des->errors++;
+		  }
 		  use_width = expr->expr_width();
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PECallFunction::elaborate_sfunc_: "

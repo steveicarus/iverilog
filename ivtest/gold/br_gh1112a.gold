@@ -1,0 +1,2 @@
+./ivltests/br_gh1112a.v:3: error: Argument with no known data type 'value' passed to $bits().
+1 error(s) during elaboration.

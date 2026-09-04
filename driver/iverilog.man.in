@@ -1,4 +1,4 @@
-.TH iverilog 1 "Jan 13th, 2026" "" "Version @VERSION@"
+.TH iverilog 1 "Sep 4th, 2026" "" "Version @VERSION@"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -204,6 +204,12 @@ Enable (default) or disable support for miscellaneous Icarus Verilog
 extensions. This includes the binary bitwise NAND and NOR operators
 and allowing the binary arithmetic modulus operator to operate on real
 operands.
+.TP 8
+.B -gallow-real-arg-to-bits\fI|\fP-gno-allow-real-arg-to-bits
+Starting in 1800-2012 the standard forbids passing a real value
+to \fB$bits()\fP. The compiler has traditionally reported the width
+of a real as 1. This is now flagged as an error by default. You can
+use this flag to enable the previous functionality.
 .TP 8
 .B -I\fIincludedir\fP
 Append directory \fIincludedir\fP to list of directories searched

@@ -229,6 +229,9 @@ extern bool gn_strict_parameter_declaration;
  */
 extern bool gn_strict_net_var_declaration;
 
+/* Allow $bits() to take a real argument. Not allowed by default. */
+extern bool gn_allow_real_arg_to_bits;
+
 static inline bool gn_system_verilog(void)
 {
       if (generation_flag >= GN_VER2005_SV)
