@@ -1920,6 +1920,11 @@ char **compile_udp_table(char **table, char *row)
 static vvp_code_t peep_prev_code_ = 0;
 static vvp_code_t peep_fuse_slot_ = 0;
 static vvp_code_t peep_parti_pair_lhs_ = 0;
+/* Loader-fused wide-constant run under construction (see the
+   %pushi/%concati fusion below). Extension requires physical adjacency
+   to the dead slots so a fused skip can never cross a code-space
+   chunk link; labels and any other opcode end the run. */
+static vvp_code_t peep_pushi_wide_ = 0;
 
 void compile_code(char*label, char*mnem, comp_operands_t opa)
 {
@@ -2217,6 +2222,76 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	    return;
       }
 
+      /* Fuse %pushi/vec4 + %concati/vec4* runs (wide literals) and
+	 bare %concati/vec4 runs (wide appends) into a single push or
+	 concat of a load-time-assembled constant. The emitter can only
+	 express immediates in 32-bit pieces, so wide literals execute
+	 as push/concat rebuild chains; assembling the constant once at
+	 load replaces each chain with one dispatch and one copy. The
+	 fused slot keeps the pool pointer in cvec (owned, released by
+	 codespace_delete) and the dead-slot count in bit_idx[0]; dead
+	 slots become %noop and are skipped at run time, so code
+	 addresses remain stable. Extension needs physical adjacency
+	 to the dead slots so a fused skip can never cross a
+	 code-space chunk link; labels and any other opcode end
+	 the run. */
+      if (!peep_disable && code->opcode == &of_CONCATI_VEC4) {
+	    vvp_code_t fuse_slot = 0;
+	    if (peep_pushi_wide_
+		&& code == peep_pushi_wide_ + peep_pushi_wide_->bit_idx[0] + 1) {
+		  fuse_slot = peep_pushi_wide_;
+	    } else if (peep_prev_code_ && code == peep_fuse_slot_
+		       && code == peep_prev_code_ + 1
+		       && (peep_prev_code_->opcode == &of_PUSHI_VEC4
+			   || peep_prev_code_->opcode == &of_CONCATI_VEC4)) {
+		  fuse_slot = peep_prev_code_;
+	    }
+	    if (fuse_slot) {
+		  vvp_vector4_t chunk(code->number,
+				      code->bit_idx[0], code->bit_idx[1]);
+		  if (fuse_slot->opcode == &of_CONCATI_WIDE) {
+			fuse_slot->cvec->concat(chunk);
+		  } else if (fuse_slot->opcode == &of_PUSHI_WIDE) {
+			fuse_slot->cvec->concat(chunk);
+		  } else if (fuse_slot->opcode == &of_PUSHI_VEC4) {
+			vvp_vector4_t*assembled =
+			      new vvp_vector4_t(fuse_slot->number,
+						fuse_slot->bit_idx[0],
+						fuse_slot->bit_idx[1]);
+			assembled->concat(chunk);
+			fuse_slot->opcode = &of_PUSHI_WIDE;
+			fuse_slot->cvec = assembled;
+			fuse_slot->bit_idx[0] = 0;
+			fuse_slot->bit_idx[1] = 0;
+		  } else {
+			assert(fuse_slot->opcode == &of_CONCATI_VEC4);
+			vvp_vector4_t*assembled =
+			      new vvp_vector4_t(fuse_slot->number,
+						fuse_slot->bit_idx[0],
+						fuse_slot->bit_idx[1]);
+			assembled->concat(chunk);
+			fuse_slot->opcode = &of_CONCATI_WIDE;
+			fuse_slot->cvec = assembled;
+			fuse_slot->bit_idx[0] = 0;
+			fuse_slot->bit_idx[1] = 0;
+		  }
+		  fuse_slot->bit_idx[0] += 1;
+		  code->opcode = &of_NOOP;
+		  code->bit_idx[0] = 0;
+		  code->bit_idx[1] = 0;
+		  code->number = 0;
+		  peep_pushi_wide_ = fuse_slot;
+		  peep_prev_code_ = 0;
+		  peep_fuse_slot_ = codespace_next();
+		  free(opa);
+		  free(mnem);
+		  return;
+	    }
+	    peep_pushi_wide_ = 0;
+      } else {
+	    peep_pushi_wide_ = 0;
+      }
+
       if (!peep_disable && peep_prev_code_ && code == peep_fuse_slot_
 	  && code == peep_prev_code_ + 1
 	  && peep_prev_code_->opcode == &of_LOAD_VEC4
@@ -2273,6 +2348,7 @@ void compile_codelabel(char*label)
 {
       peep_prev_code_ = 0;
       peep_parti_pair_lhs_ = 0;
+      peep_pushi_wide_ = 0;
       symbol_value_t val;
       vvp_code_t ptr = codespace_next();
 

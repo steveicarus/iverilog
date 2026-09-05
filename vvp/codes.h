@@ -85,6 +85,7 @@ extern bool of_CONCAT_STR(vthread_t thr, vvp_code_t code);
 extern bool of_CONCATI_STR(vthread_t thr, vvp_code_t code);
 extern bool of_CONCAT_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_CONCATI_VEC4(vthread_t thr, vvp_code_t code);
+extern bool of_CONCATI_WIDE(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_RV(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_RV_S(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_SR(vthread_t thr, vvp_code_t code);
@@ -218,6 +219,7 @@ extern bool of_PROP_V(vthread_t thr, vvp_code_t code);
 extern bool of_PUSHI_STR(vthread_t thr, vvp_code_t code);
 extern bool of_PUSHI_REAL(vthread_t thr, vvp_code_t code);
 extern bool of_PUSHI_VEC4(vthread_t thr, vvp_code_t code);
+extern bool of_PUSHI_WIDE(vthread_t thr, vvp_code_t code);
 extern bool of_PUSHV_STR(vthread_t thr, vvp_code_t code);
 extern bool of_PUTC_STR_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_NET(vthread_t thr, vvp_code_t code);
@@ -376,6 +378,10 @@ struct vvp_code_s {
 	    class __vpiHandle*handle;
 	    __vpiScope*scope;
 	    const char*text;
+	      /* Loader-assembled wide constant for fused immediate
+		 builds (%pushi/concati runs). Owned by this slot and
+		 released by codespace_delete. */
+	    class vvp_vector4_t*cvec;
       };
 
       union {

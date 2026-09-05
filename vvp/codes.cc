@@ -122,6 +122,9 @@ void codespace_delete(void)
 		             ((cur+idx)->opcode == &of_NEW_DARRAY) ||
 		             ((cur+idx)->opcode == &of_PUSHI_STR)) {
 			delete [] ((cur+idx)->text);
+		  } else if (((cur+idx)->opcode == &of_PUSHI_WIDE) ||
+		             ((cur+idx)->opcode == &of_CONCATI_WIDE)) {
+			delete ((cur+idx)->cvec);
 		  }
 		  if (count_opcodes == 0) break;
 	    }

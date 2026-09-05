@@ -2413,6 +2413,9 @@ bool of_CONCATI_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/* Loader-fused wide-immediate handlers are defined at the end of
+ * this file (see of_PUSHI_WIDE). */
+
 /*
  * %cvt/rv
  */
@@ -5458,6 +5461,9 @@ bool of_PUSHI_VEC4(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
+
+/* Loader-fused wide-immediate handlers are defined at the end of
+ * this file (see of_PUSHI_WIDE). */
 
 /*
  * %pushv/str
@@ -8505,4 +8511,25 @@ bool of_JMP_WAIT(vthread_t thr, vvp_code_t cp)
       vvp_code_t wait = thr->pc;
       thr->pc += 1;
       return of_WAIT(thr, wait);
+}
+
+/* Loader-fused wide-immediate handlers. of_PUSHI_WIDE executes a fused
+   %pushi/vec4 + %concati/vec4* run (wide literal); of_CONCATI_WIDE
+   executes a fused %concati/vec4 run (wide append to the stack top).
+   The complete constant was assembled at load time into cp->cvec;
+   bit_idx[0] counts the dead slots that this skips, so code addresses
+   remain stable. Keep these after the regular opcode handlers so they
+   do not perturb their layout. */
+bool of_PUSHI_WIDE(vthread_t thr, vvp_code_t cp)
+{
+      thr->push_vec4(*cp->cvec);
+      thr->pc += cp->bit_idx[0];
+      return true;
+}
+
+bool of_CONCATI_WIDE(vthread_t thr, vvp_code_t cp)
+{
+      thr->peek_vec4().concat(*cp->cvec);
+      thr->pc += cp->bit_idx[0];
+      return true;
 }
