@@ -16,6 +16,10 @@ the benchmark output is unchanged, and repeated measurements show a gain.
 | `event_queue` | VVP event scheduling and chained value propagation |
 | `vector_arith` | Wide vector multiply, divide, shifts, and real conversion |
 | `elaboration` | Parameterized instances, generated scopes, nets, and expressions |
+| `event_queue_heavy` | Event scheduling scaled for low-noise paired timing |
+| `vector_arith_heavy` | Wide arithmetic scaled for low-noise paired timing |
+| `elaboration_heavy` | Elaboration scaled for low-noise paired timing |
+| `picorv32` | PicoRV32 running its ISA-test firmware from a pinned external corpus |
 
 The synthetic workloads are deliberately deterministic and long enough to
 measure without producing large output files. They are not substitutes for
@@ -54,6 +58,27 @@ The comparison refuses reports whose workload source hashes or output-oracle
 hashes differ. Keep compiler flags, hardware power mode, workload selection,
 and run counts identical. Treat very short phases and changes smaller than the
 observed run-to-run dispersion as inconclusive.
+
+For a direct same-host comparison, `paired.py` pins both tools to one logical
+CPU and alternates them in balanced ABBA/BAAB blocks. Each simulation is
+checked against its oracle, and the JSON retains every wall-time and CPU-time
+sample:
+
+```sh
+python3 benchmarks/paired.py \
+  --baseline-iverilog /path/to/baseline/bin/iverilog \
+  --baseline-label baseline \
+  --candidate-iverilog /path/to/candidate/bin/iverilog \
+  --candidate-label candidate \
+  --workload vector_arith_heavy \
+  --phase simulate \
+  --cpu 3 --blocks 5 --warmups 1 \
+  --work-dir benchmarks/.work/paired \
+  --output benchmarks/.work/paired.json
+```
+
+Use the geometric mean of the per-block ratios as the primary paired result,
+and inspect its range and wall/CPU agreement before drawing a conclusion.
 
 ## Profile-First Protocol
 

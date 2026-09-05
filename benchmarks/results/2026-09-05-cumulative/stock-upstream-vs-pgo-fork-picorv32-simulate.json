@@ -1,0 +1,411 @@
+{
+  "schema": 1,
+  "timestamp_utc": "2026-09-05T15:39:09.475422+00:00",
+  "hostname": "para",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "cpu": 31,
+  "blocks": 5,
+  "warmups": 1,
+  "runs_per_tool": 10,
+  "phase": "simulate",
+  "workload": {
+    "name": "picorv32",
+    "description": "picorv32 RISC-V core running its ISA test firmware",
+    "sources": {
+      "testbench.v": "eb32235dabffc2e2c4f6bb631066d96048a0bf80dc0cb57186fd1f7e9e572be4",
+      "picorv32.v": "0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb0622",
+      "firmware.hex": "c237213a426cf774571bcaf6f83004d9082491c2edd5f1f19ed79982e2762464"
+    },
+    "oracle_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331"
+  },
+  "tools": {
+    "baseline": {
+      "label": "upstream-stock-gcc13-o2",
+      "commit": "5ab23063fe15bae91f8453e5f50a35cb03ea3206",
+      "iverilog": {
+        "path": "/tmp/iverilog-cumulative-20260904/upstream-stock/install/bin/iverilog",
+        "sha256": "b1124fb7ebefb7fdebc3b473480723e1c9e330510a3fdb25bfa3dab1c222db2c",
+        "version": "Icarus Verilog version 14.0 (devel) ()"
+      },
+      "vvp": {
+        "path": "/tmp/iverilog-cumulative-20260904/upstream-stock/install/bin/vvp",
+        "sha256": "a50b512d7a79577039c20812f46dc149d77055422fd159478e73cff5a04eb622",
+        "version": "Icarus Verilog runtime version 14.0 (devel) ()"
+      }
+    },
+    "candidate": {
+      "label": "fork-clang20-o3-thinlto-pgo",
+      "commit": "b7c94d088ee2b52a35c7bd80f8cf8a7927f66cee",
+      "iverilog": {
+        "path": "/tmp/iverilog-cumulative-20260904/fork-pgo-5c02377/final/install/bin/iverilog",
+        "sha256": "790b5b19a4171c8320fc7ef20ad8f9a670a88190c1ee614b12ce9d599d800349",
+        "version": "Icarus Verilog version 14.0 (devel) ()"
+      },
+      "vvp": {
+        "path": "/tmp/iverilog-cumulative-20260904/fork-pgo-5c02377/final/install/bin/vvp",
+        "sha256": "2f068f56f3e606ca5e262370acedb69ac54720795445b68f137dab3b704ac4e7",
+        "version": "Icarus Verilog runtime version 14.0 (devel) ()"
+      }
+    }
+  },
+  "samples": {
+    "baseline": {
+      "wall_seconds": {
+        "samples": [
+          11.738012162,
+          11.728874009,
+          11.861594333,
+          11.7615855,
+          11.98129007,
+          11.913162944,
+          11.773319614,
+          11.6811068,
+          11.767404705,
+          11.825274932
+        ],
+        "minimum": 11.6811068,
+        "median": 11.7703621595,
+        "mean": 11.8031625069,
+        "maximum": 11.98129007,
+        "mad": 0.04820046149999957,
+        "pstdev": 0.0873450471676145
+      },
+      "cpu_seconds": {
+        "samples": [
+          11.705231999999997,
+          11.696200999999999,
+          11.828608999999995,
+          11.728792999999998,
+          11.948318999999998,
+          11.880668999999989,
+          11.740568000000003,
+          11.648896000000008,
+          11.735024000000008,
+          11.79270899999999
+        ],
+        "minimum": 11.648896000000008,
+        "median": 11.737796000000007,
+        "mean": 11.770501999999999,
+        "maximum": 11.948318999999998,
+        "mad": 0.04825399999999558,
+        "pstdev": 0.08722868331804272
+      }
+    },
+    "candidate": {
+      "wall_seconds": {
+        "samples": [
+          3.81151701,
+          3.789602923,
+          3.832748383,
+          3.840341151,
+          3.808675883,
+          3.806391436,
+          3.793581624,
+          3.790572837,
+          3.8211175,
+          3.777018348
+        ],
+        "minimum": 3.777018348,
+        "median": 3.8075336595,
+        "mean": 3.8071567095,
+        "maximum": 3.840341151,
+        "mad": 0.01545642899999966,
+        "pstdev": 0.019101608208489863
+      },
+      "cpu_seconds": {
+        "samples": [
+          3.7811320000000026,
+          3.759421999999999,
+          3.8022340000000066,
+          3.809199000000007,
+          3.7782240000000025,
+          3.776316000000001,
+          3.7627680000000034,
+          3.7606139999999892,
+          3.791343999999985,
+          3.746884000000012
+        ],
+        "minimum": 3.746884000000012,
+        "median": 3.7772700000000015,
+        "mean": 3.776813700000001,
+        "maximum": 3.809199000000007,
+        "mad": 0.015579000000005117,
+        "pstdev": 0.018934052477216676
+      }
+    }
+  },
+  "speedup": {
+    "wall": {
+      "samples": [
+        3.0872932380818416,
+        3.078705093733629,
+        3.137786182714638,
+        3.092556531464345,
+        3.105061571544568
+      ],
+      "minimum": 3.078705093733629,
+      "median": 3.092556531464345,
+      "mean": 3.1002805235078044,
+      "maximum": 3.137786182714638,
+      "mad": 0.012505040080223129,
+      "pstdev": 0.02060757966687107,
+      "geomean": 3.1002123098457957,
+      "candidate_wins": 5
+    },
+    "cpu": {
+      "samples": [
+        3.103410306457588,
+        3.095002215745701,
+        3.1542606167946663,
+        3.1089028843676996,
+        3.1211224972234866
+      ],
+      "minimum": 3.095002215745701,
+      "median": 3.1089028843676996,
+      "mean": 3.1165397041178284,
+      "maximum": 3.1542606167946663,
+      "mad": 0.012219612855786988,
+      "pstdev": 0.02068059356023956,
+      "geomean": 3.116471367355768,
+      "candidate_wins": 5
+    }
+  },
+  "raw_blocks": [
+    {
+      "index": 0,
+      "order": [
+        "baseline",
+        "candidate",
+        "candidate",
+        "baseline"
+      ],
+      "samples": {
+        "baseline": [
+          {
+            "started_utc": "2026-09-05T15:36:33.369080+00:00",
+            "wall_seconds": 11.738012162,
+            "cpu_seconds": 11.705231999999997,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "started_utc": "2026-09-05T15:36:52.708664+00:00",
+            "wall_seconds": 11.728874009,
+            "cpu_seconds": 11.696200999999999,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ],
+        "candidate": [
+          {
+            "started_utc": "2026-09-05T15:36:45.107254+00:00",
+            "wall_seconds": 3.81151701,
+            "cpu_seconds": 3.7811320000000026,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "started_utc": "2026-09-05T15:36:48.918917+00:00",
+            "wall_seconds": 3.789602923,
+            "cpu_seconds": 3.759421999999999,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      },
+      "speedup": {
+        "wall": 3.0872932380818416,
+        "cpu": 3.103410306457588
+      }
+    },
+    {
+      "index": 1,
+      "order": [
+        "candidate",
+        "baseline",
+        "baseline",
+        "candidate"
+      ],
+      "samples": {
+        "baseline": [
+          {
+            "started_utc": "2026-09-05T15:37:08.270703+00:00",
+            "wall_seconds": 11.861594333,
+            "cpu_seconds": 11.828608999999995,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "started_utc": "2026-09-05T15:37:20.132447+00:00",
+            "wall_seconds": 11.7615855,
+            "cpu_seconds": 11.728792999999998,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ],
+        "candidate": [
+          {
+            "started_utc": "2026-09-05T15:37:04.437804+00:00",
+            "wall_seconds": 3.832748383,
+            "cpu_seconds": 3.8022340000000066,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "started_utc": "2026-09-05T15:37:31.894185+00:00",
+            "wall_seconds": 3.840341151,
+            "cpu_seconds": 3.809199000000007,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      },
+      "speedup": {
+        "wall": 3.078705093733629,
+        "cpu": 3.095002215745701
+      }
+    },
+    {
+      "index": 2,
+      "order": [
+        "baseline",
+        "candidate",
+        "candidate",
+        "baseline"
+      ],
+      "samples": {
+        "baseline": [
+          {
+            "started_utc": "2026-09-05T15:37:35.734757+00:00",
+            "wall_seconds": 11.98129007,
+            "cpu_seconds": 11.948318999999998,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "started_utc": "2026-09-05T15:37:55.331468+00:00",
+            "wall_seconds": 11.913162944,
+            "cpu_seconds": 11.880668999999989,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ],
+        "candidate": [
+          {
+            "started_utc": "2026-09-05T15:37:47.716150+00:00",
+            "wall_seconds": 3.808675883,
+            "cpu_seconds": 3.7782240000000025,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "started_utc": "2026-09-05T15:37:51.524935+00:00",
+            "wall_seconds": 3.806391436,
+            "cpu_seconds": 3.776316000000001,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      },
+      "speedup": {
+        "wall": 3.137786182714638,
+        "cpu": 3.1542606167946663
+      }
+    },
+    {
+      "index": 3,
+      "order": [
+        "candidate",
+        "baseline",
+        "baseline",
+        "candidate"
+      ],
+      "samples": {
+        "baseline": [
+          {
+            "started_utc": "2026-09-05T15:38:11.038521+00:00",
+            "wall_seconds": 11.773319614,
+            "cpu_seconds": 11.740568000000003,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "started_utc": "2026-09-05T15:38:22.811970+00:00",
+            "wall_seconds": 11.6811068,
+            "cpu_seconds": 11.648896000000008,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ],
+        "candidate": [
+          {
+            "started_utc": "2026-09-05T15:38:07.244809+00:00",
+            "wall_seconds": 3.793581624,
+            "cpu_seconds": 3.7627680000000034,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "started_utc": "2026-09-05T15:38:34.493210+00:00",
+            "wall_seconds": 3.790572837,
+            "cpu_seconds": 3.7606139999999892,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      },
+      "speedup": {
+        "wall": 3.092556531464345,
+        "cpu": 3.1089028843676996
+      }
+    },
+    {
+      "index": 4,
+      "order": [
+        "baseline",
+        "candidate",
+        "candidate",
+        "baseline"
+      ],
+      "samples": {
+        "baseline": [
+          {
+            "started_utc": "2026-09-05T15:38:38.283991+00:00",
+            "wall_seconds": 11.767404705,
+            "cpu_seconds": 11.735024000000008,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "started_utc": "2026-09-05T15:38:57.649926+00:00",
+            "wall_seconds": 11.825274932,
+            "cpu_seconds": 11.79270899999999,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ],
+        "candidate": [
+          {
+            "started_utc": "2026-09-05T15:38:50.051530+00:00",
+            "wall_seconds": 3.8211175,
+            "cpu_seconds": 3.791343999999985,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "started_utc": "2026-09-05T15:38:53.872779+00:00",
+            "wall_seconds": 3.777018348,
+            "cpu_seconds": 3.746884000000012,
+            "stdout_sha256": "96419421617ef21cacdc8425a890b9ab29fedbd455ba18c5f3abc650da9cf331",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      },
+      "speedup": {
+        "wall": 3.105061571544568,
+        "cpu": 3.1211224972234866
+      }
+    }
+  ]
+}
