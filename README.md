@@ -2,22 +2,30 @@
 
 This is a fork of iverilog, accepting AI patches for correctness and performance.
 
-Bugfixes, feature enhancements, and speedups: about 100 commits beyond
-upstream. Tracking of work on and around upstream issues is reflected in
-[UPSTREAM_TRACKING.md](UPSTREAM_TRACKING.md). The complete commit ledger is
+Bugfixes, feature enhancements, and speedups: more than 250 fork-side commits
+beyond the current shared base with upstream. Tracking of work on and around
+upstream issues is reflected in [UPSTREAM_TRACKING.md](UPSTREAM_TRACKING.md).
+The complete commit ledger is
 available with `git log upstream/master..HEAD` after configuring an `upstream`
 remote (perf series:
 `git log --grep='^\[perf\]'`, measurements in each message).
 
-Merged speedups so far (in-tree oracle-checked benchmarks; includes
-the `scripts/perf-build.sh` clang+ThinLTO+PGO build):
+Direct current-tip measurements against upstream `5ab23063f` are below. The
+stock column compares identical GCC 13 `-O2` builds and isolates source
+changes. The tuned column compares stock upstream with this fork built by
+`scripts/perf-build.sh` (Clang 20 `-O3`, ThinLTO, and PGO).
 
-| workload | speedup |
-| --- | --- |
-| elaboration-heavy compile | **11.5x** |
-| wide-arithmetic simulation | **3.6x** |
-| event-heavy simulation | **3.2x** |
-| picorv32 ISA-test simulation | **2.5x** |
+| workload | fork stock vs upstream stock | tuned fork vs upstream stock |
+| --- | ---: | ---: |
+| elaboration-heavy compile | **12.39x** | **13.86x** |
+| wide-arithmetic simulation | **5.52x** | **7.20x** |
+| event-heavy simulation | **3.47x** | **4.14x** |
+| picorv32 ISA-test simulation | **2.36x** | **3.10x** |
+
+These are five-block, same-core paired measurements with exact output checks,
+not products of individual commit claims. See the
+[September 2026 cumulative report](benchmarks/results/2026-09-05-cumulative/README.md)
+for matched tuned-build comparisons, dispersion, methodology, and raw JSON.
 
 ---
 
