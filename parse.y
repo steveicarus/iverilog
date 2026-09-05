@@ -145,11 +145,7 @@ static void set_type_id_range(T&value, data_type_t *type, char *id,
 {
       value.type = type;
       value.id = id;
-      value.lexical_pos = loc.lexical_pos;
-      value.first_line = loc.first_line;
-      value.first_column = loc.first_column;
-      value.last_line = loc.last_line;
-      value.last_column = loc.last_column;
+      value.id_loc = loc;
       value.ranges = ranges;
 }
 
@@ -1011,11 +1007,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
       struct {
 	    data_type_t *type;
 	    char *id;
-	    unsigned lexical_pos;
-	    int first_line;
-	    int first_column;
-	    int last_line;
-	    int last_column;
+	    struct vlltype id_loc;
 	    std::list<pform_range_t>*ranges;
       } type_id_range;
 
@@ -2453,7 +2445,8 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 list_of_variable_decl_assignments_with_type /* IEEE1800-2005 A.2.3 */
   : data_type_or_implicit_plus_id_dim var_decl_initializer_opt
       { std::list<decl_assignment_t*>*tmp = new std::list<decl_assignment_t*>;
-	tmp->push_back(pform_make_var_decl(@1, $1.id, $1.lexical_pos, $1.ranges, $2));
+	tmp->push_back(pform_make_var_decl(@1, $1.id, $1.id_loc.lexical_pos,
+					 $1.ranges, $2));
 	$$.decl_assignments = tmp;
 	$$.type = $1.type;
       }
@@ -3168,7 +3161,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
         if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || !$3.type))
               use_port_type = port_declaration_context.port_type;
 	struct pform_port_list port_list = make_port_list($3.type, $3.id,
-							  $3.lexical_pos,
+							  $3.id_loc.lexical_pos,
 							  $3.ranges, nullptr);
 
 	if (use_port_type == NetNet::PIMPLICIT) {
@@ -5187,14 +5180,16 @@ genvar_identifier_list
 
 list_of_port_identifiers
   : data_type_or_implicit_plus_id_dim
-      { $$ = make_port_list($1.type, $1.id, $1.lexical_pos, $1.ranges, nullptr); }
+      { $$ = make_port_list($1.type, $1.id, $1.id_loc.lexical_pos,
+			    $1.ranges, nullptr); }
   | list_of_port_identifiers ',' identifier_name dimensions_opt
       { $$ = make_port_list($1, $3, @3.lexical_pos, $4, nullptr); }
   ;
 
 list_of_variable_port_identifiers
   : data_type_or_implicit_plus_id_dim initializer_opt
-      { $$ = make_port_list($1.type, $1.id, $1.lexical_pos, $1.ranges, $2); }
+      { $$ = make_port_list($1.type, $1.id, $1.id_loc.lexical_pos,
+			    $1.ranges, $2); }
   | list_of_variable_port_identifiers ',' identifier_name dimensions_opt initializer_opt
       { $$ = make_port_list($1, $3, @3.lexical_pos, $4, $5); }
   ;
@@ -5263,7 +5258,7 @@ list_of_port_declarations
 	      delete $3;
 	      port = 0;
 	} else {
-	      port = module_declare_port(@4, $4.id, $4.lexical_pos,
+	      port = module_declare_port(@4, $4.id, $4.id_loc.lexical_pos,
 					 port_declaration_context.port_type,
 					 port_declaration_context.port_net_type,
 					 port_declaration_context.data_type,
@@ -5283,7 +5278,7 @@ list_of_port_declarations
 	      delete $3;
 	      port = 0;
 	} else {
-	      port = module_declare_port(@4, $4.id, $4.lexical_pos,
+	      port = module_declare_port(@4, $4.id, $4.id_loc.lexical_pos,
 					 port_declaration_context.port_type,
 					 NetNet::IMPLICIT, $4.type,
 					 $4.ranges, $5, $3);
@@ -5317,18 +5312,18 @@ interface_port_modport_opt
   // one has to be specified, so we need multiple rules.
 port_declaration
   : attribute_list_opt port_direction net_type_or_var_opt data_type_or_implicit_plus_id_dim initializer_opt
-      { $$ = module_declare_port(@4, $4.id, $4.lexical_pos,
+      { $$ = module_declare_port(@4, $4.id, $4.id_loc.lexical_pos,
 				 $2, $3, $4.type, $4.ranges, $5, $1);
       }
   | attribute_list_opt net_type_or_var data_type_or_implicit_plus_id_dim initializer_opt
       { pform_requires_sv(@3, "Partial ANSI port declaration");
-	$$ = module_declare_port(@3, $3.id, $3.lexical_pos,
+	$$ = module_declare_port(@3, $3.id, $3.id_loc.lexical_pos,
 				 port_declaration_context.port_type,
 				 $2, $3.type, $3.ranges, $4, $1);
       }
   | attribute_list_opt partial_port_type_plus_id_dim initializer_opt
       { pform_requires_sv(@2, "Partial ANSI port declaration");
-	$$ = module_declare_port(@2, $2.id, $2.lexical_pos,
+	$$ = module_declare_port(@2, $2.id, $2.id_loc.lexical_pos,
 				 port_declaration_context.port_type,
 				 NetNet::IMPLICIT, $2.type, $2.ranges, $3, $1);
       }
@@ -6154,7 +6149,8 @@ net_decl_initializer_opt
 list_of_net_decl_assignments_with_type /* IEEE1800-2005 A.2.5 */
   : data_type_or_implicit_plus_id_dim net_decl_initializer_opt
       { std::list<decl_assignment_t*>*tmp = new std::list<decl_assignment_t*>;
-	tmp->push_back(pform_make_net_decl(@1, $1.id, $1.lexical_pos, $1.ranges, $2));
+	tmp->push_back(pform_make_net_decl(@1, $1.id, $1.id_loc.lexical_pos,
+					 $1.ranges, $2));
 	$$.decl_assignments = tmp;
 	$$.type = $1.type;
       }
@@ -6258,13 +6254,7 @@ value_parameter_assign_with_type
       { param_is_type = false;
 	param_type_restrict = {};
 	param_data_type = $1.type;
-	YYLTYPE id_loc = @1;
-	id_loc.first_line = $1.first_line;
-	id_loc.first_column = $1.first_column;
-	id_loc.last_line = $1.last_line;
-	id_loc.last_column = $1.last_column;
-	id_loc.lexical_pos = $1.lexical_pos;
-	pform_set_parameter(id_loc, $1.id, param_is_local,
+	pform_set_parameter($1.id_loc, $1.id, param_is_local,
 			    param_is_type, param_type_restrict,
 			    param_data_type, $1.ranges, $2, $3);
       }
@@ -6275,13 +6265,7 @@ value_parameter_assign_without_parameter
       { param_is_type = false;
 	param_type_restrict = {};
 	param_data_type = $1.type;
-	YYLTYPE id_loc = @1;
-	id_loc.first_line = $1.first_line;
-	id_loc.first_column = $1.first_column;
-	id_loc.last_line = $1.last_line;
-	id_loc.last_column = $1.last_column;
-	id_loc.lexical_pos = $1.lexical_pos;
-	pform_set_parameter(id_loc, $1.id, param_is_local,
+	pform_set_parameter($1.id_loc, $1.id, param_is_local,
 			    param_is_type, param_type_restrict,
 			    param_data_type, $1.ranges, $2, $3);
       }
