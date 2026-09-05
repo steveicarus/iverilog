@@ -2,6 +2,7 @@
 # Test list files are a list of test names and the json that
 # describes the test.
 
+always_ff_lval_fail vvp_tests/always_ff_lval_fail.json
 always4A			vvp_tests/always4A.json
 always4B			vvp_tests/always4B.json
 analog1				vvp_tests/analog1.json
