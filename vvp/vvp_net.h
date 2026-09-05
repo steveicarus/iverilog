@@ -487,6 +487,72 @@ class vvp_vector4_t {
       };
 };
 
+/* Keep exact-equality and X/Z tests visible so the hot change-detection
+ * paths (signal stores, anyedge inputs, comparisons) can inline the
+ * common single-word cases instead of paying a cross-TU call. */
+inline bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
+{
+      if (size_ != that.size_)
+	    return false;
+
+      if (size_ < BITS_PER_WORD) {
+	    unsigned long mask = (1UL << size_) - 1;
+	    return (abits_val_&mask) == (that.abits_val_&mask)
+		  && (bbits_val_&mask) == (that.bbits_val_&mask);
+      }
+
+      if (size_ == BITS_PER_WORD) {
+	    return (abits_val_ == that.abits_val_)
+		  && (bbits_val_ == that.bbits_val_);
+      }
+
+      unsigned words = size_ / BITS_PER_WORD;
+      for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
+	    if (abits_ptr_[idx] != that.abits_ptr_[idx])
+		  return false;
+	    if (bbits_ptr_[idx] != that.bbits_ptr_[idx])
+		  return false;
+      }
+
+      unsigned long mask = size_%BITS_PER_WORD;
+      if (mask > 0) {
+	    mask = (1UL << mask) - 1;
+	    return (abits_ptr_[words]&mask) == (that.abits_ptr_[words]&mask)
+		  && (bbits_ptr_[words]&mask) == (that.bbits_ptr_[words]&mask);
+      }
+
+      return true;
+}
+
+inline bool vvp_vector4_t::has_xz() const
+{
+      if (size_ == 0)
+	    return false;
+
+      if (size_ < BITS_PER_WORD) {
+	    unsigned long mask = -1UL >> (BITS_PER_WORD - size_);
+	    return bbits_val_&mask;
+      }
+
+      if (size_ == BITS_PER_WORD) {
+	    return bbits_val_;
+      }
+
+      unsigned words = size_ / BITS_PER_WORD;
+      for (unsigned idx = 0 ; idx < words ; idx += 1) {
+	    if (bbits_ptr_[idx])
+		  return true;
+      }
+
+      unsigned long mask = size_%BITS_PER_WORD;
+      if (mask > 0) {
+	    mask = -1UL >> (BITS_PER_WORD - mask);
+	    return bbits_ptr_[words]&mask;
+      }
+
+      return false;
+}
+
 /* Make sure to set size_ before calling this routine. Keep the definition
  * visible so the common single-word initialization path can be inlined. */
 inline void vvp_vector4_t::allocate_words_(unsigned long inita,
