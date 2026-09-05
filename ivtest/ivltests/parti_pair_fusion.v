@@ -5,6 +5,8 @@ module parti_pair_fusion;
   reg [319:0] source_b;
   reg [31:0] source_word;
   reg [63:0] source_native;
+  reg select_net;
+  wire [31:0] source_net = select_net ? source_word : source_native[31:0];
   reg [1:0] actual2;
   reg [31:0] actual32;
   reg [63:0] actual64;
@@ -74,6 +76,7 @@ module parti_pair_fusion;
     source_native = 64'h0123456789abcdef;
     source_native[9] = 1'bx;
     source_native[54] = 1'bz;
+    select_net = 1'b1;
 
     // Differently sized selected signals consumed by concatenation.
     actual64 = {source_a[3 +: 31], source_b[69 +: 33]};
@@ -142,6 +145,12 @@ module parti_pair_fusion;
     actual64 = {source_native[0 +: 32], source_native[32 +: 32]};
     check(actual64, reference_concat(source_native, source_native, 0, 32,
                                      32, 32), 13);
+
+    // Net signal references can remain unresolved while the VVP code is
+    // loaded. They must use the generic path until runtime linkage finishes.
+    actual32 = {source_net[0 +: 7], source_net[7 +: 25]};
+    check(actual32, reference_concat(source_net, source_net, 0, 7,
+                                     7, 25), 14);
 
     if (failed == 0)
       $display("PASSED");

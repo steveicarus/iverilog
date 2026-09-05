@@ -2103,9 +2103,13 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	    unsigned lhs_wid = peep_prev_code_->bit_idx[1];
 	    unsigned rhs_base = rhs_code->bit_idx[0];
 	    unsigned rhs_wid = rhs_code->bit_idx[1];
-	    unsigned signal_wid = peep_prev_code_->signal->value_size();
+	    const bool signals_resolved = peep_prev_code_->signal
+		  && rhs_code->signal;
+	    unsigned signal_wid = signals_resolved
+		  ? peep_prev_code_->signal->value_size() : 0;
 	    const unsigned word_bits = 8 * sizeof(unsigned long);
-	    const bool one_word = peep_prev_code_->signal == rhs_code->signal
+	    const bool one_word = signals_resolved
+		  && peep_prev_code_->signal == rhs_code->signal
 		  && lhs_wid > 0 && lhs_wid < word_bits
 		  && rhs_wid > 0 && rhs_wid <= word_bits-lhs_wid
 		  && signal_wid <= word_bits
