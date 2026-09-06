@@ -1,0 +1,2 @@
+ivltests/sv_named_type_var_fail.v:4: error: `missing_type` is not a type.
+1 error(s) during elaboration.
