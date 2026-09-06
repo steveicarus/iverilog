@@ -937,6 +937,34 @@ Module::port_t *module_declare_port(const YYLTYPE&loc, char *id,
       return port;
 }
 
+  // Complete a data port whose direction is inherited from the preceding
+  // declaration. An explicit data type resets the net kind; otherwise inherit
+  // both the data type and net kind. Interface ports are handled separately.
+static Module::port_t*module_declare_partial_port(const YYLTYPE&loc, char*id,
+      unsigned lexical_pos, data_type_t*data_type,
+      std::list<pform_range_t>*unpacked_dims, PExpr*default_value,
+      std::list<named_pexpr_t>*attributes)
+{
+      if (port_declaration_context.port_type == NetNet::NOT_A_PORT) {
+	    yyerror(loc, "error: Incomplete interface port declaration.");
+	    delete[] id;
+	    delete data_type;
+	    delete unpacked_dims;
+	    delete default_value;
+	    delete attributes;
+	    return nullptr;
+      }
+
+      auto net_type = data_type ? NetNet::IMPLICIT
+			       : port_declaration_context.port_net_type;
+      if (!data_type) {
+	    data_type = port_declaration_context.data_type;
+      }
+      return module_declare_port(loc, id, lexical_pos,
+	    port_declaration_context.port_type, net_type, data_type,
+	    unpacked_dims, default_value, attributes);
+}
+
 Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 					      char *modport, char *id,
 					      std::list<pform_range_t> *udims,
@@ -3109,11 +3137,9 @@ data_type_or_implicit_plus_id
       }
   ;
 
-  // Declaration items can be either an implicit declaration name or an
-  // explicit type followed by a name. A bare `TYPE_IDENTIFIER dimensions_opt`
-  // lets a typedef name be shadowed by a declaration name with unpacked
-  // dimensions, while `ps_type_identifier_dim identifier_name` parses a
-  // typedef with packed dimensions followed by a separate declaration name.
+  // A plain identifier can be an implicit declaration name or the first token
+  // of a typed declaration. Keep the identifier, optional packed dimensions,
+  // and declared name together until the parser has enough lookahead.
 data_type_or_implicit_plus_id_dim
   : TYPE_IDENTIFIER dimensions_opt
       { set_type_id_range($$, nullptr, $1.text, @1, $2);
@@ -3127,8 +3153,27 @@ data_type_or_implicit_plus_id_dim
   | implicit_type identifier_name dimensions_opt
       { set_type_id_range($$, $1, $2, @2, $3);
       }
-  | ps_type_identifier_dim identifier_name dimensions_opt
-      { set_type_id_range($$, $1, $2, @2, $3);
+  | IDENTIFIER dimensions_opt identifier_name dimensions_opt
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1);
+	tmp = pform_make_parray_type(@2, tmp, $2);
+	set_type_id_range($$, tmp, $3, @3, $4);
+      }
+  | TYPE_IDENTIFIER dimensions_opt identifier_name dimensions_opt
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1.text);
+	tmp = pform_make_parray_type(@2, tmp, $2);
+	set_type_id_range($$, tmp, $3, @3, $4);
+      }
+  | package_scope IDENTIFIER dimensions_opt identifier_name dimensions_opt
+      { lex_in_package_scope(nullptr);
+	auto tmp = pform_new_type_identifier(@2, $1, $2);
+	tmp = pform_make_parray_type(@3, tmp, $3);
+	set_type_id_range($$, tmp, $4, @4, $5);
+      }
+  | package_scope TYPE_IDENTIFIER dimensions_opt identifier_name dimensions_opt
+      { lex_in_package_scope(nullptr);
+	auto tmp = pform_new_type_identifier(@2, $1, $2.text);
+	tmp = pform_make_parray_type(@3, tmp, $3);
+	set_type_id_range($$, tmp, $4, @4, $5);
       }
   ;
 
@@ -3199,9 +3244,9 @@ partial_port_typedef_plus_id_dim
 	tmp = pform_make_parray_type(@2, tmp, $2);
 	set_type_id_range($$, tmp, $3, @3, $4);
       }
-  | package_scope TYPE_IDENTIFIER dimensions_opt identifier_name dimensions_opt
+  | package_scope identifier_name dimensions_opt identifier_name dimensions_opt
       { lex_in_package_scope(nullptr);
-	auto tmp = pform_new_type_identifier(@2, $1, $2.text);
+	auto tmp = pform_new_type_identifier(@2, $1, $2);
 	tmp = pform_make_parray_type(@3, tmp, $3);
 	set_type_id_range($$, tmp, $4, @4, $5);
       }
@@ -5359,18 +5404,9 @@ list_of_port_declarations
 		    lex_strings.make($4.id), $4.ranges);
 	      delete[]$4.id;
 	      pform_module_define_interface_port(@4, port, $3);
-	} else if (port_declaration_context.port_type == NetNet::NOT_A_PORT) {
-	      yyerror(@4, "error: Incomplete interface port declaration.");
-	      delete_type_id_range($4);
-	      delete $5;
-	      delete $3;
-	      port = 0;
 	} else {
-	      port = module_declare_port(@4, $4.id, $4.id_loc.lexical_pos,
-					 port_declaration_context.port_type,
-					 port_declaration_context.port_net_type,
-					 port_declaration_context.data_type,
-					 $4.ranges, $5, $3);
+	      port = module_declare_partial_port(@4, $4.id, $4.id_loc.lexical_pos,
+						nullptr, $4.ranges, $5, $3);
 	}
 	ports->push_back(port);
 	$$ = ports;
@@ -5378,29 +5414,33 @@ list_of_port_declarations
   | list_of_port_declarations ',' attribute_list_opt partial_port_typedef_plus_id_dim initializer_opt
       { std::vector<Module::port_t*> *ports = $1;
 
-	Module::port_t* port;
-	if (port_declaration_context.port_type == NetNet::NOT_A_PORT) {
-	      yyerror(@4, "error: Incomplete interface port declaration.");
-	      delete_type_id_range($4);
-	      delete $5;
-	      delete $3;
-	      port = 0;
+	auto port = module_declare_partial_port(@4, $4.id, $4.id_loc.lexical_pos,
+					       $4.type, $4.ranges, $5, $3);
+	ports->push_back(port);
+	$$ = ports;
+      }
+    // Without packed dimensions or an initializer, an ordinary identifier at
+    // this position starts an interface port. Otherwise it starts a named data
+    // type and its validity is checked during elaboration.
+  | list_of_port_declarations ',' attribute_list_opt IDENTIFIER dimensions_opt identifier_name dimensions_opt initializer_opt
+      { auto ports = $1;
+	Module::port_t*port;
+
+	if (!$5 && !$8) {
+	      port = module_declare_interface_port(@6, $4, nullptr, $6, $7, $3);
 	} else {
-	      port = module_declare_port(@4, $4.id, $4.id_loc.lexical_pos,
-					 port_declaration_context.port_type,
-					 NetNet::IMPLICIT, $4.type,
-					 $4.ranges, $5, $3);
+	      auto data_type = pform_new_type_identifier(@4, nullptr, $4);
+	      data_type = pform_make_parray_type(@5, data_type, $5);
+	      port = module_declare_partial_port(@6, $6, @6.lexical_pos,
+						data_type, $7, $8, $3);
 	}
 	ports->push_back(port);
 	$$ = ports;
       }
-    // Once an ANSI port declaration list has been established, an identifier
-    // can unambiguously start an interface port. Keeping this case out of
-    // port_declaration avoids ambiguity with an old-style port reference at
-    // the start of the list.
-  | list_of_port_declarations ',' attribute_list_opt IDENTIFIER interface_port_modport_opt identifier_name dimensions_opt
-      { std::vector<Module::port_t*> *ports = $1;
-	ports->push_back(module_declare_interface_port(@6, $4, $5, $6, $7, $3));
+    // A modport selector makes the interface interpretation unambiguous.
+  | list_of_port_declarations ',' attribute_list_opt IDENTIFIER '.' identifier_name identifier_name dimensions_opt
+      { auto ports = $1;
+	ports->push_back(module_declare_interface_port(@7, $4, $6, $7, $8, $3));
 	$$ = ports;
       }
   | list_of_port_declarations ','
