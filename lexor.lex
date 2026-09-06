@@ -377,20 +377,9 @@ TU [munpf]
 	    break;
       }
 
-	/* Special case: If this is part of a scoped name, then check
-	   the package for identifier details. For example, if the
-	   source file is  foo::bar, the parse.y will note the
-	   PACKAGE_IDENTIFIER and "::" token and mark the
-	   "in_package_scope" variable. Then this lexor will see the
-	   identifier here and interpret it in the package scope. */
+	/* A package member remains an ordinary identifier even when its name
+	   also names a package or discipline. */
       if (in_package_scope) {
-	    if (rc == IDENTIFIER) {
-		  if (typedef_t*type = pform_test_type_identifier(in_package_scope, yylval.text)) {
-			yylval.type_identifier.text = yylval.text;
-			yylval.type_identifier.type = type;
-			rc = TYPE_IDENTIFIER;
-		  }
-	    }
 	    in_package_scope = 0;
 	    return rc;
       }
@@ -418,16 +407,6 @@ TU [munpf]
 	    }
       }
 
-	/* If this identifier names a previously declared type, then
-	   return this as a TYPE_IDENTIFIER instead. */
-      if (rc == IDENTIFIER && gn_system_verilog()) {
-	    if (typedef_t*type = pform_test_type_identifier(yylloc, yylval.text)) {
-		  yylval.type_identifier.text = yylval.text;
-		  yylval.type_identifier.type = type;
-		  rc = TYPE_IDENTIFIER;
-	    }
-      }
-
       return rc;
   }
 
@@ -443,13 +422,7 @@ TU [munpf]
 		  return PACKAGE_IDENTIFIER;
 	    }
       }
-      if (gn_system_verilog()) {
-	    if (typedef_t*type = pform_test_type_identifier(yylloc, yylval.text)) {
-		  yylval.type_identifier.text = yylval.text;
-		  yylval.type_identifier.type = type;
-		  return TYPE_IDENTIFIER;
-	    }
-      }
+
       return IDENTIFIER;
   }
 
