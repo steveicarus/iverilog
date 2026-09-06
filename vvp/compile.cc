@@ -2292,6 +2292,39 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	    peep_pushi_wide_ = 0;
       }
 
+      /* Fuse %cmpi/X + %jmp/0xz|1xz (compare-and-branch, the loop
+	 test idiom) into a single compare, pop and conditional branch.
+	 The fused slot keeps the compare operands; the dead jmp slot
+	 keeps its target and flag select, with the compare variant and
+	 branch sense recorded in its spare bit_idx[1]. Flags are still
+	 set by the compare, so later readers are unaffected. */
+      if (!peep_disable
+	  && (code->opcode == &of_JMP0XZ || code->opcode == &of_JMP1XZ)
+	  && peep_prev_code_ && code == peep_fuse_slot_
+	  && code == peep_prev_code_ + 1
+	  && (peep_prev_code_->opcode == &of_CMPIE
+	      || peep_prev_code_->opcode == &of_CMPINE
+	      || peep_prev_code_->opcode == &of_CMPIS
+	      || peep_prev_code_->opcode == &of_CMPIU)) {
+	    unsigned tag = 3;
+	    if (peep_prev_code_->opcode == &of_CMPIE)
+		  tag = 0;
+	    else if (peep_prev_code_->opcode == &of_CMPINE)
+		  tag = 1;
+	    else if (peep_prev_code_->opcode == &of_CMPIS)
+		  tag = 2;
+	    if (code->opcode == &of_JMP1XZ)
+		  tag |= 0x8;
+	    peep_prev_code_->opcode = &of_CMPI_JMP;
+	    code->opcode = &of_NOOP;
+	    code->bit_idx[1] = tag;
+	    peep_prev_code_ = 0;
+	    peep_fuse_slot_ = codespace_next();
+	    free(opa);
+	    free(mnem);
+	    return;
+      }
+
       if (!peep_disable && peep_prev_code_ && code == peep_fuse_slot_
 	  && code == peep_prev_code_ + 1
 	  && peep_prev_code_->opcode == &of_LOAD_VEC4

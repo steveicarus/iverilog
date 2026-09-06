@@ -8533,3 +8533,59 @@ bool of_CONCATI_WIDE(vthread_t thr, vvp_code_t cp)
       thr->pc += cp->bit_idx[0];
       return true;
 }
+
+/* Loader-fused %cmpi/X + %jmp/0xz|1xz (compare-and-branch, the loop
+   test idiom). The fused slot keeps the compare operands; the dead
+   jmp slot keeps its target in cptr and flag select in bit_idx[0],
+   with the compare variant and branch sense in bit_idx[1] (0=E, 1=NE,
+   2=S, 3=U, plus 8 for 1xz sense). Flags are set exactly as the
+   unfused compare sets them, so later readers are unaffected. Keep
+   this after the regular opcode handlers so it does not perturb their
+   layout. */
+bool of_CMPI_JMP(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->number;
+
+      const vvp_vector4_t&lval = thr->peek_vec4();
+
+      vvp_vector4_t rval (wid, cp->bit_idx[0], cp->bit_idx[1]);
+
+      vvp_code_t jmp = cp + 1;
+      unsigned tag = jmp->bit_idx[1];
+      switch (tag & 0x7) {
+	  case 0:
+	    do_CMPE(thr, lval, rval);
+	    break;
+	  case 1:
+	    do_CMPE(thr, lval, rval);
+	    thr->flags[4] =  ~thr->flags[4];
+	    thr->flags[6] =  ~thr->flags[6];
+	    break;
+	  case 2:
+	    do_CMPS(thr, lval, rval);
+	    break;
+	  default:
+	    do_CMPU(thr, lval, rval);
+	    break;
+      }
+
+      thr->pop_vec4(1);
+
+      bool take;
+      if ((tag & 0x8) != 0)
+	    take = thr->flags[jmp->bit_idx[0]] != BIT4_0;
+      else
+	    take = thr->flags[jmp->bit_idx[0]] != BIT4_1;
+
+      if (take)
+	    thr->pc = jmp->cptr;
+      else
+	    thr->pc += 1;
+
+      if (schedule_stopped()) {
+	    schedule_vthread(thr, 0, false);
+	    return false;
+      }
+
+      return true;
+}

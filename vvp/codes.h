@@ -86,6 +86,7 @@ extern bool of_CONCATI_STR(vthread_t thr, vvp_code_t code);
 extern bool of_CONCAT_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_CONCATI_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_CONCATI_WIDE(vthread_t thr, vvp_code_t code);
+extern bool of_CMPI_JMP(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_RV(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_RV_S(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_SR(vthread_t thr, vvp_code_t code);
