@@ -88,10 +88,9 @@ extern UCDriveType uc_drive;
 extern void lex_in_package_scope(PPackage*pkg);
 
 /*
- * Test if this identifier is a type identifier in the current
- * context. The pform code needs to help the lexor here because the
- * parser detects typedefs and marks the typedef'ed identifiers as
- * type names.
+ * Test if this identifier names a type. The parser uses this when syntax
+ * alone cannot distinguish a variable declaration from a module instance
+ * or an interface port.
  */
 extern typedef_t* pform_test_type_identifier(const YYLTYPE&loc, const char*txt);
 extern typedef_t* pform_test_type_identifier(PPackage*pkg, const char*txt);

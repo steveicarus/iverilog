@@ -1085,11 +1085,6 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
       PPackage*package;
 
       struct {
-	    char*text;
-	    typedef_t*type;
-      } type_identifier;
-
-      struct {
 	    data_type_t *type;
 	    char *id;
 	    struct vlltype id_loc;
@@ -1125,7 +1120,6 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 };
 
 %token <text>      IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
-%token <type_identifier> TYPE_IDENTIFIER
 %token <package>   PACKAGE_IDENTIFIER
 %token <discipline> DISCIPLINE_IDENTIFIER
 %token <text>   PATHPULSE_IDENTIFIER
@@ -1311,8 +1305,8 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <decl_assignments> net_decl_assigns list_of_variable_decl_assignments
 %type <decl_assignments_with_type> list_of_net_decl_assignments_with_type
 %type <decl_assignments_with_type> list_of_variable_decl_assignments_with_type
-%type <decl_assignments_with_type> type_identifier_variable_decl_assignments_with_type
-%type <decl_assignments_with_type> package_type_identifier_variable_decl_assignments_with_type
+%type <decl_assignments_with_type> identifier_variable_decl_assignments_with_type
+%type <decl_assignments_with_type> package_variable_decl_assignments_with_type
 
 %type <data_type>  data_type data_type_opt data_type_or_implicit
 %type <data_type>  block_reg_data_type for_decl_data_type
@@ -1513,16 +1507,13 @@ class_constraint /* IEEE1800-2005: A.1.8 */
   // is referenced. E.g. typedefs.
 identifier_name
   : IDENTIFIER { $$ = $1; }
-  | TYPE_IDENTIFIER { $$ = $1.text; }
   ;
 
   /* This rule implements [ extends class_type ] in the
      class_declaration. It is not a rule of its own in the LRM.
 
-     Note that for this to be correct, the identifier after the
-     extends keyword must be a class name. Therefore, match
-     TYPE_IDENTIFIER instead of IDENTIFIER, and this rule will return
-     a data_type. */
+     The identifier after extends must name a class. Construct a named type
+     here and leave validation to elaboration. */
 
 class_declaration_extends_opt /* IEEE1800-2005: A.1.2 */
   : K_extends ps_type_identifier argument_list_parens_opt
@@ -1858,22 +1849,22 @@ package_scope
 
   // Type identifiers with and without attached packed dimensions.
 ps_type_identifier /* IEEE1800-2017: A.9.3 */
- : TYPE_IDENTIFIER
-      { $$ = pform_new_type_identifier(@1, nullptr, $1.text); }
-  | package_scope TYPE_IDENTIFIER
+  : IDENTIFIER
+      { $$ = pform_new_type_identifier(@1, nullptr, $1); }
+  | package_scope IDENTIFIER
       { lex_in_package_scope(0);
-	$$ = pform_new_type_identifier(@2, $1, $2.text);
+	$$ = pform_new_type_identifier(@2, $1, $2);
       }
   ;
 
 ps_type_identifier_dim /* IEEE1800-2017: A.9.3 */
- : TYPE_IDENTIFIER dimensions_opt
-      { auto tmp = pform_new_type_identifier(@1, nullptr, $1.text);
+  : IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1);
 	$$ = pform_make_parray_type(@2, tmp, $2);
       }
-  | package_scope TYPE_IDENTIFIER dimensions_opt
+  | package_scope IDENTIFIER dimensions_opt
       { lex_in_package_scope(nullptr);
-	auto tmp = pform_new_type_identifier(@2, $1, $2.text);
+	auto tmp = pform_new_type_identifier(@2, $1, $2);
 	$$ = pform_make_parray_type(@3, tmp, $3);
       }
   ;
@@ -2543,19 +2534,19 @@ list_of_variable_decl_assignments /* IEEE1800-2005 A.2.3 */
       }
   ;
 
-type_identifier_variable_decl_assignments_with_type
-  : TYPE_IDENTIFIER dimensions_opt list_of_variable_decl_assignments
-      { auto tmp = pform_new_type_identifier(@1, nullptr, $1.text);
+identifier_variable_decl_assignments_with_type
+  : IDENTIFIER dimensions_opt list_of_variable_decl_assignments
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1);
 	$$.decl_assignments = $3;
 	$$.type = pform_make_parray_type(@2, tmp, $2);
       }
-  | package_type_identifier_variable_decl_assignments_with_type
+  | package_variable_decl_assignments_with_type
   ;
 
-package_type_identifier_variable_decl_assignments_with_type
-  : package_scope TYPE_IDENTIFIER dimensions_opt list_of_variable_decl_assignments
+package_variable_decl_assignments_with_type
+  : package_scope IDENTIFIER dimensions_opt list_of_variable_decl_assignments
       { lex_in_package_scope(nullptr);
-	auto tmp = pform_new_type_identifier(@2, $1, $2.text);
+	auto tmp = pform_new_type_identifier(@2, $1, $2);
 	$$.decl_assignments = $4;
 	$$.type = pform_make_parray_type(@3, tmp, $3);
       }
@@ -3017,8 +3008,7 @@ streaming_concatenation /* IEEE1800-2005: A.8.1 */
 task_declaration /* IEEE1800-2005: A.2.7 */
 
   /* Tasks do not have a return type, so the leading identifier is always the
-     task name. Use identifier_name so a name tokenized as TYPE_IDENTIFIER can
-     still declare a task that shadows a visible type name. */
+     task name. */
 
   : K_task lifetime_opt identifier_name ';'
       { assert(current_task == 0);
@@ -3140,10 +3130,7 @@ data_type_or_implicit_plus_id
   // of a typed declaration. Keep the identifier, optional packed dimensions,
   // and declared name together until the parser has enough lookahead.
 data_type_or_implicit_plus_id_dim
-  : TYPE_IDENTIFIER dimensions_opt
-      { set_type_id_range($$, nullptr, $1.text, @1, $2);
-      }
-  | IDENTIFIER dimensions_opt
+  : IDENTIFIER dimensions_opt
       { set_type_id_range($$, nullptr, $1, @1, $2);
       }
   | atomic_type identifier_name dimensions_opt
@@ -3157,20 +3144,9 @@ data_type_or_implicit_plus_id_dim
 	tmp = pform_make_parray_type(@2, tmp, $2);
 	set_type_id_range($$, tmp, $3, @3, $4);
       }
-  | TYPE_IDENTIFIER dimensions_opt identifier_name dimensions_opt
-      { auto tmp = pform_new_type_identifier(@1, nullptr, $1.text);
-	tmp = pform_make_parray_type(@2, tmp, $2);
-	set_type_id_range($$, tmp, $3, @3, $4);
-      }
   | package_scope IDENTIFIER dimensions_opt identifier_name dimensions_opt
       { lex_in_package_scope(nullptr);
 	auto tmp = pform_new_type_identifier(@2, $1, $2);
-	tmp = pform_make_parray_type(@3, tmp, $3);
-	set_type_id_range($$, tmp, $4, @4, $5);
-      }
-  | package_scope TYPE_IDENTIFIER dimensions_opt identifier_name dimensions_opt
-      { lex_in_package_scope(nullptr);
-	auto tmp = pform_new_type_identifier(@2, $1, $2.text);
 	tmp = pform_make_parray_type(@3, tmp, $3);
 	set_type_id_range($$, tmp, $4, @4, $5);
       }
@@ -3202,8 +3178,7 @@ data_type_or_parameter_id_dim
   ;
 
   // `void` is only an explicit return type. The following identifier is still a
-  // function name and may be tokenized as TYPE_IDENTIFIER when it shadows a
-  // visible type name.
+  // function name and can shadow a visible type name.
 data_type_or_implicit_or_void_plus_id
   : data_type_or_implicit_plus_id
       { $$ = $1;
@@ -3482,8 +3457,8 @@ attribute
      rule has presumably set up the scope. */
 
 block_item_decl
-  : block_item_decl_no_type_identifier_start
-  | type_identifier_variable_decl_assignments_with_type ';'
+  : block_item_decl_no_identifier_start
+  | identifier_variable_decl_assignments_with_type ';'
       { if ($1.type) pform_make_var(@1, $1.decl_assignments, $1.type, attributes_in_context, false);
 	var_lifetime = LexicalScope::INHERITED;
       }
@@ -3493,7 +3468,7 @@ block_item_decl
       }
   ;
 
-block_item_decl_no_type_identifier_start
+block_item_decl_no_identifier_start
 
   /* variable declarations. Note that data_type can be 0 if we are
      recovering from an error. */
@@ -3587,7 +3562,7 @@ block_item_decl_no_type_identifier_start
   ;
 
   /* We need to handle K_enum separately because
-   * `typedef enum <TYPE_IDENTIFIER>` can either be the start of a enum forward
+   * `typedef enum <IDENTIFIER>` can either be the start of a enum forward
    * declaration or a enum type declaration with a type identifier as its base
    * type. And this abmiguity can not be resolved if we reduce the K_enum to
    * forward_type_without_enum. */
@@ -5268,11 +5243,6 @@ hierarchy_identifier_component
 	append_hierarchy_identifier_component(*$$, lex_strings.make($1), $2);
 	delete[]$1;
       }
-  | TYPE_IDENTIFIER index_components_opt
-      { $$ = new pform_name_t;
-	append_hierarchy_identifier_component(*$$, lex_strings.make($1.text), $2);
-	delete[]$1.text;
-      }
   ;
 
 index_components_opt
@@ -5898,13 +5868,13 @@ module_item
 	delete[]$2;
       }
 
-  | attribute_list_opt package_type_identifier_variable_decl_assignments_with_type ';'
+  | attribute_list_opt package_variable_decl_assignments_with_type ';'
       { pform_make_var(@2, $2.decl_assignments, $2.type, $1, false);
 	var_lifetime = LexicalScope::INHERITED;
 	delete $1;
       }
 
-  | attribute_list_opt { attributes_in_context = $1; } block_item_decl_no_type_identifier_start
+  | attribute_list_opt { attributes_in_context = $1; } block_item_decl_no_identifier_start
       { delete attributes_in_context;
 	attributes_in_context = 0;
       }
@@ -6441,12 +6411,6 @@ parameter_assign
 			    param_is_type, param_type_restrict,
 			    param_data_type, $2, $3, $4);
 	delete[]$1;
-      }
-  | TYPE_IDENTIFIER dimensions_opt initializer_opt parameter_value_ranges_opt
-      { pform_set_parameter(@1, lex_strings.make($1.text), param_is_local,
-			    param_is_type, param_type_restrict,
-			    param_data_type, $2, $3, $4);
-	delete[]$1.text;
       }
   ;
 
