@@ -1342,7 +1342,6 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <type_id_range> data_type_or_implicit_plus_id
 %type <type_id_range> data_type_or_implicit_plus_id_dim
 %type <type_id_range> data_type_or_implicit_or_void_plus_id
-%type <type_id_range> data_type_or_parameter_id_base
 %type <type_id_range> data_type_or_parameter_id_dim
 %type <type_id_range> partial_port_name_dim
 %type <type_id_range> partial_port_type_plus_id_dim
@@ -3112,25 +3111,23 @@ data_type_or_implicit_plus_id_dim
   // separate from data_type_or_implicit_plus_id_dim so a bare typedef name can
   // still be parsed as a parameter name while implicit types like `signed P`
   // and `[3:0] P` are rejected.
-data_type_or_parameter_id_base
-  : IDENTIFIER
-      { set_type_id_range($$, nullptr, $1, @1, nullptr);
-      }
-  | atomic_type identifier_name
-      { set_type_id_range($$, $1, $2, @2, nullptr);
-      }
-  | ps_type_identifier_dim identifier_name
-      { set_type_id_range($$, $1, $2, @2, nullptr);
-      }
-  ;
-
 data_type_or_parameter_id_dim
-  : TYPE_IDENTIFIER dimensions_opt
-      { set_type_id_range($$, nullptr, $1.text, @1, $2);
+  : identifier_name dimensions_opt
+      { set_type_id_range($$, nullptr, $1, @1, $2);
       }
-  | data_type_or_parameter_id_base dimensions_opt
-      { $$ = $1;
-	$$.ranges = $2;
+  | identifier_name dimensions_opt identifier_name dimensions_opt
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1);
+	tmp = pform_make_parray_type(@2, tmp, $2);
+	set_type_id_range($$, tmp, $3, @3, $4);
+      }
+  | atomic_type identifier_name dimensions_opt
+      { set_type_id_range($$, $1, $2, @2, $3);
+      }
+  | package_scope identifier_name dimensions_opt identifier_name dimensions_opt
+      { lex_in_package_scope(nullptr);
+	auto tmp = pform_new_type_identifier(@2, $1, $2);
+	tmp = pform_make_parray_type(@3, tmp, $3);
+	set_type_id_range($$, tmp, $4, @4, $5);
       }
   ;
 
@@ -6288,13 +6285,14 @@ parameter_assign_with_type
   ;
 
 value_parameter_assign_with_type
-  : data_type_or_implicit_plus_id_dim initializer_opt parameter_value_ranges_opt
+  : value_parameter_assign_without_parameter
+  | implicit_type identifier_name dimensions_opt initializer_opt parameter_value_ranges_opt
       { param_is_type = false;
 	param_type_restrict = {};
-	param_data_type = $1.type;
-	pform_set_parameter($1.id_loc, $1.id, param_is_local,
+	param_data_type = $1;
+	pform_set_parameter(@2, $2, param_is_local,
 			    param_is_type, param_type_restrict,
-			    param_data_type, $1.ranges, $2, $3);
+			    param_data_type, $3, $4, $5);
       }
   ;
 
