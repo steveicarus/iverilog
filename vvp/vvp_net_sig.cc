@@ -151,9 +151,18 @@ vvp_fun_signal_base::vvp_fun_signal_base()
       count_functors_sig += 1;
 }
 
-vvp_fun_signal4_sa::vvp_fun_signal4_sa(unsigned wid, vvp_bit4_t init)
-: bits4_(wid, init)
+vvp_fun_signal4_sa::vvp_fun_signal4_sa(vvp_wire_vec4&wire)
+: bits4_(&wire.bits4_)
 {
+}
+
+void vvp_fun_signal4_sa::detach_storage_(vvp_vector4_t&storage)
+{
+      if (bits4_ != &storage)
+	    return;
+
+      void*mem = heap_.alloc(sizeof(vvp_vector4_t));
+      bits4_ = new (mem) vvp_vector4_t(storage);
 }
 
 /*
@@ -177,38 +186,47 @@ void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 		 copy the bits, otherwise we need to see if there are
 		 any holes in the mask so we can set those bits. */
 	    if (assign_mask_.size() == 0) {
-		  bool changed = !bits4_.eeq(bit);
+		  bool changed = !bits4_->eeq(bit);
                   if (needs_init_ || changed) {
-			assert(bit.size() == bits4_.size());
-			bits4_ = bit;
+			assert(bit.size() == bits4_->size());
+			*bits4_ = bit;
 			needs_init_ = false;
-			ptr.ptr()->send_vec4_from_signal(bits4_, 0, changed);
+			ptr.ptr()->send_vec4_from_signal(*bits4_, 0, changed);
 		  }
 	    } else {
 		  bool changed = false;
-		  assert(bits4_.size() == assign_mask_.size());
+		  bool touched = false;
+		  assert(bits4_->size() == assign_mask_.size());
 		  for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1) {
-			if (idx >= bits4_.size()) break;
+			if (idx >= bits4_->size()) break;
 			if (assign_mask_.value(idx)) continue;
-			bits4_.set_bit(idx, bit.value(idx));
-			changed = true;
+			touched = true;
+			vvp_bit4_t new_bit = bit.value(idx);
+			if (bits4_->value(idx) != new_bit) {
+			      bits4_->set_bit(idx, new_bit);
+			      changed = true;
+			}
 		  }
-		  if (changed) {
+		  if (touched && (needs_init_ || changed)) {
 			needs_init_ = false;
-			ptr.ptr()->send_vec4_from_signal(bits4_, 0, false);
+			ptr.ptr()->send_vec4_from_signal(*bits4_, 0, changed);
 		  }
 	    }
 	    break;
 
-	  case 1: // Continuous assign value
+	  case 1: { // Continuous assign value
 	      // Handle the simple case of the linked source being wider
 	      // than this signal. Note we don't yet support the case of
 	      // the linked source being narrower than this signal, or
 	      // the case of an expression being assigned.
-	    bits4_ = coerce_to_width(bit, bits4_.size());
-	    assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL1, bits4_.size());
-	    ptr.ptr()->send_vec4_from_signal(bits4_, 0, false);
+	    vvp_vector4_t next = coerce_to_width(bit, bits4_->size());
+	    bool changed = !bits4_->eeq(next);
+	    *bits4_ = next;
+	    assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL1,
+					  bits4_->size());
+	    ptr.ptr()->send_vec4_from_signal(*bits4_, 0, changed);
 	    break;
+	  }
 
 	  default:
 	    fprintf(stderr, "Unsupported port type %u.\n", ptr.port());
@@ -225,22 +243,26 @@ void vvp_fun_signal4_sa::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 				      unsigned base, unsigned vwid, vvp_context_t)
 {
-      assert(bits4_.size() == vwid);
+      assert(bits4_->size() == vwid);
       unsigned wid = bit.size();
 
       switch (ptr.port()) {
 	  case 0: // Normal input
 	    if (assign_mask_.size() == 0) {
-		  bool changed = true;
-		  if (base + wid <= bits4_.size()) {
+		  bool changed = false;
+		  if (base + wid <= bits4_->size()) {
 			  // The part fits entirely: write it a word
 			  // at a time, and learn whether any bit
 			  // actually changed.
-			changed = bits4_.set_vec(base, bit);
+			changed = bits4_->set_vec(base, bit);
 		  } else {
 			for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-			      if (base+idx >= bits4_.size()) break;
-			      bits4_.set_bit(base+idx, bit.value(idx));
+			      if (base+idx >= bits4_->size()) break;
+			      vvp_bit4_t new_bit = bit.value(idx);
+			      if (bits4_->value(base+idx) != new_bit) {
+				    bits4_->set_bit(base+idx, new_bit);
+				    changed = true;
+			      }
 			}
 		  }
 		    // Like the full-width and masked paths, only
@@ -248,35 +270,46 @@ void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit
 		    // initial value still needs to propagate).
 		  if (needs_init_ || changed) {
 			needs_init_ = false;
-			ptr.ptr()->send_vec4_from_signal(bits4_, 0, changed);
+			ptr.ptr()->send_vec4_from_signal(*bits4_, 0, changed);
 		  }
 	    } else {
 		  bool changed = false;
-		  assert(bits4_.size() == assign_mask_.size());
+		  bool touched = false;
+		  assert(bits4_->size() == assign_mask_.size());
 		  for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-			if (base+idx >= bits4_.size()) break;
+			if (base+idx >= bits4_->size()) break;
 			if (assign_mask_.value(base+idx)) continue;
-			bits4_.set_bit(base+idx, bit.value(idx));
-			changed = true;
+			touched = true;
+			vvp_bit4_t new_bit = bit.value(idx);
+			if (bits4_->value(base+idx) != new_bit) {
+			      bits4_->set_bit(base+idx, new_bit);
+			      changed = true;
+			}
 		  }
-		  if (changed) {
+		  if (touched && (needs_init_ || changed)) {
 			needs_init_ = false;
-			ptr.ptr()->send_vec4_from_signal(bits4_, 0, false);
+			ptr.ptr()->send_vec4_from_signal(*bits4_, 0, changed);
 		  }
 	    }
 	    break;
 
-	  case 1: // Continuous assign value
+	  case 1: { // Continuous assign value
 	    if (assign_mask_.size() == 0)
-		  assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, bits4_.size());
+		  assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, bits4_->size());
+	    bool changed = false;
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  if (base+idx >= bits4_.size())
+		  if (base+idx >= bits4_->size())
 			break;
-		  bits4_.set_bit(base+idx, bit.value(idx));
+		  vvp_bit4_t new_bit = bit.value(idx);
+		  if (bits4_->value(base+idx) != new_bit) {
+			bits4_->set_bit(base+idx, new_bit);
+			changed = true;
+		  }
 		  assign_mask_.set_bit(base+idx, 1);
 	    }
-	    ptr.ptr()->send_vec4_from_signal(bits4_, 0, false);
+	    ptr.ptr()->send_vec4_from_signal(*bits4_, 0, changed);
 	    break;
+	  }
 
 	  default:
 	    fprintf(stderr, "Unsupported port type %u.\n", ptr.port());
@@ -342,7 +375,7 @@ void automatic_signal_base::get_value(struct t_vpi_value*)
 
 const vvp_vector4_t& vvp_fun_signal4_sa::vec4_unfiltered_value() const
 {
-      return bits4_;
+      return *bits4_;
 }
 
 vvp_fun_signal4_aa::vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init)
@@ -882,14 +915,16 @@ bool vvp_wire_base::is_forced(unsigned) const
 }
 
 vvp_wire_vec4::vvp_wire_vec4(unsigned wid, vvp_bit4_t init)
-: bits4_(wid, init)
+: needs_init_(true), bits4_(wid, init)
 {
-      needs_init_ = true;
-      signal_value_synced_ = false;
 }
 
-void vvp_wire_vec4::set_variable_mask(const vvp_vector4_t&state_mask)
+void vvp_wire_vec4::set_variable_mask(const vvp_vector4_t&state_mask,
+				      vvp_fun_signal4_sa*signal)
 {
+	// Mixed structural and procedural drivers need independent state.
+      if (signal)
+	    signal->detach_storage_(bits4_);
       assert(state_mask.size() == bits4_.size());
       if (driver_mask_.size() == 0) {
 	    driver_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0,
@@ -920,7 +955,6 @@ void vvp_wire_vec4::assign_variable(vvp_net_t*net,
 				    unsigned base, unsigned vwid,
 				    vvp_context_t context)
 {
-      signal_value_synced_ = false;
       assert(net);
       assert(driver_mask_.size() == bits4_.size());
       assert(vwid == bits4_.size());
@@ -954,7 +988,6 @@ void vvp_wire_vec4::assign_variable(vvp_net_t*net,
 vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
 						 unsigned base, unsigned vwid)
 {
-      signal_value_synced_ = false;
 	// Special case! the input bit is 0 wid. Interpret this as a
 	// vector of BIT4_X to match the width of the bits4_ vector.
 	// FIXME! This is a hack to work around some buggy gate
@@ -1018,17 +1051,15 @@ vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec4_from_signal(
 	    return filter_vec4(bit, rep, base, vwid);
 
       assert(bits4_.size() == vwid);
-	// A generic filter call can update bits4_ without updating the paired
-	// signal functor. Only trust its comparison while the two are synced.
-      if ((!signal_value_synced_ || !known_changed)
-	  && bits4_.eeq(bit) && !needs_init_) {
-	    signal_value_synced_ = true;
+	// Static signal functors and their wire filters share this value. The
+	// functor has therefore already stored the new bits and checked whether
+	// they changed before reaching this filter.
+      assert(&bits4_ == &bit);
+      if (!known_changed && !needs_init_) {
 	    return STOP;
       }
 
-      bits4_ = bit;
       needs_init_ = false;
-      signal_value_synced_ = true;
       return filter_mask_(bit, force4_, rep, 0);
 }
 
@@ -1037,7 +1068,6 @@ vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec8(const vvp_vector8_t&bit,
                                                  unsigned base,
                                                  unsigned vwid)
 {
-      signal_value_synced_ = false;
       assert(bits4_.size() == vwid);
 
       if (driver_mask_.size()) {

@@ -30,6 +30,8 @@
 # include  <new>
 # include  <cassert>
 
+class vvp_wire_vec4;
+
 #ifdef HAVE_IOSFWD
 # include  <iosfwd>
 #else
@@ -146,8 +148,10 @@ class automatic_signal_base : public vvp_signal_value, public vvp_net_fil_t {
  */
 class vvp_fun_signal4_sa : public vvp_fun_signal_vec {
 
+      friend class vvp_wire_vec4;
+
     public:
-      explicit vvp_fun_signal4_sa(unsigned wid, vvp_bit4_t init=BIT4_X);
+      explicit vvp_fun_signal4_sa(vvp_wire_vec4&wire);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t) override;
@@ -163,7 +167,11 @@ class vvp_fun_signal4_sa : public vvp_fun_signal_vec {
       const vvp_vector4_t& vec4_unfiltered_value() const override;
 
     private:
-      vvp_vector4_t bits4_;
+      void detach_storage_(vvp_vector4_t&storage);
+
+	// Normally owned by the paired wire filter. Mixed-driver signals
+	// detach before the filter changes independently of the functor.
+      vvp_vector4_t*bits4_;
 };
 
 /*
@@ -425,9 +433,12 @@ class vvp_wire_base  : public vvp_net_fil_t, public vvp_signal_value {
 
 class vvp_wire_vec4 : public vvp_wire_base {
 
+      friend class vvp_fun_signal4_sa;
+
     public:
       vvp_wire_vec4(unsigned wid, vvp_bit4_t init);
-      void set_variable_mask(const vvp_vector4_t&state_mask);
+      void set_variable_mask(const vvp_vector4_t&state_mask,
+			     vvp_fun_signal4_sa*signal);
       bool has_variable_mask() const { return driver_mask_.size() != 0; }
       void assign_variable(vvp_net_t*net, const vvp_vector4_t&val,
 			   unsigned base, unsigned vwid, vvp_context_t context);
@@ -471,7 +482,6 @@ class vvp_wire_vec4 : public vvp_wire_base {
 
     private:
       bool needs_init_;
-      bool signal_value_synced_;
       vvp_vector4_t bits4_; // The tracked driven value
       vvp_vector4_t force4_; // the value being forced
       vvp_vector2_t driver_mask_; // Bits with structural drivers
