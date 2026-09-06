@@ -1771,6 +1771,10 @@ bool of_CASSIGN_WR(vthread_t thr, vvp_code_t cp)
 bool of_CAST2(vthread_t thr, vvp_code_t)
 {
       vvp_vector4_t&val = thr->peek_vec4();
+      /* Clean 2-state values need no conversion; the word-level check
+       * below skips the per-bit scan entirely. */
+      if (!val.has_xz())
+	    return true;
       unsigned wid = val.size();
 
       for (unsigned idx = 0 ; idx < wid ; idx += 1) {
