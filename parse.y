@@ -426,6 +426,8 @@ static decl_assignment_t *pform_make_var_decl(const YYLTYPE&loc, char *id,
 	    warn_count += 1;
       }
       decl_assignment_t *decl = new decl_assignment_t;
+      decl->lexical_pos(lexical_pos);
+      FILE_NAME(decl, loc);
       decl->name = { lex_strings.make(id), lexical_pos };
       if (udims) {
 	    decl->index = *udims;
@@ -441,6 +443,51 @@ static decl_assignment_t *pform_make_var_decl(const YYLTYPE&loc, char *id,
 					      PExpr *init)
 {
       return pform_make_var_decl(loc, id, loc.lexical_pos, udims, init);
+}
+
+  // Without port connections, any scalar entry or initializer requires the
+  // leading name to be a type. Array-only lists without initializers can also
+  // be parentheses-less module instances (an Icarus extension), so the caller
+  // resolves those by looking up the leading name.
+static bool decl_assignments_require_type(
+      const std::list<decl_assignment_t*> &decls)
+{
+      for (const auto decl : decls) {
+	    if (decl->expr || decl->index.empty()) return true;
+      }
+
+      return false;
+}
+
+  // Once the caller selects the instance interpretation, consume the entries
+  // parsed as variable declarations and append no-port instances. Diagnose
+  // scalar entries and initializers to keep parentheses-less instances limited
+  // to the existing Icarus array extension. Preserve each entry's location for
+  // diagnostics and the resulting instance.
+static void append_no_port_gate_instances(std::vector<lgate>&gates,
+      std::unique_ptr<std::list<decl_assignment_t*>> decls)
+{
+      while (!decls->empty()) {
+	    std::unique_ptr<decl_assignment_t> decl(decls->front());
+	    decls->pop_front();
+
+	    if (decl->expr) {
+		  cerr << decl->get_fileline() << ": error: "
+		       << "Module instances cannot have variable initializers." << endl;
+		  error_count += 1;
+	    }
+	    if (decl->index.empty()) {
+		  cerr << decl->get_fileline() << ": error: "
+		       << "Module instances require port parentheses." << endl;
+		  error_count += 1;
+	    }
+
+	    lgate instance;
+	    instance.name = decl->name.first.str();
+	    instance.ranges = new std::list<pform_range_t>(decl->index);
+	    instance.set_line(*decl);
+	    gates.push_back(instance);
+      }
 }
 
 static decl_assignment_t *pform_make_net_decl(const YYLTYPE&loc, char *id,
@@ -1204,7 +1251,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 
 %type <gate>  gate_instance gate_instance_connections gate_instance_ports
 %type <gate>  gate_instance_positional_connections
-%type <gates> gate_instance_list
+%type <gates> gate_instance_list gate_instance_continue
 %type <let_port_lst> let_port_list_opt let_port_list
 %type <let_port_itm> let_port_item
 
@@ -5062,6 +5109,73 @@ gate_instance_list
       }
   ;
 
+gate_instance_continue
+  : ',' gate_instance_list
+      { $$ = $2; }
+  |
+      { $$ = new std::vector<lgate>; }
+  ;
+
+  /* A module item that starts with two identifier names can be either a
+     no-parameter module instance or a declaration with a named type. Keep the
+     shared prefix in this rule so the parser can decide once it has seen the
+     rest of the item. Parameterized instances are unambiguous after '#', and
+     remain in the ordinary module_item rule below. */
+identifier_module_item
+  : attribute_list_opt identifier_name identifier_name gate_instance_ports gate_instance_continue ';'
+      { std::unique_ptr<lgate> instance($4);
+	instance->name = $3;
+	FILE_NAME(instance.get(), @3);
+	$5->insert($5->begin(), *instance);
+	auto type_name = lex_strings.make($2);
+	pform_make_modgates(@2, type_name, nullptr, $5, $1);
+	delete[]$2;
+	delete[]$3;
+      }
+  | attribute_list_opt identifier_name list_of_variable_decl_assignments ';'
+      { if (decl_assignments_require_type(*$3) ||
+	    pform_test_type_identifier(@2, $2)) {
+	      auto type = pform_new_type_identifier(@2, nullptr, $2);
+	      pform_make_var(@2, $3, type, $1, false);
+	      var_lifetime = LexicalScope::INHERITED;
+	      delete $1;
+	} else {
+	      std::unique_ptr<std::vector<lgate>> gates(new std::vector<lgate>);
+	      append_no_port_gate_instances(*gates,
+		    std::unique_ptr<std::list<decl_assignment_t*>>($3));
+	      auto type_name = lex_strings.make($2);
+	      pform_make_modgates(@2, type_name, nullptr, gates.release(), $1);
+	      delete[]$2;
+	}
+      }
+    // Connections in a later entry select an instance list even when the
+    // leading entries omit their port lists.
+  | attribute_list_opt identifier_name list_of_variable_decl_assignments ','
+    identifier_name gate_instance_ports gate_instance_continue ';'
+      { std::unique_ptr<std::vector<lgate>> gates(new std::vector<lgate>);
+	append_no_port_gate_instances(*gates,
+		    std::unique_ptr<std::list<decl_assignment_t*>>($3));
+	std::unique_ptr<lgate> instance($6);
+	instance->name = $5;
+	FILE_NAME(instance.get(), @5);
+	gates->push_back(*instance);
+	gates->insert(gates->end(), $7->begin(), $7->end());
+	delete $7;
+	auto type_name = lex_strings.make($2);
+	pform_make_modgates(@2, type_name, nullptr, gates.release(), $1);
+	delete[]$2;
+	delete[]$5;
+      }
+  | attribute_list_opt identifier_name dimensions
+    list_of_variable_decl_assignments ';'
+      { auto type = pform_new_type_identifier(@2, nullptr, $2);
+	type = pform_make_parray_type(@3, type, $3);
+	pform_make_var(@2, $4, type, $1, false);
+	var_lifetime = LexicalScope::INHERITED;
+	delete $1;
+      }
+  ;
+
 gatetype
   : K_and    { $$ = PGBuiltin::AND; }
   | K_nand   { $$ = PGBuiltin::NAND; }
@@ -5744,10 +5858,22 @@ module_item
   /* block_item_decl rule is shared with task blocks and named
      begin/end. Careful to pass attributes to the block_item_decl. */
 
-  | attribute_list_opt type_identifier_variable_decl_assignments_with_type ';'
-      { if ($2.type) pform_make_var(@2, $2.decl_assignments, $2.type, $1, false);
+  | identifier_module_item
+
+  | attribute_list_opt identifier_name gate_instance_positional_connections gate_instance_continue ';'
+      { std::unique_ptr<lgate> instance($3);
+	instance->name = "";
+	FILE_NAME(instance.get(), @3);
+	$4->insert($4->begin(), *instance);
+	auto type_name = lex_strings.make($2);
+	pform_make_modgates(@2, type_name, nullptr, $4, $1);
+	delete[]$2;
+      }
+
+  | attribute_list_opt package_type_identifier_variable_decl_assignments_with_type ';'
+      { pform_make_var(@2, $2.decl_assignments, $2.type, $1, false);
 	var_lifetime = LexicalScope::INHERITED;
-	if ($1) delete $1;
+	delete $1;
       }
 
   | attribute_list_opt { attributes_in_context = $1; } block_item_decl_no_type_identifier_start
@@ -5813,34 +5939,22 @@ module_item
   | K_pulldown '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
       { pform_makegates(@1, PGBuiltin::PULLDOWN, $3, 0, $7, 0); }
 
-  /* This rule handles instantiations of modules and user defined
-     primitives. These devices to not have delay lists or strengths,
-     but then can have parameter lists. */
+  /* Parameterized module and primitive instances are unambiguous after '#'.
+     Unparameterized instances share a prefix with named declarations and are
+     handled by identifier_module_item. */
 
   | attribute_list_opt
-	  IDENTIFIER parameter_value_assignment gate_instance_list ';'
+	  identifier_name parameter_value_assignment gate_instance_list ';'
       { perm_string tmp1 = lex_strings.make($2);
 		  pform_make_modgates(@2, tmp1, $3, $4, $1);
 		  delete[]$2;
       }
 
         | attribute_list_opt
-	  IDENTIFIER parameter_value_assignment error ';'
+	  identifier_name parameter_value_assignment error ';'
       { yyerror(@2, "error: Invalid module instantiation");
 		  delete[]$2;
 		  if ($1) delete $1;
-      }
-
-  | attribute_list_opt IDENTIFIER gate_instance_list ';'
-      { auto type_name = lex_strings.make($2);
-	pform_make_modgates(@2, type_name, nullptr, $3, $1);
-	delete[]$2;
-      }
-
-  | attribute_list_opt IDENTIFIER error ';'
-      { yyerror(@2, "error: Invalid module instantiation");
-	delete[]$2;
-	delete $1;
       }
 
   /* Continuous assignment can have an optional drive strength, then

@@ -162,7 +162,7 @@ struct name_component_t {
       std::list<index_component_t>index;
 };
 
-struct decl_assignment_t {
+struct decl_assignment_t : public LineInfo {
       pform_ident_t name;
       std::list<pform_range_t>index;
       std::unique_ptr<PExpr> expr;
