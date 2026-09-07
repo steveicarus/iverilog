@@ -1294,7 +1294,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <let_port_lst> let_port_list_opt let_port_list
 %type <let_port_itm> let_port_item
 
-%type <pform_name> hierarchy_identifier hierarchy_identifier_component
+%type <pform_name> hierarchy_identifier
 %type <pform_name> implicit_class_handle class_hierarchy_identifier
 %type <index_component> index_component
 %type <index_components> index_components_opt index_components
@@ -5248,7 +5248,11 @@ switchtype
      names. */
 
 hierarchy_identifier
-  : hierarchy_identifier_component
+  : IDENTIFIER index_components_opt
+      { $$ = new pform_name_t;
+	append_hierarchy_identifier_component(*$$, lex_strings.make($1), $2);
+	delete[]$1;
+      }
   | hierarchy_identifier '.' IDENTIFIER index_components_opt
       { auto tmp = $1;
 	append_hierarchy_identifier_component(*tmp, lex_strings.make($3), $4);
@@ -5261,14 +5265,6 @@ hierarchy_identifier
 	append_hierarchy_identifier_component(*tmp, lex_strings.make("unique"),
 					      $4);
 	$$ = tmp;
-      }
-  ;
-
-hierarchy_identifier_component
-  : IDENTIFIER index_components_opt
-      { $$ = new pform_name_t;
-	append_hierarchy_identifier_component(*$$, lex_strings.make($1), $2);
-	delete[]$1;
       }
   ;
 
