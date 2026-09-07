@@ -495,6 +495,13 @@ static bool symbol_search_(const LineInfo *li, Design *des, NetScope *scope,
 		      li, des, scope, start_scope, path, path_tail, res))
 		  return true;
 
+	      // Instance scopes were checked above. Gates and UDPs do not
+	      // introduce scopes, but hide outer names after their declarations.
+	    if (search_objects &&
+		  scope->gate_name_is_visible(path_tail.name, visibility_pos)) {
+		  return false;
+	    }
+
 	    // Don't scan up if the search is bound to the current scope.
 	    if (scope_is_bound)
 		  break;

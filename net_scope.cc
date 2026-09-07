@@ -26,6 +26,7 @@
 # include  "netenum.h"
 # include  "netvector.h"
 # include  "PExpr.h"
+# include  "PGate.h"
 # include  "PPackage.h"
 # include  "PWire.h"
 # include  <cstring>
@@ -255,6 +256,23 @@ typedef_t *NetScope::lookup_typedef(perm_string name,
 	    return nullptr;
 
       return type->second;
+}
+
+void NetScope::add_gate_names(const list<PGate*>&gates)
+{
+      for (const auto gate : gates) {
+	    auto name = gate->get_name();
+	    if (!name.nil() && name != "") {
+		  gate_names_[name] = gate->lexical_pos();
+	    }
+      }
+}
+
+bool NetScope::gate_name_is_visible(perm_string name,
+				    unsigned int lexical_pos) const
+{
+      auto gate = gate_names_.find(name);
+      return gate != gate_names_.end() && gate->second <= lexical_pos;
 }
 
 /*

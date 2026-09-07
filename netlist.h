@@ -80,6 +80,7 @@ class NetEvWait;
 class PClass;
 class PExpr;
 class PFunction;
+class PGate;
 class PModport;
 class PPackage;
 class PTaskFunc;
@@ -1014,6 +1015,13 @@ class NetScope : public Definitions, public Attrib {
 	/* Locate the scope that owns the resolved typedef object. */
       NetScope*find_typedef_scope(const Design*des, const typedef_t*type_i);
 
+	/* Record PGate names before elaborating types and expressions.
+	   Instances without child scopes still hide outer declarations once
+	   the instance has been declared. */
+      void add_gate_names(const std::list<PGate*>&gates);
+      bool gate_name_is_visible(perm_string name,
+				unsigned int lexical_pos) const;
+
 	/* Parameters exist within a scope, and these methods allow
 	   one to manipulate the set. In these cases, the name is the
 	   *simple* name of the parameter, the hierarchy is implicit in
@@ -1392,6 +1400,8 @@ class NetScope : public Definitions, public Attrib {
       const package_import_map_t *imports_ = nullptr;
 
       std::map<perm_string,typedef_t*>typedefs_;
+
+      std::map<perm_string,unsigned int> gate_names_;
 
       NetEvent *events_;
 
