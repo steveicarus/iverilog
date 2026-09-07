@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en" data-accent-color="violet" data-content_root="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Command File Format - Icarus Verilog documentation</title><link rel="shortcut icon" href="../_static/favicon.ico"/><link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Verilog Attributes" href="verilog_attributes.html" /><link rel="prev" title="iverilog Command Line Flags" href="command_line_flags.html" /><script>
+    function setColorMode(t){let e=document.documentElement;e.setAttribute("data-color-mode",t);let a=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,s=t;"auto"===t&&(s=a?"dark":"light"),"light"===s?(e.classList.remove("dark"),e.classList.add("light")):(e.classList.remove("light"),e.classList.add("dark"))}
+    setColorMode(localStorage._theme||"auto");
+  </script><link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=ad592e98" />
+    <link rel="stylesheet" type="text/css" href="../_static/shibuya.css?v=44020203" />
+    <link media="print" rel="stylesheet" type="text/css" href="../_static/print.css?v=20ff2c19" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sy-f-text: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+  --sy-f-heading: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+}
+</style>
+    <meta property="og:type" content="website"/><meta property="og:title" content="Command File Format"/>
+    <meta name="twitter:card" content="summary"/>
+  </head>
+<body><div class="sy-head">
+  <div class="sy-head-blur"></div>
+  <div class="sy-head-inner sy-container mx-auto">
+    <a class="sy-head-brand" href="../index.html">
+      
+      
+      <strong>Icarus Verilog</strong>
+    </a>
+    <div class="sy-head-nav" id="head-nav">
+      <nav class="sy-head-links"></nav>
+      <div class="sy-head-extra flex items-center print:hidden"><form class="searchbox flex items-center" action="../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <kbd>/</kbd>
+</form><div class="sy-head-socials">
+  <a href="https://github.com/steveicarus/iverilog" aria-label="GitHub">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </a></div></div>
+    </div>
+    <div class="sy-head-actions flex items-center shrink-0 print:hidden"><button class="js-theme theme-switch flex items-center"
+data-aria-auto="Switch to light color mode"
+data-aria-light="Switch to dark color mode"
+data-aria-dark="Switch to auto color mode">
+<i class="i-lucide theme-icon"></i>
+</button><button class="md:hidden flex items-center js-menu" aria-label="Menu" type="button" aria-controls="head-nav" aria-expanded="false">
+        <div class="hamburger">
+          <span class="hamburger_1"></span>
+          <span class="hamburger_2"></span>
+          <span class="hamburger_3"></span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+<div class="sy-page sy-container flex mx-auto">
+  <aside id="lside" class="sy-lside md:w-72 md:shrink-0 print:hidden">
+    <div class="sy-lside-inner md:sticky">
+      <div class="sy-scrollbar p-6">
+        <div class="globaltoc" data-expand-depth="0"><p class="caption" role="heading" aria-level="3"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../releases/index.html">Icarus Verilog Release Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../releases/v13-0-release-note.html">🎉 Release V13.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../releases/v13-0-release-note.html#major-changes-in-v13">🔄 Major Changes in V13</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Icarus Verilog Usage</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="waveform_viewer.html">Viewing Waveforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../targets/index.html">The Icarus Verilog Targets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-vvp.html">The vvp Code Generator (-tvvp)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-stub.html">The stub Code Generator (-tstub)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-null.html">The null Code Generator (-tnull)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-vhdl.html">The VHDL Code Generator (-tvhdl)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-vlog95.html">The Verilog ‘95 Code Generator (-tvlog95)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-pcb.html">The PCB Code Generator (-tpcb)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-fpga.html">The FPGA Code Generator (-tfpga)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-pal.html">The PAL Code Generator (-tpal)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-sizer.html">The sizer Code Analyzer (-tsizer)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-verilog.html">The Verilog Code Generator (-tverilog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../targets/tgt-blif.html">The BLIF Code Generator (-tblif)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/index.html">Icarus Verilog Developer Support</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/getting_started.html">Getting Started as a Contributor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/guide/index.html">Developer Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/ivl/index.html">IVL - The Core Compiler</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/netlist.html">Netlist Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/attributes.html">Icarus Verilog Attributes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/ivl_target.html">Loadable Target API (ivl_target)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/lpm.html">What Is LPM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/ivl/t-dll.html">Loadable Targets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/vvp/index.html">VVP - Verilog Virtual Processor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/vvp.html">VVP Simulation Engine</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/opcodes.html">Executable Instruction Opcodes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/vpi.html">VPI Within VVP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/vthread.html">Thread Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vvp/debug.html">Debug Aids For VVP</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/tgt-vvp/tgt-vvp.html">The VVP Target</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/vpi/index.html">VPI in Icarus Verilog</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vpi/vpi.html">VPI Modules in Icarus Verilog</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/vpi/va_math.html">Verilog-A math library</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/cadpli/cadpli.html">Cadence PLI1 Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/guide/misc/index.html">Miscellaneous</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/misc/ieee1364-notes.html">IEEE1364 Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/misc/swift.html">Swift Model Support (Preliminary)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../developer/guide/misc/xilinx-hint.html">Xilinx Hint</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="lside-overlay js-menu" role="button" aria-label="Close left sidebar" aria-controls="lside" aria-expanded="false"></div>
+  <aside id="rside" class="sy-rside pb-3 w-64 shrink-0 order-last">
+    <button class="rside-close js-menu xl:hidden" aria-label="Close Table of Contents" type="button" aria-controls="rside" aria-expanded="false">
+      <i class="i-lucide close"></i>
+    </button>
+    <div class="sy-scrollbar sy-rside-inner px-6 xl:top-16 xl:sticky xl:pl-0 pt-6 pb-4"><div class="localtoc"><h3>On this page</h3><ul>
+<li><a class="reference internal" href="#comments">Comments</a></li>
+<li><a class="reference internal" href="#plus-args">Plus-args</a></li>
+<li><a class="reference internal" href="#file-names">File Names</a></li>
+<li><a class="reference internal" href="#variable-substitution">Variable Substitution</a></li>
+<li><a class="reference internal" href="#an-example">An Example</a></li>
+<li><a class="reference internal" href="#summary">Summary</a></li>
+</ul>
+</div><a class="js-repo-stats repo-stats flex items-center" href="https://github.com/steveicarus/iverilog"
+  data-type="github" data-user="steveicarus" data-repo="iverilog">
+  <span class="w-8 flex items-center justify-around shrink-0 text-3xl">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </span>
+  <span class="flex-grow px-2 break-all">
+    
+    
+      <span>iverilog</span>
+    
+    <span class="flex text-sm repo-stats-count">
+      <span class="flex items-center pr-3">
+        <iconify-icon icon="lucide:star"></iconify-icon>
+        <strong class="js-repo-stars ml-1">0</strong>
+      </span>
+      <span class="flex items-center">
+        <iconify-icon icon="lucide:git-fork"></iconify-icon>
+        <strong class="js-repo-forks ml-1">0</strong>
+      </span>
+    </span>
+  </span>
+</a><div class="edit-this-page">
+  <a href="https://github.com/steveicarus/iverilog/blob/master/Documentation/usage/command_files.rst">Edit this page</a>
+</div><div id="ethical-ad-placement" data-ea-publisher="readthedocs"></div></div>
+  </aside>
+  <div class="rside-overlay js-menu" role="button" aria-label="Close Table of Contents" aria-controls="rside" aria-expanded="false"></div>
+  <main class="sy-main w-full max-sm:max-w-full print:pt-6">
+<div class="sy-breadcrumbs" role="navigation">
+  <div class="sy-breadcrumbs-inner flex items-center">
+    <div class="md:hidden mr-3">
+      <button class="js-menu" aria-label="Menu" type="button" aria-controls="lside" aria-expanded="false">
+        <i class="i-lucide menu"></i>
+      </button>
+    </div>
+    <ol class="flex-1" itemscope itemtype="https://schema.org/BreadcrumbList"><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../index.html"><span itemprop="name">Icarus Verilog</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="1" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="index.html"><span itemprop="name">Icarus Verilog Usage</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="2" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <strong itemprop="name">Command File Format</strong>
+        <meta itemprop="position" content="3" />
+      </li></ol>
+    <div class="xl:hidden ml-1">
+      <button class="js-menu" aria-label="Show table of contents" type="button" aria-controls="rside"
+        aria-expanded="false">
+        <i class="i-lucide outdent"></i>
+      </button>
+    </div>
+  </div>
+</div><div class="flex flex-col break-words justify-between">
+      <div class="relative min-w-0 max-w-6xl px-6 pb-6 pt-8 xl:px-12">
+  <div class="copy-page-wrapper relative pb-4 lg:absolute lg:top-8 lg:right-6 xl:right-12">
+  <div id="copy-page-trigger">
+    <button
+      type="button"
+      class="js-copy px-3 py-1 inline-flex items-center gap-1"
+      data-url="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/command_files.rst.txt"
+    >
+      <i class="i-lucide" data-icon="copy"></i>
+      <span>Copy page</span>
+    </button>
+    <button class="js-menu px-2 py-1" type="button" aria-label="More actions"
+      aria-haspopup="menu" aria-expanded="false" aria-controls="copy-page-content">
+      <i class="i-lucide chevron-down"></i>
+    </button>
+  </div>
+  <div id="copy-page-content" role="menu" aria-orientation="vertical" aria-hidden="true">
+    <div role="presentation">
+      <div class="flex flex-col" role="group">
+        <button class="js-copy" type="button" role="menuitem"
+          data-url="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/command_files.rst.txt">
+          <span class="iconify-icon">
+            <i class="i-lucide" data-icon="copy"></i>
+          </span>
+          <span>Copy page</span>
+        </button>
+        <a role="menuitem" href="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/command_files.rst.txt" target="_blank" rel="nofollow"><iconify-icon icon="bi:code-slash"></iconify-icon>
+            <span>View Source</span></a><a role="menuitem" href="https://chatgpt.com/?hints=search&q=Read%20https%3A//raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/command_files.rst.txt%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:openai"></iconify-icon>
+          <span>Open in ChatGPT</span>
+        </a><a role="menuitem" href="https://claude.ai/new?q=Read%20https%3A//raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/usage/command_files.rst.txt%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:claude"></iconify-icon>
+          <span>Open in Claude</span>
+        </a></div>
+    </div>
+  </div>
+</div><article class="yue" role="main">
+          <section id="command-file-format">
+<h1>Command File Format<a class="headerlink" href="#command-file-format" title="Link to this heading">¶</a></h1>
+<p>The basic format of a command file is one source file or compiler argument per
+line. Command files may also have comments of various form, and options for
+controlling the compiler.</p>
+<section id="comments">
+<h2>Comments<a class="headerlink" href="#comments" title="Link to this heading">¶</a></h2>
+<p>Lines that start with a “#” character are comments. All text after the “#”
+character, is ignored.</p>
+<p>The “//” character sequence also starts a comment that continues to the end of
+the line.</p>
+<p>The “/*” and “*/” character sequences surround multi-line comments. All the
+text between the comment start and comment end sequences is ignored, even when
+that text spans multiple lines. This style of comment does not nest, so a “/*”
+sequence within a multi-line comment is probably an error.</p>
+</section>
+<section id="plus-args">
+<h2>Plus-args<a class="headerlink" href="#plus-args" title="Link to this heading">¶</a></h2>
+<p>Outside of comments, lines that start with a “+” character are compiler
+arguments. These are called plusargs but they are not the same as extended
+arguments passed to the “vvp” command. The supported plusargs are definitively
+listed in the iverilog manual page.</p>
+<p>The plusargs lines are generally “+&lt;name&gt;+…” where the name is the name of
+an switch, and the arguments are separated by “+” characters, as in:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">+libext+.v+.V+.ver
+</span></pre></div>
+</div>
+<p>With plusargs lines, the “+” character separates tokens, and not white space,
+so arguments, which may include file paths, may include spaces. A plusarg line
+is terminated by the line end.</p>
+<p>The line in the command file may also be a “-y” argument. This works exactly
+the same as the:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">-y &lt;path&gt;
+</span></pre></div>
+</div>
+<p>argument to the compiler; it declares a library directory. The “-y” syntax is
+also a shorthand for the “+libdir” plusarg, which is a more general form:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">+libdir+&lt;path&gt;...
+</span></pre></div>
+</div>
+</section>
+<section id="file-names">
+<h2>File Names<a class="headerlink" href="#file-names" title="Link to this heading">¶</a></h2>
+<p>Any lines that are not comments, compiler arguments or plusargs are taken by
+the compiler to be a source file. The path can contain any characters (other
+then comment sequences) including blanks, although leading and trailing white
+space characters are stripped. The restriction of one file name per line is in
+support of operating systems that can name files any which way. It is not
+appropriate to expect white spaces to separate file names.</p>
+</section>
+<section id="variable-substitution">
+<h2>Variable Substitution<a class="headerlink" href="#variable-substitution" title="Link to this heading">¶</a></h2>
+<p>The syntax “$(name)” is a variable reference, and may be used anywhere within
+filenames or directory names. The contents of the variable are read from the
+environment and substituted in place of the variable reference. In Windows,
+these environment variables are the very same variables that are set through
+the Control Panel-&gt;System dialog box, and in UNIX these variables are
+environment variables as exported by your shell.</p>
+<p>Variables are useful for giving command files some installation
+independence. For example, one can import a vendor library with the line:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">-y $(VENDOR)/verilog/library
+</span></pre></div>
+</div>
+<p>in the command file, and the next programmer will be able to use this command
+file without editing it to point to the location of VENDOR on his
+machine. Note the use of forward slashes as a directory separator. This works
+even under Windows, so always use forward slashes in file paths and Windows
+and UNIX users will be able to share command files.</p>
+</section>
+<section id="an-example">
+<h2>An Example<a class="headerlink" href="#an-example" title="Link to this heading">¶</a></h2>
+<p>This sample:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1"># This is a comment in a command file.
+</span><span data-line="2"># The -y statement declares a library
+</span><span data-line="3"># search directory
+</span><span data-line="4">-y $(PROJ_LIBRARY)/prims
+</span><span data-line="5">#
+</span><span data-line="6"># This plusarg tells the compiler that
+</span><span data-line="7"># files in libraries may have .v or .vl
+</span><span data-line="8"># extensions.
+</span><span data-line="9">+libext+.v+.vl
+</span><span data-line="10">#
+</span><span data-line="11">main.v // This is a source file
+</span><span data-line="12">#
+</span><span data-line="13"># This is a file name with blanks.
+</span><span data-line="14">C:/Project Directory/file name.vl
+</span></pre></div>
+</div>
+<p>is a command file that demonstrates the major syntactic elements of command
+files. It demonstrates the use of comments, variables, plusargs and file
+names. It contains a lot of information about the hypothetical project, and
+suggests that command files can be used to describe the project as a whole
+fairly concisely.</p>
+<p>The syntax of command files is rich enough that they can be used to document
+and control the assembly and compilation of large Verilog programs. It is not
+unusual to have command files that are hundreds of lines long, although
+judicious use of libraries can lead to very short command files even for large
+designs. It is also practical to have different command files that pull
+together combinations of sources and compiler arguments to make different
+designs from the same Verilog source files.</p>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">¶</a></h2>
+<p>Given the above description of the command file format, the following is a
+list of the special records with their meaning.</p>
+<ul>
+<li><p>+libdir+*dir-path*</p>
+<p>Specify directories to be searched for library modules. The <em>dir-path</em> can
+have multiple directories, separated by “+” characters.</p>
+</li>
+<li><p>+libdir-nocase+dir-path</p>
+<p>This is the same as “+libdir+”, but when searching “nocase” libraries for
+module files, case will not be taken as significant. This is useful when the
+library is on a case insensitive file system.</p>
+</li>
+<li><p>+libext+*suffix-string*</p>
+<p>Declare the suffix strings to use when searching library directories for
+Verilog files. The compiler may test a list of suffix strings to support a
+variety of naming conventions.</p>
+</li>
+<li><p>-y dir-path</p>
+<p>This is like “+libdir+” but each line takes only one path. Like “+libdir+”
+there can be multiple “-y” records to declare multiple library
+directories. This is similar to the “-y” flag on the iverilog command line.</p>
+</li>
+<li><p>-v <em>file-name</em> or -l <em>file-name</em></p>
+<p>This declares a library file. A library file is just like any other Verilog
+source file, except that modules declared within it are not implicitly
+possible root modules.</p>
+<p>NOTE: The “-l” alias is new as of 2 October 2016. It will become available
+in releases and snapshots made after that date.</p>
+</li>
+<li><p>+incdir+*include-dir-path*</p>
+<p>Declare a directory or list of directories to search for files included by
+the “include” compiler directive. The directories are searched in
+order. This is similar to the “-I” flag on the iverilog command line.</p>
+</li>
+<li><p>+define+*name=value*</p>
+<p>Define the preprocessor symbol “name” to have the string value “value”. If
+the value (and the “=”) are omitted, then it is assumed to be the string
+“1”. This is similar to the “-D” on the iverilog command line.</p>
+</li>
+<li><p>+timescale+*units/precision*</p>
+<p>Define the default timescale. This is the timescale that is used if there is
+no other timescale directive in the Verilog source. The compiler default
+default is “+timescale+1s/1s”, which this command file setting can
+change. The format of the units/precision is the same as that for the
+timescale directive in the verilog source.</p>
+</li>
+<li><p>+toupper-filename</p>
+<p>This token causes file names after this in the command file to be translated
+to uppercase. this helps with situations where a directory has passed
+through a DOS machine (or a FAT file system) and in the process the file
+names become munged. This is not meant to be used in general, but only in
+emergencies.</p>
+</li>
+<li><p>+tolower-filename</p>
+<p>The is the lowercase version of “+toupper-filename”.</p>
+</li>
+<li><p>+parameter+*name=value*</p>
+<p>This token causes the compiler to override a parameter value for a top-level
+module. For example, if the module main has the parameter WIDTH, set the
+width like this “+parameter+main.WIDTH=5”. Note the use of the complete
+hierarchical name. This currently only works for parameters defined in root
+(top level) modules and a defparam may override the command file value.</p>
+</li>
+<li><p>+vhdl-work+*path*</p>
+<p>When compiling VHDL, this token allows control over the directory to use for
+holding working package declarations. For example, “+vhdl-work+workdir” will
+cause the directory “workdir” to be used as a directory for holding working
+working copies of package headers.</p>
+</li>
+</ul>
+</section>
+</section>
+
+        </article><button class="back-to-top" type="button">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+  </svg>
+  <span>Back to top</span>
+</button><div class="navigation flex print:hidden"><div class="navigation-prev">
+    <a href="command_line_flags.html">
+      <i class="i-lucide chevron-left"></i>
+      <div class="page-info">
+        <span>Previous</span><div class="title">iverilog Command Line Flags</div></div>
+    </a>
+  </div><div class="navigation-next">
+    <a href="verilog_attributes.html">
+      <div class="page-info">
+        <span>Next</span>
+        <div class="title">Verilog Attributes</div>
+      </div>
+      <i class="i-lucide chevron-right"></i>
+    </a>
+  </div></div></div>
+    </div>
+  </main>
+</div>
+<footer class="sy-foot">
+  <div class="sy-foot-inner sy-container mx-auto">
+    <div class="sy-foot-reserved md:flex justify-between items-center">
+      <div class="sy-foot-copyright"><p>2024-2026, Stephen Williams</p>
+  
+  <p>
+    Made with
+    
+    <a href="https://www.sphinx-doc.org/">Sphinx</a> and
+    
+    <a href="https://shibuya.lepture.com">Shibuya theme</a>.
+  </p>
+</div>
+      <div class="sy-foot-socials">
+<a href="https://github.com/steveicarus/iverilog" aria-label="GitHub">
+  <iconify-icon icon="simple-icons:github"></iconify-icon>
+</a></div>
+    </div>
+  </div>
+</footer>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/shibuya.js?v=cac61aee"></script></body>
+</html>
