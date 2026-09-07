@@ -1,5 +1,5 @@
-// Check that a type identifier can be shadowed by a forward-referenced
-// hierarchy identifier.
+// Check that a later generate block shadows a visible typedef when resolving
+// a hierarchical name.
 
 package p;
   typedef integer SCOPE;

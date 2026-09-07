@@ -1,4 +1,5 @@
-// Check that an alias of a local forward declared class shadows an outer class.
+// Check that a local forward declared class shadows an outer class when used
+// through a base class alias.
 
 class Base;
   integer value = 13;

@@ -1,4 +1,4 @@
-// Check that ANSI-style UDP names can shadow visible type identifiers.
+// Check that ANSI-style UDP and port names can match visible type identifiers.
 
 package p;
   typedef int ANSI_UDP;

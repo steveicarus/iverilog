@@ -1,4 +1,4 @@
-// Check that assertion item labels can shadow visible type identifiers.
+// Check that assertion item labels can match visible type identifiers.
 
 typedef int CHECK_A;
 typedef int CHECK_B;

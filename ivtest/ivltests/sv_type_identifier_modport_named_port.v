@@ -1,4 +1,4 @@
-// Check that a modport simple port selector can shadow a visible typedef name.
+// Check that a named modport port can have the same spelling as a visible typedef.
 
 interface I;
   typedef int T;
