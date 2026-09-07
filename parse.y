@@ -1202,7 +1202,8 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <citem>  case_item
 %type <citems> case_items
 
-%type <gate>  gate_instance
+%type <gate>  gate_instance gate_instance_connections gate_instance_ports
+%type <gate>  gate_instance_positional_connections
 %type <gates> gate_instance_list
 %type <let_port_lst> let_port_list_opt let_port_list
 %type <let_port_itm> let_port_item
@@ -4983,93 +4984,64 @@ tf_item_declaration /* IEEE1800-2017: A.2.7 */
 
   /* A gate_instance is a module instantiation or a built in part
      type. In any case, the gate has a set of connections to ports. */
+gate_instance_positional_connections
+  : '(' port_conn_expression_list_with_nuls ')'
+      { auto instance = new lgate;
+	instance->parms = $2;
+	$$ = instance;
+      }
+  | '(' error ')'
+      { $$ = new lgate;
+	yyerror(@1, "error: Syntax error in instance port "
+	        "expression(s).");
+      }
+  ;
+
+gate_instance_connections
+  : gate_instance_positional_connections
+  | '(' port_name_list ')'
+      { auto instance = new lgate;
+	instance->parms = nullptr;
+	instance->parms_by_name = $2;
+	$$ = instance;
+      }
+  ;
+
+gate_instance_ports
+  : dimensions_opt gate_instance_connections
+      { auto instance = $2;
+	instance->ranges = $1;
+	$$ = instance;
+      }
+  ;
+
 gate_instance
-  : identifier_name '(' port_conn_expression_list_with_nuls ')'
-      { lgate*tmp = new lgate;
-	tmp->name = $1;
-	tmp->parms = $3;
-	FILE_NAME(tmp, @1);
+  : identifier_name gate_instance_ports
+      { auto instance = $2;
+	instance->name = $1;
+	FILE_NAME(instance, @1);
 	delete[]$1;
-	$$ = tmp;
+	$$ = instance;
       }
 
-  | identifier_name dimensions '(' port_conn_expression_list_with_nuls ')'
-      { lgate*tmp = new lgate;
-	tmp->name = $1;
-	tmp->parms = $4;
-	tmp->ranges = $2;
-	FILE_NAME(tmp, @1);
-	delete[]$1;
-	$$ = tmp;
-      }
-
-  | '(' port_conn_expression_list_with_nuls ')'
-      { lgate*tmp = new lgate;
-	tmp->name = "";
-	tmp->parms = $2;
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
+  | gate_instance_positional_connections
+      { auto instance = $1;
+	instance->name = "";
+	FILE_NAME(instance, @1);
+	$$ = instance;
       }
 
   /* Degenerate modules can have no ports. */
 
   | identifier_name dimensions
-      { lgate*tmp = new lgate;
-	tmp->name = $1;
-	tmp->parms = 0;
-	tmp->parms_by_name = 0;
-	tmp->ranges = $2;
-	FILE_NAME(tmp, @1);
+      { auto instance = new lgate;
+	instance->name = $1;
+	instance->parms = nullptr;
+	instance->parms_by_name = nullptr;
+	instance->ranges = $2;
+	FILE_NAME(instance, @1);
 	delete[]$1;
-	$$ = tmp;
-      }
-
-  /* Modules can also take ports by port-name expressions. */
-
-  | identifier_name '(' port_name_list ')'
-      { lgate*tmp = new lgate;
-	tmp->name = $1;
-	tmp->parms = 0;
-	tmp->parms_by_name = $3;
-	FILE_NAME(tmp, @1);
-	delete[]$1;
-	$$ = tmp;
-      }
-
-  | identifier_name dimensions '(' port_name_list ')'
-      { lgate*tmp = new lgate;
-	tmp->name = $1;
-	tmp->parms = 0;
-	tmp->parms_by_name = $4;
-	tmp->ranges = $2;
-	FILE_NAME(tmp, @1);
-	delete[]$1;
-	$$ = tmp;
-      }
-
-  | identifier_name '(' error ')'
-      { lgate*tmp = new lgate;
-	tmp->name = $1;
-	tmp->parms = 0;
-	tmp->parms_by_name = 0;
-	FILE_NAME(tmp, @1);
-	yyerror(@2, "error: Syntax error in instance port "
-	        "expression(s).");
-	delete[]$1;
-	$$ = tmp;
-      }
-
-  | identifier_name dimensions '(' error ')'
-      { lgate*tmp = new lgate;
-	tmp->name = $1;
-	tmp->parms = 0;
-	tmp->parms_by_name = 0;
-	tmp->ranges = $2;
-	FILE_NAME(tmp, @1);
-	yyerror(@3, "error: Syntax error in instance port "
-	        "expression(s).");
-	delete[]$1;
-	$$ = tmp;
+	$$ = instance;
       }
   ;
 
