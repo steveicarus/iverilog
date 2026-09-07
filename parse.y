@@ -1264,7 +1264,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <decl_assignments_with_type> list_of_variable_decl_assignments_with_type
 %type <decl_assignments_with_type> type_identifier_variable_decl_assignments_with_type
 
-%type <data_type>  data_type data_type_opt data_type_or_implicit data_type_or_implicit_or_void
+%type <data_type>  data_type data_type_opt data_type_or_implicit
 %type <data_type>  block_reg_data_type for_decl_data_type
 %type <data_type>  implicit_type
 %type <data_type>  reg_prefixed_atomic_type let_formal_type
@@ -1543,10 +1543,10 @@ class_item /* IEEE1800-2005: A.1.8 */
 
   | K_extern method_qualifier_opt K_function K_new tf_port_list_parens_opt ';'
       { yyerror(@1, "sorry: External constructors are not yet supported."); }
-  | K_extern method_qualifier_opt K_function data_type_or_implicit_or_void
-    IDENTIFIER tf_port_list_parens_opt ';'
+  | K_extern method_qualifier_opt K_function data_type_or_implicit_or_void_plus_id
+    tf_port_list_parens_opt ';'
       { yyerror(@1, "sorry: External methods are not yet supported.");
-	delete[] $5;
+	delete_type_id_range($4);
       }
   | K_extern method_qualifier_opt K_task IDENTIFIER tf_port_list_parens_opt ';'
       { yyerror(@1, "sorry: External methods are not yet supported.");
@@ -1963,16 +1963,6 @@ implicit_type
       { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, $2);
 	tmp->implicit_flag = true;
 	FILE_NAME(tmp, @2);
-	$$ = tmp;
-      }
-  ;
-
-data_type_or_implicit_or_void
-  : data_type_or_implicit
-      { $$ = $1; }
-  | K_void
-      { void_type_t*tmp = new void_type_t;
-	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   ;
@@ -2667,7 +2657,7 @@ modport_ports_declaration
 
 modport_tf_port
   : K_task IDENTIFIER tf_port_list_parens_opt
-  | K_function data_type_or_implicit_or_void IDENTIFIER tf_port_list_parens_opt
+  | K_function data_type_or_implicit_or_void_plus_id tf_port_list_parens_opt
   ;
 
 non_integer_type /* IEEE1800-2005: A.2.2.1 */
