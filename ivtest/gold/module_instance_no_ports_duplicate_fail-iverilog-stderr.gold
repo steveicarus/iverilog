@@ -1,0 +1,2 @@
+ivltests/module_instance_no_ports_duplicate_fail.v:8: error: 'i_m' has already been declared in this scope.
+ivltests/module_instance_no_ports_duplicate_fail.v:7:      : It was declared here as an instance name.
