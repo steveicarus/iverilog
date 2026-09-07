@@ -1267,7 +1267,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <data_type>  data_type data_type_opt data_type_or_implicit data_type_or_implicit_or_void
 %type <data_type>  block_reg_data_type for_decl_data_type
 %type <data_type>  implicit_type
-%type <data_type>  reg_prefixed_atomic_type let_formal_type
+%type <data_type>  reg_prefixed_atomic_type
 %type <data_type>  packed_array_data_type atomic_type
 
 %type <data_type>  ps_type_identifier ps_type_identifier_dim
@@ -6088,17 +6088,16 @@ let_port_list
 
   // FIXME: What about the attributes?
 let_port_item
-  : attribute_list_opt let_formal_type IDENTIFIER dimensions_opt initializer_opt
-      { perm_string tmp3 = lex_strings.make($3);
-        $$ = pform_make_let_port($2, tmp3, $4, $5);
+  : attribute_list_opt data_type_or_implicit_plus_id_dim initializer_opt
+      { perm_string tmp2 = lex_strings.make($2.id);
+        $$ = pform_make_let_port($2.type, tmp2, $2.ranges, $3);
+	delete[]$2.id;
       }
-  ;
-
-let_formal_type
-  : data_type_or_implicit
-      { $$ = $1; }
-  | K_untyped
-      { $$ = 0; }
+  | attribute_list_opt K_untyped IDENTIFIER dimensions_opt initializer_opt
+      { perm_string tmp3 = lex_strings.make($3);
+        $$ = pform_make_let_port(nullptr, tmp3, $4, $5);
+	delete[]$3;
+      }
   ;
 
 module_item_list
