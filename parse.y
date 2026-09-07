@@ -1322,7 +1322,6 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <decl_assignments> net_decl_assigns list_of_variable_decl_assignments
 %type <decl_assignments_with_type> list_of_net_decl_assignments_with_type
 %type <decl_assignments_with_type> list_of_variable_decl_assignments_with_type
-%type <decl_assignments_with_type> identifier_variable_decl_assignments_with_type
 %type <decl_assignments_with_type> package_variable_decl_assignments_with_type
 
 %type <data_type>  data_type data_type_opt data_type_or_implicit
@@ -2545,15 +2544,6 @@ list_of_variable_decl_assignments /* IEEE1800-2005 A.2.3 */
       }
   ;
 
-identifier_variable_decl_assignments_with_type
-  : IDENTIFIER dimensions_opt list_of_variable_decl_assignments
-      { auto tmp = pform_new_type_identifier(@1, nullptr, $1);
-	$$.decl_assignments = $3;
-	$$.type = pform_make_parray_type(@2, tmp, $2);
-      }
-  | package_variable_decl_assignments_with_type
-  ;
-
 package_variable_decl_assignments_with_type
   : package_scope IDENTIFIER dimensions_opt list_of_variable_decl_assignments
       { lex_in_package_scope(nullptr);
@@ -3484,8 +3474,8 @@ attribute
 
 block_item_decl
   : block_item_decl_no_identifier_start
-  | identifier_variable_decl_assignments_with_type ';'
-      { if ($1.type) pform_make_var(@1, $1.decl_assignments, $1.type, attributes_in_context, false);
+  | ps_type_identifier_dim list_of_variable_decl_assignments ';'
+      { if ($1) pform_make_var(@1, $2, $1, attributes_in_context, false);
 	var_lifetime = LexicalScope::INHERITED;
       }
   | ps_type_identifier_dim error ';'
