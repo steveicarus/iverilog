@@ -1237,6 +1237,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <decl_assignments_with_type> list_of_net_decl_assignments_with_type
 %type <decl_assignments_with_type> list_of_variable_decl_assignments_with_type
 %type <decl_assignments_with_type> type_identifier_variable_decl_assignments_with_type
+%type <decl_assignments_with_type> package_type_identifier_variable_decl_assignments_with_type
 
 %type <data_type>  data_type data_type_opt data_type_or_implicit
 %type <data_type>  block_reg_data_type for_decl_data_type
@@ -2474,7 +2475,11 @@ type_identifier_variable_decl_assignments_with_type
 	$$.decl_assignments = $3;
 	$$.type = pform_make_parray_type(@2, tmp, $2);
       }
-  | package_scope TYPE_IDENTIFIER dimensions_opt list_of_variable_decl_assignments
+  | package_type_identifier_variable_decl_assignments_with_type
+  ;
+
+package_type_identifier_variable_decl_assignments_with_type
+  : package_scope TYPE_IDENTIFIER dimensions_opt list_of_variable_decl_assignments
       { lex_in_package_scope(nullptr);
 	auto tmp = pform_new_type_identifier(@2, $1, $2.text);
 	$$.decl_assignments = $4;
