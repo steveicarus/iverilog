@@ -1,4 +1,4 @@
-// Check that package names can shadow visible type identifiers.
+// Check that package names can have the same spelling as visible typedefs.
 
 package p;
   typedef int T;
@@ -18,7 +18,7 @@ module test;
     failed = 1'b0;
 
     if (T::VALUE !== 23) begin
-      $display("FAILED(%0d). Package name did not hide typedef", `__LINE__);
+      $display("FAILED(%0d). Package scope lookup failed", `__LINE__);
       failed = 1'b1;
     end
 

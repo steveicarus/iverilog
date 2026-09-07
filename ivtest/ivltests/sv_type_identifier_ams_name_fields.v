@@ -1,4 +1,4 @@
-// Check that nature name fields can shadow visible type identifiers.
+// Check that nature name fields can match visible type identifiers.
 
 typedef int ACCESS_NAME;
 typedef int IDT_NAME;

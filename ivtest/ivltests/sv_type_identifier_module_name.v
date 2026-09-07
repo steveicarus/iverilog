@@ -1,4 +1,4 @@
-// Check that a module name can shadow a visible type identifier.
+// Check that a module name can have the same spelling as a visible typedef.
 
 package p;
   typedef int M;
