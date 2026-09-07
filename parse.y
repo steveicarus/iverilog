@@ -6403,15 +6403,7 @@ value_parameter_assign_without_parameter
   // after a comma remains a parameter name that inherits the previous type. The
   // LRM allows data_type here, but not implicit_type.
 value_parameter_assign_with_explicit_type
-  : atomic_type IDENTIFIER dimensions_opt initializer_opt parameter_value_ranges_opt
-      { param_is_type = false;
-	param_type_restrict = {};
-	param_data_type = $1;
-	pform_set_parameter(@2, $2, param_is_local,
-			    param_is_type, param_type_restrict,
-			    param_data_type, $3, $4, $5);
-      }
-  | ps_type_identifier_dim IDENTIFIER dimensions_opt initializer_opt parameter_value_ranges_opt
+  : data_type IDENTIFIER dimensions_opt initializer_opt parameter_value_ranges_opt
       { param_is_type = false;
 	param_type_restrict = {};
 	param_data_type = $1;
