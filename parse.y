@@ -1237,7 +1237,6 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <statement> udp_initial udp_init_opt
 
 %type <text> event_variable label_opt interface_port_modport_opt
-%type <text> identifier_name
 %type <identifiers> event_variable_list
 %type <identifiers> genvar_identifier_list list_of_identifiers
 %type <perm_strings> loop_variables
@@ -1463,13 +1462,13 @@ assignment_pattern /* IEEE1800-2005: A.6.7.1 */
   /* Assertion items have an optional block identifier prefix. Consume the
      label here because its spelling is not used when assertions are parsed. */
 assertion_item_label_opt
-  : identifier_name ':'
+  : IDENTIFIER ':'
       { delete[]$1; }
   |
   ;
 
 class_declaration /* IEEE1800-2005: A.1.2 */
-  : K_virtual_opt K_class lifetime_opt identifier_name class_declaration_extends_opt ';'
+  : K_virtual_opt K_class lifetime_opt IDENTIFIER class_declaration_extends_opt ';'
       { /* Up to 1800-2017 the grammar in the LRM allowed an optional lifetime
 	 * qualifier for class declarations. But the LRM never specified what
 	 * this qualifier should do. Starting with 1800-2023 the qualifier has
@@ -1501,12 +1500,6 @@ class_declaration /* IEEE1800-2005: A.1.2 */
 class_constraint /* IEEE1800-2005: A.1.8 */
   : constraint_prototype
   | constraint_declaration
-  ;
-
-  // This is used in places where a new type can be declared or an existig type
-  // is referenced. E.g. typedefs.
-identifier_name
-  : IDENTIFIER { $$ = $1; }
   ;
 
   /* This rule implements [ extends class_type ] in the
@@ -2095,7 +2088,7 @@ description /* IEEE1800-2005: A.1.2 */
   | package_declaration
   | discipline_declaration
   | package_item
-  | KK_attribute '(' identifier_name ',' STRING ',' STRING ')'
+  | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
       { perm_string tmp3 = lex_strings.make($3);
 	pform_set_type_attrib(tmp3, $5, $7);
 	delete[] $3;
@@ -2225,27 +2218,27 @@ function_declaration /* IEEE1800-2005: A.2.6 */
   ;
 
 genvar_iteration /* IEEE1800-2012: A.4.2 */
-  : identifier_name '=' expression
+  : IDENTIFIER '=' expression
       { $$.text = $1;
         $$.expr = $3;
       }
-  | identifier_name compressed_operator expression
+  | IDENTIFIER compressed_operator expression
       { $$.text = $1;
         $$.expr = pform_genvar_compressed(@1, $1, $2, $3);;
       }
-  | identifier_name K_INCR
+  | IDENTIFIER K_INCR
       { $$.text = $1;
         $$.expr = pform_genvar_inc_dec(@1, $1, true);
       }
-  | identifier_name K_DECR
+  | IDENTIFIER K_DECR
       { $$.text = $1;
         $$.expr = pform_genvar_inc_dec(@1, $1, false);
       }
-  | K_INCR identifier_name
+  | K_INCR IDENTIFIER
       { $$.text = $2;
         $$.expr = pform_genvar_inc_dec(@1, $2, true);
       }
-  | K_DECR identifier_name
+  | K_DECR IDENTIFIER
       { $$.text = $2;
         $$.expr = pform_genvar_inc_dec(@1, $2, false);
       }
@@ -2386,7 +2379,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
       // statement in a synthetic named block. We can name the block
       // after the variable that we are creating, that identifier is
       // safe in the controlling scope.
-  | K_for '(' for_decl_data_type identifier_name
+  | K_for '(' for_decl_data_type IDENTIFIER
       // Make the loop variable symbol visible while parsing the rest of
       // the header.
       { static unsigned for_counter = 0;
@@ -2449,7 +2442,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 
       // When matching a foreach loop, implicitly create a named block
       // to hold the definitions for the index variables.
-  | K_foreach '(' identifier_name '[' loop_variables ']' ')'
+  | K_foreach '(' IDENTIFIER '[' loop_variables ']' ')'
       { static unsigned foreach_counter = 0;
 	char for_block_name[64];
 	snprintf(for_block_name, sizeof for_block_name, "$ivl_foreach%u", foreach_counter);
@@ -2501,7 +2494,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	yyerror(@1, "error: Error in do/while loop condition.");
       }
 
-  | K_foreach '(' identifier_name '[' error ']' ')' statement_or_null
+  | K_foreach '(' IDENTIFIER '[' error ']' ')' statement_or_null
       { $$ = 0;
         yyerror(@4, "error: Errors in foreach loop variables list.");
       }
@@ -2564,14 +2557,14 @@ var_decl_initializer_opt
  ;
 
 variable_decl_assignment /* IEEE1800-2005 A.2.3 */
-  : identifier_name dimensions_opt var_decl_initializer_opt
+  : IDENTIFIER dimensions_opt var_decl_initializer_opt
       { $$ = pform_make_var_decl(@1, $1, $2, $3);
       }
   ;
 
 
 loop_variables /* IEEE1800-2005: A.6.8 */
-  : loop_variables ',' identifier_name
+  : loop_variables ',' IDENTIFIER
       { std::list<perm_string>*tmp = $1;
 	tmp->push_back(lex_strings.make($3));
 	delete[]$3;
@@ -2582,7 +2575,7 @@ loop_variables /* IEEE1800-2005: A.6.8 */
 	tmp->push_back(perm_string());
 	$$ = tmp;
       }
-  | identifier_name
+  | IDENTIFIER
       { std::list<perm_string>*tmp = new std::list<perm_string>;
 	tmp->push_back(lex_strings.make($1));
 	delete[]$1;
@@ -2619,7 +2612,7 @@ modport_item_list
   ;
 
 modport_item
-  : identifier_name
+  : IDENTIFIER
       { pform_start_modport_item(@1, $1); }
     '(' modport_ports_list ')'
       { pform_end_modport_item(@1); }
@@ -2648,7 +2641,7 @@ modport_ports_list
       { if (last_modport_port.type != MP_TF)
 	      yyerror(@3, "error: task/function declaration not allowed here.");
       }
-  | modport_ports_list ',' identifier_name
+  | modport_ports_list ',' IDENTIFIER
       { if (last_modport_port.type == MP_SIMPLE) {
 	      pform_add_modport_port(@3, last_modport_port.direction,
 				     lex_strings.make($3), 0);
@@ -2662,7 +2655,7 @@ modport_ports_list
   ;
 
 modport_ports_declaration
-  : attribute_list_opt port_direction identifier_name
+  : attribute_list_opt port_direction IDENTIFIER
       { last_modport_port.type = MP_SIMPLE;
 	last_modport_port.direction = $2;
 	pform_add_modport_port(@3, $2, lex_strings.make($3), 0);
@@ -2676,7 +2669,7 @@ modport_ports_declaration
 	delete $3;
 	delete $1;
       }
-  | attribute_list_opt import_export identifier_name
+  | attribute_list_opt import_export IDENTIFIER
       { last_modport_port.type = MP_TF;
 	last_modport_port.is_import = $2;
 	yyerror(@3, "sorry: modport task/function ports are not yet supported.");
@@ -2689,7 +2682,7 @@ modport_ports_declaration
 	yyerror(@3, "sorry: modport task/function ports are not yet supported.");
 	delete $1;
       }
-  | attribute_list_opt K_clocking identifier_name
+  | attribute_list_opt K_clocking IDENTIFIER
       { last_modport_port.type = MP_CLOCKING;
 	last_modport_port.direction = NetNet::NOT_A_PORT;
 	yyerror(@3, "sorry: modport clocking declaration is not yet supported.");
@@ -2730,7 +2723,7 @@ open_range_list /* IEEE1800-2005 A.2.11 */
   ;
 
 package_declaration /* IEEE1800-2005 A.1.2 */
-  : K_package lifetime_opt identifier_name ';'
+  : K_package lifetime_opt IDENTIFIER ';'
       { pform_start_package_declaration(@1, $3, $2); }
     timeunits_declaration_opt
       { pform_set_scope_timescale(@1); }
@@ -2758,7 +2751,7 @@ package_import_declaration /* IEEE1800-2005 A.2.1.3 */
   ;
 
 package_import_item
-  : package_scope identifier_name
+  : package_scope IDENTIFIER
       { lex_in_package_scope(0);
 	pform_package_import(@1, $1, $2);
 	delete[]$2;
@@ -2780,7 +2773,7 @@ package_export_declaration /* IEEE1800-2017 A.2.1.3 */
   ;
 
 package_export_item
-  : PACKAGE_IDENTIFIER K_SCOPE_RES identifier_name
+  : PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER
       { pform_package_export(@2, $1, $3);
 	delete[] $3;
       }
@@ -3010,7 +3003,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
   /* Tasks do not have a return type, so the leading identifier is always the
      task name. */
 
-  : K_task lifetime_opt identifier_name ';'
+  : K_task lifetime_opt IDENTIFIER ';'
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -3037,7 +3030,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	delete[]$3;
       }
 
-  | K_task lifetime_opt identifier_name '('
+  | K_task lifetime_opt IDENTIFIER '('
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -3065,7 +3058,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	delete[]$3;
       }
 
-  | K_task lifetime_opt identifier_name error K_endtask
+  | K_task lifetime_opt IDENTIFIER error K_endtask
       {
 	if (current_task) {
 	      pform_pop_scope();
@@ -3097,10 +3090,10 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
   // variable/net declarations, function names do not allow unpacked
   // dimensions.
 data_type_or_implicit_plus_id
-  : identifier_name
+  : IDENTIFIER
       { set_type_id_range($$, nullptr, $1, @1, nullptr);
       }
-  | identifier_name dimensions_opt identifier_name
+  | IDENTIFIER dimensions_opt IDENTIFIER
       { if (!gn_system_verilog()) {
 	      yyerror(@1, "syntax error");
 	      delete[]$1;
@@ -3112,13 +3105,13 @@ data_type_or_implicit_plus_id
 	tmp = pform_make_parray_type(@2, tmp, $2);
 	set_type_id_range($$, tmp, $3, @3, nullptr);
       }
-  | atomic_type identifier_name
+  | atomic_type IDENTIFIER
       { set_type_id_range($$, $1, $2, @2, nullptr);
       }
-  | implicit_type identifier_name
+  | implicit_type IDENTIFIER
       { set_type_id_range($$, $1, $2, @2, nullptr);
       }
-  | package_scope identifier_name dimensions_opt identifier_name
+  | package_scope IDENTIFIER dimensions_opt IDENTIFIER
       { lex_in_package_scope(nullptr);
 	auto tmp = pform_new_type_identifier(@2, $1, $2);
 	set_type_id_range($$, pform_make_parray_type(@3, tmp, $3),
@@ -3133,18 +3126,18 @@ data_type_or_implicit_plus_id_dim
   : IDENTIFIER dimensions_opt
       { set_type_id_range($$, nullptr, $1, @1, $2);
       }
-  | atomic_type identifier_name dimensions_opt
+  | atomic_type IDENTIFIER dimensions_opt
       { set_type_id_range($$, $1, $2, @2, $3);
       }
-  | implicit_type identifier_name dimensions_opt
+  | implicit_type IDENTIFIER dimensions_opt
       { set_type_id_range($$, $1, $2, @2, $3);
       }
-  | IDENTIFIER dimensions_opt identifier_name dimensions_opt
+  | IDENTIFIER dimensions_opt IDENTIFIER dimensions_opt
       { auto tmp = pform_new_type_identifier(@1, nullptr, $1);
 	tmp = pform_make_parray_type(@2, tmp, $2);
 	set_type_id_range($$, tmp, $3, @3, $4);
       }
-  | package_scope IDENTIFIER dimensions_opt identifier_name dimensions_opt
+  | package_scope IDENTIFIER dimensions_opt IDENTIFIER dimensions_opt
       { lex_in_package_scope(nullptr);
 	auto tmp = pform_new_type_identifier(@2, $1, $2);
 	tmp = pform_make_parray_type(@3, tmp, $3);
@@ -3158,18 +3151,18 @@ data_type_or_implicit_plus_id_dim
   // still be parsed as a parameter name while implicit types like `signed P`
   // and `[3:0] P` are rejected.
 data_type_or_parameter_id_dim
-  : identifier_name dimensions_opt
+  : IDENTIFIER dimensions_opt
       { set_type_id_range($$, nullptr, $1, @1, $2);
       }
-  | identifier_name dimensions_opt identifier_name dimensions_opt
+  | IDENTIFIER dimensions_opt IDENTIFIER dimensions_opt
       { auto tmp = pform_new_type_identifier(@1, nullptr, $1);
 	tmp = pform_make_parray_type(@2, tmp, $2);
 	set_type_id_range($$, tmp, $3, @3, $4);
       }
-  | atomic_type identifier_name dimensions_opt
+  | atomic_type IDENTIFIER dimensions_opt
       { set_type_id_range($$, $1, $2, @2, $3);
       }
-  | package_scope identifier_name dimensions_opt identifier_name dimensions_opt
+  | package_scope IDENTIFIER dimensions_opt IDENTIFIER dimensions_opt
       { lex_in_package_scope(nullptr);
 	auto tmp = pform_new_type_identifier(@2, $1, $2);
 	tmp = pform_make_parray_type(@3, tmp, $3);
@@ -3183,7 +3176,7 @@ data_type_or_implicit_or_void_plus_id
   : data_type_or_implicit_plus_id
       { $$ = $1;
       }
-  | K_void identifier_name
+  | K_void IDENTIFIER
       { void_type_t*tmp = new void_type_t;
 	FILE_NAME(tmp, @1);
 	set_type_id_range($$, tmp, $2, @2, nullptr);
@@ -3195,19 +3188,19 @@ data_type_or_implicit_or_void_plus_id
   // data_type_or_implicit_plus_id_dim so a bare identifier after a comma is
   // still parsed as a continuation of the previous port declaration.
 partial_port_type_plus_id_dim
-  : atomic_type identifier_name dimensions_opt
+  : atomic_type IDENTIFIER dimensions_opt
       { set_type_id_range($$, $1, $2, @2, $3);
       }
-  | implicit_type identifier_name dimensions_opt
+  | implicit_type IDENTIFIER dimensions_opt
       { set_type_id_range($$, $1, $2, @2, $3);
       }
   ;
 
 partial_port_identifier_dim
-  : identifier_name dimensions_opt
+  : IDENTIFIER dimensions_opt
       { set_type_id_range($$, nullptr, $1, @1, $2);
       }
-  | package_scope identifier_name dimensions_opt identifier_name dimensions_opt
+  | package_scope IDENTIFIER dimensions_opt IDENTIFIER dimensions_opt
       { lex_in_package_scope(nullptr);
 	auto tmp = pform_new_type_identifier(@2, $1, $2);
 	tmp = pform_make_parray_type(@3, tmp, $3);
@@ -3439,7 +3432,7 @@ attribute_list
 
 
 attribute
-  : identifier_name initializer_opt
+  : IDENTIFIER initializer_opt
       { named_pexpr_t*tmp = new named_pexpr_t;
 	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($1);
@@ -3580,7 +3573,7 @@ forward_type
   /* Type declarations are parsed here. The rule actions call pform
      functions that add the declaration to the current lexical scope. */
 type_declaration
-  : K_typedef data_type identifier_name dimensions_opt ';'
+  : K_typedef data_type IDENTIFIER dimensions_opt ';'
       { perm_string name = lex_strings.make($3);
 	pform_set_typedef(@3, name, $2, $4);
 	delete[]$3;
@@ -3588,17 +3581,17 @@ type_declaration
 
   /* These are forward declarations... */
 
-  | K_typedef identifier_name ';'
+  | K_typedef IDENTIFIER ';'
       { perm_string name = lex_strings.make($2);
 	pform_forward_typedef(@2, name, type_restrict_t(type_restrict_t::ANY));
 	delete[]$2;
       }
-  | K_typedef forward_type_without_enum identifier_name ';'
+  | K_typedef forward_type_without_enum IDENTIFIER ';'
       { perm_string name = lex_strings.make($3);
 	pform_forward_typedef(@3, name, type_restrict_t($2));
 	delete[]$3;
       }
-  | K_typedef K_enum identifier_name ';'
+  | K_typedef K_enum IDENTIFIER ';'
       { perm_string name = lex_strings.make($3);
 	pform_forward_typedef(@3, name, type_restrict_t(type_restrict_t::ENUM));
 	delete[]$3;
@@ -3661,23 +3654,23 @@ pos_neg_number
       }
   ;
 
-  /* Enum items are declaration names. Use identifier_name so an enum item can
+  /* Enum items are declaration names. Use IDENTIFIER so an enum item can
      shadow a visible type identifier without introducing a type/name
      ambiguity. */
 enum_name
-  : identifier_name initializer_opt
+  : IDENTIFIER initializer_opt
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
 	$$ = make_named_number(@$, name, $2);
       }
-  | identifier_name '[' pos_neg_number ']' initializer_opt
+  | IDENTIFIER '[' pos_neg_number ']' initializer_opt
       { perm_string name = lex_strings.make($1);
 	long count = check_enum_seq_value(@1, $3, false);
 	$$ = make_named_numbers(@$, name, 0, count-1, $5);
 	delete[]$1;
 	delete $3;
       }
-  | identifier_name '[' pos_neg_number ':' pos_neg_number ']' initializer_opt
+  | IDENTIFIER '[' pos_neg_number ':' pos_neg_number ']' initializer_opt
       { perm_string name = lex_strings.make($1);
 	$$ = make_named_numbers(@$, name, check_enum_seq_value(@1, $3, true),
 	                                  check_enum_seq_value(@1, $5, true), $7);
@@ -3937,7 +3930,7 @@ delay_value_simple
 	      FILE_NAME($$, @1);
 	}
       }
-  | identifier_name
+  | IDENTIFIER
       { pform_name_t tmp_name = { name_component_t(lex_strings.make($1)) };
 	auto tmp = pform_new_ident(@1, tmp_name);
 	$$ = tmp;
@@ -3975,7 +3968,7 @@ delay_value_simple
 optional_semicolon : ';' | ;
 
 discipline_declaration
-  : K_discipline identifier_name optional_semicolon
+  : K_discipline IDENTIFIER optional_semicolon
       { pform_start_discipline($2); }
     discipline_items K_enddiscipline
       { pform_end_discipline(@1); delete[] $2; }
@@ -3991,14 +3984,14 @@ discipline_item
       { pform_discipline_domain(@1, IVL_DIS_DISCRETE); }
   | K_domain K_continuous ';'
       { pform_discipline_domain(@1, IVL_DIS_CONTINUOUS); }
-  | K_potential identifier_name ';'
+  | K_potential IDENTIFIER ';'
       { pform_discipline_potential(@1, $2); delete[] $2; }
-  | K_flow identifier_name ';'
+  | K_flow IDENTIFIER ';'
       { pform_discipline_flow(@1, $2); delete[] $2; }
   ;
 
 nature_declaration
-  : K_nature identifier_name optional_semicolon
+  : K_nature IDENTIFIER optional_semicolon
       { pform_start_nature($2); }
     nature_items
     K_endnature
@@ -4014,16 +4007,16 @@ nature_item
   : K_units '=' STRING ';'
       { delete[] $3; }
   | K_abstol '=' expression ';'
-  | K_access '=' identifier_name ';'
+  | K_access '=' IDENTIFIER ';'
       { pform_nature_access(@1, $3); delete[] $3; }
-  | K_idt_nature '=' identifier_name ';'
+  | K_idt_nature '=' IDENTIFIER ';'
       { delete[] $3; }
-  | K_ddt_nature '=' identifier_name ';'
+  | K_ddt_nature '=' IDENTIFIER ';'
       { delete[] $3; }
   ;
 
 config_declaration
-  : K_config identifier_name ';'
+  : K_config IDENTIFIER ';'
     K_design lib_cell_identifiers ';'
     list_of_config_rule_statements
     K_endconfig
@@ -4189,9 +4182,9 @@ event_expression
      or explicit as a named branch. Elaboration will check that the
      function name really is a nature attribute identifier. */
 branch_probe_expression
-  : identifier_name '(' identifier_name ',' identifier_name ')'
+  : IDENTIFIER '(' IDENTIFIER ',' IDENTIFIER ')'
       { $$ = pform_make_branch_probe_expression(@1, $1, $3, $5); }
-  | identifier_name '(' identifier_name ')'
+  | IDENTIFIER '(' IDENTIFIER ')'
       { $$ = pform_make_branch_probe_expression(@1, $1, $3); }
   ;
 
@@ -5076,7 +5069,7 @@ gate_instance_ports
   ;
 
 gate_instance
-  : identifier_name gate_instance_ports
+  : IDENTIFIER gate_instance_ports
       { auto instance = $2;
 	instance->name = $1;
 	FILE_NAME(instance, @1);
@@ -5093,7 +5086,7 @@ gate_instance
 
   /* Degenerate modules can have no ports. */
 
-  | identifier_name dimensions
+  | IDENTIFIER dimensions
       { auto instance = new lgate;
 	instance->name = $1;
 	instance->parms = nullptr;
@@ -5130,7 +5123,7 @@ gate_instance_continue
      rest of the item. Parameterized instances are unambiguous after '#', and
      remain in the ordinary module_item rule below. */
 identifier_module_item
-  : attribute_list_opt identifier_name identifier_name gate_instance_ports gate_instance_continue ';'
+  : attribute_list_opt IDENTIFIER IDENTIFIER gate_instance_ports gate_instance_continue ';'
       { std::unique_ptr<lgate> instance($4);
 	instance->name = $3;
 	FILE_NAME(instance.get(), @3);
@@ -5140,7 +5133,7 @@ identifier_module_item
 	delete[]$2;
 	delete[]$3;
       }
-  | attribute_list_opt identifier_name list_of_variable_decl_assignments ';'
+  | attribute_list_opt IDENTIFIER list_of_variable_decl_assignments ';'
       { if (decl_assignments_require_type(*$3) ||
 	    pform_test_type_identifier(@2, $2)) {
 	      auto type = pform_new_type_identifier(@2, nullptr, $2);
@@ -5158,8 +5151,8 @@ identifier_module_item
       }
     // Connections in a later entry select an instance list even when the
     // leading entries omit their port lists.
-  | attribute_list_opt identifier_name list_of_variable_decl_assignments ','
-    identifier_name gate_instance_ports gate_instance_continue ';'
+  | attribute_list_opt IDENTIFIER list_of_variable_decl_assignments ','
+    IDENTIFIER gate_instance_ports gate_instance_continue ';'
       { std::unique_ptr<std::vector<lgate>> gates(new std::vector<lgate>);
 	append_no_port_gate_instances(*gates,
 		    std::unique_ptr<std::list<decl_assignment_t*>>($3));
@@ -5174,7 +5167,7 @@ identifier_module_item
 	delete[]$2;
 	delete[]$5;
       }
-  | attribute_list_opt identifier_name dimensions
+  | attribute_list_opt IDENTIFIER dimensions
     list_of_variable_decl_assignments ';'
       { auto type = pform_new_type_identifier(@2, nullptr, $2);
 	type = pform_make_parray_type(@3, type, $3);
@@ -5222,7 +5215,7 @@ switchtype
 
 hierarchy_identifier
   : hierarchy_identifier_component
-  | hierarchy_identifier '.' identifier_name index_components_opt
+  | hierarchy_identifier '.' IDENTIFIER index_components_opt
       { auto tmp = $1;
 	append_hierarchy_identifier_component(*tmp, lex_strings.make($3), $4);
 	delete[]$3;
@@ -5275,9 +5268,9 @@ list_of_identifiers
   ;
 
 genvar_identifier_list
-  : identifier_name
+  : IDENTIFIER
       { $$ = list_from_identifier($1, @1.lexical_pos); }
-  | genvar_identifier_list ',' identifier_name
+  | genvar_identifier_list ',' IDENTIFIER
       { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
   ;
 
@@ -5285,7 +5278,7 @@ list_of_port_identifiers
   : data_type_or_implicit_plus_id_dim
       { $$ = make_port_list($1.type, $1.id, $1.id_loc.lexical_pos,
 			    $1.ranges, nullptr); }
-  | list_of_port_identifiers ',' identifier_name dimensions_opt
+  | list_of_port_identifiers ',' IDENTIFIER dimensions_opt
       { $$ = make_port_list($1, $3, @3.lexical_pos, $4, nullptr); }
   ;
 
@@ -5293,7 +5286,7 @@ list_of_variable_port_identifiers
   : data_type_or_implicit_plus_id_dim initializer_opt
       { $$ = make_port_list($1.type, $1.id, $1.id_loc.lexical_pos,
 			    $1.ranges, $2); }
-  | list_of_variable_port_identifiers ',' identifier_name dimensions_opt initializer_opt
+  | list_of_variable_port_identifiers ',' IDENTIFIER dimensions_opt initializer_opt
       { $$ = make_port_list($1, $3, @3.lexical_pos, $4, $5); }
   ;
 
@@ -5337,11 +5330,11 @@ list_of_port_declarations
     // shifted before choosing between an interface port and an old-style port
     // reference. The attributed form is separate because attribute_list_opt
     // can be empty.
-  | identifier_name interface_port_modport_opt identifier_name dimensions_opt
+  | IDENTIFIER interface_port_modport_opt IDENTIFIER dimensions_opt
       { auto port = module_declare_interface_port(@3, $1, $2, $3, $4, nullptr);
 	$$ = new std::vector<Module::port_t*>(1, port);
       }
-  | attribute_instance_list identifier_name interface_port_modport_opt identifier_name dimensions_opt
+  | attribute_instance_list IDENTIFIER interface_port_modport_opt IDENTIFIER dimensions_opt
       { auto port = module_declare_interface_port(@4, $2, $3, $4, $5, $1);
 	$$ = new std::vector<Module::port_t*>(1, port);
       }
@@ -5372,7 +5365,7 @@ list_of_port_declarations
       }
     // After a comma, an identifier can name either a data type or an interface.
     // Look up a type only when the syntax also permits an interface port.
-  | list_of_port_declarations ',' attribute_list_opt identifier_name dimensions_opt identifier_name dimensions_opt initializer_opt
+  | list_of_port_declarations ',' attribute_list_opt IDENTIFIER dimensions_opt IDENTIFIER dimensions_opt initializer_opt
       { auto ports = $1;
 	Module::port_t*port;
 
@@ -5388,7 +5381,7 @@ list_of_port_declarations
 	$$ = ports;
       }
     // A modport selector makes the interface interpretation unambiguous.
-  | list_of_port_declarations ',' attribute_list_opt identifier_name '.' identifier_name identifier_name dimensions_opt
+  | list_of_port_declarations ',' attribute_list_opt IDENTIFIER '.' IDENTIFIER IDENTIFIER dimensions_opt
       { auto ports = $1;
 	ports->push_back(module_declare_interface_port(@7, $4, $6, $7, $8, $3));
 	$$ = ports;
@@ -5400,7 +5393,7 @@ list_of_port_declarations
   ;
 
 interface_port_modport_opt
-  : '.' identifier_name
+  : '.' IDENTIFIER
       { $$ = $2; }
   |
       { $$ = 0; }
@@ -5425,7 +5418,7 @@ port_declaration
 				 port_declaration_context.port_type,
 				 NetNet::IMPLICIT, $2.type, $2.ranges, $3, $1);
       }
-  | attribute_list_opt port_direction K_wreal identifier_name
+  | attribute_list_opt port_direction K_wreal IDENTIFIER
       { real_type_t*real_type = new real_type_t(real_type_t::REAL);
 	FILE_NAME(real_type, @3);
 	$$ = module_declare_port(@4, $4, @4.lexical_pos, $2, NetNet::WIRE,
@@ -5526,7 +5519,7 @@ cont_assign_list
      items, and finally an end marker. */
 
 module
-  : attribute_list_opt module_start lifetime_opt identifier_name
+  : attribute_list_opt module_start lifetime_opt IDENTIFIER
       { pform_startmodule(@2, $4, $2==K_program, $2==K_interface, $3, $1);
         port_declaration_context_init(); }
     module_package_import_list_opt
@@ -5626,12 +5619,12 @@ module_end
   ;
 
 label_opt
-  : ':' identifier_name { $$ = $2; }
+  : ':' IDENTIFIER { $$ = $2; }
   |                { $$ = 0; }
   ;
 
 module_attribute_foreign
-  : K_PSTAR identifier_name K_integer identifier_name '=' STRING ';' K_STARP
+  : K_PSTAR IDENTIFIER K_integer IDENTIFIER '=' STRING ';' K_STARP
       { delete[] $2;
 	delete[] $4;
 	delete[] $6;
@@ -5858,7 +5851,7 @@ module_item
 
   | identifier_module_item
 
-  | attribute_list_opt identifier_name gate_instance_positional_connections gate_instance_continue ';'
+  | attribute_list_opt IDENTIFIER gate_instance_positional_connections gate_instance_continue ';'
       { std::unique_ptr<lgate> instance($3);
 	instance->name = "";
 	FILE_NAME(instance.get(), @3);
@@ -5942,14 +5935,14 @@ module_item
      handled by identifier_module_item. */
 
   | attribute_list_opt
-	  identifier_name parameter_value_assignment gate_instance_list ';'
+	  IDENTIFIER parameter_value_assignment gate_instance_list ';'
       { perm_string tmp1 = lex_strings.make($2);
 		  pform_make_modgates(@2, tmp1, $3, $4, $1);
 		  delete[]$2;
       }
 
         | attribute_list_opt
-	  identifier_name parameter_value_assignment error ';'
+	  IDENTIFIER parameter_value_assignment error ';'
       { yyerror(@2, "error: Invalid module instantiation");
 		  delete[]$2;
 		  if ($1) delete $1;
@@ -6014,7 +6007,7 @@ module_item
   | K_genvar genvar_identifier_list ';'
       { pform_genvars(@1, $2); }
 
-  | K_for '(' K_genvar_opt identifier_name '=' expression ';'
+  | K_for '(' K_genvar_opt IDENTIFIER '=' expression ';'
               expression ';'
               genvar_iteration ')'
       { pform_start_generate_for(@2, $3, $4, $6, $8, $10.text, $10.expr); }
@@ -6110,7 +6103,7 @@ module_item
   /* These rules are for the Icarus Verilog specific $attribute
      extensions. Then catch the parameters of the $attribute keyword. */
 
-  | KK_attribute '(' identifier_name ',' STRING ',' STRING ')' ';'
+  | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
       { perm_string tmp3 = lex_strings.make($3);
 	perm_string tmp5 = lex_strings.make($5);
 	pform_set_attrib(tmp3, tmp5, $7);
@@ -6202,7 +6195,7 @@ generate_item
 	      cerr << @1 << ": warning: Anachronistic use of begin/end to surround generate schemes." << endl;
 	}
       }
-  | K_begin ':' identifier_name
+  | K_begin ':' IDENTIFIER
       { pform_start_generate_nblock(@1, $3); }
     generate_item_list_opt K_end
       { /* Detect and warn about anachronistic named begin/end use */
@@ -6270,7 +6263,7 @@ list_of_net_decl_assignments_with_type /* IEEE1800-2005 A.2.5 */
   ;
 
 net_decl_assign
-  : identifier_name dimensions_opt net_decl_initializer_opt
+  : IDENTIFIER dimensions_opt net_decl_initializer_opt
       { $$ = pform_make_net_decl(@1, $1, $2, $3);
       }
   ;
@@ -6360,7 +6353,7 @@ parameter_assign_with_type
 
 value_parameter_assign_with_type
   : value_parameter_assign_without_parameter
-  | implicit_type identifier_name dimensions_opt initializer_opt parameter_value_ranges_opt
+  | implicit_type IDENTIFIER dimensions_opt initializer_opt parameter_value_ranges_opt
       { param_is_type = false;
 	param_type_restrict = {};
 	param_data_type = $1;
@@ -6387,7 +6380,7 @@ value_parameter_assign_without_parameter
   // after a comma remains a parameter name that inherits the previous type. The
   // LRM allows data_type here, but not implicit_type.
 value_parameter_assign_with_explicit_type
-  : atomic_type identifier_name dimensions_opt initializer_opt parameter_value_ranges_opt
+  : atomic_type IDENTIFIER dimensions_opt initializer_opt parameter_value_ranges_opt
       { param_is_type = false;
 	param_type_restrict = {};
 	param_data_type = $1;
@@ -6395,7 +6388,7 @@ value_parameter_assign_with_explicit_type
 			    param_is_type, param_type_restrict,
 			    param_data_type, $3, $4, $5);
       }
-  | ps_type_identifier_dim identifier_name dimensions_opt initializer_opt parameter_value_ranges_opt
+  | ps_type_identifier_dim IDENTIFIER dimensions_opt initializer_opt parameter_value_ranges_opt
       { param_is_type = false;
 	param_type_restrict = {};
 	param_data_type = $1;
@@ -6504,7 +6497,7 @@ parameter_value_assignment
   ;
 
 named_expression
-  : '.' identifier_name '(' expression ')'
+  : '.' IDENTIFIER '(' expression ')'
       { named_pexpr_t*tmp = new named_pexpr_t;
 	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($2);
@@ -6515,7 +6508,7 @@ named_expression
 
 named_expression_opt
   : named_expression
-  | '.' identifier_name '(' ')'
+  | '.' IDENTIFIER '(' ')'
       { named_pexpr_t*tmp = new named_pexpr_t;
 	FILE_NAME(tmp, @$);
 	tmp->name = lex_strings.make($2);
@@ -6563,7 +6556,7 @@ port
      references. The port_t object gets its PWire from the
      port_reference, but its name from the IDENTIFIER. */
 
-  | '.' identifier_name '(' port_reference ')'
+  | '.' IDENTIFIER '(' port_reference ')'
       { Module::port_t*tmp = $4;
 	tmp->name = lex_strings.make($2);
 	delete[]$2;
@@ -6583,7 +6576,7 @@ port
   /* This attaches a name to a port reference concatenation list so
      that parameter passing be name is possible. */
 
-  | '.' identifier_name '(' '{' port_reference_list '}' ')'
+  | '.' IDENTIFIER '(' '{' port_reference_list '}' ')'
       { Module::port_t*tmp = $5;
 	tmp->name = lex_strings.make($2);
 	delete[]$2;
@@ -6605,7 +6598,7 @@ port_name
       { delete $1;
 	$$ = $2;
       }
-  | attribute_list_opt '.' identifier_name '(' error ')'
+  | attribute_list_opt '.' IDENTIFIER '(' error ')'
       { yyerror(@3, "error: Invalid port connection expression.");
 	named_pexpr_t*tmp = new named_pexpr_t;
 	FILE_NAME(tmp, @$);
@@ -6615,7 +6608,7 @@ port_name
 	delete $1;
 	$$ = tmp;
       }
-  | attribute_list_opt '.' identifier_name
+  | attribute_list_opt '.' IDENTIFIER
       { pform_requires_sv(@3, "Implicit named port connections");
 	named_pexpr_t*tmp = new named_pexpr_t;
 	FILE_NAME(tmp, @$);
@@ -6687,14 +6680,14 @@ port_conn_expression_list_with_nuls
      port_t object to pass it up to the module declaration code. */
 
 port_reference
-  : identifier_name
+  : IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($1);
 	ptmp = pform_module_port_reference(@1, name);
 	delete[]$1;
 	$$ = ptmp;
       }
-  | identifier_name '[' expression ':' expression ']'
+  | IDENTIFIER '[' expression ':' expression ']'
       { index_component_t itmp;
 	itmp.sel = index_component_t::SEL_PART;
 	itmp.msb = $3;
@@ -6717,7 +6710,7 @@ port_reference
 	delete[]$1;
 	$$ = ptmp;
       }
-  | identifier_name '[' expression ']'
+  | IDENTIFIER '[' expression ']'
       { index_component_t itmp;
 	itmp.sel = index_component_t::SEL_BIT;
 	itmp.msb = $3;
@@ -6739,7 +6732,7 @@ port_reference
 	delete[]$1;
 	$$ = ptmp;
       }
-  | identifier_name '[' error ']'
+  | IDENTIFIER '[' error ']'
       { yyerror(@1, "error: Invalid port bit select");
 	Module::port_t*ptmp = new Module::port_t;
 	PEIdent*wtmp = new PEIdent(lex_strings.make($1), @1.lexical_pos);
@@ -6778,7 +6771,7 @@ dimensions
   ;
 
 event_variable
-  : identifier_name dimensions_opt
+  : IDENTIFIER dimensions_opt
       { if ($2) {
 	      yyerror(@2, "sorry: event arrays are not supported.");
 	      delete $2;
@@ -7103,13 +7096,13 @@ specify_simple_path
   ;
 
 specify_path_identifiers
-  : identifier_name
+  : IDENTIFIER
       { std::list<perm_string>*tmp = new std::list<perm_string>;
 	tmp->push_back(lex_strings.make($1));
 	$$ = tmp;
 	delete[]$1;
       }
-  | identifier_name '[' expr_primary ']'
+  | IDENTIFIER '[' expr_primary ']'
       { if (gn_specify_blocks_flag) {
 	      yywarn(@4, "warning: Bit selects are not currently supported "
 			 "in path declarations. The declaration "
@@ -7120,7 +7113,7 @@ specify_path_identifiers
 	$$ = tmp;
 	delete[]$1;
       }
-  | identifier_name '[' expr_primary polarity_operator expr_primary ']'
+  | IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
       { if (gn_specify_blocks_flag) {
 	      yywarn(@4, "warning: Part selects are not currently supported "
 			 "in path declarations. The declaration "
@@ -7131,13 +7124,13 @@ specify_path_identifiers
 	$$ = tmp;
 	delete[]$1;
       }
-  | specify_path_identifiers ',' identifier_name
+  | specify_path_identifiers ',' IDENTIFIER
       { std::list<perm_string>*tmp = $1;
 	tmp->push_back(lex_strings.make($3));
 	$$ = tmp;
 	delete[]$3;
       }
-  | specify_path_identifiers ',' identifier_name '[' expr_primary ']'
+  | specify_path_identifiers ',' IDENTIFIER '[' expr_primary ']'
       { if (gn_specify_blocks_flag) {
 	      yywarn(@4, "warning: Bit selects are not currently supported "
 			 "in path declarations. The declaration "
@@ -7148,7 +7141,7 @@ specify_path_identifiers
 	$$ = tmp;
 	delete[]$3;
       }
-  | specify_path_identifiers ',' identifier_name '[' expr_primary polarity_operator expr_primary ']'
+  | specify_path_identifiers ',' IDENTIFIER '[' expr_primary polarity_operator expr_primary ']'
       { if (gn_specify_blocks_flag) {
 	      yywarn(@4, "warning: Part selects are not currently supported "
 			 "in path declarations. The declaration "
@@ -7162,7 +7155,7 @@ specify_path_identifiers
   ;
 
 specparam
-  : identifier_name '=' expr_mintypmax
+  : IDENTIFIER '=' expr_mintypmax
 	{ pform_set_specparam(@1, lex_strings.make($1), specparam_active_range, $3,
 			      !in_specify_block);
 	delete[]$1;
@@ -7527,7 +7520,7 @@ block_prefix_opt
       { $$.label = nullptr;
 	$$.attributes = nullptr;
       }
-  | identifier_name ':' attribute_list_opt
+  | IDENTIFIER ':' attribute_list_opt
       { pform_requires_sv(@1, "Block prefix label");
 	$$.label = $1;
 	$$.attributes = $3;
@@ -8068,7 +8061,7 @@ udp_sequ_entry
   ;
 
 udp_initial
-  : K_initial identifier_name '=' number ';'
+  : K_initial IDENTIFIER '=' number ';'
       { PExpr*etmp = new PENumber($4);
 	PEIdent*itmp = new PEIdent(lex_strings.make($2), @2.lexical_pos);
 	PAssign*atmp = new PAssign(itmp, etmp);
@@ -8148,7 +8141,7 @@ udp_output_sym
 udp_port_decl
   : K_input udp_port_list ';'
       { $$ = pform_make_udp_input_ports($2); }
-  | K_output identifier_name ';'
+  | K_output IDENTIFIER ';'
       { perm_string pname = lex_strings.make($2);
 	PWire*pp = new PWire(pname, @2.lexical_pos, NetNet::IMPLICIT, NetNet::POUTPUT);
 	vector<PWire*>*tmp = new std::vector<PWire*>(1);
@@ -8156,7 +8149,7 @@ udp_port_decl
 	$$ = tmp;
 	delete[]$2;
       }
-  | K_reg identifier_name ';'
+  | K_reg IDENTIFIER ';'
       { perm_string pname = lex_strings.make($2);
 	PWire*pp = new PWire(pname, @2.lexical_pos, NetNet::REG, NetNet::PIMPLICIT);
 	vector<PWire*>*tmp = new std::vector<PWire*>(1);
@@ -8164,7 +8157,7 @@ udp_port_decl
 	$$ = tmp;
 	delete[]$2;
       }
-  | K_output K_reg identifier_name ';'
+  | K_output K_reg IDENTIFIER ';'
       { perm_string pname = lex_strings.make($3);
 	PWire*pp = new PWire(pname, @3.lexical_pos, NetNet::REG, NetNet::POUTPUT);
 	vector<PWire*>*tmp = new std::vector<PWire*>(1);
@@ -8189,9 +8182,9 @@ udp_port_decls
   ;
 
 udp_port_list
-  : identifier_name
+  : IDENTIFIER
       { $$ = list_from_identifier($1, @1.lexical_pos); }
-  | udp_port_list ',' identifier_name
+  | udp_port_list ',' IDENTIFIER
       { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
   ;
 
@@ -8200,9 +8193,9 @@ udp_reg_opt
   |        { $$ = false; };
 
 udp_input_declaration_list
-  : K_input identifier_name
+  : K_input IDENTIFIER
       { $$ = list_from_identifier($2, @2.lexical_pos); }
-  | udp_input_declaration_list ',' K_input identifier_name
+  | udp_input_declaration_list ',' K_input IDENTIFIER
       { $$ = list_from_identifier($1, $4, @4.lexical_pos); }
   ;
 
@@ -8211,7 +8204,7 @@ udp_primitive
 	   format. The ports are simply names in the port list, and the
 	   declarations are in the body. */
 
-  : K_primitive identifier_name '(' udp_port_list ')' ';'
+  : K_primitive IDENTIFIER '(' udp_port_list ')' ';'
     udp_port_decls
     udp_init_opt
     udp_body
@@ -8225,8 +8218,8 @@ udp_primitive
         /* This is the syntax for IEEE1364-2001 format definitions. The port
 	   names and declarations are all in the parameter list. */
 
-  | K_primitive identifier_name
-    '(' K_output udp_reg_opt identifier_name initializer_opt ','
+  | K_primitive IDENTIFIER
+    '(' K_output udp_reg_opt IDENTIFIER initializer_opt ','
     udp_input_declaration_list ')' ';'
     udp_body
     K_endprimitive label_opt
