@@ -1265,7 +1265,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <gatetype> gatetype switchtype
 %type <porttype> port_direction port_direction_opt
 %type <vartype> integer_vector_type integer_vector_type_no_reg
-%type <parmvalue> parameter_value_opt
+%type <parmvalue> parameter_value_assignment
 
 %type <event_exprs> event_expression_list
 %type <event_expr> event_expression
@@ -5813,17 +5813,29 @@ module_item
      but then can have parameter lists. */
 
   | attribute_list_opt
-	  IDENTIFIER parameter_value_opt gate_instance_list ';'
+	  IDENTIFIER parameter_value_assignment gate_instance_list ';'
       { perm_string tmp1 = lex_strings.make($2);
 		  pform_make_modgates(@2, tmp1, $3, $4, $1);
 		  delete[]$2;
       }
 
         | attribute_list_opt
-	  IDENTIFIER parameter_value_opt error ';'
+	  IDENTIFIER parameter_value_assignment error ';'
       { yyerror(@2, "error: Invalid module instantiation");
 		  delete[]$2;
 		  if ($1) delete $1;
+      }
+
+  | attribute_list_opt IDENTIFIER gate_instance_list ';'
+      { auto type_name = lex_strings.make($2);
+	pform_make_modgates(@2, type_name, nullptr, $3, $1);
+	delete[]$2;
+      }
+
+  | attribute_list_opt IDENTIFIER error ';'
+      { yyerror(@2, "error: Invalid module instantiation");
+	delete[]$2;
+	delete $1;
       }
 
   /* Continuous assignment can have an optional drive strength, then
@@ -6338,7 +6350,7 @@ from_exclude : K_from { $$ = false; } | K_exclude { $$ = true; } ;
      The parameter value by name syntax is OVI enhancement BTF-B06 as
      approved by WG1364 on 6/28/1998. */
 
-parameter_value_opt
+parameter_value_assignment
   : '#' '(' expression_list_with_nuls ')'
       { struct parmvalue_t*tmp = new struct parmvalue_t;
 	tmp->by_order = $3;
@@ -6378,8 +6390,6 @@ parameter_value_opt
       { yyerror(@1, "error: Syntax error in parameter value assignment list.");
 	$$ = 0;
       }
-  |
-      { $$ = 0; }
   ;
 
 named_expression
