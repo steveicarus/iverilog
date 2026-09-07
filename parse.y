@@ -127,9 +127,6 @@ static void check_net_decl_assigns(const struct vlltype&loc,
       }
 }
 
-static std::list<pform_range_t> *
-make_dimensions(std::list<index_component_t> *components);
-
 static data_type_t *pform_make_parray_type(const struct vlltype&loc,
 					  data_type_t *base,
 					  std::list<pform_range_t> *pdims)
@@ -143,14 +140,6 @@ static data_type_t *pform_make_parray_type(const struct vlltype&loc,
       return type;
 }
 
-static data_type_t *pform_make_parray_type(
-					  const struct vlltype &loc,
-					  data_type_t *base,
-					  std::list<index_component_t> *components)
-{
-      return pform_make_parray_type(loc, base, make_dimensions(components));
-}
-
 template <class T>
 static void set_type_id_range(T&value, data_type_t *type, char *id,
 			      const YYLTYPE&loc,
@@ -160,22 +149,6 @@ static void set_type_id_range(T&value, data_type_t *type, char *id,
       value.id = id;
       value.id_loc = loc;
       value.ranges = ranges;
-}
-
-template <class T>
-static void set_type_id_range(T &value, data_type_t *type, char *id,
-			      const YYLTYPE &loc,
-			      std::list<index_component_t> *components)
-{
-      set_type_id_range(value, type, id, loc, make_dimensions(components));
-}
-
-template <class T>
-static void set_type_id_range(T &value, data_type_t *type, char *id,
-			      const YYLTYPE &loc, std::nullptr_t)
-{
-      set_type_id_range(value, type, id, loc,
-			static_cast<std::list<pform_range_t> *>(nullptr));
 }
 
 template <class T>
@@ -3057,7 +3030,7 @@ data_type_or_implicit_plus_id
   : identifier_name
       { set_type_id_range($$, nullptr, $1, @1, nullptr);
       }
-  | identifier_name index_components_opt identifier_name
+  | identifier_name dimensions_opt identifier_name
       { if (!gn_system_verilog()) {
 	      yyerror(@1, "syntax error");
 	      delete[]$1;
