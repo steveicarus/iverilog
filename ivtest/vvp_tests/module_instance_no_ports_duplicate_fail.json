@@ -1,0 +1,5 @@
+{
+    "type"   : "CE",
+    "source" : "module_instance_no_ports_duplicate_fail.v",
+    "gold"   : "module_instance_no_ports_duplicate_fail"
+}
