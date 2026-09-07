@@ -4984,7 +4984,7 @@ tf_item_declaration /* IEEE1800-2017: A.2.7 */
   /* A gate_instance is a module instantiation or a built in part
      type. In any case, the gate has a set of connections to ports. */
 gate_instance
-  : IDENTIFIER '(' port_conn_expression_list_with_nuls ')'
+  : identifier_name '(' port_conn_expression_list_with_nuls ')'
       { lgate*tmp = new lgate;
 	tmp->name = $1;
 	tmp->parms = $3;
@@ -4993,7 +4993,7 @@ gate_instance
 	$$ = tmp;
       }
 
-  | IDENTIFIER dimensions '(' port_conn_expression_list_with_nuls ')'
+  | identifier_name dimensions '(' port_conn_expression_list_with_nuls ')'
       { lgate*tmp = new lgate;
 	tmp->name = $1;
 	tmp->parms = $4;
@@ -5013,7 +5013,7 @@ gate_instance
 
   /* Degenerate modules can have no ports. */
 
-  | IDENTIFIER dimensions
+  | identifier_name dimensions
       { lgate*tmp = new lgate;
 	tmp->name = $1;
 	tmp->parms = 0;
@@ -5026,7 +5026,7 @@ gate_instance
 
   /* Modules can also take ports by port-name expressions. */
 
-  | IDENTIFIER '(' port_name_list ')'
+  | identifier_name '(' port_name_list ')'
       { lgate*tmp = new lgate;
 	tmp->name = $1;
 	tmp->parms = 0;
@@ -5036,7 +5036,7 @@ gate_instance
 	$$ = tmp;
       }
 
-  | IDENTIFIER dimensions '(' port_name_list ')'
+  | identifier_name dimensions '(' port_name_list ')'
       { lgate*tmp = new lgate;
 	tmp->name = $1;
 	tmp->parms = 0;
@@ -5047,7 +5047,7 @@ gate_instance
 	$$ = tmp;
       }
 
-  | IDENTIFIER '(' error ')'
+  | identifier_name '(' error ')'
       { lgate*tmp = new lgate;
 	tmp->name = $1;
 	tmp->parms = 0;
@@ -5059,7 +5059,7 @@ gate_instance
 	$$ = tmp;
       }
 
-  | IDENTIFIER dimensions '(' error ')'
+  | identifier_name dimensions '(' error ')'
       { lgate*tmp = new lgate;
 	tmp->name = $1;
 	tmp->parms = 0;
