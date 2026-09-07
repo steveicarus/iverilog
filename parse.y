@@ -5351,7 +5351,15 @@ list_of_port_declarations
       { std::vector<Module::port_t*> *ports = $1;
 
 	Module::port_t* port;
-	if (port_declaration_context.port_type == NetNet::NOT_A_PORT) {
+	auto previous_port = ports->back();
+	if (previous_port && previous_port->is_interface_port() && !$5) {
+		// Inherit the interface header, but not unpacked dimensions.
+	      port = pform_module_interface_port_reference(@4,
+		    previous_port->interface_type, previous_port->modport_name,
+		    lex_strings.make($4.id), $4.ranges);
+	      delete[]$4.id;
+	      pform_module_define_interface_port(@4, port, $3);
+	} else if (port_declaration_context.port_type == NetNet::NOT_A_PORT) {
 	      yyerror(@4, "error: Incomplete interface port declaration.");
 	      delete_type_id_range($4);
 	      delete $5;
