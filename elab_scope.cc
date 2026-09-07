@@ -797,6 +797,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       }
 
       scope->add_typedefs(&typedefs);
+      scope->add_gate_names(gates_);
 
 	// Add the genvars to the scope.
       typedef map<perm_string,LineInfo*>::const_iterator genvar_it_t;
@@ -1335,6 +1336,7 @@ void PGenerate::elaborate_subscope_direct_(Design*des, NetScope*scope)
 void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 {
       scope->add_typedefs(&typedefs);
+      scope->add_gate_names(gates);
 
 	// Add the genvars to this scope.
       typedef map<perm_string,LineInfo*>::const_iterator genvar_it_t;
