@@ -1251,13 +1251,12 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <identifiers> udp_input_declaration_list
 %type <strings> udp_entry_list udp_comb_entry_list udp_sequ_entry_list
 %type <strings> udp_body
-%type <identifiers> udp_port_list
 %type <wires>   udp_port_decl udp_port_decls
 %type <statement> udp_initial udp_init_opt
 
 %type <text> event_variable label_opt interface_port_modport_opt
 %type <identifiers> event_variable_list
-%type <identifiers> genvar_identifier_list list_of_identifiers
+%type <identifiers> list_of_identifiers
 %type <perm_strings> loop_variables
 %type <port_list> list_of_port_identifiers list_of_variable_port_identifiers
 
@@ -5302,13 +5301,6 @@ list_of_identifiers
       { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
   ;
 
-genvar_identifier_list
-  : IDENTIFIER
-      { $$ = list_from_identifier($1, @1.lexical_pos); }
-  | genvar_identifier_list ',' IDENTIFIER
-      { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
-  ;
-
 list_of_port_identifiers
   : data_type_or_implicit_plus_id_dim
       { $$ = make_port_list($1.type, $1.id, $1.id_loc.lexical_pos,
@@ -6039,7 +6031,7 @@ module_item
 
   | K_generate { check_in_gen_region(@1); } generate_item_list_opt K_endgenerate { in_gen_region = false; }
 
-  | K_genvar genvar_identifier_list ';'
+  | K_genvar list_of_identifiers ';'
       { pform_genvars(@1, $2); }
 
   | K_for '(' K_genvar_opt IDENTIFIER '=' expression ';'
@@ -8175,7 +8167,7 @@ udp_output_sym
      makes for these ports are scoped within the UDP, so there is no
      hierarchy involved. */
 udp_port_decl
-  : K_input udp_port_list ';'
+  : K_input list_of_identifiers ';'
       { $$ = pform_make_udp_input_ports($2); }
   | K_output IDENTIFIER ';'
       { perm_string pname = lex_strings.make($2);
@@ -8217,13 +8209,6 @@ udp_port_decls
       }
   ;
 
-udp_port_list
-  : IDENTIFIER
-      { $$ = list_from_identifier($1, @1.lexical_pos); }
-  | udp_port_list ',' IDENTIFIER
-      { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
-  ;
-
 udp_reg_opt
   : K_reg  { $$ = true; }
   |        { $$ = false; };
@@ -8240,7 +8225,7 @@ udp_primitive
 	   format. The ports are simply names in the port list, and the
 	   declarations are in the body. */
 
-  : K_primitive IDENTIFIER '(' udp_port_list ')' ';'
+  : K_primitive IDENTIFIER '(' list_of_identifiers ')' ';'
     udp_port_decls
     udp_init_opt
     udp_body
