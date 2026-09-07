@@ -1393,9 +1393,8 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <type_id_range> data_type_or_implicit_plus_id_dim
 %type <type_id_range> data_type_or_implicit_or_void_plus_id
 %type <type_id_range> data_type_or_parameter_id_dim
-%type <type_id_range> partial_port_name_dim
+%type <type_id_range> partial_port_identifier_dim
 %type <type_id_range> partial_port_type_plus_id_dim
-%type <type_id_range> partial_port_typedef_plus_id_dim
 
 %token K_TAND
 %nonassoc K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
@@ -3229,20 +3228,9 @@ partial_port_type_plus_id_dim
       }
   ;
 
-partial_port_name_dim
-  : IDENTIFIER dimensions_opt
+partial_port_identifier_dim
+  : identifier_name dimensions_opt
       { set_type_id_range($$, nullptr, $1, @1, $2);
-      }
-  | TYPE_IDENTIFIER dimensions_opt
-      { set_type_id_range($$, nullptr, $1.text, @1, $2);
-      }
-  ;
-
-partial_port_typedef_plus_id_dim
-  : TYPE_IDENTIFIER dimensions_opt identifier_name dimensions_opt
-      { auto tmp = pform_new_type_identifier(@1, nullptr, $1.text);
-	tmp = pform_make_parray_type(@2, tmp, $2);
-	set_type_id_range($$, tmp, $3, @3, $4);
       }
   | package_scope identifier_name dimensions_opt identifier_name dimensions_opt
       { lex_in_package_scope(nullptr);
@@ -5379,12 +5367,12 @@ list_of_port_declarations
     // shifted before choosing between an interface port and an old-style port
     // reference. The attributed form is separate because attribute_list_opt
     // can be empty.
-  | IDENTIFIER interface_port_modport_opt identifier_name dimensions_opt
-      { Module::port_t*port = module_declare_interface_port(@3, $1, $2, $3, $4, 0);
+  | identifier_name interface_port_modport_opt identifier_name dimensions_opt
+      { auto port = module_declare_interface_port(@3, $1, $2, $3, $4, nullptr);
 	$$ = new std::vector<Module::port_t*>(1, port);
       }
-  | attribute_instance_list IDENTIFIER interface_port_modport_opt identifier_name dimensions_opt
-      { Module::port_t*port = module_declare_interface_port(@4, $2, $3, $4, $5, $1);
+  | attribute_instance_list identifier_name interface_port_modport_opt identifier_name dimensions_opt
+      { auto port = module_declare_interface_port(@4, $2, $3, $4, $5, $1);
 	$$ = new std::vector<Module::port_t*>(1, port);
       }
   | list_of_port_declarations ',' port_declaration
@@ -5392,12 +5380,13 @@ list_of_port_declarations
 	tmp->push_back($3);
 	$$ = tmp;
       }
-  | list_of_port_declarations ',' attribute_list_opt partial_port_name_dim initializer_opt
-      { std::vector<Module::port_t*> *ports = $1;
+  | list_of_port_declarations ',' attribute_list_opt partial_port_identifier_dim initializer_opt
+      { auto ports = $1;
 
-	Module::port_t* port;
+	Module::port_t*port;
 	auto previous_port = ports->back();
-	if (previous_port && previous_port->is_interface_port() && !$5) {
+	if (!$4.type && !$5 && previous_port &&
+	    previous_port->is_interface_port()) {
 		// Inherit the interface header, but not unpacked dimensions.
 	      port = pform_module_interface_port_reference(@4,
 		    previous_port->interface_type, previous_port->modport_name,
@@ -5406,27 +5395,18 @@ list_of_port_declarations
 	      pform_module_define_interface_port(@4, port, $3);
 	} else {
 	      port = module_declare_partial_port(@4, $4.id, $4.id_loc.lexical_pos,
-						nullptr, $4.ranges, $5, $3);
+						$4.type, $4.ranges, $5, $3);
 	}
 	ports->push_back(port);
 	$$ = ports;
       }
-  | list_of_port_declarations ',' attribute_list_opt partial_port_typedef_plus_id_dim initializer_opt
-      { std::vector<Module::port_t*> *ports = $1;
-
-	auto port = module_declare_partial_port(@4, $4.id, $4.id_loc.lexical_pos,
-					       $4.type, $4.ranges, $5, $3);
-	ports->push_back(port);
-	$$ = ports;
-      }
-    // Without packed dimensions or an initializer, an ordinary identifier at
-    // this position starts an interface port. Otherwise it starts a named data
-    // type and its validity is checked during elaboration.
-  | list_of_port_declarations ',' attribute_list_opt IDENTIFIER dimensions_opt identifier_name dimensions_opt initializer_opt
+    // After a comma, an identifier can name either a data type or an interface.
+    // Look up a type only when the syntax also permits an interface port.
+  | list_of_port_declarations ',' attribute_list_opt identifier_name dimensions_opt identifier_name dimensions_opt initializer_opt
       { auto ports = $1;
 	Module::port_t*port;
 
-	if (!$5 && !$8) {
+	if (!$5 && !$8 && !pform_test_type_identifier(@4, $4)) {
 	      port = module_declare_interface_port(@6, $4, nullptr, $6, $7, $3);
 	} else {
 	      auto data_type = pform_new_type_identifier(@4, nullptr, $4);
@@ -5438,7 +5418,7 @@ list_of_port_declarations
 	$$ = ports;
       }
     // A modport selector makes the interface interpretation unambiguous.
-  | list_of_port_declarations ',' attribute_list_opt IDENTIFIER '.' identifier_name identifier_name dimensions_opt
+  | list_of_port_declarations ',' attribute_list_opt identifier_name '.' identifier_name identifier_name dimensions_opt
       { auto ports = $1;
 	ports->push_back(module_declare_interface_port(@7, $4, $6, $7, $8, $3));
 	$$ = ports;
