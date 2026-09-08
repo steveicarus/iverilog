@@ -171,7 +171,7 @@ static data_type_t *pform_new_type_identifier(const struct vlltype &loc,
 
       PEIdent *identifier;
       if (package) {
-	    identifier = new PEIdent(package, path);
+	    identifier = new PEIdent(pform_scoped_name_t(package, path));
 	    FILE_NAME(identifier, loc);
       } else {
 	    identifier = pform_new_ident(loc, path, true);
@@ -4755,7 +4755,8 @@ expr_primary
 	$$ = tmp;
       }
   | package_scope hierarchy_identifier { lex_in_package_scope(0); } argument_list_parens
-      { PECallFunction*tmp = new PECallFunction($1, *$2, *$4);
+      { pform_scoped_name_t call_path($1, *$2);
+	auto tmp = new PECallFunction(call_path, *$4);
 	FILE_NAME(tmp, @2);
 	delete $2;
 	delete $4;
@@ -7486,7 +7487,8 @@ subroutine_call
       }
   | package_scope hierarchy_identifier { lex_in_package_scope(nullptr); }
     argument_list_parens_opt
-      { auto tmp = new PCallTask($1, *$2, *$4);
+      { pform_scoped_name_t call_path($1, *$2);
+	auto tmp = new PCallTask(call_path, *$4);
 	FILE_NAME(tmp, @2);
 	delete $2;
 	delete $4;

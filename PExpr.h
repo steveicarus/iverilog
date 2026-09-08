@@ -35,7 +35,6 @@ class LexicalScope;
 class NetNet;
 class NetExpr;
 class NetScope;
-class PPackage;
 struct symbol_search_results;
 class netclass_t;
 
@@ -362,7 +361,7 @@ class PEIdent : public PExpr {
 
     public:
       explicit PEIdent(perm_string, unsigned lexical_pos, bool no_implicit_sig=false);
-      explicit PEIdent(PPackage*pkg, const pform_name_t&name);
+      explicit PEIdent(const pform_scoped_name_t&name);
       explicit PEIdent(const pform_name_t&, unsigned lexical_pos,
 		       bool no_implicit_sig = false);
       ~PEIdent() override;
@@ -948,11 +947,13 @@ class PETernary : public PExpr {
 class PECallFunction : public PExpr {
     public:
       explicit PECallFunction(const pform_name_t &n, const std::vector<named_pexpr_t> &parms);
-	// Call function defined in package.
-      explicit PECallFunction(PPackage *pkg, const pform_name_t &n, const std::list<named_pexpr_t> &parms);
+	// Call a function with a scoped name.
+      explicit PECallFunction(const pform_scoped_name_t &n,
+			      const std::list<named_pexpr_t> &parms);
 
-	// Used to convert a user function called as a task
-      explicit PECallFunction(PPackage *pkg, const pform_name_t &n, const std::vector<named_pexpr_t> &parms);
+	// Used to convert a user function called as a task.
+      explicit PECallFunction(const pform_scoped_name_t &n,
+			      const std::vector<named_pexpr_t> &parms);
 
 	// Call of system function (name is not hierarchical)
       explicit PECallFunction(perm_string n, const std::vector<named_pexpr_t> &parms);

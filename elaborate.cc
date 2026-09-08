@@ -3855,7 +3855,7 @@ NetProc* PCallTask::elaborate(Design*des, NetScope*scope) const
 {
       if (peek_tail_name(path_)[0] == '$') {
 	    if (void_cast_)
-		  return elaborate_non_void_function_(des, scope, path_);
+		  return elaborate_non_void_function_(des, scope, path_.name);
 	    else
 		  return elaborate_sys(des, scope);
       } else {
@@ -3956,10 +3956,9 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       ivl_assert(*this, scope);
 
       symbol_search_results search_results;
-      pform_scoped_name_t call_path(package_, path_);
       NetScope *task = nullptr;
       NetScope *func_scope = nullptr;
-      if (symbol_search(this, des, scope, call_path, lexical_pos(),
+      if (symbol_search(this, des, scope, path_, lexical_pos(),
 			&search_results,
 			SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE)) {
 	    if (!search_results.require_non_type(
@@ -4301,7 +4300,7 @@ NetProc* PCallTask::elaborate_method_property_func_(NetScope*scope,
 NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
                                       bool add_this_flag) const
 {
-      pform_name_t use_path = path_;
+      pform_name_t use_path = path_.name;
       perm_string method_name = peek_tail_name(use_path);
       use_path.pop_back();
 
@@ -4327,7 +4326,8 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	// (internally represented as "@") is handled by there being a
 	// "this" object in the instance scope.
       symbol_search_results sr;
-      pform_scoped_name_t object_path(package_, use_path);
+      pform_scoped_name_t object_path = path_;
+      object_path.name = use_path;
       symbol_search(this, des, scope, object_path, lexical_pos(), &sr);
 
       NetNet*net = sr.net;
@@ -4638,7 +4638,9 @@ NetProc *PCallTask::elaborate_non_void_function_(Design *des, NetScope *scope,
 						 const pform_name_t &path) const
 {
 	// Generate a function call version of this task call.
-      auto rval = new PECallFunction(package_, path, parms_);
+      pform_scoped_name_t call_path = path_;
+      call_path.name = path;
+      auto rval = new PECallFunction(call_path, parms_);
       rval->set_line(*this);
 	// Generate an assign to nothing.
       auto tmp = new PAssign(nullptr, rval);
@@ -4671,7 +4673,7 @@ NetProc *PCallTask::elaborate_function_(
       if (gn_system_verilog() && func->is_void())
 	    return elaborate_void_function_(des, scope, func);
 
-      return elaborate_non_void_function_(des, scope, path_);
+      return elaborate_non_void_function_(des, scope, path_.name);
 }
 
 NetProc* PCallTask::elaborate_void_function_(Design*des, NetScope*scope,
@@ -4718,7 +4720,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
       } else if (task->type() == NetScope::FUNC) {
 	    const NetFuncDef*tmp = task->func_def();
 	    if (!tmp->is_void())
-		  return elaborate_non_void_function_(des, scope, path_);
+		  return elaborate_non_void_function_(des, scope, path_.name);
 	    def = tmp;
 
 	    if (void_cast_) {

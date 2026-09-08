@@ -31,7 +31,6 @@
 # include  "LineInfo.h"
 class PExpr;
 class PChainConstructor;
-class PPackage;
 class Statement;
 class PEventStatement;
 class Design;
@@ -231,7 +230,8 @@ class PBreak : public Statement {
 class PCallTask  : public Statement {
 
     public:
-      explicit PCallTask(PPackage *pkg, const pform_name_t &n, const std::list<named_pexpr_t> &parms);
+      explicit PCallTask(const pform_scoped_name_t &n,
+			 const std::list<named_pexpr_t> &parms);
       explicit PCallTask(const pform_name_t &n, const std::list<named_pexpr_t> &parms);
       explicit PCallTask(perm_string n, const std::list<named_pexpr_t> &parms);
       ~PCallTask() override;
@@ -303,8 +303,7 @@ class PCallTask  : public Statement {
 					  const char*sys_task_name) const;
       bool test_task_calls_ok_(Design*des, const NetScope*scope) const;
 
-      PPackage*package_;
-      pform_name_t path_;
+      pform_scoped_name_t path_;
       std::vector<named_pexpr_t> parms_;
       bool void_cast_ = false;
 };
@@ -662,7 +661,7 @@ class PReturn  : public Statement {
 class PTrigger  : public Statement {
 
     public:
-      explicit PTrigger(PPackage*pkg, const pform_name_t&ev);
+      explicit PTrigger(const pform_scoped_name_t&ev);
       ~PTrigger() override;
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
