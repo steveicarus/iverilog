@@ -1527,6 +1527,20 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
  */
 void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*sc) const
 {
+        // A module's compilation unit follows its declaration, not the
+        // instance hierarchy. Nested modules share their outer module's unit.
+      NetScope*unit_scope = nullptr;
+      if (gn_system_verilog()) {
+	    auto unit = mod->parent_scope();
+	    while (unit->parent_scope()) {
+		  unit = unit->parent_scope();
+	    }
+	    auto unit_package = dynamic_cast<PPackage*>(unit);
+	    ivl_assert(*this, unit_package);
+	    unit_scope = des->find_package(unit_package->pscope_name());
+	    ivl_assert(*this, unit_scope && unit_scope->is_unit());
+      }
+
       long instance_low  = 0;
       long instance_high = 0;
       long instance_count = calculate_array_size_(des, sc, instance_high, instance_low);
@@ -1565,7 +1579,8 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // Create the new scope as a MODULE with my name. Note
 	      // that if this is a nested module, mark it thus so that
 	      // scope searches will continue into the parent scope.
-	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE, 0,
+	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE,
+					     unit_scope,
 					     bound_type_? true : false,
 					     mod->program_block,
 					     mod->is_interface);
