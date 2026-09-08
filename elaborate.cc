@@ -6970,10 +6970,11 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 					       conditional, !full_flag_);
 	    path->set_line(*this);
 
-	      // The presence of the data_source_expression indicates
-	      // that this is an edge sensitive path. If so, then set
-	      // the edges. Note that edge==0 is BOTH edges.
-	    if (data_source_expression) {
+	      // An edge sensitive path has either a data source
+	      // expression or an explicit edge keyword. When neither is
+	      // present the path is a simple (non-edge) path. Note that
+	      // edge==0 with a data source expression is BOTH edges.
+	    if (data_source_expression || edge != 0) {
 		  if (edge >= 0) path->set_posedge();
 		  if (edge <= 0) path->set_negedge();
 	    }

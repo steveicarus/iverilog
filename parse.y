@@ -7104,6 +7104,16 @@ specify_edge_path
       { int edge_flag = $2? 1 : -1;
 	$$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, true, $7, $9);
       }
+  | '(' edge_operator specify_path_identifiers spec_polarity
+    K_EG specify_path_identifiers ')'
+      { int edge_flag = $2? 1 : -1;
+	$$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, false, $6, 0);
+      }
+  | '(' edge_operator specify_path_identifiers spec_polarity
+    K_SG specify_path_identifiers ')'
+      { int edge_flag = $2? 1 : -1;
+	$$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, true, $6, 0);
+      }
   ;
 
 polarity_operator
