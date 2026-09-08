@@ -763,7 +763,7 @@ PTrigger* pform_new_trigger(const struct vlltype&loc, PPackage*pkg,
       if (gn_system_verilog())
 	    check_potential_imports(loc, name.front().name, false);
 
-      PTrigger*tmp = new PTrigger(pkg, name);
+      PTrigger*tmp = new PTrigger(pform_scoped_name_t(pkg, name));
       FILE_NAME(tmp, loc);
       return tmp;
 }

@@ -167,19 +167,20 @@ PNamedItem::SymbolType PBlock::symbol_type() const
 }
 
 PCallTask::PCallTask(const pform_name_t &n, const list<named_pexpr_t> &p)
-: package_(0), path_(n), parms_(p.begin(), p.end())
+: path_(n), parms_(p.begin(), p.end())
 {
 }
 
-PCallTask::PCallTask(PPackage *pkg, const pform_name_t &n, const list<named_pexpr_t> &p)
-: package_(pkg), path_(n), parms_(p.begin(), p.end())
+PCallTask::PCallTask(const pform_scoped_name_t &n,
+		     const list<named_pexpr_t> &p)
+: path_(n), parms_(p.begin(), p.end())
 {
 }
 
 PCallTask::PCallTask(perm_string n, const list<named_pexpr_t> &p)
-: package_(0), parms_(p.begin(), p.end())
+: parms_(p.begin(), p.end())
 {
-      path_.push_back(name_component_t(n));
+      path_.name.push_back(name_component_t(n));
 }
 
 PCallTask::~PCallTask()
@@ -188,7 +189,7 @@ PCallTask::~PCallTask()
 
 const pform_name_t& PCallTask::path() const
 {
-      return path_;
+      return path_.name;
 }
 
 PCase::PCase(ivl_case_quality_t q, NetCase::TYPE t, PExpr*ex, std::vector<PCase::Item*>*l)
@@ -396,8 +397,8 @@ PReturn::~PReturn()
       delete expr_;
 }
 
-PTrigger::PTrigger(PPackage*pkg, const pform_name_t&ev)
-: event_(pkg, ev)
+PTrigger::PTrigger(const pform_scoped_name_t&ev)
+: event_(ev)
 {
 }
 
