@@ -1,0 +1,7 @@
+./ivltests/br_gh1284.v:19: error: 'b' is not a valid l-value for a procedural assignment.
+./ivltests/br_gh1284.v:17:      : 'b' is declared here as a wire.
+./ivltests/br_gh1284.v:17:      : An inout port is a net unless it is explicitly declared as a variable.
+./ivltests/br_gh1284.v:13: error: 'i' is not a valid l-value for a procedural assignment.
+./ivltests/br_gh1284.v:11:      : 'i' is declared here as a wire.
+./ivltests/br_gh1284.v:11:      : An input port is a net unless it is explicitly declared as a variable.
+Elaboration failed
