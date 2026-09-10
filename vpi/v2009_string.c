@@ -260,6 +260,31 @@ static PLI_INT32 atohex_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
+static PLI_INT32 toupperlower_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv;
+      vpiHandle arg;
+      s_vpi_value value;
+
+      argv = vpi_iterate(vpiArgument, callh);
+      assert(argv);
+      arg = vpi_scan(argv);
+      assert(arg);
+      vpi_free_object(argv);
+
+      value.format = vpiStringVal;
+      vpi_get_value(arg, &value);
+
+      for (size_t i = 0; value.value.str[i]; i++)
+	    value.value.str[i] = (name[0] == 'u') ? toupper(value.value.str[i])
+						  : tolower(value.value.str[i]);
+
+      vpi_put_value(callh, &value, 0, vpiNoDelay);
+
+      return 0;
+}
+
 /*
  * Convert a val to a text string that represents the value. The base
  * is the integer base to use for the conversion. The base will be one
@@ -413,6 +438,26 @@ void v2009_string_register(void)
       tf_data.compiletf = one_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$ivl_string_method$atohex";
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiStringFunc;
+      tf_data.tfname    = "$ivl_string_method$toupper";
+      tf_data.calltf    = toupperlower_calltf;
+      tf_data.compiletf = one_arg_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "u";
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiStringFunc;
+      tf_data.tfname    = "$ivl_string_method$tolower";
+      tf_data.calltf    = toupperlower_calltf;
+      tf_data.compiletf = one_arg_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "l";
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
