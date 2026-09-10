@@ -2090,7 +2090,22 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 	    else
 		  fprintf(vvp_out, ", ");
 
-	    assert(ivl_signal_dimensions(psig) == 0);
+	      /* A .ufunc node is driven by its input nexuses, and an unpacked
+		 array is memory rather than a net, so there is nothing to
+		 connect it to here. Passing an array to a function is
+		 supported in procedural code; in a continuous assignment it
+		 would additionally need the node to be sensitive to changes of
+		 any word, which the structural netlist cannot express today.
+		 Report it rather than aborting. */
+	    if (ivl_signal_dimensions(psig) > 0) {
+		  fprintf(stderr, "%s:%u: sorry: passing an unpacked array to "
+			  "a function is not supported in a continuous "
+			  "assignment; use an always_comb block instead.\n",
+			  ivl_lpm_file(net), ivl_lpm_lineno(net));
+		  vvp_errors += 1;
+		  fprintf(vvp_out, "v%p_0", psig);
+		  continue;
+	    }
 	    fprintf(vvp_out, "v%p_0", psig);
       }
 

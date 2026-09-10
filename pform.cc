@@ -3101,17 +3101,22 @@ void pform_set_parameter(const struct vlltype&loc,
 
       const vector_type_t*vt = dynamic_cast<vector_type_t*>(data_type);
       if (vt && vt->pdims && vt->pdims->size() > 1) {
-	    if (pform_requires_sv(loc, "packed array parameter")) {
-		  VLerror(loc, "sorry: packed array parameters are not supported yet.");
-	    }
-	    return;
+	    // A multi-dimension packed array parameter, e.g.
+	    //   localparam logic [0:63][3:0] MEM = '{ ... };
+	    // The value elaborates to a foldable packed constant and the
+	    // multi-dimension type is carried through for element selects.
+	    pform_requires_sv(loc, "packed array parameter");
       }
 
       if (udims) {
+	    // An unpacked array parameter, e.g.
+	    //   localparam logic [3:0] MEM [0:63] = '{ ... };
+	    // Wrap the element data type in an unpacked array type (mirrors the
+	    // wire declaration path) so the parameter carries a netuarray_t.
 	    if (pform_requires_sv(loc, "unpacked array parameter")) {
-		  VLerror(loc, "sorry: unpacked array parameters are not supported yet.");
+		  data_type = new uarray_type_t(data_type,
+				   new std::list<pform_range_t>(*udims));
 	    }
-	    return;
       }
 
       bool overridable = !is_local;

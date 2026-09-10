@@ -86,6 +86,10 @@ extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 extern void draw_lpm_mux(ivl_lpm_t net);
 extern void draw_lpm_substitute(ivl_lpm_t net);
 
+/* Copy a whole unpacked array into another, word by word. Used both for a
+   plain array-to-array assignment and for passing an array to a subroutine. */
+extern int draw_array_copy(ivl_signal_t dst, ivl_expr_t rval);
+
 extern void draw_ufunc_vec4(ivl_expr_t expr);
 extern void draw_ufunc_real(ivl_expr_t expr);
 extern void draw_ufunc_string(ivl_expr_t expr);

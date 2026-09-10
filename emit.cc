@@ -28,6 +28,7 @@
 # include  "target.h"
 # include  "netclass.h"
 # include  "netlist.h"
+# include  "netparray.h"
 # include  "compiler.h"
 # include  <typeinfo>
 # include  <cassert>
@@ -458,12 +459,40 @@ void netclass_t::emit_scope(struct target_t*tgt) const
       class_scope_->emit_scope(tgt);
 }
 
+/*
+ * A function that returns an unpacked array is evaluated entirely at
+ * elaboration time (in constant contexts); the run-time code generator has no
+ * representation for a whole-unpacked-array return value, and run-time calls to
+ * such a function are rejected during elaboration. So such a function scope is
+ * never referenced at run time and must not be emitted (drawing its body would
+ * fail). Detect that here.
+ */
+static bool skip_unpacked_array_func(const NetScope*scope)
+{
+      if (scope->type() != NetScope::FUNC)
+	    return false;
+      const NetFuncDef*def = scope->func_def();
+      if (!def)
+	    return false;
+      const NetNet*rsig = def->return_sig();
+      if (!rsig)
+	    return false;
+	// The unpacked array may be recorded either as separate unpacked
+	// dimensions on the signal or as a netuarray_t net type, depending on
+	// how the return signal was created.
+      return rsig->unpacked_dimensions() > 0
+	    || dynamic_cast<const netuarray_t*>(rsig->net_type());
+}
+
 void NetScope::emit_scope(struct target_t*tgt) const
 {
       if (debug_emit) {
 	    cerr << "NetScope::emit_scope: "
 		 << "Emit scope " << scope_path(this) << endl;
       }
+
+      if (skip_unpacked_array_func(this))
+	    return;
 
       tgt->scope(this);
 
@@ -511,6 +540,11 @@ bool NetScope::emit_defs(struct target_t*tgt) const
 	    cerr << "NetScope::emit_defs: "
 		 << "Emit definitions for " << scope_path(this) << endl;
       }
+
+	// Skip functions that return an unpacked array (see
+	// skip_unpacked_array_func): they are only used at elaboration time.
+      if (skip_unpacked_array_func(this))
+	    return true;
 
       switch (type_) {
 	  case PACKAGE:
