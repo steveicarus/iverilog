@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_string_toupper_tolower.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
