@@ -29,6 +29,30 @@ static void yyerror(const char*msg);
 # include  <stdlib.h>
 # include  "ivl_alloc.h"
 
+/* Convert an SDF (TIMESCALE <number> <unit>) entry into seconds. The unit is
+   one of s, ms, us, ns, ps or fs, and IEEE 1497 restricts the number to 1, 10
+   or 100. */
+static void set_timescale(double mult, const char*unit, int lineno)
+{
+      double base;
+      if      (strcmp(unit, "s")  == 0) base = 1.0;
+      else if (strcmp(unit, "ms") == 0) base = 1.0e-3;
+      else if (strcmp(unit, "us") == 0) base = 1.0e-6;
+      else if (strcmp(unit, "ns") == 0) base = 1.0e-9;
+      else if (strcmp(unit, "ps") == 0) base = 1.0e-12;
+      else if (strcmp(unit, "fs") == 0) base = 1.0e-15;
+      else {
+	    vpi_printf("SDF ERROR: %s:%d: Unknown TIMESCALE unit \"%s\"; "
+	               "assuming 1ns.\n", sdf_parse_path, lineno, unit);
+	    sdf_timescale = 1.0e-9;
+	    return;
+      }
+      if (mult != 1.0 && mult != 10.0 && mult != 100.0)
+	    vpi_printf("SDF WARNING: %s:%d: TIMESCALE multiplier %g is not 1, 10 "
+	               "or 100.\n", sdf_parse_path, lineno, mult);
+      sdf_timescale = mult * base;
+}
+
 /* This is the hierarchy separator to use. */
 char sdf_use_hchar = '.';
 
@@ -235,11 +259,13 @@ time_scale
   : '(' K_TIMESCALE REAL_NUMBER IDENTIFIER ')'
       { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Timescale: %f%s\n",
 	                                sdf_parse_path, @2.first_line, $3, $4);
+	set_timescale($3, $4, @2.first_line);
 	free($4);
       }
   | '(' K_TIMESCALE INTEGER IDENTIFIER ')'
       { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Timescale: %lu%s\n",
 	                                sdf_parse_path, @2.first_line, $3, $4);
+	set_timescale((double)$3, $4, @2.first_line);
 	free($4);
       }
   ;
