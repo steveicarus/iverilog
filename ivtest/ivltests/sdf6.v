@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module dff (q, d, cp, sdn, cdn);
   output q;
   input cp;
