@@ -34,6 +34,11 @@ extern int sdf_flag_inform;
 
 extern int sdf_min_typ_max;
 
+/* The timescale given in the SDF file header, expressed in seconds
+   (for example 1ps is 1.0e-12). IEEE 1497 makes 1ns the default when the
+   header contains no (TIMESCALE ...) entry. */
+extern double sdf_timescale;
+
 /* ****
  * These functions are called by the parser to process the SDF file as
  * it is parsed.

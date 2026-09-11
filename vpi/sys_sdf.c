@@ -19,6 +19,7 @@
 
 # include  "sys_priv.h"
 # include  "sdf_priv.h"
+# include  <math.h>
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
@@ -36,6 +37,19 @@ static vpiHandle sdf_scope;
 static vpiHandle sdf_callh = 0;
   /* The cell in process. */
 static vpiHandle sdf_cur_cell;
+
+/* Timescale from the SDF file header, in seconds. IEEE 1497 makes 1ns the
+   default when the header carries no (TIMESCALE ...) entry. */
+double sdf_timescale = 1.0e-9;
+
+/* SDF delay values are expressed in the SDF file's own timescale, but
+   vpi_put_delays() with vpiScaledRealTime interprets them in the time units
+   of the module being annotated, so convert between the two. */
+static double sdf_delay_scale(void)
+{
+      int unit = vpi_get(vpiTimeUnit, sdf_scope);
+      return sdf_timescale / pow(10.0, (double)unit);
+}
 static char* sdf_fname = NULL;
 
 static vpiHandle find_scope(vpiHandle scope, const char*name)
@@ -268,9 +282,10 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 		  for (int idx = 0 ; idx < delval_list->count ; idx += 1) {
 			delay_vals[idx].type = vpiScaledRealTime;
 			if (delval_list->val[idx].defined) {
+			      double val = delval_list->val[idx].value * sdf_delay_scale();
 			      if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Putting delay: %f for index %d\n",
-			                                      sdf_fname, sdf_lineno, delval_list->val[idx].value, idx);
-			      delay_vals[idx].real = delval_list->val[idx].value;
+			                                      sdf_fname, sdf_lineno, val, idx);
+			      delay_vals[idx].real = val;
 			}
 		  }
 
@@ -342,7 +357,8 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 	    for (idx = 0 ; idx < delval_list->count ; idx += 1) {
 		  delay_vals[idx].type = vpiScaledRealTime;
 		  if (delval_list->val[idx].defined) {
-			delay_vals[idx].real = delval_list->val[idx].value;
+			delay_vals[idx].real = delval_list->val[idx].value
+			                       * sdf_delay_scale();
 		  }
 	    }
 
@@ -436,6 +452,11 @@ static PLI_INT32 sys_sdf_annotate_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
+	/* IEEE 1497: a file with no (TIMESCALE ...) entry defaults to 1ns. Reset
+	   here so a second $sdf_annotate cannot inherit the previous file's
+	   timescale. */
+      sdf_timescale = 1.0e-9;
+
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       FILE *sdf_fd;
