@@ -45,6 +45,11 @@ string_type_t::~string_type_t()
 
 atom_type_t size_type (atom_type_t::INT, true);
 
+PNamedItem::SymbolType enum_name_t::symbol_type() const
+{
+      return ENUM;
+}
+
 PNamedItem::SymbolType enum_type_t::symbol_type() const
 {
       return ENUM;

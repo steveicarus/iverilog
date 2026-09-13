@@ -211,7 +211,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	// Variable to indicate when a defined value wraps.
       bool implicit_wrapped = false;
 	// Process the enumeration definition.
-      for (list<named_pexpr_t>::const_iterator cur = enum_type->names->begin()
+      for (auto cur = enum_type->names->cbegin()
 		 ; cur != enum_type->names->end() ;  ++ cur, name_idx += 1) {
 	      // Check to see if the enumeration name has a value given.
 	    if (cur->parm) {
