@@ -75,6 +75,24 @@ static PTask* current_task = 0;
 static PFunction* current_function = 0;
 static stack<PBlock*> current_block_stack;
 
+  // Complete the named block around a labeled statement. Keep the scope even
+  // when the statement is discarded, for example with -gno-assertions.
+static Statement*pform_pop_statement_scope(Statement*statement)
+{
+      pform_pop_block_scope(true);
+      assert(!current_block_stack.empty());
+      auto block = current_block_stack.top();
+      current_block_stack.pop();
+
+      if (statement) {
+	    vector<Statement*> statements;
+	    statements.push_back(statement);
+	    block->set_statement(statements);
+      }
+
+      return block;
+}
+
 /* The variable declaration rules need to know if a lifetime has been
    specified. */
 static LexicalScope::lifetime_t var_lifetime;
@@ -1226,6 +1244,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <flag>    import_export union_soft_opt
 %type <flag>    K_genvar_opt K_static_opt K_virtual_opt K_const_opt
 %type <flag>    udp_reg_opt edge_operator
+%type <flag>    procedural_assertion_label_opt
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
 %type <text>    udp_input_list udp_sequ_entry udp_comb_entry
@@ -2827,13 +2846,22 @@ port_direction_opt
   |                { $$ = NetNet::PIMPLICIT; }
   ;
 
+procedural_assertion_label_opt
+  : IDENTIFIER ':'
+      { pform_start_block(@1, $1, PBlock::BL_SEQ);
+	delete[]$1;
+	$$ = true;
+      }
+  | { $$ = false; }
+  ;
+
 procedural_assertion_statement /* IEEE1800-2012 A.6.10 */
-  : assertion_item_label_opt concurrent_assertion_statement
-      { $$ = $2; }
-  | assertion_item_label_opt simple_immediate_assertion_statement
-      { $$ = $2; }
-  | assertion_item_label_opt deferred_immediate_assertion_statement
-      { $$ = $2; }
+  : concurrent_assertion_statement
+      { $$ = $1; }
+  | simple_immediate_assertion_statement
+      { $$ = $1; }
+  | deferred_immediate_assertion_statement
+      { $$ = $1; }
   ;
 
 property_expr /* IEEE1800-2012 A.2.10 */
@@ -7660,8 +7688,8 @@ statement_item /* This is roughly statement_item in the LRM */
         yywarn(@1, "sorry: ->> with repeat event control is not currently supported.");
       }
 
-  | procedural_assertion_statement
-      { $$ = $1; }
+  | procedural_assertion_label_opt procedural_assertion_statement
+      { $$ = $1 ? pform_pop_statement_scope($2) : $2; }
 
   | loop_statement
       { $$ = $1; }
