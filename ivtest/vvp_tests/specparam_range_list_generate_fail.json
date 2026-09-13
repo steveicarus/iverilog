@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "specparam_range_list_generate_fail.v",
+    "iverilog-args" : [ "-g2001" ]
+}

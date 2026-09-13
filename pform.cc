@@ -3161,13 +3161,12 @@ void pform_set_parameter(const struct vlltype&loc,
 }
 
 void pform_set_specparam(const struct vlltype&loc, perm_string name,
-			 list<pform_range_t> *range, PExpr *expr,
+			 vector_type_t*data_type, PExpr *expr,
 			 bool check_decl_order)
 {
       ivl_assert(loc, !pform_cur_module.empty());
       Module*scope = pform_cur_module.front();
       if (scope != lexical_scope) {
-	    delete range;
 	    delete expr;
 	    return;
       }
@@ -3186,11 +3185,10 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
       if (check_decl_order)
 	    parm->lexical_pos = loc.lexical_pos;
 
-      if (range) {
-	    ivl_assert(loc, range->size() == 1);
-	    parm->data_type = new vector_type_t(IVL_VT_LOGIC, false, range);
-	    parm->range = 0;
+      if (data_type) {
+	    ivl_assert(loc, data_type->pdims->size() == 1);
       }
+      parm->data_type = data_type;
 }
 
 void pform_set_defparam(const pform_name_t&name, PExpr*expr)
