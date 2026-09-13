@@ -158,7 +158,9 @@ gate_instance_hierarchy_shadow_fail	vvp_tests/gate_instance_hierarchy_shadow_fai
 gate_instance_reference_order	vvp_tests/gate_instance_reference_order.json
 gate_instance_shadow_fail	vvp_tests/gate_instance_shadow_fail.json
 hier_index_empty_fail		vvp_tests/hier_index_empty_fail.json
+hier_index_module_name_fail	vvp_tests/hier_index_module_name_fail.json
 hier_index_queue_fail		vvp_tests/hier_index_queue_fail.json
+hier_index_root_name_fail		vvp_tests/hier_index_root_name_fail.json
 line_directive			vvp_tests/line_directive.json
 localparam_type			vvp_tests/localparam_type.json
 macro_str_esc			vvp_tests/macro_str_esc.json
