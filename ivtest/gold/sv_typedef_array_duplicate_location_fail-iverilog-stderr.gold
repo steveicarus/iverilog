@@ -1,0 +1,1 @@
+ivltests/sv_typedef_array_duplicate_location_fail.v:6 error: Type identifier `T` has already been declared in this scope at ivltests/sv_typedef_array_duplicate_location_fail.v:5.
