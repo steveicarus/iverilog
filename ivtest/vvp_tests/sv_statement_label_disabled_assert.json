@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_statement_label_disabled_assert.v",
+    "iverilog-args" : [ "-g2005-sv", "-gno-assertions" ]
+}
