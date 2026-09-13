@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_assertion_label_duplicate_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
