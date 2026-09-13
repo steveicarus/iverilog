@@ -248,6 +248,14 @@ struct void_type_t : public data_type_t {
       virtual void pform_dump(std::ostream&out, unsigned indent) const override;
 };
 
+// Each enumerator has its own symbol location, distinct from the enum type.
+struct enum_name_t : public PNamedItem {
+      perm_string name;
+      PExpr*parm = nullptr;
+
+      SymbolType symbol_type() const override;
+};
+
 /*
  * The enum_type_t holds the parsed declaration to represent an
  * enumeration. Since this is in the pform, it represents the type
@@ -263,7 +271,7 @@ struct enum_type_t : public data_type_t {
       SymbolType symbol_type() const override;
 
       std::unique_ptr<data_type_t> base_type;
-      std::unique_ptr< std::list<named_pexpr_t> > names;
+      std::unique_ptr< std::list<enum_name_t> > names;
 };
 
 struct struct_member_t : public LineInfo {

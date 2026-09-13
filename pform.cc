@@ -858,16 +858,16 @@ void pform_put_enum_type_in_scope(enum_type_t*enum_set)
 	    return;
 
       set<perm_string> enum_names;
-      list<named_pexpr_t>::const_iterator cur;
-      for (cur = enum_set->names->begin(); cur != enum_set->names->end(); ++cur) {
-	    if (enum_names.count(cur->name)) {
-		  cerr << enum_set->get_fileline() << ": error: "
+
+      for (auto&cur : *enum_set->names) {
+	    if (enum_names.count(cur.name)) {
+		  cerr << cur.get_fileline() << ": error: "
 			  "Duplicate enumeration name '"
-		       << cur->name << "'." << endl;
+		       << cur.name << "'." << endl;
 		  error_count += 1;
 	    } else {
-		  add_local_symbol(lexical_scope, cur->name, enum_set);
-		  enum_names.insert(cur->name);
+		  add_local_symbol(lexical_scope, cur.name, &cur);
+		  enum_names.insert(cur.name);
 	    }
       }
 
@@ -906,8 +906,10 @@ void pform_set_typedef(const struct vlltype&loc, perm_string name,
 {
       typedef_t *td = pform_get_typedef(loc, name);
 
-      if(unp_ranges)
+      if (unp_ranges) {
 	    data_type = new uarray_type_t(data_type, unp_ranges);
+	    FILE_NAME(data_type, loc);
+      }
 
       if (!td->set_data_type(data_type)) {
 	    cerr << loc << " error: Type identifier `" << name
@@ -1032,7 +1034,7 @@ void pform_make_foreach_declarations(const struct vlltype&loc,
 	    if (cur->nil())
 		  continue;
 	    decl_assignment_t*tmp_assign = new decl_assignment_t;
-	    tmp_assign->name = { lex_strings.make(*cur), 0 };
+	    tmp_assign->name = { lex_strings.make(*cur), loc.lexical_pos };
 	    assign_list.push_back(tmp_assign);
       }
 
@@ -1575,6 +1577,7 @@ void pform_genvars(const struct vlltype&li, list<pform_ident_t>*names)
       list<pform_ident_t>::const_iterator cur;
       for (cur = names->begin(); cur != names->end() ; ++cur) {
 	    PGenvar*genvar = new PGenvar();
+	    genvar->lexical_pos(cur->second);
 	    FILE_NAME(genvar, li);
 
 	    if (pform_cur_generate) {

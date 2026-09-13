@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_typedef_array_duplicate_location_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "gold"          : "sv_typedef_array_duplicate_location_fail"
+}
