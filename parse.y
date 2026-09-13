@@ -93,6 +93,20 @@ static Statement*pform_pop_statement_scope(Statement*statement)
       return block;
 }
 
+  // Discard attributes and their expressions when parsing produced no statement.
+static void pform_bind_statement_attributes(
+      Statement*statement, std::list<named_pexpr_t>*attributes)
+{
+      if (statement) {
+	    pform_bind_attributes(statement->attributes, attributes);
+      } else if (attributes) {
+	    for (const auto&attribute : *attributes) {
+		  delete attribute.parm;
+	    }
+	    delete attributes;
+      }
+}
+
 /* The variable declaration rules need to know if a lifetime has been
    specified. */
 static LexicalScope::lifetime_t var_lifetime;
@@ -2973,21 +2987,15 @@ statement_or_null /* IEEE1800-2005: A.6.4 */
   : statement_item
       { $$ = $1; }
   | attribute_instance_list statement_item
-      { if ($2) {
-	      pform_bind_attributes($2->attributes, $1);
-	} else if ($1) {
-		// Discard attributes when parsing produced no statement.
-	      for (const auto&attribute : *$1) {
-		    delete attribute.parm;
-	      }
-	      delete $1;
-	}
+      { pform_bind_statement_attributes($2, $1);
 	$$ = $2;
       }
   | ';'
       { $$ = 0; }
   | attribute_instance_list ';'
-      { $$ = 0; }
+      { pform_bind_statement_attributes(nullptr, $1);
+	$$ = nullptr;
+      }
   ;
 
 stream_expression
