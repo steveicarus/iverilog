@@ -530,7 +530,10 @@ static bool symbol_search_(const LineInfo *li, Design *des, NetScope *scope,
 	    // This feature recurses, so code in subscopes of foo can refer to
 	    // foo by the name "foo" as well. In general, anything within
 	    // "foo" can use the name "foo" to reference it.
-	    if (scope->type()==NetScope::MODULE && scope->module_name()==path_tail.name) {
+	    // A module definition name refers to this instance, not an array.
+	    if (scope->type() == NetScope::MODULE &&
+		  scope->module_name() == path_tail.name &&
+		  path_tail.index.empty()) {
 		  path.push_back(path_tail);
 		  res->scope = scope;
 		  res->path_head = path;
@@ -592,7 +595,8 @@ static bool symbol_search_(const LineInfo *li, Design *des, NetScope *scope,
       // Last chance: this is a single name, so it might be the name
       // of a root scope. Ask the design if this is a root
       // scope. This is only possible if the search is not already bound.
-      if (!scope_is_bound) {
+      // Root modules are not instance arrays and cannot have an index.
+      if (!scope_is_bound && path_tail.index.empty()) {
 	    hname_t path_item (path_tail.name);
 	    scope = des->find_scope(path_item);
 	    if (scope) {
