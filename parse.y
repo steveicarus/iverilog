@@ -2954,11 +2954,17 @@ simple_immediate_assertion_statement /* IEEE1800-2012 A.6.10 */
 
 statement_or_null /* IEEE1800-2005: A.6.4 */
   : statement_item
-      { pform_bind_attributes($1->attributes, nullptr);
-	$$ = $1;
-      }
+      { $$ = $1; }
   | attribute_instance_list statement_item
-      { pform_bind_attributes($2->attributes, $1);
+      { if ($2) {
+	      pform_bind_attributes($2->attributes, $1);
+	} else if ($1) {
+		// Discard attributes when parsing produced no statement.
+	      for (const auto&attribute : *$1) {
+		    delete attribute.parm;
+	      }
+	      delete $1;
+	}
 	$$ = $2;
       }
   | ';'
