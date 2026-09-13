@@ -1370,9 +1370,10 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <event_exprs> event_expression_list
 %type <event_expr> event_expression
 %type <event_statement> event_control
-%type <statement> statement_item statement_or_null
+%type <statement> statement_item non_block_statement_item statement_or_null
 %type <statement> compressed_statement
 %type <statement> loop_statement for_step for_step_opt jump_statement
+%type <statement> for_statement foreach_statement
 %type <statement> concurrent_assertion_statement
 %type <statement> deferred_immediate_assertion_statement
 %type <statement> simple_immediate_assertion_statement
@@ -1381,7 +1382,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <procedural_item_list> block_item_or_statement_list_opt
 %type <procedural_item_list> tf_item_or_statement_list
 %type <procedural_item_list> tf_item_or_statement_list_opt
-%type <block_prefix> block_prefix_opt
+%type <block_prefix> block_prefix block_prefix_opt
 %type <text> sequential_block_start parallel_block_start
 
 %type <statement> analog_statement
@@ -2388,7 +2389,7 @@ lifetime_opt /* IEEE1800-2005: A.2.1.3 */
 
   /* Loop statements are kinds of statements. */
 
-loop_statement /* IEEE1800-2005: A.6.8 */
+for_statement /* IEEE1800-2005: A.6.8 */
   : K_for '(' lpvalue '=' expression ';' expression_opt ';' for_step_opt ')'
     statement_or_null
       { check_for_loop(@1, $5, $7, $9);
@@ -2447,7 +2448,58 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	delete[]$4;
       }
 
-  | K_forever statement_or_null
+  | K_for '(' lpvalue '=' expression ';' expression_opt ';' error ')'
+    statement_or_null
+      { $$ = 0;
+	yyerror(@1, "error: Error in for loop step assignment.");
+      }
+
+  | K_for '(' lpvalue '=' expression ';' error ';' for_step_opt ')'
+    statement_or_null
+      { $$ = 0;
+	yyerror(@1, "error: Error in for loop condition expression.");
+      }
+
+  | K_for '(' error ')' statement_or_null
+      { $$ = 0;
+	yyerror(@1, "error: Incomprehensible for loop.");
+      }
+  ;
+
+foreach_statement
+      // When matching a foreach loop, implicitly create a named block
+      // to hold the definitions for the index variables.
+  : K_foreach '(' IDENTIFIER '[' loop_variables ']' ')'
+      { static unsigned foreach_counter = 0;
+	char for_block_name[64];
+	snprintf(for_block_name, sizeof for_block_name, "$ivl_foreach%u", foreach_counter);
+	foreach_counter += 1;
+
+	PBlock*tmp = pform_push_block_scope(@1, for_block_name, PBlock::BL_SEQ);
+	current_block_stack.push(tmp);
+
+	pform_make_foreach_declarations(@1, $5);
+      }
+    statement_or_null
+      { PForeach*tmp_for = pform_make_foreach(@1, $3, $5, $9);
+
+	pform_pop_scope();
+	vector<Statement*>tmp_for_list(1);
+	tmp_for_list[0] = tmp_for;
+	PBlock*tmp_blk = current_block_stack.top();
+	current_block_stack.pop();
+	tmp_blk->set_statement(tmp_for_list);
+	$$ = tmp_blk;
+      }
+
+  | K_foreach '(' IDENTIFIER '[' error ']' ')' statement_or_null
+      { $$ = 0;
+        yyerror(@4, "error: Errors in foreach loop variables list.");
+      }
+  ;
+
+loop_statement /* IEEE1800-2005: A.6.8 */
+  : K_forever statement_or_null
       { PForever*tmp = new PForever($2);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
@@ -2471,49 +2523,7 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	$$ = tmp;
       }
 
-      // When matching a foreach loop, implicitly create a named block
-      // to hold the definitions for the index variables.
-  | K_foreach '(' IDENTIFIER '[' loop_variables ']' ')'
-      { static unsigned foreach_counter = 0;
-	char for_block_name[64];
-	snprintf(for_block_name, sizeof for_block_name, "$ivl_foreach%u", foreach_counter);
-	foreach_counter += 1;
-
-	PBlock*tmp = pform_push_block_scope(@1, for_block_name, PBlock::BL_SEQ);
-	current_block_stack.push(tmp);
-
-	pform_make_foreach_declarations(@1, $5);
-      }
-    statement_or_null
-      { PForeach*tmp_for = pform_make_foreach(@1, $3, $5, $9);
-
-	pform_pop_scope();
-	vector<Statement*>tmp_for_list(1);
-	tmp_for_list[0] = tmp_for;
-	PBlock*tmp_blk = current_block_stack.top();
-	current_block_stack.pop();
-	tmp_blk->set_statement(tmp_for_list);
-	$$ = tmp_blk;
-      }
-
   /* Error forms for loop statements. */
-
-  | K_for '(' lpvalue '=' expression ';' expression_opt ';' error ')'
-    statement_or_null
-      { $$ = 0;
-	yyerror(@1, "error: Error in for loop step assignment.");
-      }
-
-  | K_for '(' lpvalue '=' expression ';' error ';' for_step_opt ')'
-    statement_or_null
-      { $$ = 0;
-	yyerror(@1, "error: Error in for loop condition expression.");
-      }
-
-  | K_for '(' error ')' statement_or_null
-      { $$ = 0;
-	yyerror(@1, "error: Incomprehensible for loop.");
-      }
 
   | K_while '(' error ')' statement_or_null
       { $$ = 0;
@@ -2523,11 +2533,6 @@ loop_statement /* IEEE1800-2005: A.6.8 */
   | K_do statement_or_null K_while '(' error ')' ';'
       { $$ = 0;
 	yyerror(@1, "error: Error in do/while loop condition.");
-      }
-
-  | K_foreach '(' IDENTIFIER '[' error ']' ')' statement_or_null
-      { $$ = 0;
-        yyerror(@4, "error: Errors in foreach loop variables list.");
       }
   ;
 
@@ -7534,9 +7539,15 @@ block_prefix_opt
       { $$.label = nullptr;
 	$$.attributes = nullptr;
       }
-  | IDENTIFIER ':' attribute_list_opt
+  | block_prefix
       { pform_requires_sv(@1, "Block prefix label");
-	$$.label = $1;
+	$$ = $1;
+      }
+  ;
+
+block_prefix
+  : IDENTIFIER ':' attribute_list_opt
+      { $$.label = $1;
 	$$.attributes = $3;
       }
   ;
@@ -7558,6 +7569,41 @@ parallel_block_start
   ;
 
 statement_item /* This is roughly statement_item in the LRM */
+
+  /* begin-end blocks come in a variety of forms, including named and
+     anonymous. The named blocks can also carry their own reg
+     variables, which are placed in the scope created by the block
+     name. These are handled by pushing the scope name, then matching
+     the declarations. The scope is popped at the end of the block. */
+
+  /* In SystemVerilog an unnamed block can contain variable declarations. */
+  : sequential_block_start block_item_or_statement_list_opt K_end label_opt
+      { if (!$1 && $2->has_decls) {
+	      pform_block_decls_requires_sv();
+	}
+	$$ = pform_finish_block(@1, @4, "block", $1, $4,
+				    PBlock::BL_SEQ, $2);
+      }
+
+  /* fork-join blocks are very similar to begin-end blocks. In fact,
+     from the parser's perspective there is no real difference. All we
+     need to do is remember that this is a parallel block so that the
+     code generator can do the right thing. */
+
+  /* In SystemVerilog an unnamed block can contain variable declarations. */
+  | parallel_block_start block_item_or_statement_list_opt join_keyword label_opt
+      { if (!$1 && $2->has_decls) {
+	      pform_requires_sv(@2, "Variable declaration in unnamed block");
+	}
+	$$ = pform_finish_block(@1, @4, "fork", $1, $4, $3, $2);
+      }
+
+  | non_block_statement_item
+  | for_statement
+  | foreach_statement
+  ;
+
+non_block_statement_item
 
   /* assign and deassign statements are procedural code to do
      structural assignments, and to turn that structural assignment
@@ -7589,34 +7635,6 @@ statement_item /* This is roughly statement_item in the LRM */
       { PRelease*tmp = new PRelease($2);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
-      }
-
-  /* begin-end blocks come in a variety of forms, including named and
-     anonymous. The named blocks can also carry their own reg
-     variables, which are placed in the scope created by the block
-     name. These are handled by pushing the scope name, then matching
-     the declarations. The scope is popped at the end of the block. */
-
-  /* In SystemVerilog an unnamed block can contain variable declarations. */
-  | sequential_block_start block_item_or_statement_list_opt K_end label_opt
-      { if (!$1 && $2->has_decls) {
-	      pform_block_decls_requires_sv();
-	}
-	$$ = pform_finish_block(@1, @4, "block", $1, $4,
-				    PBlock::BL_SEQ, $2);
-      }
-
-  /* fork-join blocks are very similar to begin-end blocks. In fact,
-     from the parser's perspective there is no real difference. All we
-     need to do is remember that this is a parallel block so that the
-     code generator can do the right thing. */
-
-  /* In SystemVerilog an unnamed block can contain variable declarations. */
-  | parallel_block_start block_item_or_statement_list_opt join_keyword label_opt
-      { if (!$1 && $2->has_decls) {
-	      pform_requires_sv(@2, "Variable declaration in unnamed block");
-	}
-	$$ = pform_finish_block(@1, @4, "fork", $1, $4, $3, $2);
       }
 
   | K_disable hierarchy_identifier ';'
