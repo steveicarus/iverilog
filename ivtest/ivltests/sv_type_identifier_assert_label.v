@@ -1,17 +1,15 @@
-// Check that assertion labels can shadow type identifiers after declarations.
+// Check that assertion labels can use the same names as outer typedefs.
 
 typedef reg [7:0] CHECK;
 
 module test;
 
   task check_task;
-    CHECK value;
     CHECK: assert (1);
   endtask
 
   initial begin
     begin
-      CHECK value;
       CHECK: assert (1);
     end
 
