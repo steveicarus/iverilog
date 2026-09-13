@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_assertion_label_hides_type_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
