@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_disabled_assert_attributes.v",
+    "iverilog-args" : [ "-g2005-sv", "-gno-assertions" ]
+}
