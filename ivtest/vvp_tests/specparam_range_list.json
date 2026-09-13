@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "specparam_range_list.v",
+    "iverilog-args" : [ "-g2001" ]
+}

@@ -248,6 +248,8 @@ sf_onehot_fail			vvp_tests/sf_onehot_fail.json
 sf_onehot0_fail			vvp_tests/sf_onehot0_fail.json
 shift6				vvp_tests/shift6.json
 single_element_array		vvp_tests/single_element_array.json
+specparam_range_list		vvp_tests/specparam_range_list.json
+specparam_range_list_generate_fail	vvp_tests/specparam_range_list_generate_fail.json
 specparam_reference_order_fail	vvp_tests/specparam_reference_order_fail.json
 specparam_specify_reference_order	vvp_tests/specparam_specify_reference_order.json
 statement_attributes_error_recovery_fail	vvp_tests/statement_attributes_error_recovery_fail.json
