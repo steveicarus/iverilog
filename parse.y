@@ -49,7 +49,7 @@ static bool param_is_local = false;
 static bool param_is_type = false;
 static type_restrict_t param_type_restrict;
 static bool in_gen_region = false;
-static std::list<pform_range_t>* specparam_active_range = 0;
+static vector_type_t*specparam_data_type = nullptr;
 static bool in_specify_block = false;
 
 /* Port declaration lists use this structure for context. */
@@ -7161,7 +7161,7 @@ specify_path_identifiers
 
 specparam
   : IDENTIFIER '=' expr_mintypmax
-	{ pform_set_specparam(@1, lex_strings.make($1), specparam_active_range, $3,
+	{ pform_set_specparam(@1, lex_strings.make($1), specparam_data_type, $3,
 			      !in_specify_block);
 	delete[]$1;
       }
@@ -7184,9 +7184,12 @@ specparam_list
 specparam_decl
   : specparam_list
   | dimensions
-      { specparam_active_range = $1; }
+      { // The declaration shares one type, which owns the range list.
+	specparam_data_type = new vector_type_t(IVL_VT_LOGIC, false, $1);
+	FILE_NAME(specparam_data_type, @1);
+      }
     specparam_list
-      { specparam_active_range = 0; }
+      { specparam_data_type = nullptr; }
   ;
 
 spec_polarity
