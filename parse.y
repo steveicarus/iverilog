@@ -107,6 +107,23 @@ static void pform_bind_statement_attributes(
       }
 }
 
+static Statement*pform_finish_labeled_statement(
+      Statement*statement, char*label, std::list<named_pexpr_t>*attributes,
+      bool implicit_scope = false)
+{
+        // An implicit loop scope already uses the label, so it must not
+        // receive the additional wrapper used for other labeled statements.
+      if (implicit_scope) statement = pform_pop_statement_scope(statement);
+
+      pform_bind_statement_attributes(statement, attributes);
+
+      if (label && !implicit_scope) {
+	    statement = pform_pop_statement_scope(statement);
+      }
+      delete[]label;
+      return statement;
+}
+
 /* The variable declaration rules need to know if a lifetime has been
    specified. */
 static LexicalScope::lifetime_t var_lifetime;
@@ -1258,7 +1275,6 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <flag>    import_export union_soft_opt
 %type <flag>    K_genvar_opt K_static_opt K_virtual_opt K_const_opt
 %type <flag>    udp_reg_opt edge_operator
-%type <flag>    procedural_assertion_label_opt
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
 %type <text>    udp_input_list udp_sequ_entry udp_comb_entry
@@ -1382,7 +1398,8 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <procedural_item_list> block_item_or_statement_list_opt
 %type <procedural_item_list> tf_item_or_statement_list
 %type <procedural_item_list> tf_item_or_statement_list_opt
-%type <block_prefix> block_prefix block_prefix_opt
+%type <block_prefix> block_prefix block_prefix_opt statement_prefix
+%type <block_prefix> for_statement_start foreach_statement_start
 %type <text> sequential_block_start parallel_block_start
 
 %type <statement> analog_statement
@@ -2387,39 +2404,47 @@ lifetime_opt /* IEEE1800-2005: A.2.1.3 */
   |          { $$ = LexicalScope::INHERITED; }
   ;
 
-  /* Loop statements are kinds of statements. */
+  /* These loops handle their own labels so that a loop with an implicit
+     scope can use the label for that scope (IEEE 1800-2023 9.3.5). */
+
+for_statement_start
+  : block_prefix_opt K_for
+      { if ($1.label) pform_start_block(@1, $1.label, PBlock::BL_SEQ);
+	$$ = $1;
+	@$ = @2;
+      }
+  ;
 
 for_statement /* IEEE1800-2005: A.6.8 */
-  : K_for '(' lpvalue '=' expression ';' expression_opt ';' for_step_opt ')'
+  : for_statement_start '(' lpvalue '=' expression ';' expression_opt ';' for_step_opt ')'
     statement_or_null
       { check_for_loop(@1, $5, $7, $9);
 	PForStatement*tmp = new PForStatement($3, $5, $7, $9, $11);
 	FILE_NAME(tmp, @1);
-	$$ = tmp;
+	$$ = pform_finish_labeled_statement(tmp, $1.label, $1.attributes);
       }
 
       // The initialization statement is optional.
-  | K_for '(' ';' expression_opt ';' for_step_opt ')'
+  | for_statement_start '(' ';' expression_opt ';' for_step_opt ')'
     statement_or_null
       { check_for_loop(@1, nullptr, $4, $6);
 	PForStatement*tmp = new PForStatement(nullptr, nullptr, $4, $6, $8);
 	FILE_NAME(tmp, @1);
-	$$ = tmp;
+	$$ = pform_finish_labeled_statement(tmp, $1.label, $1.attributes);
       }
 
-      // Handle for_variable_declaration syntax by wrapping the for(...)
-      // statement in a synthetic named block. We can name the block
-      // after the variable that we are creating, that identifier is
-      // safe in the controlling scope.
-  | K_for '(' for_decl_data_type IDENTIFIER
+      // Reuse the label scope for loop variables. Unlabeled loops need a
+      // synthetic scope to keep their variables local to the loop.
+  | for_statement_start '(' for_decl_data_type IDENTIFIER
       // Make the loop variable symbol visible while parsing the rest of
       // the header.
-      { static unsigned for_counter = 0;
-	char for_block_name [64];
-	snprintf(for_block_name, sizeof for_block_name, "$ivl_for_loop%u", for_counter);
-	for_counter += 1;
-	PBlock*tmp = pform_push_block_scope(@1, for_block_name, PBlock::BL_SEQ);
-	current_block_stack.push(tmp);
+      { if (!$1.label) {
+	      static unsigned for_counter = 0;
+	      char for_block_name[64];
+	      snprintf(for_block_name, sizeof for_block_name,
+		       "$ivl_for_loop%u", for_counter++);
+	      pform_start_block(@1, for_block_name, PBlock::BL_SEQ);
+	}
 
 	list<decl_assignment_t*>assign_list;
 	decl_assignment_t*tmp_assign = new decl_assignment_t;
@@ -2438,63 +2463,59 @@ for_statement /* IEEE1800-2005: A.6.8 */
 	PForStatement*tmp_for = new PForStatement(tmp_ident, $7, $9, $11, $13);
 	FILE_NAME(tmp_for, @1);
 
-	pform_pop_scope();
-	vector<Statement*>tmp_for_list (1);
-	tmp_for_list[0] = tmp_for;
-	PBlock*tmp_blk = current_block_stack.top();
-	current_block_stack.pop();
-	tmp_blk->set_statement(tmp_for_list);
-	$$ = tmp_blk;
+	$$ = pform_finish_labeled_statement(tmp_for, $1.label, $1.attributes, true);
 	delete[]$4;
       }
 
-  | K_for '(' lpvalue '=' expression ';' expression_opt ';' error ')'
+  | for_statement_start '(' lpvalue '=' expression ';' expression_opt ';' error ')'
     statement_or_null
-      { $$ = 0;
+      { $$ = pform_finish_labeled_statement(nullptr, $1.label, $1.attributes);
 	yyerror(@1, "error: Error in for loop step assignment.");
       }
 
-  | K_for '(' lpvalue '=' expression ';' error ';' for_step_opt ')'
+  | for_statement_start '(' lpvalue '=' expression ';' error ';' for_step_opt ')'
     statement_or_null
-      { $$ = 0;
+      { $$ = pform_finish_labeled_statement(nullptr, $1.label, $1.attributes);
 	yyerror(@1, "error: Error in for loop condition expression.");
       }
 
-  | K_for '(' error ')' statement_or_null
-      { $$ = 0;
+  | for_statement_start '(' error ')' statement_or_null
+      { $$ = pform_finish_labeled_statement(nullptr, $1.label, $1.attributes);
 	yyerror(@1, "error: Incomprehensible for loop.");
+      }
+  ;
+
+foreach_statement_start
+  : block_prefix_opt K_foreach
+      { if ($1.label) pform_start_block(@1, $1.label, PBlock::BL_SEQ);
+	$$ = $1;
+	@$ = @2;
       }
   ;
 
 foreach_statement
       // When matching a foreach loop, implicitly create a named block
       // to hold the definitions for the index variables.
-  : K_foreach '(' IDENTIFIER '[' loop_variables ']' ')'
-      { static unsigned foreach_counter = 0;
-	char for_block_name[64];
-	snprintf(for_block_name, sizeof for_block_name, "$ivl_foreach%u", foreach_counter);
-	foreach_counter += 1;
-
-	PBlock*tmp = pform_push_block_scope(@1, for_block_name, PBlock::BL_SEQ);
-	current_block_stack.push(tmp);
+  : foreach_statement_start '(' IDENTIFIER '[' loop_variables ']' ')'
+      { if (!$1.label) {
+	      static unsigned foreach_counter = 0;
+	      char for_block_name[64];
+	      snprintf(for_block_name, sizeof for_block_name,
+		       "$ivl_foreach%u", foreach_counter++);
+	      pform_start_block(@1, for_block_name, PBlock::BL_SEQ);
+	}
 
 	pform_make_foreach_declarations(@1, $5);
       }
     statement_or_null
       { PForeach*tmp_for = pform_make_foreach(@1, $3, $5, $9);
 
-	pform_pop_scope();
-	vector<Statement*>tmp_for_list(1);
-	tmp_for_list[0] = tmp_for;
-	PBlock*tmp_blk = current_block_stack.top();
-	current_block_stack.pop();
-	tmp_blk->set_statement(tmp_for_list);
-	$$ = tmp_blk;
+	$$ = pform_finish_labeled_statement(tmp_for, $1.label, $1.attributes, true);
       }
 
-  | K_foreach '(' IDENTIFIER '[' error ']' ')' statement_or_null
-      { $$ = 0;
-        yyerror(@4, "error: Errors in foreach loop variables list.");
+  | foreach_statement_start '(' IDENTIFIER '[' error ']' ')' statement_or_null
+      { $$ = pform_finish_labeled_statement(nullptr, $1.label, $1.attributes);
+	yyerror(@4, "error: Errors in foreach loop variables list.");
       }
   ;
 
@@ -2852,15 +2873,6 @@ port_direction /* IEEE1800-2005 A.1.3 */
 port_direction_opt
   : port_direction { $$ = $1; }
   |                { $$ = NetNet::PIMPLICIT; }
-  ;
-
-procedural_assertion_label_opt
-  : IDENTIFIER ':'
-      { pform_start_block(@1, $1, PBlock::BL_SEQ);
-	delete[]$1;
-	$$ = true;
-      }
-  | { $$ = false; }
   ;
 
 procedural_assertion_statement /* IEEE1800-2012 A.6.10 */
@@ -7552,6 +7564,17 @@ block_prefix
       }
   ;
 
+  /* The LRM allows every statement to have a leading statement label.
+     Represent it as a named block scope around the statement item so the
+     label is available for hierarchical references and disable statements. */
+statement_prefix
+  : block_prefix
+      { pform_requires_sv(@1, "Statement labels");
+	pform_start_block(@1, $1.label, PBlock::BL_SEQ);
+	$$ = $1;
+      }
+  ;
+
 sequential_block_start
   : block_prefix_opt K_begin label_opt
       { $$ = pform_start_block_with_labels(@2, @3, $1.label, $3,
@@ -7596,6 +7619,10 @@ statement_item /* This is roughly statement_item in the LRM */
 	      pform_requires_sv(@2, "Variable declaration in unnamed block");
 	}
 	$$ = pform_finish_block(@1, @4, "fork", $1, $4, $3, $2);
+      }
+
+  | statement_prefix non_block_statement_item
+      { $$ = pform_finish_labeled_statement($2, $1.label, $1.attributes);
       }
 
   | non_block_statement_item
@@ -7684,8 +7711,8 @@ non_block_statement_item
         yywarn(@1, "sorry: ->> with repeat event control is not currently supported.");
       }
 
-  | procedural_assertion_label_opt procedural_assertion_statement
-      { $$ = $1 ? pform_pop_statement_scope($2) : $2; }
+  | procedural_assertion_statement
+      { $$ = $1; }
 
   | loop_statement
       { $$ = $1; }
