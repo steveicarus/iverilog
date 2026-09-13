@@ -6,6 +6,6 @@ ERROR: vlog95.v:32:
        Time: 0  Scope: test
 Check 7 : this should be displayed
 Check 8 : this should be displayed
-ERROR: vlog95.v:38: Check 9 : this should be displayed
-       Time: 0  Scope: test
+ERROR: vlog95.v:39: Check 9 : this should be displayed
+       Time: 0  Scope: test.a_i_is_non_0
 Check 10 : this should be displayed
