@@ -233,7 +233,13 @@ pv_wr_fn_vec4			vvp_tests/pv_wr_fn_vec4.json
 queue_fail			vvp_tests/queue_fail.json
 readmem-invalid			vvp_tests/readmem-invalid.json
 real_delay_assign		vvp_tests/real_delay_assign.json
+real_feedback			vvp_tests/real_feedback.json
+real_feedback_nan		vvp_tests/real_feedback_nan.json
+real_feedback_sfunc		vvp_tests/real_feedback_sfunc.json
 real_negative_zero		vvp_tests/real_negative_zero.json
+real_net_init			vvp_tests/real_net_init.json
+real_net_release		vvp_tests/real_net_release.json
+real_net_signed_zero		vvp_tests/real_net_signed_zero.json
 real_unary_minus_inf		vvp_tests/real_unary_minus_inf.json
 real_unary_minus_nan		vvp_tests/real_unary_minus_nan.json
 real_unary_minus_zero		vvp_tests/real_unary_minus_zero.json
@@ -253,6 +259,10 @@ single_element_array		vvp_tests/single_element_array.json
 specparam_reference_order_fail	vvp_tests/specparam_reference_order_fail.json
 specparam_specify_reference_order	vvp_tests/specparam_specify_reference_order.json
 statement_attributes_error_recovery_fail	vvp_tests/statement_attributes_error_recovery_fail.json
+strength_feedback		vvp_tests/strength_feedback.json
+strength_feedback_delay		vvp_tests/strength_feedback_delay.json
+strength_net_change		vvp_tests/strength_net_change.json
+strength_net_release		vvp_tests/strength_net_release.json
 struct_enum_partsel		vvp_tests/struct_enum_partsel.json
 struct_field_left_right		vvp_tests/struct_field_left_right.json
 struct_nested1			vvp_tests/struct_nested1.json
