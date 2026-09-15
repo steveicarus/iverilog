@@ -1084,8 +1084,13 @@ vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec8(const vvp_vector8_t&bit, vvp_ve
 	// Keep track of the value being driven from this net, even if
 	// it is not ultimately what survives the force filter.
       if (base==0 && bit.size()==vwid) {
+	    if (bits8_.eeq(bit) && !needs_init_) return STOP;
 	    bits8_ = bit;
       } else {
+	    if (bits8_.subvalue(base, bit.size()).eeq(bit) &&
+		!needs_init_) {
+		  return STOP;
+	    }
 	    if (bits8_.size() == 0)
 		  bits8_ = vvp_vector8_t(vwid);
 	    assert(bits8_.size() == vwid);
@@ -1227,7 +1232,9 @@ vvp_wire_real::vvp_wire_real()
 
 vvp_net_fil_t::prop_t vvp_wire_real::filter_real(double&bit)
 {
+      if (bits_equal(bit_, bit) && !needs_init_) return STOP;
       bit_ = bit;
+      needs_init_ = false;
       return filter_mask_(bit, force_);
 }
 
@@ -1262,6 +1269,7 @@ void vvp_wire_real::release(vvp_net_ptr_t ptr, bool net_flag)
       if (net_flag) {
 	      // Wires revert to their unforced value after release.
 	    release_mask(mask);
+	    needs_init_ = !bits_equal(force_, bit_);
 	    ptr.ptr()->send_real(bit_, 0);
       } else {
 	      // Variables keep the current value.
