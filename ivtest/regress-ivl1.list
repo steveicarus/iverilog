@@ -299,3 +299,5 @@ unnamed_generate_block	normal			ivltests gold=unnamed_generate_block.gold
 br_gh497b		CE			ivltests gold=br_gh497b.gold
 br_gh497d		CE			ivltests gold=br_gh497d.gold
 br_gh497f		CE			ivltests gold=br_gh497f.gold
+
+gate_array_output_width	CE	ivltests gold=gate_array_output_width.gold

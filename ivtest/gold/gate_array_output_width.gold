@@ -1,0 +1,7 @@
+./ivltests/gate_array_output_width.v:5: sorry: Gate arrays with outputs of different widths are not currently supported.
+./ivltests/gate_array_output_width.v:6: sorry: Gate arrays with outputs of different widths are not currently supported.
+./ivltests/gate_array_output_width.v:7: sorry: Gate arrays with outputs of different widths are not currently supported.
+./ivltests/gate_array_output_width.v:8: sorry: Gate arrays with outputs of different widths are not currently supported.
+./ivltests/gate_array_output_width.v:9: sorry: Gate arrays with outputs of different widths are not currently supported.
+./ivltests/gate_array_output_width.v:10: sorry: Gate arrays with outputs of different widths are not currently supported.
+6 error(s) during elaboration.
