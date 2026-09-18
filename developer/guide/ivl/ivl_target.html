@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" data-accent-color="violet" data-content_root="../../../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Loadable Target API (ivl_target) - Icarus Verilog documentation</title><link rel="shortcut icon" href="../../../_static/favicon.ico"/><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" /><link rel="next" title="What Is LPM" href="lpm.html" /><link rel="prev" title="Icarus Verilog Attributes" href="attributes.html" /><script>
+    function setColorMode(t){let e=document.documentElement;e.setAttribute("data-color-mode",t);let a=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,s=t;"auto"===t&&(s=a?"dark":"light"),"light"===s?(e.classList.remove("dark"),e.classList.add("light")):(e.classList.remove("light"),e.classList.add("dark"))}
+    setColorMode(localStorage._theme||"auto");
+  </script><link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=ad592e98" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/shibuya.css?v=44020203" />
+    <link media="print" rel="stylesheet" type="text/css" href="../../../_static/print.css?v=20ff2c19" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sy-f-text: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+  --sy-f-heading: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+}
+</style>
+    <meta property="og:type" content="website"/><meta property="og:title" content="Loadable Target API (ivl_target)"/>
+    <meta name="twitter:card" content="summary"/>
+  </head>
+<body><div class="sy-head">
+  <div class="sy-head-blur"></div>
+  <div class="sy-head-inner sy-container mx-auto">
+    <a class="sy-head-brand" href="../../../index.html">
+      
+      
+      <strong>Icarus Verilog</strong>
+    </a>
+    <div class="sy-head-nav" id="head-nav">
+      <nav class="sy-head-links"></nav>
+      <div class="sy-head-extra flex items-center print:hidden"><form class="searchbox flex items-center" action="../../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <kbd>/</kbd>
+</form><div class="sy-head-socials">
+  <a href="https://github.com/steveicarus/iverilog" aria-label="GitHub">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </a></div></div>
+    </div>
+    <div class="sy-head-actions flex items-center shrink-0 print:hidden"><button class="js-theme theme-switch flex items-center"
+data-aria-auto="Switch to light color mode"
+data-aria-light="Switch to dark color mode"
+data-aria-dark="Switch to auto color mode">
+<i class="i-lucide theme-icon"></i>
+</button><button class="md:hidden flex items-center js-menu" aria-label="Menu" type="button" aria-controls="head-nav" aria-expanded="false">
+        <div class="hamburger">
+          <span class="hamburger_1"></span>
+          <span class="hamburger_2"></span>
+          <span class="hamburger_3"></span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+<div class="sy-page sy-container flex mx-auto">
+  <aside id="lside" class="sy-lside md:w-72 md:shrink-0 print:hidden">
+    <div class="sy-lside-inner md:sticky">
+      <div class="sy-scrollbar p-6">
+        <div class="globaltoc" data-expand-depth="0"><p class="caption" role="heading" aria-level="3"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../releases/index.html">Icarus Verilog Release Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../releases/v13-0-release-note.html">🎉 Release V13.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../releases/v13-0-release-note.html#major-changes-in-v13">🔄 Major Changes in V13</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage/index.html">Icarus Verilog Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/waveform_viewer.html">Viewing Waveforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../targets/index.html">The Icarus Verilog Targets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-vvp.html">The vvp Code Generator (-tvvp)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-stub.html">The stub Code Generator (-tstub)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-null.html">The null Code Generator (-tnull)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-vhdl.html">The VHDL Code Generator (-tvhdl)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-vlog95.html">The Verilog ‘95 Code Generator (-tvlog95)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-pcb.html">The PCB Code Generator (-tpcb)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-fpga.html">The FPGA Code Generator (-tfpga)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-pal.html">The PAL Code Generator (-tpal)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-sizer.html">The sizer Code Analyzer (-tsizer)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-verilog.html">The Verilog Code Generator (-tverilog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-blif.html">The BLIF Code Generator (-tblif)</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html">Getting Started as a Contributor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Developer Guide</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">IVL - The Core Compiler</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="netlist.html">Netlist Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="attributes.html">Icarus Verilog Attributes</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Loadable Target API (ivl_target)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lpm.html">What Is LPM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="t-dll.html">Loadable Targets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../vvp/index.html">VVP - Verilog Virtual Processor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/vvp.html">VVP Simulation Engine</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/opcodes.html">Executable Instruction Opcodes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/vpi.html">VPI Within VVP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/vthread.html">Thread Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/debug.html">Debug Aids For VVP</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../tgt-vvp/tgt-vvp.html">The VVP Target</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vpi/index.html">VPI in Icarus Verilog</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../vpi/vpi.html">VPI Modules in Icarus Verilog</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vpi/va_math.html">Verilog-A math library</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../cadpli/cadpli.html">Cadence PLI1 Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/index.html">Miscellaneous</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../misc/ieee1364-notes.html">IEEE1364 Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/swift.html">Swift Model Support (Preliminary)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/xilinx-hint.html">Xilinx Hint</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="lside-overlay js-menu" role="button" aria-label="Close left sidebar" aria-controls="lside" aria-expanded="false"></div>
+  <aside id="rside" class="sy-rside pb-3 w-64 shrink-0 order-last">
+    <button class="rside-close js-menu xl:hidden" aria-label="Close Table of Contents" type="button" aria-controls="rside" aria-expanded="false">
+      <i class="i-lucide close"></i>
+    </button>
+    <div class="sy-scrollbar sy-rside-inner px-6 xl:top-16 xl:sticky xl:pl-0 pt-6 pb-4"><div class="localtoc"><h3>On this page</h3><ul>
+<li><a class="reference internal" href="#the-target-module-api">The Target Module API</a></li>
+<li><a class="reference internal" href="#compiling-target-modules">Compiling Target Modules</a></li>
+<li><a class="reference internal" href="#creating-the-target-config-file">Creating the Target Config File</a></li>
+<li><a class="reference internal" href="#installing-the-target-module">Installing the Target Module</a></li>
+<li><a class="reference internal" href="#lpm-devices">LPM Devices</a></li>
+</ul>
+</div><a class="js-repo-stats repo-stats flex items-center" href="https://github.com/steveicarus/iverilog"
+  data-type="github" data-user="steveicarus" data-repo="iverilog">
+  <span class="w-8 flex items-center justify-around shrink-0 text-3xl">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </span>
+  <span class="flex-grow px-2 break-all">
+    
+    
+      <span>iverilog</span>
+    
+    <span class="flex text-sm repo-stats-count">
+      <span class="flex items-center pr-3">
+        <iconify-icon icon="lucide:star"></iconify-icon>
+        <strong class="js-repo-stars ml-1">0</strong>
+      </span>
+      <span class="flex items-center">
+        <iconify-icon icon="lucide:git-fork"></iconify-icon>
+        <strong class="js-repo-forks ml-1">0</strong>
+      </span>
+    </span>
+  </span>
+</a><div class="edit-this-page">
+  <a href="https://github.com/steveicarus/iverilog/blob/master/Documentation/developer/guide/ivl/ivl_target.rst">Edit this page</a>
+</div><div id="ethical-ad-placement" data-ea-publisher="readthedocs"></div></div>
+  </aside>
+  <div class="rside-overlay js-menu" role="button" aria-label="Close Table of Contents" aria-controls="rside" aria-expanded="false"></div>
+  <main class="sy-main w-full max-sm:max-w-full print:pt-6">
+<div class="sy-breadcrumbs" role="navigation">
+  <div class="sy-breadcrumbs-inner flex items-center">
+    <div class="md:hidden mr-3">
+      <button class="js-menu" aria-label="Menu" type="button" aria-controls="lside" aria-expanded="false">
+        <i class="i-lucide menu"></i>
+      </button>
+    </div>
+    <ol class="flex-1" itemscope itemtype="https://schema.org/BreadcrumbList"><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../../../index.html"><span itemprop="name">Icarus Verilog</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="1" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../../index.html"><span itemprop="name">Icarus Verilog Developer Support</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="2" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../index.html"><span itemprop="name">Developer Guide</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="3" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="index.html"><span itemprop="name">IVL - The Core Compiler</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="4" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <strong itemprop="name">Loadable Target API (ivl_target)</strong>
+        <meta itemprop="position" content="5" />
+      </li></ol>
+    <div class="xl:hidden ml-1">
+      <button class="js-menu" aria-label="Show table of contents" type="button" aria-controls="rside"
+        aria-expanded="false">
+        <i class="i-lucide outdent"></i>
+      </button>
+    </div>
+  </div>
+</div><div class="flex flex-col break-words justify-between">
+      <div class="relative min-w-0 max-w-6xl px-6 pb-6 pt-8 xl:px-12">
+  <div class="copy-page-wrapper relative pb-4 lg:absolute lg:top-8 lg:right-6 xl:right-12">
+  <div id="copy-page-trigger">
+    <button
+      type="button"
+      class="js-copy px-3 py-1 inline-flex items-center gap-1"
+      data-url="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/ivl/ivl_target.rst.txt"
+    >
+      <i class="i-lucide" data-icon="copy"></i>
+      <span>Copy page</span>
+    </button>
+    <button class="js-menu px-2 py-1" type="button" aria-label="More actions"
+      aria-haspopup="menu" aria-expanded="false" aria-controls="copy-page-content">
+      <i class="i-lucide chevron-down"></i>
+    </button>
+  </div>
+  <div id="copy-page-content" role="menu" aria-orientation="vertical" aria-hidden="true">
+    <div role="presentation">
+      <div class="flex flex-col" role="group">
+        <button class="js-copy" type="button" role="menuitem"
+          data-url="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/ivl/ivl_target.rst.txt">
+          <span class="iconify-icon">
+            <i class="i-lucide" data-icon="copy"></i>
+          </span>
+          <span>Copy page</span>
+        </button>
+        <a role="menuitem" href="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/ivl/ivl_target.rst.txt" target="_blank" rel="nofollow"><iconify-icon icon="bi:code-slash"></iconify-icon>
+            <span>View Source</span></a><a role="menuitem" href="https://chatgpt.com/?hints=search&q=Read%20https%3A//raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/ivl/ivl_target.rst.txt%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:openai"></iconify-icon>
+          <span>Open in ChatGPT</span>
+        </a><a role="menuitem" href="https://claude.ai/new?q=Read%20https%3A//raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/ivl/ivl_target.rst.txt%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:claude"></iconify-icon>
+          <span>Open in Claude</span>
+        </a></div>
+    </div>
+  </div>
+</div><article class="yue" role="main">
+          <section id="loadable-target-api-ivl-target">
+<h1>Loadable Target API (ivl_target)<a class="headerlink" href="#loadable-target-api-ivl-target" title="Link to this heading">¶</a></h1>
+<p>In addition to the standard VPI API, Icarus Verilog supports a non-standard
+loadable target module API. This API helps C programmers write modules that
+Icarus Verilog can use to generate code. These modules are used at compile
+time to write the elaborated design to the simulation or netlist files. For
+example, the vvp code generator is a loadable target module that writes vvp
+code into the specified file.</p>
+<p>Loadable target modules gain access to the ‘elaborated’ design. That means,
+the source files have been checked for syntax and correctness, any synthesis
+and general optimization steps have been performed, and what is left is a
+design that reflects but is not exactly the same as the input Verilog source
+code. This relieves the modules of the burden of supporting all the odd
+corners and complexities of the Verilog language.</p>
+<section id="the-target-module-api">
+<h2>The Target Module API<a class="headerlink" href="#the-target-module-api" title="Link to this heading">¶</a></h2>
+<p>The API is defined in the header file “ivl_target.h” which is installed with
+Icarus Verilog. The header defines the functions that the module writer can
+use to get at the elaborated design during the course of writing the output
+format.</p>
+<p>The target module API function “target_design” is special in that the API does
+not provide this function: The target module itself provides it. When the
+compiler loads the target module, it invokes the “target_design” function with
+a handle to the design. This is the point where the target module takes over
+to process the design.</p>
+</section>
+<section id="compiling-target-modules">
+<h2>Compiling Target Modules<a class="headerlink" href="#compiling-target-modules" title="Link to this heading">¶</a></h2>
+<p>Compiling loadable target modules is similar to compiling VPI modules, in that
+the module must be compiled with the “-fPIC” flag to gcc, and linked with the
+“-shared” flag. The module that you compile is then installed in a place where
+the “iverilog” command can find it, and configuration files are adjusted to
+account for the new module.</p>
+<p>This code:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1"># include  &lt;ivl_target.h&gt;
+</span><span data-line="2">
+</span><span data-line="3">int target_design(ivl_design_t des)
+</span><span data-line="4">{
+</span><span data-line="5">     return 0;
+</span><span data-line="6">}
+</span></pre></div>
+</div>
+<p>is an example module that we can write into the file “empty.c”; and let us
+compile it into the module file “empty.tgt” like so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">% gcc -o empty.tgt -fpic -shared empty.c
+</span></pre></div>
+</div>
+<p>This makes the “empty.tgt” file an a dynamically loaded shared object.</p>
+</section>
+<section id="creating-the-target-config-file">
+<h2>Creating the Target Config File<a class="headerlink" href="#creating-the-target-config-file" title="Link to this heading">¶</a></h2>
+<p>The target config file tells the Icarus Verilog core how to process your new
+code generator. The ivl core expects two configuration files: the name.conf
+and the name-s.config files. The “-s” version is what is used if the user
+gives the “-S” (synthesis) flag on the command line.</p>
+<p>The stub target, included in most distributions, demonstrates the config
+files. The “stub.conf” file is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">functor:cprop
+</span><span data-line="2">functor:nodangle
+</span><span data-line="3">-t:dll
+</span><span data-line="4">flag:DLL=stub.tgt
+</span></pre></div>
+</div>
+<p>and the “stub-s.conf” file is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">functor:synth2
+</span><span data-line="2">functor:synth
+</span><span data-line="3">functor:syn-rules
+</span><span data-line="4">functor:cprop
+</span><span data-line="5">functor:nodangle
+</span><span data-line="6">-t:dll
+</span><span data-line="7">flag:DLL=stub.tgt
+</span></pre></div>
+</div>
+<p>Note that the “stub-s.conf” file contains more lines to invoke internal
+synthesis functions, whereas the “stub.conf” invokes only the basic
+optimization steps.</p>
+<p>In general, only the last line (The “flag:DLL=&lt;name&gt;.tgt” record) varies for
+each target. For your target, replace the &lt;name&gt; with the name of your target
+and you have a configuration file ready to install. Note that this is the name
+of your target module. This is in fact how the config file tells the compiler
+the name of your module.</p>
+<p>The rest of the config file is best taken as boiler plate and installed as is,
+with one difference. If your target is a synthesis target (for example a mosis
+code generator or a pld code generator) that expects synthesis to happen, then
+it makes the most sense to create both your config file like the “stub-s.conf”
+config file. This causes the compiler to do synthesis for your target whether
+the user gives the “-S” flag or not.</p>
+</section>
+<section id="installing-the-target-module">
+<h2>Installing the Target Module<a class="headerlink" href="#installing-the-target-module" title="Link to this heading">¶</a></h2>
+<p>Finally, the “empty.conf”, the “empty-s.conf” and the “empty.tgt” files need
+to be installed. Where they go depends on your system, but in Linux they are
+normally installed in “/usr/lib/ivl”.</p>
+</section>
+<section id="lpm-devices">
+<h2>LPM Devices<a class="headerlink" href="#lpm-devices" title="Link to this heading">¶</a></h2>
+<p>All LPM devices support a small set of common LPM functions, as
+described in the ivl_target header file. The ivl_lpm_t object has a
+type enumerated by ivl_lpm_type_t, and that type is accessible via the
+ivl_lpm_type function.</p>
+<p>The following are type specific aspects of LPM devices.</p>
+<ul class="simple">
+<li><p>IVL_LPM_UFUNC</p></li>
+</ul>
+<p>This LPM represents a user defined function. It is a way to connect
+behavioral code into a structural network. The UFUNC device has a
+vector output and a set of inputs. The ivl_lpm_define function returns
+the definition as an ivl_scope_t object.</p>
+<p>The output vector is accessible through the ivl_lpm_q, and the output
+has the width defined by ivl_lpm_width. This similar to most every
+other LPM device with outputs.</p>
+<p>There are ivl_lpm_size() input ports, each with the width
+ivl_lpm_data2_width(). The actual nexus is indexed by ivl_lpm_data2().</p>
+</section>
+</section>
+
+        </article><button class="back-to-top" type="button">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+  </svg>
+  <span>Back to top</span>
+</button><div class="navigation flex print:hidden"><div class="navigation-prev">
+    <a href="attributes.html">
+      <i class="i-lucide chevron-left"></i>
+      <div class="page-info">
+        <span>Previous</span><div class="title">Icarus Verilog Attributes</div></div>
+    </a>
+  </div><div class="navigation-next">
+    <a href="lpm.html">
+      <div class="page-info">
+        <span>Next</span>
+        <div class="title">What Is LPM</div>
+      </div>
+      <i class="i-lucide chevron-right"></i>
+    </a>
+  </div></div></div>
+    </div>
+  </main>
+</div>
+<footer class="sy-foot">
+  <div class="sy-foot-inner sy-container mx-auto">
+    <div class="sy-foot-reserved md:flex justify-between items-center">
+      <div class="sy-foot-copyright"><p>2024-2026, Stephen Williams</p>
+  
+  <p>
+    Made with
+    
+    <a href="https://www.sphinx-doc.org/">Sphinx</a> and
+    
+    <a href="https://shibuya.lepture.com">Shibuya theme</a>.
+  </p>
+</div>
+      <div class="sy-foot-socials">
+<a href="https://github.com/steveicarus/iverilog" aria-label="GitHub">
+  <iconify-icon icon="simple-icons:github"></iconify-icon>
+</a></div>
+    </div>
+  </div>
+</footer>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/shibuya.js?v=cac61aee"></script></body>
+</html>
