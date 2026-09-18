@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "statement_attributes_error_recovery_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

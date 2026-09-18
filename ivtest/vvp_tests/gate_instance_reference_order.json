@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "gate_instance_reference_order.v",
+    "iverilog-args" : [ "-g2001" ],
+    "vlog95" : {
+        "__comment" : "Generate scopes are not supported by vlog95.",
+        "type"      : "CE"
+    }
+}

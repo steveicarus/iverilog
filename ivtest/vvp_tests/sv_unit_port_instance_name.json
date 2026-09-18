@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_unit_port_instance_name.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Compilation-unit implicit port connections are not translated",
+        "type"      : "NI"
+    }
+}

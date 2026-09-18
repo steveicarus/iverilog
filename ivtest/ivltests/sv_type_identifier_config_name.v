@@ -1,4 +1,4 @@
-// Check that a config name can shadow a visible type identifier.
+// Check that a config name can have the same spelling as a visible typedef.
 
 typedef int CFG_NAME;
 

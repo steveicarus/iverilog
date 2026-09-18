@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_package_void_function_call.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

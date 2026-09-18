@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_type_identifier_typed_constructor_shadow_fail.v",
+    "gold"          : "sv_type_identifier_typed_constructor_shadow_fail",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

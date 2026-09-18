@@ -19,12 +19,20 @@
 
 
 # include  "pform_types.h"
+# include  "PExpr.h"
 # include  "netclass.h"
 # include  "netenum.h"
 
 data_type_t::~data_type_t()
 {
 }
+
+type_identifier_t::type_identifier_t(PEIdent *identifier)
+: identifier_(identifier)
+{
+}
+
+type_identifier_t::~type_identifier_t() = default;
 
 PNamedItem::SymbolType data_type_t::symbol_type() const
 {

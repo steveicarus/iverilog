@@ -31,7 +31,6 @@
 # include  "LineInfo.h"
 class PExpr;
 class PChainConstructor;
-class PPackage;
 class Statement;
 class PEventStatement;
 class Design;
@@ -231,7 +230,8 @@ class PBreak : public Statement {
 class PCallTask  : public Statement {
 
     public:
-      explicit PCallTask(PPackage *pkg, const pform_name_t &n, const std::list<named_pexpr_t> &parms);
+      explicit PCallTask(const pform_scoped_name_t &n,
+			 const std::list<named_pexpr_t> &parms);
       explicit PCallTask(const pform_name_t &n, const std::list<named_pexpr_t> &parms);
       explicit PCallTask(perm_string n, const std::list<named_pexpr_t> &parms);
       ~PCallTask() override;
@@ -251,10 +251,12 @@ class PCallTask  : public Statement {
 
       NetProc*elaborate_method_(Design*des, NetScope*scope,
                                 bool add_this_flag = false) const;
-      NetProc*elaborate_function_(Design*des, NetScope*scope) const;
+      NetProc *elaborate_function_(
+	    Design *des, NetScope *scope, NetScope *func_scope) const;
       NetProc*elaborate_void_function_(Design*des, NetScope*scope,
 				       NetFuncDef*def) const;
-      NetProc *elaborate_non_void_function_(Design *des, NetScope *scope) const;
+      NetProc *elaborate_non_void_function_(Design *des, NetScope *scope,
+					    const pform_name_t &path) const;
 
       NetProc*elaborate_build_call_(Design*des, NetScope*scope,
 				    NetScope*task, NetExpr*use_this) const;
@@ -301,8 +303,7 @@ class PCallTask  : public Statement {
 					  const char*sys_task_name) const;
       bool test_task_calls_ok_(Design*des, const NetScope*scope) const;
 
-      PPackage*package_;
-      pform_name_t path_;
+      pform_scoped_name_t path_;
       std::vector<named_pexpr_t> parms_;
       bool void_cast_ = false;
 };
@@ -660,7 +661,7 @@ class PReturn  : public Statement {
 class PTrigger  : public Statement {
 
     public:
-      explicit PTrigger(PPackage*pkg, const pform_name_t&ev, unsigned lexical_pos);
+      explicit PTrigger(const pform_scoped_name_t&ev);
       ~PTrigger() override;
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
@@ -668,12 +669,11 @@ class PTrigger  : public Statement {
 
     private:
       pform_scoped_name_t event_;
-      unsigned lexical_pos_;
 };
 
 class PNBTrigger  : public Statement {
     public:
-      explicit PNBTrigger(const pform_name_t&ev, unsigned lexical_pos, PExpr*dly);
+      explicit PNBTrigger(const pform_name_t&ev, PExpr*dly);
       ~PNBTrigger() override;
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const override;
@@ -681,7 +681,6 @@ class PNBTrigger  : public Statement {
 
     private:
       pform_name_t event_;
-      unsigned lexical_pos_;
       PExpr*dly_;
 };
 

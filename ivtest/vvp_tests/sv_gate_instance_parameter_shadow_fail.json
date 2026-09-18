@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_gate_instance_parameter_shadow_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

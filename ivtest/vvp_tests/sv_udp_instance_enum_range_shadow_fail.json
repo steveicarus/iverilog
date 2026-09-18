@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_udp_instance_enum_range_shadow_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

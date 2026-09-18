@@ -1,0 +1,6 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_unit_separate_scopes.v",
+    "iverilog-args" : [ "-g2005-sv", "-u",
+                        "ivltests/sv_unit_separate_scopes_module.v" ]
+}

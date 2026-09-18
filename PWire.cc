@@ -29,10 +29,12 @@ PWire::PWire(perm_string n,
 	     NetNet::Type t,
 	     NetNet::PortType pt,
 	     PWSRType rt)
-: name_(n), lexical_pos_(lp), type_(t), port_type_(pt), signed_(false),
+: name_(n), type_(t), port_type_(pt), signed_(false),
   port_set_(false), net_set_(false), is_scalar_(false),
   error_cnt_(0), discipline_(0)
 {
+      lexical_pos(lp);
+
       switch (rt) {
 	  case SR_PORT:
 	    port_set_ = true;

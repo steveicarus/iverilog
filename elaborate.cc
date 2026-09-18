@@ -777,11 +777,14 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  return;
 	    }
-	      // Gates can never have variable output ports.
+	      // Normal gates cannot have variable output ports except for
+	      // SystemVerilog. See: 1800-2023 section 10.3.2. Bi-directional
+	      // (tran) gates can never have their output ports connected to
+	      // a variable.
             if (lval_count > gate_count)
 	          lval_sigs[idx] = pin(idx)->elaborate_bi_net(des, scope, false);
             else
-	          lval_sigs[idx] = pin(idx)->elaborate_lnet(des, scope, false);
+	          lval_sigs[idx] = pin(idx)->elaborate_lnet(des, scope, gn_system_verilog());
 
 	      // The only way this should return zero is if an error
 	      // happened, so for that case just return.
@@ -1263,19 +1266,22 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
 	    for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
 		    // Handle wildcard named port.
 		  if (pins_[idx].name[0] == '*') {
+			const auto &wildcard = pins_[idx];
 			for (unsigned j = 0 ; j < nexp ; j += 1) {
 			      if (rmod->ports[j] && !pins[j] && !pins_is_explicitly_not_connected[j]) {
 				    pins_fromwc[j] = true;
 				    pform_name_t path_;
 				    path_.push_back(name_component_t(rmod->ports[j]->name));
 				    symbol_search_results sr;
-				    symbol_search(this, des, scope, path_, UINT_MAX, &sr);
+				    symbol_search(&wildcard, des, scope, path_,
+						  wildcard.lexical_pos(), &sr);
 				    if (sr.net != 0 ||
 					(rmod->ports[j]->is_interface_port() &&
-					 sr.scope != 0 && sr.scope->is_interface())) {
-					  pins[j] = new PEIdent(rmod->ports[j]->name, UINT_MAX, true);
-					  pins[j]->set_lineno(get_lineno());
-					  pins[j]->set_file(get_file());
+					 sr.is_scope() && sr.scope->is_interface())) {
+					  pins[j] = new PEIdent(
+						rmod->ports[j]->name,
+						wildcard.lexical_pos(), true);
+					  pins[j]->set_line(wildcard);
 				    }
 			      }
 			}
@@ -1447,7 +1453,8 @@ static bool resolve_interface_actual_scope(const PExpr*actual,
 		  symbol_search_results sr;
 		  symbol_search(actual, des, parent_scope, actual_ident->path(),
 				actual_ident->lexical_pos(), &sr);
-		  res.scope = sr.scope;
+		  if (sr.is_scope())
+			res.scope = sr.scope;
 		  if (sr.through_interface_alias())
 			res.modport = sr.interface_alias_modport;
 	    }
@@ -1459,7 +1466,8 @@ static bool resolve_interface_actual_scope(const PExpr*actual,
       symbol_search(actual, des, parent_scope, actual_ident->path(),
 		    actual_ident->lexical_pos(), &sr);
 
-      res.scope = sr.scope;
+      if (sr.is_scope())
+	    res.scope = sr.scope;
       if (sr.through_interface_alias())
 	    res.modport = sr.interface_alias_modport;
       else if (NetScope*child = parent_scope->child(hname_t(res.display_name)))
@@ -2082,7 +2090,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		    // We do not support automatic bits to real conversion
 		    // for inout ports.
 		  if ((sig->data_type() == IVL_VT_REAL ) &&
-		      !prts.empty() && (prts[0]->data_type() != IVL_VT_REAL )) {
+		      (prts[0]->data_type() != IVL_VT_REAL )) {
 			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "Cannot automatically connect bit based "
 			        "inout port " << (idx+1) << " (" << port_name
@@ -2093,7 +2101,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		  }
 
 		    // We do not support real inout ports at all.
-		  if (!prts.empty() && (prts[0]->data_type() == IVL_VT_REAL )) {
+		  if (prts[0]->data_type() == IVL_VT_REAL ) {
 			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "No support for connecting real inout ports ("
 			        "port " << (idx+1) << " (" << port_name
@@ -2147,7 +2155,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		    // width cast. Since a real is only one bit the whole
 		    // thing needs to go to each instance when arrayed.
 		  if ((sig->data_type() != IVL_VT_REAL ) &&
-		      !prts.empty() && (prts[0]->data_type() == IVL_VT_REAL )) {
+		      (prts[0]->data_type() == IVL_VT_REAL )) {
 			if (sig->vector_width() % instance.size() != 0) {
 			      cerr << pins[idx]->get_fileline() << ": error: "
 			              "When automatically converting a real "
@@ -2172,7 +2180,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		    // If we have a bit/vector port driving a single real
 		    // signal then we convert the value to a real.
 		  if ((sig->data_type() == IVL_VT_REAL ) &&
-		      !prts.empty() && (prts[0]->data_type() != IVL_VT_REAL )) {
+		      (prts[0]->data_type() != IVL_VT_REAL )) {
 			prts_vector_width -= prts[0]->vector_width() - 1;
 			prts[0] = cast_to_real(des, scope, prts[0]);
 			  // No support for multiple real drivers.
@@ -2190,7 +2198,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		    // If we have a 4-state bit/vector port driving a
 		    // 2-state signal then we convert the value to 2-state.
 		  if ((sig->data_type() == IVL_VT_BOOL ) &&
-		      !prts.empty() && (prts[0]->data_type() == IVL_VT_LOGIC )) {
+		      (prts[0]->data_type() == IVL_VT_LOGIC )) {
 			for (unsigned pidx = 0; pidx < prts.size(); pidx += 1) {
 			      prts[pidx] = cast_to_int2(des, scope, prts[pidx],
 			                                prts[pidx]->vector_width());
@@ -2200,7 +2208,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		    // A real to real connection is not allowed for arrayed
 		    // instances. You cannot have multiple real drivers.
 		  if ((sig->data_type() == IVL_VT_REAL ) &&
-		      !prts.empty() && (prts[0]->data_type() == IVL_VT_REAL ) &&
+		      (prts[0]->data_type() == IVL_VT_REAL ) &&
 		      instance.size() != 1) {
 			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "An arrayed instance of " << rmod->mod_name()
@@ -2775,8 +2783,7 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
 		tmp = new NetNet(scope, scope->local_symbol(), NetNet::REG, tmp_vec);
 	    }
 
-	    tmp->set_file(rval_->get_file());
-	    tmp->set_lineno(rval_->get_lineno());
+	    tmp->set_line(*rval_);
 	    NetAssign_*lv = new NetAssign_(tmp);
 	    return lv;
       }
@@ -3848,7 +3855,7 @@ NetProc* PCallTask::elaborate(Design*des, NetScope*scope) const
 {
       if (peek_tail_name(path_)[0] == '$') {
 	    if (void_cast_)
-		  return elaborate_non_void_function_(des, scope);
+		  return elaborate_non_void_function_(des, scope, path_.name);
 	    else
 		  return elaborate_sys(des, scope);
       } else {
@@ -3948,25 +3955,39 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 {
       ivl_assert(*this, scope);
 
-      NetScope*pscope = scope;
-      if (package_) {
-	    pscope = des->find_package(package_->pscope_name());
-	    ivl_assert(*this, pscope);
+      symbol_search_results search_results;
+      NetScope *task = nullptr;
+      NetScope *func_scope = nullptr;
+      if (symbol_search(this, des, scope, path_, lexical_pos(),
+			&search_results,
+			SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE)) {
+	    if (!search_results.require_non_type(
+			this, des, "in a task or function call"))
+		  return nullptr;
+
+	    if (search_results.is_scope()) {
+		  if (search_results.scope->type() == NetScope::TASK)
+			task = search_results.scope;
+		  else if (search_results.scope->type() == NetScope::FUNC)
+			func_scope = search_results.scope;
+	    } else if (test_function_return_value(search_results)) {
+		    // A recursive function call resolves to the function return
+		    // variable. Its containing scope is the function being called.
+		  func_scope = search_results.scope;
+	    }
       }
 
-      NetScope*task = des->find_task(pscope, path_);
-      if (task == 0) {
+      if (!task) {
 	      // For SystemVerilog this may be a few other things.
 	    if (gn_system_verilog()) {
-		  NetProc *tmp;
 		    // This could be a method attached to a signal
 		    // or defined in this object?
 		  bool try_implicit_this = scope->get_class_scope() && path_.size() == 1;
-		  tmp = elaborate_method_(des, scope, try_implicit_this);
+		  NetProc *tmp = elaborate_method_(des, scope, try_implicit_this);
 		  if (tmp) return tmp;
 		    // Or it could be a function call ignoring the return?
-		  tmp = elaborate_function_(des, scope);
-		  if (tmp) return tmp;
+		  if (func_scope)
+			return elaborate_function_(des, scope, func_scope);
 	    }
 
 	    cerr << get_fileline() << ": error: Enable of unknown task "
@@ -4279,7 +4300,7 @@ NetProc* PCallTask::elaborate_method_property_func_(NetScope*scope,
 NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
                                       bool add_this_flag) const
 {
-      pform_name_t use_path = path_;
+      pform_name_t use_path = path_.name;
       perm_string method_name = peek_tail_name(use_path);
       use_path.pop_back();
 
@@ -4305,7 +4326,9 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	// (internally represented as "@") is handled by there being a
 	// "this" object in the instance scope.
       symbol_search_results sr;
-      symbol_search(this, des, scope, use_path, UINT_MAX, &sr);
+      pform_scoped_name_t object_path = path_;
+      object_path.name = use_path;
+      symbol_search(this, des, scope, object_path, lexical_pos(), &sr);
 
       NetNet*net = sr.net;
       if (net == 0)
@@ -4569,6 +4592,14 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 		       << " method " << task->basename() << endl;
 	    }
 
+	    /* Preserve the resolved object path, including an implicit this,
+	     * when rebuilding a non-void function call as an expression. */
+	    if (task->type() == NetScope::FUNC &&
+		!task->func_def()->is_void()) {
+		  use_path.push_back(name_component_t(method_name));
+		  return elaborate_non_void_function_(des, scope, use_path);
+	    }
+
 	    NetESignal*use_this = new NetESignal(net);
 	    use_this->set_line(*this);
 
@@ -4603,38 +4634,46 @@ bool PCallTask::test_task_calls_ok_(Design*des, const NetScope*scope) const
       return true;
 }
 
-NetProc *PCallTask::elaborate_non_void_function_(Design *des, NetScope *scope) const
+NetProc *PCallTask::elaborate_non_void_function_(Design *des, NetScope *scope,
+						 const pform_name_t &path) const
 {
 	// Generate a function call version of this task call.
-      PExpr*rval = new PECallFunction(package_, path_, parms_);
-      rval->set_file(get_file());
-      rval->set_lineno(get_lineno());
+      pform_scoped_name_t call_path = path_;
+      call_path.name = path;
+      auto rval = new PECallFunction(call_path, parms_);
+      rval->set_line(*this);
 	// Generate an assign to nothing.
-      PAssign*tmp = new PAssign(0, rval);
-      tmp->set_file(get_file());
-      tmp->set_lineno(get_lineno());
+      auto tmp = new PAssign(nullptr, rval);
+      tmp->set_line(*this);
       if (!void_cast_) {
 	    cerr << get_fileline() << ": warning: User function '"
-		 << peek_tail_name(path_) << "' is being called as a task." << endl;
+		 << peek_tail_name(path) << "' is being called as a task." << endl;
       }
 
 	// Elaborate the assignment to a dummy variable.
       return tmp->elaborate(des, scope);
 }
 
-NetProc* PCallTask::elaborate_function_(Design*des, NetScope*scope) const
+NetProc *PCallTask::elaborate_function_(
+      Design *des, NetScope *scope, NetScope *func_scope) const
 {
-      NetFuncDef*func = des->find_function(scope, path_);
+      ivl_assert(*this, func_scope);
+      ivl_assert(*this, func_scope->type() == NetScope::FUNC);
 
-	// This is not a function, so this task call cannot be a function
-	// call with a missing return assignment.
-      if (!func)
-	    return nullptr;
+	// The function signals might not have been elaborated yet.
+      if (func_scope->elab_stage() < 2) {
+	    func_scope->need_const_func(true);
+	    const PFunction *pfunc = func_scope->func_pform();
+	    ivl_assert(*this, pfunc);
+	    pfunc->elaborate_sig(des, func_scope);
+      }
+      NetFuncDef *func = func_scope->func_def();
+      ivl_assert(*this, func);
 
       if (gn_system_verilog() && func->is_void())
 	    return elaborate_void_function_(des, scope, func);
 
-      return elaborate_non_void_function_(des, scope);
+      return elaborate_non_void_function_(des, scope, path_.name);
 }
 
 NetProc* PCallTask::elaborate_void_function_(Design*des, NetScope*scope,
@@ -4681,7 +4720,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
       } else if (task->type() == NetScope::FUNC) {
 	    const NetFuncDef*tmp = task->func_def();
 	    if (!tmp->is_void())
-		  return elaborate_non_void_function_(des, scope);
+		  return elaborate_non_void_function_(des, scope, path_.name);
 	    def = tmp;
 
 	    if (void_cast_) {
@@ -4689,6 +4728,11 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 		       << peek_tail_name(path_) << "' is not allowed." << endl;
 		  des->errors++;
 	    }
+      } else {
+	    cerr << get_fileline() << ": error: trying to generate a call to '"
+	         << peek_tail_name(path_) << "' which is not a task of function." << endl;
+	    des->errors++;
+	    return nullptr;
       }
 
 	/* The caller has checked the parms_ size to make sure it
@@ -4880,9 +4924,19 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 			rv = cast_to_int4(rv, lv_width);
 			break;
 		      default:
-			  /* Don't yet know how to handle this. */
-			ivl_assert(*this, 0);
-			break;
+			cerr << get_fileline() << ": error: "
+			     << "Argument " << (idx+1) << " for task '"
+			     << task->basename() << "' is called with '";
+			lv->dump_lval(cerr);
+			cerr << "' which has type '"
+			     << lv->expr_type() << "'." << endl;
+			cerr << get_fileline() << ":      : "
+			        "The task expects to return type '"
+			     << rv->expr_type() << "'." << endl;
+			des->errors += 1;
+			delete lv;
+			delete rv;
+			continue;
 		  }
 	    }
 	    rv = pad_to_width(rv, lv_width, *this);
@@ -5232,15 +5286,27 @@ NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
 	    }
       }
 
-      list<hname_t> spath = eval_scope_path(des, scope, scope_);
-
-      NetScope*target = des->find_scope(scope, spath);
-      if (target == 0) {
+      symbol_search_results search_results;
+      if (!symbol_search(this, des, scope, scope_, lexical_pos(),
+			 &search_results)) {
 	    cerr << get_fileline() << ": error: Cannot find scope "
 		 << scope_ << " in " << scope_path(scope) << endl;
 	    des->errors += 1;
 	    return 0;
       }
+      if (!search_results.require_non_type(this, des,
+					    "as a disable target"))
+	    return nullptr;
+
+      if (!search_results.is_scope()) {
+	    cerr << get_fileline() << ": error: Cannot disable "
+		 << search_results.result_type() << " `" << scope_ << "'."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetScope *target = search_results.scope;
 
       switch (target->type()) {
 	  case NetScope::FUNC:
@@ -6626,7 +6692,7 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
       ivl_assert(*this, scope);
 
       symbol_search_results sr;
-      if (!symbol_search(this, des, scope, event_, lexical_pos_, &sr)) {
+      if (!symbol_search(this, des, scope, event_, lexical_pos(), &sr)) {
 	    cerr << get_fileline() << ": error: event <" << event_ << ">"
 		 << " not found." << endl;
 	    if (sr.decl_after_use) {
@@ -6637,6 +6703,8 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return 0;
       }
+      if (!sr.require_non_type(this, des, "as a named event"))
+	    return nullptr;
 
       if (!sr.eve) {
 	    cerr << get_fileline() << ": error:  <" << event_ << ">"
@@ -6655,7 +6723,7 @@ NetProc* PNBTrigger::elaborate(Design*des, NetScope*scope) const
       ivl_assert(*this, scope);
 
       symbol_search_results sr;
-      if (!symbol_search(this, des, scope, event_, lexical_pos_, &sr)) {
+      if (!symbol_search(this, des, scope, event_, lexical_pos(), &sr)) {
 	    cerr << get_fileline() << ": error: event <" << event_ << ">"
 		 << " not found." << endl;
 	    if (sr.decl_after_use) {
@@ -6666,6 +6734,8 @@ NetProc* PNBTrigger::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return 0;
       }
+      if (!sr.require_non_type(this, des, "as a named event"))
+	    return nullptr;
 
       if (sr.eve == 0) {
 	    cerr << get_fileline() << ": error:  <" << event_ << ">"

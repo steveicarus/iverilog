@@ -1,0 +1,2 @@
+./ivltests/br_gh1112c.v:3: error: Real argument '1.00000' passed to $bits().
+1 error(s) during elaboration.

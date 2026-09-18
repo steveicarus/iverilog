@@ -1,0 +1,1 @@
+ivltests/sv_class_method_call_nonvoid.v:14: warning: User function 'value' is being called as a task.

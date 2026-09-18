@@ -1,0 +1,2 @@
+ivltests/sv_parameter_named_type_omitted_keyword_fail.v:5: error: `missing_type` is not a type.
+1 error(s) during elaboration.

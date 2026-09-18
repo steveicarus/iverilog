@@ -1,0 +1,3 @@
+ivltests/sv_type_identifier_procedural_lvalue_fail.v:11: error: Type name `i_container.value' cannot be used as a procedural l-value.
+ivltests/sv_type_identifier_procedural_lvalue_fail.v:4:      : The type was declared here.
+Elaboration failed

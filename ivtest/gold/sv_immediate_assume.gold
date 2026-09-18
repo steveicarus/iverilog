@@ -7,5 +7,5 @@ ERROR: ./ivltests/sv_immediate_assume.v:11:
 Check 7 : this should be displayed
 Check 8 : this should be displayed
 ERROR: ./ivltests/sv_immediate_assume.v:19: Check 9 : this should be displayed
-       Time: 0  Scope: test
+       Time: 0  Scope: test.a_i_is_non_0
 Check 10 : this should be displayed

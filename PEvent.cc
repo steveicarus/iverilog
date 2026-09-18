@@ -22,8 +22,9 @@
 # include  "PEvent.h"
 
 PEvent::PEvent(perm_string n, unsigned lexical_pos)
-: name_(n), lexical_pos_(lexical_pos)
+: name_(n)
 {
+      LineInfo::lexical_pos(lexical_pos);
 }
 
 PEvent::~PEvent()

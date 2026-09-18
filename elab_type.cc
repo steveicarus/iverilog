@@ -374,9 +374,8 @@ ivl_type_t elaborate_array_type(Design *des, NetScope *scope,
 		  type = elaborate_darray_check_type(des, li, type, "Dynamic array");
 		  type = new netdarray_t(type);
 		  continue;
-	    } else if (dynamic_cast<PENull*>(lidx)) {
-		    // Special case: Detect the mark for a QUEUE declaration,
-		    // which is the dimensions [null:max_idx].
+	    } else if (dynamic_cast<PEQueueDimension*>(lidx)) {
+		    // Special case: Detect the mark for a QUEUE declaration.
 		  type = elaborate_static_array_type(des, li, type, dimensions);
 		  type = elaborate_queue_type(des, scope, li, type, ridx);
 		  continue;
@@ -405,24 +404,18 @@ ivl_type_t uarray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
       return elaborate_array_type(des, scope, *this, btype, *dims.get());
 }
 
-ivl_type_t typeref_t::elaborate_type_raw(Design*des, NetScope*s) const
+ivl_type_t type_identifier_t::elaborate_type_raw(Design *des,
+						 NetScope *scope) const
 {
-      if (!s) {
-	    // Try to recover
+      if (!scope)
 	    return new netvector_t(IVL_VT_LOGIC);
-      }
 
-      return type->elaborate_type(des, s);
-}
+      ivl_type_t type = identifier_->elaborate_type(
+	    des, scope, PExpr::type_elaboration_context_t::REQUIRED_TYPE);
+      if (type)
+	    return type;
 
-NetScope *typeref_t::find_scope(Design *des, NetScope *s) const
-{
-        // If a scope has been specified use that as a starting point for the
-	// search
-      if (scope)
-	    s = des->find_package(scope->pscope_name());
-
-      return s;
+      return new netvector_t(IVL_VT_LOGIC);
 }
 
 ivl_type_t typedef_t::elaborate_type(Design *des, NetScope *scope)

@@ -138,6 +138,7 @@ const char*gen_io_range_error = "io-range-error";
 const char*gen_strict_ca_eval = "no-strict-ca-eval";
 const char*gen_strict_expr_width = "no-strict-expr-width";
 const char*gen_shared_loop_index = "shared-loop-index";
+const char*gen_allow_real_arg_to_bits = "no-allow-real-arg-to-bits";
 const char*gen_verilog_ams = "no-verilog-ams";
 const char*gen_strict_net_var_declaration = "strict-net-var-declaration";
 const char*gen_strict_parameter_declaration = "strict-parameter-declaration";
@@ -832,6 +833,12 @@ static int process_generation(const char*name)
       else if (strcmp(name,"no-shared-loop-index") == 0)
 	    gen_shared_loop_index = "no-shared-loop-index";
 
+      else if (strcmp(name,"allow-real-arg-to-bits") == 0)
+            gen_allow_real_arg_to_bits = "allow-real-arg-to-bits";
+
+      else if (strcmp(name,"no-allow-real-arg-to-bits") == 0)
+            gen_allow_real_arg_to_bits = "no-allow-real-arg-to-bits";
+
       else if (strcmp(name,"verilog-ams") == 0)
 	    gen_verilog_ams = "verilog-ams";
 
@@ -1445,6 +1452,7 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "generation:%s\n", gen_strict_ca_eval);
       fprintf(iconfig_file, "generation:%s\n", gen_strict_expr_width);
       fprintf(iconfig_file, "generation:%s\n", gen_shared_loop_index);
+      fprintf(iconfig_file, "generation:%s\n", gen_allow_real_arg_to_bits);
       fprintf(iconfig_file, "generation:%s\n", gen_verilog_ams);
       fprintf(iconfig_file, "generation:%s\n", gen_strict_net_var_declaration);
       fprintf(iconfig_file, "generation:%s\n", gen_strict_parameter_declaration);

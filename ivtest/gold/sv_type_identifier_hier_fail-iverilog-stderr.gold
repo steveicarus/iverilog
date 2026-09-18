@@ -1,0 +1,3 @@
+ivltests/sv_type_identifier_hier_fail.v:5: error: Type name `test.T' cannot be referenced through a hierarchical path.
+ivltests/sv_type_identifier_hier_fail.v:3:      : The type was declared here.
+1 error(s) during elaboration.

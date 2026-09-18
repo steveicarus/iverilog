@@ -1,0 +1,3 @@
+ivltests/sv_class_forward_base_undefined_fail.v:3: error: Undefined type `B`.
+ivltests/sv_class_forward_base_undefined_fail.v:5: error: Base type of C is not a class.
+3 error(s) during elaboration.

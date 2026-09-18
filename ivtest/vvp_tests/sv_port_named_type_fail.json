@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_port_named_type_fail.v",
+    "gold"          : "sv_port_named_type_fail",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

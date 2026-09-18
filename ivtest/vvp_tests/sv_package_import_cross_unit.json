@@ -1,0 +1,6 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_package_import_cross_unit.v",
+    "iverilog-args" : [ "-g2005-sv", "-u",
+                         "ivltests/sv_package_import_cross_unit_pkg.v" ]
+}

@@ -28,8 +28,8 @@ nullPointerOutOfMemory:modpath.c:139         // calloc @  138
 nullPointerOutOfMemory:modpath.c:140         // calloc @  138
 nullPointerOutOfMemory:modpath.c:141         // calloc @  138
 nullPointerOutOfMemory:modpath.c:142         // calloc @  138
-nullPointerOutOfMemory:vvp_process.c:2218    // malloc @ 2216
-nullPointerOutOfMemory:vvp_process.c:2219    // malloc @ 2216
+nullPointerOutOfMemory:vvp_process.c:2290    // malloc @ 2288
+nullPointerOutOfMemory:vvp_process.c:2291    // malloc @ 2288
 nullPointerOutOfMemory:vvp_scope.c:876       // calloc @  865
 nullPointerOutOfMemory:vvp_scope.c:900       // calloc @  865
 nullPointerOutOfMemory:vvp_scope.c:1094      // calloc @ 1092

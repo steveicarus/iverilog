@@ -1,0 +1,1 @@
+ivltests/module_instance_initializer_fail.v:8: error: Module instances cannot have variable initializers.

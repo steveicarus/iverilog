@@ -18,6 +18,7 @@
  */
 
 # include  <cstdarg>
+# include  <utility>
 # include  "pform.h"
 # include  "PClass.h"
 # include  "parse_misc.h"
@@ -78,6 +79,30 @@ void pform_class_property(const struct vlltype&loc,
 		 ; cur != decls->end() ; ++cur) {
 
 	    decl_assignment_t*curp = *cur;
+	    class_type_t::prop_info_t property(property_qual, nullptr,
+						 curp->expr != nullptr);
+	    FILE_NAME(&property, loc);
+
+	    // Properties are stored by value in the property map, while the type
+	    // can be shared by comma-separated declarations. Check the temporary
+	    // before taking ownership of the type or releasing the initializer. It
+	    // can not be registered in the local symbol table yet since that would
+	    // store a pointer to the temporary.
+	    if (!pform_check_local_symbol(pform_cur_class, curp->name.first,
+					  &property))
+		  continue;
+
+	    auto result = pform_cur_class->type->properties.emplace(
+		  curp->name.first, std::move(property));
+	    ivl_assert(loc, result.second);
+
+	    auto &property_info = result.first->second;
+	    // Register the property now that it has a stable address. The earlier
+	    // check makes failure of this insertion an internal error.
+	    auto symbol = pform_cur_class->local_symbols.emplace(
+		  curp->name.first, &property_info);
+	    ivl_assert(loc, symbol.second);
+
 	    data_type_t*use_type = data_type;
 
 	    if (! curp->index.empty()) {
@@ -86,14 +111,12 @@ void pform_class_property(const struct vlltype&loc,
 		  FILE_NAME(use_type, loc);
 	    }
 
-	    pform_cur_class->type->properties[curp->name.first]
-		  = class_type_t::prop_info_t(property_qual,use_type);
-	    FILE_NAME(&pform_cur_class->type->properties[curp->name.first], loc);
+	    property_info.type.reset(use_type);
 
 	    if (PExpr*rval = curp->expr.release()) {
 		  PExpr*lval = new PEIdent(curp->name.first, curp->name.second);
 		  FILE_NAME(lval, loc);
-		  PAssign*tmp = new PAssign(lval, rval);
+		  auto tmp = new PAssign(lval, rval, false, true);
 		  FILE_NAME(tmp, loc);
 
 		  if (property_qual.test_static())

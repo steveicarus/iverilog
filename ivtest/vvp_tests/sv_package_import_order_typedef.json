@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_package_import_order_typedef.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

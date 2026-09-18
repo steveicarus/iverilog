@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_package_import_copy_new.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Class scopes and the new operator are not supported",
+        "type"          : "CE"
+    }
+}

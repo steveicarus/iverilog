@@ -1,0 +1,5 @@
+{
+    "type"   : "CE",
+    "source" : "module_instance_initializer_fail.v",
+    "gold"   : "module_instance_initializer_fail"
+}

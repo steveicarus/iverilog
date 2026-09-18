@@ -41,15 +41,12 @@ class PEvent : public PNamedItem {
 
       perm_string name() const;
 
-      unsigned lexical_pos() const { return lexical_pos_; }
-
       void elaborate_scope(Design*des, NetScope*scope) const;
 
       SymbolType symbol_type() const override;
 
     private:
       perm_string name_;
-      unsigned lexical_pos_;
 
     private: // not implemented
       PEvent(const PEvent&);

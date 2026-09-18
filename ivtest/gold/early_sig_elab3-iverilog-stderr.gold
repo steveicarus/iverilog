@@ -1,2 +1,3 @@
 ivltests/early_sig_elab3.v:8: error: Circular dependency detected in declaration of 'a'.
-1 error(s) during elaboration.
+ivltests/early_sig_elab3.v:9: error: Argument with no known data type 'test.a' passed to $bits().
+2 error(s) during elaboration.

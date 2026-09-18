@@ -1,0 +1,2 @@
+ivltests/sv_type_identifier_class_property_shadow_fail.v:6: error: `T` is not a type.
+1 error(s) during elaboration.

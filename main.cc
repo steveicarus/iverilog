@@ -121,6 +121,13 @@ bool gn_strict_parameter_declaration = true;
 bool gn_strict_net_var_declaration = true;
 
 /*
+ * Traditionally iverilog return 1 for the width of a real.
+ * Since 1800-2012 this is now forbidden by the standard.
+ * To support older code allow this when requested.
+ */
+bool gn_allow_real_arg_to_bits = false;
+
+/*
  * For some generations we allow a system function to be called
  * as a task and only print a warning message. The default for
  * this is that it is a run time error.
@@ -406,6 +413,12 @@ static void process_generation_flag(const char*gen)
 
       } else if (strcmp(gen,"no-strict-net-var-declaration") == 0) {
 	    gn_strict_net_var_declaration = false;
+
+      } else if (strcmp(gen,"allow-real-arg-to-bits") == 0) {
+	    gn_allow_real_arg_to_bits = true;
+
+      } else if (strcmp(gen,"no-allow-real-arg-to-bits") == 0) {
+	    gn_allow_real_arg_to_bits = false;
 
 	  } else {
       }

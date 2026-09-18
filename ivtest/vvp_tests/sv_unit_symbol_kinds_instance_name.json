@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_unit_symbol_kinds_instance_name.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

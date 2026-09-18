@@ -26,6 +26,7 @@
  * can be passed around in this form to the various stages and design
  * processors.
  */
+# include  <climits>
 # include  <string>
 # include  <map>
 # include  <list>
@@ -79,6 +80,7 @@ class NetEvWait;
 class PClass;
 class PExpr;
 class PFunction;
+class PGate;
 class PModport;
 class PPackage;
 class PTaskFunc;
@@ -733,9 +735,6 @@ class NetNet  : public NetObj, public PortType {
       PortType port_type() const;
       void port_type(PortType t);
 
-      unsigned lexical_pos() const { return lexical_pos_; }
-      void lexical_pos(unsigned lp) { lexical_pos_ = lp; }
-
       // If this net net is a port (i.e. a *sub*port net of a module port)
       // its port index is number of the module it connects through
       int get_module_port_index() const;                // -1 Not connected to port...
@@ -860,7 +859,6 @@ class NetNet  : public NetObj, public PortType {
       PortType port_type_ : 3;
       bool coerced_to_uwire_: 1;
       bool local_flag_: 1;
-      unsigned lexical_pos_;
       ivl_type_t net_type_;
       netuarray_t *array_type_ = nullptr;
       ivl_discipline_t discipline_;
@@ -948,7 +946,9 @@ class Definitions {
 	// up this enumeration based on the pform type.
       void add_enumeration_set(const enum_type_t*key, netenum_t*enum_set);
 
-      bool add_enumeration_name(const netenum_t*enum_set, perm_string enum_name);
+      bool add_enumeration_name(const netenum_t *enum_set,
+				perm_string enum_name,
+				const LineInfo &location);
 
 	// Look up the enumeration set that was added with the given
 	// key. This is used by enum_type_t::elaborate_type to locate
@@ -1001,13 +1001,26 @@ class NetScope : public Definitions, public Attrib {
 	   if a unique name couldn't be generated. */
       bool auto_name(const char* prefix, char pad, const char* suffix);
 
-      void add_imports(const std::map<perm_string,PPackage*>*imports);
-      NetScope*find_import(const Design*des, perm_string name);
+      void add_imports(const package_import_map_t *imports);
+      NetScope *find_import(const Design *des, perm_string name,
+			    unsigned int lexical_pos = UINT_MAX);
 
       void add_typedefs(const std::map<perm_string,typedef_t*>*typedefs);
 
-        /* Search the scope hierarchy for the scope where 'type' was defined. */
+	/* Find a type declared in this scope and visible at the given source
+	   position. */
+      typedef_t *lookup_typedef(perm_string name,
+				unsigned int lexical_pos) const;
+
+	/* Locate the scope that owns the resolved typedef object. */
       NetScope*find_typedef_scope(const Design*des, const typedef_t*type_i);
+
+	/* Record PGate names before elaborating types and expressions.
+	   Instances without child scopes still hide outer declarations once
+	   the instance has been declared. */
+      void add_gate_names(const std::list<PGate*>&gates);
+      bool gate_name_is_visible(perm_string name,
+				unsigned int lexical_pos) const;
 
 	/* Parameters exist within a scope, and these methods allow
 	   one to manipulate the set. In these cases, the name is the
@@ -1337,8 +1350,11 @@ class NetScope : public Definitions, public Attrib {
 
       LineInfo get_parameter_line_info(perm_string name) const;
 
-      unsigned get_parameter_lexical_pos(perm_string name) const;
-      void set_parameter_lexical_pos(perm_string name, unsigned lexical_pos);
+      bool get_constant_lexical_pos(perm_string name,
+				    unsigned int &lexical_pos,
+				    bool &is_enum_name) const;
+      void set_constant_lexical_pos(perm_string name,
+				    unsigned int lexical_pos);
 
 	/* Module instance arrays are collected here for access during
 	   the multiple elaboration passes. */
@@ -1381,9 +1397,11 @@ class NetScope : public Definitions, public Attrib {
       signed char time_unit_, time_prec_;
       bool time_from_timescale_;
 
-      const std::map<perm_string,PPackage*>*imports_;
+      const package_import_map_t *imports_ = nullptr;
 
       std::map<perm_string,typedef_t*>typedefs_;
+
+      std::map<perm_string,unsigned int> gate_names_;
 
       NetEvent *events_;
 
@@ -3509,9 +3527,6 @@ class NetEvent : public LineInfo {
 
       perm_string name() const;
 
-      unsigned lexical_pos() const { return lexical_pos_; }
-      void lexical_pos(unsigned lp) { lexical_pos_ = lp; }
-
       bool local_flag() const { return local_flag_; }
       void local_flag(bool f) { local_flag_ = f; }
 
@@ -3546,7 +3561,6 @@ class NetEvent : public LineInfo {
 
     private:
       perm_string name_;
-      unsigned lexical_pos_;
       bool local_flag_;
 
 	// The NetScope class uses these to list the events.
@@ -5216,12 +5230,6 @@ class Design {
 	   handles global name binding. */
 
       NetNet*find_signal(NetScope*scope, pform_name_t path);
-
-	// Functions
-      NetFuncDef* find_function(NetScope*scope, const pform_name_t&key);
-
-	// Tasks
-      NetScope* find_task(NetScope*scope, const pform_name_t&name);
 
 	// NODES
       void add_node(NetNode*);

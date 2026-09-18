@@ -355,7 +355,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	    }
 
 	    rc_flag = use_enum->insert_name(name_idx, cur->name, cur_value);
-	    rc_flag &= scope->add_enumeration_name(use_enum, cur->name);
+	    rc_flag &= scope->add_enumeration_name(use_enum, cur->name, *cur);
 
 	    if (! rc_flag) {
 		  cerr << use_enum->get_fileline()
@@ -487,19 +487,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       }
 
 
-      const netclass_t*use_base_class = 0;
-      if (use_type->base_type) {
-	    ivl_type_t base_type = use_type->base_type->elaborate_type(des, scope);
-	    use_base_class = dynamic_cast<const netclass_t *>(base_type);
-	    if (!use_base_class) {
-		  cerr << pclass->get_fileline() << ": error: "
-		       << "Base type of " << use_type->name
-		       << " is not a class." << endl;
-		  des->errors += 1;
-	    }
-      }
-
-      netclass_t*use_class = new netclass_t(use_type->name, use_base_class);
+      netclass_t*use_class = new netclass_t(use_type->name);
 
       NetScope*class_scope = new NetScope(scope, hname_t(pclass->pscope_name()),
 					  NetScope::CLASS, scope->unit());
@@ -583,6 +571,43 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       scope->add_class(use_class);
 }
 
+static void elaborate_scope_class_bind_super(Design *des, NetScope *scope,
+					     PClass *pclass)
+{
+      auto *class_type = pclass->type;
+
+      if (!class_type->base_type)
+	    return;
+
+      ivl_type_t elaborated_base_type =
+	    class_type->base_type->elaborate_type(des, scope);
+      const auto *base_class =
+	    dynamic_cast<const netclass_t *>(elaborated_base_type);
+      if (!base_class) {
+	    cerr << pclass->get_fileline() << ": error: "
+		 << "Base type of " << class_type->name
+		 << " is not a class." << endl;
+	    des->errors += 1;
+	    return;
+      }
+
+      auto *derived_class = scope->find_class(des, class_type->name);
+      ivl_assert(*pclass, derived_class);
+
+      for (auto ancestor = base_class; ancestor;
+	   ancestor = ancestor->get_super()) {
+	    if (ancestor == derived_class) {
+		  cerr << pclass->get_fileline() << ": error: "
+		       << "Inheritance cycle detected for class `"
+		       << class_type->name << "`." << endl;
+		  des->errors += 1;
+		  return;
+	    }
+      }
+
+      derived_class->set_super(base_class);
+}
+
 static void elaborate_scope_classes(Design*des, NetScope*scope,
 				    const vector<PClass*>&classes)
 {
@@ -597,6 +622,9 @@ static void elaborate_scope_classes(Design*des, NetScope*scope,
 	    blend_class_constructors(classes[idx]);
 	    elaborate_scope_class(des, scope, classes[idx]);
       }
+
+      for (auto pclass : classes)
+	    elaborate_scope_class_bind_super(des, scope, pclass);
 }
 
 static void replace_scope_parameters(Design *des, NetScope*scope, const LineInfo&loc,
@@ -769,6 +797,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       }
 
       scope->add_typedefs(&typedefs);
+      scope->add_gate_names(gates_);
 
 	// Add the genvars to the scope.
       typedef map<perm_string,LineInfo*>::const_iterator genvar_it_t;
@@ -1307,6 +1336,7 @@ void PGenerate::elaborate_subscope_direct_(Design*des, NetScope*scope)
 void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 {
       scope->add_typedefs(&typedefs);
+      scope->add_gate_names(gates);
 
 	// Add the genvars to this scope.
       typedef map<perm_string,LineInfo*>::const_iterator genvar_it_t;
@@ -1497,6 +1527,20 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
  */
 void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*sc) const
 {
+        // A module's compilation unit follows its declaration, not the
+        // instance hierarchy. Nested modules share their outer module's unit.
+      NetScope*unit_scope = nullptr;
+      if (gn_system_verilog()) {
+	    auto unit = mod->parent_scope();
+	    while (unit->parent_scope()) {
+		  unit = unit->parent_scope();
+	    }
+	    auto unit_package = dynamic_cast<PPackage*>(unit);
+	    ivl_assert(*this, unit_package);
+	    unit_scope = des->find_package(unit_package->pscope_name());
+	    ivl_assert(*this, unit_scope && unit_scope->is_unit());
+      }
+
       long instance_low  = 0;
       long instance_high = 0;
       long instance_count = calculate_array_size_(des, sc, instance_high, instance_low);
@@ -1535,7 +1579,8 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // Create the new scope as a MODULE with my name. Note
 	      // that if this is a nested module, mark it thus so that
 	      // scope searches will continue into the parent scope.
-	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE, 0,
+	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE,
+					     unit_scope,
 					     bound_type_? true : false,
 					     mod->program_block,
 					     mod->is_interface);
@@ -1640,7 +1685,6 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 void PEvent::elaborate_scope(Design*, NetScope*scope) const
 {
       NetEvent*ev = new NetEvent(name_);
-      ev->lexical_pos(lexical_pos_);
       ev->set_line(*this);
       scope->add_event(ev);
 }

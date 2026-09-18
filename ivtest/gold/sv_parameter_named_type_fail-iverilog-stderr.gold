@@ -1,0 +1,2 @@
+ivltests/sv_parameter_named_type_fail.v:9: error: `p::missing_type` is not a type.
+1 error(s) during elaboration.

@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_named_type_enum_base_fail.v",
+    "gold"          : "sv_named_type_enum_base_fail",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

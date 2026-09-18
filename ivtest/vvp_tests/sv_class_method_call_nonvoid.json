@@ -1,0 +1,11 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_class_method_call_nonvoid.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "gold"          : "sv_class_method_call_nonvoid",
+    "vlog95" : {
+        "__comment" : "Classes are not supported",
+        "type"      : "CE",
+        "gold"      : ""
+    }
+}

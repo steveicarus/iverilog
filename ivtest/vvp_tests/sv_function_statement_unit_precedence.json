@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_function_statement_unit_precedence.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

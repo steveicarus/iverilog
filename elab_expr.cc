@@ -309,7 +309,9 @@ static const netclass_t* resolve_call_chain_prefix_class(Design*des, NetScope*sc
 
       if (link->peek_chain_prefix() == 0) {
 	    symbol_search_results sr;
-	    if (!symbol_search(link, des, scope, link->peek_path(), UINT_MAX, &sr)) {
+	    if (!symbol_search(link, des, scope, link->peek_path(),
+			       link->lexical_pos(), &sr,
+			       SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE)) {
 		  return 0;
 		}
 	    if (!sr.is_scope() || sr.scope->type() != NetScope::FUNC) {
@@ -484,6 +486,17 @@ unsigned PExpr::test_width(Design*des, NetScope*, width_mode_t&)
 	   << endl;
       des->errors += 1;
       return 1;
+}
+
+ivl_type_t PExpr::elaborate_type(
+		Design *, NetScope *, type_elaboration_context_t) const
+{
+      return nullptr;
+}
+
+bool PExpr::test_type(Design *, NetScope *)
+{
+      return false;
 }
 
 NetExpr* PExpr::elaborate_expr(Design*des, NetScope*scope, ivl_type_t, unsigned flags) const
@@ -1674,21 +1687,30 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	    PExpr *pexpr = parms_[1].parm;
 	    if (pexpr == 0) {
 		  cerr << get_fileline() << ": error: "
-		       << "Missing $ivlh_to_unsigned width." << endl;
+		       << "The width is missing for " << name << "()." << endl;
+		  des->errors += 1;
 		  return 0;
 	    }
 
 	    const NetExpr*nexpr = elab_and_eval(des, scope, pexpr, -1, true);
 	    if (nexpr == 0) {
 		  cerr << get_fileline() << ": error: "
-		       << "Unable to evaluate " << name
-		       << " width argument: " << *pexpr << endl;
+		       << "Unable to evaluate width argument for " << name
+		       << "(): " << *pexpr << endl;
+		  des->errors += 1;
 		  return 0;
 	    }
 
 	    long value = 0;
 	    bool rc = eval_as_long(value, nexpr);
-	    ivl_assert(*this, rc && value>=0);
+	    if (! rc || value < 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "The width argument for " << name
+		       << "() must be defined and greater than or equal to zero, given: "
+		       << *pexpr << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
 
 	      // The argument width is self-determined and doesn't
 	      // affect the result width.
@@ -1724,7 +1746,7 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	    if (expr == 0)
 		  return 0;
 
-	    if (! dynamic_cast<PETypename*>(expr)) {
+	    if (!expr->test_type(des, scope)) {
 		    // The argument type/width is self-determined and doesn't
 		    // affect the result type/width. Note that if the
 		    // argument is a type name (a special case) then
@@ -2091,7 +2113,9 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 
       // Search for the symbol. This should turn up a scope.
       symbol_search_results search_results;
-      bool search_flag = symbol_search(this, des, scope, path_, UINT_MAX, &search_results);
+      bool search_flag = symbol_search(this, des, scope, path_, lexical_pos(),
+				       &search_results,
+				       SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PECallFunction::test_width: "
@@ -2319,9 +2343,10 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 	    PExpr *expr = parms_[0].parm;
 
 	    uint64_t use_width = 0;
-	    if (const PETypename*type_expr = dynamic_cast<PETypename*>(expr)) {
-		  ivl_type_t data_type = type_expr->get_type()->elaborate_type(des, scope);
-		  ivl_assert(*this, data_type);
+	    if (expr->test_type(des, scope)) {
+		  ivl_type_t data_type = expr->elaborate_type(des, scope);
+		  if (!data_type)
+			return nullptr;
 		  use_width = 1;
 		  while (const netuarray_t *utype =
 			 dynamic_cast<const netuarray_t*>(data_type)) {
@@ -2332,7 +2357,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 		  if (!data_type->packed()) {
 			use_width = 0;
 			cerr << get_fileline() << ": error: "
-			     << "Invalid data type for $bits()."
+			     << "Invalid data type for " << name << "()."
 			     << endl;
 			des->errors++;
 		  } else {
@@ -2344,6 +2369,31 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 		  }
 
 	    } else {
+		  switch(expr->expr_type()) {
+		    case IVL_VT_BOOL:
+		    case IVL_VT_LOGIC: // This also covers IVL_VT_VECTOR
+		    case IVL_VT_STRING:
+			break;
+		    case IVL_VT_NO_TYPE:
+			cerr << get_fileline() << ": error: Argument with no known data type '"
+			     << *expr << "' passed to " << name << "()." << endl;
+			des->errors++;
+			break;
+		    case IVL_VT_REAL:
+			  // Traditionally iverilog returned 1 for the width of a real.
+			  // Since 1800-2012 this is now forbidden by the standard.
+			  // To support older code skip the error when requested.
+			if (gn_allow_real_arg_to_bits) break;
+			cerr << get_fileline() << ": error: Real argument '"
+			     << *expr << "' passed to " << name << "()." << endl;
+			des->errors++;
+			break;
+		    default:
+			cerr << get_fileline() << ": sorry: Argument '" << *expr << "' of type '"
+			     << expr->expr_type() << "' passed to " << name << "(). is not "
+			        "currently supported" << endl;
+			des->errors++;
+		  }
 		  use_width = expr->expr_width();
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PECallFunction::elaborate_sfunc_: "
@@ -2756,7 +2806,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		 << "Unpacked structures not supported here."
 		 << endl;
 	    des->errors += 1;
-	    return 0;
+	    return nullptr;
       }
 
 	// These make up the "part" select that is the equivilent of
@@ -2796,7 +2846,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		       << net->name()
 		       << "." << completed_path << endl;
 		  des->errors += 1;
-		  return 0;
+		  return nullptr;
 	    }
 	    member_type = member->net_type;
 	    if (debug_elaborate) {
@@ -2837,13 +2887,13 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 			      cerr << li->get_fileline() << ": error: "
 				   << "Too many index expressions for enum member." << endl;
 			      des->errors += 1;
-			      return 0;
+			      return nullptr;
 			}
 
 			long tail_off = 0;
 			unsigned long tail_wid = 0;
 			bool rc = calculate_part(li, des, scope, member_comp.index.back(), tail_off, tail_wid);
-			if (! rc) return 0;
+			if (! rc) return nullptr;
 
 			off += tail_off;
 			use_width = tail_wid;
@@ -2882,7 +2932,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 			      cerr << li->get_fileline() << ": error: "
 				   << "Too many index expressions for member." << endl;
 			      des->errors += 1;
-			      return 0;
+			      return nullptr;
 			}
 
 			  // Evaluate all but the last index expression, into prefix_indices.
@@ -2900,7 +2950,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 			long tail_off = 0;
 			unsigned long tail_wid = 0;
 			rc = calculate_part(li, des, scope, member_comp.index.back(), tail_off, tail_wid);
-			if (! rc) return 0;
+			if (! rc) return nullptr;
 
 			if (debug_elaborate) {
 			      cerr << li->get_fileline() << ": check_for_struct_member: "
@@ -2962,7 +3012,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 			     << "Too many index expressions for member "
 			     << member_name << "." << endl;
 			des->errors += 1;
-			return 0;
+			return nullptr;
 		  }
 
 		    // Evaluate all but the last index expression, into prefix_indices.
@@ -2978,7 +3028,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 			     << "Array index expressions for member " << member_name
 			     << " must be constant here." << endl;
 			des->errors += 1;
-			return 0;
+			return nullptr;
 		  }
 
 		  delete texpr;
@@ -3230,7 +3280,9 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 
       // Search for the symbol. This should turn up a scope.
       symbol_search_results search_results;
-      bool search_flag = symbol_search(this, des, scope, path_, UINT_MAX, &search_results);
+      bool search_flag = symbol_search(this, des, scope, path_, lexical_pos(),
+				       &search_results,
+				       SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PECallFunction::elaborate_expr: "
@@ -3258,6 +3310,9 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return 0;
       }
+
+      if (!search_results.require_non_type(this, des, "in a function call"))
+	    return 0;
 
       // If the symbol is found, but is not a scope...
       if (! search_results.is_scope() && !test_function_return_value(search_results)) {
@@ -3331,9 +3386,12 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 		 use_search_results.scope = scope;
 		 use_search_results.path_tail.push_back(search_results.path_head.back());
 		 use_search_results.path_head.push_back(name_component_t(perm_string::literal(THIS_TOKEN)));
-		 use_search_results.net = scope->find_signal(perm_string::literal(THIS_TOKEN));
-		 use_search_results.type = use_search_results.net->net_type();
+		 NetScope *method_scope = find_method_containing_scope(*this, scope);
+		 ivl_assert(*this, method_scope);
+		 use_search_results.net = method_scope->find_signal(
+		       perm_string::literal(THIS_TOKEN));
 		 ivl_assert(*this, use_search_results.net);
+		 use_search_results.type = use_search_results.net->net_type();
 
 		 return elaborate_expr_method_(des, scope, use_search_results);
            }
@@ -4210,151 +4268,263 @@ NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, const NetScope*s
       return 0;
 }
 
-unsigned PECastSize::test_width(Design*des, NetScope*scope, width_mode_t&)
+struct cast_type_info_t {
+      ivl_variable_type_t expr_type;
+      unsigned int width;
+};
+
+static cast_type_info_t cast_type_info(ivl_type_t type)
 {
-      ivl_assert(*this, size_);
+      if (auto darray = dynamic_cast<const netdarray_t *>(type)) {
+	    return { darray->element_base_type(),
+		     static_cast<unsigned int>(darray->element_width()) };
+      }
+
+      if (auto string_type = dynamic_cast<const netstring_t *>(type)) {
+	    return { string_type->base_type(), 8 };
+      }
+
+      return { type->base_type(),
+	       static_cast<unsigned int>(type->packed_width()) };
+}
+
+static unsigned int evaluate_cast_size(Design *des, NetScope *scope,
+				       PExpr *target, const LineInfo &loc)
+{
+      unsigned int width = 0;
+      auto size_expr = elab_and_eval(des, scope, target, -1, true);
+      auto size_const = dynamic_cast<NetEConst *>(size_expr);
+      if (size_const && !size_const->value().is_negative())
+	    width = size_const->value().as_ulong();
+      delete size_expr;
+
+      if (width == 0) {
+	    cerr << loc.get_fileline() << ": error: Cast size expression "
+		 << "must be constant and greater than zero." << endl;
+	    des->errors += 1;
+      }
+
+      return width;
+}
+
+static bool test_size_cast_base(Design *des, NetScope *scope, PExpr *base,
+				const LineInfo &loc)
+{
+      PExpr::width_mode_t mode = PExpr::SIZED;
+      base->test_width(des, scope, mode);
+
+      if (type_is_vectorable(base->expr_type()))
+	    return true;
+
+      cerr << loc.get_fileline() << ": error: Cast base expression "
+	   << "must be a vector type." << endl;
+      des->errors += 1;
+      return false;
+}
+
+PECast::target_info_t PECast::resolve_target_(Design *des,
+					     NetScope *scope) const
+{
+      target_info_t target_info;
+
+      if (target_->test_type(des, scope)) {
+	    auto type = target_->elaborate_type(
+		  des, scope, PExpr::type_elaboration_context_t::CAST_TARGET);
+	    if (!type)
+		  return target_info;
+
+	    target_info.kind = target_kind_t::TYPE;
+	    target_info.type = type;
+	    return target_info;
+      }
+
+      target_info.width = evaluate_cast_size(
+	    des, scope, target_.get(), *this);
+      if (target_info.width != 0)
+	    target_info.kind = target_kind_t::SIZE;
+
+      return target_info;
+}
+
+PECast::target_info_t PECast::target_for_scope_(Design *des,
+						 NetScope *scope) const
+{
+      if (target_resolved_ && target_scope_ == scope)
+	    return target_info_;
+
+      return resolve_target_(des, scope);
+}
+
+unsigned int PECast::test_width(Design *des, NetScope *scope, width_mode_t &)
+{
+      ivl_assert(*this, target_);
       ivl_assert(*this, base_);
 
-      expr_width_ = 0;
-
-      NetExpr*size_ex = elab_and_eval(des, scope, size_, -1, true);
-      const NetEConst*size_ce = dynamic_cast<NetEConst*>(size_ex);
-      if (size_ce && !size_ce->value().is_negative())
-	    expr_width_ = size_ce->value().as_ulong();
-      delete size_ex;
-      if (expr_width_ == 0) {
-	    cerr << get_fileline() << ": error: Cast size expression "
-		    "must be constant and greater than zero." << endl;
-	    des->errors += 1;
-	    return 0;
+      if (!target_resolved_ || target_scope_ != scope) {
+	    target_info_ = resolve_target_(des, scope);
+	    target_scope_ = scope;
+	    target_resolved_ = true;
       }
 
-      width_mode_t tmp_mode = PExpr::SIZED;
-      base_->test_width(des, scope, tmp_mode);
-
-      if (!type_is_vectorable(base_->expr_type())) {
-	    cerr << get_fileline() << ": error: Cast base expression "
-		    "must be a vector type." << endl;
-	    des->errors += 1;
+      const auto &target_info = target_info_;
+      if (target_info.kind == target_kind_t::ERROR)
 	    return 0;
+
+      if (target_info.kind == target_kind_t::TYPE) {
+	    width_mode_t mode = PExpr::SIZED;
+	    base_->test_width(des, scope, mode);
+
+	    auto type_info = cast_type_info(target_info.type);
+	    expr_type_ = type_info.expr_type;
+	    expr_width_ = type_info.width;
+	    min_width_ = expr_width_;
+	    signed_flag_ = target_info.type->get_signed();
+	    return expr_width_;
       }
 
-      expr_type_   = base_->expr_type();
-      min_width_   = expr_width_;
+      ivl_assert(*this, target_info.kind == target_kind_t::SIZE);
+      expr_width_ = target_info.width;
+      if (!test_size_cast_base(des, scope, base_.get(), *this))
+	    return 0;
+
+      expr_type_ = base_->expr_type();
+      min_width_ = expr_width_;
       signed_flag_ = base_->has_sign();
-
       return expr_width_;
 }
 
-NetExpr* PECastSize::elaborate_expr(Design*des, NetScope*scope,
-				    unsigned expr_wid, unsigned flags) const
+NetExpr *PECast::elaborate_expr(Design *des, NetScope *scope, ivl_type_t,
+				unsigned int flags) const
 {
-      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
-
-      ivl_assert(*this, size_);
+      ivl_assert(*this, target_);
       ivl_assert(*this, base_);
+
+      auto target_info = target_for_scope_(des, scope);
+      if (target_info.kind == target_kind_t::ERROR)
+	    return nullptr;
+
+      if (target_info.kind == target_kind_t::TYPE) {
+	    width_mode_t mode = PExpr::SIZED;
+	    base_->test_width(des, scope, mode);
+
+	    auto type_info = cast_type_info(target_info.type);
+	    return elaborate_type_cast_(des, scope, type_info.width,
+					target_info.type, type_info.width,
+					target_info.type->get_signed(),
+					flags);
+      }
+
+      ivl_assert(*this, target_info.kind == target_kind_t::SIZE);
+      return elaborate_size_cast_(des, scope, target_info.width,
+				  target_info.width,
+				  base_->has_sign(), flags);
+}
+
+NetExpr *PECast::elaborate_expr(Design *des, NetScope *scope,
+				unsigned int expr_wid,
+				unsigned int flags) const
+{
+      ivl_assert(*this, target_);
+      ivl_assert(*this, base_);
+
+      auto target_info = target_for_scope_(des, scope);
+      if (target_info.kind == target_kind_t::ERROR)
+	    return nullptr;
+
+      if (target_info.kind == target_kind_t::TYPE) {
+	    auto type_info = cast_type_info(target_info.type);
+	    return elaborate_type_cast_(des, scope, expr_wid, target_info.type,
+					type_info.width, signed_flag_,
+					flags);
+      }
+
+      ivl_assert(*this, target_info.kind == target_kind_t::SIZE);
+      return elaborate_size_cast_(des, scope, expr_wid, target_info.width,
+				  signed_flag_, flags);
+}
+
+NetExpr *PECast::elaborate_size_cast_(Design *des, NetScope *scope,
+				      unsigned int expr_wid,
+				      unsigned int target_width,
+				      bool signed_flag,
+				      unsigned int flags) const
+{
+      flags &= ~SYS_TASK_ARG;
 
 	// A cast behaves exactly like an assignment to a temporary variable,
 	// so the temporary result size may affect the sub-expression width.
-      unsigned cast_width = base_->expr_width();
-      if (cast_width < expr_width_)
-            cast_width = expr_width_;
+      unsigned int cast_width = base_->expr_width();
+      if (cast_width < target_width)
+	    cast_width = target_width;
 
-      NetExpr*sub = base_->elaborate_expr(des, scope, cast_width, flags);
-      if (sub == 0)
-	    return 0;
+      auto sub = base_->elaborate_expr(des, scope, cast_width, flags);
+      if (!sub)
+	    return nullptr;
 
 	// Perform the cast. The extension method (zero/sign), if needed,
 	// depends on the type of the base expression.
-      NetExpr*tmp = cast_to_width(sub, expr_width_, base_->has_sign(), *this);
+      auto tmp = cast_to_width(sub, target_width, base_->has_sign(), *this);
 
 	// Pad up to the expression width. The extension method (zero/sign)
 	// depends on the type of enclosing expression.
-      return pad_to_width(tmp, expr_wid, signed_flag_, *this);
+      return pad_to_width(tmp, expr_wid, signed_flag, *this);
 }
 
-unsigned PECastType::test_width(Design*des, NetScope*scope, width_mode_t&)
+NetExpr *PECast::elaborate_type_cast_(Design *des, NetScope *scope,
+				      unsigned int expr_wid,
+				      ivl_type_t target_type,
+				      unsigned int target_width,
+				      bool signed_flag,
+				      unsigned int flags) const
 {
-      target_type_ = target_->elaborate_type(des, scope);
+      auto darray = dynamic_cast<const netdarray_t *>(target_type);
+      auto vector = darray
+	    ? dynamic_cast<const netvector_t *>(darray->element_type())
+	    : nullptr;
+      if (vector) {
+	    unsigned int use_width = base_->expr_width();
+	    auto base_expr = base_->elaborate_expr(des, scope, use_width,
+					      NO_FLAGS);
+	    if (!base_expr)
+		  return nullptr;
 
-      width_mode_t tmp_mode = PExpr::SIZED;
-      base_->test_width(des, scope, tmp_mode);
+	    ivl_assert(*this, vector->packed_width() > 0);
+	    ivl_assert(*this, base_expr->expr_width() > 0);
 
-      if (const netdarray_t*use_darray = dynamic_cast<const netdarray_t*>(target_type_)) {
-	    expr_type_  = use_darray->element_base_type();
-	    expr_width_ = use_darray->element_width();
+	    // Find the number of elements needed to contain the source value.
+	    int length = base_expr->expr_width() + vector->packed_width() - 1;
+	    if (base_expr->expr_width() >
+		static_cast<unsigned int>(vector->packed_width()))
+		  length /= vector->packed_width();
+	    else
+		  length /= base_expr->expr_width();
 
-      } else if (const netstring_t*use_string = dynamic_cast<const netstring_t*>(target_type_)) {
-	    expr_type_  = use_string->base_type();
-	    expr_width_ = 8;
-
-      } else {
-	    expr_type_  = target_type_->base_type();
-	    expr_width_ = target_type_->packed_width();
+	    auto length_expr = new NetEConst(verinum(length));
+	    return new NetENew(target_type, length_expr, base_expr);
       }
-      min_width_   = expr_width_;
-      signed_flag_ = target_type_->get_signed();
 
-      return expr_width_;
-}
-
-NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
-                                    ivl_type_t type, unsigned flags) const
-{
-    const netdarray_t*darray = NULL;
-    const netvector_t*vector = NULL;
-
-    // Casting array of vectors to dynamic array type
-    if((darray = dynamic_cast<const netdarray_t*>(type)) &&
-            (vector = dynamic_cast<const netvector_t*>(darray->element_type()))) {
-        PExpr::width_mode_t mode = PExpr::SIZED;
-        unsigned use_wid = base_->test_width(des, scope, mode);
-        NetExpr*base = base_->elaborate_expr(des, scope, use_wid, NO_FLAGS);
-
-        ivl_assert(*this, vector->packed_width() > 0);
-        ivl_assert(*this, base->expr_width() > 0);
-
-        // Find rounded up length that can fit the whole casted array of vectors
-        int len = base->expr_width() + vector->packed_width() - 1;
-        if(base->expr_width() > (unsigned)vector->packed_width()) {
-            len /= vector->packed_width();
-        } else {
-            len /= base->expr_width();
-        }
-
-        // Number of words in the created dynamic array
-        NetEConst*len_expr = new NetEConst(verinum(len));
-        return new NetENew(type, len_expr, base);
-    }
-
-    // Fallback
-    return elaborate_expr(des, scope, (unsigned) 0, flags);
-}
-
-NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
-				    unsigned expr_wid, unsigned flags) const
-{
-      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
+      flags &= ~SYS_TASK_ARG;
 
 	// A cast behaves exactly like an assignment to a temporary variable,
 	// so the temporary result size may affect the sub-expression width.
-      unsigned cast_width = base_->expr_width();
-      if (type_is_vectorable(base_->expr_type()) && (cast_width < expr_width_))
-	    cast_width = expr_width_;
+      unsigned int cast_width = base_->expr_width();
+      if (type_is_vectorable(base_->expr_type()) &&
+	  cast_width < target_width)
+	    cast_width = target_width;
 
-      NetExpr*sub = base_->elaborate_expr(des, scope, cast_width, flags);
-      if (sub == 0)
-	    return 0;
+      auto sub = base_->elaborate_expr(des, scope, cast_width, flags);
+      if (!sub)
+	    return nullptr;
 
-      NetExpr*tmp = 0;
-      if (dynamic_cast<const netreal_t*>(target_type_)) {
+      NetExpr *tmp = nullptr;
+      if (dynamic_cast<const netreal_t *>(target_type)) {
 	    switch (sub->expr_type()) {
 		case IVL_VT_REAL:
 		  return sub;
 		case IVL_VT_LOGIC:
 		case IVL_VT_BOOL:
 		  return cast_to_real(sub);
-	        default:
+		default:
 		  break;
 	    }
 	    cerr << get_fileline() << " error: Expression of type `"
@@ -4362,40 +4532,42 @@ NetExpr* PECastType::elaborate_expr(Design*des, NetScope*scope,
 		 << endl;
 	    des->errors++;
 	    return nullptr;
-      } else if (dynamic_cast<const netstring_t*>(target_type_)) {
+      }
+
+      if (dynamic_cast<const netstring_t *>(target_type)) {
 	    if (base_->expr_type() == IVL_VT_STRING)
-		  return sub; // no conversion
+		  return sub;
 	    if (base_->expr_type() == IVL_VT_LOGIC ||
 		base_->expr_type() == IVL_VT_BOOL)
-		  return sub; // handled by the target as special cases
-      } else if (target_type_ && target_type_->packed()) {
-	    switch (target_type_->base_type()) {
+		  return sub;
+      } else if (target_type->packed()) {
+	    switch (target_type->base_type()) {
 		case IVL_VT_BOOL:
-		  tmp = cast_to_int2(sub, expr_width_);
+		  tmp = cast_to_int2(sub, target_width);
 		  break;
-
 		case IVL_VT_LOGIC:
-		  tmp = cast_to_int4(sub, expr_width_);
+		  tmp = cast_to_int4(sub, target_width);
 		  break;
-
 		default:
 		  break;
 	    }
       }
+
       if (tmp) {
 	    if (tmp == sub) {
 		    // We already had the correct base type, so we just need to
 		    // fix the size. Note that even if the size is already correct,
-                    // we still need to isolate the sub-expression from changes in
-                    // the signedness pushed down from the main expression.
-		  tmp = cast_to_width(sub, expr_width_, sub->has_sign(), *this);
+		    // we still need to isolate the sub-expression from changes in
+		    // the signedness pushed down from the main expression.
+		  tmp = cast_to_width(sub, target_width, sub->has_sign(), *this);
 	    }
-	    return pad_to_width(tmp, expr_wid, signed_flag_, *this, target_type_);
+	    return pad_to_width(tmp, expr_wid, signed_flag, *this, target_type);
       }
 
-      cerr << get_fileline() << ": sorry: This cast operation is not yet supported." << endl;
+      cerr << get_fileline()
+	   << ": sorry: This cast operation is not yet supported." << endl;
       des->errors += 1;
-      return 0;
+      return nullptr;
 }
 
 unsigned PECastSign::test_width(Design *des, NetScope *scope, width_mode_t &mode)
@@ -4993,10 +5165,168 @@ ivl_type_t PEIdent::resolve_type_(Design *des, const symbol_search_results &sr,
       return type;
 }
 
+bool PEIdent::find_type_(Design *des, NetScope *scope,
+			 struct symbol_search_results &search_results,
+			 bool strict_declaration_order) const
+{
+      unsigned int flags = SYMBOL_SEARCH_NO_SIGNAL_ELABORATION;
+      if (strict_declaration_order) {
+	    flags |= SYMBOL_SEARCH_STRICT_DECLARATION_ORDER;
+      }
+
+      return symbol_search(this, des, scope, path_, lexical_pos(),
+			   &search_results, flags)
+	    && search_results.type_def;
+}
+
+bool PEIdent::test_type(Design *des, NetScope *scope)
+{
+      if (type_lookup_.valid && type_lookup_.lookup_scope == scope)
+	    return type_lookup_.type_def != nullptr;
+
+      symbol_search_results search_results;
+      find_type_(des, scope, search_results, false);
+
+      type_lookup_.lookup_scope = scope;
+      type_lookup_.declaration_scope = search_results.scope;
+      type_lookup_.type_def = search_results.type_def;
+      type_lookup_.valid = true;
+
+      return type_lookup_.type_def != nullptr;
+}
+
+static bool elaborate_type_dimensions(Design *des, NetScope *scope,
+		const std::list<index_component_t> &indices,
+		netranges_t &dimensions)
+{
+      dimensions.reserve(indices.size());
+      bool dimensions_ok = true;
+
+      for (const auto &index : indices) {
+	    PExpr *range_msb = index.msb;
+	    PExpr *range_lsb = nullptr;
+
+	    switch (index.sel) {
+		case index_component_t::SEL_BIT:
+		  break;
+		case index_component_t::SEL_PART:
+		  range_lsb = index.lsb;
+		  break;
+		case index_component_t::SEL_NONE:
+		  cerr << index.get_fileline() << ": error: "
+		       << "An unsized dimension is not allowed here." << endl;
+		  des->errors++;
+		  dimensions_ok = false;
+		  continue;
+		case index_component_t::SEL_BIT_LAST:
+		case index_component_t::SEL_QUEUE_BOUND:
+		  cerr << index.get_fileline() << ": error: "
+		       << "A queue dimension is not allowed here." << endl;
+		  des->errors++;
+		  dimensions_ok = false;
+		  continue;
+		case index_component_t::SEL_IDX_UP:
+		case index_component_t::SEL_IDX_DO:
+		  cerr << index.get_fileline() << ": error: "
+		       << "An indexed part select is not allowed in a dimension."
+		       << endl;
+		  des->errors++;
+		  dimensions_ok = false;
+		  continue;
+	    }
+
+	    long range_msb_value = 0;
+	    long range_lsb_value = 0;
+	    pform_range_t range(range_msb, range_lsb);
+	    dimensions_ok &= evaluate_range(des, scope, &index, range,
+				    range_msb_value, range_lsb_value);
+	    dimensions.emplace_back(range_msb_value, range_lsb_value);
+      }
+
+      return dimensions_ok;
+}
+
+ivl_type_t PEIdent::elaborate_type(
+		Design *des, NetScope *scope,
+		type_elaboration_context_t context) const
+{
+      symbol_search_results search_results;
+      NetScope *declaration_scope;
+      typedef_t *type_def;
+      const bool strict_declaration_order =
+	    context == type_elaboration_context_t::REQUIRED_TYPE;
+
+      if (!strict_declaration_order && type_lookup_.valid &&
+	  type_lookup_.lookup_scope == scope) {
+	    declaration_scope = type_lookup_.declaration_scope;
+	    type_def = type_lookup_.type_def;
+      } else {
+	    if (!find_type_(des, scope, search_results,
+			    strict_declaration_order)) {
+		  if (strict_declaration_order) {
+			cerr << get_fileline() << ": error: `" << *this
+			     << "` is not a type." << endl;
+			des->errors += 1;
+		  }
+		  return nullptr;
+	    }
+	    declaration_scope = search_results.scope;
+	    type_def = search_results.type_def;
+      }
+
+      if (!type_def)
+	    return nullptr;
+
+      // Recognize types at the end of hierarchical paths during lookup so
+      // they are not mistaken for values, but reject the hierarchical type
+      // reference during elaboration.
+      if (path_.name.size() != 1) {
+	    cerr << get_fileline() << ": error: Type name `" << path_
+		 << "' cannot be referenced through a hierarchical path."
+		 << endl;
+	    cerr << type_def->get_fileline()
+		 << ":      : The type was declared here." << endl;
+	    des->errors++;
+	    return nullptr;
+      }
+
+      const auto &name = path_.name.front();
+      if (context == type_elaboration_context_t::CAST_TARGET &&
+	  !name.index.empty()) {
+	    cerr << get_fileline() << ": error: Dimensions after a type "
+		 << "identifier are not allowed in a cast target." << endl;
+	    cerr << type_def->get_fileline()
+		 << ":      : The type was declared here." << endl;
+	    des->errors++;
+	    return nullptr;
+      }
+
+      ivl_type_t base_type = type_def->elaborate_type(des, declaration_scope);
+      if (!base_type)
+	    return nullptr;
+
+      netranges_t packed_dimensions;
+      if (!elaborate_type_dimensions(des, scope, name.index,
+				     packed_dimensions))
+	    return nullptr;
+
+      if (packed_dimensions.empty())
+	    return base_type;
+
+      if (!base_type->packed()) {
+	    cerr << get_fileline() << ": error: Packed array base-type `"
+		 << name.name << "` is not packed." << endl;
+	    des->errors++;
+	    return nullptr;
+      }
+
+      return new netparray_t(packed_dimensions, base_type);
+}
+
 unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
       symbol_search_results sr;
-      bool found_symbol = symbol_search(this, des, scope, path_, lexical_pos_, &sr);
+      bool found_symbol = symbol_search(this, des, scope, path_, lexical_pos(), &sr);
 
 	// If there is a part/bit select expression, then process it
 	// here. This constrains the results no matter what kind the
@@ -5160,7 +5490,10 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       bool need_const = NEED_CONST & flags;
 
       symbol_search_results sr;
-      symbol_search(this, des, scope, path_, lexical_pos_, &sr);
+      symbol_search(this, des, scope, path_, lexical_pos(), &sr);
+
+      if (!sr.require_non_type(this, des, "in an expression"))
+	    return nullptr;
 
       if (!sr.net) {
             cerr << get_fileline() << ": error: Unable to bind variable `"
@@ -5495,7 +5828,10 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 	// a net called "b" in the scope "main.a" and with a member
 	// named "c". symbol_search() handles this for us.
       symbol_search_results sr;
-      symbol_search(this, des, scope, path_, lexical_pos_, &sr);
+      symbol_search(this, des, scope, path_, lexical_pos(), &sr);
+
+      if (!sr.require_non_type(this, des, "in an expression"))
+	    return 0;
 
 	// If the identifier name is a parameter name, then return
 	// the parameter value.
@@ -8195,6 +8531,17 @@ NetExpr* PETernary::elab_and_eval_alternative_(Design*des, NetScope*scope,
  * A typename expression is only legal in very narrow cases. This is
  * just a placeholder.
  */
+ivl_type_t PETypename::elaborate_type(
+		Design *des, NetScope *scope, type_elaboration_context_t) const
+{
+      return data_type_->elaborate_type(des, scope);
+}
+
+bool PETypename::test_type(Design *, NetScope *)
+{
+      return true;
+}
+
 unsigned PETypename::test_width(Design*des, NetScope*, width_mode_t&)
 {
       cerr << get_fileline() << ": error: "

@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_disable_order_event_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

@@ -217,12 +217,9 @@ ostream& data_type_t::debug_dump(ostream&out) const
       return out;
 }
 
-std::ostream& typeref_t::debug_dump(ostream&out) const
+std::ostream& type_identifier_t::debug_dump(ostream&out) const
 {
-      if (scope)
-	    out << scope->pscope_name() << "::";
-      out << type->name;
-
+      out << *identifier_;
       return out;
 }
 
@@ -431,16 +428,9 @@ void PECallFunction::dump(ostream &out) const
       }
 }
 
-void PECastSize::dump(ostream &out) const
+void PECast::dump(ostream &out) const
 {
-      out << *size_ << "'(";
-      base_->dump(out);
-      out << ")";
-}
-
-void PECastType::dump(ostream &out) const
-{
-      target_->pform_dump(out, 0);
+      target_->dump(out);
       out << "'(";
       base_->dump(out);
       out << ")";
@@ -506,6 +496,11 @@ void PENull::dump(ostream&out) const
       out << "null";
 }
 
+void PEQueueDimension::dump(ostream&out) const
+{
+      out << "$";
+}
+
 void PENumber::dump(ostream&out) const
 {
       out << value();
@@ -528,7 +523,7 @@ void PETernary::dump(ostream&out) const
 
 void PETypename::dump(ostream&fd) const
 {
-      fd << "<type>";
+      data_type_->pform_dump(fd, 0);
 }
 
 void PEUnary::dump(ostream&out) const

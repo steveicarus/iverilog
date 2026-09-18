@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_class_forward_base_undefined_fail.v",
+    "gold"          : "sv_class_forward_base_undefined_fail",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

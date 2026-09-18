@@ -122,7 +122,7 @@ pr1000			normal			ivltests
 pr1609611		normal			ivltests
 pr1750870		normal			ivltests
 pr1765789		normal			ivltests
-pr1771903		normal			ivltests gold=pr1771903.gold
+pr1771903		normal,-gallow-real-arg-to-bits ivltests gold=pr1771903.gold
 pr1793749		normal			ivltests gold=pr1793749.gold
 pr1793749b		normal			ivltests gold=pr1793749b.gold
 pr1861212b		normal			ivltests gold=pr1861212.gold

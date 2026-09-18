@@ -1,4 +1,4 @@
-// Check that old-style UDP names can shadow visible type identifiers.
+// Check that old-style UDP and port names can match visible type identifiers.
 
 package p;
   typedef int OLD_UDP;

@@ -1,0 +1,4 @@
+ivltests/sv_type_identifier_shadow_implicit_port_fail.v:13: error: Type name `value' cannot be used in an expression.
+ivltests/sv_type_identifier_shadow_implicit_port_fail.v:12:      : The type was declared here.
+ivltests/sv_type_identifier_shadow_implicit_port_fail.v:13: error: Failed to elaborate input port 'value' expression (value) in instance inner.i_m of module: M.
+2 error(s) during elaboration.

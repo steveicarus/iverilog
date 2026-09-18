@@ -1,4 +1,4 @@
-// Check that foreach array expressions can shadow visible type identifiers.
+// Check that a later array declaration shadows a typedef in a foreach expression.
 
 typedef int A;
 

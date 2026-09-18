@@ -1,0 +1,4 @@
+ivltests/sv_type_identifier_shadow_lvalue_fail.v:13: error: Type name `value' cannot be used as a procedural l-value.
+ivltests/sv_type_identifier_shadow_lvalue_fail.v:12:      : The type was declared here.
+ivltests/sv_type_identifier_shadow_lvalue_fail.v:13: error: I give up on task port 1 expression: value
+1 error(s) during elaboration.

@@ -1,0 +1,3 @@
+ivltests/sv_type_identifier_shadow_function_call_fail.v:11: error: Type name `value' cannot be used in a function call.
+ivltests/sv_type_identifier_shadow_function_call_fail.v:13:      : The type was declared here.
+Elaboration failed

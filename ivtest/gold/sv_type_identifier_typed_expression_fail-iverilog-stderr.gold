@@ -1,0 +1,3 @@
+ivltests/sv_type_identifier_typed_expression_fail.v:13: error: Type name `i_container.value' cannot be used in an expression.
+ivltests/sv_type_identifier_typed_expression_fail.v:4:      : The type was declared here.
+Elaboration failed

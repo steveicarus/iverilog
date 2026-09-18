@@ -1,0 +1,4 @@
+ivltests/sv_cast_type_error_once_fail.v:8: error: Unable to bind parameter `missing' in `test'
+ivltests/sv_cast_type_error_once_fail.v:8: error: Dimensions must be a constant with no unknown or high-Z bits.
+ivltests/sv_cast_type_error_once_fail.v:8       : This MSB expression violates the rule: missing
+2 error(s) during elaboration.

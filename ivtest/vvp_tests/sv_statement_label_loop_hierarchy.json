@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_statement_label_loop_hierarchy.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Loop indices require signed register support.",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}

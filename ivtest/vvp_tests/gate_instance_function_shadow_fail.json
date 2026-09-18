@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "gate_instance_function_shadow_fail.v",
+    "iverilog-args" : [ "-g2001" ]
+}

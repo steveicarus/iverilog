@@ -27,9 +27,9 @@ module test;
     e = T;
 
     `check(e, 3, "Enum item name did not hide typedef");
-    `check(U0, 5, "Enum item sequence name did not hide typedef");
+    `check(U0, 5, "Enum item sequence first value mismatch");
     `check(U1, 6, "Enum item sequence value mismatch");
-    `check(V3, 9, "Enum item range name did not hide typedef");
+    `check(V3, 9, "Enum item range first value mismatch");
     `check(V4, 10, "Enum item range value mismatch");
 
     if (!failed) begin
