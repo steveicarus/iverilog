@@ -26,8 +26,10 @@ static void function_argument_logic(ivl_signal_t port, ivl_expr_t expr)
 {
       unsigned ewidth, pwidth;
 
-	/* ports cannot be arrays. */
-      assert(ivl_signal_dimensions(port) == 0);
+	/* An unpacked array port is copied straight from the source signal in
+	   the send pass, so there is nothing to evaluate onto the stack. */
+      if (ivl_signal_dimensions(port) > 0)
+	    return;
 
       ewidth = ivl_expr_width(expr);
       pwidth = ivl_signal_width(port);
@@ -40,8 +42,10 @@ static void function_argument_logic(ivl_signal_t port, ivl_expr_t expr)
 
 static void function_argument_real(ivl_signal_t port, ivl_expr_t expr)
 {
-	/* ports cannot be arrays. */
-      assert(ivl_signal_dimensions(port) == 0);
+	/* See function_argument_logic: array ports are handled in the send
+	   pass. */
+      if (ivl_signal_dimensions(port) > 0)
+	    return;
 
       draw_eval_real(expr);
 }
@@ -74,9 +78,18 @@ static void draw_eval_function_argument(ivl_signal_t port, ivl_expr_t expr)
       }
 }
 
-static void draw_send_function_argument(ivl_signal_t port)
+static void draw_send_function_argument(ivl_signal_t port, ivl_expr_t expr)
 {
       ivl_variable_type_t dtype = ivl_signal_data_type(port);
+
+	/* An unpacked array argument is a memory-to-memory copy rather than a
+	   value on the stack, so it is done here in the send pass, reading the
+	   source signal directly. */
+      if (ivl_signal_dimensions(port) > 0) {
+	    vvp_errors += draw_array_copy(port, expr);
+	    return;
+      }
+
       switch (dtype) {
 	  case IVL_VT_BOOL:
 	      /* For now, treat bit2 variables as bit4 variables. */
@@ -126,7 +139,7 @@ static void draw_ufunc_preamble(ivl_expr_t expr)
       }
       for (idx = ivl_expr_parms(expr) ;  idx > 0 ;  idx -= 1) {
 	    ivl_signal_t port = ivl_scope_port(def, idx);
-	    draw_send_function_argument(port);
+	    draw_send_function_argument(port, ivl_expr_parm(expr, idx-1));
       }
 
 	/* Call the function */

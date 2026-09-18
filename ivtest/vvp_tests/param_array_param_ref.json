@@ -1,0 +1,5 @@
+{
+    "type"   : "normal",
+    "source" : "param_array_param_ref.v",
+    "iverilog-args" : [ "-g2012" ]
+}

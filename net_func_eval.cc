@@ -1097,6 +1097,29 @@ NetExpr* NetESignal::evaluate_function(const LineInfo&loc,
       }
 
       const NetExpr*value = 0;
+      if (var->nwords > 0 && word_ == 0) {
+	      // A reference to the whole unpacked array (no word index), e.g.
+	      // `return arr;` in a constant function. Assemble the current word
+	      // values into an array pattern that later evaluation (e.g. the
+	      // enclosing localparam) can consume/flatten.
+	    const netarray_t*atype = sig()->array_type();
+	    ivl_assert(loc, atype);
+	    ivl_type_t etype = atype->element_type();
+	    std::vector<NetExpr*> items (var->nwords);
+	    for (int idx = 0 ; idx < var->nwords ; idx += 1) {
+		  if (var->array[idx]) {
+			items[idx] = var->array[idx]->dup_expr();
+		  } else if (etype->base_type() == IVL_VT_REAL) {
+			items[idx] = new NetECReal(verireal(0.0));
+		  } else {
+			items[idx] = new NetEConst(verinum(verinum::Vx,
+						   etype->packed_width(), true));
+		  }
+	    }
+	    NetEArrayPattern*ap = new NetEArrayPattern(atype, items);
+	    ap->set_line(loc);
+	    return ap;
+      }
       if (var->nwords > 0) {
 	    ivl_assert(loc, word_);
 	    NetExpr*word_result = word_->evaluate_function(loc, context_map);

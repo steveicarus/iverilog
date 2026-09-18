@@ -1,6 +1,5 @@
 {
-    "type"   : "CE",
+    "type"   : "normal",
     "source" : "br_gh1180a.v",
-    "iverilog-args" : [ "-g2009" ],
-    "gold" : "br_gh1180a"
+    "iverilog-args" : [ "-g2009" ]
 }

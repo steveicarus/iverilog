@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "func_return_uarray.v",
+    "iverilog-args" : [ "-g2012" ]
+}

@@ -280,8 +280,10 @@ static void func_always_sens(NetFuncDef *func, NexusSet *result,
 	std::unique_ptr<NexusSet> in(new NexusSet);
 	for (unsigned idx = 0; idx < func->port_count(); idx++) {
 	      NetNet *net = func->port(idx);
-	      assert(net->pin_count() == 1);
-	      in->add(net->pin(0).nexus(), 0, net->vector_width());
+		// A port with unpacked dimensions has one pin per word, so
+		// remove them all, not just the first.
+	      for (unsigned pin = 0 ; pin < net->pin_count() ; pin += 1)
+		    in->add(net->pin(pin).nexus(), 0, net->vector_width());
 	}
 	tmp->rem(*in);
 	result->add(*tmp);
