@@ -546,8 +546,8 @@ static bool symbol_search_(const LineInfo *li, Design *des, NetScope *scope,
 	    const bool is_design_unit =
 		  (scope->type() == NetScope::MODULE && !scope->nested_module())
 		  || scope->type() == NetScope::PACKAGE;
-	    if (!scope_is_bound && !searched_unit_scope && is_design_unit
-		&& unit_scope && scope != unit_scope) {
+	    if (!searched_unit_scope && is_design_unit &&
+		unit_scope && scope != unit_scope) {
 		  instance_parent = scope->parent();
 		  scope = unit_scope;
 		  searched_unit_scope = true;
@@ -611,7 +611,7 @@ static bool symbol_search_(const LineInfo *li, Design *des, NetScope *scope,
 }
 
 bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
-		   pform_name_t path, unsigned int lexical_pos,
+		   const pform_name_t &path, unsigned int lexical_pos,
 		   struct symbol_search_results *res, unsigned int flags)
 {
       const bool allow_forward_reference =

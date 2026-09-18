@@ -477,7 +477,7 @@ static void blend_class_constructors(PClass*pclass)
 
 static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 {
-      class_type_t*use_type = pclass->type;
+      const class_type_t*use_type = pclass->type;
 
       if (debug_scopes) {
 	    cerr << pclass->get_fileline() <<": elaborate_scope_class: "

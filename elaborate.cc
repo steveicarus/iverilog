@@ -4635,11 +4635,11 @@ bool PCallTask::test_task_calls_ok_(Design*des, const NetScope*scope) const
 }
 
 NetProc *PCallTask::elaborate_non_void_function_(Design *des, NetScope *scope,
-						 const pform_name_t &path) const
+						 const pform_name_t &cpath) const
 {
 	// Generate a function call version of this task call.
       pform_scoped_name_t call_path = path_;
-      call_path.name = path;
+      call_path.name = cpath;
       auto rval = new PECallFunction(call_path, parms_);
       rval->set_line(*this);
 	// Generate an assign to nothing.
@@ -4647,7 +4647,7 @@ NetProc *PCallTask::elaborate_non_void_function_(Design *des, NetScope *scope,
       tmp->set_line(*this);
       if (!void_cast_) {
 	    cerr << get_fileline() << ": warning: User function '"
-		 << peek_tail_name(path) << "' is being called as a task." << endl;
+		 << peek_tail_name(cpath) << "' is being called as a task." << endl;
       }
 
 	// Elaborate the assignment to a dummy variable.

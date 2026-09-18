@@ -152,7 +152,7 @@ static inline bool test_function_return_value(const symbol_search_results&search
 }
 
 extern bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
-			  pform_name_t path, unsigned int lexical_pos,
+			  const pform_name_t &path, unsigned int lexical_pos,
 			  struct symbol_search_results *res,
 			  unsigned int flags = 0);
 

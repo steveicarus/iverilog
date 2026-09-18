@@ -6544,7 +6544,7 @@ NetExpr* PEIdent::elaborate_expr_param_uarray_(Design*des, NetScope*scope,
 	    long mink = (lo <= hi) ? lo : hi;
 	    long maxk = (lo <= hi) ? hi : lo;
 
-	    if (NetEConst*idx_c = dynamic_cast<NetEConst*>(idx)) {
+	    if (const NetEConst*idx_c = dynamic_cast<NetEConst*>(idx)) {
 		  if (!idx_c->value().is_defined()) {
 			out_of_bounds = true;
 		  } else {

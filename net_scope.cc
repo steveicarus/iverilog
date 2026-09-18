@@ -248,14 +248,14 @@ void NetScope::add_typedefs(const map<perm_string,typedef_t*>*typedefs)
 typedef_t *NetScope::lookup_typedef(perm_string name,
 				    unsigned int lexical_pos) const
 {
-      auto type = typedefs_.find(name);
-      if (type == typedefs_.end())
+      auto typed = typedefs_.find(name);
+      if (typed == typedefs_.end())
 	    return nullptr;
 
-      if (type->second->lexical_pos() > lexical_pos)
+      if (typed->second->lexical_pos() > lexical_pos)
 	    return nullptr;
 
-      return type->second;
+      return typed->second;
 }
 
 void NetScope::add_gate_names(const list<PGate*>&gates)

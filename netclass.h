@@ -1,7 +1,7 @@
 #ifndef IVL_netclass_H
 #define IVL_netclass_H
 /*
- * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,7 +35,7 @@ class PExpr;
 
 class netclass_t : public ivl_type_s {
     public:
-      netclass_t(perm_string class_name);
+      explicit netclass_t(perm_string class_name);
       ~netclass_t() override;
 
 	// Set the property of the class during elaboration. Set the

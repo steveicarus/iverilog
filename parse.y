@@ -5385,7 +5385,7 @@ list_of_port_declarations
       { auto ports = $1;
 
 	Module::port_t*port;
-	auto previous_port = ports->back();
+	const auto previous_port = ports->back();
 	if (!$4.type && !$5 && previous_port &&
 	    previous_port->is_interface_port()) {
 		// Inherit the interface header, but not unpacked dimensions.

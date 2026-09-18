@@ -150,9 +150,9 @@ unusedFunction:fstapi.c:3646
 // fstReaderSetVcdExtensions()
 unusedFunction:fstapi.c:3653
 // fstUtilityExtractEnumTableFromString()
-unusedFunction:fstapi.c:6931
+unusedFunction:fstapi.c:6978
 // fstUtilityFreeEnumTable()
-unusedFunction:fstapi.c:6996
+unusedFunction:fstapi.c:7043
 // fstWriterCreateEnumTable()
 unusedFunction:fstapi.c:2715
 // fstWriterCreateVar2()
