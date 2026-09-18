@@ -1,5 +1,10 @@
 {
     "type"   : "normal",
     "source" : "uarray_subroutine_port.v",
-    "iverilog-args" : [ "-g2012" ]
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "__comment" : "Real arrays/array copy asserts",
+        "type"   : "NI",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }

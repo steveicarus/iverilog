@@ -1,5 +1,8 @@
 {
     "type"          : "normal",
     "source"        : "func_return_uarray_2d.v",
-    "iverilog-args" : [ "-g2012" ]
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }

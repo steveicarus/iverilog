@@ -186,6 +186,7 @@ vhdl_pow_rem		CE,-g2005-sv,-pallowsigned=1,ivltests/vhdl_pow_rem.vhd	ivltests
 # IEEE 1364-1995 does not support these SV functions
 sf_countbits		RE,-g2012		ivltests
 sf_countones		RE,-g2009		ivltests
+sf_countones_inline	RE,-g2009		ivltests
 sf_isunknown		RE,-g2005-sv		ivltests
 sf_onehot		RE,-g2005-sv		ivltests
 sf_onehot0		RE,-g2005-sv		ivltests
@@ -204,11 +205,13 @@ assign_op_after_cmp3	CE,-g2009		ivltests
 assign_op_real_array	CE,-g2009		ivltests
 assign_op_real_array_oob CE,-g2009		ivltests
 br1008			CE			ivltests
+br1015b			CE			ivltests
 br1019			CE			ivltests
 br_gh556		CE,-g2009		ivltests
 br_gh632c		CE			ivltests
 br_gh661a		CE			ivltests
 br_gh661b		CE			ivltests
+br_gh1449		CE,-pallowsigned=1	ivltests
 br_ml20171017		CE			ivltests
 genvar_scopes		CE			ivltests
 meminit2		CE			ivltests
