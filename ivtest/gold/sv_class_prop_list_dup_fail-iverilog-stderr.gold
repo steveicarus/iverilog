@@ -1,0 +1,2 @@
+ivltests/sv_class_prop_list_dup_fail.v:7: error: 'value' has already been declared in this scope.
+ivltests/sv_class_prop_list_dup_fail.v:6:      : It was declared here as a class property.

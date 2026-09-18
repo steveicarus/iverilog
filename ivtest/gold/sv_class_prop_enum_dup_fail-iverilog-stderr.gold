@@ -1,0 +1,2 @@
+ivltests/sv_class_prop_enum_dup_fail.v:8: error: 'value' has already been declared in this scope.
+ivltests/sv_class_prop_enum_dup_fail.v:6:      : It was declared here as a class property.

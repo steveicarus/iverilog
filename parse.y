@@ -627,13 +627,13 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       return tmp;
 }
 
-static std::list<named_pexpr_t>* make_named_numbers(const struct vlltype &loc,
-						    perm_string name,
-						    long first, long last,
-						    PExpr *val = nullptr)
+static std::list<enum_name_t>*make_enum_names(const struct vlltype&loc,
+					   perm_string name,
+					   long first, long last,
+					   PExpr*val = nullptr)
 {
-      std::list<named_pexpr_t>*lst = new std::list<named_pexpr_t>;
-      named_pexpr_t tmp;
+      auto lst = new std::list<enum_name_t>;
+      enum_name_t tmp;
 	// We are counting up.
       if (first <= last) {
 	    for (long idx = first ; idx <= last ; idx += 1) {
@@ -660,12 +660,12 @@ static std::list<named_pexpr_t>* make_named_numbers(const struct vlltype &loc,
       return lst;
 }
 
-static std::list<named_pexpr_t>* make_named_number(const struct vlltype &loc,
-						   perm_string name,
-						   PExpr *val = nullptr)
+static std::list<enum_name_t>*make_enum_name(const struct vlltype&loc,
+					  perm_string name,
+					  PExpr*val = nullptr)
 {
-      std::list<named_pexpr_t>*lst = new std::list<named_pexpr_t>;
-      named_pexpr_t tmp;
+      auto lst = new std::list<enum_name_t>;
+      enum_name_t tmp;
       tmp.name = name;
       tmp.parm = val;
       FILE_NAME(&tmp, loc);
@@ -1083,6 +1083,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 
       named_pexpr_t*named_pexpr;
       std::list<named_pexpr_t>*named_pexprs;
+      std::list<enum_name_t>*enum_names;
       struct parmvalue_t*parmvalue;
       std::list<pform_range_t>*ranges;
       index_component_t *index_component;
@@ -1297,7 +1298,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <value_range> parameter_value_ranges_opt
 %type <expr> value_range_expression
 
-%type <named_pexprs> enum_name_list enum_name
+%type <enum_names> enum_name_list enum_name
 %type <data_type> enum_data_type enum_base_type
 
 %type <tf_ports> tf_item_declaration
@@ -3684,7 +3685,7 @@ enum_name_list
       { $$ = $1;
       }
   | enum_name_list ',' enum_name
-      { std::list<named_pexpr_t>*lst = $1;
+      { auto lst = $1;
 	lst->splice(lst->end(), *$3);
 	delete $3;
 	$$ = lst;
@@ -3709,19 +3710,19 @@ enum_name
   : IDENTIFIER initializer_opt
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
-	$$ = make_named_number(@$, name, $2);
+	$$ = make_enum_name(@$, name, $2);
       }
   | IDENTIFIER '[' pos_neg_number ']' initializer_opt
       { perm_string name = lex_strings.make($1);
 	long count = check_enum_seq_value(@1, $3, false);
-	$$ = make_named_numbers(@$, name, 0, count-1, $5);
+	$$ = make_enum_names(@$, name, 0, count-1, $5);
 	delete[]$1;
 	delete $3;
       }
   | IDENTIFIER '[' pos_neg_number ':' pos_neg_number ']' initializer_opt
       { perm_string name = lex_strings.make($1);
-	$$ = make_named_numbers(@$, name, check_enum_seq_value(@1, $3, true),
-	                                  check_enum_seq_value(@1, $5, true), $7);
+	$$ = make_enum_names(@$, name, check_enum_seq_value(@1, $3, true),
+	                              check_enum_seq_value(@1, $5, true), $7);
 	delete[]$1;
 	delete $3;
 	delete $5;

@@ -81,7 +81,7 @@ void pform_class_property(const struct vlltype&loc,
 	    decl_assignment_t*curp = *cur;
 	    class_type_t::prop_info_t property(property_qual, nullptr,
 						 curp->expr != nullptr);
-	    FILE_NAME(&property, loc);
+	    property.set_line(*curp);
 
 	    // Properties are stored by value in the property map, while the type
 	    // can be shared by comma-separated declarations. Check the temporary
