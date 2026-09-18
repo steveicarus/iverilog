@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "real_net_release.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Real nets are not supported.",
+        "type"      : "CE"
+    }
+}
