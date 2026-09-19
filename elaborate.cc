@@ -796,8 +796,15 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  return;
 	    }
 
-	      // For now, assume all the outputs are the same width.
-	    ivl_assert(*this, idx == 0 || lval_sigs[idx]->vector_width() == lval_sigs[0]->vector_width());
+	      // Gate arrays currently require equally wide outputs. For a
+	      // single gate, let the port width checks below report the error.
+	    if (array_count > 1 && idx > 0 &&
+		lval_sigs[idx]->vector_width() != lval_sigs[0]->vector_width()) {
+		  cerr << get_fileline() << ": sorry: Gate arrays with outputs "
+			"of different widths are not currently supported." << endl;
+		  des->errors += 1;
+		  return;
+	    }
       }
 
 	/* Detect the special case that the l-value width exactly
