@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -470,6 +470,8 @@ struct vvp_fun_anyedge_state_s : public waitable_state_s {
       }
 
       anyedge_value *last_value_[4];
+      vvp_fun_anyedge_state_s(const vvp_fun_anyedge_state_s&) = delete;
+      vvp_fun_anyedge_state_s& operator=(const vvp_fun_anyedge_state_s&) = delete;
 };
 
 vvp_fun_anyedge::vvp_fun_anyedge()

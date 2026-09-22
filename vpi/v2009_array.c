@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2013-2021  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2013-2026  Cary R. (cygcary@yahoo.com)
  *  Copyright (C) 2014  Stephen Williams (steve@icarus.com)
  *  Copyright (C) 2014  CERN
  *  @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -266,8 +266,6 @@ void v2009_array_register(void)
 
       tf_data.type        = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
-      tf_data.calltf      = 0;
-      tf_data.compiletf   = func_not_implemented_compiletf;;
       tf_data.sizetf      = 0;
 
       tf_data.tfname      = "$high";
@@ -301,16 +299,22 @@ void v2009_array_register(void)
 	/* These functions are not currently implemented. */
       tf_data.tfname      = "$dimensions";
       tf_data.user_data   = "$dimensions";
+      tf_data.compiletf   = func_not_implemented_compiletf;;
+      tf_data.calltf      = 0;
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$unpacked_dimensions";
       tf_data.user_data   = "$unpacked_dimensions";
+      tf_data.compiletf   = func_not_implemented_compiletf;;
+      tf_data.calltf      = 0;
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$increment";
       tf_data.user_data   = "$increment";
+      tf_data.compiletf   = func_not_implemented_compiletf;;
+      tf_data.calltf      = 0;
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 }

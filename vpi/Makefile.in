@@ -102,7 +102,8 @@ distclean: clean
 
 # The -U flag is used to skip checking paths that depend on that define having
 # an explicit value (i.e. the define is expected to be real code).
-cppcheck: $(O:.o=.c) $(OPP:.o=.cc) $(M:.o=.c) $(V:.o=.c)
+cppcheck: $(O:.o=.c) $(OPP:.o=.cc) $(V2005:.o=.c) $(VA_MATH:.o=.c) $(V2009:.o=.c) \
+          $(VHDL_SYS:.o=.c) $(VHDL_TEXTIO:.o=.c) $(VPI_DEBUG:.o=.c)
 	cppcheck --enable=all --std=c99 --std=c++11 -f \
 	         --check-level=exhaustive \
 	         --suppressions-list=$(srcdir)/../cppcheck-global.sup \

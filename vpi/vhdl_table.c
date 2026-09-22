@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -157,7 +157,7 @@ static PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*data)
       event_type_t type = (event_type_t)(uintptr_t)data;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       struct t_vpi_value rval;
-      struct monitor_data*mon;
+      const struct monitor_data*mon;
 
       rval.format = vpiScalarVal;
 

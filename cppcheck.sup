@@ -15,13 +15,13 @@ constVariablePointer:main.cc:438
 constVariablePointer:main.cc:688
 
 // const auto should be const
-constVariablePointer:elab_expr.cc:641
-constVariablePointer:elab_expr.cc:644
-constVariablePointer:elab_expr.cc:713
-constVariablePointer:elab_expr.cc:4296
+constVariablePointer:elab_expr.cc:643
+constVariablePointer:elab_expr.cc:646
+constVariablePointer:elab_expr.cc:715
+constVariablePointer:elab_expr.cc:4476
 constVariablePointer:elab_lval.cc:1149
 constVariablePointer:elab_scope.cc:1538
-constVariablePointer:parse.y:5388
+constVariablePointer:parse.y:5389
 
 // The reference cannot be const since it is updated in the calling function.
 constParameterReference:net_udp.cc:37
@@ -40,7 +40,7 @@ uninitMemberVar:t-dll.cc:41
 uninitMemberVar:t-dll.cc:109
 
 // By convention we put statics at the top scope.
-variableScope:pform.cc:3634
+variableScope:pform.cc:3635
 
 // These are correct and are used to find the base (zero) pin.
 thisSubtraction:netlist.h:5384

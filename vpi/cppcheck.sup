@@ -48,6 +48,16 @@ constParameterCallback:sys_sdf.c:437
 constParameterCallback:sys_time.c:25
 constParameterCallback:sys_time.c:81
 constParameterCallback:table_mod.c:663
+constParameterCallback:va_math.c:193
+constParameterCallback:va_math.c:270
+constParameterCallback:v2005_math.c:166
+constParameterCallback:v2005_math.c:243
+constParameterCallback:v2009_enum.c:238
+constParameterCallback:v2009_string.c:263
+constParameterCallback:v2009_string.c:338
+constParameterCallback:vhdl_table.c:95
+constParameterCallback:vhdl_table.c:155
+constParameterCallback:vhdl_table.c:200
 
 // Unused functions.
 unusedFunction:sys_sdf.c:60

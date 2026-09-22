@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -96,7 +96,7 @@ static PLI_INT32 vpi_tree_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-void sys_register(void)
+static void sys_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;

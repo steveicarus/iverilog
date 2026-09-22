@@ -4473,7 +4473,7 @@ static unsigned int evaluate_cast_size(Design *des, NetScope *scope,
 {
       unsigned int width = 0;
       auto size_expr = elab_and_eval(des, scope, target, -1, true);
-      auto size_const = dynamic_cast<NetEConst *>(size_expr);
+      const auto size_const = dynamic_cast<NetEConst *>(size_expr);
       if (size_const && !size_const->value().is_negative())
 	    width = size_const->value().as_ulong();
       delete size_expr;

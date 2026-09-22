@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -73,7 +73,7 @@ static PLI_INT32 two_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       arg = vpi_scan(argv);
-      if (argv == 0) {
+      if (arg == 0) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s missing object argument.\n", name);
@@ -83,7 +83,7 @@ static PLI_INT32 two_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       arg = vpi_scan(argv);
-      if (argv == 0) {
+      if (arg == 0) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s missing method argument.\n", name);
@@ -468,6 +468,7 @@ void v2009_string_register(void)
       tf_data.sizetf    = 0;
       tf_data.user_data = "10";
       res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$ivl_string_method$hextoa";
@@ -476,6 +477,7 @@ void v2009_string_register(void)
       tf_data.sizetf    = 0;
       tf_data.user_data = "16";
       res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$ivl_string_method$octtoa";
@@ -484,6 +486,7 @@ void v2009_string_register(void)
       tf_data.sizetf    = 0;
       tf_data.user_data = "8";
       res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$ivl_string_method$bintoa";
@@ -492,6 +495,7 @@ void v2009_string_register(void)
       tf_data.sizetf    = 0;
       tf_data.user_data = "2";
       res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$ivl_string_method$realtoa";
@@ -500,6 +504,5 @@ void v2009_string_register(void)
       tf_data.sizetf    = 0;
       tf_data.user_data = "$ivl_string_method$realtoa";
       res = vpi_register_systf(&tf_data);
-
       vpip_make_systf_system_defined(res);
 }

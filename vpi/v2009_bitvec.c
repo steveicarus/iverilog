@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2018-2021  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2018-2026  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ static PLI_INT32 countbits_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 }
 
 /* Count the number of bits in the expression that match the search bits. */
-static PLI_INT32 count_bits_in_expr(vpiHandle expr_arg, char search[4])
+static PLI_INT32 count_bits_in_expr(vpiHandle expr_arg, const char search[4])
 {
       s_vpi_value val;
       PLI_INT32 result;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2025 CERN
+ * Copyright (c) 2015-2026 CERN
  * @author Maciej Suminski <maciej.suminski@cern.ch>
  *
  *    This source code is free software; you can redistribute it
@@ -152,7 +152,7 @@ static int read_vector(const char *string, s_vpi_value *val, vpiHandle var)
 
     /* Skip spaces in the beginning */
     int skipped = 0;
-    while(*string && *string == ' ') {
+    while(*string == ' ') {
         --len;
         ++string;
         ++skipped;
@@ -654,7 +654,7 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
     s_vpi_value val;
     PLI_INT32 type, format, dest_size;
     char *string = 0;
-    unsigned int processed_chars = 0, fail = 0;
+    int processed_chars = 0, fail = 0;
 
     /* Get the string */
     stringh = vpi_scan(argv);
@@ -751,11 +751,12 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
             break;
     }
 
-    if(processed_chars == 0) {
+    if(processed_chars <= 0) {
         show_error_line(callh);
         vpi_printf("%s could not read a valid value.\n", name);
         fail = 1;
-    } else if(val.format == vpiStringVar && processed_chars == STRING_BUF_SIZE) {
+    } else if(val.format == vpiStringVar &&
+              (size_t)processed_chars == STRING_BUF_SIZE) {
         show_warning_line(callh);
         vpi_printf("%s has reached the buffer limit, part of the "
                 "processed string might have been skipped.\n", name);
@@ -999,8 +1000,6 @@ static PLI_INT32 ivlh_write_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 static void vhdl_register(void)
 {
-    vpiHandle res;
-
     s_vpi_systf_data tf_data[] = {
         { vpiSysTask, 0, "$ivlh_file_open",
           ivlh_file_open_calltf, ivlh_file_open_compiletf, 0,
@@ -1024,6 +1023,7 @@ static void vhdl_register(void)
     };
 
     for(unsigned int i = 0; i < sizeof(tf_data) / sizeof(s_vpi_systf_data); ++i) {
+        vpiHandle res;
         res = vpi_register_systf(&tf_data[i]);
         vpip_make_systf_system_defined(res);
     }
