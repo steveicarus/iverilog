@@ -19,6 +19,8 @@
  */
 
 # include "config.h"
+# include  <algorithm>
+# include  <string>
 # include  <typeinfo>
 # include  <cstdlib>
 # include  <cstring>
@@ -3858,6 +3860,24 @@ NetExpr* PECallFunction::elaborate_expr_method_chained_(Design*des, NetScope*sco
       return elaborate_expr_method_(des, scope, tail_sr);
 }
 
+static void check_number_of_args(Design*des, perm_string name,
+                                 const LineInfo &loc,
+                                 unsigned expected, unsigned given)
+{
+      if (given != expected) {
+	    cerr << loc.get_fileline() << ": error: String method '" << name
+	         << "()' takes ";
+	    switch (expected) {
+		case 0: cerr << "no arguments"; break;
+		case 1: cerr << "one argument"; break;
+		case 2: cerr << "two arguments"; break;
+		default: cerr << "unsupported" ; assert(0);
+	    }
+	    cerr << ", given " << given << "." << endl;
+	    des->errors += 1;
+      }
+}
+
 /*
  * Look for a method of a given object. The search_results gives us the
  * information we need to look into this case: The net is the object that will
@@ -4128,34 +4148,29 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$len",
 						     &netvector_t::atom2u32, 1);
 		  sys_expr->parm(0, sub_expr);
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
 		  return sys_expr;
 	    }
 
-	    if (method_name == "atoi") {
-		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atoi",
-						     netvector_t::integer_type(), 1);
-		  sys_expr->parm(0, sub_expr);
-		  return sys_expr;
+	    if (method_name == "putc") {
+		  cerr << get_fileline() << ": sorry: String method 'putc()' "
+		          "is not currently supported." << endl;
+		  check_number_of_args(des, method_name, *this, 2, parms_.size());
+		  return 0;
 	    }
 
-	    if (method_name == "atoreal") {
-		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atoreal",
-						     &netreal_t::type_real, 1);
-		  sys_expr->parm(0, sub_expr);
-		  return sys_expr;
-	    }
-
-	    if (method_name == "atohex") {
-		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atohex",
-						     netvector_t::integer_type(), 1);
-		  sys_expr->parm(0, sub_expr);
-		  return sys_expr;
+	    if (method_name == "getc") {
+		  cerr << get_fileline() << ": sorry: String method 'getc()' "
+		          "is not currently supported." << endl;
+		  check_number_of_args(des, method_name, *this, 1, parms_.size());
+		  return 0;
 	    }
 
 	    if (method_name == "toupper") {
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$toupper",
 						     &netstring_t::type_string, 1);
 		  sys_expr->parm(0, sub_expr);
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
 		  return sys_expr;
 	    }
 
@@ -4163,16 +4178,26 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$tolower",
 						     &netstring_t::type_string, 1);
 		  sys_expr->parm(0, sub_expr);
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
 		  return sys_expr;
 	    }
 
+	    if (method_name == "compare") {
+		  cerr << get_fileline() << ": sorry: String method 'compare()' "
+		          "is not currently supported." << endl;
+		  check_number_of_args(des, method_name, *this, 1, parms_.size());
+		  return 0;
+	    }
+
+	    if (method_name == "icompare") {
+		  cerr << get_fileline() << ": sorry: String method 'icompare()' "
+		          "is not currently supported." << endl;
+		  check_number_of_args(des, method_name, *this, 1, parms_.size());
+		  return 0;
+	    }
+
 	    if (method_name == "substr") {
-		  if (parms_.size() != 2) {
-			cerr << get_fileline() << ": error: Method `substr()`"
-			     << " requires 2 arguments, got " << parms_.size()
-			     << "." << endl;
-			des->errors += 1;
-		  }
+		  check_number_of_args(des, method_name, *this, 2, parms_.size());
 
 		  static const std::vector<perm_string> parm_names = {
 			perm_string::literal("i"),
@@ -4204,8 +4229,58 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  return sys_expr;
 	    }
 
-	    cerr << get_fileline() << ": error: Method " << method_name
-		 << " is not a string method." << endl;
+	    if (method_name == "atoi") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atoi",
+						     netvector_t::integer_type(), 1);
+		  sys_expr->parm(0, sub_expr);
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
+		  return sys_expr;
+	    }
+
+	    if (method_name == "atohex") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atohex",
+						     netvector_t::integer_type(), 1);
+		  sys_expr->parm(0, sub_expr);
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
+		  return sys_expr;
+	    }
+
+	    if (method_name == "atooct") {
+		  cerr << get_fileline() << ": sorry: String method 'atooct()' "
+		          "is not currently supported." << endl;
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
+		  return 0;
+	    }
+
+	    if (method_name == "atobin") {
+		  cerr << get_fileline() << ": sorry: String method 'atobin()' "
+		          "is not currently supported." << endl;
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
+		  return 0;
+	    }
+
+	    if (method_name == "atoreal") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atoreal",
+						     &netreal_t::type_real, 1);
+		  sys_expr->parm(0, sub_expr);
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
+		  return sys_expr;
+	    }
+
+	    if ((method_name == "itoa")   ||
+	        (method_name == "hextoa") ||
+	        (method_name == "octtoa") ||
+	        (method_name == "bintoa") ||
+	        (method_name == "realtoa")) {
+		  cerr << get_fileline() << ": sorry: String method '"
+		       << method_name << "()' is not currently supported." << endl;
+		  check_number_of_args(des, method_name, *this, 1, parms_.size());
+		  return 0;
+	    }
+
+	    cerr << get_fileline() << ": error: Unknown string method '"
+	         << method_name << "()'." << endl;
+	    des->errors += 1;
 	    return 0;
       }
 
@@ -4239,45 +4314,136 @@ NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, const NetScope*s
 	    ivl_assert(*par_val, par_string);
 	    string par_value = par_string->value().as_string();
 
-	    if (method_name=="len") {
+	    if (method_name == "len") {
 		  NetEConst*use_val = make_const_val(par_value.size());
 		  use_val->set_line(*this);
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
 		  return use_val;
+	    }
+
+	    if (method_name == "putc") {
+		  cerr << get_fileline() << ": error: string method 'putc()' "
+		       << "cannot modify a parameter." << endl;
+		  des->errors += 1;
+		  check_number_of_args(des, method_name, *this, 2, parms_.size());
+		  return 0;
+	    }
+
+	    if (method_name == "getc") {
+		  cerr << get_fileline() << ": sorry: string method: '"
+		       << method_name << "()' is not currently supported."
+		       << endl;
+		  check_number_of_args(des, method_name, *this, 1, parms_.size());
+		  return 0;
+	    }
+
+	    if (method_name == "toupper") {
+		  string s_upper = par_value;
+		  std::transform(s_upper.begin(), s_upper.end(), s_upper.begin(),
+				 [](unsigned char c){ return std::toupper(c); });
+		  NetEConst*use_val = new NetECString(s_upper);
+		  use_val->set_line(*this);
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
+		  return use_val;
+	    }
+
+	    if (method_name == "tolower") {
+		  string s_lower = par_value;
+		  std::transform(s_lower.begin(), s_lower.end(), s_lower.begin(),
+				 [](unsigned char c){ return std::tolower(c); });
+		  NetEConst*use_val = new NetECString(s_lower);
+		  use_val->set_line(*this);
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
+		  return use_val;
+	    }
+
+	    if (method_name=="compare") {
+		  cerr << get_fileline() << ": sorry: string method: '"
+		       << method_name << "()' is not currently supported."
+		       << endl;
+		  check_number_of_args(des, method_name, *this, 1, parms_.size());
+		  return 0;
+	    }
+
+	    if (method_name=="icompare") {
+		  cerr << get_fileline() << ": sorry: string method: '"
+		       << method_name << "()' is not currently supported."
+		       << endl;
+		  check_number_of_args(des, method_name, *this, 1, parms_.size());
+		  return 0;
+	    }
+
+	    if (method_name=="substr") {
+		  cerr << get_fileline() << ": sorry: string method: '"
+		       << method_name << "()' is not currently supported."
+		       << endl;
+		  check_number_of_args(des, method_name, *this, 2, parms_.size());
+		  return 0;
 	    }
 
 	    if (method_name == "atoi") {
 		  NetEConst*use_val = make_const_val(atoi(par_value.c_str()));
 		  use_val->set_line(*this);
-		  return use_val;
-	    }
-
-	    if (method_name == "atoreal") {
-		  NetECReal*use_val = new NetECReal(verireal(par_value.c_str()));
-		  use_val->set_line(*this);
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
 		  return use_val;
 	    }
 
 	    if (method_name == "atohex") {
 		  NetEConst*use_val = make_const_val(strtoul(par_value.c_str(),0,16));
 		  use_val->set_line(*this);
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
 		  return use_val;
 	    }
 
-	    // Returning 0 here will cause the caller to print an error
-	    // message and increment the error count, so there is no need to
-	    // increment des->error_count here.
-	    cerr << get_fileline() << ": error: "
-		 << "Unknown or unsupport string method: " << method_name
-		 << endl;
+	    if (method_name=="atooct") {
+		  cerr << get_fileline() << ": sorry: string method: '"
+		       << method_name << "()' is not currently supported."
+		       << endl;
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
+		  return 0;
+	    }
+
+	    if (method_name=="atobin") {
+		  cerr << get_fileline() << ": sorry: string method: '"
+		       << method_name << "()' is not currently supported."
+		       << endl;
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
+		  return 0;
+	    }
+
+	    if (method_name == "atoreal") {
+		  NetECReal*use_val = new NetECReal(verireal(par_value.c_str()));
+		  use_val->set_line(*this);
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
+		  return use_val;
+	    }
+
+	    if ((method_name=="itoa")   ||
+	        (method_name=="hextoa") ||
+	        (method_name=="octtoa") ||
+	        (method_name=="bintoa") ||
+	        (method_name=="realtoa")) {
+		  cerr << get_fileline() << ": error: string method '"
+		       << method_name << "()' cannot modify a parameter."
+		       << endl;
+		  des->errors += 1;
+		  check_number_of_args(des, method_name, *this, 1, parms_.size());
+		  return 0;
+	    }
+
+	      // Anything that is not handled above is an unknown string method.
+	    cerr << get_fileline() << ": error: Unknown string method: '"
+	         << method_name << "'()." << endl;
+	    des->errors += 1;
 	    return 0;
       }
 
       // If we haven't figured out what to do with this method by now,
       // something went wrong.
-      cerr << get_fileline() << ": sorry: Don't know how to handle methods of parameters of type:" << endl;
+      cerr << get_fileline() << ": sorry: Don't know how to handle method '"
+           << method_name << "()' for parameter of type:" << endl;
       cerr << get_fileline() << ":      : " << *par_type << endl;
       cerr << get_fileline() << ":      : in scope " << scope_path(scope) << endl;
-
       des->errors += 1;
       return 0;
 }

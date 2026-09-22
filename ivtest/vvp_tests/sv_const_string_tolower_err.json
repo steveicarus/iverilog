@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_const_string_tolower_err.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
