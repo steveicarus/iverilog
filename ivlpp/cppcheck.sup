@@ -6,6 +6,10 @@ memleakOnRealloc
 nullPointerArithmeticOutOfMemory
 nullPointerOutOfMemory
 
+// CmdExec.c is shared by multiple executables, so this target sees helpers
+// that are used only by another target.
+unusedFunction:../libmisc/CmdExec.c
+
 // Errors/limitations in the generated yacc and lex files
 ctunullpointerOutOfMemory:lexor.lex
 memleakOnRealloc:lexor.lex

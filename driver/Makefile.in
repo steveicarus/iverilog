@@ -31,6 +31,7 @@ builddir=@builddir@
 top_builddir=@top_builddir@
 
 VPATH = $(srcdir)
+vpath %.c $(srcdir)/../libmisc
 
 bindir = $(exec_prefix)/bin
 libdir = $(exec_prefix)/lib
@@ -50,16 +51,16 @@ MAN = @MAN@
 PS2PDF = @PS2PDF@
 
 ifeq (@srcdir@,.)
-INCLUDE_PATH = -I. -I..
+INCLUDE_PATH = -I. -I.. -I../libmisc
 else
-INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/.. -I$(srcdir)/../libmisc
 endif
 
 CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@
 CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-O = main.o substit.o cflexor.o cfparse.o
+O = main.o substit.o cflexor.o cfparse.o CmdExec.o
 
 all: dep iverilog@EXEEXT@ iverilog.man
 
