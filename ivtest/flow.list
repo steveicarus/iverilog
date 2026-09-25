@@ -1,0 +1,11 @@
+# Test list for the flow (-tflow) dataflow exporter target.
+#
+# Each entry names a Verilog source under flow/<name>.v. The runner
+# flow_reg.py compiles it with `iverilog -tflow`, parses the resulting
+# .flow JSON, and checks structural expectations (schema, hierarchy,
+# processes/assignments, generate frames). Run with: python3 flow_reg.py
+#
+flow_basic
+flow_comb
+flow_generate
+flow_genpath
