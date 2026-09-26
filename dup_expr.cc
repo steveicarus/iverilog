@@ -94,6 +94,15 @@ NetEBLogic* NetEBLogic::dup_expr() const
       return tmp;
 }
 
+NetEBMinMax* NetEBMinMax::dup_expr() const
+{
+      auto result = new NetEBMinMax(op_, left_->dup_expr(),
+				   right_->dup_expr(), expr_width(),
+				   has_sign());
+      result->set_line(*this);
+      return result;
+}
+
 NetEBMult* NetEBMult::dup_expr() const
 {
       NetEBMult*tmp = new NetEBMult(op_, left_->dup_expr(), right_->dup_expr(),
@@ -194,8 +203,9 @@ NetELast* NetELast::dup_expr() const
 
 NetENetenum* NetENetenum::dup_expr() const
 {
-      ivl_assert(*this, 0);
-      return 0;
+      auto result = new NetENetenum(netenum_);
+      result->set_line(*this);
+      return result;
 }
 
 NetENew* NetENew::dup_expr() const
@@ -206,14 +216,17 @@ NetENew* NetENew::dup_expr() const
 
 NetENull* NetENull::dup_expr() const
 {
-      ivl_assert(*this, 0);
-      return 0;
+      auto result = new NetENull;
+      result->set_line(*this);
+      return result;
 }
 
 NetEProperty* NetEProperty::dup_expr() const
 {
-      ivl_assert(*this, 0);
-      return 0;
+      auto index = index_ ? index_->dup_expr() : nullptr;
+      auto result = new NetEProperty(net_, pidx_, index);
+      result->set_line(*this);
+      return result;
 }
 
 NetEScope* NetEScope::dup_expr() const

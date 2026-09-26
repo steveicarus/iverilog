@@ -4462,6 +4462,7 @@ class NetEBMinMax : public NetEBinary {
       ~NetEBMinMax() override;
 
       virtual ivl_variable_type_t expr_type() const override;
+      virtual NetEBMinMax* dup_expr() const override;
 
     private:
       virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const override;
