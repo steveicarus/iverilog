@@ -94,6 +94,78 @@ jobs:
         cd Documentation
         make html
 
+  win-arm:
+    runs-on: windows-11-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        msystem: [CLANGARM64]
+        # libvvp: [false, true]
+        # suffix: [false, true]
+        include:
+          - { msystem: CLANGARM64, env: clang-aarch64 }
+    name: 🪟 ${{ matrix.msystem }}${{ matrix.libvvp && ' +libvvp' || '' }}${{ matrix.suffix && ' +suffix' || '' }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    env:
+      MINGW_ARCH: ${{ matrix.msystem }}
+    steps:
+
+    - run: git config --global core.autocrlf input
+      shell: bash
+
+    - uses: actions/checkout@v7
+
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.msystem }}
+        update: true
+        install: >
+          git
+          base-devel
+          python-pip
+          mingw-w64-${{ matrix.env }}-perl
+
+    - uses: actions/setup-python@v7
+      with:
+        msystem: ${{ matrix.msystem }}
+        update: true
+        install: >
+          git
+          base-devel
+          python-pip
+          mingw-w64-${{ matrix.env }}-perl
+
+    - uses: actions/setup-python@v7
+      with:
+        python-version: '>=3.5'
+
+    - name: Build and check
+      run: |
+        cd msys2
+        CONFIG_OPTS=""
+        if [ "${{ matrix.libvvp }}" = "true" ] ; then
+            CONFIG_OPTS="$CONFIG_OPTS --enable-libvvp"
+        fi
+        if [ "${{ matrix.suffix }}" = "true" ]; then
+            CONFIG_OPTS="$CONFIG_OPTS --enable-suffix"
+        fi
+        export IVL_CONFIG_OPTIONS="$CONFIG_OPTS"
+        makepkg-mingw --noconfirm --noprogressbar -sCLf
+
+    - name: Install
+      run: pacman -U --noconfirm msys2/*.zst
+
+    - name: Test
+      run: |
+        make check-installed
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: 🪟 ${{ matrix.msystem }}${{ matrix.libvvp && ' +libvvp' || '' }}
+        path: msys2/*.zst
+
   win:
     runs-on: windows-latest
     strategy:
@@ -157,5 +229,5 @@ jobs:
 
     - uses: actions/upload-artifact@v7
       with:
-        name: 🟪 ${{ matrix.msystem }}${{ matrix.libvvp && ' +libvvp' || '' }}
+        name: 🪟 ${{ matrix.msystem }}${{ matrix.libvvp && ' +libvvp' || '' }}
         path: msys2/*.zst
