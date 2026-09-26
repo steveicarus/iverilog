@@ -129,16 +129,6 @@ jobs:
 
     - uses: actions/setup-python@v7
       with:
-        msystem: ${{ matrix.msystem }}
-        update: true
-        install: >
-          git
-          base-devel
-          python-pip
-          mingw-w64-${{ matrix.env }}-perl
-
-    - uses: actions/setup-python@v7
-      with:
         python-version: '>=3.5'
 
     - name: Build and check
