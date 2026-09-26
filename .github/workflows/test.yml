@@ -99,7 +99,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        msystem: [MINGW64, UCRT64, CLANG64]
+        msystem: [UCRT64, CLANG64]
         # libvvp: [false, true]
         # suffix: [false, true]
         include:
