@@ -596,8 +596,16 @@ NetExpr* PEAssignPattern::elaborate_expr_array_(Design *des, NetScope *scope,
       vector<NetExpr*> elem_exprs (parms_.size());
       size_t elem_idx = up ? 0 : parms_.size() - 1;
       for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
-	    elem_exprs[elem_idx] = elaborate_rval_expr(des, scope, elem_type,
-						       parms_[idx], need_const);
+	    NetExpr* tmp = elaborate_rval_expr(des, scope, elem_type,
+	                                       parms_[idx], need_const);
+	      // Trim the expression if it is too large and a type that
+	      // can be trimmed.
+	    if ((tmp->expr_width() > elem_type->packed_width()) &&
+		((elem_type->base_type() == IVL_VT_LOGIC) ||
+		 (elem_type->base_type() == IVL_VT_BOOL))) {
+		  tmp = new NetESelect(tmp, 0, elem_type->packed_width());
+	    }
+	    elem_exprs[elem_idx] = tmp;
 	    if (up)
 		  elem_idx++;
 	    else

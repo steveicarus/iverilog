@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -866,9 +866,12 @@ NetNet *NetEArrayPattern::synthesize(Design *des, NetScope *scope, NetExpr *root
 		  failed = true;
 		  continue;
 	    }
+
 	    nets[idx] = items_[idx]->synthesize(des, scope, root);
-	    if (!nets[idx])
+	    if (!nets[idx]) {
 		  failed = true;
+		  continue;
+	    }
       }
 
       if (failed)

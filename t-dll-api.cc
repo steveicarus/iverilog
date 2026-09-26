@@ -703,6 +703,9 @@ extern "C" ivl_signal_t ivl_expr_signal(ivl_expr_t net)
 	    return net->u_.property_.sig;
 
 	  default:
+	    cerr << ivl_expr_file(net) << ":" << ivl_expr_lineno(net)
+	         << ": Internal error: Net type " << net->type_
+		 << " is not supported." << endl;
 	    assert(0);
 	    return 0;
       }
