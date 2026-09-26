@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_enum_method_case_width.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Enum expressions are not supported",
+        "type"      : "CE"
+    }
+}

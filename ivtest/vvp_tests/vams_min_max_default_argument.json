@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "vams_min_max_default_argument.v",
+    "iverilog-args" : [ "-g2005-sv", "-gverilog-ams" ]
+}
