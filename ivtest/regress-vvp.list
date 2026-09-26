@@ -346,6 +346,7 @@ sv_class_method_call_nonvoid	vvp_tests/sv_class_method_call_nonvoid.json
 sv_class_nested_method_call	vvp_tests/sv_class_nested_method_call.json
 sv_class_prop_assign_op1	vvp_tests/sv_class_prop_assign_op1.json
 sv_class_prop_assign_op2	vvp_tests/sv_class_prop_assign_op2.json
+sv_class_prop_case_width	vvp_tests/sv_class_prop_case_width.json
 sv_class_prop_class_name	vvp_tests/sv_class_prop_class_name.json
 sv_class_prop_dup_fail		vvp_tests/sv_class_prop_dup_fail.json
 sv_class_prop_enum_dup_fail	vvp_tests/sv_class_prop_enum_dup_fail.json
@@ -405,6 +406,7 @@ sv_disable_order_parameter_fail	vvp_tests/sv_disable_order_parameter_fail.json
 sv_disable_order_variable_fail	vvp_tests/sv_disable_order_variable_fail.json
 sv_disabled_assert_attributes	vvp_tests/sv_disabled_assert_attributes.json
 sv_disabled_assertion_label_duplicate_fail	vvp_tests/sv_disabled_assertion_label_duplicate_fail.json
+sv_enum_method_case_width	vvp_tests/sv_enum_method_case_width.json
 sv_enum_reference_order	vvp_tests/sv_enum_reference_order.json
 sv_enum_reference_order_relaxed	vvp_tests/sv_enum_reference_order_relaxed.json
 sv_foreach9			vvp_tests/sv_foreach9.json
@@ -499,6 +501,7 @@ sv_named_type_typedef_fail	vvp_tests/sv_named_type_typedef_fail.json
 sv_named_type_var_fail	vvp_tests/sv_named_type_var_fail.json
 sv_net_array_decl_assign	vvp_tests/sv_net_array_decl_assign.json
 sv_net_decl_assign		vvp_tests/sv_net_decl_assign.json
+sv_null_default_argument	vvp_tests/sv_null_default_argument.json
 sv_package_function_void_cast	vvp_tests/sv_package_function_void_cast.json
 sv_package_import_copy_new	vvp_tests/sv_package_import_copy_new.json
 sv_package_import_cross_unit	vvp_tests/sv_package_import_cross_unit.json
@@ -724,6 +727,7 @@ value_range3			vvp_tests/value_range3.json
 vams_abs1			vvp_tests/vams_abs1.json
 vams_abs2			vvp_tests/vams_abs2.json
 vams_abs3			vvp_tests/vams_abs3.json
+vams_min_max_default_argument	vvp_tests/vams_min_max_default_argument.json
 vardly_undefined_vec		vvp_tests/vardly_undefined_vec.json
 va_math				vvp_tests/va_math.json
 vvp_quiet_mode			vvp_tests/vvp_quiet_mode.json
