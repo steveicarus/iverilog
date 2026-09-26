@@ -21,7 +21,7 @@ jobs:
     name: 🍏 macOS${{ matrix.libvvp && ' +libvvp' || '' }}${{ matrix.suffix && ' +suffix' || '' }}
     steps:
 
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Install dependencies
       run: |
@@ -51,14 +51,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['22.04', '24.04']
+        os: ['22.04', '24.04', '26.04']
         # libvvp: [false, true]
         # suffix: [false, true]
     runs-on: ubuntu-${{ matrix.os }}
     name: 🐧 Ubuntu ${{ matrix.os }}${{ matrix.libvvp && ' +libvvp' || '' }}${{ matrix.suffix && ' +suffix' || '' }}
     steps:
 
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Install dependencies
       run: |
@@ -116,7 +116,7 @@ jobs:
     - run: git config --global core.autocrlf input
       shell: bash
 
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - uses: msys2/setup-msys2@v2
       with:
@@ -128,7 +128,7 @@ jobs:
           python-pip
           mingw-w64-${{ matrix.env }}-perl
 
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@v7
       with:
         python-version: '>=3.5'
 
