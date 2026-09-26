@@ -15,9 +15,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: ['15', '26']
         libvvp: [true]
         suffix: [true]
-    runs-on: macos-15-intel
+    runs-on: macos-${{ matrix.os }}-intel
     name: 🍏 macOS${{ matrix.libvvp && ' +libvvp' || '' }}${{ matrix.suffix && ' +suffix' || '' }}
     steps:
 
