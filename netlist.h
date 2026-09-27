@@ -3698,7 +3698,7 @@ class NetEvWait  : public NetProc {
       virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const override;
 
     private:
-      NetProc*statement_;
+      NetProc::Ptr statement_;
 	// Events that I might wait for.
       std::vector<NetEvent*>events_;
       bool has_t0_trigger_;
