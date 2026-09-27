@@ -3134,8 +3134,8 @@ class NetAssignNB  : public NetAssignBase {
       const NetExpr* get_count() const;
 
     private:
-      NetEvWait*event_;
-      NetExpr*count_;
+      std::unique_ptr<NetEvWait>event_;
+      NetExpr::Ptr count_;
 };
 
 /*
