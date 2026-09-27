@@ -4982,9 +4982,9 @@ class NetETernary  : public NetExpr {
     private:
       NetExpr* blended_arguments_(const NetExpr*t, const NetExpr*f) const;
 
-      NetExpr*cond_;
-      NetExpr*true_val_;
-      NetExpr*false_val_;
+      NetExpr::Ptr cond_;
+      NetExpr::Ptr true_val_;
+      NetExpr::Ptr false_val_;
 };
 
 /*

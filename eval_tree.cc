@@ -1278,14 +1278,14 @@ static void print_ternary_cond(NetExpr*expr)
 NetExpr* NetETernary::eval_tree()
 {
       eval_expr(cond_);
-      switch (const_logical(cond_)) {
+      switch (const_logical(cond_.get())) {
 	  case C_0:
 	    eval_expr(false_val_);
 	    if (debug_eval_tree) {
 
 		  cerr << get_fileline() << ": debug: Evaluate ternary with "
 		       << "constant condition value: ";
-		  print_ternary_cond(cond_);
+		  print_ternary_cond(cond_.get());
 		  cerr << get_fileline() << ":      : Selecting false case: "
 		       << *false_val_ << endl;
 	    }
@@ -1296,7 +1296,7 @@ NetExpr* NetETernary::eval_tree()
 	    if (expr_type() == IVL_VT_REAL &&
 	        false_val_->expr_type() != IVL_VT_REAL) {
 		  verireal f;
-		  if (get_real_arg_(false_val_, f)) {
+		  if (get_real_arg_(false_val_.get(), f)) {
 			NetECReal*rc = new NetECReal(f);
 			rc->set_line(*this);
 			return rc;
@@ -1310,7 +1310,7 @@ NetExpr* NetETernary::eval_tree()
 	    if (debug_eval_tree) {
 		  cerr << get_fileline() << ": debug: Evaluate ternary with "
 		       << "constant condition value: ";
-		  print_ternary_cond(cond_);
+		  print_ternary_cond(cond_.get());
 		  cerr << get_fileline() << ":      : Selecting true case: "
 		       << *true_val_ << endl;
 	    }
@@ -1321,7 +1321,7 @@ NetExpr* NetETernary::eval_tree()
 	    if (expr_type() == IVL_VT_REAL &&
 	        true_val_->expr_type() != IVL_VT_REAL) {
 		  verireal t;
-		  if (get_real_arg_(true_val_, t)) {
+		  if (get_real_arg_(true_val_.get(), t)) {
 			NetECReal*rc = new NetECReal(t);
 			rc->set_line(*this);
 			return rc;
@@ -1344,7 +1344,7 @@ NetExpr* NetETernary::eval_tree()
       eval_expr(true_val_);
       eval_expr(false_val_);
 
-      return blended_arguments_(true_val_, false_val_);
+      return blended_arguments_(true_val_.get(), false_val_.get());
 }
 
 NetExpr*NetETernary::blended_arguments_(const NetExpr*te, const NetExpr*fe) const
@@ -1363,7 +1363,7 @@ NetExpr*NetETernary::blended_arguments_(const NetExpr*te, const NetExpr*fe) cons
 	    if (debug_eval_tree) {
 		  cerr << get_fileline() << ": debug: Evaluate ternary with "
 		       << "constant condition value: ";
-		  print_ternary_cond(cond_);
+		  print_ternary_cond(cond_.get());
 		  cerr << get_fileline() << ":      : Blending real cases "
 		       << "true=" << tv.as_double()
 		       << ", false=" << fv.as_double()
@@ -1393,7 +1393,7 @@ NetExpr*NetETernary::blended_arguments_(const NetExpr*te, const NetExpr*fe) cons
       if (debug_eval_tree) {
 	    cerr << get_fileline() << ": debug: Evaluate ternary with "
 		 << "constant condition value: ";
-	    print_ternary_cond(cond_);
+	    print_ternary_cond(cond_.get());
 	    cerr << get_fileline() << ":      : Blending cases to get "
 		 << val << endl;
       }
