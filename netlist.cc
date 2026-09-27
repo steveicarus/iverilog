@@ -3012,7 +3012,7 @@ DelayType NetWhile::delay_type(bool print_delay) const
 {
 	// If the wait was a constant value the compiler already removed it
 	// so we know we can only have a possible delay.
-      if (while_is_wait(cond_, proc_)) {
+      if (while_is_wait(cond_.get(), proc_.get())) {
 	    if (print_delay) {
 		  cerr << get_fileline() << ": error: a wait statement is "
 		          "not allowed in an "
@@ -3021,7 +3021,7 @@ DelayType NetWhile::delay_type(bool print_delay) const
 	    }
 	    return POSSIBLE_DELAY;
       }
-      return get_loop_delay_type(cond_, proc_, print_delay);
+      return get_loop_delay_type(cond_.get(), proc_.get(), print_delay);
 }
 
 /*
@@ -3509,7 +3509,7 @@ bool NetWhile::check_synth(ivl_process_type_t pr_type,
 {
       bool result = false;
 	// A wait is already maked as an error in the delay check above.
-      if (! while_is_wait(cond_, proc_)) {
+      if (! while_is_wait(cond_.get(), proc_.get())) {
 	    print_synth_warning(this, "A while", pr_type);
 	    if (proc_) result |= proc_->check_synth(pr_type, scope);
       }
