@@ -255,13 +255,9 @@ NetRepeat::NetRepeat(NetExpr*e, NetProc*p)
 {
 }
 
-NetRepeat::~NetRepeat()
-{
-      delete expr_;
-      delete statement_;
-}
+NetRepeat::~NetRepeat() = default;
 
 const NetExpr* NetRepeat::expr() const
 {
-      return expr_;
+      return expr_.get();
 }

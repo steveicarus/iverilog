@@ -2926,7 +2926,7 @@ DelayType NetPDelay::delay_type(bool print_delay) const
 
 DelayType NetRepeat::delay_type(bool print_delay) const
 {
-      return get_loop_delay_type(expr_, statement_, print_delay);
+      return get_loop_delay_type(expr_.get(), statement_.get(), print_delay);
 }
 
 DelayType NetTaskDef::delay_type(bool print_delay) const

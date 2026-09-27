@@ -3936,8 +3936,8 @@ class NetRepeat : public NetProc {
 				     std::map<perm_string,LocalVar>&ctx) const override;
 
     private:
-      NetExpr*expr_;
-      NetProc*statement_;
+      NetExpr::Ptr expr_;
+      NetProc::Ptr statement_;
 };
 
 /*
