@@ -3909,8 +3909,8 @@ class NetPDelay  : public NetProc {
 
     private:
       uint64_t delay_;
-      NetExpr*expr_;
-      NetProc*statement_;
+      NetExpr::Ptr expr_;
+      NetProc::Ptr statement_;
 };
 
 /*
