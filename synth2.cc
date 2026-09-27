@@ -1234,7 +1234,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
 	// Synthesize the condition. This will act as a select signal
 	// for a binary mux.
-      NetNet*ssig = expr_->synthesize(des, scope, expr_);
+      NetNet*ssig = expr_->synthesize(des, scope, expr_.get());
       ivl_assert(*this, ssig);
 
 	// The incoming nex_out is taken as the input for this
@@ -1268,7 +1268,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    }
 
 	    bool flag = synth_async_block_substatement_(des, scope, nex_map, a_out,
-							a_ena, a_masks, if_);
+							a_ena, a_masks, if_.get());
 	    if (!flag) return false;
 
       } else {
@@ -1293,7 +1293,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    }
 
 	    bool flag = synth_async_block_substatement_(des, scope, nex_map, b_out,
-							b_ena, b_masks, else_);
+							b_ena, b_masks, else_.get());
 	    if (!flag) return false;
 
       } else {
@@ -1801,7 +1801,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 		  continue;
 
 	      // Synthesize the set/reset input expression.
-	    NetNet*rst = expr_->synthesize(des, scope, expr_);
+	    NetNet*rst = expr_->synthesize(des, scope, expr_.get());
 	    ivl_assert(*this, rst->pin_count() == 1);
 
 	      // Check that the edge used on the set/reset input is correct.

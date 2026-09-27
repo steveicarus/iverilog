@@ -2016,37 +2016,31 @@ NetCondit::NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
 {
 }
 
-NetCondit::~NetCondit()
-{
-      delete expr_;
-      delete if_;
-      delete else_;
-}
+NetCondit::~NetCondit() = default;
 
 const NetExpr* NetCondit::expr() const
 {
-      return expr_;
+      return expr_.get();
 }
 
 NetExpr* NetCondit::expr()
 {
-      return expr_;
+      return expr_.get();
 }
 
 void NetCondit::set_expr(NetExpr*ex)
 {
-      delete expr_;
-      expr_ = ex;
+      expr_.reset(ex);
 }
 
 NetProc* NetCondit::if_clause()
 {
-      return if_;
+      return if_.get();
 }
 
 NetProc* NetCondit::else_clause()
 {
-      return else_;
+      return else_.get();
 }
 
 NetConst::NetConst(NetScope*s, perm_string n, verinum::V v)

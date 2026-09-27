@@ -3351,9 +3351,9 @@ class NetCondit  : public NetProc {
                                      std::map<perm_string,LocalVar>&ctx) const override;
 
     private:
-      NetExpr* expr_;
-      NetProc*if_;
-      NetProc*else_;
+      NetExpr::Ptr expr_;
+      NetProc::Ptr if_;
+      NetProc::Ptr else_;
 };
 
 class NetContinue : public NetProc {
