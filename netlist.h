@@ -3991,7 +3991,7 @@ class NetSTask  : public NetProc {
     private:
       perm_string name_;
       ivl_sfunc_as_task_t sfunc_as_task_;
-      std::vector<NetExpr*>parms_;
+      std::vector<NetExpr::Ptr>parms_;
 };
 
 /*
