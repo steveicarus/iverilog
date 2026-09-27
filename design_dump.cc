@@ -1387,8 +1387,9 @@ void NetForLoop::dump(ostream&fd, unsigned ind) const
       else
 	    fd << "<nil>";
       fd << ", init_expr=";
-      if (init_expr_)
-	    fd << *init_expr_;
+      const NetExpr*init = init_expr();
+      if (init)
+	    fd << *init;
       else
 	    fd << "<nil>";
       fd << ", condition=";

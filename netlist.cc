@@ -3382,7 +3382,7 @@ bool NetForLoop::check_synth(ivl_process_type_t pr_type,
       bool result = false;
 
 // FIXME: What about an enum (NetEConstEnum)?
-      if (! dynamic_cast<const NetEConst*>(init_expr_)) {
+      if (! dynamic_cast<const NetEConst*>(init_expr())) {
 	    cerr << get_fileline() << ": warning: A for statement must "
 	            "have a constant initial value to be synthesized "
                  << get_process_type_as_string(pr_type) << endl;
