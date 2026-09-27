@@ -524,9 +524,7 @@ NetEShallowCopy::NetEShallowCopy(NetExpr*arg1, NetExpr*arg2)
 {
 }
 
-NetEShallowCopy::~NetEShallowCopy()
-{
-}
+NetEShallowCopy::~NetEShallowCopy() = default;
 
 ivl_variable_type_t NetEShallowCopy::expr_type() const
 {
