@@ -1406,7 +1406,7 @@ NetExpr*NetETernary::blended_arguments_(const NetExpr*te, const NetExpr*fe) cons
 NetExpr* NetEUnary::eval_tree()
 {
       eval_expr(expr_);
-      return eval_arguments_(expr_);
+      return eval_arguments_(expr_.get());
 }
 
 NetExpr* NetEUnary::eval_tree_real_(const NetExpr*ex) const
