@@ -372,42 +372,41 @@ static void draw_ternary_real(ivl_expr_t expr)
       ivl_expr_t true_ex = ivl_expr_oper2(expr);
       ivl_expr_t false_ex = ivl_expr_oper3(expr);
 
-      unsigned lab_true = local_count++;
+      unsigned lab_false = local_count++;
       unsigned lab_out = local_count++;
 
-      int cond_flag = allocate_flag();
+      fprintf(vvp_out, "; Start of ternary condition expr.\n");
+      int use_flag = draw_eval_condition(cond);
 
-	/* Evaluate the ternary condition. */
-      draw_eval_vec4(cond);
-      if (ivl_expr_width(cond) > 1)
-	    fprintf(vvp_out, "    %%or/r;\n");
+	/* The condition flag is used after possibly other statements,
+	   so we need to put it into a non-common place. Allocate a
+	   safe flag bit and move the condition to the flag position. */
+      if (use_flag < 8) {
+            int tmp_flag = allocate_flag();
+            assert(tmp_flag >= 8);
+            fprintf(vvp_out, "    %%flag_mov %d, %d;\n", tmp_flag, use_flag);
+            use_flag = tmp_flag;
+      }
 
-      fprintf(vvp_out, "    %%flag_set/vec4 %d;\n", cond_flag);
+	/* If the condition is just false then we only need to calculate
+	   the false expression. */
+      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_false, use_flag);
+      fprintf(vvp_out, "; Start of true expr.\n");
+      draw_eval_real(true_ex);
 
-
-	/* Evaluate the true expression second. */
-      fprintf(vvp_out, "    %%jmp/1  T_%u.%u, %d;\n",
-	      thread_count, lab_true, cond_flag);
-
-	/* Evaluate the false expression. */
+	/* If the condition is true, then we only need the true expression. */
+      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
+      fprintf(vvp_out, "T_%u.%u; Start of false expr.\n", thread_count, lab_false);
       draw_eval_real(false_ex);
-      fprintf(vvp_out, "    %%jmp/0  T_%u.%u, %d; End of false expr.\n",
-              thread_count, lab_out, cond_flag);
 
-	/* If the conditional is undefined then blend the real words. */
-      draw_eval_real(true_ex);
+	/* If the condition is false, then we only need the false expression. */
+      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
+
+	/* This handles the case that the condition is undefined (x/z). */
       fprintf(vvp_out, "    %%blend/wr;\n");
-      fprintf(vvp_out, "    %%jmp  T_%u.%u; End of blend\n",
-              thread_count, lab_out);
+      fprintf(vvp_out, "T_%u.%u; End of ternary.\n", thread_count, lab_out);
 
-	/* Evaluate the true expression. */
-      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_true);
-      draw_eval_real(true_ex);
-
-	/* This is the out label. */
-      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
-
-      clr_flag(cond_flag);
+      clr_flag(use_flag);
 }
 
 static void increment(ivl_expr_t e, bool pre)

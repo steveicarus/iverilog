@@ -1224,9 +1224,10 @@ static void draw_ternary_vec4(ivl_expr_t expr)
       ivl_expr_t true_ex = ivl_expr_oper2(expr);
       ivl_expr_t false_ex = ivl_expr_oper3(expr);
 
-      unsigned lab_true  = local_count++;
+      unsigned lab_false  = local_count++;
       unsigned lab_out   = local_count++;
 
+      fprintf(vvp_out, "; Start of ternary condition expr.\n");
       int use_flag = draw_eval_condition(cond);
 
 	/* The condition flag is used after possibly other statements,
@@ -1239,27 +1240,23 @@ static void draw_ternary_vec4(ivl_expr_t expr)
 	    use_flag = tmp_flag;
       }
 
-      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_true, use_flag);
-
-	/* If the condition is true or xz (not false), we need the true
-	   expression. If the condition is true, then we ONLY need the
-	   true expression. */
-      draw_eval_vec4(true_ex);
-      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
-      fprintf(vvp_out, "T_%u.%u ; End of true expr.\n", thread_count, lab_true);
-
-	/* If the condition is false or xz (not true), we need the false
-	   expression. If the condition is false, then we ONLY need
+	/* If the condition is just false then we only need to calculate
 	   the false expression. */
-      draw_eval_vec4(false_ex);
-      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
-      fprintf(vvp_out, " ; End of false expr.\n");
+      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_false, use_flag);
+      fprintf(vvp_out, "; Start of true expr.\n");
+      draw_eval_vec4(true_ex);
 
-	/* Here, the condition is not true or false, it is xz. Both
-	   the true and false expressions have been pushed onto the
-	   stack, we just need to blend the bits. */
+	/* If the condition is true, then we only need the true expression. */
+      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
+      fprintf(vvp_out, "T_%u.%u ; Start of false expr.\n", thread_count, lab_false);
+      draw_eval_vec4(false_ex);
+
+	/* If the condition is false, then we only need the false expression. */
+      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
+
+	/* This handles the case that the condition is undefined (x/z). */
       fprintf(vvp_out, "    %%blend;\n");
-      fprintf(vvp_out, "T_%u.%u;\n", thread_count, lab_out);
+      fprintf(vvp_out, "T_%u.%u; End of ternary.\n", thread_count, lab_out);
 
       clr_flag(use_flag);
 }
