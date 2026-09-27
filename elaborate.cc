@@ -6138,6 +6138,7 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
 
       NetESignal*array_exp = new NetESignal(array_sig);
       array_exp->set_line(*this);
+      auto high_array_expr = array_exp->dup_expr();
 
       NetESignal*idx_exp = new NetESignal(idx_sig);
       idx_exp->set_line(*this);
@@ -6153,7 +6154,7 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
 	// Make a condition expression: idx <= $high(array)
       NetESFunc*high_exp = new NetESFunc("$high", &netvector_t::atom2s32, 1);
       high_exp->set_line(*this);
-      high_exp->parm(0, array_exp);
+      high_exp->parm(0, high_array_expr);
 
       NetEBComp*cond_expr = new NetEBComp('L', idx_exp, high_exp);
       cond_expr->set_line(*this);
