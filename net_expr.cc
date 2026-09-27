@@ -411,9 +411,7 @@ NetEProperty::NetEProperty(NetNet*net, size_t pidx, NetExpr*idx)
       }
 }
 
-NetEProperty::~NetEProperty()
-{
-}
+NetEProperty::~NetEProperty() = default;
 
 NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
                        ivl_select_type_t sel_type)

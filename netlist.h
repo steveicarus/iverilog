@@ -4736,7 +4736,7 @@ class NetEProperty : public NetExpr {
 
       inline const NetNet* get_sig() const { return net_; }
       inline size_t property_idx() const { return pidx_; }
-      inline const NetExpr*get_index() const { return index_; }
+      inline const NetExpr*get_index() const { return index_.get(); }
 
     public: // Overridden methods
       virtual void expr_scan(struct expr_scan_t*) const override;
@@ -4749,7 +4749,7 @@ class NetEProperty : public NetExpr {
     private:
       NetNet*net_;
       size_t pidx_;
-      NetExpr*index_;
+      NetExpr::Ptr index_;
 };
 
 /*
