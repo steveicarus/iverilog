@@ -3237,11 +3237,11 @@ class NetCase  : public NetProc {
 
       inline ivl_case_quality_t case_quality() const { return quality_; }
       TYPE type() const;
-      const NetExpr*expr() const { return expr_; }
+      const NetExpr*expr() const { return expr_.get(); }
       inline unsigned nitems() const { return items_.size(); }
 
-      inline const NetExpr*expr(unsigned idx) const { return items_[idx].guard;}
-      inline const NetProc*stat(unsigned idx) const { return items_[idx].statement; }
+      inline const NetExpr*expr(unsigned idx) const { return items_[idx].guard.get();}
+      inline const NetProc*stat(unsigned idx) const { return items_[idx].statement.get(); }
 
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                                   bool nested_func = false) const override;
@@ -3272,12 +3272,11 @@ class NetCase  : public NetProc {
       TYPE type_;
 
       struct Item {
-	    inline Item() : guard(0), statement(0) { }
-	    NetExpr*guard;
-	    NetProc*statement;
+	    NetExpr::Ptr guard;
+	    NetProc::Ptr statement;
       };
 
-      NetExpr* expr_;
+      NetExpr::Ptr expr_;
       std::vector<Item>items_;
 };
 
