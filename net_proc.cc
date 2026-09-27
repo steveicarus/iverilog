@@ -225,7 +225,7 @@ NetForLoop::~NetForLoop()
 }
 
 NetPDelay::NetPDelay(uint64_t d, NetProc*st)
-: delay_(d), expr_(0), statement_(st)
+: delay_(d), expr_(nullptr), statement_(st)
 {
 }
 
@@ -234,10 +234,7 @@ NetPDelay::NetPDelay(NetExpr*d, NetProc*st)
 {
 }
 
-NetPDelay::~NetPDelay()
-{
-      delete expr_;
-}
+NetPDelay::~NetPDelay() = default;
 
 uint64_t NetPDelay::delay() const
 {
@@ -247,7 +244,7 @@ uint64_t NetPDelay::delay() const
 
 const NetExpr* NetPDelay::expr() const
 {
-      return expr_;
+      return expr_.get();
 }
 
 NetRepeat::NetRepeat(NetExpr*e, NetProc*p)

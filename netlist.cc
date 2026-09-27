@@ -2907,10 +2907,10 @@ DelayType NetPDelay::delay_type(bool print_delay) const
 
       if (expr_) {
 	    if (statement_) {
-		  return combine_delays(delay_type_from_expr(expr_),
+		  return combine_delays(delay_type_from_expr(expr_.get()),
 		                        statement_->delay_type(print_delay));
 	    } else {
-		  return delay_type_from_expr(expr_);
+		  return delay_type_from_expr(expr_.get());
 	    }
       }
 
