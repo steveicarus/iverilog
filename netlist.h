@@ -4944,8 +4944,8 @@ class NetEShallowCopy : public NetExpr {
       void expr_scan_oper2(struct expr_scan_t*) const;
 
     private:
-      NetExpr*arg1_;
-      NetExpr*arg2_;
+      NetExpr::Ptr arg1_;
+      NetExpr::Ptr arg2_;
 };
 
 /*
