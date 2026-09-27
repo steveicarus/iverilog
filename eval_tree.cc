@@ -1209,12 +1209,12 @@ NetEConst* NetEConcat::eval_arguments_(const vector<NetExpr*>&vals,
 NetEConst* NetESelect::eval_tree()
 {
       eval_expr(expr_);
-      const NetEConst*expr = dynamic_cast<NetEConst*>(expr_);
+      const NetEConst*expr = dynamic_cast<NetEConst*>(expr_.get());
 
       long bval = 0;
       if (base_) {
 	    eval_expr(base_);
-	    const NetEConst*base = dynamic_cast<NetEConst*>(base_);
+	    const NetEConst*base = dynamic_cast<NetEConst*>(base_.get());
 
 	    if (base == 0) return 0;
 
