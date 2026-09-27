@@ -3639,7 +3639,7 @@ class NetEvNBTrig  : public NetProc {
 
     private:
       NetEvent*event_;
-      NetExpr*dly_;
+      NetExpr::Ptr dly_;
 	// This is used to place me in the NetEvents lists of triggers.
       NetEvNBTrig*enext_;
 };

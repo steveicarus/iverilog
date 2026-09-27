@@ -292,7 +292,7 @@ NetEvNBTrig::~NetEvNBTrig()
 
 const NetExpr* NetEvNBTrig::delay() const
 {
-      return dly_;
+      return dly_.get();
 }
 
 const NetEvent* NetEvNBTrig::event() const
