@@ -3458,7 +3458,7 @@ class NetDoWhile  : public NetProc {
       NetDoWhile(NetExpr*c, NetProc*p)
       : cond_(c), proc_(p) { }
 
-      const NetExpr*expr() const { return cond_; }
+      const NetExpr*expr() const { return cond_.get(); }
 
       void emit_proc_recurse(struct target_t*) const;
 
@@ -3473,8 +3473,8 @@ class NetDoWhile  : public NetProc {
                                      std::map<perm_string,LocalVar>&ctx) const override;
 
     private:
-      NetExpr* cond_;
-      NetProc*proc_;
+      NetExpr::Ptr cond_;
+      NetProc::Ptr proc_;
 };
 
 /*
