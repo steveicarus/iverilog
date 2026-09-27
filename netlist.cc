@@ -2515,12 +2515,7 @@ NetETernary::NetETernary(NetExpr*c, NetExpr*t, NetExpr*f,
       cast_signed_base_(signed_flag);
 }
 
-NetETernary::~NetETernary()
-{
-      delete cond_;
-      delete true_val_;
-      delete false_val_;
-}
+NetETernary::~NetETernary() = default;
 
 const netenum_t* NetETernary::enumeration() const
 {
@@ -2538,17 +2533,17 @@ const netenum_t* NetETernary::enumeration() const
 
 const NetExpr* NetETernary::cond_expr() const
 {
-      return cond_;
+      return cond_.get();
 }
 
 const NetExpr* NetETernary::true_expr() const
 {
-      return true_val_;
+      return true_val_.get();
 }
 
 const NetExpr* NetETernary::false_expr() const
 {
-      return false_val_;
+      return false_val_.get();
 }
 
 ivl_variable_type_t NetETernary::expr_type() const
