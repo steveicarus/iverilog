@@ -194,10 +194,7 @@ NetForever::NetForever(NetProc*p)
 {
 }
 
-NetForever::~NetForever()
-{
-      delete statement_;
-}
+NetForever::~NetForever() = default;
 
 NetForLoop::NetForLoop(NetNet*ind, NetExpr*iexpr, NetExpr*cond, NetProc*sub,
                        NetProc*step)
