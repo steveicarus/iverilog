@@ -1490,6 +1490,14 @@ bool of_BLEND(vthread_t thr, vvp_code_t)
       return true;
 }
 
+bool of_BLEND_STR(vthread_t thr, vvp_code_t)
+{
+      string f = thr->pop_str();
+      string t = thr->pop_str();
+      thr->push_str((t == f) ? t : "");
+      return true;
+}
+
 bool of_BLEND_WR(vthread_t thr, vvp_code_t)
 {
       double f = thr->pop_real();

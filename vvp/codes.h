@@ -1,7 +1,7 @@
 #ifndef IVL_codes_H
 #define IVL_codes_H
 /*
- * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -52,6 +52,7 @@ extern bool of_ASSIGN_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_WRD(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_WRE(vthread_t thr, vvp_code_t code);
 extern bool of_BLEND(vthread_t thr, vvp_code_t code);
+extern bool of_BLEND_STR(vthread_t thr, vvp_code_t code);
 extern bool of_BLEND_WR(vthread_t thr, vvp_code_t code);
 extern bool of_BREAKPOINT(vthread_t thr, vvp_code_t code);
 extern bool of_CALLF_OBJ(vthread_t thr, vvp_code_t code);

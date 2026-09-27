@@ -187,6 +187,49 @@ static void draw_sfunc_string(ivl_expr_t expr)
     draw_vpi_sfunc_call(expr);
 }
 
+static void draw_ternary_string(ivl_expr_t expr)
+{
+      ivl_expr_t cond = ivl_expr_oper1(expr);
+      ivl_expr_t true_ex = ivl_expr_oper2(expr);
+      ivl_expr_t false_ex = ivl_expr_oper3(expr);
+
+      unsigned lab_false  = local_count++;
+      unsigned lab_out   = local_count++;
+
+      fprintf(vvp_out, "; Start of ternary condition expr.\n");
+      int use_flag = draw_eval_condition(cond);
+
+	/* The condition flag is used after possibly other statements,
+	   so we need to put it into a non-common place. Allocate a
+	   safe flag bit and move the condition to the flag position. */
+      if (use_flag < 8) {
+	    int tmp_flag = allocate_flag();
+	    assert(tmp_flag >= 8);
+	    fprintf(vvp_out, "    %%flag_mov %d, %d;\n", tmp_flag, use_flag);
+	    use_flag = tmp_flag;
+      }
+
+	/* If the condition is just false then we only need to calculate
+	   the false expression. */
+      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_false, use_flag);
+      fprintf(vvp_out, "; Start of true expr.\n");
+      draw_eval_string(true_ex);
+
+	/* If the condition is true, then we only need the true expression. */
+      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
+      fprintf(vvp_out, "T_%u.%u; Start of false expr.\n", thread_count, lab_false);
+      draw_eval_string(false_ex);
+
+	/* If the condition is false, then we only need the false expression. */
+      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
+
+	/* This handles the case that the condition is undefined (x/z). */
+      fprintf(vvp_out, "    %%blend/str;\n");
+      fprintf(vvp_out, "T_%u.%u; End of ternary.\n", thread_count, lab_out);
+
+      clr_flag(use_flag);
+}
+
 void draw_eval_string(ivl_expr_t expr)
 {
 
@@ -220,6 +263,10 @@ void draw_eval_string(ivl_expr_t expr)
 		  string_ex_pop(expr);
 	    else
 		  draw_sfunc_string(expr);
+	    break;
+
+	  case IVL_EX_TERNARY:
+	    draw_ternary_string(expr);
 	    break;
 
 	  case IVL_EX_UFUNC:

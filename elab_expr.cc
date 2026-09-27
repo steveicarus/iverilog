@@ -8528,6 +8528,10 @@ unsigned PETernary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
       if (tru_type == IVL_VT_REAL || fal_type == IVL_VT_REAL) {
 	    expr_type_ = IVL_VT_REAL;
+      } else if (((tru_type == IVL_VT_STRING) || (fal_type == IVL_VT_STRING)) &&
+                 ((tru_type == IVL_VT_STRING) || dynamic_cast<const PEString*>(tru_)) &&
+                 ((fal_type == IVL_VT_STRING) || dynamic_cast<const PEString*>(fal_))) {
+	    expr_type_ = IVL_VT_STRING;
       } else if (tru_type == IVL_VT_LOGIC || fal_type == IVL_VT_LOGIC) {
 	    expr_type_ = IVL_VT_LOGIC;
       } else {
@@ -8695,6 +8699,16 @@ NetExpr* PETernary::elab_and_eval_alternative_(Design*des, NetScope*scope,
       } else {
             expr->cast_signed(signed_flag_);
       }
+
+      if (expr_type_ == IVL_VT_STRING) {
+	    if (const PEString *str = dynamic_cast<const PEString*>(expr)) {
+		  NetExpr*tmp = new NetECString(str->value());
+		  tmp->cast_signed(signed_flag_);
+		  tmp->set_line(*this);
+		  return tmp;
+	    }
+      }
+
       NetExpr*tmp = expr->elaborate_expr(des, scope, expr_wid, flags);
       if (tmp == 0) return 0;
 
