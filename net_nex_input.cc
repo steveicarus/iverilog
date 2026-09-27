@@ -523,8 +523,8 @@ NexusSet* NetForLoop::nex_input(bool rem_out, bool always_sens, bool nested_func
 {
       NexusSet*result = new NexusSet;
 
-      if (init_expr_) {
-	    NexusSet*tmp = init_expr_->nex_input(rem_out, always_sens, nested_func);
+      if (const NetExpr*init = init_expr()) {
+	    NexusSet*tmp = init->nex_input(rem_out, always_sens, nested_func);
 	    result->add(*tmp);
 	    delete tmp;
       }

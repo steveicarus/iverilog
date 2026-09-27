@@ -3801,9 +3801,10 @@ class NetForLoop : public NetProc {
 		       NetBus&enables, std::vector<mask_t>&bitmasks) override;
 
     private:
+      const NetExpr*init_expr() const;
+
       NetNet*index_;
-      NetExpr*init_expr_;
-      NetProc*init_statement_; // Generated form index_ and init_expr_.
+      std::unique_ptr<NetAssign>init_statement_; // Assignment to index_.
       NetExpr*condition_;
       NetProc*statement_;
       NetProc*step_statement_;

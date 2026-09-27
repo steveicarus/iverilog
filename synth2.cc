@@ -1464,12 +1464,14 @@ bool NetForLoop::synth_async(Design*des, NetScope*scope,
 	    return false;
       }
 
-      ivl_assert(*this, index_ && init_expr_);
+      ivl_assert(*this, index_ && init_statement_);
+      const NetExpr*init = init_expr();
+      ivl_assert(*this, init);
       if (debug_synth2) {
 	    cerr << get_fileline() << ": NetForLoop::synth_async: "
 		 << "Index variable is " << index_->name() << endl;
 	    cerr << get_fileline() << ": NetForLoop::synth_async: "
-		 << "Initialization expression: " << *init_expr_ << endl;
+		 << "Initialization expression: " << *init << endl;
       }
 
 	// Get the step assignment statement and break it into the
@@ -1487,7 +1489,7 @@ bool NetForLoop::synth_async(Design*des, NetScope*scope,
       map<perm_string,LocalVar> index_args;
 
 	// Calculate the initial value for the index.
-      index_var.value = init_expr_->evaluate_function(*this, index_args);
+      index_var.value = init->evaluate_function(*this, index_args);
       ivl_assert(*this, index_var.value);
       index_args[index_->name()] = index_var;
 

@@ -199,22 +199,29 @@ NetForever::~NetForever()
       delete statement_;
 }
 
-NetForLoop::NetForLoop(NetNet*ind, NetExpr*iexpr, NetExpr*cond, NetProc*sub, NetProc*step)
-: index_(ind), init_expr_(iexpr), condition_(cond), statement_(sub), step_statement_(step)
+NetForLoop::NetForLoop(NetNet*ind, NetExpr*iexpr, NetExpr*cond, NetProc*sub,
+                       NetProc*step)
+: index_(ind), condition_(cond), statement_(sub), step_statement_(step)
 {
-      if (index_ && init_expr_) {
-	    NetAssign_*lv = new NetAssign_(index_);
-	    NetAssign*use_init_statement = new NetAssign(lv, init_expr_);
-	    use_init_statement->set_line(*init_expr_);
-	    init_statement_ = use_init_statement;
-      } else {
-	    init_statement_ = nullptr;
+	// Capture ownership until the expression is transferred to the
+	// generated assignment.
+      std::unique_ptr<NetExpr> initial_expr(iexpr);
+      if (index_ && initial_expr) {
+	    auto lv = new NetAssign_(index_);
+	    init_statement_.reset(new NetAssign(lv, initial_expr.release()));
+	    init_statement_->set_line(*init_expr());
       }
+}
+
+const NetExpr*NetForLoop::init_expr() const
+{
+      if (!init_statement_) return nullptr;
+
+      return init_statement_->rval();
 }
 
 NetForLoop::~NetForLoop()
 {
-      delete init_expr_;
       delete condition_;
       delete statement_;
       delete step_statement_;
