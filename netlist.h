@@ -5017,7 +5017,7 @@ class NetEUnary  : public NetExpr {
       ~NetEUnary() override;
 
       char op() const { return op_; }
-      const NetExpr* expr() const { return expr_; }
+      const NetExpr* expr() const { return expr_.get(); }
 
       virtual NetEUnary* dup_expr() const override;
       virtual NetExpr* eval_tree() override;
@@ -5033,7 +5033,7 @@ class NetEUnary  : public NetExpr {
 
     protected:
       char op_;
-      NetExpr* expr_;
+      NetExpr::Ptr expr_;
 
     private:
       virtual NetExpr* eval_arguments_(const NetExpr*ex) const;

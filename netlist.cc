@@ -2585,10 +2585,7 @@ NetEUnary::NetEUnary(char op__, NetExpr*ex, unsigned wid, bool signed_flag)
       cast_signed_base_(signed_flag);
 }
 
-NetEUnary::~NetEUnary()
-{
-      delete expr_;
-}
+NetEUnary::~NetEUnary() = default;
 
 ivl_variable_type_t NetEUnary::expr_type() const
 {

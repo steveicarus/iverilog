@@ -1203,6 +1203,15 @@ void eval_expr(NetExpr*&expr, int context_width)
       }
 }
 
+void eval_expr(NetExpr::Ptr&expr, int context_width)
+{
+        // The raw-pointer overload may delete and replace the expression.
+        // Release ownership before the call, then own its result.
+      auto tmp = expr.release();
+      eval_expr(tmp, context_width);
+      expr.reset(tmp);
+}
+
 bool eval_as_long(long&value, const NetExpr*expr)
 {
       if (const NetEConst*tmp = dynamic_cast<const NetEConst*>(expr) ) {
