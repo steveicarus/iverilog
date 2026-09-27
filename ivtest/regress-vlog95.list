@@ -283,6 +283,7 @@ br_gh365		CE,-g2009		ivltests
 br_gh453		CE,-g2009,-pallowsigned=1	ivltests
 br_gh800		CE,-g2009		ivltests
 br_gh1298		CE,-g2005-sv		ivltests
+br_gh1459		CE,-g2005-sv		ivltests
 br_ml20180309a		CE,-g2009		ivltests
 br_ml20180309b		CE,-g2009		ivltests
 ivlh_textio		CE,-g2005-sv		ivltests
