@@ -2427,7 +2427,7 @@ const NetScope* NetEScope::scope() const
 }
 
 NetESignal::NetESignal(NetNet*n)
-: NetExpr(n->net_type()), net_(n), word_(0)
+: NetExpr(n->net_type()), net_(n)
 {
       net_->incr_eref();
       set_line(*n);
@@ -2457,7 +2457,7 @@ perm_string NetESignal::name() const
 
 const NetExpr* NetESignal::word_index() const
 {
-      return word_;
+      return word_.get();
 }
 
 unsigned NetESignal::vector_width() const

@@ -1465,7 +1465,7 @@ NetNet* NetESignal::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	// For NetExpr objects, the word index is already converted to
 	// a canonical (lsb==0) address. Just use the index directly.
 
-      if (const NetEConst*index_co = dynamic_cast<NetEConst*> (word_)) {
+      if (const NetEConst*index_co = dynamic_cast<NetEConst*> (word_.get())) {
 
 	    long index = index_co->value().as_long();
 	    connect(tmp->pin(0), net_->pin(index));

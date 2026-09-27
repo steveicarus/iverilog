@@ -271,7 +271,7 @@ NetEShallowCopy* NetEShallowCopy::dup_expr() const
 
 NetESignal* NetESignal::dup_expr() const
 {
-      NetESignal*tmp = new NetESignal(net_, word_);
+      NetESignal*tmp = new NetESignal(net_, word_ ? word_->dup_expr() : nullptr);
       ivl_assert(*this, tmp);
       tmp->expr_width(expr_width());
       tmp->cast_signed(has_sign());
