@@ -2883,7 +2883,7 @@ DelayType NetForever::delay_type(bool print_delay) const
 
 DelayType NetForLoop::delay_type(bool print_delay) const
 {
-      return get_loop_delay_type(condition_, statement_, print_delay);
+      return get_loop_delay_type(condition_.get(), statement_.get(), print_delay);
 }
 
 DelayType NetPDelay::delay_type(bool print_delay) const
@@ -3375,11 +3375,11 @@ bool NetForLoop::check_synth(ivl_process_type_t pr_type,
 //          From NetEUnary
 //            What about NetEUBits ! sig or ! (sig == constat)
 //            What about NetEUReduce &signal
-      if (const NetESignal*tmp = dynamic_cast<const NetESignal*>(condition_)) {
+      if (const NetESignal*tmp = dynamic_cast<const NetESignal*>(condition_.get())) {
 	    if (tmp->sig() != index_) {
 		  print_for_idx_warning(this, "condition", pr_type, index_);
 	    }
-      } else if (const NetEBComp*cmp = dynamic_cast<const NetEBComp*>(condition_)) {
+      } else if (const NetEBComp*cmp = dynamic_cast<const NetEBComp*>(condition_.get())) {
 	    check_for_bin_synth(cmp->left(), cmp->right(),
                                 "compare against a constant", "condition",
 	                        this, pr_type, index_);
@@ -3387,7 +3387,7 @@ bool NetForLoop::check_synth(ivl_process_type_t pr_type,
 	    print_for_idx_warning(this, "condition", pr_type, index_);
       }
 
-      if (const NetAssign*tmp = dynamic_cast<const NetAssign*>(step_statement_)) {
+      if (const NetAssign*tmp = dynamic_cast<const NetAssign*>(step_statement_.get())) {
 	    check_for_step_synth(tmp, this, pr_type, index_);
       } else {
 	    print_for_step_warning(this, pr_type);

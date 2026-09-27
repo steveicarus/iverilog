@@ -207,12 +207,7 @@ const NetExpr*NetForLoop::init_expr() const
       return init_statement_->rval();
 }
 
-NetForLoop::~NetForLoop()
-{
-      delete condition_;
-      delete statement_;
-      delete step_statement_;
-}
+NetForLoop::~NetForLoop() = default;
 
 NetPDelay::NetPDelay(uint64_t d, NetProc*st)
 : delay_(d), expr_(nullptr), statement_(st)

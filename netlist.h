@@ -3808,9 +3808,9 @@ class NetForLoop : public NetProc {
 
       NetNet*index_;
       std::unique_ptr<NetAssign>init_statement_; // Assignment to index_.
-      NetExpr*condition_;
-      NetProc*statement_;
-      NetProc*step_statement_;
+      NetExpr::Ptr condition_;
+      NetProc::Ptr statement_;
+      NetProc::Ptr step_statement_;
 };
 
 class NetFree   : public NetProc {
