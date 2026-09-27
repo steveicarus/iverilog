@@ -1476,7 +1476,7 @@ bool NetForLoop::synth_async(Design*des, NetScope*scope,
 	// Get the step assignment statement and break it into the
 	// l-value (should be the index) and the r-value, which is the
 	// step expressions.
-      NetAssign*step_assign = dynamic_cast<NetAssign*> (step_statement_);
+      NetAssign*step_assign = dynamic_cast<NetAssign*> (step_statement_.get());
       char assign_operator = step_assign->assign_operator();
       ivl_assert(*this, step_assign);
       const NetExpr*step_expr = step_assign->rval();
@@ -1524,7 +1524,7 @@ bool NetForLoop::synth_async(Design*des, NetScope*scope,
 	    vector<mask_t> tmp_masks (nex_out.pin_count());
 
 	    rc = synth_async_block_substatement_(des, scope, nex_map, nex_out,
-						 tmp_ena, tmp_masks, statement_);
+						 tmp_ena, tmp_masks, statement_.get());
 
 	    for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
 		  merge_sequential_enables(des, scope, enables.pin(idx), tmp_ena.pin(idx));
