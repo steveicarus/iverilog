@@ -2131,18 +2131,13 @@ const NetNet* NetFuncDef::return_sig() const
 
 NetSTask::NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
                    const vector<NetExpr*>&pa)
-: name_(lex_strings.make(na)), sfunc_as_task_(sfat), parms_(pa)
+: name_(lex_strings.make(na)), sfunc_as_task_(sfat)
 {
+      for (auto*parm : pa) parms_.emplace_back(parm);
       ivl_assert(*this, name_.str()[0] == '$');
 }
 
-NetSTask::~NetSTask()
-{
-      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
-	    delete parms_[idx];
-
-	/* The name_ string is perm-allocated in lex_strings. */
-}
+NetSTask::~NetSTask() = default;
 
 const char*NetSTask::name() const
 {
@@ -2161,7 +2156,7 @@ unsigned NetSTask::nparms() const
 
 const NetExpr* NetSTask::parm(unsigned idx) const
 {
-      return parms_[idx];
+      return parms_[idx].get();
 }
 
 NetEUFunc::NetEUFunc(NetScope*scope, NetScope*def, NetESignal*res,
