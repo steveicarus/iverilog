@@ -5128,7 +5128,7 @@ class NetESignal  : public NetExpr {
     private:
       NetNet*net_;
 	// Expression to select a word from the net.
-      NetExpr*word_;
+      std::unique_ptr<NetExpr> word_;
 };
 
 /*

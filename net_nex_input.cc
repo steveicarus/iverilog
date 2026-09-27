@@ -229,7 +229,7 @@ NexusSet* NetESignal::nex_input_base(bool rem_out, bool always_sens, bool nested
                        << net_->unpacked_count() << " words in array '"
                        << name() << "'." << endl;
             }
-	    if (always_sens) if (const NetEConst *val = dynamic_cast <NetEConst*> (word_)) {
+	    if (always_sens) if (const NetEConst *val = dynamic_cast <NetEConst*> (word_.get())) {
 		  const_select = true;
 		  const_word = val->value().as_unsigned();
 	    }
