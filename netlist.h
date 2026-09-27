@@ -3382,8 +3382,8 @@ class NetContribution : public NetProc {
       virtual void dump(std::ostream&, unsigned ind) const override;
 
     private:
-      NetEAccess*lval_;
-      NetExpr*rval_;
+      std::unique_ptr<NetEAccess>lval_;
+      NetExpr::Ptr rval_;
 };
 
 /*
