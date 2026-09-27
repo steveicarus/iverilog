@@ -3772,7 +3772,7 @@ class NetForever : public NetProc {
 				     std::map<perm_string,LocalVar>&ctx) const override;
 
     private:
-      NetProc*statement_;
+      NetProc::Ptr statement_;
 };
 
 class NetForLoop : public NetProc {
