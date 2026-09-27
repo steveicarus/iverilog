@@ -756,7 +756,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	// is a pattern where the guards are non-constant and tested
 	// against a constant case. Handle this as chained conditions
 	// instead.
-      if (dynamic_cast<NetEConst*> (expr_))
+      if (dynamic_cast<NetEConst*> (expr_.get()))
 	    return synth_async_casez_(des, scope, nex_map, nex_out,
 				      enables, bitmasks);
 
@@ -770,7 +770,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       }
 
 	/* Synthesize the select expression. */
-      NetNet*esig = expr_->synthesize(des, scope, expr_);
+      NetNet*esig = expr_->synthesize(des, scope, expr_.get());
 
       unsigned sel_width = esig->vector_width();
       ivl_assert(*this, sel_width > 0);
@@ -816,11 +816,11 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 
       for (size_t item = 0 ;  item < items_.size() ;  item += 1) {
 	    if (items_[item].guard == 0) {
-		  default_statement = items_[item].statement;
+		  default_statement = items_[item].statement.get();
 		  continue;
 	    }
 
-	    const NetEConst*ge = dynamic_cast<NetEConst*>(items_[item].guard);
+	    const NetEConst*ge = dynamic_cast<NetEConst*>(items_[item].guard.get());
 	    if (ge == 0) {
 		  cerr << items_[item].guard->get_fileline() << ": sorry: "
 		       << "variable case item expressions with a variable "
@@ -838,8 +838,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 		  cerr << ge->get_fileline() << ": warning: duplicate case "
 		       << "value '" << sel_idx << "' detected. This case is "
 		       << "unreachable." << endl;
-		  delete items_[item].statement;
-		  items_[item].statement = 0;
+		  items_[item].statement.reset();
 		  continue;
 	    }
 
@@ -847,7 +846,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 		  max_guard_value = sel_idx;
 
 	    if (items_[item].statement) {
-		  statement_map[sel_idx] = items_[item].statement;
+		  statement_map[sel_idx] = items_[item].statement.get();
 		  continue;
 	    }
 
@@ -1043,7 +1042,7 @@ bool NetCase::synth_async_casez_(Design*des, NetScope*scope,
       ivl_assert(*this, nex_map.size() == bitmasks.size());
 
 	/* Synthesize the select expression. */
-      NetNet*esig = expr_->synthesize(des, scope, expr_);
+      NetNet*esig = expr_->synthesize(des, scope, expr_.get());
 
       unsigned sel_width = esig->vector_width();
       ivl_assert(*this, sel_width > 0);
@@ -1082,7 +1081,7 @@ bool NetCase::synth_async_casez_(Design*des, NetScope*scope,
 		  continue;
 
 	    ivl_assert(*this, default_statement==0);
-	    default_statement = items_[item].statement;
+	    default_statement = items_[item].statement.get();
       }
 
 	/* If there is a default clause, synthesize it once and we'll
@@ -1134,10 +1133,10 @@ bool NetCase::synth_async_casez_(Design*des, NetScope*scope,
 	    if (items_[item].guard == 0)
 		  continue;
 
-	    NetProc*stmt = items_[item].statement;
+	    NetProc*stmt = items_[item].statement.get();
 	    ivl_assert(*this, stmt);
 
-	    NetExpr*guard_expr = items_[item].guard;
+	    NetExpr*guard_expr = items_[item].guard.get();
 	    NetNet*guard = guard_expr->synthesize(des, scope, guard_expr);
 
 	    NetCaseCmp*condit_dev = new NetCaseCmp(scope, scope->local_symbol(),
