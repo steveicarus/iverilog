@@ -427,20 +427,16 @@ NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
       expr_width(wid);
 }
 
-NetESelect::~NetESelect()
-{
-      delete expr_;
-      delete base_;
-}
+NetESelect::~NetESelect() = default;
 
 const NetExpr*NetESelect::sub_expr() const
 {
-      return expr_;
+      return expr_.get();
 }
 
 const NetExpr*NetESelect::select() const
 {
-      return base_;
+      return base_.get();
 }
 
 ivl_select_type_t NetESelect::select_type() const

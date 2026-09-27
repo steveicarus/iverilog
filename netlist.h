@@ -4627,8 +4627,8 @@ class NetESelect  : public NetExpr {
       virtual void dump(std::ostream&) const override;
 
     private:
-      NetExpr*expr_;
-      NetExpr*base_;
+      NetExpr::Ptr expr_;
+      NetExpr::Ptr base_;
       ivl_select_type_t sel_type_;
 };
 

@@ -1142,7 +1142,7 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 
 	// Detect the special case that there is a base expression and
 	// it is constant. In this case we can generate fixed part selects.
-      if (const NetEConst*base_const = dynamic_cast<NetEConst*>(base_)) {
+      if (const NetEConst*base_const = dynamic_cast<NetEConst*>(base_.get())) {
 	    verinum base_tmp = base_const->value();
 	    unsigned select_width = expr_width();
 
