@@ -371,7 +371,7 @@ const netenum_t* NetENetenum::netenum() const
 }
 
 NetENew::NetENew(ivl_type_t t)
-: NetExpr(t), size_(0), init_val_(0)
+: NetExpr(t)
 {
 }
 
@@ -380,9 +380,7 @@ NetENew::NetENew(ivl_type_t t, NetExpr*size, NetExpr*init_val)
 {
 }
 
-NetENew::~NetENew()
-{
-}
+NetENew::~NetENew() = default;
 
 ivl_variable_type_t NetENew::expr_type() const
 {

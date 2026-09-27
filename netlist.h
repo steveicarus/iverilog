@@ -4686,8 +4686,8 @@ class NetENew : public NetExpr {
       explicit NetENew(ivl_type_t, NetExpr*size, NetExpr* init_val=0);
       ~NetENew() override;
 
-      inline const NetExpr*size_expr() const { return size_; }
-      inline const NetExpr*init_expr() const { return init_val_; }
+      inline const NetExpr*size_expr() const { return size_.get(); }
+      inline const NetExpr*init_expr() const { return init_val_.get(); }
 
       virtual ivl_variable_type_t expr_type() const override;
 
@@ -4699,8 +4699,8 @@ class NetENew : public NetExpr {
       virtual void dump(std::ostream&os) const override;
 
     private:
-      NetExpr*size_;
-      NetExpr*init_val_;
+      NetExpr::Ptr size_;
+      NetExpr::Ptr init_val_;
 };
 
 /*
