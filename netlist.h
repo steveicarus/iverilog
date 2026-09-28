@@ -2785,6 +2785,8 @@ enum DelayType { NO_DELAY, ZERO_DELAY, POSSIBLE_DELAY, DEFINITE_DELAY };
 class NetProc : public virtual LineInfo {
 
     public:
+      using Ptr = std::unique_ptr<NetProc>;
+
       explicit NetProc();
       virtual ~NetProc() override;
 
