@@ -2125,6 +2125,8 @@ class NetTran  : public NetNode, public IslandBranch {
  */
 class NetExpr  : public LineInfo {
     public:
+      using Ptr = std::unique_ptr<NetExpr>;
+
       explicit NetExpr(unsigned w =0);
       explicit NetExpr(ivl_type_t t);
       virtual ~NetExpr() override =0;
