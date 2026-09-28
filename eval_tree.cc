@@ -2442,7 +2442,7 @@ NetESFunc::ID NetESFunc::built_in_id_() const
 
 	/* Look for the given function and if it is not available return
 	 * NOT_BUILT_IN otherwise return the ID for the function. */
-      map<string,ID>::iterator idx = built_in_func.find(name_);
+      map<string,ID>::iterator idx = built_in_func.find(name_.str());
 
       if (idx == built_in_func.end()) return NOT_BUILT_IN;
 

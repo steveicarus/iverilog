@@ -470,25 +470,22 @@ ivl_variable_type_t NetESelect::expr_type() const
 
 NetESFunc::NetESFunc(const char*n, ivl_variable_type_t t,
 		     unsigned width, unsigned np, bool is_overridden)
-: name_(0), type_(t), parms_(np), is_overridden_(is_overridden)
+: name_(lex_strings.make(n)), type_(t), parms_(np),
+  is_overridden_(is_overridden)
 {
-      name_ = lex_strings.add(n);
       expr_width(width);
 }
 
 NetESFunc::NetESFunc(const char*n, ivl_type_t rtype, unsigned np)
-: NetExpr(rtype), name_(0), type_(rtype->base_type()), parms_(np),
-  is_overridden_(false)
+: NetExpr(rtype), name_(lex_strings.make(n)),
+  type_(rtype->base_type()), parms_(np), is_overridden_(false)
 {
-      name_ = lex_strings.add(n);
 }
 
 NetESFunc::~NetESFunc()
 {
       for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
 	    if (parms_[idx]) delete parms_[idx];
-
-	/* name_ string ls lex_strings allocated. */
 }
 
 const char* NetESFunc::name() const

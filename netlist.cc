@@ -2137,10 +2137,9 @@ const NetNet* NetFuncDef::return_sig() const
 
 NetSTask::NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
                    const vector<NetExpr*>&pa)
-: name_(0), sfunc_as_task_(sfat), parms_(pa)
+: name_(lex_strings.make(na)), sfunc_as_task_(sfat), parms_(pa)
 {
-      name_ = lex_strings.add(na);
-      ivl_assert(*this, name_[0] == '$');
+      ivl_assert(*this, name_.str()[0] == '$');
 }
 
 NetSTask::~NetSTask()
