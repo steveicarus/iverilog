@@ -3986,7 +3986,7 @@ class NetSTask  : public NetProc {
                                      std::map<perm_string,LocalVar>&ctx) const override;
 
     private:
-      const char* name_;
+      perm_string name_;
       ivl_sfunc_as_task_t sfunc_as_task_;
       std::vector<NetExpr*>parms_;
 };
@@ -4874,7 +4874,7 @@ class NetESFunc  : public NetExpr {
 	    return func & (1U << (nargs + 16));
       }
 
-      const char* name_;
+      perm_string name_;
       ivl_variable_type_t type_;
       std::vector<NetExpr*>parms_;
       bool is_overridden_;
