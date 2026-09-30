@@ -2818,6 +2818,22 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	    des->errors += 1;
 	    return nullptr;
       }
+      const unsigned unpacked_dimensions = net->unpacked_dimensions();
+
+      if (base_index.size() < unpacked_dimensions) {
+            cerr << li->get_fileline() << ": error: Array "
+                 << net->name() << " needs "
+                 << unpacked_dimensions << " indices, but got only "
+                 << base_index.size() << "." << endl;
+            des->errors += 1;
+            return nullptr;
+      }
+
+	// Remove the unpacked indices from the list that will later
+	// be treated as packed indices.
+      list<index_component_t> packed_base_index(base_index);
+      for (unsigned idx = 0; idx < unpacked_dimensions; idx += 1)
+            packed_base_index.pop_front();
 
 	// These make up the "part" select that is the equivilent of
 	// following the member path through the nested structs. To
@@ -3087,7 +3103,58 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	    member_path.pop_front();
 
       } while (!member_path.empty() && struct_type != 0);
+      // Convert the leading unpacked-array indices into one canonical
+      // array-element index.
+      NetExpr*canon_index = 0;
 
+      if (unpacked_dimensions > 0) {
+            list<NetExpr*>unpacked_indices;
+            list<long>unpacked_indices_const;
+            indices_flags idx_flags;
+
+            indices_to_expressions(des, scope, li,
+                                   base_index, unpacked_dimensions,
+                                   false,
+                                   idx_flags,
+                                   unpacked_indices,
+                                   unpacked_indices_const);
+
+            if (idx_flags.invalid)
+                  return nullptr;
+
+            if (idx_flags.undefined) {
+                  cerr << li->get_fileline() << ": warning: "
+                       << "returning 'bx for undefined array access "
+                       << net->name()
+                       << as_indices(unpacked_indices) << "." << endl;
+
+                  NetEConst*xxx = make_const_x(use_width);
+                  xxx->set_line(*li);
+                  return xxx;
+            }
+
+            if (idx_flags.variable) {
+                  canon_index =
+                        normalize_variable_unpacked(net, unpacked_indices);
+            } else {
+                  canon_index =
+                        normalize_variable_unpacked(net,
+                                                    unpacked_indices_const);
+            }
+
+            if (canon_index == 0) {
+                  cerr << li->get_fileline() << ": warning: "
+                       << "returning 'bx for out of bounds array access "
+                       << net->name()
+                       << as_indices(unpacked_indices_const) << "." << endl;
+
+                  NetEConst*xxx = make_const_x(use_width);
+                  xxx->set_line(*li);
+                  return xxx;
+            }
+
+            canon_index->set_line(*li);
+      }
 	// The dimensions in the expression must match the packed
 	// dimensions that are declared for the variable. For example,
 	// if foo is a packed array of struct, then this expression
@@ -3095,11 +3162,12 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	// match the declaration of "b".
 	// Note that one of the packed dimensions is the packed struct
 	// itself.
-      ivl_assert(*li, base_index.size()+1 == net->packed_dimensions());
+      ivl_assert(*li, packed_base_index.size()+1
+                 == net->packed_dimensions());
 
       NetExpr*packed_base = 0;
       if (net->packed_dimensions() > 1) {
-	    list<index_component_t>tmp_index = base_index;
+	    list<index_component_t>tmp_index = packed_base_index;
 	    index_component_t member_select;
 	    member_select.sel = index_component_t::SEL_BIT;
 	    member_select.msb = new PENumber(new verinum(off));
@@ -3119,7 +3187,12 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	    packed_base = 0;
       }
 
-      NetESignal*sig = new NetESignal(net);
+      NetESignal*sig;
+      if (canon_index)
+	    sig = new NetESignal(net, canon_index);
+      else
+	    sig = new NetESignal(net);
+
       NetExpr   *base = packed_base? packed_base : make_const_val(off);
       NetESelect*sel = new NetESelect(sig, base, use_width, member_type);
 
