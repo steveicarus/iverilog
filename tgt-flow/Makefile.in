@@ -1,0 +1,106 @@
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    Library General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Library General Public License for more details.
+#
+#    You should have received a copy of the GNU Library General Public
+#    License along with this program; if not, write to the Free
+#    Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+#    Boston, MA 02110-1301, USA.
+#
+SHELL = /bin/sh
+
+suffix = @install_suffix@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+srcdir = @srcdir@
+
+VPATH = $(srcdir)
+
+bindir = @bindir@
+libdir = @libdir@
+includedir = $(prefix)/include
+
+CC = @CC@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
+CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
+LDFLAGS = @LDFLAGS@
+
+O = flow.o
+
+all: dep flow.tgt
+
+check: all
+
+clean:
+	rm -rf *.o dep flow.tgt
+
+distclean: clean
+	rm -f Makefile config.log
+
+cppcheck: $(O:.o=.c)
+	cppcheck --enable=all --std=c99 --std=c++11 -f \
+	         --check-level=exhaustive \
+	         --suppressions-list=$(srcdir)/../cppcheck-global.sup \
+	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
+
+Makefile: $(srcdir)/Makefile.in ../config.status
+	cd ..; ./config.status --file=tgt-flow/$@
+
+dep:
+	mkdir dep
+
+%.o: %.c | dep
+	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
+	mv $*.d dep
+
+ifeq (@WIN32@,yes)
+  TGTLDFLAGS=-L.. -livl
+  TGTDEPLIBS=../libivl.a
+else
+  TGTLDFLAGS=
+  TGTDEPLIBS=
+endif
+
+flow.tgt: $O $(TGTDEPLIBS)
+	$(CC) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
+
+install: all installdirs installfiles
+
+F = ./flow.tgt \
+	$(srcdir)/flow.conf \
+	$(srcdir)/flow-s.conf
+
+installfiles: $(F) | installdirs
+	$(INSTALL_PROGRAM) ./flow.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/flow.tgt"
+	$(INSTALL_DATA) $(srcdir)/flow.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/flow.conf"
+	$(INSTALL_DATA) $(srcdir)/flow-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/flow-s.conf"
+
+installdirs: $(srcdir)/../mkinstalldirs
+	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)/ivl$(suffix)"
+
+uninstall:
+	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/flow.tgt"
+	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/flow.conf"
+	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/flow-s.conf"
+
+
+-include $(patsubst %.o, dep/%.d, $O)
