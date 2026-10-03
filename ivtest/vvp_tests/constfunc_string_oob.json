@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "constfunc_string_oob.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Strings are not supported",
+        "type"      : "CE"
+    }
+}
