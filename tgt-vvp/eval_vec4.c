@@ -1075,13 +1075,16 @@ static void draw_darray_pop(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%qpop/prop/%s/v %u, %u;\n", fb, pidx,
 	            ivl_expr_width(expr));
 	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-	    return;
+      } else {
+	    assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
+
+	    fprintf(vvp_out, "    %%qpop/%s/v v%p_0, %u;\n", fb,
+	            ivl_expr_signal(arg), ivl_expr_width(expr));
       }
 
-      assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
-
-      fprintf(vvp_out, "    %%qpop/%s/v v%p_0, %u;\n", fb, ivl_expr_signal(arg),
-                       ivl_expr_width(expr));
+      if (ivl_expr_value(expr) == IVL_VT_BOOL) {
+	    fprintf(vvp_out, "    %%cast2;\n");
+      }
 }
 
 static void draw_sfunc_vec4(ivl_expr_t expr)
