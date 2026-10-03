@@ -248,6 +248,18 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 		 << endl;
 	    cerr << reg->get_fileline() << ":      : '" << path_ <<
 		  "' is declared here as a " << reg->type() << "." << endl;
+	      /* An input or inout port is a net unless it is explicitly
+		 declared as a variable. Reporting the resolved net type on
+		 its own is confusing when the source declared the port with
+		 a data type (e.g. "input reg"), so explain where the net
+		 type came from. */
+	    if (reg->port_type() == NetNet::PINPUT ||
+	        reg->port_type() == NetNet::PINOUT) {
+		  cerr << reg->get_fileline() << ":      : An "
+		       << (reg->port_type() == NetNet::PINPUT ? "input" : "inout")
+		       << " port is a net unless it is explicitly declared "
+			  "as a variable." << endl;
+	    }
 	    des->errors += 1;
 	    return 0;
       }
