@@ -569,7 +569,7 @@ bool NetCase::evaluate_function_vect_(const LineInfo&loc,
             const Item*item = &items_[cnt];
 
             if (item->guard == 0) {
-                  default_statement = item->statement;
+                  default_statement = item->statement.get();
                   continue;
             }
 
@@ -631,7 +631,7 @@ bool NetCase::evaluate_function_real_(const LineInfo&loc,
             const Item*item = &items_[cnt];
 
             if (item->guard == 0) {
-                  default_statement = item->statement;
+                  default_statement = item->statement.get();
                   continue;
             }
 

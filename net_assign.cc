@@ -320,15 +320,11 @@ NetAssign::~NetAssign()
 }
 
 NetAssignNB::NetAssignNB(NetAssign_*lv, NetExpr*rv, NetEvWait*ev, NetExpr*cnt)
-: NetAssignBase(lv, rv)
+: NetAssignBase(lv, rv), event_(ev), count_(cnt)
 {
-      event_ = ev;
-      count_ = cnt;
 }
 
-NetAssignNB::~NetAssignNB()
-{
-}
+NetAssignNB::~NetAssignNB() = default;
 
 unsigned NetAssignNB::nevents() const
 {
@@ -344,7 +340,7 @@ const NetEvent*NetAssignNB::event(unsigned idx) const
 
 const NetExpr*NetAssignNB::get_count() const
 {
-      return count_;
+      return count_.get();
 }
 
 NetCAssign::NetCAssign(NetAssign_*lv, NetExpr*rv)

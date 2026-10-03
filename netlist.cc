@@ -2016,37 +2016,31 @@ NetCondit::NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
 {
 }
 
-NetCondit::~NetCondit()
-{
-      delete expr_;
-      delete if_;
-      delete else_;
-}
+NetCondit::~NetCondit() = default;
 
 const NetExpr* NetCondit::expr() const
 {
-      return expr_;
+      return expr_.get();
 }
 
 NetExpr* NetCondit::expr()
 {
-      return expr_;
+      return expr_.get();
 }
 
 void NetCondit::set_expr(NetExpr*ex)
 {
-      delete expr_;
-      expr_ = ex;
+      expr_.reset(ex);
 }
 
 NetProc* NetCondit::if_clause()
 {
-      return if_;
+      return if_.get();
 }
 
 NetProc* NetCondit::else_clause()
 {
-      return else_;
+      return else_.get();
 }
 
 NetConst::NetConst(NetScope*s, perm_string n, verinum::V v)
@@ -2137,18 +2131,13 @@ const NetNet* NetFuncDef::return_sig() const
 
 NetSTask::NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
                    const vector<NetExpr*>&pa)
-: name_(lex_strings.make(na)), sfunc_as_task_(sfat), parms_(pa)
+: name_(lex_strings.make(na)), sfunc_as_task_(sfat)
 {
+      for (auto*parm : pa) parms_.emplace_back(parm);
       ivl_assert(*this, name_.str()[0] == '$');
 }
 
-NetSTask::~NetSTask()
-{
-      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
-	    delete parms_[idx];
-
-	/* The name_ string is perm-allocated in lex_strings. */
-}
+NetSTask::~NetSTask() = default;
 
 const char*NetSTask::name() const
 {
@@ -2167,7 +2156,7 @@ unsigned NetSTask::nparms() const
 
 const NetExpr* NetSTask::parm(unsigned idx) const
 {
-      return parms_[idx];
+      return parms_[idx].get();
 }
 
 NetEUFunc::NetEUFunc(NetScope*scope, NetScope*def, NetESignal*res,
@@ -2894,7 +2883,7 @@ DelayType NetForever::delay_type(bool print_delay) const
 
 DelayType NetForLoop::delay_type(bool print_delay) const
 {
-      return get_loop_delay_type(condition_, statement_, print_delay);
+      return get_loop_delay_type(condition_.get(), statement_.get(), print_delay);
 }
 
 DelayType NetPDelay::delay_type(bool print_delay) const
@@ -2907,10 +2896,10 @@ DelayType NetPDelay::delay_type(bool print_delay) const
 
       if (expr_) {
 	    if (statement_) {
-		  return combine_delays(delay_type_from_expr(expr_),
+		  return combine_delays(delay_type_from_expr(expr_.get()),
 		                        statement_->delay_type(print_delay));
 	    } else {
-		  return delay_type_from_expr(expr_);
+		  return delay_type_from_expr(expr_.get());
 	    }
       }
 
@@ -2926,7 +2915,7 @@ DelayType NetPDelay::delay_type(bool print_delay) const
 
 DelayType NetRepeat::delay_type(bool print_delay) const
 {
-      return get_loop_delay_type(expr_, statement_, print_delay);
+      return get_loop_delay_type(expr_.get(), statement_.get(), print_delay);
 }
 
 DelayType NetTaskDef::delay_type(bool print_delay) const
@@ -3012,7 +3001,7 @@ DelayType NetWhile::delay_type(bool print_delay) const
 {
 	// If the wait was a constant value the compiler already removed it
 	// so we know we can only have a possible delay.
-      if (while_is_wait(cond_, proc_)) {
+      if (while_is_wait(cond_.get(), proc_.get())) {
 	    if (print_delay) {
 		  cerr << get_fileline() << ": error: a wait statement is "
 		          "not allowed in an "
@@ -3021,7 +3010,7 @@ DelayType NetWhile::delay_type(bool print_delay) const
 	    }
 	    return POSSIBLE_DELAY;
       }
-      return get_loop_delay_type(cond_, proc_, print_delay);
+      return get_loop_delay_type(cond_.get(), proc_.get(), print_delay);
 }
 
 /*
@@ -3386,11 +3375,11 @@ bool NetForLoop::check_synth(ivl_process_type_t pr_type,
 //          From NetEUnary
 //            What about NetEUBits ! sig or ! (sig == constat)
 //            What about NetEUReduce &signal
-      if (const NetESignal*tmp = dynamic_cast<const NetESignal*>(condition_)) {
+      if (const NetESignal*tmp = dynamic_cast<const NetESignal*>(condition_.get())) {
 	    if (tmp->sig() != index_) {
 		  print_for_idx_warning(this, "condition", pr_type, index_);
 	    }
-      } else if (const NetEBComp*cmp = dynamic_cast<const NetEBComp*>(condition_)) {
+      } else if (const NetEBComp*cmp = dynamic_cast<const NetEBComp*>(condition_.get())) {
 	    check_for_bin_synth(cmp->left(), cmp->right(),
                                 "compare against a constant", "condition",
 	                        this, pr_type, index_);
@@ -3398,7 +3387,7 @@ bool NetForLoop::check_synth(ivl_process_type_t pr_type,
 	    print_for_idx_warning(this, "condition", pr_type, index_);
       }
 
-      if (const NetAssign*tmp = dynamic_cast<const NetAssign*>(step_statement_)) {
+      if (const NetAssign*tmp = dynamic_cast<const NetAssign*>(step_statement_.get())) {
 	    check_for_step_synth(tmp, this, pr_type, index_);
       } else {
 	    print_for_step_warning(this, pr_type);
@@ -3509,7 +3498,7 @@ bool NetWhile::check_synth(ivl_process_type_t pr_type,
 {
       bool result = false;
 	// A wait is already maked as an error in the delay check above.
-      if (! while_is_wait(cond_, proc_)) {
+      if (! while_is_wait(cond_.get(), proc_.get())) {
 	    print_synth_warning(this, "A while", pr_type);
 	    if (proc_) result |= proc_->check_synth(pr_type, scope);
       }

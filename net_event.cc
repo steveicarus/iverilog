@@ -292,7 +292,7 @@ NetEvNBTrig::~NetEvNBTrig()
 
 const NetExpr* NetEvNBTrig::delay() const
 {
-      return dly_;
+      return dly_.get();
 }
 
 const NetEvent* NetEvNBTrig::event() const
@@ -409,7 +409,6 @@ NetEvWait::~NetEvWait()
 	    }
 	    events_.clear();
       }
-      delete statement_;
 }
 
 void NetEvWait::add_event(NetEvent*tgt)
@@ -476,10 +475,10 @@ void NetEvWait::replace_event(NetEvent*src, NetEvent*repl)
 
 NetProc* NetEvWait::statement()
 {
-      return statement_;
+      return statement_.get();
 }
 
 const NetProc* NetEvWait::statement() const
 {
-      return statement_;
+      return statement_.get();
 }

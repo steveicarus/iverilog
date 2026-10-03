@@ -2785,6 +2785,8 @@ enum DelayType { NO_DELAY, ZERO_DELAY, POSSIBLE_DELAY, DEFINITE_DELAY };
 class NetProc : public virtual LineInfo {
 
     public:
+      using Ptr = std::unique_ptr<NetProc>;
+
       explicit NetProc();
       virtual ~NetProc() override;
 
@@ -3132,8 +3134,8 @@ class NetAssignNB  : public NetAssignBase {
       const NetExpr* get_count() const;
 
     private:
-      NetEvWait*event_;
-      NetExpr*count_;
+      std::unique_ptr<NetEvWait>event_;
+      NetExpr::Ptr count_;
 };
 
 /*
@@ -3235,11 +3237,11 @@ class NetCase  : public NetProc {
 
       inline ivl_case_quality_t case_quality() const { return quality_; }
       TYPE type() const;
-      const NetExpr*expr() const { return expr_; }
+      const NetExpr*expr() const { return expr_.get(); }
       inline unsigned nitems() const { return items_.size(); }
 
-      inline const NetExpr*expr(unsigned idx) const { return items_[idx].guard;}
-      inline const NetProc*stat(unsigned idx) const { return items_[idx].statement; }
+      inline const NetExpr*expr(unsigned idx) const { return items_[idx].guard.get();}
+      inline const NetProc*stat(unsigned idx) const { return items_[idx].statement.get(); }
 
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                                   bool nested_func = false) const override;
@@ -3270,12 +3272,11 @@ class NetCase  : public NetProc {
       TYPE type_;
 
       struct Item {
-	    inline Item() : guard(0), statement(0) { }
-	    NetExpr*guard;
-	    NetProc*statement;
+	    NetExpr::Ptr guard;
+	    NetProc::Ptr statement;
       };
 
-      NetExpr* expr_;
+      NetExpr::Ptr expr_;
       std::vector<Item>items_;
 };
 
@@ -3349,9 +3350,9 @@ class NetCondit  : public NetProc {
                                      std::map<perm_string,LocalVar>&ctx) const override;
 
     private:
-      NetExpr* expr_;
-      NetProc*if_;
-      NetProc*else_;
+      NetExpr::Ptr expr_;
+      NetProc::Ptr if_;
+      NetProc::Ptr else_;
 };
 
 class NetContinue : public NetProc {
@@ -3380,8 +3381,8 @@ class NetContribution : public NetProc {
       virtual void dump(std::ostream&, unsigned ind) const override;
 
     private:
-      NetEAccess*lval_;
-      NetExpr*rval_;
+      std::unique_ptr<NetEAccess>lval_;
+      NetExpr::Ptr rval_;
 };
 
 /*
@@ -3456,7 +3457,7 @@ class NetDoWhile  : public NetProc {
       NetDoWhile(NetExpr*c, NetProc*p)
       : cond_(c), proc_(p) { }
 
-      const NetExpr*expr() const { return cond_; }
+      const NetExpr*expr() const { return cond_.get(); }
 
       void emit_proc_recurse(struct target_t*) const;
 
@@ -3471,8 +3472,8 @@ class NetDoWhile  : public NetProc {
                                      std::map<perm_string,LocalVar>&ctx) const override;
 
     private:
-      NetExpr* cond_;
-      NetProc*proc_;
+      NetExpr::Ptr cond_;
+      NetProc::Ptr proc_;
 };
 
 /*
@@ -3637,7 +3638,7 @@ class NetEvNBTrig  : public NetProc {
 
     private:
       NetEvent*event_;
-      NetExpr*dly_;
+      NetExpr::Ptr dly_;
 	// This is used to place me in the NetEvents lists of triggers.
       NetEvNBTrig*enext_;
 };
@@ -3696,7 +3697,7 @@ class NetEvWait  : public NetProc {
       virtual bool check_synth(ivl_process_type_t pr_type, const NetScope*scope) const override;
 
     private:
-      NetProc*statement_;
+      NetProc::Ptr statement_;
 	// Events that I might wait for.
       std::vector<NetEvent*>events_;
       bool has_t0_trigger_;
@@ -3770,7 +3771,7 @@ class NetForever : public NetProc {
 				     std::map<perm_string,LocalVar>&ctx) const override;
 
     private:
-      NetProc*statement_;
+      NetProc::Ptr statement_;
 };
 
 class NetForLoop : public NetProc {
@@ -3807,9 +3808,9 @@ class NetForLoop : public NetProc {
 
       NetNet*index_;
       std::unique_ptr<NetAssign>init_statement_; // Assignment to index_.
-      NetExpr*condition_;
-      NetProc*statement_;
-      NetProc*step_statement_;
+      NetExpr::Ptr condition_;
+      NetProc::Ptr statement_;
+      NetProc::Ptr step_statement_;
 };
 
 class NetFree   : public NetProc {
@@ -3907,8 +3908,8 @@ class NetPDelay  : public NetProc {
 
     private:
       uint64_t delay_;
-      NetExpr*expr_;
-      NetProc*statement_;
+      NetExpr::Ptr expr_;
+      NetProc::Ptr statement_;
 };
 
 /*
@@ -3934,8 +3935,8 @@ class NetRepeat : public NetProc {
 				     std::map<perm_string,LocalVar>&ctx) const override;
 
     private:
-      NetExpr*expr_;
-      NetProc*statement_;
+      NetExpr::Ptr expr_;
+      NetProc::Ptr statement_;
 };
 
 /*
@@ -3990,7 +3991,7 @@ class NetSTask  : public NetProc {
     private:
       perm_string name_;
       ivl_sfunc_as_task_t sfunc_as_task_;
-      std::vector<NetExpr*>parms_;
+      std::vector<NetExpr::Ptr>parms_;
 };
 
 /*
@@ -4151,7 +4152,7 @@ class NetWhile  : public NetProc {
       NetWhile(NetExpr*c, NetProc*p)
       : cond_(c), proc_(p) { }
 
-      const NetExpr*expr() const { return cond_; }
+      const NetExpr*expr() const { return cond_.get(); }
 
       void emit_proc_recurse(struct target_t*) const;
 
@@ -4166,8 +4167,8 @@ class NetWhile  : public NetProc {
 				     std::map<perm_string,LocalVar>&ctx) const override;
 
     private:
-      NetExpr*cond_;
-      NetProc*proc_;
+      NetExpr::Ptr cond_;
+      NetProc::Ptr proc_;
 };
 
 

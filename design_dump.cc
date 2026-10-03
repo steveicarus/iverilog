@@ -242,6 +242,17 @@ static std::ostream& operator << (std::ostream &out, const std::vector<NetExpr*>
       return out;
 }
 
+static std::ostream& operator << (std::ostream&out,
+				 const std::vector<NetExpr::Ptr>&exprs)
+{
+      for (size_t idx = 0 ; idx < exprs.size() ; idx += 1) {
+	    if (idx != 0) out << ", ";
+	    if (exprs[idx]) out << *exprs[idx];
+      }
+
+      return out;
+}
+
 ostream& ivl_type_s::debug_dump(ostream&o) const
 {
       o << typeid(*this).name();
