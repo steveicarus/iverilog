@@ -1068,7 +1068,8 @@ NetExpr* NetESelect::evaluate_function(const LineInfo&loc,
 	    sub = pad_to_width(sub, expr_width());
       }
 
-      verinum res (verinum::Vx, expr_width());
+      verinum::V pad = expr_type() == IVL_VT_BOOL ? verinum::V0 : verinum::Vx;
+      verinum res(pad, expr_width());
       for (unsigned idx = 0 ; idx < res.len() ; idx += 1) {
 	    long sdx = base + idx;
 	    if (sdx >= 0 && (unsigned long)sdx < sub.len())
