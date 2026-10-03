@@ -1566,6 +1566,7 @@ sdf8			normal,-gspecify	ivltests gold=sdf8.gold
 sdf_del_max		normal,-gspecify,-Tmax	ivltests
 sdf_del_min		normal,-gspecify,-Tmin	ivltests
 sdf_del_typ		normal,-gspecify,-Ttyp	ivltests
+sdf_timescale		normal,-gspecify	ivltests gold=sdf_timescale.gold
 sdf_esc_id		normal,-gspecify	ivltests gold=sdf1.gold
 sdw_always1		normal			ivltests
 sdw_always2		normal			ivltests
