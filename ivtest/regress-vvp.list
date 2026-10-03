@@ -549,6 +549,7 @@ sv_queue_method_push_front_too_few_arg_fail	vvp_tests/sv_queue_method_push_front
 sv_queue_method_push_front_too_many_arg_fail	vvp_tests/sv_queue_method_push_front_too_many_arg_fail.json
 sv_queue_min_max		vvp_tests/sv_queue_min_max.json
 sv_queue_min_max_with		vvp_tests/sv_queue_min_max_with.json
+sv_queue_pop_2state		vvp_tests/sv_queue_pop_2state.json
 sv_queue_product		vvp_tests/sv_queue_product.json
 sv_queue_product_with		vvp_tests/sv_queue_product_with.json
 sv_queue_reverse		vvp_tests/sv_queue_reverse.json
