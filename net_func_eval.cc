@@ -1053,6 +1053,8 @@ NetExpr* NetESelect::evaluate_function(const LineInfo&loc,
       verinum sub = sub_const->value();
       delete sub_exp;
 
+      verinum::V pad = expr_type() == IVL_VT_BOOL ? verinum::V0 : verinum::Vx;
+      verinum res(pad, expr_width());
       long base = 0;
       if (base_) {
 	    NetExpr*base_val = base_->evaluate_function(loc, context_map);
@@ -1061,19 +1063,20 @@ NetExpr* NetESelect::evaluate_function(const LineInfo&loc,
 	    const NetEConst*base_const = dynamic_cast<NetEConst*>(base_val);
 	    ivl_assert(loc, base_const);
 
-	    base = base_const->value().as_long();
+	    bool valid = base_const->value().try_long(base);
 	    delete base_val;
+	    if (!valid) return new NetEConst(res);
       } else {
 	    sub.has_sign(has_sign());
 	    sub = pad_to_width(sub, expr_width());
       }
 
-      verinum::V pad = expr_type() == IVL_VT_BOOL ? verinum::V0 : verinum::Vx;
-      verinum res(pad, expr_width());
       for (unsigned idx = 0 ; idx < res.len() ; idx += 1) {
-	    long sdx = base + idx;
-	    if (sdx >= 0 && (unsigned long)sdx < sub.len())
-		  res.set(idx, sub[sdx]);
+	    if (base >= 0) {
+		  if (static_cast<unsigned long>(base) >= sub.len()) break;
+		  res.set(idx, sub[base]);
+	    }
+	    base += 1;
       }
 
       NetEConst*res_const = new NetEConst(res);
