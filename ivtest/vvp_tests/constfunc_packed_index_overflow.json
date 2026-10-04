@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "constfunc_packed_index_overflow.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Signed registers require allowsigned",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}
