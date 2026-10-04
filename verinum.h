@@ -107,10 +107,16 @@ class verinum {
       unsigned long as_ulong() const;
 
       signed long   as_long() const;
+
+        // Set value as for as_long(), without issuing a truncation warning.
+        // Return true if the value is defined and fits in a native long.
+      bool try_long(long&value) const;
+
       double as_double() const;
       std::string as_string() const;
     private:
       void signed_trim();
+      bool convert_long(long&val, bool warn) const;
 
     private:
       V* bits_;

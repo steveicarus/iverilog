@@ -480,14 +480,23 @@ uint64_t verinum::as_ulong64() const
  */
 signed long verinum::as_long() const
 {
+      long val;
+      convert_long(val, true);
+      return val;
+}
+
+bool verinum::try_long(long&value) const
+{
+      return convert_long(value, false);
+}
+
+bool verinum::convert_long(long&val, bool warn) const
+{
 #define IVLLBITS (8 * sizeof(long) - 1)
-      if (nbits_ == 0)
-	    return 0;
+      val = 0;
+      if (nbits_ == 0) return true;
+      if (!is_defined()) return false;
 
-      if (!is_defined())
-	    return 0;
-
-      signed long val = 0;
       unsigned diag_top = 0;
 
       unsigned top = nbits_;
@@ -521,9 +530,11 @@ signed long verinum::as_long() const
 	    }
       }
 
-      if (lost_bits) cerr << "warning: verinum::as_long() truncated " <<
-	  diag_top << " bits to " << IVLLBITS << ", returns " << val << endl;
-      return val;
+      if (lost_bits && warn) {
+	    cerr << "warning: verinum::as_long() truncated " << diag_top
+		 << " bits to " << IVLLBITS << ", returns " << val << endl;
+      }
+      return !lost_bits;
 #undef IVLLBITS
 }
 
