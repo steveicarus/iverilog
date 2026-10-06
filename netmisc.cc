@@ -800,6 +800,29 @@ NetExpr* condition_reduce(NetExpr*expr)
 	    return rtn;
       }
 
+	/* If we have a constant reduce it to a single bit */
+      const_bool cval = const_logical(expr);
+      if (cval != C_NON) {
+	    verinum::V res = verinum::Vx;
+	    switch (cval) {
+		case C_0:
+		  res = verinum::V0;
+		  break;
+		case C_1:
+		  res = verinum::V1;
+		  break;
+		case C_X:
+		  break;
+		case C_NON:
+		  assert(0);
+	    }
+	    verinum vres (res, 1, true);
+	    NetEConst*eres = new NetEConst(vres);
+	    eres->set_line(*expr);
+	    delete expr;
+	    return eres;
+      }
+
       if (expr->expr_width() == 1)
 	    return expr;
 
