@@ -118,6 +118,9 @@ constfunc18			vvp_tests/constfunc18.json
 constfunc19			vvp_tests/constfunc19.json
 constfunc20			vvp_tests/constfunc20.json
 constfunc_2state_oob		vvp_tests/constfunc_2state_oob.json
+constfunc_loop_condition_real	vvp_tests/constfunc_loop_condition_real.json
+constfunc_loop_condition_unknown	vvp_tests/constfunc_loop_condition_unknown.json
+constfunc_loop_condition_wide	vvp_tests/constfunc_loop_condition_wide.json
 constfunc_packed_index_overflow	vvp_tests/constfunc_packed_index_overflow.json
 constfunc_packed_index_undefined	vvp_tests/constfunc_packed_index_undefined.json
 constfunc_string_oob		vvp_tests/constfunc_string_oob.json
@@ -175,6 +178,7 @@ hier_index_queue_fail		vvp_tests/hier_index_queue_fail.json
 hier_index_root_name_fail		vvp_tests/hier_index_root_name_fail.json
 line_directive			vvp_tests/line_directive.json
 localparam_type			vvp_tests/localparam_type.json
+loop_condition_real		vvp_tests/loop_condition_real.json
 macro_str_esc			vvp_tests/macro_str_esc.json
 memsynth1			vvp_tests/memsynth1.json
 memsynth2			vvp_tests/memsynth2.json
