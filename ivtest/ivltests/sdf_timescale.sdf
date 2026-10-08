@@ -1,0 +1,19 @@
+(DELAYFILE
+  (SDFVERSION "3.0")
+  (DESIGN "top")
+  (DATE "Thu Sep 11 00:00:00 2026")
+  (VENDOR "None")
+  (PROGRAM "Human")
+  (VERSION "1.0")
+  (DIVIDER /)
+  (TIMESCALE 1ps)
+  (CELL
+    (CELLTYPE "BUF1")
+    (INSTANCE u1)
+    (DELAY
+      (ABSOLUTE
+        (IOPATH A Q (2000.0:2000.0:2000.0) (2000.0:2000.0:2000.0))
+      )
+    )
+  )
+)
