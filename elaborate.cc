@@ -5345,6 +5345,7 @@ NetProc* PDoWhile::elaborate(Design*des, NetScope*scope) const
 	    delete sub;
 	    return 0;
       }
+      ce = condition_reduce(ce);
       NetDoWhile*loop = new NetDoWhile(ce, sub);
       loop->set_line(*this);
       return loop;
@@ -6297,6 +6298,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       // have a consistent input.
       ivl_assert(*this, sig || !initial_expr);
 
+      ce = condition_reduce(ce);
       NetForLoop*loop = new NetForLoop(sig, initial_expr, ce, sub, step);
       loop->set_line(*this);
       return loop;
@@ -6693,6 +6695,7 @@ NetProc* PWhile::elaborate(Design*des, NetScope*scope) const
 	    delete sub;
 	    return 0;
       }
+      ce = condition_reduce(ce);
       NetWhile*loop = new NetWhile(ce, sub);
       loop->set_line(*this);
       return loop;
