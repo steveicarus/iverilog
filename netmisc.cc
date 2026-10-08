@@ -782,6 +782,8 @@ NetNet* make_const_z(Design*des, NetScope*scope, unsigned long wid)
 
 NetExpr* condition_reduce(NetExpr*expr)
 {
+      if (expr == nullptr) return nullptr;
+
       if (expr->expr_type() == IVL_VT_REAL) {
 	    if (const NetECReal *tmp = dynamic_cast<NetECReal*>(expr)) {
 		  verinum::V res;

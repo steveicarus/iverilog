@@ -217,6 +217,7 @@ extern NetExpr*cast_to_real(NetExpr*expr);
  * Take the input expression and return a variation that assures that
  * the expression is 1-bit wide and logical. This reflects the needs
  * of conditions i.e. for "if" statements or logical operators.
+ * A null input expression is returned unchanged.
  */
 extern NetExpr*condition_reduce(NetExpr*expr);
 
