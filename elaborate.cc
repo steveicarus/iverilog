@@ -5737,8 +5737,8 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 
       PExpr *pe = expr_[0]->expr();
 
-	/* Elaborate wait expression. Don't eval yet, we will do that
-	   shortly, after we apply a reduction or. */
+	/* Elaborate the wait expression. Evaluate it after reducing
+	   it to its logical value. */
 
       PExpr::width_mode_t mode = PExpr::SIZED;
       pe->test_width(des, scope, mode);
@@ -5751,22 +5751,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	    return 0;
       }
 
-	// If the condition expression is more than 1 bits, then
-	// generate a reduction operator to get the result down to
-	// one bit. In other words, Turn <e> into |<e>;
-
-      if (expr->expr_width() < 1) {
-	    cerr << get_fileline() << ": internal error: "
-		  "incomprehensible wait expression width (0)." << endl;
-	    return 0;
-      }
-
-      if (expr->expr_width() > 1) {
-	    ivl_assert(*this, expr->expr_width() > 1);
-	    NetEUReduce*cmp = new NetEUReduce('|', expr);
-	    cmp->set_line(*pe);
-	    expr = cmp;
-      }
+      expr = condition_reduce(expr);
 
 	/* precalculate as much as possible of the wait expression. */
       eval_expr(expr);

@@ -741,6 +741,8 @@ vams_min_max_default_argument	vvp_tests/vams_min_max_default_argument.json
 vardly_undefined_vec		vvp_tests/vardly_undefined_vec.json
 va_math				vvp_tests/va_math.json
 vvp_quiet_mode			vvp_tests/vvp_quiet_mode.json
+wait_condition_real		vvp_tests/wait_condition_real.json
+wait_condition_real_constant	vvp_tests/wait_condition_real_constant.json
 warn_opt_sys_tf			vvp_tests/warn_opt_sys_tf.json
 wreal				vvp_tests/wreal.json
 writemem-invalid		vvp_tests/writemem-invalid.json
