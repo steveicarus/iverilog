@@ -717,7 +717,7 @@ void vvp_fun_modpath_src::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 
       } else if (port.port() == 1) {
 	      // The modpath condition input...
-	    if (bit.value(0) == BIT4_1)
+	    if (bit.value(0) != BIT4_0)
 		  condition_flag_ = true;
 	    else
 		  condition_flag_ = false;
