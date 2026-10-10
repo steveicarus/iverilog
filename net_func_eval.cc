@@ -356,7 +356,13 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 	    const NetEConst*base_const = dynamic_cast<NetEConst*>(base_result);
 	    ivl_assert(loc, base_const);
 
-	    long base = base_const->value().as_long();
+	    long base;
+	      // If the base does not fit in a long, assume it is out of bounds.
+	    if (!base_const->value().try_long(base)) {
+		  delete base_result;
+		  delete rval_result;
+		  return true;
+	    }
 
 	    if (old_lval == 0)
 		  old_lval = make_const_x(lval->sig()->vector_width());
