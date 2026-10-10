@@ -425,10 +425,20 @@ static void draw_binary_vec4_limpl(ivl_expr_t expr)
       assert(ivl_expr_width(le) == 1);
       assert(ivl_expr_width(re) == 1);
 
-      draw_eval_vec4(le);
+      unsigned int label_out = local_count++;
+
+	/* Skip the right operand if the left operand is false. */
+      int flag = draw_eval_condition(le);
+      fprintf(vvp_out, "    %%flag_get/vec4 %d;\n", flag);
       fprintf(vvp_out, "    %%inv;\n");
+      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n",
+	      thread_count, label_out, flag);
+      clr_flag(flag);
+
       draw_eval_vec4(re);
       fprintf(vvp_out, "    %%or;\n");
+
+      fprintf(vvp_out, "T_%u.%u;\n", thread_count, label_out);
 }
 
 static void draw_binary_vec4_lequiv(ivl_expr_t expr)
