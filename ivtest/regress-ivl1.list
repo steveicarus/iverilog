@@ -242,6 +242,9 @@ br_gh99e		normal,-g2009		ivltests
 pull371			normal,-g2012		ivltests
 sv-2val-nets		normal,-g2009		ivltests
 
+# Data types on module ports
+br_gh1284		CE			ivltests gold=br_gh1284.gold
+
 # Left aligned formats
 pr2476430		normal			ivltests
 
