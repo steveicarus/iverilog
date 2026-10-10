@@ -97,6 +97,7 @@ br_gh1385a			vvp_tests/br_gh1385a.json
 br_gh1385b			vvp_tests/br_gh1385b.json
 br_gh1385c			vvp_tests/br_gh1385c.json
 br_gh1512			vvp_tests/br_gh1512.json
+br_gh1563			vvp_tests/br_gh1563.json
 ca_time_real			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json
@@ -123,6 +124,7 @@ constfunc_loop_condition_unknown	vvp_tests/constfunc_loop_condition_unknown.json
 constfunc_loop_condition_wide	vvp_tests/constfunc_loop_condition_wide.json
 constfunc_packed_index_overflow	vvp_tests/constfunc_packed_index_overflow.json
 constfunc_packed_index_undefined	vvp_tests/constfunc_packed_index_undefined.json
+constfunc_repeat_unknown		vvp_tests/constfunc_repeat_unknown.json
 constfunc_string_oob		vvp_tests/constfunc_string_oob.json
 constfunccall1			vvp_tests/constfunccall1.json
 constfunccall2			vvp_tests/constfunccall2.json
@@ -259,6 +261,7 @@ real_net_signed_zero		vvp_tests/real_net_signed_zero.json
 real_unary_minus_inf		vvp_tests/real_unary_minus_inf.json
 real_unary_minus_nan		vvp_tests/real_unary_minus_nan.json
 real_unary_minus_zero		vvp_tests/real_unary_minus_zero.json
+repeat_signed_one_bit		vvp_tests/repeat_signed_one_bit.json
 scaled_real			vvp_tests/scaled_real.json
 scan-invalid			vvp_tests/scan-invalid.json
 sdf_interconnect1		vvp_tests/sdf_interconnect1.json

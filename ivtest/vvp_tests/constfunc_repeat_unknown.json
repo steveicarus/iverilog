@@ -1,0 +1,8 @@
+{
+    "type"   : "normal",
+    "source" : "constfunc_repeat_unknown.v",
+    "vlog95" : {
+        "__comment"     : "Signed function inputs require allowsigned.",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}

@@ -1,0 +1,8 @@
+{
+    "type"   : "normal",
+    "source" : "repeat_signed_one_bit.v",
+    "vlog95" : {
+        "__comment"     : "Signed registers require allowsigned.",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}
