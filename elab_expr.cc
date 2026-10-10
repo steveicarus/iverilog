@@ -4817,6 +4817,11 @@ NetExpr *PECast::elaborate_type_cast_(Design *des, NetScope *scope,
 		    // the signedness pushed down from the main expression.
 		  tmp = cast_to_width(sub, target_width, sub->has_sign(), *this);
 	    }
+	      // Keep the cast type only if width and signedness are unchanged.
+	    if (expr_wid != target_width ||
+		signed_flag != target_type->get_signed()) {
+		  target_type = nullptr;
+	    }
 	    return pad_to_width(tmp, expr_wid, signed_flag, *this, target_type);
       }
 
