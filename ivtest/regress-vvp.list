@@ -261,6 +261,7 @@ real_net_signed_zero		vvp_tests/real_net_signed_zero.json
 real_unary_minus_inf		vvp_tests/real_unary_minus_inf.json
 real_unary_minus_nan		vvp_tests/real_unary_minus_nan.json
 real_unary_minus_zero		vvp_tests/real_unary_minus_zero.json
+repeat_signed_one_bit		vvp_tests/repeat_signed_one_bit.json
 scaled_real			vvp_tests/scaled_real.json
 scan-invalid			vvp_tests/scan-invalid.json
 sdf_interconnect1		vvp_tests/sdf_interconnect1.json
