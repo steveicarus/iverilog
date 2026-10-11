@@ -1182,5 +1182,8 @@ NetExpr* NetEUFunc::evaluate_function(const LineInfo&loc,
 	    args[idx] = parms_[idx]->evaluate_function(loc, context_map);
 
       NetExpr*res = def->evaluate_function(*this, args);
+      if (NetEConst*value = dynamic_cast<NetEConst*>(res)) {
+	    value->cast_signed(has_sign());
+      }
       return res;
 }

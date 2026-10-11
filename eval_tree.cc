@@ -2525,5 +2525,8 @@ NetExpr* NetEUFunc::eval_tree()
 	    args[idx] = parms_[idx]->dup_expr();
 
       NetExpr*res = def->evaluate_function(*this, args);
+      if (NetEConst*value = dynamic_cast<NetEConst*>(res)) {
+	    value->cast_signed(has_sign());
+      }
       return res;
 }
