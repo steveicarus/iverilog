@@ -1,6 +1,7 @@
 // Still need to check real wires and what they return!
 module top;
-  // Any unsized negative value will be 32 bits or more!
+  // Any unsized negative value will be 32 bits or more,
+  // except -(2**31)
   parameter pm1 = $clog2(-1);
   parameter prm1 = $clog2(-1.0);
   parameter prm30 = $clog2(-(2**31-1));
@@ -58,8 +59,8 @@ module top;
       $display("Failed with param. -(2**30-1), expected 32, got %d", prm30);
       pass = 1'b0;
     end
-    if (prm31 !== 32) begin
-      $display("Failed with param. -(2**31), expected 32, got %d", prm31);
+    if (prm31 !== 31) begin
+      $display("Failed with param. -(2**31), expected 31, got %d", prm31);
       pass = 1'b0;
     end
     if (prm32 !== 32) begin
@@ -125,7 +126,8 @@ module top;
 
     /* Test the eval_tree implementation. */
 
-    // Any unsized negative value will be 32 bits or more!
+    // Any unsized negative value will be 32 bits or more
+    // except -(2**31)
     result = $clog2(-1);
     if (result !== 32) begin
       $display("Failed with -1, expected 32, got %d", result);
@@ -139,8 +141,8 @@ module top;
     end
 
     result = $clog2(-(2**31));
-    if (result !== 32) begin
-      $display("Failed with -(2**31), expected 32, got %d", result);
+    if (result !== 31) begin
+      $display("Failed with -(2**31), expected 31, got %d", result);
       pass = 1'b0;
     end
 
