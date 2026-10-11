@@ -1,0 +1,7 @@
+{
+    "type"          : "normal",
+    "source"        : "constfunc_resize_signedness.v",
+    "vlog95"        : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}
