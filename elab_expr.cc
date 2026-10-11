@@ -3316,6 +3316,25 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
 		  ivl_assert(*this, use_index.lsb == 0);
 		  canon_index = elab_and_eval(des, scope, use_index.msb, -1, false);
 	    }
+      } else if (!comp.index.empty()) {
+	    /* IEEE 1800-2023 §11.5.1: bit-select on a scalar packed property,
+	     * e.g. c.vect[i] where vect is logic [7:0].  The index was
+	     * silently dropped before this fix (canon_index stayed nullptr).
+	     * Wrap the full property in a NetESelect so draw_select_vec4 can
+	     * emit the correct %parti/u or %part/u opcode. */
+	    const index_component_t&idx = comp.index.front();
+	    ivl_assert(*this, idx.sel == index_component_t::SEL_BIT);
+	    ivl_assert(*this, idx.lsb == 0);
+
+	    NetEProperty *prop = new NetEProperty(sr.net, pidx, nullptr);
+	    prop->set_line(*this);
+
+	    NetExpr *bit = elab_and_eval(des, scope, idx.msb, -1, false);
+	    if (!bit) return nullptr;
+
+	    NetESelect *sel = new NetESelect(prop, bit, 1);
+	    sel->set_line(*this);
+	    return sel;
       }
 
       if (debug_elaborate && canon_index) {
