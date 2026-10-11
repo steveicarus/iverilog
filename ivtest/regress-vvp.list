@@ -10,6 +10,7 @@ array_index_real_fail		vvp_tests/array_index_real_fail.json
 array_packed_sysfunct		vvp_tests/array_packed_sysfunct.json
 array_packed_value_list		vvp_tests/array_packed_value_list.json
 array_packed_write_read		vvp_tests/array_packed_write_read.json
+array_query_invalid_signedness	vvp_tests/array_query_invalid_signedness.json
 array_slice_concat		vvp_tests/array_slice_concat.json
 assign_op_return_select		vvp_tests/assign_op_return_select.json
 assign_op_signed1		vvp_tests/assign_op_signed1.json
