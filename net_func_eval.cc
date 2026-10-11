@@ -1055,6 +1055,7 @@ NetExpr* NetESelect::evaluate_function(const LineInfo&loc,
 
       verinum::V pad = expr_type() == IVL_VT_BOOL ? verinum::V0 : verinum::Vx;
       verinum res(pad, expr_width());
+      res.has_sign(has_sign());
       long base = 0;
       if (base_) {
 	    NetExpr*base_val = base_->evaluate_function(loc, context_map);
