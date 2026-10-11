@@ -1262,11 +1262,20 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
 	// reflects the positions of the named ports.
       if (pins_) {
 	    unsigned nexp = rmod->port_count();
+	    bool seen_wildcard = false;
 
 	      // Scan the bindings, matching them with port names.
 	    for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
 		    // Handle wildcard named port.
 		  if (pins_[idx].name[0] == '*') {
+			if (seen_wildcard) {
+			      cerr << get_fileline() << ": error: "
+			           << "Wildcard port connection already specified."
+			           << endl;
+			      des->errors += 1;
+			      continue;
+			}
+			seen_wildcard = true;
 			const auto &wildcard = pins_[idx];
 			for (unsigned j = 0 ; j < nexp ; j += 1) {
 			      if (rmod->ports[j] && !pins[j] && !pins_is_explicitly_not_connected[j]) {
