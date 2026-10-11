@@ -118,6 +118,8 @@ constfunc18			vvp_tests/constfunc18.json
 constfunc19			vvp_tests/constfunc19.json
 constfunc20			vvp_tests/constfunc20.json
 constfunc_2state_oob		vvp_tests/constfunc_2state_oob.json
+constfunc_case_null		vvp_tests/constfunc_case_null.json
+constfunc_case_null_real	vvp_tests/constfunc_case_null_real.json
 constfunc_loop_condition_real	vvp_tests/constfunc_loop_condition_real.json
 constfunc_loop_condition_unknown	vvp_tests/constfunc_loop_condition_unknown.json
 constfunc_loop_condition_wide	vvp_tests/constfunc_loop_condition_wide.json
