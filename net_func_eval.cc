@@ -603,6 +603,7 @@ bool NetCase::evaluate_function_vect_(const LineInfo&loc,
             }
             if (!match) continue;
 
+            if (!item->statement) return true;
             return item->statement->evaluate_function(loc, context_map);
       }
 
@@ -647,6 +648,7 @@ bool NetCase::evaluate_function_real_(const LineInfo&loc,
 
             if (item_val != case_val) continue;
 
+            if (!item->statement) return true;
             return item->statement->evaluate_function(loc, context_map);
       }
 
