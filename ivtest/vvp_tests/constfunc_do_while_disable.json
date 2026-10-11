@@ -1,0 +1,7 @@
+{
+    "type": "normal",
+    "source": "constfunc_do_while_disable.v",
+    "iverilog-args": [
+        "-g2005-sv"
+    ]
+}
