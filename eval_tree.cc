@@ -1652,10 +1652,13 @@ NetEConst* NetESFunc::evaluate_clog2_(const NetExpr*arg_) const
       if (tmpi == 0 && tmpr == 0) return 0;
 
       verinum arg;
+      bool is_neg_real = false;
       if (tmpi) {
 	    arg = tmpi->value();
       } else {
 	    arg = verinum(tmpr->value().as_double(), true);
+            if (arg.is_negative())
+                  is_neg_real = true;
       }
 
       NetEConst*rtn;
@@ -1668,16 +1671,8 @@ NetEConst* NetESFunc::evaluate_clog2_(const NetExpr*arg_) const
 	    rtn = new NetEConst(tmp);
 	    ivl_assert(*this, rtn);
       } else {
-	    bool is_neg = false;
 	    uint64_t res = 0;
 
-	    if (arg.is_negative()) {
-		  is_neg = true;
-		    // If the length is not defined, then work with
-		    // the trimmed version of the number.
-		  if (! arg.has_len())
-			arg = trim_vnum(arg);
-	    }
 	    arg.has_sign(false);  // $unsigned()
 
 	    if (!arg.is_zero()) {
@@ -1688,7 +1683,10 @@ NetEConst* NetESFunc::evaluate_clog2_(const NetExpr*arg_) const
 		  }
 	    }
 
-	    if (is_neg && res < integer_width)
+            // Allowing real arguments to $clog2 is an Icarus extension.
+            // Preserve the legacy behaviour that returns a minimum value
+            // of integer_width.
+	    if (is_neg_real && res < integer_width)
 		  res = integer_width;
 
 	    verinum tmp (res, integer_width);
