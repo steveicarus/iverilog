@@ -6499,7 +6499,7 @@ static vvp_queue_vec4* queue_find_first_last_to_queue_src(SRC* src,
       return dst;
 }
 
-/* min()/max() return all elements equal to the selected extrema. */
+/* min()/max() return one element with the selected extremum. */
 template <class SRC>
 static vvp_queue_vec4* queue_run_min_max_src(SRC* src, unsigned wid, bool want_max)
 {
@@ -6508,27 +6508,18 @@ static vvp_queue_vec4* queue_run_min_max_src(SRC* src, unsigned wid, bool want_m
 
       vvp_vector4_t best(wid);
       src->get_word(0, best);
-      dst->push_back(best, 0);
 
       size_t n = src->get_size();
-      for (size_t i = 1; i < n; i += 1) {
+      for (size_t i = 1 ; i < n ; i += 1) {
 	    vvp_vector4_t vi(wid);
 	    src->get_word(i, vi);
-	    if (vi.eeq(best)) {
-		  dst->push_back(vi, 0);
-		  continue;
-	    }
 
 	    vvp_bit4_t ge = compare_gtge(vi, best, BIT4_1);
 	    bool replace = want_max ? (ge == BIT4_1) : (ge == BIT4_0);
-	    if (!replace) continue;
-
-	    best = vi;
-	    delete dst;
-	    dst = new vvp_queue_vec4();
-	    dst->push_back(best, 0);
+	    if (replace) best = vi;
       }
 
+      dst->push_back(best, 0);
       return dst;
 }
 
