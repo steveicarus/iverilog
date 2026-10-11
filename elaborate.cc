@@ -1310,11 +1310,9 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
 			delete pins[pidx];
 			pins_fromwc[pidx] = false;
 
-		    // If I already explicitly bound something to
-		    // this port, then the pins array will already
-		    // have a pointer value where I want to place this
-		    // expression.
-		  } else if (pins[pidx]) {
+		    // An explicit binding is recorded by either an
+		    // expression or the explicitly unconnected flag.
+		  } else if (pins[pidx] || pins_is_explicitly_not_connected[pidx]) {
 			cerr << get_fileline() << ": error: port ``" <<
 			      pins_[idx].name << "'' already bound." <<
 			      endl;
