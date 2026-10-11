@@ -239,6 +239,8 @@ named_event_posedge_fail	vvp_tests/named_event_posedge_fail.json
 nba_repeat_wide_count		vvp_tests/nba_repeat_wide_count.json
 nba_repeat_wide_count_real_array	vvp_tests/nba_repeat_wide_count_real_array.json
 non-polymorphic-abs		vvp_tests/non-polymorphic-abs.json
+parameter_named_duplicate_fail	vvp_tests/parameter_named_duplicate_fail.json
+parameter_named_empty		vvp_tests/parameter_named_empty.json
 partsel_invalid_idx1		vvp_tests/partsel_invalid_idx1.json
 partsel_invalid_idx2		vvp_tests/partsel_invalid_idx2.json
 partsel_invalid_idx3		vvp_tests/partsel_invalid_idx3.json
