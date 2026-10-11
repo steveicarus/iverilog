@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "constfunc_do_while_disable_side_effect.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Post-increment operators are not currently translated",
+        "type"      : "CE"
+    }
+}
