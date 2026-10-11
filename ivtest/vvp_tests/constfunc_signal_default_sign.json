@@ -1,0 +1,8 @@
+{
+    "type"          : "normal",
+    "source"        : "constfunc_signal_default_sign.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95"        : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}

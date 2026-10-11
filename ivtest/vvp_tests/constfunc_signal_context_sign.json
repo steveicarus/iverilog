@@ -1,0 +1,7 @@
+{
+    "type"          : "normal",
+    "source"        : "constfunc_signal_context_sign.v",
+    "vlog95"        : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}
