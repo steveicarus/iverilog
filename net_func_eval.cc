@@ -1086,21 +1086,27 @@ NetExpr* NetESignal::evaluate_function(const LineInfo&loc,
 	    value = var->value;
       }
 
+      NetExpr*res;
       if (value == 0) {
 	    switch (expr_type()) {
 		case IVL_VT_REAL:
 		  return new NetECReal( verireal(0.0) );
 		case IVL_VT_BOOL:
-		  return make_const_0(expr_width());
+		  res = make_const_0(expr_width());
+		  break;
 		case IVL_VT_LOGIC:
-		  return make_const_x(expr_width());
+		  res = make_const_x(expr_width());
+		  break;
 		default:
 		  cerr << get_fileline() << ": sorry: I don't know how to initialize " << *this << endl;
 		  return 0;
 	    }
+      } else {
+	    res = value->dup_expr();
       }
 
-      return value->dup_expr();
+      res->cast_signed(has_sign());
+      return res;
 }
 
 NetExpr* NetETernary::evaluate_function(const LineInfo&loc,
