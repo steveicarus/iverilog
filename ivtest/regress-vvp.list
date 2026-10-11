@@ -545,6 +545,8 @@ sv_port_named_type_fail		vvp_tests/sv_port_named_type_fail.json
 sv_port_named_type_initializer_fail	vvp_tests/sv_port_named_type_initializer_fail.json
 sv_port_named_type_packed_fail	vvp_tests/sv_port_named_type_packed_fail.json
 sv_port_package_named_type_fail	vvp_tests/sv_port_package_named_type_fail.json
+sv_pure_virtual_fail		vvp_tests/sv_pure_virtual_fail.json
+sv_pure_virtual_task_fail	vvp_tests/sv_pure_virtual_task_fail.json
 sv_queue_ap_method		vvp_tests/sv_queue_ap_method.json
 sv_queue_assign_op		vvp_tests/sv_queue_assign_op.json
 sv_queue_find			vvp_tests/sv_queue_find.json
