@@ -757,8 +757,9 @@ bool NetDoWhile::evaluate_function(const LineInfo&loc,
       while (!disable) {
 	      // Evaluate the statement.
 	    flag = proc_->evaluate_function(loc, context_map);
-	    if (! flag)
-		   break;
+	    if (!flag || disable) {
+		  break;
+	    }
 
 	    if (loop_break) {
 		  loop_break = false;
