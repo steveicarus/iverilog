@@ -1,0 +1,4 @@
+{
+    "type"   : "CE",
+    "source" : "port_duplicate_after_empty_fail.v"
+}

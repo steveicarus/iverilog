@@ -243,6 +243,8 @@ partsel_reversed_idx6		vvp_tests/partsel_reversed_idx6.json
 param_test3			vvp_tests/param_test3.json
 param-width			vvp_tests/param-width.json
 parameter_type			vvp_tests/parameter_type.json
+port_duplicate_after_empty_fail	vvp_tests/port_duplicate_after_empty_fail.json
+port_duplicate_empty_fail	vvp_tests/port_duplicate_empty_fail.json
 pr1388974			vvp_tests/pr1388974.json
 pr1701890			vvp_tests/pr1701890.json
 pr1864110a			vvp_tests/pr1864110a.json
@@ -556,6 +558,8 @@ sv_parameter_named_type_fail	vvp_tests/sv_parameter_named_type_fail.json
 sv_parameter_named_type_omitted_keyword_fail	vvp_tests/sv_parameter_named_type_omitted_keyword_fail.json
 sv_parameter_type		vvp_tests/sv_parameter_type.json
 sv_partsel_var_negative_packed	vvp_tests/sv_partsel_var_negative_packed.json
+sv_port_duplicate_empty_wildcard_fail	vvp_tests/sv_port_duplicate_empty_wildcard_fail.json
+sv_port_empty_wildcard		vvp_tests/sv_port_empty_wildcard.json
 sv_port_named_type_fail		vvp_tests/sv_port_named_type_fail.json
 sv_port_named_type_initializer_fail	vvp_tests/sv_port_named_type_initializer_fail.json
 sv_port_named_type_packed_fail	vvp_tests/sv_port_named_type_packed_fail.json
