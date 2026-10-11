@@ -1294,7 +1294,7 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
       NetScope*scope = new NetScope(container, use_name,
 				    NetScope::GENBLOCK);
       scope->set_line(get_file(), get_lineno());
-      scope->add_imports(&explicit_imports);
+      scope->add_imports(&item->explicit_imports);
 
       item->elaborate_subscope_(des, scope);
 
