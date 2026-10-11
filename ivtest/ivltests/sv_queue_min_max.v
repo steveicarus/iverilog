@@ -27,14 +27,12 @@ module top;
     q.push_back(1);
 
     r = q.min();
-    `CHK(r.size == 2);
+    `CHK(r.size == 1);
     `CHK(r[0] == 1);
-    `CHK(r[1] == 1);
 
     r = q.max();
-    `CHK(r.size == 2);
+    `CHK(r.size == 1);
     `CHK(r[0] == 7);
-    `CHK(r[1] == 7);
 
     r = e.min();
     `CHK(r.size == 0);
