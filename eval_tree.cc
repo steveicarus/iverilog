@@ -1671,6 +1671,12 @@ NetEConst* NetESFunc::evaluate_clog2_(const NetExpr*arg_) const
 	    bool is_neg = false;
 	    uint64_t res = 0;
 
+	    /* IEEE 1800-2017 §20.8.1: argument shall be treated as unsigned.
+	     * For unsized negatives (no defined length), trim_vnum reduces
+	     * the value so the raise to integer_width is still needed to
+	     * reflect the implicit 32-bit width. For sized negatives the bit
+	     * pattern is already the correct unsigned value — no raise needed. */
+	    bool arg_has_len = arg.has_len();
 	    if (arg.is_negative()) {
 		  is_neg = true;
 		    // If the length is not defined, then work with
@@ -1688,7 +1694,7 @@ NetEConst* NetESFunc::evaluate_clog2_(const NetExpr*arg_) const
 		  }
 	    }
 
-	    if (is_neg && res < integer_width)
+	    if (is_neg && !arg_has_len && res < integer_width)
 		  res = integer_width;
 
 	    verinum tmp (res, integer_width);
