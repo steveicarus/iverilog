@@ -1649,8 +1649,14 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 		  for (unsigned jdx = 0 ;  jdx < nparms_ ;  jdx += 1) {
 		          // No expression means that the parameter is not
 		          // replaced.
-			if (parms_[jdx].parm)
-			      replace[parms_[jdx].name] = parms_[jdx].parm;
+			if (parms_[jdx].parm &&
+			    !replace.emplace(parms_[jdx].name,
+			                     parms_[jdx].parm).second) {
+			      cerr << get_fileline() << ": error: Parameter "
+			           << parms_[jdx].name << " is assigned more than "
+			           << "once in instance " << use_name << "." << endl;
+			      des->errors += 1;
+			}
 		  }
 
 	    }
