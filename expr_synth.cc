@@ -1441,7 +1441,7 @@ NetNet* NetESignal::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       if (word_ == 0) {
 	    if (net_->get_signed() == has_sign())
-		  return net_;
+		  return net_.get();
 
 	      // If the signal has been cast to a different type, we
 	      // need to add an intermediate signal to reflect that.
@@ -1474,7 +1474,7 @@ NetNet* NetESignal::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    unsigned selwid = word_->expr_width();
 
 	    NetArrayDq*mux = new NetArrayDq(scope, scope->local_symbol(),
-					    net_, selwid);
+					    net_.get(), selwid);
 	    mux->set_line(*this);
 	    des->add_node(mux);
 
