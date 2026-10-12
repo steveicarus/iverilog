@@ -147,45 +147,10 @@ void __vpiDarrayVar::put_word_value(struct __vpiArrayWord*word, p_vpi_value vp, 
 
       switch(vp->format) {
       case vpiScalarVal:
-      {
-          vvp_vector4_t vec(1, vp->value.scalar);
-          aobj->set_word(index, vec);
-      }
-      break;
-
       case vpiIntVal:
-      {
-          vvp_vector4_t vec;
-	  unsigned long val = vp->value.integer;
-          vec.setarray(0, 8 * sizeof(vp->value.integer), &val);
-          aobj->set_word(index, vec);
-      }
-      break;
-
-      case vpiVectorVal:        // 2 vs 4 state logic?
-      {
-          int size = get_word_size();
-          PLI_INT32 a = 0, b = 0;
-          vvp_vector4_t new_vec(size);
-          p_vpi_vecval vec = vp->value.vector;
-          vec--; // it will be increased in the first loop iteration
-
-          for(int i = 0; i < size; ++i) {
-            int new_bit;
-            if(i % (8 * sizeof(vec->aval)) == 0) {
-                ++vec;
-                a = vec->aval;
-                b = vec->bval;
-            }
-
-            // convert to vvp_bit4_t
-            new_bit = ((b & 1) << 2) | (a & 1);
-            new_vec.set_bit(i, (vvp_bit4_t) new_bit);
-
-            a >>= 1;
-            b >>= 1;
-          }
-          aobj->set_word(index, new_vec);
+      case vpiVectorVal: {
+	    vvp_vector4_t vec = vec4_from_vpi_value(vp, get_word_size());
+	    aobj->set_word(index, vec);
       }
       break;
 
