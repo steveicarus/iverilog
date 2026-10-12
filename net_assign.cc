@@ -55,7 +55,6 @@ NetAssign_::NetAssign_(NetNet*s)
 : nest_(0), sig_(s), word_(0), base_(0), sel_type_(IVL_SEL_OTHER)
 {
       lwid_ = sig_->vector_width();
-      sig_->incr_lref();
       more = 0;
       signed_ = false;
       turn_sig_to_wire_on_release_ = false;
@@ -63,10 +62,9 @@ NetAssign_::NetAssign_(NetNet*s)
 
 NetAssign_::~NetAssign_()
 {
-      if (sig_) {
-	    sig_->decr_lref();
-	    if (turn_sig_to_wire_on_release_ && sig_->peek_lref() == 0)
-		  sig_->type(NetNet::WIRE);
+        // The reference held by this l-value is released after the body.
+      if (sig_ && turn_sig_to_wire_on_release_ && sig_->peek_lref() == 1) {
+	    sig_->type(NetNet::WIRE);
       }
 
       ivl_assert(*this, more == 0 );
@@ -183,7 +181,7 @@ perm_string NetAssign_::name() const
 NetNet* NetAssign_::sig() const
 {
       ivl_assert(*this, sig_ ? nest_ == 0 : nest_ != 0);
-      return sig_;
+      return sig_.get();
 }
 
 void NetAssign_::set_part(NetExpr*base, unsigned wid,

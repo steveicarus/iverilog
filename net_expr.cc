@@ -347,9 +347,7 @@ NetELast::NetELast(NetNet*s)
 {
 }
 
-NetELast::~NetELast()
-{
-}
+NetELast::~NetELast() = default;
 
 ivl_variable_type_t NetELast::expr_type() const
 {

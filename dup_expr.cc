@@ -195,7 +195,7 @@ NetEEvent* NetEEvent::dup_expr() const
 
 NetELast* NetELast::dup_expr() const
 {
-      NetELast*tmp = new NetELast(sig_);
+      NetELast*tmp = new NetELast(sig_.get());
       ivl_assert(*this, tmp);
       tmp->set_line(*this);
       return tmp;
@@ -224,7 +224,7 @@ NetENull* NetENull::dup_expr() const
 NetEProperty* NetEProperty::dup_expr() const
 {
       auto index = index_ ? index_->dup_expr() : nullptr;
-      auto result = new NetEProperty(net_, pidx_, index);
+      auto result = new NetEProperty(net_.get(), pidx_, index);
       result->set_line(*this);
       return result;
 }
@@ -271,7 +271,7 @@ NetEShallowCopy* NetEShallowCopy::dup_expr() const
 
 NetESignal* NetESignal::dup_expr() const
 {
-      NetESignal*tmp = new NetESignal(net_, word_ ? word_->dup_expr() : nullptr);
+      NetESignal*tmp = new NetESignal(net_.get(), word_ ? word_->dup_expr() : nullptr);
       ivl_assert(*this, tmp);
       tmp->expr_width(expr_width());
       tmp->cast_signed(has_sign());
