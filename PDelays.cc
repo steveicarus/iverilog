@@ -20,6 +20,7 @@
 # include "config.h"
 
 # include  <iostream>
+# include  <utility>
 
 # include  "PDelays.h"
 # include  "PExpr.h"
@@ -73,9 +74,9 @@ unsigned PDelays::delay_count() const
       return dly_cnt;
 }
 
-static NetExpr*calculate_val(Design*des, NetScope*scope, PExpr*expr)
+static NetExpr::Ptr calculate_val(Design*des, NetScope*scope, PExpr*expr)
 {
-      NetExpr*dex = elab_and_eval(des, scope, expr, -1);
+      NetExpr::Ptr dex(elab_and_eval(des, scope, expr, -1));
 
       check_for_inconsistent_delays(scope);
 
@@ -83,22 +84,20 @@ static NetExpr*calculate_val(Design*des, NetScope*scope, PExpr*expr)
 	   constant, then evaluate it, scale it to the local time
 	   units, and return an adjusted value. */
 
-      if (NetECReal*tmp = dynamic_cast<NetECReal*>(dex)) {
+      if (NetECReal*tmp = dynamic_cast<NetECReal*>(dex.get())) {
 	    uint64_t delay = get_scaled_time_from_real(des, scope, tmp);
 
-	    delete tmp;
-	    NetEConst*tmp2 = new NetEConst(verinum(delay, 64));
+	    NetExpr::Ptr tmp2(new NetEConst(verinum(delay, 64)));
 	    tmp2->set_line(*expr);
 	    return tmp2;
       }
 
 
-      if (NetEConst*tmp = dynamic_cast<NetEConst*>(dex)) {
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(dex.get())) {
 	    verinum fn = tmp->value();
 	    uint64_t delay = des->scale_to_precision(fn.as_ulong64(), scope);
 
-	    delete tmp;
-	    NetEConst*tmp2 = new NetEConst(verinum(delay, 64));
+	    NetExpr::Ptr tmp2(new NetEConst(verinum(delay, 64)));
 	    tmp2->set_line(*expr);
 	    return tmp2;
       }
@@ -107,27 +106,23 @@ static NetExpr*calculate_val(Design*des, NetScope*scope, PExpr*expr)
       return dex;
 }
 
-static NetExpr* make_delay_nets(Design*des, NetScope*scope, NetExpr*expr)
+static NetExpr::Ptr make_delay_nets(Design*des, NetScope*scope, NetExpr::Ptr expr)
 {
-      if (expr == 0)
-            return 0;
+      if (expr == nullptr) return nullptr;
 
-      if (dynamic_cast<NetESignal*> (expr))
-	    return expr;
+      if (dynamic_cast<NetESignal*>(expr.get())) return expr;
 
-      if (dynamic_cast<NetEConst*> (expr))
-	    return expr;
+      if (dynamic_cast<NetEConst*>(expr.get())) return expr;
 
-      NetNet*sig = expr->synthesize(des, scope, expr);
+      NetNet*sig = expr->synthesize(des, scope, expr.get());
       if (sig == 0) {
 	    cerr << expr->get_fileline() << ": error: Expression " << *expr
 		 << " is not suitable as a delay expression." << endl;
 	    des->errors += 1;
-	    return 0;
+	    return nullptr;
       }
 
-      expr = new NetESignal(sig);
-      return expr;
+      return NetExpr::Ptr(new NetESignal(sig));
 }
 
 static const NetExpr *calc_decay_time(const NetExpr *rise,
@@ -149,22 +144,25 @@ void PDelays::eval_delays(Design*des, NetScope*scope, delay_exprs_t &delays,
       assert(scope);
 
       if (delay_[0]) {
-	    NetExpr *rise = calculate_val(des, scope, delay_[0]);
-	    if (as_nets_flag)
-		  rise = make_delay_nets(des, scope, rise);
-	    delays.rise = rise;
+	    NetExpr::Ptr rise = calculate_val(des, scope, delay_[0]);
+	    if (as_nets_flag) {
+		  rise = make_delay_nets(des, scope, std::move(rise));
+	    }
+	    delays.rise = rise.release();
 
 	    if (delay_[1]) {
-		  NetExpr *fall = calculate_val(des, scope, delay_[1]);
-		  if (as_nets_flag)
-			fall = make_delay_nets(des, scope, fall);
-		  delays.fall = fall;
+		  NetExpr::Ptr fall = calculate_val(des, scope, delay_[1]);
+		  if (as_nets_flag) {
+			fall = make_delay_nets(des, scope, std::move(fall));
+		  }
+		  delays.fall = fall.release();
 
 		  if (delay_[2]) {
-			NetExpr *decay = calculate_val(des, scope, delay_[2]);
-			if (as_nets_flag)
-			      decay = make_delay_nets(des, scope, decay);
-			delays.decay = decay;
+			NetExpr::Ptr decay = calculate_val(des, scope, delay_[2]);
+			if (as_nets_flag) {
+			      decay = make_delay_nets(des, scope, std::move(decay));
+			}
+			delays.decay = decay.release();
 
 		  } else {
 			// If this is zero then we need to do the min()
