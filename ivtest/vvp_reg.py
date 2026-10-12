@@ -98,6 +98,7 @@ def process_test(item: list, cfg: list) -> str:
         'key'               : it_key,
         'type'              : it_dict['type'],
         'iverilog_args'     : it_dict.get('iverilog-args', [ ]),
+        'vpi_sources'       : it_dict.get('vpi-sources', [ ]),
         'source'            : os.path.join("ivltests", it_dict['source']),
         'modulename'        : None,
         'gold'              : it_dict.get('gold', None),
@@ -122,6 +123,11 @@ def process_test(item: list, cfg: list) -> str:
 
     # Get the overridden test type.
     it_type = it_opts['type']
+
+    if it_opts['vpi_sources'] and it_type != "NI":
+        res = run_ivl.build_vpi(it_opts, cfg)
+        if res[0]:
+            return res
 
     if it_type == "NI":
         res = [0, "Not Implemented."]
