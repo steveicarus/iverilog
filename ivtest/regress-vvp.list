@@ -274,6 +274,10 @@ real_net_signed_zero		vvp_tests/real_net_signed_zero.json
 real_unary_minus_inf		vvp_tests/real_unary_minus_inf.json
 real_unary_minus_nan		vvp_tests/real_unary_minus_nan.json
 real_unary_minus_zero		vvp_tests/real_unary_minus_zero.json
+repeat_one_break		vvp_tests/repeat_one_break.json
+repeat_one_break_nested		vvp_tests/repeat_one_break_nested.json
+repeat_one_continue		vvp_tests/repeat_one_continue.json
+repeat_one_continue_nested	vvp_tests/repeat_one_continue_nested.json
 repeat_signed_one_bit		vvp_tests/repeat_signed_one_bit.json
 scaled_real			vvp_tests/scaled_real.json
 scan-invalid			vvp_tests/scan-invalid.json

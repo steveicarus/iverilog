@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "repeat_one_continue_nested.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Continue statements are not currently translated",
+        "type"      : "CE"
+    }
+}
