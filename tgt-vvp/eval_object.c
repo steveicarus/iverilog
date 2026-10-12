@@ -430,8 +430,8 @@ enum queue_locator_with_mode_e {
       QUEUE_WITH_MAX,
       QUEUE_WITH_UNIQUE,
       QUEUE_WITH_UNIQUE_INDEX,
-      QUEUE_WITH_SUM,
-      QUEUE_WITH_PRODUCT
+      UPARR_WITH_SUM,
+      UPARR_WITH_PRODUCT
 };
 
 static enum queue_locator_with_mode_e queue_locator_with_mode_from_name(
@@ -458,9 +458,9 @@ static enum queue_locator_with_mode_e queue_locator_with_mode_from_name(
       } else if (strcmp(name, "$ivl_queue_method$unique_index_with") == 0) {
 	    return QUEUE_WITH_UNIQUE_INDEX;
       } else if (strcmp(name, "$ivl_queue_method$sum_with") == 0) {
-	    return QUEUE_WITH_SUM;
+	    return UPARR_WITH_SUM;
       } else if (strcmp(name, "$ivl_queue_method$product_with") == 0) {
-	    return QUEUE_WITH_PRODUCT;
+	    return UPARR_WITH_PRODUCT;
       }
       return (enum queue_locator_with_mode_e) -1;
 }
@@ -479,13 +479,13 @@ static int queue_with_multi(enum queue_locator_with_mode_e mode)
 	     mode == QUEUE_WITH_MAX ||
 	     mode == QUEUE_WITH_UNIQUE ||
 	     mode == QUEUE_WITH_UNIQUE_INDEX ||
-	     mode == QUEUE_WITH_SUM ||
-	     mode == QUEUE_WITH_PRODUCT;
+	     mode == UPARR_WITH_SUM ||
+	     mode == UPARR_WITH_PRODUCT;
 }
 
 static int queue_with_expr_value(enum queue_locator_with_mode_e mode)
 {
-      return mode == QUEUE_WITH_SUM || mode == QUEUE_WITH_PRODUCT;
+      return mode == UPARR_WITH_SUM || mode == UPARR_WITH_PRODUCT;
 }
 
 static int queue_with_as_index(enum queue_locator_with_mode_e mode)
@@ -572,15 +572,15 @@ static void emit_queue_with_finish(enum queue_locator_with_mode_e mode,
 	    }
 	    return;
       }
-      if (mode == QUEUE_WITH_SUM) {
-	    fprintf(vvp_out, "    %%queue/sum/obj/v %u;\n", elem_wid);
+      if (mode == UPARR_WITH_SUM) {
+	    fprintf(vvp_out, "    %%uparr/sum/obj/v %u;\n", elem_wid);
 	    if (is_prop) {
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 	    }
 	    return;
       }
-      if (mode == QUEUE_WITH_PRODUCT) {
-	    fprintf(vvp_out, "    %%queue/product/obj/v %u;\n", elem_wid);
+      if (mode == UPARR_WITH_PRODUCT) {
+	    fprintf(vvp_out, "    %%uparr/product/obj/v %u;\n", elem_wid);
 	    if (is_prop) {
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 	    }

@@ -293,10 +293,31 @@ static void real_ex_pop(ivl_expr_t expr)
 
 static void draw_sfunc_real(ivl_expr_t expr)
 {
+      unsigned parm_count = ivl_expr_parms(expr);
+
+      if ((strcmp(ivl_expr_name(expr), "$ivl_uparr_method$sum_real") == 0 ||
+           strcmp(ivl_expr_name(expr), "$ivl_uparr_method$product_real") == 0) &&
+          parm_count == 1) {
+	    ivl_expr_t arg = ivl_expr_parm(expr, 0);
+	    const char* op = strcmp(ivl_expr_name(expr), "$ivl_uparr_method$product_real") == 0
+	                            ? "product"
+	                            : "sum";
+	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
+		  fprintf(stderr, "%s:%u: Sorry: No support for '%s' from a class.\n",
+		          ivl_expr_file(expr), ivl_expr_lineno(expr), op);
+		  vvp_errors += 1;
+		  return;
+	    }
+	    assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
+	    fprintf(vvp_out, "    %%uparr/%s/r v%p_0;\n",
+	            op, ivl_expr_signal(arg));
+	    return;
+      }
+
       switch (ivl_expr_value(expr)) {
 
 	  case IVL_VT_REAL:
-	    if (ivl_expr_parms(expr) == 0) {
+	    if (parm_count == 0) {
 		  fprintf(vvp_out, "    %%vpi_func/r %u %u \"%s\" {0 0 0};\n",
 			  ivl_file_table_index(ivl_expr_file(expr)),
 			  ivl_expr_lineno(expr), ivl_expr_name(expr));

@@ -4768,28 +4768,6 @@ expr_primary
 	$$ = tmp;
 	delete $1;
       }
-  /* These are array methods that cannot be matched with the above rule */
-  | hierarchy_identifier '.' K_and
-      { pform_name_t * nm = $1;
-	nm->push_back(name_component_t(lex_strings.make("and")));
-	PEIdent*tmp = pform_new_ident(@1, *nm);
-	$$ = tmp;
-	delete nm;
-      }
-  | hierarchy_identifier '.' K_or
-      { pform_name_t * nm = $1;
-	nm->push_back(name_component_t(lex_strings.make("or")));
-	PEIdent*tmp = pform_new_ident(@1, *nm);
-	$$ = tmp;
-	delete nm;
-      }
-  | hierarchy_identifier '.' K_xor
-      { pform_name_t * nm = $1;
-	nm->push_back(name_component_t(lex_strings.make("xor")));
-	PEIdent*tmp = pform_new_ident(@1, *nm);
-	$$ = tmp;
-	delete nm;
-      }
   | package_scope hierarchy_identifier
       { lex_in_package_scope(0);
 	$$ = pform_package_ident(@2, $1, $2);
@@ -5288,11 +5266,29 @@ hierarchy_identifier
 	delete[]$3;
 	$$ = tmp;
       }
-  /* "unique" is a keyword (K_unique) but also a queue/array method name. */
-  | hierarchy_identifier '.' K_unique index_components_opt
+  /* These are array methods that cannot be matched with the above rule */
+  | hierarchy_identifier '.' K_unique
       { auto tmp = $1;
 	append_hierarchy_identifier_component(*tmp, lex_strings.make("unique"),
-					      $4);
+					      nullptr);
+	$$ = tmp;
+      }
+  | hierarchy_identifier '.' K_and
+      { auto tmp = $1;
+	append_hierarchy_identifier_component(*tmp, lex_strings.make("and"),
+					      nullptr);
+	$$ = tmp;
+      }
+  | hierarchy_identifier '.' K_or
+      { auto tmp = $1;
+	append_hierarchy_identifier_component(*tmp, lex_strings.make("or"),
+					      nullptr);
+	$$ = tmp;
+      }
+  | hierarchy_identifier '.' K_xor
+      { auto tmp = $1;
+	append_hierarchy_identifier_component(*tmp, lex_strings.make("xor"),
+					      nullptr);
 	$$ = tmp;
       }
   ;
