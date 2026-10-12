@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_class_property_reference.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95"       : {
+        "type"      : "CE",
+        "__comment" : "Class scopes are not currently translated."
+    }
+}
