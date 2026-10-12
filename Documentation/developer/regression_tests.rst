@@ -108,6 +108,15 @@ iverilog-args (optional)
 If this is specified, it is a list of strings that are passed as arguments to
 the iverilog command line.
 
+vpi-sources (optional)
+^^^^^^^^^^^^^^^^^^^^^^
+
+If this is specified, it is a list of C or C++ source files for a VPI module,
+with paths relative to the ivtest directory. The runner uses iverilog-vpi to
+build the module in the work directory and loads it when compiling the HDL.
+The generated VVP program also loads the module when it runs. A module build
+failure fails the test, including tests that expect an HDL compilation error.
+
 vvp-args (optional)
 ^^^^^^^^^^^^^^^^^^^^
 
