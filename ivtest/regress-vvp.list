@@ -768,6 +768,9 @@ vams_abs3			vvp_tests/vams_abs3.json
 vams_min_max_default_argument	vvp_tests/vams_min_max_default_argument.json
 vardly_undefined_vec		vvp_tests/vardly_undefined_vec.json
 va_math				vvp_tests/va_math.json
+vpi_array_word_int		vvp_tests/vpi_array_word_int.json
+vpi_array_word_scalar		vvp_tests/vpi_array_word_scalar.json
+vpi_array_word_vector		vvp_tests/vpi_array_word_vector.json
 vvp_quiet_mode			vvp_tests/vvp_quiet_mode.json
 wait_condition_real		vvp_tests/wait_condition_real.json
 wait_condition_real_constant	vvp_tests/wait_condition_real_constant.json
