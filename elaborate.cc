@@ -6424,17 +6424,14 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 	    stat = new NetBlock(NetBlock::SEQU, 0);
       if (stat == 0) return 0;
 
-	// If the expression is a constant, handle certain special
-	// iteration counts.
+	// Elide loops that have no iterations. Keep single iterations to
+	// preserve the loop targets of break and continue statements.
       if (const NetEConst*ce = dynamic_cast<NetEConst*>(expr)) {
 	    long val = ce->value().as_long();
 	    if (val <= 0) {
 		  delete expr;
 		  delete stat;
 		  return new NetBlock(NetBlock::SEQU, 0);
-	    } else if (val == 1) {
-		  delete expr;
-		  return stat;
 	    }
       }
 
