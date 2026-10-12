@@ -1,0 +1,10 @@
+{
+    "type"          : "normal",
+    "source"        : "vpi_array_word_int.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vpi-sources"   : [ "vpi/array_word_value.c" ],
+    "vlog95" : {
+        "__comment" : "Dynamic arrays and queues are not supported",
+        "type"      : "CE"
+    }
+}
