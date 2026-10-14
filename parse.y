@@ -2755,7 +2755,9 @@ modport_ports_declaration
 
 modport_tf_port
   : K_task IDENTIFIER tf_port_list_parens_opt
+      { delete[]$2; }
   | K_function data_type_or_implicit_or_void_plus_id tf_port_list_parens_opt
+      { delete[]$2.id; }
   ;
 
 non_integer_type /* IEEE1800-2005: A.2.2.1 */
@@ -3519,6 +3521,7 @@ block_item_decl
       }
   | ps_type_identifier_dim error ';'
       { yyerror(@1, "error: Syntax error in variable list.");
+	delete $1;
 	yyerrok;
       }
   ;
