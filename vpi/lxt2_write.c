@@ -1849,6 +1849,7 @@ if(!(s->flags&(LXT2_WR_SYM_F_DOUBLE|LXT2_WR_SYM_F_STRING)))
 	{
 	char prevch;
 	int idx;
+	int not_dup;
 
 	lt->bumptime = 1;
 
@@ -1878,7 +1879,9 @@ if(!(s->flags&(LXT2_WR_SYM_F_DOUBLE|LXT2_WR_SYM_F_STRING)))
 		default:	idx = -1; break;
 		}
 
-	if((lt->timepos)||(lt->timegranule))
+	not_dup = ((s->msk & (LXT2_WR_GRAN_1VAL<<lt->timepos)) == LXT2_WR_GRAN_0VAL); /* github #521: s->value alg comparison value no longer valid */
+
+	if(((lt->timepos)||(lt->timegranule)) && not_dup)
 		{
 		for(i=0;i<s->len;i++)
 			{
@@ -1986,7 +1989,7 @@ idxchk:	if(idx<0)
 		}
 
 do_enc:
-	if((s->msk & (LXT2_WR_GRAN_1VAL<<lt->timepos)) == LXT2_WR_GRAN_0VAL)
+	if(not_dup)
 		{
 		s->msk |= (LXT2_WR_GRAN_1VAL<<lt->timepos);
 		s->chg[s->chgpos] = idx;
