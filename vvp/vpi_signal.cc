@@ -1362,9 +1362,12 @@ static int PV_get(int code, vpiHandle ref)
 	case vpiLeftRange:
             rval += rfp->width - 1;
 	    // fallthrough
-	case vpiRightRange:
-	    rval += vpi_get(vpiRightRange, rfp->parent) + PV_get_base(rfp);
-	    return rval;
+	case vpiRightRange: {
+	    int left = vpi_get(vpiLeftRange, rfp->parent);
+	    int right = vpi_get(vpiRightRange, rfp->parent);
+	    rval += PV_get_base(rfp);
+	    return left >= right ? right + rval : right - rval;
+	}
 
         case vpiAutomatic:
             return vpi_get(vpiAutomatic, rfp->parent);
