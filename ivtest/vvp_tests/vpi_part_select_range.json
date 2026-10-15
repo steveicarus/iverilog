@@ -1,0 +1,6 @@
+{
+    "type"     : "normal",
+    "source"   : "vpi_part_select_range.v",
+    "gold"     : "vpi_part_select_range",
+    "vvp-args" : [ "-mvpi_debug" ]
+}
