@@ -150,6 +150,7 @@ constfunc_string_oob		vvp_tests/constfunc_string_oob.json
 constfunccall1			vvp_tests/constfunccall1.json
 constfunccall2			vvp_tests/constfunccall2.json
 constfunccall3			vvp_tests/constfunccall3.json
+countdrivers_bit_select_range	vvp_tests/countdrivers_bit_select_range.json
 decl_before_use1		vvp_tests/decl_before_use1.json
 decl_before_use2		vvp_tests/decl_before_use2.json
 decl_before_use3		vvp_tests/decl_before_use3.json
