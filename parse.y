@@ -1638,6 +1638,18 @@ class_item /* IEEE1800-2005: A.1.8 */
 	delete[] $4;
       }
 
+    /* Pure virtual class method declarations (IEEE1800-2012: A.1.8)... */
+
+  | K_pure K_virtual K_function data_type_or_implicit_or_void_plus_id
+    tf_port_list_parens_opt ';'
+      { yyerror(@1, "sorry: Pure virtual methods are not yet supported.");
+	delete_type_id_range($4);
+      }
+  | K_pure K_virtual K_task IDENTIFIER tf_port_list_parens_opt ';'
+      { yyerror(@1, "sorry: Pure virtual methods are not yet supported.");
+	delete[] $4;
+      }
+
     /* Class constraints... */
 
   | class_constraint
