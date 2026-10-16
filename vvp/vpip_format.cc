@@ -122,7 +122,7 @@ static char* format_darray_pretty(vvp_darray* aobj)
 {
       if (!aobj || aobj->get_size() == 0) return strdup("{}");
 
-      std::string out = "{";
+      std::string out = "'{";
 
       for (size_t i = 0; i < aobj->get_size(); i += 1) {
 	    if (i > 0) out += ", ";
