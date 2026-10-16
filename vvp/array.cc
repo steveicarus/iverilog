@@ -549,7 +549,7 @@ void __vpiArrayVthrAPV::vpi_get_value(p_vpi_value vp)
       } else {
 	    vvp_vector4_t tmp = array->get_word(index);
 	    tmp = tmp.subvalue(part_bit, part_wid);
-	    vpip_vec4_get_value(tmp, part_wid, array->signed_flag, vp);
+	    vpip_vec4_get_value(tmp, part_wid, false, vp);
       }
 }
 
