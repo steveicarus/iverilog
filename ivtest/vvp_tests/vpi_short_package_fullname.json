@@ -1,0 +1,11 @@
+{
+    "type"          : "normal",
+    "source"        : "vpi_short_package_fullname.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "gold"          : "vpi_short_package_fullname",
+    "vvp-args"      : [ "-mvpi_debug" ],
+    "vlog95" : {
+        "__comment" : "Packages become modules, so package full names cannot be checked",
+        "type"      : "NI"
+    }
+}
