@@ -1,0 +1,9 @@
+{
+    "type"   : "normal",
+    "source" : "vpi_net_array_word_select_signedness.v",
+    "vlog95" : {
+        "__comment"     : "Net arrays are not supported",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}

@@ -1,0 +1,7 @@
+{
+    "type"   : "normal",
+    "source" : "vpi_array_word_select_signedness.v",
+    "vlog95" : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}
