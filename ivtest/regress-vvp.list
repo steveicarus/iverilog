@@ -776,6 +776,7 @@ vpi_array_word_int		vvp_tests/vpi_array_word_int.json
 vpi_array_word_scalar		vvp_tests/vpi_array_word_scalar.json
 vpi_array_word_vector		vvp_tests/vpi_array_word_vector.json
 vpi_part_select_range		vvp_tests/vpi_part_select_range.json
+vpi_short_package_fullname	vvp_tests/vpi_short_package_fullname.json
 vvp_quiet_mode			vvp_tests/vvp_quiet_mode.json
 wait_condition_real		vvp_tests/wait_condition_real.json
 wait_condition_real_constant	vvp_tests/wait_condition_real_constant.json
