@@ -197,6 +197,7 @@ early_sig_elab3			vvp_tests/early_sig_elab3.json
 enum_compatibility10		vvp_tests/enum_compatibility10.json
 enum_compatibility11		vvp_tests/enum_compatibility11.json
 enum_compatibility9		vvp_tests/enum_compatibility9.json
+enum_method_scalar		vvp_tests/enum_method_scalar.json
 enum_method_two_state_values	vvp_tests/enum_method_two_state_values.json
 eofmt_percent			vvp_tests/eofmt_percent.json
 fdisplay3			vvp_tests/fdisplay3.json
