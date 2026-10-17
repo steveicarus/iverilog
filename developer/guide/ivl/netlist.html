@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en" data-accent-color="violet" data-content_root="../../../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Netlist Format - Icarus Verilog documentation</title><link rel="shortcut icon" href="../../../_static/favicon.ico"/><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" /><link rel="next" title="Icarus Verilog Attributes" href="attributes.html" /><link rel="prev" title="IVL - The Core Compiler" href="index.html" /><script>
+    function setColorMode(t){let e=document.documentElement;e.setAttribute("data-color-mode",t);let a=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,s=t;"auto"===t&&(s=a?"dark":"light"),"light"===s?(e.classList.remove("dark"),e.classList.add("light")):(e.classList.remove("light"),e.classList.add("dark"))}
+    setColorMode(localStorage._theme||"auto");
+  </script><link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=ad592e98" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/shibuya.css?v=44020203" />
+    <link media="print" rel="stylesheet" type="text/css" href="../../../_static/print.css?v=20ff2c19" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sy-f-text: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+  --sy-f-heading: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+}
+</style>
+    <meta property="og:type" content="website"/><meta property="og:title" content="Netlist Format"/>
+    <meta name="twitter:card" content="summary"/>
+  </head>
+<body><div class="sy-head">
+  <div class="sy-head-blur"></div>
+  <div class="sy-head-inner sy-container mx-auto">
+    <a class="sy-head-brand" href="../../../index.html">
+      
+      
+      <strong>Icarus Verilog</strong>
+    </a>
+    <div class="sy-head-nav" id="head-nav">
+      <nav class="sy-head-links"></nav>
+      <div class="sy-head-extra flex items-center print:hidden"><form class="searchbox flex items-center" action="../../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <kbd>/</kbd>
+</form><div class="sy-head-socials">
+  <a href="https://github.com/steveicarus/iverilog" aria-label="GitHub">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </a></div></div>
+    </div>
+    <div class="sy-head-actions flex items-center shrink-0 print:hidden"><button class="js-theme theme-switch flex items-center"
+data-aria-auto="Switch to light color mode"
+data-aria-light="Switch to dark color mode"
+data-aria-dark="Switch to auto color mode">
+<i class="i-lucide theme-icon"></i>
+</button><button class="md:hidden flex items-center js-menu" aria-label="Menu" type="button" aria-controls="head-nav" aria-expanded="false">
+        <div class="hamburger">
+          <span class="hamburger_1"></span>
+          <span class="hamburger_2"></span>
+          <span class="hamburger_3"></span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+<div class="sy-page sy-container flex mx-auto">
+  <aside id="lside" class="sy-lside md:w-72 md:shrink-0 print:hidden">
+    <div class="sy-lside-inner md:sticky">
+      <div class="sy-scrollbar p-6">
+        <div class="globaltoc" data-expand-depth="0"><p class="caption" role="heading" aria-level="3"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../releases/index.html">Icarus Verilog Release Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../releases/v13-0-release-note.html">🎉 Release V13.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../releases/v13-0-release-note.html#major-changes-in-v13">🔄 Major Changes in V13</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage/index.html">Icarus Verilog Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/getting_started.html">Getting Started With Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/simulation.html">Simulation Using Icarus Verilog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/command_line_flags.html">iverilog Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/command_files.html">Command File Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/verilog_attributes.html">Verilog Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/ivlpp_flags.html">IVLPP - IVL Preprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vvp_flags.html">VVP Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vvp_debug.html">VVP Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vvp_library.html">VVP as a library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vhdlpp_flags.html">vhdlpp Command Line Flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/waveform_viewer.html">Viewing Waveforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/vpi.html">Using VPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/icarus_verilog_extensions.html">Icarus Verilog Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/icarus_verilog_quirks.html">Icarus Verilog Quirks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/reporting_issues.html">Reporting Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../targets/index.html">The Icarus Verilog Targets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-vvp.html">The vvp Code Generator (-tvvp)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-stub.html">The stub Code Generator (-tstub)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-null.html">The null Code Generator (-tnull)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-vhdl.html">The VHDL Code Generator (-tvhdl)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-vlog95.html">The Verilog ‘95 Code Generator (-tvlog95)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-pcb.html">The PCB Code Generator (-tpcb)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-fpga.html">The FPGA Code Generator (-tfpga)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-pal.html">The PAL Code Generator (-tpal)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-sizer.html">The sizer Code Analyzer (-tsizer)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-verilog.html">The Verilog Code Generator (-tverilog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../targets/tgt-blif.html">The BLIF Code Generator (-tblif)</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Icarus Verilog Developer Support</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html">Getting Started as a Contributor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../regression_tests.html">The Regression Test Suite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version_stamps.html">Files With Version Information</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Developer Guide</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">IVL - The Core Compiler</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Netlist Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="attributes.html">Icarus Verilog Attributes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ivl_target.html">Loadable Target API (ivl_target)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lpm.html">What Is LPM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="t-dll.html">Loadable Targets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../vvp/index.html">VVP - Verilog Virtual Processor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/vvp.html">VVP Simulation Engine</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/opcodes.html">Executable Instruction Opcodes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/vpi.html">VPI Within VVP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/vthread.html">Thread Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vvp/debug.html">Debug Aids For VVP</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../tgt-vvp/tgt-vvp.html">The VVP Target</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vpi/index.html">VPI in Icarus Verilog</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../vpi/vpi.html">VPI Modules in Icarus Verilog</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../vpi/va_math.html">Verilog-A math library</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../cadpli/cadpli.html">Cadence PLI1 Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/index.html">Miscellaneous</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../misc/ieee1364-notes.html">IEEE1364 Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/swift.html">Swift Model Support (Preliminary)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/xilinx-hint.html">Xilinx Hint</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="lside-overlay js-menu" role="button" aria-label="Close left sidebar" aria-controls="lside" aria-expanded="false"></div>
+  <aside id="rside" class="sy-rside pb-3 w-64 shrink-0 order-last">
+    <button class="rside-close js-menu xl:hidden" aria-label="Close Table of Contents" type="button" aria-controls="rside" aria-expanded="false">
+      <i class="i-lucide close"></i>
+    </button>
+    <div class="sy-scrollbar sy-rside-inner px-6 xl:top-16 xl:sticky xl:pl-0 pt-6 pb-4"><div class="localtoc"><h3>On this page</h3><ul>
+<li><a class="reference internal" href="#structural-items-netnode-and-netnet">Structural Items: NetNode and NetNet</a></li>
+<li><a class="reference internal" href="#structural-links">Structural Links</a></li>
+<li><a class="reference internal" href="#behavioral-items-netproctop-netproc-and-derived-classes">Behavioral Items: NetProcTop, NetProc and derived classes</a></li>
+<li><a class="reference internal" href="#interaction-of-behavioral-and-structural-netassign">Interaction Of Behavioral And Structural: NetAssign_</a></li>
+<li><a class="reference internal" href="#memories">Memories</a></li>
+<li><a class="reference internal" href="#expressions">Expressions</a></li>
+<li><a class="reference internal" href="#expression-bit-width">Expression Bit Width</a></li>
+<li><a class="reference internal" href="#interaction-of-expressions-and-structure-netesignal">Interaction Of Expressions And Structure: NetESignal</a></li>
+<li><a class="reference internal" href="#hierarchy-in-netlists">Hierarchy In Netlists</a></li>
+<li><a class="reference internal" href="#scope-representation-in-netlists">Scope Representation In Netlists</a></li>
+<li><a class="reference internal" href="#tasks-in-netlists">Tasks In Netlists</a></li>
+<li><a class="reference internal" href="#time-scale-in-netlists">Time Scale In Netlists</a></li>
+</ul>
+</div><a class="js-repo-stats repo-stats flex items-center" href="https://github.com/steveicarus/iverilog"
+  data-type="github" data-user="steveicarus" data-repo="iverilog">
+  <span class="w-8 flex items-center justify-around shrink-0 text-3xl">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </span>
+  <span class="flex-grow px-2 break-all">
+    
+    
+      <span>iverilog</span>
+    
+    <span class="flex text-sm repo-stats-count">
+      <span class="flex items-center pr-3">
+        <iconify-icon icon="lucide:star"></iconify-icon>
+        <strong class="js-repo-stars ml-1">0</strong>
+      </span>
+      <span class="flex items-center">
+        <iconify-icon icon="lucide:git-fork"></iconify-icon>
+        <strong class="js-repo-forks ml-1">0</strong>
+      </span>
+    </span>
+  </span>
+</a><div class="edit-this-page">
+  <a href="https://github.com/steveicarus/iverilog/blob/master/Documentation/developer/guide/ivl/netlist.rst">Edit this page</a>
+</div><div id="ethical-ad-placement" data-ea-publisher="readthedocs"></div></div>
+  </aside>
+  <div class="rside-overlay js-menu" role="button" aria-label="Close Table of Contents" aria-controls="rside" aria-expanded="false"></div>
+  <main class="sy-main w-full max-sm:max-w-full print:pt-6">
+<div class="sy-breadcrumbs" role="navigation">
+  <div class="sy-breadcrumbs-inner flex items-center">
+    <div class="md:hidden mr-3">
+      <button class="js-menu" aria-label="Menu" type="button" aria-controls="lside" aria-expanded="false">
+        <i class="i-lucide menu"></i>
+      </button>
+    </div>
+    <ol class="flex-1" itemscope itemtype="https://schema.org/BreadcrumbList"><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../../../index.html"><span itemprop="name">Icarus Verilog</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="1" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../../index.html"><span itemprop="name">Icarus Verilog Developer Support</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="2" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../index.html"><span itemprop="name">Developer Guide</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="3" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="index.html"><span itemprop="name">IVL - The Core Compiler</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="4" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <strong itemprop="name">Netlist Format</strong>
+        <meta itemprop="position" content="5" />
+      </li></ol>
+    <div class="xl:hidden ml-1">
+      <button class="js-menu" aria-label="Show table of contents" type="button" aria-controls="rside"
+        aria-expanded="false">
+        <i class="i-lucide outdent"></i>
+      </button>
+    </div>
+  </div>
+</div><div class="flex flex-col break-words justify-between">
+      <div class="relative min-w-0 max-w-6xl px-6 pb-6 pt-8 xl:px-12">
+  <div class="copy-page-wrapper relative pb-4 lg:absolute lg:top-8 lg:right-6 xl:right-12">
+  <div id="copy-page-trigger">
+    <button
+      type="button"
+      class="js-copy px-3 py-1 inline-flex items-center gap-1"
+      data-url="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/ivl/netlist.rst.txt"
+    >
+      <i class="i-lucide" data-icon="copy"></i>
+      <span>Copy page</span>
+    </button>
+    <button class="js-menu px-2 py-1" type="button" aria-label="More actions"
+      aria-haspopup="menu" aria-expanded="false" aria-controls="copy-page-content">
+      <i class="i-lucide chevron-down"></i>
+    </button>
+  </div>
+  <div id="copy-page-content" role="menu" aria-orientation="vertical" aria-hidden="true">
+    <div role="presentation">
+      <div class="flex flex-col" role="group">
+        <button class="js-copy" type="button" role="menuitem"
+          data-url="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/ivl/netlist.rst.txt">
+          <span class="iconify-icon">
+            <i class="i-lucide" data-icon="copy"></i>
+          </span>
+          <span>Copy page</span>
+        </button>
+        <a role="menuitem" href="https://raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/ivl/netlist.rst.txt" target="_blank" rel="nofollow"><iconify-icon icon="bi:code-slash"></iconify-icon>
+            <span>View Source</span></a><a role="menuitem" href="https://chatgpt.com/?hints=search&q=Read%20https%3A//raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/ivl/netlist.rst.txt%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:openai"></iconify-icon>
+          <span>Open in ChatGPT</span>
+        </a><a role="menuitem" href="https://claude.ai/new?q=Read%20https%3A//raw.githubusercontent.com/steveicarus/iverilog/refs/heads/master/Documentation/developer/guide/ivl/netlist.rst.txt%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:claude"></iconify-icon>
+          <span>Open in Claude</span>
+        </a></div>
+    </div>
+  </div>
+</div><article class="yue" role="main">
+          <section id="netlist-format">
+<h1>Netlist Format<a class="headerlink" href="#netlist-format" title="Link to this heading">¶</a></h1>
+<p>The output from the parse and elaboration steps is a “netlist” rooted
+in a Design object. Parsing translates the design described in the
+initial source file into a temporary symbolic “pform”. Elaboration
+then expands the design, resolving references and expanding
+hierarchies, to produce a flattened netlist. This is the form that
+optimizers and code generators use.</p>
+<p>The design optimization processes all manipulate the netlist,
+translating it to a (hopefully) better netlist after each step. The
+complete netlist is then passed to the code generator, the emit
+function, where the final code (in the target format) is produced.</p>
+<section id="structural-items-netnode-and-netnet">
+<h2>Structural Items: NetNode and NetNet<a class="headerlink" href="#structural-items-netnode-and-netnet" title="Link to this heading">¶</a></h2>
+<p>Components and wires, memories and registers all at their base are
+either NetNode objects or NetNet objects. Even these classes are
+derived from the NetObj class.</p>
+<p>All NetNode and NetNet objects have a name and some number of
+pins. The name usually comes from the Verilog source that represents
+that object, although objects that are artifacts of elaboration will
+have a generated (and probably unreadable) name. The pins are the
+ports into the device. NetNode objects have a pin for each pin of the
+component it represents, and NetNet objects have a pin for each signal
+in the vector.</p>
+<p>Node and net pins can be connected together via the connect
+function. Connections are transitive (A==B and B==c means A==C) so
+connections accumulate on a link as items are connected to it. The
+destructors for nets and nodes automatically arrange for pins to be
+disconnected when the item is deleted, so that the netlist can be
+changed during processing.</p>
+</section>
+<section id="structural-links">
+<h2>Structural Links<a class="headerlink" href="#structural-links" title="Link to this heading">¶</a></h2>
+<p>The NetNode and NetNet classes contain arrays of Link objects, one
+object per pin. Each pin is a single bit. The Link objects link to all
+the NetNode and NetNet objects’ links that are connected together in
+the design, and to a Nexus object. This way, code that examines a node
+of the design can discover what is connected to each pin.</p>
+<p>The connected set of links also has common properties that are stored
+or access from the Nexus object. All the Links that are connected
+together are also connected to a single Nexus object. This object is
+useful for accessing the properties and values that come from the
+connected set of links. The Nexus object is also handy for iterating
+over the connected set of Links.</p>
+<p>See the Link class definition in netlist.h for a description of the link
+methods, and the Nexus class for nexus global methods.</p>
+<p>Currently, a link has 3 possible direction properties:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>PASSIVE – These pins are sampled by the object that holds the</dt><dd><p>pin based on some external event. These are used,
+for example, by NetESignal objects that read a
+point for a procedural expression.</p>
+</dd>
+<dt>INPUT   – These pins potentially react to the setting of its</dt><dd><p>input.</p>
+</dd>
+<dt>OUTPUT  – These pins potentially drive the node. (They may be</dt><dd><p>three-state.)</p>
+</dd>
+</dl>
+</div></blockquote>
+</section>
+<section id="behavioral-items-netproctop-netproc-and-derived-classes">
+<h2>Behavioral Items: NetProcTop, NetProc and derived classes<a class="headerlink" href="#behavioral-items-netproctop-netproc-and-derived-classes" title="Link to this heading">¶</a></h2>
+<p>Behavioral items are not in general linked to the netlist. Instead,
+they represent elaborated behavioral statements. The type of the object
+implies what the behavior of the statement does. For example, a
+NetCondit object represents an <cite>if</cite> statement, and carries a
+condition expression and up to two alternative sub-statements.</p>
+<p>At the root of a process is a NetProcTop object. This class carries a
+type flag (initial or always) and a single NetProc object. The
+contained statement may, depending on the derived class, refer to
+other statements, compound statements, so on. But at the root of the
+tree is the NetProcTop object. The Design class keeps a list of the
+elaborated NetProcTop objects. That list represents the list of
+processes in the design.</p>
+</section>
+<section id="interaction-of-behavioral-and-structural-netassign">
+<h2>Interaction Of Behavioral And Structural: NetAssign_<a class="headerlink" href="#interaction-of-behavioral-and-structural-netassign" title="Link to this heading">¶</a></h2>
+<p>The behavioral statements in a Verilog design effect the structural
+aspects through assignments to registers. Registers are structural
+items represented by the NetNet class, linked to the assignment
+statement through pins. This implies that the l-value of an assignment
+is structural. It also implies that the statement itself is
+structural, and indeed it is derived from NetNode.</p>
+<p>The NetAssign_ class is also derived from the NetProc class because
+what it does is brought on by executing the process. By multiple
+inheritance we have therefore that the assignment is both a NetNode
+and a NetProc. The NetAssign_ node has pins that represent the l-value
+of the statement, and carries behavioral expressions that represent
+the r-value of the assignment.</p>
+</section>
+<section id="memories">
+<h2>Memories<a class="headerlink" href="#memories" title="Link to this heading">¶</a></h2>
+<p>The netlist form includes the NetMemory type to hold the content of a
+memory. Instances of this type represent the declaration of a memory,
+and occur once for each memory. References to the memory are managed
+by the NetEMemory and NetAssignMem_ classes.</p>
+<p>An instance of the NetEMemory class is created whenever a procedural
+expression references a memory element. The operand is the index to
+use to address (and read) the memory.</p>
+<p>An instance of the NetAssignMem_ class is created when there is a
+procedural assignment to the memory. The NetAssignMem_ object
+represents the l-value reference (a write) to the memory. As with the
+NetEMemory class, this is a procedural reference only.</p>
+<p>When a memory reference appears in structural context (i.e. continuous
+assignments) elaboration creates a NetRamDq. This is a LPM_RAM_DQ
+device. Elaboration leaves the write control and data input pins
+unconnected for now, because memories cannot appear is l-values of
+continuous assignments. However, the synthesis functor may connect
+signals to the write control lines to get a fully operational RAM.</p>
+<p>By the time elaboration completes, there may be many NetAssignMem_,
+NetEMemory and NetRamDq objects referencing the same NetMemory
+object. Each represents a port into the memory. It is up to the
+synthesis steps (and the target code) to figure out what to do with
+these ports.</p>
+</section>
+<section id="expressions">
+<h2>Expressions<a class="headerlink" href="#expressions" title="Link to this heading">¶</a></h2>
+<p>Expressions are represented as a tree of NetExpr nodes. The NetExpr
+base class contains the core methods that represent an expression
+node, including virtual methods to help with dealing with nested
+complexities of expressions.</p>
+<p>Expressions (as expressed in the source and p-form) may also be
+elaborated structurally, where it makes sense. For example, assignment
+l-value expressions are represented as connections to pins. Also,
+continuous assignment module items are elaborated as gates instead of
+as a procedural expression. Event expressions are also elaborated
+structurally as events are like devices that trigger behavioral
+statements.</p>
+<p>However, typical expressions the behavioral description are
+represented as a tree of NetExpr nodes. The derived class of the node
+encodes what kind of operator the node represents.</p>
+</section>
+<section id="expression-bit-width">
+<h2>Expression Bit Width<a class="headerlink" href="#expression-bit-width" title="Link to this heading">¶</a></h2>
+<p>The expression (represented by the NetExpr class) has a bit width that
+it either explicitly specified, or implied by context or contents.
+When each node of the expression is first constructed during
+elaboration, it is given, by type and parameters, an idea what its
+width should be. It certain cases, this is definitive, for example
+with signals. In others, it is ambiguous, as with unsized constants.</p>
+<p>As the expression is built up by elaboration, operators that combine
+expressions impose bit widths of the environment or expose the bit
+widths of the sub expressions. For example, the bitwise AND (&amp;)
+operator has a bit size implied by its operands, whereas the
+comparison (==) operator has a bit size of 1. The building up of the
+elaborated expression checks and adjusts the bit widths as the
+expression is built up, until finally the context of the expression
+takes the final bit width and makes any final adjustments.</p>
+<p>The NetExpr::expr_width() method returns the calculated (or guessed)
+expression width. This method will return 0 until the width is set by
+calculation or context. If this method returns false, then it is up to
+the context that wants the width to set one. The elaboration phase
+will call the NetExpr::set_width method on an expression as soon as it
+gets to a point where it believes that it knows what the width should
+be.</p>
+<p>The NetExpr::set_width(unsigned) virtual method is used by the context
+of an expression node to note to the expression that the width is
+determined and please adapt. If the expression cannot reasonably
+adapt, it will return false. Otherwise, it will adjust bit widths and
+return true.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span><span data-line="1">I do not yet properly deal with cases where elaboration knows for
+</span><span data-line="2">certain that the bit width does not matter. In this case, I
+</span><span data-line="3">really should tell the expression node about it so that it can
+</span><span data-line="4">pick a practical (and optimal) width.
+</span></pre></div>
+</div>
+</section>
+<section id="interaction-of-expressions-and-structure-netesignal">
+<h2>Interaction Of Expressions And Structure: NetESignal<a class="headerlink" href="#interaction-of-expressions-and-structure-netesignal" title="Link to this heading">¶</a></h2>
+<p>The NetAssign_ class described above is the means for processes to
+manipulate the net, but values are read from the net by NetESignal
+objects. These objects are class NetExpr because they can appear in
+expressions (and have width). They are not NetNode object, but hold
+pointers to a NetNet object, which is used to retrieve values with the
+expression is evaluated.</p>
+</section>
+<section id="hierarchy-in-netlists">
+<h2>Hierarchy In Netlists<a class="headerlink" href="#hierarchy-in-netlists" title="Link to this heading">¶</a></h2>
+<p>The obvious hierarchical structure of Verilog is the module. The
+Verilog program may contain any number of instantiations of modules in
+order to form an hierarchical design. However, the elaboration of the
+design into a netlist erases module boundaries. Modules are expanded
+each place they are used, with the hierarchical instance name used to
+name the components of the module instance. However, the fact that a
+wire or register is a module port is lost.</p>
+<p>The advantage of this behavior is first the simplification of the
+netlist structure itself. Backends that process netlists only need to
+cope with a list of nets, a list of nodes and a list of
+processes. This eases the task of the backend code generators.</p>
+<p>Another advantage of this flattening of the netlist is that optimizers
+can operate globally, with optimizations freely crossing module
+boundaries. This makes coding of netlist transform functions such as
+constant propagation more effective and easier to write.</p>
+</section>
+<section id="scope-representation-in-netlists">
+<h2>Scope Representation In Netlists<a class="headerlink" href="#scope-representation-in-netlists" title="Link to this heading">¶</a></h2>
+<p>In spite of the literal flattening of the design, scope information is
+preserved in the netlist, with the NetScope class. The Design class
+keeps a single pointer to the root scope of the design. This is the
+scope of the root module. Scopes that are then created within that
+(or any nested) module are placed as children of the root scope, and
+those children can have further children, and so on.</p>
+<p>Each scope in the tree carries its own name, and its relationship to
+its parent and children. This makes it possible to walk the tree of
+scopes. In practice, the walking of the scopes is handled by recursive
+methods.</p>
+<p>Each scope also carries the parameters that are applicable to the
+scope itself. The parameter expression (possibly evaluated) can be
+located by name, given the scope object itself. The scan of the pform
+to generate scopes also places the parameters that are declared in the
+scope. Overrides are managed during the scan, and once the scan is
+complete, defparam overrides are applied.</p>
+</section>
+<section id="tasks-in-netlists">
+<h2>Tasks In Netlists<a class="headerlink" href="#tasks-in-netlists" title="Link to this heading">¶</a></h2>
+<p>The flattening of the design does not include tasks and named
+begin-end blocks. Tasks are behavioral hierarchy (whereas modules are
+structural) so do not easily succumb to the flattening process. In
+particular, it is logically impossible to flatten tasks that
+recurse. (The elaboration process does reserve the right to flatten
+some task calls. C++ programmers recognize this as inlining a task.)</p>
+</section>
+<section id="time-scale-in-netlists">
+<h2>Time Scale In Netlists<a class="headerlink" href="#time-scale-in-netlists" title="Link to this heading">¶</a></h2>
+<p>The Design class and the NetScope classes carry time scale and
+resolution information of the elaborated design. There is a global
+resolution, and there are scope specific units and resolutions. Units
+and resolutions are specified as signed integers, and interpreted as
+the power of 10 of the value. For example, a resolution “-9” means
+that “1” is 1ns (1e-9). The notation supports units from -128 to +127.
+It is up to the back-ends to interpret “-4” as “100us”.</p>
+<p>Delays are expressed in the netlist by integers. The units of these
+delays are always given in the units of the design precision. This
+allows everything to work with integers, and generally places the
+burden of scaling delays into elaboration. This is, after all, a
+common task. The Design::get_precision() method gets the global design
+precision.</p>
+<p>Each NetScope also carries its local time_units and time_precision
+values. These are filled in during scope elaboration and are used in
+subsequent elaboration phases to arrange for scaling of delays. This
+information can also be used by the code generator to scale times back
+to the units of the scope, if that is desired.</p>
+</section>
+</section>
+
+        </article><button class="back-to-top" type="button">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+  </svg>
+  <span>Back to top</span>
+</button><div class="navigation flex print:hidden"><div class="navigation-prev">
+    <a href="index.html">
+      <i class="i-lucide chevron-left"></i>
+      <div class="page-info">
+        <span>Previous</span><div class="title">IVL - The Core Compiler</div></div>
+    </a>
+  </div><div class="navigation-next">
+    <a href="attributes.html">
+      <div class="page-info">
+        <span>Next</span>
+        <div class="title">Icarus Verilog Attributes</div>
+      </div>
+      <i class="i-lucide chevron-right"></i>
+    </a>
+  </div></div></div>
+    </div>
+  </main>
+</div>
+<footer class="sy-foot">
+  <div class="sy-foot-inner sy-container mx-auto">
+    <div class="sy-foot-reserved md:flex justify-between items-center">
+      <div class="sy-foot-copyright"><p>2024-2026, Stephen Williams</p>
+  
+  <p>
+    Made with
+    
+    <a href="https://www.sphinx-doc.org/">Sphinx</a> and
+    
+    <a href="https://shibuya.lepture.com">Shibuya theme</a>.
+  </p>
+</div>
+      <div class="sy-foot-socials">
+<a href="https://github.com/steveicarus/iverilog" aria-label="GitHub">
+  <iconify-icon icon="simple-icons:github"></iconify-icon>
+</a></div>
+    </div>
+  </div>
+</footer>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/shibuya.js?v=cac61aee"></script></body>
+</html>
