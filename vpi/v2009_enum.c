@@ -159,6 +159,30 @@ static PLI_INT32 ivl_enum_method_next_prev_compiletf(ICARUS_VPI_CONST PLI_BYTE8*
 static int compare_value_eequal(s_vpi_value*ref1, s_vpi_value*ref2,
                                 PLI_INT32 wid)
 {
+	/* Handle scalar values in either operand. */
+      if (ref2->format == vpiScalarVal) {
+	    s_vpi_value*tmp = ref1;
+	    ref1 = ref2;
+	    ref2 = tmp;
+      }
+      if (ref1->format == vpiScalarVal) {
+	    PLI_INT32 scalar = ref1->value.scalar;
+	    PLI_INT32 aval = scalar == vpi1 || scalar == vpiX;
+	    PLI_INT32 bval = scalar == vpiX || scalar == vpiZ;
+	    assert(wid == 1);
+	    switch (ref2->format) {
+		case vpiScalarVal:
+		  return scalar == ref2->value.scalar;
+		case vpiIntVal:
+		  return !bval && aval == (ref2->value.integer & 1);
+		case vpiVectorVal:
+		  return aval == (ref2->value.vector[0].aval & 1) &&
+		         bval == (ref2->value.vector[0].bval & 1);
+		default:
+		  break;
+	    }
+      }
+
 	/* Two integer values are easy. */
       if (ref1->format == vpiIntVal && ref2->format == vpiIntVal)
 	    return ref1->value.integer == ref2->value.integer;
