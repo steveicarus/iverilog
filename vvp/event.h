@@ -27,21 +27,21 @@
 class evctl {
 
     public:
-      explicit evctl(unsigned long ecount);
+      explicit evctl(uint64_t ecount);
       bool dec_and_run();
       virtual void run_run() = 0;
       virtual ~evctl() {}
       evctl*next;
 
     private:
-      unsigned long ecount_;
+      uint64_t ecount_;
 };
 
 class evctl_real : public evctl {
 
     public:
       explicit evctl_real(class __vpiHandle*handle, double value,
-                          unsigned long ecount);
+                          uint64_t ecount);
       virtual ~evctl_real() override {}
       void run_run() override;
 
@@ -54,7 +54,7 @@ class evctl_vector : public evctl {
 
     public:
       explicit evctl_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
-                            unsigned off, unsigned wid, unsigned long ecount);
+                            unsigned off, unsigned wid, uint64_t ecount);
       virtual ~evctl_vector() override {}
       void run_run() override;
 
@@ -70,7 +70,7 @@ class evctl_array : public evctl {
     public:
       explicit evctl_array(vvp_array_t memory, unsigned index,
                            const vvp_vector4_t&value, unsigned off,
-                           unsigned long ecount);
+                           uint64_t ecount);
       virtual ~evctl_array() override {}
       virtual void run_run() override;
 
@@ -85,7 +85,7 @@ class evctl_array_r : public evctl {
 
     public:
       explicit evctl_array_r(vvp_array_t memory, unsigned index,
-                           double value, unsigned long ecount);
+                           double value, uint64_t ecount);
       virtual ~evctl_array_r() override {}
       virtual void run_run() override;
 
@@ -96,19 +96,19 @@ class evctl_array_r : public evctl {
 };
 
 extern void schedule_evctl(class __vpiHandle*handle, double value,
-                           vvp_net_t*event, unsigned long ecount);
+                           vvp_net_t*event, uint64_t ecount);
 
 extern void schedule_evctl(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
                            unsigned offset, unsigned wid,
-                           vvp_net_t*event, unsigned long ecount);
+                           vvp_net_t*event, uint64_t ecount);
 
 extern void schedule_evctl(vvp_array_t memory, unsigned index,
                            const vvp_vector4_t&value, unsigned offset,
-                           vvp_net_t*event, unsigned long ecount);
+                           vvp_net_t*event, uint64_t ecount);
 
 extern void schedule_evctl(vvp_array_t memory, unsigned index,
                            double value,
-                           vvp_net_t*event, unsigned long ecount);
+                           vvp_net_t*event, uint64_t ecount);
 
 /*
  *  Event / edge detection functors
