@@ -1,0 +1,8 @@
+{
+    "type"          : "normal",
+    "source"        : "nba_repeat_wide_count_real_array.v",
+    "vlog95" : {
+        "__comment"     : "Real arrays are not supported",
+        "type"          : "CE"
+    }
+}
