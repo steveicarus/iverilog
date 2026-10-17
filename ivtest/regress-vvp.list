@@ -104,6 +104,7 @@ br_gh1558			vvp_tests/br_gh1558.json
 br_gh1562			vvp_tests/br_gh1562.json
 br_gh1563			vvp_tests/br_gh1563.json
 br_gh1574			vvp_tests/br_gh1574a.json
+br_gh1588_fail			vvp_tests/br_gh1588_fail.json
 ca_time_real			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json
