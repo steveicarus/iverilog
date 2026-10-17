@@ -35,6 +35,7 @@ struct enumconst_s : public __vpiHandle {
       void vpi_get_value(p_vpi_value val) override;
 
       const char*name;
+      bool is_signed;
       vvp_vector2_t val2;
       vvp_vector4_t val4;
 };
@@ -127,10 +128,11 @@ char* enumconst_s::vpi_get_str(int code)
 
 void enumconst_s::vpi_get_value(p_vpi_value val)
 {
-      if (val4.size() > 0)
-	    vpip_vec4_get_value(val4, val4.size(), false, val);
-      else
-	    vpip_vec2_get_value(val2, val2.size(), false, val);
+      if (val4.size() > 0) {
+	    vpip_vec4_get_value(val4, val4.size(), is_signed, val);
+      } else {
+	    vpip_vec2_get_value(val2, val2.size(), is_signed, val);
+      }
 }
 
 
@@ -148,6 +150,7 @@ void compile_enum2_type(char*label, long width, bool signed_flag,
 	    assert(cur->val4 == 0);
 	    spec->names[idx].name = cur->text;
 	    spec->names[idx].val2 = vvp_vector2_t(cur->val2, width);
+	    spec->names[idx].is_signed = signed_flag;
       }
 
       assert(idx == spec->names.size());
@@ -172,6 +175,7 @@ void compile_enum4_type(char*label, long width, bool signed_flag,
 	    spec->names[idx].name = cur->text;
 	    assert(cur->val4);
 	    spec->names[idx].val4 = vector4_from_text(cur->val4, width);
+	    spec->names[idx].is_signed = signed_flag;
 	    free(cur->val4);
 	    cur->val4 = 0;
       }
