@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "enum_method_two_state_values.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Enum expressions are not supported",
+        "type"          : "CE"
+    }
+}

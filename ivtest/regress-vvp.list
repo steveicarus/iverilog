@@ -174,6 +174,7 @@ dumpfile			vvp_tests/dumpfile.json
 early_sig_elab1			vvp_tests/early_sig_elab1.json
 early_sig_elab2			vvp_tests/early_sig_elab2.json
 early_sig_elab3			vvp_tests/early_sig_elab3.json
+enum_method_two_state_values	vvp_tests/enum_method_two_state_values.json
 eofmt_percent			vvp_tests/eofmt_percent.json
 fdisplay3			vvp_tests/fdisplay3.json
 final3				vvp_tests/final3.json
