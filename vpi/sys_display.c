@@ -212,10 +212,15 @@ static char * format_as_string(int ljust, int plus, int ld_zero, int width,
   return strdup(buf);
 }
 
-static void get_time(char *rtn, const char *value, int prec,
-                     PLI_INT32 time_units)
+static char *get_time(const char *value, int prec, PLI_INT32 time_units)
 {
   int shift = time_units - timeformat_info.units;
+
+    /* Allow for scaling, a leading zero, the decimal point and NUL. */
+  size_t size = strlen(value) + strlen(timeformat_info.suff) + 3;
+  if (shift > 0) size += shift;
+  if (prec > 0) size += prec;
+  char *rtn = malloc(size);
 
   /* Strip any leading zeros, but leave a single zero. */
   while (value[0] == '0' && value[1] != '\0') value += 1;
@@ -277,10 +282,10 @@ static void get_time(char *rtn, const char *value, int prec,
   }
 
   strcat(rtn, timeformat_info.suff);
+  return rtn;
 }
 
-static void get_time_real(char *rtn, double value, int prec,
-                          PLI_INT32 time_units)
+static char *get_time_real(double value, int prec, PLI_INT32 time_units)
 {
   /* Scale the value from its time units to the format time units. */
   if (time_units >= timeformat_info.units) {
@@ -288,7 +293,11 @@ static void get_time_real(char *rtn, double value, int prec,
   } else {
     value /= pow(10.0, timeformat_info.units - time_units);
   }
-  sprintf(rtn, "%0.*f%s", prec, value, timeformat_info.suff);
+  int len = snprintf(NULL, 0, "%0.*f%s", prec, value, timeformat_info.suff);
+  assert(len >= 0);
+  char *rtn = malloc((size_t)len + 1);
+  snprintf(rtn, (size_t)len + 1, "%0.*f%s", prec, value, timeformat_info.suff);
+  return rtn;
 }
 
 static unsigned int get_format_char(char **rtn, int ljust, int plus,
@@ -674,21 +683,13 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           }
 
           unsigned swidth, free_flag = 0;
-          unsigned suff_len = strlen(timeformat_info.suff);
           char *cp;
 
-          /* The 512 (513-1 for EOL) is more than enough for any double
-           * value (309 digits plus a decimal point maximum). Because of
-           * scaling this could be larger. For decimal values you can
-           * have an arbitrary value so you can overflow the buffer, but
-           * for now we will assume the user will use this as intended
-           * (pass a time variable or the result of a time function). */
-          tbuf = malloc((513+suff_len)*sizeof(char));
           if (prec == -1) prec = timeformat_info.prec;
           if (value.format == vpiRealVal) {
-            get_time_real(tbuf, value.value.real, prec, time_units);
+            tbuf = get_time_real(value.value.real, prec, time_units);
           } else {
-            get_time(tbuf, value.value.str, prec, time_units);
+            tbuf = get_time(value.value.str, prec, time_units);
           }
           cp = tbuf;
           swidth = strlen(tbuf);
@@ -1060,12 +1061,13 @@ static char *get_display(unsigned int *rtnsz, const struct strobe_cb_info *info)
       case vpiTimeVar:
         value.format = vpiDecStrVal;
         vpi_get_value(item, &value);
-        get_time(buf, value.value.str, timeformat_info.prec,
-                 vpi_get(vpiTimeUnit, info->scope));
-        width = strlen(buf);
+        result = get_time(value.value.str, timeformat_info.prec,
+                          vpi_get(vpiTimeUnit, info->scope));
+        width = strlen(result);
         if (width  < timeformat_info.width) width = timeformat_info.width;
         rtn = realloc(rtn, (size+width)*sizeof(char));
-        sprintf(rtn+size-1, "%*s", width, buf);
+        sprintf(rtn+size-1, "%*s", width, result);
+        free(result);
         break;
 
       /* Realtime variables are also processed here. */
