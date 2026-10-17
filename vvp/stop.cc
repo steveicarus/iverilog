@@ -368,8 +368,8 @@ static void cmd_push(unsigned argc, const char* argv[])
 
 static void cmd_time(unsigned, const char*[])
 {
-      unsigned long ticks = schedule_simtime();
-      printf("%lu ticks\n", ticks);
+      vvp_time64_t ticks = schedule_simtime();
+      printf("%" TIME_FMT_U " ticks\n", ticks);
 }
 
 static void cmd_trace(unsigned argc, const char*argv[])
