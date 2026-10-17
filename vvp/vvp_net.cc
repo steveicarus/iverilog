@@ -2482,16 +2482,17 @@ vvp_vector2_t::vvp_vector2_t()
       wid_ = 0;
 }
 
-vvp_vector2_t::vvp_vector2_t(unsigned long v, unsigned wid)
+vvp_vector2_t::vvp_vector2_t(uint64_t v, unsigned wid)
 {
       wid_ = wid;
       const unsigned bits_per_word = 8 * sizeof(vec_[0]);
       const unsigned words = (wid_ + bits_per_word-1) / bits_per_word;
 
       vec_ = new unsigned long[words];
-      vec_[0] = v;
-      for (unsigned idx = 1 ;  idx < words ;  idx += 1)
-	    vec_[idx] = 0;
+      for (unsigned idx = 0 ; idx < words ; idx += 1) {
+	    const unsigned shift = idx * bits_per_word;
+	    vec_[idx] = shift < 64 ? v >> shift : 0;
+      }
 }
 
 vvp_vector2_t::vvp_vector2_t(vvp_vector2_t::fill_t fill, unsigned wid)
