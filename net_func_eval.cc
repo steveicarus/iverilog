@@ -290,13 +290,15 @@ void NetAssign::eval_func_lval_op_(const LineInfo&loc,
 		  lv.set(idx, lv[idx] ^ rv[idx]);
 	    break;
 	  case 'l':
-	    lv = lv << rv.as_unsigned();
+	    lv = rv.is_defined()
+		  ? lv << rv.as_unsigned()
+		  : verinum(verinum::Vx, lv_width);
 	    break;
 	  case 'r':
-	    lv = lv >> rv.as_unsigned();
-	    break;
 	  case 'R':
-	    lv = lv >> rv.as_unsigned();
+	    lv = rv.is_defined()
+		  ? lv >> rv.as_unsigned()
+		  : verinum(verinum::Vx, lv_width);
 	    break;
 	  default:
 	    cerr << "Illegal assignment operator: "
