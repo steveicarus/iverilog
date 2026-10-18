@@ -3058,9 +3058,10 @@ class NetAssign_ {
 
 	// Return the l-value's signedness for compound assignments.
       bool get_signed() const;
-	// Keep concatenations and explicit selects unsigned even if
-	// elaboration removes the select or concatenation.
-      void set_unsigned() { force_unsigned_ = true; }
+	// Treat the l-value as an unsigned integral assignment target, without
+	// the declared type's assignment restrictions. Its width and two-state
+	// or four-state behavior are preserved.
+      void set_untyped();
 
 	// Get the width of the r-value that this node expects. This
 	// method accounts for the presence of the mux, so it is not
@@ -3101,6 +3102,11 @@ class NetAssign_ {
       void dump_lval(std::ostream&o) const;
 
     private:
+	// Return the type of this l-value component, if any. Return nullptr
+	// if more components follow. Unlike net_type(), this retains the type
+	// when the component is marked untyped.
+      ivl_type_t component_type() const;
+
 	// Nested l-value. If this is set, sig_ must NOT be set!
       NetAssign_*nest_;
       NetLRef sig_;
@@ -3110,7 +3116,7 @@ class NetAssign_ {
       perm_string member_;
       int member_idx_ = -1;
 
-      bool force_unsigned_ = false;
+      bool untyped_ = false;
       bool turn_sig_to_wire_on_release_;
 	// indexed part select base
       NetExpr*base_;

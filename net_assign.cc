@@ -109,10 +109,13 @@ ivl_select_type_t NetAssign_::select_type() const
 
 bool NetAssign_::get_signed() const
 {
-      if (force_unsigned_) return false;
-
       ivl_type_t type = net_type();
       return type && type->get_signed();
+}
+
+void NetAssign_::set_untyped()
+{
+      untyped_ = true;
 }
 
 unsigned NetAssign_::lwidth() const
@@ -120,7 +123,7 @@ unsigned NetAssign_::lwidth() const
 	// This gets me the type of the l-value expression, down to
 	// the type of the member. If this returns nil, then resort to
 	// the lwid_ value.
-      ivl_type_t ntype = net_type();
+      auto ntype = component_type();
       if (ntype)
 	    return ntype->packed_width();
 
@@ -129,7 +132,7 @@ unsigned NetAssign_::lwidth() const
 
 ivl_variable_type_t NetAssign_::expr_type() const
 {
-      ivl_type_t ntype = net_type();
+      auto ntype = component_type();
       if (ntype)
 	    return ntype->base_type();
 
@@ -139,11 +142,17 @@ ivl_variable_type_t NetAssign_::expr_type() const
 
 ivl_type_t NetAssign_::net_type() const
 {
-	// This is a concatenation, it does not have a type
-      if (more)
-	    return nullptr;
+	// Concatenations and explicit selects do not retain a declared type.
+      if (untyped_) return nullptr;
 
-       // Selected sub-vector can have its own data type
+      return component_type();
+}
+
+ivl_type_t NetAssign_::component_type() const
+{
+      if (more) return nullptr;
+
+	// A selected member can have its own data type.
       if (base_)
 	    return part_data_type_;
 
