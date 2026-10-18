@@ -376,6 +376,7 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 
 	    verinum lpart(verinum::Vx, lval->lwidth());
 	    if (op_) {
+		  lpart.has_sign(lval->get_signed());
 		  for (unsigned idx = 0 ; idx < lpart.len() ; idx += 1) {
 			long ldx = base + idx;
 			if (ldx >= 0 && (unsigned long)ldx < lval_v.len())
