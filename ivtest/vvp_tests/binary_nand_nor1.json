@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "binary_nand_nor1.v",
+    "iverilog-args" : [ "-gicarus-misc" ]
+}
