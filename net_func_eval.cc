@@ -218,27 +218,7 @@ bool NetProc::evaluate_function(const LineInfo&,
 void NetAssign::eval_func_lval_op_real_(const LineInfo&loc,
 					verireal&lv, const verireal&rv) const
 {
-      switch (op_) {
-	  case '+':
-	    lv = lv + rv;
-	    break;
-	  case '-':
-	    lv = lv - rv;
-	    break;
-	  case '*':
-	    lv = lv * rv;
-	    break;
-	  case '/':
-	    lv = lv / rv;
-	    break;
-	  case '%':
-	    lv = lv % rv;
-	    break;
-	  default:
-	    cerr << "Illegal assignment operator: "
-		 << human_readable_op(op_) << endl;
-	    ivl_assert(loc, 0);
-      }
+      lv = eval_binary(loc, op_, lv, rv);
 }
 
 void NetAssign::eval_func_lval_op_(const LineInfo&loc,
@@ -248,64 +228,16 @@ void NetAssign::eval_func_lval_op_(const LineInfo&loc,
       bool lv_sign = lv.has_sign();
       switch (op_) {
 	  case 'l':
+	  case 'r':
 	  case 'R':
 	      // The left operand is self-determined.
-	    break;
-	  case 'r':
-	      // The left operand is self-determined, but we need to
-	      // cast it to unsigned to get a logical shift.
-	    lv.has_sign(false);
 	    break;
           default:
 	      // The left operand must be cast to the expression type/size
 	    lv.has_sign(rv.has_sign());
 	    lv = cast_to_width(lv, rv.len());
       }
-      switch (op_) {
-	  case '+':
-	    lv = lv + rv;
-	    break;
-	  case '-':
-	    lv = lv - rv;
-	    break;
-	  case '*':
-	    lv = lv * rv;
-	    break;
-	  case '/':
-	    lv = lv / rv;
-	    break;
-	  case '%':
-	    lv = lv % rv;
-	    break;
-	  case '&':
-	    for (unsigned idx = 0 ; idx < lv.len() ; idx += 1)
-		  lv.set(idx, lv[idx] & rv[idx]);
-	    break;
-	  case '|':
-	    for (unsigned idx = 0 ; idx < lv.len() ; idx += 1)
-		  lv.set(idx, lv[idx] | rv[idx]);
-	    break;
-	  case '^':
-	    for (unsigned idx = 0 ; idx < lv.len() ; idx += 1)
-		  lv.set(idx, lv[idx] ^ rv[idx]);
-	    break;
-	  case 'l':
-	    lv = rv.is_defined()
-		  ? lv << rv.as_unsigned()
-		  : verinum(verinum::Vx, lv_width);
-	    break;
-	  case 'r':
-	  case 'R':
-	    lv = rv.is_defined()
-		  ? lv >> rv.as_unsigned()
-		  : verinum(verinum::Vx, lv_width);
-	    break;
-	  default:
-	    cerr << "Illegal assignment operator: "
-		 << human_readable_op(op_) << endl;
-	    ivl_assert(loc, 0);
-      }
-      lv = cast_to_width(lv, lv_width);
+      lv = cast_to_width(eval_binary(loc, op_, lv, rv), lv_width);
       lv.has_sign(lv_sign);
 }
 
