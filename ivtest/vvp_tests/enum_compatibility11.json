@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "enum_compatibility11.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

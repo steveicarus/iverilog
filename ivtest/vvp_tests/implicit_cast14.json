@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "implicit_cast14.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
