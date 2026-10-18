@@ -127,9 +127,19 @@ verinum eval_binary(const LineInfo&loc, char op,
 		  result.set(idx, left[idx] & right[idx]);
 	    }
 	    break;
+	  case 'A': // Binary NAND is an Icarus extension.
+	    for (auto idx = 0U ; idx < result.len() ; idx += 1) {
+		  result.set(idx, ~(left[idx] & right[idx]));
+	    }
+	    break;
 	  case '|':
 	    for (auto idx = 0U ; idx < result.len() ; idx += 1) {
 		  result.set(idx, left[idx] | right[idx]);
+	    }
+	    break;
+	  case 'O': // Binary NOR is an Icarus extension.
+	    for (auto idx = 0U ; idx < result.len() ; idx += 1) {
+		  result.set(idx, ~(left[idx] | right[idx]));
 	    }
 	    break;
 	  case '^':
@@ -305,8 +315,6 @@ NetExpr* NetEBAdd::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
 NetEConst* NetEBBits::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 {
-      if (op_ == 'A' || op_ == 'O') return nullptr;
-
       const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
       const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
       if (lc == 0 || rc == 0) return 0;
