@@ -1,0 +1,10 @@
+{
+    "type"          : "normal",
+    "source"        : "assign_op_signed3.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Queues are not supported",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}
