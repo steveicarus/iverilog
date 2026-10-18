@@ -132,6 +132,7 @@ constfunc18			vvp_tests/constfunc18.json
 constfunc19			vvp_tests/constfunc19.json
 constfunc20			vvp_tests/constfunc20.json
 constfunc_2state_oob		vvp_tests/constfunc_2state_oob.json
+constfunc_assign_shift1		vvp_tests/constfunc_assign_shift1.json
 constfunc_case_null		vvp_tests/constfunc_case_null.json
 constfunc_case_null_real	vvp_tests/constfunc_case_null_real.json
 constfunc_do_while_disable	vvp_tests/constfunc_do_while_disable.json
