@@ -144,7 +144,7 @@ NetAssign_* PEConcat::elaborate_lval(Design*des,
 	    }
 
 	      /* A concatenation is always unsigned. */
-	    tmp->set_signed(false);
+	    tmp->set_unsigned();
 
 	      /* Link the new l-value to the previous one. */
 	    NetAssign_*last = tmp;
@@ -367,10 +367,7 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 
 	/* No select expressions. */
 
-      NetAssign_*lv = new NetAssign_(reg);
-      lv->set_signed(reg->get_signed());
-
-      return lv;
+      return new NetAssign_(reg);
 }
 
 NetAssign_*PEIdent::elaborate_lval_array_(Design *des, NetScope *,
@@ -544,6 +541,8 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 				      bool need_const_idx,
 				      bool is_force) const
 {
+      lv->set_unsigned();
+
       list<long>prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, lv->sig(), prefix_indices);
       if (!rc) return false;
@@ -761,6 +760,8 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 				       NetAssign_*lv,
 				       bool is_force) const
 {
+      lv->set_unsigned();
+
       if (lv->sig()->data_type() == IVL_VT_STRING) {
            cerr << get_fileline() << ": error: Cannot part select assign to a string ('"
                 << lv->sig()->name() << "')." << endl;
@@ -872,6 +873,8 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 				      bool need_const_idx,
 				      bool is_force) const
 {
+      lv->set_unsigned();
+
       if (lv->sig()->data_type() == IVL_VT_STRING) {
            cerr << get_fileline() << ": error: Cannot index part select assign to a string ('"
                 << lv->sig()->name() << "')." << endl;

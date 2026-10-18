@@ -47,7 +47,6 @@ NetAssign_::NetAssign_(NetAssign_*n)
 {
       lwid_ = 0;
       more = 0;
-      signed_ = false;
       turn_sig_to_wire_on_release_ = false;
 }
 
@@ -56,7 +55,6 @@ NetAssign_::NetAssign_(NetNet*s)
 {
       lwid_ = sig_->vector_width();
       more = 0;
-      signed_ = false;
       turn_sig_to_wire_on_release_ = false;
 }
 
@@ -107,6 +105,14 @@ const NetExpr* NetAssign_::get_base() const
 ivl_select_type_t NetAssign_::select_type() const
 {
       return sel_type_;
+}
+
+bool NetAssign_::get_signed() const
+{
+      if (force_unsigned_) return false;
+
+      ivl_type_t type = net_type();
+      return type && type->get_signed();
 }
 
 unsigned NetAssign_::lwidth() const

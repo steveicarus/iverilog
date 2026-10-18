@@ -3056,11 +3056,11 @@ class NetAssign_ {
       void set_property(const perm_string&name, unsigned int idx);
       inline int get_property_idx(void) const { return member_idx_; }
 
-	// Determine if the assigned object is signed or unsigned.
-	// This is used when determining the expression type for
-	// a compressed assignment statement.
-      bool get_signed() const { return signed_; }
-      void set_signed(bool flag) { signed_ = flag; }
+	// Return the l-value's signedness for compound assignments.
+      bool get_signed() const;
+	// Keep concatenations and explicit selects unsigned even if
+	// elaboration removes the select or concatenation.
+      void set_unsigned() { force_unsigned_ = true; }
 
 	// Get the width of the r-value that this node expects. This
 	// method accounts for the presence of the mux, so it is not
@@ -3110,7 +3110,7 @@ class NetAssign_ {
       perm_string member_;
       int member_idx_ = -1;
 
-      bool signed_;
+      bool force_unsigned_ = false;
       bool turn_sig_to_wire_on_release_;
 	// indexed part select base
       NetExpr*base_;
