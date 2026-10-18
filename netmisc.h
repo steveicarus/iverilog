@@ -445,7 +445,7 @@ void eval_expr(NetExpr*&expr, int context_width =-1);
 void eval_expr(NetExpr::Ptr&expr, int context_width =-1);
 
 /*
- * Evaluate +, -, *, /, %, bitwise AND/OR/XOR/XNOR and shifts on constants.
+ * Evaluate +, -, *, /, %, bitwise operators and shifts on constants.
  * Operands must already have their expression widths and signedness.
  * Callers apply result width, signedness and assignment conversions.
  * The real overload supports only arithmetic operators.
