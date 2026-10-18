@@ -17,6 +17,7 @@ assign_op_signed3		vvp_tests/assign_op_signed3.json
 assign_op_signed4		vvp_tests/assign_op_signed4.json
 assign_op_signed5		vvp_tests/assign_op_signed5.json
 assign_op_signed6		vvp_tests/assign_op_signed6.json
+assign_op_signed7		vvp_tests/assign_op_signed7.json
 automatic_error11		vvp_tests/automatic_error11.json
 automatic_error12		vvp_tests/automatic_error12.json
 automatic_error13		vvp_tests/automatic_error13.json
@@ -182,6 +183,9 @@ dumpfile			vvp_tests/dumpfile.json
 early_sig_elab1			vvp_tests/early_sig_elab1.json
 early_sig_elab2			vvp_tests/early_sig_elab2.json
 early_sig_elab3			vvp_tests/early_sig_elab3.json
+enum_compatibility10		vvp_tests/enum_compatibility10.json
+enum_compatibility11		vvp_tests/enum_compatibility11.json
+enum_compatibility9		vvp_tests/enum_compatibility9.json
 enum_method_two_state_values	vvp_tests/enum_method_two_state_values.json
 eofmt_percent			vvp_tests/eofmt_percent.json
 fdisplay3			vvp_tests/fdisplay3.json
@@ -200,6 +204,7 @@ hier_index_empty_fail		vvp_tests/hier_index_empty_fail.json
 hier_index_module_name_fail	vvp_tests/hier_index_module_name_fail.json
 hier_index_queue_fail		vvp_tests/hier_index_queue_fail.json
 hier_index_root_name_fail		vvp_tests/hier_index_root_name_fail.json
+implicit_cast14			vvp_tests/implicit_cast14.json
 line_directive			vvp_tests/line_directive.json
 localparam_type			vvp_tests/localparam_type.json
 loop_condition_real		vvp_tests/loop_condition_real.json
