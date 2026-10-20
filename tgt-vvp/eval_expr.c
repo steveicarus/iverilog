@@ -229,6 +229,13 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		const char*type = ivl_expr_signed(expr) ? "/s" : "";
 		ivl_signal_t sig = ivl_expr_signal(expr);
 
+		  /* Function return values are stored on the stack. */
+		if (signal_is_return_value(sig)) {
+		      draw_eval_vec4(expr);
+		      fprintf(vvp_out, "    %%ix/vec4%s %u;\n", type, ix);
+		      break;
+		}
+
 		unsigned word = 0;
 		if (ivl_signal_dimensions(sig) > 0) {
 		      ivl_expr_t ixe;
