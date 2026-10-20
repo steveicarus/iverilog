@@ -572,7 +572,7 @@ void draw_eval_real(ivl_expr_t expr)
 	    break;
 
 	  case IVL_EX_UFUNC:
-	    draw_ufunc_real(expr);
+	    draw_ufunc(expr);
 	    break;
 
 	  case IVL_EX_UNARY:

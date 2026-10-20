@@ -186,46 +186,12 @@ static void draw_ufunc_epilogue(ivl_expr_t expr)
 }
 
 /*
- * A call to a user defined function generates a result that is the
- * result of this expression.
- *
- * The result of the function is placed by the function execution into
- * a signal within the scope of the function that also has a basename
- * the same as the function. The ivl_target API handled the result
- * mapping already, and we get the name of the result signal as
- * parameter 0 of the function definition.
+ * The call instruction leaves vector, real and string results on their
+ * respective evaluation stacks.
  */
-
-void draw_ufunc_vec4(ivl_expr_t expr)
+void draw_ufunc(ivl_expr_t expr)
 {
-
-	/* Take in arguments to function and call function code. */
       draw_ufunc_preamble(expr);
-
-      draw_ufunc_epilogue(expr);
-}
-
-void draw_ufunc_real(ivl_expr_t expr)
-{
-
-	/* Take in arguments to function and call the function code. */
-      draw_ufunc_preamble(expr);
-
-	/* The %callf/real function emitted by the preamble leaves
-	   the result in the stack for us. */
-
-      draw_ufunc_epilogue(expr);
-}
-
-void draw_ufunc_string(ivl_expr_t expr)
-{
-
-	/* Take in arguments to function and call the function code. */
-      draw_ufunc_preamble(expr);
-
-	/* The %callf/str function emitted by the preamble leaves
-	   the result in the stack for us. */
-
       draw_ufunc_epilogue(expr);
 }
 

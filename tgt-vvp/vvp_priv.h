@@ -90,9 +90,7 @@ extern void draw_lpm_substitute(ivl_lpm_t net);
    plain array-to-array assignment and for passing an array to a subroutine. */
 extern int draw_array_copy(ivl_signal_t dst, ivl_expr_t rval);
 
-extern void draw_ufunc_vec4(ivl_expr_t expr);
-extern void draw_ufunc_real(ivl_expr_t expr);
-extern void draw_ufunc_string(ivl_expr_t expr);
+extern void draw_ufunc(ivl_expr_t expr);
 extern void draw_ufunc_object(ivl_expr_t expr);
 
 extern char* process_octal_codes(const char*txt, unsigned wid);

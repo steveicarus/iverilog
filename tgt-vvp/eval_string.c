@@ -270,7 +270,7 @@ void draw_eval_string(ivl_expr_t expr)
 	    break;
 
 	  case IVL_EX_UFUNC:
-	    draw_ufunc_string(expr);
+	    draw_ufunc(expr);
 	    break;
 
 	  default:
