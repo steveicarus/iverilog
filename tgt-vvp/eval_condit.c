@@ -67,14 +67,18 @@ static int draw_condition_binary_compare(ivl_expr_t expr)
 	    return draw_condition_fallback(expr);
       }
 
+      char use_opcode = ivl_expr_opcode(expr);
+      bool wildcard = use_opcode == 'w' || use_opcode == 'W';
+
       unsigned use_wid = ivl_expr_width(le);
       if (ivl_expr_width(re) > use_wid)
 	    use_wid = ivl_expr_width(re);
 
-	/* If the le is constant, then swap the operands so that we
-	   can possibly take advantage of the immediate version of the
-	   %cmp instruction. */
-      if (ivl_expr_width(le)==use_wid && test_immediate_vec4_ok(le)) {
+	/* Put a constant on the right to use an immediate comparison.
+	   Wildcard comparisons must retain operand order because only
+	   X/Z bits on the right are wildcards. */
+      if (!wildcard && ivl_expr_width(le) == use_wid &&
+          test_immediate_vec4_ok(le)) {
 	    ivl_expr_t tmp = le;
 	    le = re;
 	    re = tmp;
@@ -83,30 +87,34 @@ static int draw_condition_binary_compare(ivl_expr_t expr)
       draw_eval_vec4(le);
       resize_vec4_wid(le, use_wid);
 
-      char use_opcode = ivl_expr_opcode(expr);
-
-
-      if (ivl_expr_width(re)==use_wid && test_immediate_vec4_ok(re)) {
+      if (!wildcard && ivl_expr_width(re) == use_wid &&
+          test_immediate_vec4_ok(re)) {
 	      /* Special case: If the right operand can be handled as
 		 an immediate operand, then use that instead. */
-	    if (use_opcode=='n' || use_opcode=='N')
+	    if (use_opcode == 'n' || use_opcode == 'N') {
 		  draw_immediate_vec4(re, "%cmpi/ne");
-	    else
+	    } else {
 		  draw_immediate_vec4(re, "%cmpi/e");
+	    }
       } else {
 	    draw_eval_vec4(re);
 	    resize_vec4_wid(re, use_wid);
-	    if (use_opcode=='n' || use_opcode=='N')
+	    if (wildcard) {
+		  fprintf(vvp_out, "    %%cmp/%s;\n",
+		          use_opcode == 'w' ? "we" : "wne");
+	    } else if (use_opcode == 'n' || use_opcode == 'N') {
 		  fprintf(vvp_out, "    %%cmp/ne;\n");
-	    else
+	    } else {
 		  fprintf(vvp_out, "    %%cmp/e;\n");
+	    }
       }
 
       switch (ivl_expr_opcode(expr)) {
 	  case 'n': /* != */
 	  case 'e': /* == */
+	  case 'w': /* ==? */
+	  case 'W': /* !=? */
 	    return 4;
-	    break;
 	  case 'N': /* !== */
 	  case 'E': /* === */
 	    return 6;
@@ -320,6 +328,8 @@ static int draw_condition_binary(ivl_expr_t expr)
 	  case 'E': /* === */
 	  case 'n': /* != */
 	  case 'N': /* !== */
+	  case 'w': /* ==? */
+	  case 'W': /* !=? */
 	    return draw_condition_binary_compare(expr);
 	  case '<':
 	  case '>':
