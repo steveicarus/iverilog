@@ -1534,7 +1534,7 @@ void draw_eval_vec4(ivl_expr_t expr)
 	    return;
 
 	  case IVL_EX_UFUNC:
-	    draw_ufunc_vec4(expr);
+	    draw_ufunc(expr);
 	    return;
 
 	  case IVL_EX_UNARY:
