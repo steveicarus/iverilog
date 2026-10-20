@@ -316,6 +316,7 @@ repeat_one_continue_nested	vvp_tests/repeat_one_continue_nested.json
 repeat_signed_one_bit		vvp_tests/repeat_signed_one_bit.json
 scaled_real			vvp_tests/scaled_real.json
 scan-invalid			vvp_tests/scan-invalid.json
+scope_fullname_long		vvp_tests/scope_fullname_long.json
 sdf_interconnect1		vvp_tests/sdf_interconnect1.json
 sdf_interconnect2		vvp_tests/sdf_interconnect2.json
 sdf_interconnect3		vvp_tests/sdf_interconnect3.json

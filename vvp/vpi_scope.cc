@@ -25,6 +25,7 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
+# include  <string>
 # include  <vector>
 # include  <cstring>
 # include  <cstdlib>
@@ -165,19 +166,19 @@ void root_table_delete(void)
 }
 #endif
 
-static void construct_scope_fullname(__vpiScope*ref, char*buf)
+static void construct_scope_fullname(__vpiScope*ref, string&buf)
 {
       if (ref->scope) {
 	    construct_scope_fullname(ref->scope, buf);
 	      // Add a "." separator, unless this is for a package
 	    if (ref->scope->get_type_code() != vpiPackage) {
-		  strcat(buf, ".");
+		  buf += ".";
 	    }
       }
 
-      strcat(buf, ref->scope_name());
+      buf += ref->scope_name();
 	// For a package, add a "::" to the end
-      if (ref->get_type_code() == vpiPackage) strcat(buf, "::");
+      if (ref->get_type_code() == vpiPackage) buf += "::";
 }
 
 static const char* scope_get_type(int code)
@@ -206,7 +207,7 @@ static char* scope_get_str(int code, vpiHandle obj)
       __vpiScope*ref = dynamic_cast<__vpiScope*>(obj);
       assert(ref);
 
-      char buf[4096];  // XXX is a fixed buffer size really reliable?
+      string buf;
       const char *p=0;
       switch (code) {
 	  case vpiDefFile:
@@ -218,9 +219,8 @@ static char* scope_get_str(int code, vpiHandle obj)
 	    break;
 
 	  case vpiFullName:
-	    buf[0] = 0;
 	    construct_scope_fullname(ref, buf);
-	    p = buf;
+	    p = buf.c_str();
 	    break;
 
 	  case vpiName:
