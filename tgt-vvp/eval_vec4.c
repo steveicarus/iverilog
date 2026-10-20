@@ -1328,13 +1328,17 @@ static void draw_unary_inc_dec(ivl_expr_t sub, bool incr, bool pre)
 		 result, as well as leaving a copy on the stack. */
 	    fprintf(vvp_out, "    %si 1, 0, %u;\n", cmd, wid);
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
-	    fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", sig, wid);
 
       } else {
 	      /* The post-fix decrement returns the non-decremented
 		 version, so there is a slight re-arrange. */
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
 	    fprintf(vvp_out, "    %si 1, 0, %u;\n", cmd, wid);
+      }
+
+      if (signal_is_return_value(sig)) {
+	    fprintf(vvp_out, "    %%ret/vec4 0, 0, %u;\n", wid);
+      } else {
 	    fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", sig, wid);
       }
 }

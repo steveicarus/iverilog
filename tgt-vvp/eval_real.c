@@ -433,23 +433,31 @@ static void draw_ternary_real(ivl_expr_t expr)
 static void increment(ivl_expr_t e, bool pre)
 {
       ivl_signal_t sig = ivl_expr_signal(e);
-      fprintf(vvp_out, "    %%load/real v%p_0;\n", sig);
+      draw_eval_real(e);
       if (!pre) fprintf(vvp_out, "    %%dup/real;\n");
       fprintf(vvp_out, "    %%pushi/real 1, 0x1000;\n");
       fprintf(vvp_out, "    %%add/wr;\n");
       if ( pre) fprintf(vvp_out, "    %%dup/real;\n");
-      fprintf(vvp_out, "    %%store/real v%p_0;\n", sig);
+      if (signal_is_return_value(sig)) {
+	    fprintf(vvp_out, "    %%ret/real 0;\n");
+      } else {
+	    fprintf(vvp_out, "    %%store/real v%p_0;\n", sig);
+      }
 }
 
 static void decrement(ivl_expr_t e, bool pre)
 {
       ivl_signal_t sig = ivl_expr_signal(e);
-      fprintf(vvp_out, "    %%load/real v%p_0;\n", sig);
+      draw_eval_real(e);
       if (!pre) fprintf(vvp_out, "    %%dup/real;\n");
       fprintf(vvp_out, "    %%pushi/real 1, 0x1000;\n");
       fprintf(vvp_out, "    %%sub/wr;\n");
       if ( pre) fprintf(vvp_out, "    %%dup/real;\n");
-      fprintf(vvp_out, "    %%store/real v%p_0;\n", sig);
+      if (signal_is_return_value(sig)) {
+	    fprintf(vvp_out, "    %%ret/real 0;\n");
+      } else {
+	    fprintf(vvp_out, "    %%store/real v%p_0;\n", sig);
+      }
 }
 
 static void draw_unary_real(ivl_expr_t expr)
