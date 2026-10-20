@@ -37,35 +37,10 @@ static int draw_condition_fallback(ivl_expr_t expr)
       return use_flag;
 }
 
-static int draw_condition_binary_compare(ivl_expr_t expr)
+static int draw_compare_vec4(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
-
-      if ((ivl_expr_value(le) == IVL_VT_REAL)
-	  || (ivl_expr_value(re) == IVL_VT_REAL)) {
-	    return draw_condition_fallback(expr);
-      }
-
-      if ((ivl_expr_value(le)==IVL_VT_STRING)
-	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
-	    return draw_condition_fallback(expr);
-      }
-
-      if ((ivl_expr_value(le)==IVL_VT_STRING)
-	  && (ivl_expr_type(re)==IVL_EX_STRING)) {
-	    return draw_condition_fallback(expr);
-      }
-
-      if ((ivl_expr_type(le)==IVL_EX_STRING)
-	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
-	    return draw_condition_fallback(expr);
-      }
-
-      if ((ivl_expr_value(le)==IVL_VT_CLASS)
-	  && (ivl_expr_value(re)==IVL_VT_CLASS)) {
-	    return draw_condition_fallback(expr);
-      }
 
       char use_opcode = ivl_expr_opcode(expr);
       bool wildcard = use_opcode == 'w' || use_opcode == 'W';
@@ -125,78 +100,67 @@ static int draw_condition_binary_compare(ivl_expr_t expr)
 
 }
 
-static int draw_condition_binary_real_le(ivl_expr_t expr)
+static int draw_compare_real_string(ivl_expr_t expr, bool real)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
-      ivl_expr_t tmp;
-
       char use_opcode = ivl_expr_opcode(expr);
 
-	/* If this is a > or >=, then convert it to < or <= by
-	   swapping the operands. Adjust the opcode to match. */
-      switch (use_opcode) {
-	  case 'G':
-	    tmp = le;
+	/* Reverse greater-than comparisons to use the less-than flag. */
+      if (use_opcode == '>' || use_opcode == 'G') {
+	    ivl_expr_t tmp = le;
 	    le = re;
 	    re = tmp;
-	    use_opcode = 'L';
-	    break;
-	  case '>':
-	    tmp = le;
-	    le = re;
-	    re = tmp;
-	    use_opcode = '<';
-	    break;
       }
 
-      draw_eval_real(le);
-      draw_eval_real(re);
-
-      fprintf(vvp_out, "    %%cmp/wr;\n");
+      if (real) {
+	    draw_eval_real(le);
+	    draw_eval_real(re);
+	    fprintf(vvp_out, "    %%cmp/wr;\n");
+      } else {
+	    draw_eval_string(le);
+	    draw_eval_string(re);
+	    fprintf(vvp_out, "    %%cmp/str;\n");
+      }
 
       switch (use_opcode) {
-	  case '<':
-	    return 5;
-	  case 'L':
+	  case 'n': /* != */
+	    fprintf(vvp_out, "    %%flag_inv 4;\n");
+	    return 4;
+	  case 'e': /* == */
+	    return 4;
+	  case 'L': /* <= */
+	  case 'G': /* >= */
 	    fprintf(vvp_out, "    %%flag_or 5, 4;\n");
+	    return 5;
+	  case '<':
+	  case '>':
 	    return 5;
 	  default:
 	    assert(0);
 	    return -1;
       }
-
 }
 
-static int draw_condition_binary_le(ivl_expr_t expr)
+static int draw_compare_vec4_le(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
       ivl_expr_t tmp;
 
-      if ((ivl_expr_value(le) == IVL_VT_REAL)
-	  || (ivl_expr_value(re) == IVL_VT_REAL)) {
-	    return draw_condition_binary_real_le(expr);
-      }
-
-      if ((ivl_expr_value(le)==IVL_VT_STRING)
-	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
-	    return draw_condition_fallback(expr);
-      }
-
-      if ((ivl_expr_value(le)==IVL_VT_STRING)
-	  && (ivl_expr_type(re)==IVL_EX_STRING)) {
-	    return draw_condition_fallback(expr);
-      }
-
-      if ((ivl_expr_type(le)==IVL_EX_STRING)
-	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
-	    return draw_condition_fallback(expr);
-      }
-
       char use_opcode = ivl_expr_opcode(expr);
       char s_flag = (ivl_expr_signed(le) && ivl_expr_signed(re)) ? 's' : 'u';
 
+	/* NOTE: I think I would rather the elaborator handle the
+	   operand widths. When that happens, take this code out. */
+
+      unsigned use_wid = ivl_expr_width(le);
+      if (ivl_expr_width(re) > use_wid) {
+	    use_wid = ivl_expr_width(re);
+      }
+
+	/* Prefer an immediate operand to avoid pushing a constant onto
+	   the vector stack, even when the result needs flag operations. */
       if (test_immediate_vec4_ok(le) && !test_immediate_vec4_ok(re)) {
 	    tmp = le;
 	    le = re;
@@ -241,13 +205,6 @@ static int draw_condition_binary_le(ivl_expr_t expr)
 	    }
       }
 
-	/* NOTE: I think I would rather the elaborator handle the
-	   operand widths. When that happens, take this code out. */
-
-      unsigned use_wid = ivl_expr_width(le);
-      if (ivl_expr_width(re) > use_wid)
-	    use_wid = ivl_expr_width(re);
-
       draw_eval_vec4(le);
       resize_vec4_wid(le, use_wid);
 
@@ -278,6 +235,43 @@ static int draw_condition_binary_le(ivl_expr_t expr)
 	  case 'L':
 	    fprintf(vvp_out, "    %%flag_or 5, 4;\n");
 	    return 5;
+	  default:
+	    assert(0);
+	    return -1;
+      }
+}
+
+int draw_eval_compare(ivl_expr_t expr)
+{
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      if (ivl_expr_value(le) == IVL_VT_REAL ||
+          ivl_expr_value(re) == IVL_VT_REAL) {
+	    return draw_compare_real_string(expr, true);
+      }
+
+      if ((ivl_expr_value(le) == IVL_VT_STRING &&
+           (ivl_expr_value(re) == IVL_VT_STRING ||
+            ivl_expr_type(re) == IVL_EX_STRING)) ||
+          (ivl_expr_type(le) == IVL_EX_STRING &&
+           ivl_expr_value(re) == IVL_VT_STRING)) {
+	    return draw_compare_real_string(expr, false);
+      }
+
+      switch (ivl_expr_opcode(expr)) {
+	  case 'e': /* == */
+	  case 'E': /* === */
+	  case 'n': /* != */
+	  case 'N': /* !== */
+	  case 'w': /* ==? */
+	  case 'W': /* !=? */
+	    return draw_compare_vec4(expr);
+	  case '<':
+	  case '>':
+	  case 'L': /* <= */
+	  case 'G': /* >= */
+	    return draw_compare_vec4_le(expr);
 	  default:
 	    assert(0);
 	    return -1;
@@ -330,12 +324,16 @@ static int draw_condition_binary(ivl_expr_t expr)
 	  case 'N': /* !== */
 	  case 'w': /* ==? */
 	  case 'W': /* !=? */
-	    return draw_condition_binary_compare(expr);
+	    if (ivl_expr_value(ivl_expr_oper1(expr)) == IVL_VT_CLASS &&
+	        ivl_expr_value(ivl_expr_oper2(expr)) == IVL_VT_CLASS) {
+		  return draw_condition_fallback(expr);
+	    }
+	    return draw_eval_compare(expr);
 	  case '<':
 	  case '>':
 	  case 'L': /* <= */
 	  case 'G': /* >= */
-	    return draw_condition_binary_le(expr);
+	    return draw_eval_compare(expr);
 	  case 'o': /* Logical or (||) */
 	    return draw_condition_binary_lor(expr);
 	  default:

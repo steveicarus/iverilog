@@ -215,46 +215,6 @@ static void draw_binary_vec4_bitwise(ivl_expr_t expr)
       }
 }
 
-static void draw_binary_vec4_compare_real(ivl_expr_t expr)
-{
-      draw_eval_real(ivl_expr_oper1(expr));
-      draw_eval_real(ivl_expr_oper2(expr));
-
-      switch (ivl_expr_opcode(expr)) {
-	  case 'e': /* == */
-	    fprintf(vvp_out, "    %%cmp/wr;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  case 'n': /* != */
-	    fprintf(vvp_out, "    %%cmp/wr;\n");
-	    fprintf(vvp_out, "    %%flag_inv 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  default:
-	    assert(0);
-      }
-}
-
-static void draw_binary_vec4_compare_string(ivl_expr_t expr)
-{
-      draw_eval_string(ivl_expr_oper1(expr));
-      draw_eval_string(ivl_expr_oper2(expr));
-
-      switch (ivl_expr_opcode(expr)) {
-	  case 'e': /* == */
-	    fprintf(vvp_out, "    %%cmp/str;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  case 'n': /* != */
-	    fprintf(vvp_out, "    %%cmp/str;\n");
-	    fprintf(vvp_out, "    %%flag_inv 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  default:
-	    assert(0);
-      }
-}
-
 static void draw_binary_vec4_compare_class(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
@@ -339,74 +299,14 @@ static void draw_binary_vec4_compare(ivl_expr_t expr)
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
 
-      if ((ivl_expr_value(le) == IVL_VT_REAL)
-	  || (ivl_expr_value(re) == IVL_VT_REAL)) {
-	    draw_binary_vec4_compare_real(expr);
-	    return;
-      }
-
-      if ((ivl_expr_value(le)==IVL_VT_STRING)
-	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
-	    draw_binary_vec4_compare_string(expr);
-	    return;
-      }
-
-      if ((ivl_expr_value(le)==IVL_VT_STRING)
-	  && (ivl_expr_type(re)==IVL_EX_STRING)) {
-	    draw_binary_vec4_compare_string(expr);
-	    return;
-      }
-
-      if ((ivl_expr_type(le)==IVL_EX_STRING)
-	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
-	    draw_binary_vec4_compare_string(expr);
-	    return;
-      }
-
-      if ((ivl_expr_value(le)==IVL_VT_CLASS)
-	  && (ivl_expr_value(re)==IVL_VT_CLASS)) {
+      if (ivl_expr_value(le) == IVL_VT_CLASS &&
+          ivl_expr_value(re) == IVL_VT_CLASS) {
 	    draw_binary_vec4_compare_class(expr);
 	    return;
       }
 
-      unsigned use_wid = ivl_expr_width(le);
-      if (ivl_expr_width(re) > use_wid)
-	    use_wid = ivl_expr_width(re);
-
-      draw_eval_vec4(le);
-      resize_vec4_wid(le, use_wid);
-
-      draw_eval_vec4(re);
-      resize_vec4_wid(re, use_wid);
-
-      switch (ivl_expr_opcode(expr)) {
-	  case 'e': /* == */
-	    fprintf(vvp_out, "    %%cmp/e;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  case 'n': /* != */
-	    fprintf(vvp_out, "    %%cmp/ne;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  case 'E': /* === */
-	    fprintf(vvp_out, "    %%cmp/e;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 6;\n");
-	    break;
-	  case 'N': /* !== */
-	    fprintf(vvp_out, "    %%cmp/ne;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 6;\n");
-	    break;
-	  case 'w': /* ==? */
-	    fprintf(vvp_out, "    %%cmp/we;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  case 'W': /* !=? */
-	    fprintf(vvp_out, "    %%cmp/wne;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  default:
-	    assert(0);
-      }
+      int flag = draw_eval_compare(expr);
+      fprintf(vvp_out, "    %%flag_get/vec4 %d;\n", flag);
 }
 
 /*
@@ -502,183 +402,6 @@ static void draw_binary_vec4_logical(ivl_expr_t expr, char op)
 	    fprintf(vvp_out, "    %%pad/u %u;\n", ivl_expr_width(expr));
 }
 
-static void draw_binary_vec4_le_real(ivl_expr_t expr)
-{
-      ivl_expr_t le = ivl_expr_oper1(expr);
-      ivl_expr_t re = ivl_expr_oper2(expr);
-
-      switch (ivl_expr_opcode(expr)) {
-	  case '<':
-	    draw_eval_real(le);
-	    draw_eval_real(re);
-	    fprintf(vvp_out, "    %%cmp/wr;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    break;
-
-	  case 'L': /* <= */
-	    draw_eval_real(le);
-	    draw_eval_real(re);
-	    fprintf(vvp_out, "    %%cmp/wr;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    fprintf(vvp_out, "    %%or;\n");
-	    break;
-
-	  case '>':
-	    draw_eval_real(re);
-	    draw_eval_real(le);
-	    fprintf(vvp_out, "    %%cmp/wr;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    break;
-
-	  case 'G': /* >= */
-	    draw_eval_real(re);
-	    draw_eval_real(le);
-	    fprintf(vvp_out, "    %%cmp/wr;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    fprintf(vvp_out, "    %%or;\n");
-	    break;
-
-	  default:
-	    assert(0);
-	    break;
-      }
-}
-
-static void draw_binary_vec4_le_string(ivl_expr_t expr)
-{
-      ivl_expr_t le = ivl_expr_oper1(expr);
-      ivl_expr_t re = ivl_expr_oper2(expr);
-
-      switch (ivl_expr_opcode(expr)) {
-	  case '<':
-	    draw_eval_string(le);
-	    draw_eval_string(re);
-	    fprintf(vvp_out, "    %%cmp/str;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    break;
-
-	  case 'L': /* <= */
-	    draw_eval_string(le);
-	    draw_eval_string(re);
-	    fprintf(vvp_out, "    %%cmp/str;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    fprintf(vvp_out, "    %%or;\n");
-	    break;
-
-	  case '>':
-	    draw_eval_string(re);
-	    draw_eval_string(le);
-	    fprintf(vvp_out, "    %%cmp/str;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    break;
-
-	  case 'G': /* >= */
-	    draw_eval_string(re);
-	    draw_eval_string(le);
-	    fprintf(vvp_out, "    %%cmp/str;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    fprintf(vvp_out, "    %%or;\n");
-	    break;
-
-	  default:
-	    assert(0);
-	    break;
-      }
-}
-
-static void draw_binary_vec4_le(ivl_expr_t expr)
-{
-      ivl_expr_t le = ivl_expr_oper1(expr);
-      ivl_expr_t re = ivl_expr_oper2(expr);
-      ivl_expr_t tmp;
-
-      if ((ivl_expr_value(le) == IVL_VT_REAL)
-	  || (ivl_expr_value(re) == IVL_VT_REAL)) {
-	    draw_binary_vec4_le_real(expr);
-	    return;
-      }
-
-      char use_opcode = ivl_expr_opcode(expr);
-      char s_flag = (ivl_expr_signed(le) && ivl_expr_signed(re)) ? 's' : 'u';
-
-	/* If this is a > or >=, then convert it to < or <= by
-	   swapping the operands. Adjust the opcode to match. */
-      switch (use_opcode) {
-	  case 'G':
-	    tmp = le;
-	    le = re;
-	    re = tmp;
-	    use_opcode = 'L';
-	    break;
-	  case '>':
-	    tmp = le;
-	    le = re;
-	    re = tmp;
-	    use_opcode = '<';
-	    break;
-      }
-
-      if ((ivl_expr_value(le)==IVL_VT_STRING)
-	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
-	    draw_binary_vec4_le_string(expr);
-	    return;
-      }
-
-      if ((ivl_expr_value(le)==IVL_VT_STRING)
-	  && (ivl_expr_type(re)==IVL_EX_STRING)) {
-	    draw_binary_vec4_le_string(expr);
-	    return;
-      }
-
-      if ((ivl_expr_type(le)==IVL_EX_STRING)
-	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
-	    draw_binary_vec4_le_string(expr);
-	    return;
-      }
-
-	/* NOTE: I think I would rather the elaborator handle the
-	   operand widths. When that happens, take this code out. */
-
-      unsigned use_wid = ivl_expr_width(le);
-      if (ivl_expr_width(re) > use_wid)
-	    use_wid = ivl_expr_width(re);
-
-      draw_eval_vec4(le);
-      resize_vec4_wid(le, use_wid);
-
-      if (ivl_expr_width(re)==use_wid && test_immediate_vec4_ok(re)) {
-	      /* Special case: If the right operand can be handled as
-		 an immediate operand, then use that instead. */
-	    char opcode[8];
-	    snprintf(opcode, sizeof opcode, "%%cmpi/%c", s_flag);
-	    draw_immediate_vec4(re, opcode);
-
-      } else {
-	    draw_eval_vec4(re);
-	    resize_vec4_wid(re, use_wid);
-
-	    fprintf(vvp_out, "    %%cmp/%c;\n", s_flag);
-      }
-
-      switch (use_opcode) {
-	  case 'L':
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    fprintf(vvp_out, "    %%or;\n");
-	    break;
-	  case '<':
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    break;
-	  default:
-	    assert(0);
-	    break;
-      }
-}
-
 static void draw_binary_vec4_lrs(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
@@ -747,14 +470,11 @@ static void draw_binary_vec4(ivl_expr_t expr)
 	  case 'N': /* !== */
 	  case 'w': /* ==? */
 	  case 'W': /* !=? */
-	    draw_binary_vec4_compare(expr);
-	    break;
-
 	  case 'G': /* >= */
 	  case 'L': /* <= */
 	  case '>':
 	  case '<':
-	    draw_binary_vec4_le(expr);
+	    draw_binary_vec4_compare(expr);
 	    break;
 
 	  case 'l': /* << */
