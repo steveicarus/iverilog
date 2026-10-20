@@ -140,14 +140,17 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
 	    assert(use_word == 0);
 	    assert(part_off == 0);
-	    assert(!signal_is_return_value(sig)); // NOT IMPLEMENTED
 
 	    slice->type = SLICE_PART_SELECT_DYNAMIC;
 
 	    slice->u_.part_select_dynamic.word_idx_reg = allocate_word();
 	    slice->u_.part_select_dynamic.x_flag = allocate_flag();
 
-	    fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
+	    if (signal_is_return_value(sig)) {
+		  fprintf(vvp_out, "    %%retload/vec4 0;\n");
+	    } else {
+		  fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
+	    }
 	    draw_eval_vec4(part_off_ex);
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
 	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", slice->u_.part_select_dynamic.word_idx_reg);
