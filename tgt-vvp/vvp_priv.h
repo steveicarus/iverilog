@@ -198,6 +198,12 @@ extern void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix);
 extern int draw_eval_condition(ivl_expr_t expr);
 
 /*
+ * Evaluate a numeric or string comparison and return the flag containing
+ * its result. Vector callers can copy this flag onto the expression stack.
+ */
+extern int draw_eval_compare(ivl_expr_t expr);
+
+/*
  * Return true if the signal is the return value of a function.
  */
 extern int signal_is_return_value(ivl_signal_t sig);
