@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "func_return_inc_dec.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Increment and decrement expressions are not translated",
+        "type"      : "CE"
+    }
+}
