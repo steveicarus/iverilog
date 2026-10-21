@@ -202,6 +202,14 @@ extern int draw_eval_condition(ivl_expr_t expr);
 extern int draw_eval_compare(ivl_expr_t expr);
 
 /*
+ * Evaluate a ternary using draw_eval for its branches and blend to combine
+ * their results when the condition is unknown. Both must use the same
+ * expression stack.
+ */
+extern void draw_eval_ternary(ivl_expr_t expr, void(*draw_eval)(ivl_expr_t),
+                              const char*blend);
+
+/*
  * Return true if the signal is the return value of a function.
  */
 extern int signal_is_return_value(ivl_signal_t sig);
