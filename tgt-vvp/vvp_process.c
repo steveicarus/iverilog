@@ -1837,6 +1837,7 @@ static int show_insert_method(ivl_statement_t net)
 	            ivl_type_packed_width(element_type));
 	    break;
       }
+      clr_word(idx);
       return 0;
 }
 
