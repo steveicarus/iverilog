@@ -1485,7 +1485,7 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		 variable. */
 	    errors += draw_eval_object(rval);
 
-	    if (ivl_signal_array_count(sig) > 1) {
+	    if (ivl_signal_dimensions(sig) > 0) {
 		  unsigned ix;
 		  ivl_expr_t aidx = ivl_lval_idx(lval);
 
