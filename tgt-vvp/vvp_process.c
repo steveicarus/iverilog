@@ -693,6 +693,10 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 	    }
       }
 
+	/* Discard the selector before executing a branch, since break or
+	   continue may bypass the end of the case statement. */
+      fprintf(vvp_out, "    %%pop/vec4 1;\n");
+
 	/* Emit code for the default case. */
       if (default_case < count) {
 	    ivl_statement_t cst = ivl_stmt_case_stmt(net, default_case);
@@ -727,6 +731,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 		  continue;
 
 	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_base+idx);
+	    fprintf(vvp_out, "    %%pop/vec4 1;\n");
 	    rc += show_statement(cst, sscope);
 
 	      /* Statement is done, jump to the out of the case. */
@@ -738,9 +743,6 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 
 	/* The out of the case. */
       fprintf(vvp_out, "T_%u.%u ;\n",  thread_count, local_base+count);
-	/* The case tests will leave the case expression on the top of
-	   the stack, but we are done with it now. Pop it. */
-      fprintf(vvp_out, "    %%pop/vec4 1;\n");
 
       return rc;
 }
@@ -788,6 +790,10 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 
       }
 
+	/* Discard the selector before executing a branch, since break or
+	   continue may bypass the end of the case statement. */
+      fprintf(vvp_out, "    %%pop/real 1;\n");
+
 	/* Emit code for the case default. The above jump table will
 	   fall through to this statement. */
       if (default_case < count) {
@@ -806,6 +812,7 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 		  continue;
 
 	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_base+idx);
+	    fprintf(vvp_out, "    %%pop/real 1;\n");
 	    rc += show_statement(cst, sscope);
 
 	    fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count,
@@ -814,7 +821,6 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 
 	/* The out of the case. */
       fprintf(vvp_out, "T_%u.%u ;\n",  thread_count, local_base+count);
-      fprintf(vvp_out, "    %%pop/real 1;\n");
 
       return rc;
 }
