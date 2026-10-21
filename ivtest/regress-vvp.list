@@ -453,6 +453,8 @@ sv_darray_assign_op		vvp_tests/sv_darray_assign_op.json
 sv_darray_find_locators		vvp_tests/sv_darray_find_locators.json
 sv_darray_min_max		vvp_tests/sv_darray_min_max.json
 sv_darray_min_max_with		vvp_tests/sv_darray_min_max_with.json
+sv_darray_new_function		vvp_tests/sv_darray_new_function.json
+sv_darray_new_property		vvp_tests/sv_darray_new_property.json
 sv_darray_product		vvp_tests/sv_darray_product.json
 sv_darray_product_with		vvp_tests/sv_darray_product_with.json
 sv_darray_reduction		vvp_tests/sv_darray_reduction.json
