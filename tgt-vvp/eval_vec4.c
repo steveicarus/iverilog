@@ -973,49 +973,6 @@ static void draw_string_vec4(ivl_expr_t expr)
       free(fp);
 }
 
-static void draw_ternary_vec4(ivl_expr_t expr)
-{
-      ivl_expr_t cond = ivl_expr_oper1(expr);
-      ivl_expr_t true_ex = ivl_expr_oper2(expr);
-      ivl_expr_t false_ex = ivl_expr_oper3(expr);
-
-      unsigned lab_false  = local_count++;
-      unsigned lab_out   = local_count++;
-
-      fprintf(vvp_out, "; Start of ternary condition expr.\n");
-      int use_flag = draw_eval_condition(cond);
-
-	/* The condition flag is used after possibly other statements,
-	   so we need to put it into a non-common place. Allocate a
-	   safe flag bit and move the condition to the flag position. */
-      if (use_flag < 8) {
-	    int tmp_flag = allocate_flag();
-	    assert(tmp_flag >= 8);
-	    fprintf(vvp_out, "    %%flag_mov %d, %d;\n", tmp_flag, use_flag);
-	    use_flag = tmp_flag;
-      }
-
-	/* If the condition is just false then we only need to calculate
-	   the false expression. */
-      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_false, use_flag);
-      fprintf(vvp_out, "; Start of true expr.\n");
-      draw_eval_vec4(true_ex);
-
-	/* If the condition is true, then we only need the true expression. */
-      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
-      fprintf(vvp_out, "T_%u.%u ; Start of false expr.\n", thread_count, lab_false);
-      draw_eval_vec4(false_ex);
-
-	/* If the condition is false, then we only need the false expression. */
-      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
-
-	/* This handles the case that the condition is undefined (x/z). */
-      fprintf(vvp_out, "    %%blend;\n");
-      fprintf(vvp_out, "T_%u.%u; End of ternary.\n", thread_count, lab_out);
-
-      clr_flag(use_flag);
-}
-
 static void draw_unary_inc_dec(ivl_expr_t sub, bool incr, bool pre)
 {
       ivl_signal_t sig = 0;
@@ -1254,7 +1211,7 @@ void draw_eval_vec4(ivl_expr_t expr)
 	    return;
 
 	  case IVL_EX_TERNARY:
-	    draw_ternary_vec4(expr);
+	    draw_eval_ternary(expr, draw_eval_vec4, "%blend");
 	    return;
 
 	  case IVL_EX_UFUNC:
