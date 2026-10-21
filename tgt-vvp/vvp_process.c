@@ -1667,11 +1667,13 @@ static int show_delete_method(ivl_statement_t net)
 	    ivl_signal_t clas = ivl_expr_signal(parm);
 	    unsigned pidx = ivl_expr_property_idx(parm);
 	    ivl_type_t sig_type = ivl_signal_net_type(clas);
-	    ivl_type_t queue_type = ivl_type_prop_type(sig_type, pidx);
-	    assert(ivl_type_base(queue_type) == IVL_VT_QUEUE);
+	    ivl_type_t array_type = ivl_type_prop_type(sig_type, pidx);
+	    assert(ivl_type_base(array_type) == IVL_VT_QUEUE ||
+	           ivl_type_base(array_type) == IVL_VT_DARRAY);
 
 	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
 	    if (parm_count == 2) {
+		  assert(ivl_type_base(array_type) == IVL_VT_QUEUE);
 		  draw_eval_expr_into_integer(ivl_stmt_parm(net, 1), 3);
 		  fprintf(vvp_out, "    %%delete/prop/elem %u;\n", pidx);
 	    } else {
