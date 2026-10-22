@@ -1,0 +1,6 @@
+{
+    "type"              : "normal",
+    "source"            : "plusargs_dec_underscore.v",
+    "gold"              : "plusargs_dec_underscore",
+    "vvp-args-extended" : [ "+a=_", "+b=__" ]
+}
