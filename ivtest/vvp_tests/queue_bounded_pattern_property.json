@@ -1,0 +1,10 @@
+{
+    "type"          : "normal",
+    "source"        : "queue_bounded_pattern_property.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Class scopes are not translated",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}

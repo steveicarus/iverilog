@@ -298,6 +298,10 @@ program2b			vvp_tests/program2b.json
 program3a			vvp_tests/program3a.json
 pv_wr_fn_vec2			vvp_tests/pv_wr_fn_vec2.json
 pv_wr_fn_vec4			vvp_tests/pv_wr_fn_vec4.json
+queue_bounded_pattern_integer	vvp_tests/queue_bounded_pattern_integer.json
+queue_bounded_pattern_property	vvp_tests/queue_bounded_pattern_property.json
+queue_bounded_pattern_real	vvp_tests/queue_bounded_pattern_real.json
+queue_bounded_pattern_string	vvp_tests/queue_bounded_pattern_string.json
 queue_fail			vvp_tests/queue_fail.json
 readmem-invalid			vvp_tests/readmem-invalid.json
 real_delay_assign		vvp_tests/real_delay_assign.json
