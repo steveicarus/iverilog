@@ -1354,6 +1354,8 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net, ivl_variable_type_t dt)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	  case IVL_LPM_RE_AND:
 	  case IVL_LPM_RE_OR:
 	  case IVL_LPM_RE_XOR:
