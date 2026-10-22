@@ -212,6 +212,8 @@ func_nested_block_nb_fail	vvp_tests/func_nested_block_nb_fail.json
 func_return_inc_dec		vvp_tests/func_return_inc_dec.json
 func_return_index		vvp_tests/func_return_index.json
 func_return_real_inc_dec	vvp_tests/func_return_real_inc_dec.json
+function_escaped_name		vvp_tests/function_escaped_name.json
+function_escaped_name_strict	vvp_tests/function_escaped_name_strict.json
 gate_instance_array_shadow_fail	vvp_tests/gate_instance_array_shadow_fail.json
 gate_instance_function_shadow_fail	vvp_tests/gate_instance_function_shadow_fail.json
 gate_instance_hierarchy_shadow_fail	vvp_tests/gate_instance_hierarchy_shadow_fail.json
@@ -789,6 +791,7 @@ sv_wildcard_port_order_relaxed	vvp_tests/sv_wildcard_port_order_relaxed.json
 sv_wildcard_port_position	vvp_tests/sv_wildcard_port_position.json
 sdf_header			vvp_tests/sdf_header.json
 switch_instance_shadow_fail	vvp_tests/switch_instance_shadow_fail.json
+task_escaped_name		vvp_tests/task_escaped_name.json
 task_return1			vvp_tests/task_return1.json
 task_return2			vvp_tests/task_return2.json
 task_return_fail1		vvp_tests/task_return_fail1.json
