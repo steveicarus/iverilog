@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "function_escaped_name.v",
+    "iverilog-args" : [ "-gstrict-ca-eval" ]
+}
