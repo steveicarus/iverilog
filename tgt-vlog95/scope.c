@@ -821,7 +821,8 @@ static void emit_specify_paths(ivl_scope_t scope, ivl_signal_t sig)
 	    ivl_delaypath_t dpath = ivl_signal_path(sig, idx);
 	    ivl_nexus_t cond = ivl_path_condit(dpath);
 	    ivl_nexus_t source = ivl_path_source(dpath);
-	    unsigned has_edge = 0;
+	    unsigned posedge = ivl_path_source_posedge(dpath);
+	    unsigned negedge = ivl_path_source_negedge(dpath);
 	    fprintf(vlog_out, "%*c", indent, ' ');
 	    if (cond) {
 		  fprintf(vlog_out, "if (");
@@ -831,13 +832,11 @@ static void emit_specify_paths(ivl_scope_t scope, ivl_signal_t sig)
 		  fprintf(vlog_out, "ifnone ");
 	    }
 	    fprintf(vlog_out, "(");
-	    if (ivl_path_source_posedge(dpath)) {
+	    if (posedge && !negedge) {
 		  fprintf(vlog_out, "posedge ");
-		  has_edge = 1;
 	    }
-	    if (ivl_path_source_negedge(dpath)) {
+	    if (negedge && !posedge) {
 		  fprintf(vlog_out, "negedge ");
-		  has_edge = 1;
 	    }
 	    emit_nexus_as_ca(scope, source, 0, 0);
 	    if (ivl_path_is_parallel(dpath)) {
@@ -847,7 +846,7 @@ static void emit_specify_paths(ivl_scope_t scope, ivl_signal_t sig)
 	    }
 	      /* The compiler does not keep the source expression for an edge
 	       * sensitive path so add a constant to get the syntax right. */
-	    if (has_edge) {
+	    if (posedge || negedge) {
 		  fprintf(vlog_out, "(%s : 1'bx /* Missing */)",
 		                    ivl_signal_basename(sig));
 	    } else {
