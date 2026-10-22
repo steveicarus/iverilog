@@ -338,6 +338,7 @@ strength_feedback		vvp_tests/strength_feedback.json
 strength_feedback_delay		vvp_tests/strength_feedback_delay.json
 strength_net_change		vvp_tests/strength_net_change.json
 strength_net_release		vvp_tests/strength_net_release.json
+strength_resistive_mos		vvp_tests/strength_resistive_mos.json
 struct_enum_partsel		vvp_tests/struct_enum_partsel.json
 struct_field_left_right		vvp_tests/struct_field_left_right.json
 struct_nested1			vvp_tests/struct_nested1.json
