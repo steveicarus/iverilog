@@ -2063,7 +2063,9 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 
       if (ivl_lpm_trigger(net)) {
 	    assert(ninp > 0);
-	    fprintf(vvp_out, "L_%p%s .ufunc/e TD_%s, %u, E_%p", net, dly,
+	    const char*event_type = dt == IVL_VT_REAL ? "/real" : "";
+	    fprintf(vvp_out, "L_%p%s .ufunc%s/e TD_%s, %u, E_%p",
+	            net, dly, event_type,
 	            vvp_mangle_id(ivl_scope_name(def)),
 	            ivl_lpm_width(net), ivl_lpm_trigger(net));
       } else
