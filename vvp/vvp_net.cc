@@ -789,9 +789,10 @@ vvp_vector4_t::vvp_vector4_t(unsigned size__, double val)
 
 	/* If the value is small enough just use lround(). */
       if (exponent < BITS_PER_WORD-2) {
-	    if (is_neg) this->invert();  // Invert the bits if negative.
 	    long sval = lround(val);
 	    if (is_neg) sval = -sval;
+	      /* Sign extend the rounded value, which may be zero. */
+	    if (sval < 0) this->invert();
 	      /* This requires that 0 and 1 have the same bbit value. */
 	    if (size_ > BITS_PER_WORD) {
 		  abits_ptr_[0] = sval;
