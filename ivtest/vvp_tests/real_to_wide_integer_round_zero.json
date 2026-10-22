@@ -1,0 +1,8 @@
+{
+    "type"   : "normal",
+    "source" : "real_to_wide_integer_round_zero.v",
+    "vlog95" : {
+        "__comment"     : "Signed nets and registers require -pallowsigned=1.",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}

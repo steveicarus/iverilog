@@ -308,6 +308,7 @@ real_negative_zero		vvp_tests/real_negative_zero.json
 real_net_init			vvp_tests/real_net_init.json
 real_net_release		vvp_tests/real_net_release.json
 real_net_signed_zero		vvp_tests/real_net_signed_zero.json
+real_to_wide_integer_round_zero	vvp_tests/real_to_wide_integer_round_zero.json
 real_unary_minus_inf		vvp_tests/real_unary_minus_inf.json
 real_unary_minus_nan		vvp_tests/real_unary_minus_nan.json
 real_unary_minus_zero		vvp_tests/real_unary_minus_zero.json
