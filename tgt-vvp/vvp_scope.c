@@ -2364,12 +2364,12 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    switch (ivl_scope_func_type(net)) {
 		case IVL_VT_LOGIC:
 		  snprintf(suffix, sizeof suffix, ".vec4.%c%u",
-			   ivl_scope_func_signed(net)? 'u' : 's',
+			   ivl_scope_func_signed(net)? 's' : 'u',
 			   ivl_scope_func_width(net));
 		  break;
 		case IVL_VT_BOOL:
 		  snprintf(suffix, sizeof suffix, ".vec2.%c%u",
-			   ivl_scope_func_signed(net)? 'u' : 's',
+			   ivl_scope_func_signed(net)? 's' : 'u',
 			   ivl_scope_func_width(net));
 		  break;
 		case IVL_VT_REAL:
