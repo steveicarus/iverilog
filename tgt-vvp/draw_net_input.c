@@ -174,16 +174,19 @@ static int nexus_drive_is_strength_aware(ivl_nexus_ptr_t nptr)
 	      /* These logic gates are able to generate unusual
 	         strength values and so their outputs are considered
 	         strength aware. */
-	    if (ivl_logic_type(logic) == IVL_LO_BUFIF0)
+	    switch (ivl_logic_type(logic)) {
+		case IVL_LO_BUFIF0:
+		case IVL_LO_BUFIF1:
+		case IVL_LO_PMOS:
+		case IVL_LO_NMOS:
+		case IVL_LO_CMOS:
+		case IVL_LO_RPMOS:
+		case IVL_LO_RNMOS:
+		case IVL_LO_RCMOS:
 		  return 1;
-	    if (ivl_logic_type(logic) == IVL_LO_BUFIF1)
-		  return 1;
-	    if (ivl_logic_type(logic) == IVL_LO_PMOS)
-		  return 1;
-	    if (ivl_logic_type(logic) == IVL_LO_NMOS)
-		  return 1;
-	    if (ivl_logic_type(logic) == IVL_LO_CMOS)
-		  return 1;
+		default:
+		  break;
+	    }
       }
 
       return 0;
