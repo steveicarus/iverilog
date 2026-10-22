@@ -2066,14 +2066,12 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
       if (ivl_lpm_trigger(net)) {
 	    assert(ninp > 0);
 	    const char*event_type = dt == IVL_VT_REAL ? "/real" : "";
-	    fprintf(vvp_out, "L_%p%s .ufunc%s/e TD_%s, %u, E_%p",
-	            net, dly, event_type,
-	            vvp_mangle_id(ivl_scope_name(def)),
+	    fprintf(vvp_out, "L_%p%s .ufunc%s/e TD_%p, %u, E_%p",
+	            net, dly, event_type, def,
 	            ivl_lpm_width(net), ivl_lpm_trigger(net));
       } else
-	    fprintf(vvp_out, "L_%p%s .ufunc%s TD_%s, %u", net, dly, type_string,
-	            vvp_mangle_id(ivl_scope_name(def)),
-	            ivl_lpm_width(net));
+	    fprintf(vvp_out, "L_%p%s .ufunc%s TD_%p, %u", net, dly, type_string,
+	            def, ivl_lpm_width(net));
 
 	/* Print all the net signals that connect to the input of the
 	   function. */
@@ -2128,7 +2126,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
       }
 #endif
         /* Finally, print the scope identifier. */
-      fprintf(vvp_out, " S_%p;\n", def);
+      fprintf(vvp_out, " S_%p; %s\n", def, ivl_scope_name(def));
 }
 
 /*
