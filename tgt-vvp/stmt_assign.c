@@ -1262,11 +1262,16 @@ static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
 	                    max_elems, ivl_signal_basename(var), max_size, max_size);
 	    max_elems = max_size;
       }
-      for (idx = 0 ; idx < max_elems ; idx += 1) {
+	/* Discard excess values only after evaluating their expressions. */
+      for (idx = 0 ; idx < ivl_expr_parms(rval) ; idx += 1) {
 	    switch (ivl_type_base(element_type)) {
 		case IVL_VT_BOOL:
 		case IVL_VT_LOGIC:
 		  draw_eval_vec4(ivl_expr_parm(rval,idx));
+		  if (idx >= max_elems) {
+			fprintf(vvp_out, "    %%pop/vec4 1;\n");
+			break;
+		  }
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%store/qdar/v v%p_0, %d, %u;\n", var, max_idx,
@@ -1275,6 +1280,10 @@ static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
 
 		case IVL_VT_REAL:
 		  draw_eval_real(ivl_expr_parm(rval,idx));
+		  if (idx >= max_elems) {
+			fprintf(vvp_out, "    %%pop/real 1;\n");
+			break;
+		  }
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%store/qdar/r v%p_0, %d;\n", var, max_idx);
@@ -1282,6 +1291,10 @@ static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
 
 		case IVL_VT_STRING:
 		  draw_eval_string(ivl_expr_parm(rval,idx));
+		  if (idx >= max_elems) {
+			fprintf(vvp_out, "    %%pop/str 1;\n");
+			break;
+		  }
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%store/qdar/str v%p_0, %d;\n", var, max_idx);
