@@ -2392,9 +2392,11 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    }
       }
 
-      fprintf(vvp_out, "S_%p .scope %s%s%s, \"%s\" \"%s\" %u %u",
+	/* Emit each name before vvp_mangle_name() reuses its output buffer. */
+      fprintf(vvp_out, "S_%p .scope %s%s%s, \"%s\" ",
 	      net, prefix, type, suffix,
-	      vvp_mangle_name(ivl_scope_basename(net)),
+	      vvp_mangle_name(ivl_scope_basename(net)));
+      fprintf(vvp_out, "\"%s\" %u %u",
               vvp_mangle_name(ivl_scope_tname(net)),
 	      ivl_file_table_index(ivl_scope_file(net)),
               ivl_scope_lineno(net));
