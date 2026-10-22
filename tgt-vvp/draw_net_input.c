@@ -177,6 +177,8 @@ static int nexus_drive_is_strength_aware(ivl_nexus_ptr_t nptr)
 	    switch (ivl_logic_type(logic)) {
 		case IVL_LO_BUFIF0:
 		case IVL_LO_BUFIF1:
+		case IVL_LO_NOTIF0:
+		case IVL_LO_NOTIF1:
 		case IVL_LO_PMOS:
 		case IVL_LO_NMOS:
 		case IVL_LO_CMOS:
