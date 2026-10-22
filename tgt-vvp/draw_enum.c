@@ -74,7 +74,8 @@ void draw_enumeration_in_scope(ivl_enumtype_t enumtype)
                        ivl_enum_width(enumtype));
 
       for (idx = 0 ; idx < name_count ; idx += 1) {
-	    fprintf(vvp_out, "   \"%s\" ", ivl_enum_name(enumtype, idx));
+	    fprintf(vvp_out, "   \"%s\" ",
+		    vvp_mangle_name(ivl_enum_name(enumtype, idx)));
 
 	    switch (ivl_enum_type(enumtype)) {
 		case IVL_VT_BOOL:

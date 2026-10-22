@@ -82,10 +82,12 @@ void draw_class_in_scope(ivl_type_t classtype)
 {
       int idx;
       fprintf(vvp_out, "C%p  .class \"%s\" [%d]\n",
-	      classtype, ivl_type_name(classtype), ivl_type_properties(classtype));
+	      classtype, vvp_mangle_name(ivl_type_name(classtype)),
+	      ivl_type_properties(classtype));
 
       for (idx = 0 ; idx < ivl_type_properties(classtype) ; idx += 1) {
-	    fprintf(vvp_out, " %3d: \"%s\", ", idx, ivl_type_prop_name(classtype,idx));
+	    fprintf(vvp_out, " %3d: \"%s\", ", idx,
+		    vvp_mangle_name(ivl_type_prop_name(classtype, idx)));
 	    show_prop_type(ivl_type_prop_type(classtype,idx));
 	    fprintf(vvp_out, "\n");
       }
