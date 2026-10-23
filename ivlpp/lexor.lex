@@ -1964,14 +1964,17 @@ static void do_include(void)
 
 	assert(isp);
 
-	strcpy(path, isp->path);
-	cp = strrchr(path, '/');
+	/* The path can come from a `line directive, so it is not limited
+	 * to the size of the path buffer. */
+	cp = strrchr(isp->path, '/');
 
 	/* I may need the relative path for a planned warning even when
 	 * we are not in relative mode, so for now keep it around. */
 	if (cp != 0) {
-	    *cp = '\0';
-	    include_dir[0] = strdup(path);
+	    size_t len = cp - isp->path;
+	    include_dir[0] = malloc(len + 1);
+	    memcpy(include_dir[0], isp->path, len);
+	    include_dir[0][len] = '\0';
 	    if (relative_include) start = 0;
 	}
 

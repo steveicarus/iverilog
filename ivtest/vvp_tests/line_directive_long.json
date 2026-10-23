@@ -1,0 +1,5 @@
+{
+    "type" : "normal",
+    "source" : "line_directive_long.v",
+    "iverilog-args" : [ "-I./ivltests" ]
+}
