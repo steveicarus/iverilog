@@ -1637,6 +1637,8 @@ specify_01		normal,-gspecify	ivltests test # Yet another version of specify
 sqrt32			normal			ivltests
 sscanf_u		normal			ivltests
 sscanf_z		normal			ivltests
+sscanf_u_width	normal			ivltests
+sscanf_z_width	normal			ivltests
 stask_parm1		normal			ivltests
 stask_parm2		normal			ivltests gold=stask_parm2.gold
 stask_sens_null_arg	normal			ivltests
