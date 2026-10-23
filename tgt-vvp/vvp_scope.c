@@ -2538,12 +2538,19 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    draw_switch_in_scope(sw);
       }
 
-      if (ivl_scope_type(net) == IVL_SCT_TASK)
-	    draw_task_definition(net);
-
-      if (ivl_scope_type(net) == IVL_SCT_FUNCTION)
-	    vvp_errors += draw_func_definition(net);
-
+	/*
+	 * Declare child scopes before subroutine bodies so that system calls
+	 * in named blocks can resolve their scope while being compiled.
+	 */
       ivl_scope_children(net, (ivl_scope_f*) draw_scope, net);
+
+      if (ivl_scope_type(net) == IVL_SCT_TASK) {
+	    fprintf(vvp_out, "    .scope S_%p;\n", net);
+	    draw_task_definition(net);
+      } else if (ivl_scope_type(net) == IVL_SCT_FUNCTION) {
+	    fprintf(vvp_out, "    .scope S_%p;\n", net);
+	    vvp_errors += draw_func_definition(net);
+      }
+
       return 0;
 }
