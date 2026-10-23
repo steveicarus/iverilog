@@ -163,6 +163,7 @@ static struct vvp_nexus_data*new_nexus_data(void)
 static int nexus_drive_is_strength_aware(ivl_nexus_ptr_t nptr)
 {
       ivl_net_logic_t logic;
+      ivl_lpm_t lpm;
 
       if (ivl_nexus_ptr_drive0(nptr) != IVL_DR_STRONG)
 	    return 1;
@@ -171,10 +172,10 @@ static int nexus_drive_is_strength_aware(ivl_nexus_ptr_t nptr)
 
       logic = ivl_nexus_ptr_log(nptr);
       if (logic != 0) {
-	      /* These logic gates are able to generate unusual
-	         strength values and so their outputs are considered
-	         strength aware. */
+	      /* These logic gates can generate or pass through unusual
+	         strength values, so their outputs are strength aware. */
 	    switch (ivl_logic_type(logic)) {
+		case IVL_LO_BUFT:
 		case IVL_LO_BUFIF0:
 		case IVL_LO_BUFIF1:
 		case IVL_LO_NOTIF0:
@@ -185,6 +186,18 @@ static int nexus_drive_is_strength_aware(ivl_nexus_ptr_t nptr)
 		case IVL_LO_RPMOS:
 		case IVL_LO_RNMOS:
 		case IVL_LO_RCMOS:
+		  return 1;
+		default:
+		  break;
+	    }
+      }
+
+      lpm = ivl_nexus_ptr_lpm(nptr);
+      if (lpm != 0) {
+	      /* These nodes preserve input strengths, so their output
+	         nets must preserve them as well. */
+	    switch (ivl_lpm_type(lpm)) {
+		case IVL_LPM_CONCATZ:
 		  return 1;
 		default:
 		  break;
