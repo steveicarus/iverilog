@@ -1006,7 +1006,7 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 	 * before this procedure. */
       if (part_off_ex) {
 	    assert(number_is_immediate(part_off_ex, IMM_WID, 0));
-	    assert(! number_is_unknown(part_off_ex));
+	    if (number_is_unknown(part_off_ex)) return;
       }
       if (ivl_signal_width(lsig) > ivl_signal_width(rsig) ||
           (part_off_ex && get_number_immediate(part_off_ex) != 0)) {
@@ -1516,9 +1516,8 @@ static int show_stmt_release(ivl_statement_t net)
 		  assert(number_is_immediate(part_off_ex, 64, 0));
 		    /* An out-of-range or undefined offset will have been
 		       converted to a canonical offset of 1'bx. Skip the
-		       assignment in this case. */
-		  if (number_is_unknown(part_off_ex))
-			return 0;
+		       release of this element in this case. */
+		  if (number_is_unknown(part_off_ex)) continue;
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 
