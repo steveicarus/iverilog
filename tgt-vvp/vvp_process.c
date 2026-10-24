@@ -912,14 +912,19 @@ static void force_vector_to_lval(ivl_statement_t net)
 	    ivl_expr_t word_idx = ivl_lval_idx(lval);
 	    unsigned long use_word = 0;
 
+	    if (lidx+1 < ivl_stmt_lvals(net)) {
+		  fprintf(vvp_out, "    %%split/vec4 %u;\n", ivl_lval_width(lval));
+	    }
+
 	    if (word_idx != 0) {
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
 		    /* An out-of-range or undefined index will have been
-		       converted to a canonical offset of 1'bx. Skip the
-		       assignment in this case. */
+		       converted to a canonical offset of 1'bx. Discard only
+		       this element's value so the remaining l-values are
+		       still processed. */
 		  if (number_is_unknown(word_idx)) {
 			fprintf(vvp_out, "    %%pop/vec4 1; force to out of bounds index suppressed.\n");
-			return;
+			continue;
 		  }
 		  use_word = get_number_immediate(word_idx);
 
@@ -934,10 +939,6 @@ static void force_vector_to_lval(ivl_statement_t net)
 			vvp_errors += 1;
 		  }
 	    }
-
-
-	    if (lidx+1 < ivl_stmt_lvals(net))
-		  fprintf(vvp_out, "    %%split/vec4 %u;\n", ivl_lval_width(lval));
 
 	      /* L-Value must be a signal: reg or wire */
 	    assert(lsig != 0);
@@ -1188,8 +1189,7 @@ static int show_stmt_deassign(ivl_statement_t net)
 	    part_off = 0;
 	    if (part_off_ex != 0) {
 		  assert(number_is_immediate(part_off_ex, 64, 0));
-		  if (number_is_unknown(part_off_ex))
-			return 0;
+		  if (number_is_unknown(part_off_ex)) continue;
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 
@@ -1197,9 +1197,8 @@ static int show_stmt_deassign(ivl_statement_t net)
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
 		    /* An out-of-range or undefined index will have been
 		       converted to a canonical offset of 1'bx. Skip the
-		       deassignment in this case. */
-		  if (number_is_unknown(word_idx))
-			return 0;
+		       deassignment of this element in this case. */
+		  if (number_is_unknown(word_idx)) continue;
 		  use_word = get_number_immediate(word_idx);
 	    }
 
@@ -1536,9 +1535,8 @@ static int show_stmt_release(ivl_statement_t net)
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
 		    /* An out-of-range or undefined index will have been
 		       converted to a canonical offset of 1'bx. Skip the
-		       assignment in this case. */
-		  if (number_is_unknown(word_idx))
-			return 0;
+		       release of this element in this case. */
+		  if (number_is_unknown(word_idx)) continue;
 		  use_word = get_number_immediate(word_idx);
 	    }
 

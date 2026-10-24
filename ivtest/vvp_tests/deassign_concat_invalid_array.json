@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "deassign_concat_invalid_array.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
