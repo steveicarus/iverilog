@@ -313,6 +313,7 @@ queue_bounded_pattern_property	vvp_tests/queue_bounded_pattern_property.json
 queue_bounded_pattern_real	vvp_tests/queue_bounded_pattern_real.json
 queue_bounded_pattern_string	vvp_tests/queue_bounded_pattern_string.json
 queue_fail			vvp_tests/queue_fail.json
+rcmos_control_strength		vvp_tests/rcmos_control_strength.json
 readmem-invalid			vvp_tests/readmem-invalid.json
 real_delay_assign		vvp_tests/real_delay_assign.json
 real_feedback			vvp_tests/real_feedback.json
