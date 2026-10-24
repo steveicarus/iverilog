@@ -1603,13 +1603,13 @@ static int show_stmt_utask(ivl_statement_t net)
       if (ivl_scope_type(task) == IVL_SCT_FUNCTION) {
 	      // A function called as a task is (presumably) a void function.
 	      // Use the %callf/void instruction to call it.
-	    fprintf(vvp_out, "    %%callf/void TD_%s",
-		    vvp_mangle_id(ivl_scope_name(task)));
-	    fprintf(vvp_out, ", S_%p;\n", task);
+	    fprintf(vvp_out, "    %%callf/void TD_%p", task);
+	    fprintf(vvp_out, ", S_%p; %s\n", task,
+		    ivl_scope_name(task));
       } else {
-	    fprintf(vvp_out, "    %%fork TD_%s",
-		    vvp_mangle_id(ivl_scope_name(task)));
-	    fprintf(vvp_out, ", S_%p;\n", task);
+	    fprintf(vvp_out, "    %%fork TD_%p", task);
+	    fprintf(vvp_out, ", S_%p; %s\n", task,
+		    ivl_scope_name(task));
 	    fprintf(vvp_out, "    %%join;\n");
       }
 
@@ -2612,7 +2612,7 @@ int draw_task_definition(ivl_scope_t scope)
       int rc = 0;
       ivl_statement_t def = ivl_scope_def(scope);
 
-      fprintf(vvp_out, "TD_%s ;\n", vvp_mangle_id(ivl_scope_name(scope)));
+      fprintf(vvp_out, "TD_%p ; %s\n", scope, ivl_scope_name(scope));
 
       assert(def);
       rc += show_statement(def, scope);
@@ -2628,7 +2628,7 @@ int draw_func_definition(ivl_scope_t scope)
       int rc = 0;
       ivl_statement_t def = ivl_scope_def(scope);
 
-      fprintf(vvp_out, "TD_%s ;\n", vvp_mangle_id(ivl_scope_name(scope)));
+      fprintf(vvp_out, "TD_%p ; %s\n", scope, ivl_scope_name(scope));
 
       assert(def);
       rc += show_statement(def, scope);
