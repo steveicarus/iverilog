@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -255,7 +255,7 @@ vvp_fun_rcmos::vvp_fun_rcmos()
 
 void vvp_fun_rcmos::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 {
-      if (ptr.port() == 1) {
+      if (ptr.port() == 1 || ptr.port() == 2) {
 	    recv_vec4(ptr, reduce4(bit), 0);
 	    return;
       }
