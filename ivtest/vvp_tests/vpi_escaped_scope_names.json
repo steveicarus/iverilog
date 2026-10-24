@@ -1,0 +1,5 @@
+{
+    "type"        : "normal",
+    "source"      : "vpi_escaped_scope_names.v",
+    "vpi-sources" : [ "vpi/escaped_scope_names.c" ]
+}
