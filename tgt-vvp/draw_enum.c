@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,13 +24,16 @@
 # include  <assert.h>
 # include  <inttypes.h>
 
-// HERE: This still needs work! Fall back to <width>'b format for
-//       very large constants. We also should pass the file and
+// HERE: This still needs work! We should pass the file and
 //       line number information for the enum type and the MSB and
 //       LSB should be used instead of the width.
+
+static void draw_enum4_value(ivl_enumtype_t enumtype, unsigned idx);
+
 /*
  * If it fits we always print this as a uint64_t the run time will turn
- * it back into a signed value when needed.
+ * it back into a signed value when needed. Wider values are printed in
+ * the <width>'b format.
  */
 static void draw_enum2_value(ivl_enumtype_t enumtype, unsigned idx)
 {
@@ -39,9 +42,11 @@ static void draw_enum2_value(ivl_enumtype_t enumtype, unsigned idx)
       const char*bit;
       unsigned len = strlen(bits);
 
-// HERE: If this doesn't fit then write it as a enum4 and modify the run
-//       time to deal with the conversion.
-      assert(len <= sizeof(uint64_t)*8);
+      if (len > sizeof(uint64_t)*8) {
+	    draw_enum4_value(enumtype, idx);
+	    return;
+      }
+
       val = 0;
       for (bit = bits, mask = 1 ; *bit != 0 ; bit += 1, mask <<= 1) {
 	    if (*bit == '1')
