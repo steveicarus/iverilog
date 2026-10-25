@@ -10,7 +10,7 @@ At time 6.000000 i2 = 6
 At time 7.000000 l2 = 7
 At time 8.000000 r = 8.000000
 At time 9.000000 e changed
-At time 10.000000 p4[1:0] = 10
+At time 10.000000 p4[1:0] = 2
 At time 11.000000 a4 = 11
 At time 12.000000 a4 = 12
 At time 14.000000 a2[1] = 14

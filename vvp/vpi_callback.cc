@@ -896,8 +896,9 @@ void vvp_vpi_callback::run_vpi_callbacks()
 
 	    if (cur->cb_data.cb_rtn != 0) {
 		  if (cur->test_value_callback_ready()) {
-			if (cur->cb_data.value)
-			      get_value(cur->cb_data.value);
+			if (cur->cb_data.value) {
+			      vpi_get_value(cur->cb_data.obj, cur->cb_data.value);
+			}
 
 			callback_execute(cur);
 		  }
