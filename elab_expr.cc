@@ -5751,15 +5751,19 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       }
 
       // The width of a parameter is the width of the parameter value
-      // (as evaluated earlier). The exception is an indexed unpacked-array
-      // parameter: its stored value is the whole (flattened) array, but an
-      // element select has the width of a single element, which is computed
+      // (as evaluated earlier). The exception is an element select of an
+      // unpacked array parameter or of a packed array of a typedef: its
+      // stored value is the whole (flattened) array, but an element select
+      // has the width and signedness of a single element, which are computed
       // from the resolved element type below.
       if (sr.par_val != 0) {
 	    bool unpacked_elem_sel = use_sel != index_component_t::SEL_NONE
 		  && dynamic_cast<const netsarray_t*>(sr.type)
 		  && !dynamic_cast<const netparray_t*>(sr.type);
-	    if (!unpacked_elem_sel)
+	    bool packed_elem_sel = use_sel == index_component_t::SEL_BIT
+		  && name_tail.index.size() == 1
+		  && dynamic_cast<const netparray_t*>(sr.type);
+	    if (!unpacked_elem_sel && !packed_elem_sel)
 		  return test_width_parameter_(sr.par_val, mode);
       }
 
@@ -6900,11 +6904,12 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
       if (sel == 0) return 0;
 
 	// An index select of an array parameter selects a whole element, not
-	// a single bit. This applies both to a multi-dimension packed array,
-	// e.g. localparam logic [0:63][3:0] MEM = '{...}, and to an unpacked
-	// array, e.g. localparam logic [3:0] MEM [0:63] = '{...} (whose value
-	// has been flattened to the packed-equivalent constant). The selected
-	// element keeps the remaining dimensions as its width.
+	// a single bit. This applies to a multi-dimension packed array,
+	// e.g. localparam logic [0:63][3:0] MEM = '{...}, to a packed array of
+	// a typedef, e.g. localparam word_t [0:63] MEM = '{...}, and to an
+	// unpacked array, e.g. localparam logic [3:0] MEM [0:63] = '{...}
+	// (whose value has been flattened to the packed-equivalent constant).
+	// The selected element keeps the remaining dimensions as its width.
       if (const netvector_t*par_vec = dynamic_cast<const netvector_t*>(par_type)) {
 	    if (par_vec->packed_dims().size() > 1) {
 		  const netranges_t&pdims = par_vec->packed_dims();
@@ -6916,6 +6921,16 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 		  unsigned long elem_w = par_vec->packed_width() / outer_w;
 		  return elaborate_expr_param_slice_(par_ex, found_in,
 						     msb0, lsb0, elem_w,
+						     true, sel, name);
+	    }
+      }
+      if (const netparray_t*par_arr = dynamic_cast<const netparray_t*>(par_type)) {
+	    if (name_tail.index.size() == 1) {
+		  const netrange_t&outer = par_arr->static_dimensions()[0];
+		  unsigned long elem_w = par_arr->packed_width() / outer.width();
+		  return elaborate_expr_param_slice_(par_ex, found_in,
+						     outer.get_msb(),
+						     outer.get_lsb(), elem_w,
 						     true, sel, name);
 	    }
       }
