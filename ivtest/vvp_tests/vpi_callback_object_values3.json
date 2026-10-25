@@ -1,0 +1,5 @@
+{
+    "type"        : "normal",
+    "source"      : "vpi_callback_object_values3.v",
+    "vpi-sources" : [ "vpi/callback_object_values.c" ]
+}
