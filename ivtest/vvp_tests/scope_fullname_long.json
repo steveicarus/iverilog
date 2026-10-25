@@ -1,5 +1,9 @@
 {
     "type"   : "normal",
     "source" : "scope_fullname_long.v",
-    "iverilog-args" : [ "-pRECURSIVE_MOD_LIMIT=100" ]
+    "iverilog-args" : [ "-pRECURSIVE_MOD_LIMIT=100" ],
+    "vlog95" : {
+        "__comment"     : "Named generate scopes are not translated by vlog95",
+        "type"          : "CE"
+    }
 }
