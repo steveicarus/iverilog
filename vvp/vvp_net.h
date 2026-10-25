@@ -24,6 +24,7 @@
 # include  "vvp_vpi_callback.h"
 # include  "permaheap.h"
 # include  "vvp_object.h"
+# include  <climits>
 # include  <cstddef>
 # include  <cstdlib>
 # include  <cstring>
@@ -208,21 +209,22 @@ inline void update_driver_counts(vvp_bit4_t bit, unsigned counts[3])
 
 /*
  * Some of the instructions do wide addition to arrays of long. They
- * use this add_with_carry function to help.
+ * use this add_with_carry function to help. The carry is a single-bit
+ * input and output.
  */
 static inline unsigned long add_with_carry(unsigned long a, unsigned long b,
 					   unsigned long&carry)
 {
-      unsigned long tmp = b + carry;
-      unsigned long sum = a + tmp;
+      unsigned long out = carry;
       carry = 0;
-      if (tmp < b)
-	    carry = 1;
-      if (sum < tmp)
-	    carry = 1;
-      if (sum < a)
-	    carry = 1;
-      return sum;
+
+      if ((ULONG_MAX - out) < a) carry += 1;
+      out += a;
+
+      if ((ULONG_MAX - out) < b) carry += 1;
+      out += b;
+
+      return out;
 }
 
 extern unsigned long multiply_with_carry(unsigned long a, unsigned long b,
