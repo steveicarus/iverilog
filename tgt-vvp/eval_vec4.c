@@ -215,198 +215,24 @@ static void draw_binary_vec4_bitwise(ivl_expr_t expr)
       }
 }
 
-static void draw_binary_vec4_compare_real(ivl_expr_t expr)
-{
-      draw_eval_real(ivl_expr_oper1(expr));
-      draw_eval_real(ivl_expr_oper2(expr));
-
-      switch (ivl_expr_opcode(expr)) {
-	  case 'e': /* == */
-	    fprintf(vvp_out, "    %%cmp/wr;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  case 'n': /* != */
-	    fprintf(vvp_out, "    %%cmp/wr;\n");
-	    fprintf(vvp_out, "    %%flag_inv 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  default:
-	    assert(0);
-      }
-}
-
-static void draw_binary_vec4_compare_string(ivl_expr_t expr)
-{
-      draw_eval_string(ivl_expr_oper1(expr));
-      draw_eval_string(ivl_expr_oper2(expr));
-
-      switch (ivl_expr_opcode(expr)) {
-	  case 'e': /* == */
-	    fprintf(vvp_out, "    %%cmp/str;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  case 'n': /* != */
-	    fprintf(vvp_out, "    %%cmp/str;\n");
-	    fprintf(vvp_out, "    %%flag_inv 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  default:
-	    assert(0);
-      }
-}
-
-static void draw_binary_vec4_compare_class(ivl_expr_t expr)
-{
-      ivl_expr_t le = ivl_expr_oper1(expr);
-      ivl_expr_t re = ivl_expr_oper2(expr);
-
-      if (ivl_expr_type(le) == IVL_EX_NULL) {
-	    ivl_expr_t tmp = le;
-	    le = re;
-	    re = tmp;
-      }
-
-	/* Special case: If both operands are null, then the
-	   expression has a constant value. */
-      if (ivl_expr_type(le)==IVL_EX_NULL && ivl_expr_type(re)==IVL_EX_NULL) {
-	    switch (ivl_expr_opcode(expr)) {
-		case 'e': /* == */
-		  fprintf(vvp_out, "    %%pushi/vec4 1, 0, 1;\n");
-		  break;
-		case 'n': /* != */
-		  fprintf(vvp_out, "    %%pushi/vec4 0, 0, 1;\n");
-		  break;
-		default:
-		  assert(0);
-		  break;
-	    }
-	    return;
-      }
-
-	/* A signal/variable is compared to null. Implement this with
-	   the %test_nul statement, which peeks at the variable
-	   contents directly. */
-      if (ivl_expr_type(re)==IVL_EX_NULL && ivl_expr_type(le)==IVL_EX_SIGNAL) {
-	    ivl_signal_t sig= ivl_expr_signal(le);
-
-	    if (ivl_signal_dimensions(sig) == 0) {
-		  fprintf(vvp_out, "    %%test_nul v%p_0;\n", sig);
-	    } else {
-		  ivl_expr_t word_ex = ivl_expr_oper1(le);
-		  int word_ix = allocate_word();
-		  draw_eval_expr_into_integer(word_ex, word_ix);
-		  fprintf(vvp_out, "    %%test_nul/a v%p, %d;\n", sig, word_ix);
-		  clr_word(word_ix);
-	    }
-	    if (ivl_expr_opcode(expr) == 'n')
-		  fprintf(vvp_out, "    %%flag_inv 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    return;
-      }
-
-      if (ivl_expr_type(re)==IVL_EX_NULL && ivl_expr_type(le)==IVL_EX_PROPERTY) {
-	    ivl_signal_t sig = ivl_expr_signal(le);
-	    unsigned pidx = ivl_expr_property_idx(le);
-	    ivl_expr_t idx_expr = ivl_expr_oper1(le);
-	    int idx = 0;
-
-	      /* If the property has an array index, then evaluate it
-		 into an index register. */
-	    if ( idx_expr ) {
-		  idx = allocate_word();
-		  draw_eval_expr_into_integer(idx_expr, idx);
-	    }
-
-	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
-	    fprintf(vvp_out, "    %%test_nul/prop %u, %d;\n", pidx, idx);
-	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-	    if (ivl_expr_opcode(expr) == 'n')
-		  fprintf(vvp_out, "    %%flag_inv 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-
-	    if (idx != 0) clr_word(idx);
-	    return;
-      }
-
-      fprintf(stderr, "SORRY: Compare class handles not implemented\n");
-      fprintf(vvp_out, " ; XXXX compare class handles. re-type=%d, le-type=%d\n",
-	      ivl_expr_type(re), ivl_expr_type(le));
-      vvp_errors += 1;
-}
-
 static void draw_binary_vec4_compare(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
 
-      if ((ivl_expr_value(le) == IVL_VT_REAL)
-	  || (ivl_expr_value(re) == IVL_VT_REAL)) {
-	    draw_binary_vec4_compare_real(expr);
+	/* Special case: If both operands are null, then the
+	   expression has a constant value. */
+      if (ivl_expr_type(le) == IVL_EX_NULL &&
+          ivl_expr_type(re) == IVL_EX_NULL) {
+	    char opcode = ivl_expr_opcode(expr);
+	    assert(opcode == 'e' || opcode == 'n');
+	    unsigned value = opcode == 'e';
+	    fprintf(vvp_out, "    %%pushi/vec4 %u, 0, 1;\n", value);
 	    return;
       }
 
-      if ((ivl_expr_value(le)==IVL_VT_STRING)
-	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
-	    draw_binary_vec4_compare_string(expr);
-	    return;
-      }
-
-      if ((ivl_expr_value(le)==IVL_VT_STRING)
-	  && (ivl_expr_type(re)==IVL_EX_STRING)) {
-	    draw_binary_vec4_compare_string(expr);
-	    return;
-      }
-
-      if ((ivl_expr_type(le)==IVL_EX_STRING)
-	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
-	    draw_binary_vec4_compare_string(expr);
-	    return;
-      }
-
-      if ((ivl_expr_value(le)==IVL_VT_CLASS)
-	  && (ivl_expr_value(re)==IVL_VT_CLASS)) {
-	    draw_binary_vec4_compare_class(expr);
-	    return;
-      }
-
-      unsigned use_wid = ivl_expr_width(le);
-      if (ivl_expr_width(re) > use_wid)
-	    use_wid = ivl_expr_width(re);
-
-      draw_eval_vec4(le);
-      resize_vec4_wid(le, use_wid);
-
-      draw_eval_vec4(re);
-      resize_vec4_wid(re, use_wid);
-
-      switch (ivl_expr_opcode(expr)) {
-	  case 'e': /* == */
-	    fprintf(vvp_out, "    %%cmp/e;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  case 'n': /* != */
-	    fprintf(vvp_out, "    %%cmp/ne;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  case 'E': /* === */
-	    fprintf(vvp_out, "    %%cmp/e;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 6;\n");
-	    break;
-	  case 'N': /* !== */
-	    fprintf(vvp_out, "    %%cmp/ne;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 6;\n");
-	    break;
-	  case 'w': /* ==? */
-	    fprintf(vvp_out, "    %%cmp/we;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  case 'W': /* !=? */
-	    fprintf(vvp_out, "    %%cmp/wne;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    break;
-	  default:
-	    assert(0);
-      }
+      int flag = draw_eval_compare(expr);
+      fprintf(vvp_out, "    %%flag_get/vec4 %d;\n", flag);
 }
 
 /*
@@ -425,10 +251,20 @@ static void draw_binary_vec4_limpl(ivl_expr_t expr)
       assert(ivl_expr_width(le) == 1);
       assert(ivl_expr_width(re) == 1);
 
-      draw_eval_vec4(le);
+      unsigned int label_out = local_count++;
+
+	/* Skip the right operand if the left operand is false. */
+      int flag = draw_eval_condition(le);
+      fprintf(vvp_out, "    %%flag_get/vec4 %d;\n", flag);
       fprintf(vvp_out, "    %%inv;\n");
+      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n",
+	      thread_count, label_out, flag);
+      clr_flag(flag);
+
       draw_eval_vec4(re);
       fprintf(vvp_out, "    %%or;\n");
+
+      fprintf(vvp_out, "T_%u.%u;\n", thread_count, label_out);
 }
 
 static void draw_binary_vec4_lequiv(ivl_expr_t expr)
@@ -490,183 +326,6 @@ static void draw_binary_vec4_logical(ivl_expr_t expr, char op)
       fprintf(vvp_out, "T_%u.%u;\n", thread_count, label_out);
       if (ivl_expr_width(expr) > 1)
 	    fprintf(vvp_out, "    %%pad/u %u;\n", ivl_expr_width(expr));
-}
-
-static void draw_binary_vec4_le_real(ivl_expr_t expr)
-{
-      ivl_expr_t le = ivl_expr_oper1(expr);
-      ivl_expr_t re = ivl_expr_oper2(expr);
-
-      switch (ivl_expr_opcode(expr)) {
-	  case '<':
-	    draw_eval_real(le);
-	    draw_eval_real(re);
-	    fprintf(vvp_out, "    %%cmp/wr;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    break;
-
-	  case 'L': /* <= */
-	    draw_eval_real(le);
-	    draw_eval_real(re);
-	    fprintf(vvp_out, "    %%cmp/wr;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    fprintf(vvp_out, "    %%or;\n");
-	    break;
-
-	  case '>':
-	    draw_eval_real(re);
-	    draw_eval_real(le);
-	    fprintf(vvp_out, "    %%cmp/wr;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    break;
-
-	  case 'G': /* >= */
-	    draw_eval_real(re);
-	    draw_eval_real(le);
-	    fprintf(vvp_out, "    %%cmp/wr;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    fprintf(vvp_out, "    %%or;\n");
-	    break;
-
-	  default:
-	    assert(0);
-	    break;
-      }
-}
-
-static void draw_binary_vec4_le_string(ivl_expr_t expr)
-{
-      ivl_expr_t le = ivl_expr_oper1(expr);
-      ivl_expr_t re = ivl_expr_oper2(expr);
-
-      switch (ivl_expr_opcode(expr)) {
-	  case '<':
-	    draw_eval_string(le);
-	    draw_eval_string(re);
-	    fprintf(vvp_out, "    %%cmp/str;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    break;
-
-	  case 'L': /* <= */
-	    draw_eval_string(le);
-	    draw_eval_string(re);
-	    fprintf(vvp_out, "    %%cmp/str;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    fprintf(vvp_out, "    %%or;\n");
-	    break;
-
-	  case '>':
-	    draw_eval_string(re);
-	    draw_eval_string(le);
-	    fprintf(vvp_out, "    %%cmp/str;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    break;
-
-	  case 'G': /* >= */
-	    draw_eval_string(re);
-	    draw_eval_string(le);
-	    fprintf(vvp_out, "    %%cmp/str;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    fprintf(vvp_out, "    %%or;\n");
-	    break;
-
-	  default:
-	    assert(0);
-	    break;
-      }
-}
-
-static void draw_binary_vec4_le(ivl_expr_t expr)
-{
-      ivl_expr_t le = ivl_expr_oper1(expr);
-      ivl_expr_t re = ivl_expr_oper2(expr);
-      ivl_expr_t tmp;
-
-      if ((ivl_expr_value(le) == IVL_VT_REAL)
-	  || (ivl_expr_value(re) == IVL_VT_REAL)) {
-	    draw_binary_vec4_le_real(expr);
-	    return;
-      }
-
-      char use_opcode = ivl_expr_opcode(expr);
-      char s_flag = (ivl_expr_signed(le) && ivl_expr_signed(re)) ? 's' : 'u';
-
-	/* If this is a > or >=, then convert it to < or <= by
-	   swapping the operands. Adjust the opcode to match. */
-      switch (use_opcode) {
-	  case 'G':
-	    tmp = le;
-	    le = re;
-	    re = tmp;
-	    use_opcode = 'L';
-	    break;
-	  case '>':
-	    tmp = le;
-	    le = re;
-	    re = tmp;
-	    use_opcode = '<';
-	    break;
-      }
-
-      if ((ivl_expr_value(le)==IVL_VT_STRING)
-	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
-	    draw_binary_vec4_le_string(expr);
-	    return;
-      }
-
-      if ((ivl_expr_value(le)==IVL_VT_STRING)
-	  && (ivl_expr_type(re)==IVL_EX_STRING)) {
-	    draw_binary_vec4_le_string(expr);
-	    return;
-      }
-
-      if ((ivl_expr_type(le)==IVL_EX_STRING)
-	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
-	    draw_binary_vec4_le_string(expr);
-	    return;
-      }
-
-	/* NOTE: I think I would rather the elaborator handle the
-	   operand widths. When that happens, take this code out. */
-
-      unsigned use_wid = ivl_expr_width(le);
-      if (ivl_expr_width(re) > use_wid)
-	    use_wid = ivl_expr_width(re);
-
-      draw_eval_vec4(le);
-      resize_vec4_wid(le, use_wid);
-
-      if (ivl_expr_width(re)==use_wid && test_immediate_vec4_ok(re)) {
-	      /* Special case: If the right operand can be handled as
-		 an immediate operand, then use that instead. */
-	    char opcode[8];
-	    snprintf(opcode, sizeof opcode, "%%cmpi/%c", s_flag);
-	    draw_immediate_vec4(re, opcode);
-
-      } else {
-	    draw_eval_vec4(re);
-	    resize_vec4_wid(re, use_wid);
-
-	    fprintf(vvp_out, "    %%cmp/%c;\n", s_flag);
-      }
-
-      switch (use_opcode) {
-	  case 'L':
-	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    fprintf(vvp_out, "    %%or;\n");
-	    break;
-	  case '<':
-	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
-	    break;
-	  default:
-	    assert(0);
-	    break;
-      }
 }
 
 static void draw_binary_vec4_lrs(ivl_expr_t expr)
@@ -737,14 +396,11 @@ static void draw_binary_vec4(ivl_expr_t expr)
 	  case 'N': /* !== */
 	  case 'w': /* ==? */
 	  case 'W': /* !=? */
-	    draw_binary_vec4_compare(expr);
-	    break;
-
 	  case 'G': /* >= */
 	  case 'L': /* <= */
 	  case '>':
 	  case '<':
-	    draw_binary_vec4_le(expr);
+	    draw_binary_vec4_compare(expr);
 	    break;
 
 	  case 'l': /* << */
@@ -1133,24 +789,46 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 	    }
       }
 
-      if ((strcmp(ivl_expr_name(expr), "$ivl_queue_method$sum") == 0 ||
-	   strcmp(ivl_expr_name(expr), "$ivl_queue_method$product") == 0) &&
+      if ((strcmp(ivl_expr_name(expr), "$ivl_uparr_method$sum") == 0 ||
+	   strcmp(ivl_expr_name(expr), "$ivl_uparr_method$product") == 0) &&
 	  parm_count == 1) {
 	    ivl_expr_t arg = ivl_expr_parm(expr, 0);
 	    unsigned wid = ivl_expr_width(expr);
-	    const char* op = strcmp(ivl_expr_name(expr), "$ivl_queue_method$product") == 0
+	    const char* op = strcmp(ivl_expr_name(expr), "$ivl_uparr_method$product") == 0
 			       ? "product"
 			       : "sum";
 	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
 		  ivl_signal_t clas = ivl_expr_signal(arg);
 		  unsigned pidx = ivl_expr_property_idx(arg);
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
-		  fprintf(vvp_out, "    %%queue/%s/prop/v %u, %u;\n", op, pidx, wid);
+		  fprintf(vvp_out, "    %%uparr/%s/prop/v %u, %u;\n", op, pidx, wid);
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 		  return;
 	    }
 	    assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
-	    fprintf(vvp_out, "    %%queue/%s/v v%p_0, %u;\n",
+	    fprintf(vvp_out, "    %%uparr/%s/v v%p_0, %u;\n",
+	            op, ivl_expr_signal(arg), wid);
+	    return;
+      }
+
+      if ((strcmp(ivl_expr_name(expr), "$ivl_uparr_method$and") == 0 ||
+           strcmp(ivl_expr_name(expr), "$ivl_uparr_method$or") == 0 ||
+           strcmp(ivl_expr_name(expr), "$ivl_uparr_method$xor") == 0) &&
+	  parm_count == 1) {
+	    ivl_expr_t arg = ivl_expr_parm(expr, 0);
+	    unsigned wid = ivl_expr_width(expr);
+	    const char* op = strcmp(ivl_expr_name(expr), "$ivl_uparr_method$and") == 0 ?
+	                     "and" :
+	                     strcmp(ivl_expr_name(expr), "$ivl_uparr_method$or") == 0 ?
+			     "or" : "xor";
+	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
+		  fprintf(stderr, "%s:%u: Sorry: No support for '%s' from a class.\n",
+		          ivl_expr_file(expr), ivl_expr_lineno(expr), op);
+		  vvp_errors += 1;
+		  return;
+	    }
+	    assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
+	    fprintf(vvp_out, "    %%uparr/%s/v v%p_0, %u;\n",
 	            op, ivl_expr_signal(arg), wid);
 	    return;
       }
@@ -1221,49 +899,6 @@ static void draw_string_vec4(ivl_expr_t expr)
       free(fp);
 }
 
-static void draw_ternary_vec4(ivl_expr_t expr)
-{
-      ivl_expr_t cond = ivl_expr_oper1(expr);
-      ivl_expr_t true_ex = ivl_expr_oper2(expr);
-      ivl_expr_t false_ex = ivl_expr_oper3(expr);
-
-      unsigned lab_false  = local_count++;
-      unsigned lab_out   = local_count++;
-
-      fprintf(vvp_out, "; Start of ternary condition expr.\n");
-      int use_flag = draw_eval_condition(cond);
-
-	/* The condition flag is used after possibly other statements,
-	   so we need to put it into a non-common place. Allocate a
-	   safe flag bit and move the condition to the flag position. */
-      if (use_flag < 8) {
-	    int tmp_flag = allocate_flag();
-	    assert(tmp_flag >= 8);
-	    fprintf(vvp_out, "    %%flag_mov %d, %d;\n", tmp_flag, use_flag);
-	    use_flag = tmp_flag;
-      }
-
-	/* If the condition is just false then we only need to calculate
-	   the false expression. */
-      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_false, use_flag);
-      fprintf(vvp_out, "; Start of true expr.\n");
-      draw_eval_vec4(true_ex);
-
-	/* If the condition is true, then we only need the true expression. */
-      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
-      fprintf(vvp_out, "T_%u.%u ; Start of false expr.\n", thread_count, lab_false);
-      draw_eval_vec4(false_ex);
-
-	/* If the condition is false, then we only need the false expression. */
-      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
-
-	/* This handles the case that the condition is undefined (x/z). */
-      fprintf(vvp_out, "    %%blend;\n");
-      fprintf(vvp_out, "T_%u.%u; End of ternary.\n", thread_count, lab_out);
-
-      clr_flag(use_flag);
-}
-
 static void draw_unary_inc_dec(ivl_expr_t sub, bool incr, bool pre)
 {
       ivl_signal_t sig = 0;
@@ -1296,13 +931,17 @@ static void draw_unary_inc_dec(ivl_expr_t sub, bool incr, bool pre)
 		 result, as well as leaving a copy on the stack. */
 	    fprintf(vvp_out, "    %si 1, 0, %u;\n", cmd, wid);
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
-	    fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", sig, wid);
 
       } else {
 	      /* The post-fix decrement returns the non-decremented
 		 version, so there is a slight re-arrange. */
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
 	    fprintf(vvp_out, "    %si 1, 0, %u;\n", cmd, wid);
+      }
+
+      if (signal_is_return_value(sig)) {
+	    fprintf(vvp_out, "    %%ret/vec4 0, 0, %u;\n", wid);
+      } else {
 	    fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", sig, wid);
       }
 }
@@ -1498,11 +1137,11 @@ void draw_eval_vec4(ivl_expr_t expr)
 	    return;
 
 	  case IVL_EX_TERNARY:
-	    draw_ternary_vec4(expr);
+	    draw_eval_ternary(expr, draw_eval_vec4, "%blend");
 	    return;
 
 	  case IVL_EX_UFUNC:
-	    draw_ufunc_vec4(expr);
+	    draw_ufunc(expr);
 	    return;
 
 	  case IVL_EX_UNARY:

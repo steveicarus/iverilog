@@ -693,6 +693,10 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 	    }
       }
 
+	/* Discard the selector before executing a branch, since break or
+	   continue may bypass the end of the case statement. */
+      fprintf(vvp_out, "    %%pop/vec4 1;\n");
+
 	/* Emit code for the default case. */
       if (default_case < count) {
 	    ivl_statement_t cst = ivl_stmt_case_stmt(net, default_case);
@@ -727,6 +731,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 		  continue;
 
 	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_base+idx);
+	    fprintf(vvp_out, "    %%pop/vec4 1;\n");
 	    rc += show_statement(cst, sscope);
 
 	      /* Statement is done, jump to the out of the case. */
@@ -738,9 +743,6 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 
 	/* The out of the case. */
       fprintf(vvp_out, "T_%u.%u ;\n",  thread_count, local_base+count);
-	/* The case tests will leave the case expression on the top of
-	   the stack, but we are done with it now. Pop it. */
-      fprintf(vvp_out, "    %%pop/vec4 1;\n");
 
       return rc;
 }
@@ -788,6 +790,10 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 
       }
 
+	/* Discard the selector before executing a branch, since break or
+	   continue may bypass the end of the case statement. */
+      fprintf(vvp_out, "    %%pop/real 1;\n");
+
 	/* Emit code for the case default. The above jump table will
 	   fall through to this statement. */
       if (default_case < count) {
@@ -806,6 +812,7 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 		  continue;
 
 	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_base+idx);
+	    fprintf(vvp_out, "    %%pop/real 1;\n");
 	    rc += show_statement(cst, sscope);
 
 	    fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count,
@@ -814,7 +821,6 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 
 	/* The out of the case. */
       fprintf(vvp_out, "T_%u.%u ;\n",  thread_count, local_base+count);
-      fprintf(vvp_out, "    %%pop/real 1;\n");
 
       return rc;
 }
@@ -906,14 +912,19 @@ static void force_vector_to_lval(ivl_statement_t net)
 	    ivl_expr_t word_idx = ivl_lval_idx(lval);
 	    unsigned long use_word = 0;
 
+	    if (lidx+1 < ivl_stmt_lvals(net)) {
+		  fprintf(vvp_out, "    %%split/vec4 %u;\n", ivl_lval_width(lval));
+	    }
+
 	    if (word_idx != 0) {
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
 		    /* An out-of-range or undefined index will have been
-		       converted to a canonical offset of 1'bx. Skip the
-		       assignment in this case. */
+		       converted to a canonical offset of 1'bx. Discard only
+		       this element's value so the remaining l-values are
+		       still processed. */
 		  if (number_is_unknown(word_idx)) {
 			fprintf(vvp_out, "    %%pop/vec4 1; force to out of bounds index suppressed.\n");
-			return;
+			continue;
 		  }
 		  use_word = get_number_immediate(word_idx);
 
@@ -928,10 +939,6 @@ static void force_vector_to_lval(ivl_statement_t net)
 			vvp_errors += 1;
 		  }
 	    }
-
-
-	    if (lidx+1 < ivl_stmt_lvals(net))
-		  fprintf(vvp_out, "    %%split/vec4 %u;\n", ivl_lval_width(lval));
 
 	      /* L-Value must be a signal: reg or wire */
 	    assert(lsig != 0);
@@ -1182,8 +1189,7 @@ static int show_stmt_deassign(ivl_statement_t net)
 	    part_off = 0;
 	    if (part_off_ex != 0) {
 		  assert(number_is_immediate(part_off_ex, 64, 0));
-		  if (number_is_unknown(part_off_ex))
-			return 0;
+		  if (number_is_unknown(part_off_ex)) continue;
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 
@@ -1191,9 +1197,8 @@ static int show_stmt_deassign(ivl_statement_t net)
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
 		    /* An out-of-range or undefined index will have been
 		       converted to a canonical offset of 1'bx. Skip the
-		       deassignment in this case. */
-		  if (number_is_unknown(word_idx))
-			return 0;
+		       deassignment of this element in this case. */
+		  if (number_is_unknown(word_idx)) continue;
 		  use_word = get_number_immediate(word_idx);
 	    }
 
@@ -1530,9 +1535,8 @@ static int show_stmt_release(ivl_statement_t net)
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
 		    /* An out-of-range or undefined index will have been
 		       converted to a canonical offset of 1'bx. Skip the
-		       assignment in this case. */
-		  if (number_is_unknown(word_idx))
-			return 0;
+		       release of this element in this case. */
+		  if (number_is_unknown(word_idx)) continue;
 		  use_word = get_number_immediate(word_idx);
 	    }
 
@@ -1597,13 +1601,13 @@ static int show_stmt_utask(ivl_statement_t net)
       if (ivl_scope_type(task) == IVL_SCT_FUNCTION) {
 	      // A function called as a task is (presumably) a void function.
 	      // Use the %callf/void instruction to call it.
-	    fprintf(vvp_out, "    %%callf/void TD_%s",
-		    vvp_mangle_id(ivl_scope_name(task)));
-	    fprintf(vvp_out, ", S_%p;\n", task);
+	    fprintf(vvp_out, "    %%callf/void TD_%p", task);
+	    fprintf(vvp_out, ", S_%p; %s\n", task,
+		    ivl_scope_name(task));
       } else {
-	    fprintf(vvp_out, "    %%fork TD_%s",
-		    vvp_mangle_id(ivl_scope_name(task)));
-	    fprintf(vvp_out, ", S_%p;\n", task);
+	    fprintf(vvp_out, "    %%fork TD_%p", task);
+	    fprintf(vvp_out, ", S_%p; %s\n", task,
+		    ivl_scope_name(task));
 	    fprintf(vvp_out, "    %%join;\n");
       }
 
@@ -1667,11 +1671,13 @@ static int show_delete_method(ivl_statement_t net)
 	    ivl_signal_t clas = ivl_expr_signal(parm);
 	    unsigned pidx = ivl_expr_property_idx(parm);
 	    ivl_type_t sig_type = ivl_signal_net_type(clas);
-	    ivl_type_t queue_type = ivl_type_prop_type(sig_type, pidx);
-	    assert(ivl_type_base(queue_type) == IVL_VT_QUEUE);
+	    ivl_type_t array_type = ivl_type_prop_type(sig_type, pidx);
+	    assert(ivl_type_base(array_type) == IVL_VT_QUEUE ||
+	           ivl_type_base(array_type) == IVL_VT_DARRAY);
 
 	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
 	    if (parm_count == 2) {
+		  assert(ivl_type_base(array_type) == IVL_VT_QUEUE);
 		  draw_eval_expr_into_integer(ivl_stmt_parm(net, 1), 3);
 		  fprintf(vvp_out, "    %%delete/prop/elem %u;\n", pidx);
 	    } else {
@@ -1837,6 +1843,7 @@ static int show_insert_method(ivl_statement_t net)
 	            ivl_type_packed_width(element_type));
 	    break;
       }
+      clr_word(idx);
       return 0;
 }
 
@@ -2603,7 +2610,7 @@ int draw_task_definition(ivl_scope_t scope)
       int rc = 0;
       ivl_statement_t def = ivl_scope_def(scope);
 
-      fprintf(vvp_out, "TD_%s ;\n", vvp_mangle_id(ivl_scope_name(scope)));
+      fprintf(vvp_out, "TD_%p ; %s\n", scope, ivl_scope_name(scope));
 
       assert(def);
       rc += show_statement(def, scope);
@@ -2619,7 +2626,7 @@ int draw_func_definition(ivl_scope_t scope)
       int rc = 0;
       ivl_statement_t def = ivl_scope_def(scope);
 
-      fprintf(vvp_out, "TD_%s ;\n", vvp_mangle_id(ivl_scope_name(scope)));
+      fprintf(vvp_out, "TD_%p ; %s\n", scope, ivl_scope_name(scope));
 
       assert(def);
       rc += show_statement(def, scope);

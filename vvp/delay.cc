@@ -717,7 +717,7 @@ void vvp_fun_modpath_src::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 
       } else if (port.port() == 1) {
 	      // The modpath condition input...
-	    if (bit.value(0) == BIT4_1)
+	    if (bit.value(0) != BIT4_0)
 		  condition_flag_ = true;
 	    else
 		  condition_flag_ = false;
@@ -789,12 +789,7 @@ static vpiHandle modpath_src_get_handle(int code, vpiHandle ref)
 	  return rfp->dest->scope;
 
 	  case vpiModule:
-	      { __vpiScope*scope = rfp->dest->scope;
-		while (scope && scope->get_type_code() != vpiModule)
-		      scope = scope->scope;
-		assert(scope);
-		return scope;
-	      }
+	    return vpip_module(rfp->dest->scope);
 
 	    // Handles to path term objects should really be obtained via
 	    // the vpi_iterate and vpi_scan functions. Continue to allow
@@ -1231,12 +1226,7 @@ static vpiHandle intermodpath_get_handle(int code, vpiHandle ref)
 	  return rfp->scope;
 
 	  case vpiModule:
-	      { __vpiScope*scope = rfp->scope;
-		while (scope && scope->get_type_code() != vpiModule)
-		      scope = scope->scope;
-		assert(scope);
-		return scope;
-	      }
+	    return vpip_module(rfp->scope);
       }
       return 0;
 }

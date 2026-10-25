@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_port_duplicate_empty_wildcard_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

@@ -1354,6 +1354,8 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net, ivl_variable_type_t dt)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_CMP_WEQ:
+	  case IVL_LPM_CMP_WNE:
 	  case IVL_LPM_RE_AND:
 	  case IVL_LPM_RE_OR:
 	  case IVL_LPM_RE_XOR:
@@ -2063,13 +2065,13 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 
       if (ivl_lpm_trigger(net)) {
 	    assert(ninp > 0);
-	    fprintf(vvp_out, "L_%p%s .ufunc/e TD_%s, %u, E_%p", net, dly,
-	            vvp_mangle_id(ivl_scope_name(def)),
+	    const char*event_type = dt == IVL_VT_REAL ? "/real" : "";
+	    fprintf(vvp_out, "L_%p%s .ufunc%s/e TD_%p, %u, E_%p",
+	            net, dly, event_type, def,
 	            ivl_lpm_width(net), ivl_lpm_trigger(net));
       } else
-	    fprintf(vvp_out, "L_%p%s .ufunc%s TD_%s, %u", net, dly, type_string,
-	            vvp_mangle_id(ivl_scope_name(def)),
-	            ivl_lpm_width(net));
+	    fprintf(vvp_out, "L_%p%s .ufunc%s TD_%p, %u", net, dly, type_string,
+	            def, ivl_lpm_width(net));
 
 	/* Print all the net signals that connect to the input of the
 	   function. */
@@ -2124,7 +2126,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
       }
 #endif
         /* Finally, print the scope identifier. */
-      fprintf(vvp_out, " S_%p;\n", def);
+      fprintf(vvp_out, " S_%p; %s\n", def, ivl_scope_name(def));
 }
 
 /*
@@ -2390,9 +2392,11 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    }
       }
 
-      fprintf(vvp_out, "S_%p .scope %s%s%s, \"%s\" \"%s\" %u %u",
+	/* Emit each name before vvp_mangle_name() reuses its output buffer. */
+      fprintf(vvp_out, "S_%p .scope %s%s%s, \"%s\" ",
 	      net, prefix, type, suffix,
-	      vvp_mangle_name(ivl_scope_basename(net)),
+	      vvp_mangle_name(ivl_scope_basename(net)));
+      fprintf(vvp_out, "\"%s\" %u %u",
               vvp_mangle_name(ivl_scope_tname(net)),
 	      ivl_file_table_index(ivl_scope_file(net)),
               ivl_scope_lineno(net));
@@ -2534,12 +2538,19 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    draw_switch_in_scope(sw);
       }
 
-      if (ivl_scope_type(net) == IVL_SCT_TASK)
-	    draw_task_definition(net);
-
-      if (ivl_scope_type(net) == IVL_SCT_FUNCTION)
-	    vvp_errors += draw_func_definition(net);
-
+	/*
+	 * Declare child scopes before subroutine bodies so that system calls
+	 * in named blocks can resolve their scope while being compiled.
+	 */
       ivl_scope_children(net, (ivl_scope_f*) draw_scope, net);
+
+      if (ivl_scope_type(net) == IVL_SCT_TASK) {
+	    fprintf(vvp_out, "    .scope S_%p;\n", net);
+	    draw_task_definition(net);
+      } else if (ivl_scope_type(net) == IVL_SCT_FUNCTION) {
+	    fprintf(vvp_out, "    .scope S_%p;\n", net);
+	    vvp_errors += draw_func_definition(net);
+      }
+
       return 0;
 }

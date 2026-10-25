@@ -49,9 +49,8 @@ module test;
     `check(r[5], 7);
 
     r = c.d.min();
-    `check(r.size, 2);
+    `check(r.size, 1);
     `check(r[0], 1);
-    `check(r[1], 1);
 
     r = c.d.max() with (item < 7);
     `check(r.size, 1);

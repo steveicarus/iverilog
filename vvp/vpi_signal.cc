@@ -108,7 +108,7 @@ char *generic_get_str(int code, vpiHandle ref, const char *name, const char *ind
       if (code == vpiFullName) {
 	    bn = strdup(vpi_get_str(code,ref));
 	    size_t bn_len = strlen(bn);
-	    is_bn_a_pkg = (bn_len > 3) && (bn[bn_len-1] == ':') && (bn[bn_len-2] == ':');
+	    is_bn_a_pkg = (bn_len >= 3) && (bn[bn_len-1] == ':') && (bn[bn_len-2] == ':');
 	    len += bn_len;
 	    if (! is_bn_a_pkg) len += 1; // include space for "." separator
       }
@@ -1362,9 +1362,12 @@ static int PV_get(int code, vpiHandle ref)
 	case vpiLeftRange:
             rval += rfp->width - 1;
 	    // fallthrough
-	case vpiRightRange:
-	    rval += vpi_get(vpiRightRange, rfp->parent) + PV_get_base(rfp);
-	    return rval;
+	case vpiRightRange: {
+	    int left = vpi_get(vpiLeftRange, rfp->parent);
+	    int right = vpi_get(vpiRightRange, rfp->parent);
+	    rval += PV_get_base(rfp);
+	    return left >= right ? right + rval : right - rval;
+	}
 
         case vpiAutomatic:
             return vpi_get(vpiAutomatic, rfp->parent);

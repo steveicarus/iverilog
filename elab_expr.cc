@@ -50,10 +50,16 @@ using namespace std;
 
 static netqueue_t ivl_queue_unique_index_ret(&netvector_t::atom2s32, -1);
 
-static bool queue_method_element_is_integral_vec4(ivl_type_t et)
+static bool method_supports_integral(ivl_type_t mt)
 {
-      ivl_variable_type_t bt = ivl_type_base(et);
+      ivl_variable_type_t bt = mt->base_type();
       return bt == IVL_VT_BOOL || bt == IVL_VT_LOGIC;
+}
+
+static bool method_supports_real(ivl_type_t mt)
+{
+      ivl_variable_type_t bt = mt->base_type();
+      return bt == IVL_VT_REAL;
 }
 
 /* One argument: value to match using == (same as find with (item == arg)). */
@@ -184,10 +190,10 @@ static NetExpr* elab_array_locator_method(Design* des, NetScope* scope,
 					  const vector<named_pexpr_t>& parms,
 					  PExpr* with_expr, const char* kind)
 {
-      if (!queue_method_element_is_integral_vec4(element_type)) {
+      if (!method_supports_integral(element_type)) {
 	    cerr << loc.get_fileline() << ": sorry: " << kind << " "
-		 << method_name << "() for this "
-		 << "element type is not yet supported." << endl;
+		 << method_name << "() for this element type ("
+		 << *element_type << ") is not yet supported." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -239,12 +245,56 @@ static NetExpr* elab_array_locator_method(Design* des, NetScope* scope,
 
 static bool is_array_reduction_method(perm_string name)
 {
-      return name == "sum" || name == "product";
+      return name == "sum" || name == "product" ||
+             name == "and" || name == "or" || name == "xor";
 }
 
 /*
  * Elaborate sum()/product() on a queue or dynamic array expression.
  * Returns an integral value with the element type/width.
+ */
+static NetExpr* elab_array_reduction_method_real(Design* des, NetScope* scope,
+                                                 const LineInfo& loc,
+                                                 perm_string method_name,
+                                                 NetExpr* array_arg,
+                                                 ivl_type_t element_type,
+                                                 const vector<named_pexpr_t>& parms,
+                                                 PExpr* with_expr)
+{
+      if (method_name != "product" && method_name != "sum") {
+	    cerr << loc.get_fileline() << ": error: " << method_name
+		 << "() reduction does not support a real element type."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      char sfunc[64];
+      snprintf(sfunc, sizeof sfunc, "$ivl_uparr_method$%s_real", method_name.str());
+
+      if (with_expr) {
+	    (void) scope;
+	    cerr << loc.get_fileline() << ": sorry: real "  << method_name
+	         << "() reduction does not currently support a with expression."
+	         << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (parms.size() != 0) {
+	    cerr << loc.get_fileline() << ": error: " << method_name
+		 << "() method takes no arguments" << endl;
+	    des->errors += 1;
+      }
+      NetESFunc*sys_expr = new NetESFunc(sfunc, element_type, 1);
+      sys_expr->set_line(loc);
+      sys_expr->parm(0, array_arg);
+      return sys_expr;
+}
+
+/*
+ * Elaborate sum()/product()/and()/or()/xor() on a queue or dynamic array
+ * expression. Returns an integral value with the element type/width.
  */
 static NetExpr* elab_array_reduction_method(Design* des, NetScope* scope,
 					    const LineInfo& loc,
@@ -254,16 +304,31 @@ static NetExpr* elab_array_reduction_method(Design* des, NetScope* scope,
 					    const vector<named_pexpr_t>& parms,
 					    PExpr* with_expr, const char* kind)
 {
-      if (!queue_method_element_is_integral_vec4(element_type)) {
+      if (element_type->base_type() == IVL_VT_STRING) {
+	    cerr << loc.get_fileline() << ": error: "  << method_name
+		 << "() reduction does not support a string element type."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (element_type->base_type() == IVL_VT_REAL) {
+	    return elab_array_reduction_method_real(des, scope, loc,
+	                                            method_name, array_arg,
+	                                            element_type, parms,
+	                                            with_expr);
+      }
+
+      if (!method_supports_integral(element_type)) {
 	    cerr << loc.get_fileline() << ": sorry: " << kind << " "
-		 << method_name << "() for this "
-		 << "element type is not yet supported." << endl;
+		 << method_name << "() for this element type ("
+		 << *element_type << ") is not yet supported." << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
       char sfunc[64];
-      snprintf(sfunc, sizeof sfunc, "$ivl_queue_method$%s", method_name.str());
+      snprintf(sfunc, sizeof sfunc, "$ivl_uparr_method$%s", method_name.str());
 
       if (with_expr) {
 	    if (!parms.empty()) {
@@ -447,6 +512,8 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 	    rval = elab_and_eval(des, scope, expr, context_wid, need_const,
 				 false, lv_type, force_unsigned);
       }
+
+      if (rval == nullptr) return nullptr;
 
       const netenum_t *lval_enum = dynamic_cast<const netenum_t*>(lv_net_type);
       if (lval_enum) {
@@ -1932,7 +1999,9 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 		  return expr_width_;
 	    }
 
-	    if (method_name == "sum" || method_name == "product") {
+	    if (method_name == "sum" || method_name == "product" ||
+	        method_name == "and" || method_name == "or" ||
+	        method_name == "xor") {
 		  expr_type_   = darray->element_base_type();
 		  expr_width_  = darray->element_width();
 		  min_width_   = expr_width_;
@@ -4206,6 +4275,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return 0;
       }
+      // FIXME: Need to check for unpacked array reduction calls.
 
       // Enumeration methods.
       if (search_results.net && search_results.net->enumeration()) {
@@ -4835,6 +4905,11 @@ NetExpr *PECast::elaborate_type_cast_(Design *des, NetScope *scope,
 		    // we still need to isolate the sub-expression from changes in
 		    // the signedness pushed down from the main expression.
 		  tmp = cast_to_width(sub, target_width, sub->has_sign(), *this);
+	    }
+	      // Keep the cast type only if width and signedness are unchanged.
+	    if (expr_wid != target_width ||
+		signed_flag != target_type->get_signed()) {
+		  target_type = nullptr;
 	    }
 	    return pad_to_width(tmp, expr_wid, signed_flag, *this, target_type);
       }
@@ -5768,6 +5843,82 @@ unique_ptr<NetExpr> PEIdent::elaborate_variable(Design*des, NetScope*scope)
 }
 
 
+static NetExpr* build_unpacked_reduction(Design *des,
+                                         const LineInfo &loc,
+                                         symbol_search_results&sr,
+                                         const char* nm,
+					 bool support_real)
+{
+      const netdarray_t* dar_sum = sr.net->darray_type();
+      ivl_assert(loc, dar_sum);
+      ivl_type_t element_type = dar_sum->element_type();
+      bool allow_real = support_real && method_supports_real(element_type);
+      if (!method_supports_integral(element_type) && !allow_real) {
+	    cerr << loc.get_fileline() << ": error: " << nm << "() reduction "
+	         << "does not support a " << *element_type
+	         << " element type." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+      const char*suf;
+      if (allow_real) {
+	    suf = "_real";
+      } else {
+	    suf = "";
+      }
+      char buf[64];
+      int res = snprintf(buf, sizeof buf, "$ivl_uparr_method$%s%s", nm, suf);
+      ivl_assert(loc, res < static_cast<int>(sizeof buf));
+      NetESFunc*fun = new NetESFunc(buf, element_type, 1);
+      fun->set_line(loc);
+      NetESignal*arg = new NetESignal(sr.net);
+      arg->set_line(*sr.net);
+      fun->parm(0, arg);
+      return fun;
+}
+
+static NetExpr* build_queue_method(const LineInfo &loc,
+                                   symbol_search_results&sr,
+                                   ivl_type_t element_type,
+                                   const char* nm)
+{
+      char buf[64];
+      int res = snprintf(buf, sizeof buf, "$ivl_queue_method$%s", nm);
+      ivl_assert(loc, res < static_cast<int>(sizeof buf));
+      NetESFunc*fun = new NetESFunc(buf, element_type, 1);
+      fun->set_line(loc);
+      NetESignal*arg = new NetESignal(sr.net);
+      arg->set_line(*sr.net);
+      fun->parm(0, arg);
+      return fun;
+}
+
+static NetExpr* build_queue_locator_method(Design *des,
+                                           const LineInfo &loc,
+                                           symbol_search_results&sr,
+                                           const char* nm,
+                                           bool use_idx)
+{
+      ivl_type_t element_type = sr.net->queue_type()->element_type();
+      if (!method_supports_integral(element_type)) {
+	    cerr << loc.get_fileline() << ": sorry: queue " << nm << "() for '"
+	         << element_type << "is not supported yet." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+      char buf[64];
+      int res = snprintf(buf, sizeof buf, "$ivl_queue_method$%s", nm);
+      ivl_assert(loc, res < static_cast<int>(sizeof buf));
+      const netqueue_t*queue = use_idx ? &ivl_queue_unique_index_ret :
+                                         sr.net->queue_type();
+      NetESFunc*fun = new NetESFunc(buf, static_cast<ivl_type_t>(queue), 1);
+      fun->set_line(loc);
+      NetESignal*arg = new NetESignal(sr.net);
+      arg->set_line(*sr.net);
+      fun->parm(0, arg);
+      return fun;
+}
+
 NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 				 ivl_type_t ntype, unsigned flags) const
 {
@@ -5827,105 +5978,30 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  fun->parm(0, arg);
 		  return fun;
 	    }
-	    if (member_comp.name == "pop_back") {
-		  NetESFunc*fun = new NetESFunc("$ivl_queue_method$pop_back",
-						element_type, 1);
-		  fun->set_line(*this);
-		  NetESignal*arg = new NetESignal(sr.net);
-		  arg->set_line(*sr.net);
-		  fun->parm(0, arg);
-		  return fun;
+	    if ((member_comp.name == "pop_back") ||
+	        (member_comp.name == "pop_front")) {
+		  return build_queue_method(*this, sr, element_type, member_comp.name);
 	    }
-	    if (member_comp.name == "pop_front") {
-		  NetESFunc*fun = new NetESFunc("$ivl_queue_method$pop_front",
-						element_type, 1);
-		  fun->set_line(*this);
-		  NetESignal*arg = new NetESignal(sr.net);
-		  arg->set_line(*sr.net);
-		  fun->parm(0, arg);
-		  return fun;
+
+	    if ((member_comp.name == "max") ||
+	        (member_comp.name == "min") ||
+	        (member_comp.name == "unique")) {
+		  return build_queue_locator_method(des, *this, sr,
+		                                    member_comp.name, false);
 	    }
-	    if (member_comp.name == "unique") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: queue unique() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  NetESFunc*fun = new NetESFunc(
-		      "$ivl_queue_method$unique",
-		      static_cast<ivl_type_t>(queue), 1);
-		  fun->set_line(*this);
-		  NetESignal*arg = new NetESignal(sr.net);
-		  arg->set_line(*sr.net);
-		  fun->parm(0, arg);
-		  return fun;
-	    }
+
 	    if (member_comp.name == "unique_index") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: queue unique_index() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  NetESFunc*fun = new NetESFunc(
-		      "$ivl_queue_method$unique_index",
-		      static_cast<ivl_type_t>(&ivl_queue_unique_index_ret), 1);
-		  fun->set_line(*this);
-		  NetESignal*arg = new NetESignal(sr.net);
-		  arg->set_line(*sr.net);
-		  fun->parm(0, arg);
-		  return fun;
+		  return build_queue_locator_method(des, *this, sr,
+		                                    member_comp.name, true);
 	    }
-	    if (member_comp.name == "sum") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: queue sum() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  NetESFunc*fun = new NetESFunc(
-		      "$ivl_queue_method$sum",
-		      element_type, 1);
-		  fun->set_line(*this);
-		  NetESignal*arg = new NetESignal(sr.net);
-		  arg->set_line(*sr.net);
-		  fun->parm(0, arg);
-		  return fun;
+
+	      // FIXME: is this actually used? Are the and()/or()/xor() needed?
+	    if ((member_comp.name == "product") ||
+	        (member_comp.name == "sum")) {
+		  return build_unpacked_reduction(des, *this, sr,
+                                         member_comp.name, true);
 	    }
-	    if (member_comp.name == "product") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: queue product() for this "
-			     << "element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  NetESFunc*fun = new NetESFunc(
-		      "$ivl_queue_method$product",
-		      element_type, 1);
-		  fun->set_line(*this);
-		  NetESignal*arg = new NetESignal(sr.net);
-		  arg->set_line(*sr.net);
-		  fun->parm(0, arg);
-		  return fun;
-	    }
-	    if (member_comp.name == "min" || member_comp.name == "max") {
-		  if (!queue_method_element_is_integral_vec4(element_type)) {
-			cerr << get_fileline() << ": sorry: queue " << member_comp.name
-			     << "() for this element type is not yet supported." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  NetESFunc*fun = new NetESFunc(
-		      member_comp.name == "min" ? "$ivl_queue_method$min"
-						: "$ivl_queue_method$max",
-		      static_cast<ivl_type_t>(queue), 1);
-		  fun->set_line(*this);
-		  NetESignal*arg = new NetESignal(sr.net);
-		  arg->set_line(*sr.net);
-		  fun->parm(0, arg);
-		  return fun;
-	    }
+
 	    cerr << get_fileline() << ": error: Unknown or unsupported queue "
 		 << "member `" << member_comp.name << "'." << endl;
 	    des->errors += 1;
@@ -6204,95 +6280,36 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 			fun->parm(0, arg);
 			return fun;
 		  }
-		  if (member_comp.name == "pop_back") {
-			NetESFunc*fun = new NetESFunc("$ivl_queue_method$pop_back",
-			                              element_type, 1);
-			fun->set_line(*this);
 
-			NetESignal*arg = new NetESignal(sr.net);
-			arg->set_line(*sr.net);
-
-			fun->parm(0, arg);
-			return fun;
+		  if ((member_comp.name == "pop_back") ||
+		      (member_comp.name == "pop_front")) {
+			return build_queue_method(*this, sr, element_type, member_comp.name);
 		  }
 
-		  if (member_comp.name == "pop_front") {
-			NetESFunc*fun = new NetESFunc("$ivl_queue_method$pop_front",
-			                              element_type, 1);
-			fun->set_line(*this);
-
-			NetESignal*arg = new NetESignal(sr.net);
-			arg->set_line(*sr.net);
-
-			fun->parm(0, arg);
-			return fun;
-		  }
-
-		  if (member_comp.name == "unique") {
-			if (!queue_method_element_is_integral_vec4(element_type)) {
-			      cerr << get_fileline() << ": sorry: queue unique() for this "
-			           << "element type is not yet supported." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			NetESFunc*fun = new NetESFunc(
-			    "$ivl_queue_method$unique",
-			    static_cast<ivl_type_t>(queue), 1);
-			fun->set_line(*this);
-			NetESignal*arg = new NetESignal(sr.net);
-			arg->set_line(*sr.net);
-			fun->parm(0, arg);
-			return fun;
+		  if ((member_comp.name == "max") ||
+		      (member_comp.name == "min") ||
+		      (member_comp.name == "unique")) {
+			return build_queue_locator_method(des, *this, sr,
+			                                  member_comp.name, false);
 		  }
 
 		  if (member_comp.name == "unique_index") {
-			if (!queue_method_element_is_integral_vec4(element_type)) {
-			      cerr << get_fileline() << ": sorry: queue unique_index() for this "
-			           << "element type is not yet supported." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			NetESFunc*fun = new NetESFunc(
-			    "$ivl_queue_method$unique_index",
-			    static_cast<ivl_type_t>(&ivl_queue_unique_index_ret), 1);
-			fun->set_line(*this);
-			NetESignal*arg = new NetESignal(sr.net);
-			arg->set_line(*sr.net);
-			fun->parm(0, arg);
-			return fun;
+			return build_queue_locator_method(des, *this, sr,
+			                                  member_comp.name, true);
 		  }
-		  if (member_comp.name == "sum") {
-			if (!queue_method_element_is_integral_vec4(element_type)) {
-			      cerr << get_fileline() << ": sorry: queue sum() for this "
-			           << "element type is not yet supported." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			NetESFunc*fun = new NetESFunc(
-			    "$ivl_queue_method$sum",
-			    element_type, 1);
-			fun->set_line(*this);
-			NetESignal*arg = new NetESignal(sr.net);
-			arg->set_line(*sr.net);
-			fun->parm(0, arg);
-			return fun;
+
+		  if ((member_comp.name == "product") ||
+		      (member_comp.name == "sum")) {
+			return build_unpacked_reduction(des, *this, sr,
+			                                member_comp.name,
+			                                true);
 		  }
-		  if (member_comp.name == "min" || member_comp.name == "max") {
-			if (!queue_method_element_is_integral_vec4(element_type)) {
-			      cerr << get_fileline() << ": sorry: queue " << member_comp.name
-			           << "() for this element type is not yet supported." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			NetESFunc*fun = new NetESFunc(
-			    member_comp.name == "min" ? "$ivl_queue_method$min"
-						      : "$ivl_queue_method$max",
-			    static_cast<ivl_type_t>(queue), 1);
-			fun->set_line(*this);
-			NetESignal*arg = new NetESignal(sr.net);
-			arg->set_line(*sr.net);
-			fun->parm(0, arg);
-			return fun;
+		  if ((member_comp.name == "and") ||
+		      (member_comp.name == "or")  ||
+		      (member_comp.name == "xor")) {
+			return build_unpacked_reduction(des, *this, sr,
+			                                member_comp.name,
+			                                false);
 		  }
 	    }
 
@@ -6355,60 +6372,17 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 			        "implemented." << endl;
 			des->errors += 1;
 			return 0;
-// FIXME: Check this is a real or integral type.
-		  } else if (member_comp.name == "sum") {
-			const netdarray_t* dar_sum = sr.net->darray_type();
-			ivl_assert(*this, dar_sum);
-			ivl_type_t element_type = dar_sum->element_type();
-			if (!queue_method_element_is_integral_vec4(element_type)) {
-			      cerr << get_fileline() << ": sorry: dynamic array sum() for this "
-				   << "element type is not yet supported." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			NetESFunc*fun = new NetESFunc("$ivl_queue_method$sum",
-						      element_type, 1);
-			fun->set_line(*this);
-			NetESignal*arg = new NetESignal(sr.net);
-			arg->set_line(*sr.net);
-			fun->parm(0, arg);
-			return fun;
-		  } else if (member_comp.name == "product") {
-			const netdarray_t* dar_sum = sr.net->darray_type();
-			ivl_assert(*this, dar_sum);
-			ivl_type_t element_type = dar_sum->element_type();
-			if (!queue_method_element_is_integral_vec4(element_type)) {
-			      cerr << get_fileline() << ": sorry: dynamic array product() for this "
-				   << "element type is not yet supported." << endl;
-			      des->errors += 1;
-			      return 0;
-			}
-			NetESFunc*fun = new NetESFunc("$ivl_queue_method$product",
-						      element_type, 1);
-			fun->set_line(*this);
-			NetESignal*arg = new NetESignal(sr.net);
-			arg->set_line(*sr.net);
-			fun->parm(0, arg);
-			return fun;
-// FIXME: Check this is only an integral type.
-		  } else if (member_comp.name == "and") {
-			cerr << get_fileline() << ": sorry: 'and()' "
-			        "array reduction method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
-		  } else if (member_comp.name == "or") {
-			cerr << get_fileline() << ": sorry: 'or()' "
-			        "array reduction method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
-		  } else if (member_comp.name == "xor") {
-			cerr << get_fileline() << ": sorry: 'xor()' "
-			        "array reduction method is not currently "
-			        "implemented." << endl;
-			des->errors += 1;
-			return 0;
+
+		  } else if ((member_comp.name == "product") ||
+		             (member_comp.name == "sum")) {
+			return build_unpacked_reduction(des, *this, sr,
+			                                member_comp.name, true);
+
+		  } else if ((member_comp.name == "and") ||
+		             (member_comp.name == "or") ||
+		             (member_comp.name == "xor")) {
+			return build_unpacked_reduction(des, *this, sr,
+			                                member_comp.name, false);
 		  }
 	    }
 
@@ -6454,6 +6428,7 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 						member_comp.name,
 						expr, {});
 	    }
+	    // FIXME: Need to check for an unpacked array and then handle the reduction methods.
 
 	    if (! sr.path_tail.empty()) {
 		  cerr << get_fileline() << ": error: Variable "

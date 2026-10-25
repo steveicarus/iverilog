@@ -118,9 +118,8 @@ static int eval_darray_new(ivl_expr_t ex)
 		  break;
 	    }
       } else if (init_expr && (ivl_expr_value(init_expr) == IVL_VT_DARRAY)) {
-		  ivl_signal_t sig = ivl_expr_signal(init_expr);
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
-		  fprintf(vvp_out, "    %%scopy;\n");
+	    errors += draw_eval_object(init_expr);
+	    fprintf(vvp_out, "    %%scopy;\n");
 
       } else if (init_expr && number_is_immediate(size_expr,32,0)) {
 	      /* In this case, there is an init expression, the
@@ -206,9 +205,11 @@ static int eval_array_pattern_object(ivl_expr_t ex)
       switch (ivl_type_base(element_type)) {
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
-	    for (unsigned idx = 0; idx < max_elems; idx += 1) {
+	    for (unsigned idx = 0 ; idx < ivl_expr_parms(ex) ; idx += 1) {
 		  draw_eval_vec4(ivl_expr_parm(ex, idx));
-		  if (base_type == IVL_VT_QUEUE) {
+		  if (idx >= max_elems) {
+			fprintf(vvp_out, "    %%pop/vec4 1;\n");
+		  } else if (base_type == IVL_VT_QUEUE) {
 			fprintf(vvp_out, "    %%queue/append_word/v %u;\n",
 			        ivl_type_packed_width(element_type));
 		  } else {
@@ -430,8 +431,8 @@ enum queue_locator_with_mode_e {
       QUEUE_WITH_MAX,
       QUEUE_WITH_UNIQUE,
       QUEUE_WITH_UNIQUE_INDEX,
-      QUEUE_WITH_SUM,
-      QUEUE_WITH_PRODUCT
+      UPARR_WITH_SUM,
+      UPARR_WITH_PRODUCT
 };
 
 static enum queue_locator_with_mode_e queue_locator_with_mode_from_name(
@@ -458,9 +459,9 @@ static enum queue_locator_with_mode_e queue_locator_with_mode_from_name(
       } else if (strcmp(name, "$ivl_queue_method$unique_index_with") == 0) {
 	    return QUEUE_WITH_UNIQUE_INDEX;
       } else if (strcmp(name, "$ivl_queue_method$sum_with") == 0) {
-	    return QUEUE_WITH_SUM;
+	    return UPARR_WITH_SUM;
       } else if (strcmp(name, "$ivl_queue_method$product_with") == 0) {
-	    return QUEUE_WITH_PRODUCT;
+	    return UPARR_WITH_PRODUCT;
       }
       return (enum queue_locator_with_mode_e) -1;
 }
@@ -479,13 +480,13 @@ static int queue_with_multi(enum queue_locator_with_mode_e mode)
 	     mode == QUEUE_WITH_MAX ||
 	     mode == QUEUE_WITH_UNIQUE ||
 	     mode == QUEUE_WITH_UNIQUE_INDEX ||
-	     mode == QUEUE_WITH_SUM ||
-	     mode == QUEUE_WITH_PRODUCT;
+	     mode == UPARR_WITH_SUM ||
+	     mode == UPARR_WITH_PRODUCT;
 }
 
 static int queue_with_expr_value(enum queue_locator_with_mode_e mode)
 {
-      return mode == QUEUE_WITH_SUM || mode == QUEUE_WITH_PRODUCT;
+      return mode == UPARR_WITH_SUM || mode == UPARR_WITH_PRODUCT;
 }
 
 static int queue_with_as_index(enum queue_locator_with_mode_e mode)
@@ -572,15 +573,15 @@ static void emit_queue_with_finish(enum queue_locator_with_mode_e mode,
 	    }
 	    return;
       }
-      if (mode == QUEUE_WITH_SUM) {
-	    fprintf(vvp_out, "    %%queue/sum/obj/v %u;\n", elem_wid);
+      if (mode == UPARR_WITH_SUM) {
+	    fprintf(vvp_out, "    %%uparr/sum/obj/v %u;\n", elem_wid);
 	    if (is_prop) {
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 	    }
 	    return;
       }
-      if (mode == QUEUE_WITH_PRODUCT) {
-	    fprintf(vvp_out, "    %%queue/product/obj/v %u;\n", elem_wid);
+      if (mode == UPARR_WITH_PRODUCT) {
+	    fprintf(vvp_out, "    %%uparr/product/obj/v %u;\n", elem_wid);
 	    if (is_prop) {
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 	    }

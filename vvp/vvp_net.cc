@@ -789,9 +789,10 @@ vvp_vector4_t::vvp_vector4_t(unsigned size__, double val)
 
 	/* If the value is small enough just use lround(). */
       if (exponent < BITS_PER_WORD-2) {
-	    if (is_neg) this->invert();  // Invert the bits if negative.
 	    long sval = lround(val);
 	    if (is_neg) sval = -sval;
+	      /* Sign extend the rounded value, which may be zero. */
+	    if (sval < 0) this->invert();
 	      /* This requires that 0 and 1 have the same bbit value. */
 	    if (size_ > BITS_PER_WORD) {
 		  abits_ptr_[0] = sval;
@@ -2482,16 +2483,17 @@ vvp_vector2_t::vvp_vector2_t()
       wid_ = 0;
 }
 
-vvp_vector2_t::vvp_vector2_t(unsigned long v, unsigned wid)
+vvp_vector2_t::vvp_vector2_t(uint64_t v, unsigned wid)
 {
       wid_ = wid;
       const unsigned bits_per_word = 8 * sizeof(vec_[0]);
       const unsigned words = (wid_ + bits_per_word-1) / bits_per_word;
 
       vec_ = new unsigned long[words];
-      vec_[0] = v;
-      for (unsigned idx = 1 ;  idx < words ;  idx += 1)
-	    vec_[idx] = 0;
+      for (unsigned idx = 0 ; idx < words ; idx += 1) {
+	    const unsigned shift = idx * bits_per_word;
+	    vec_[idx] = shift < 64 ? v >> shift : 0;
+      }
 }
 
 vvp_vector2_t::vvp_vector2_t(vvp_vector2_t::fill_t fill, unsigned wid)

@@ -688,8 +688,8 @@ class vvp_vector2_t {
 	// a NaN value. If enable_NaN is false then X or Z bits are
 	// converted to 0 as per the standard Verilog rules.
       explicit vvp_vector2_t(const vvp_vector4_t&that, bool allow_NaN = false);
-	// Make from a native long and a specified width.
-      vvp_vector2_t(unsigned long val, unsigned wid);
+	// Make from a 64-bit value and a specified width.
+      vvp_vector2_t(uint64_t val, unsigned wid);
 	// Make with the width, and filled with 1 or 0 bits.
       enum fill_t {FILL0, FILL1};
       vvp_vector2_t(fill_t fill, unsigned wid);

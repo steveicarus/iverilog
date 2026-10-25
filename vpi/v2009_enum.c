@@ -159,6 +159,30 @@ static PLI_INT32 ivl_enum_method_next_prev_compiletf(ICARUS_VPI_CONST PLI_BYTE8*
 static int compare_value_eequal(s_vpi_value*ref1, s_vpi_value*ref2,
                                 PLI_INT32 wid)
 {
+	/* Handle scalar values in either operand. */
+      if (ref2->format == vpiScalarVal) {
+	    s_vpi_value*tmp = ref1;
+	    ref1 = ref2;
+	    ref2 = tmp;
+      }
+      if (ref1->format == vpiScalarVal) {
+	    PLI_INT32 scalar = ref1->value.scalar;
+	    PLI_INT32 aval = scalar == vpi1 || scalar == vpiX;
+	    PLI_INT32 bval = scalar == vpiX || scalar == vpiZ;
+	    assert(wid == 1);
+	    switch (ref2->format) {
+		case vpiScalarVal:
+		  return scalar == ref2->value.scalar;
+		case vpiIntVal:
+		  return !bval && aval == (ref2->value.integer & 1);
+		case vpiVectorVal:
+		  return aval == (ref2->value.vector[0].aval & 1) &&
+		         bval == (ref2->value.vector[0].bval & 1);
+		default:
+		  break;
+	    }
+      }
+
 	/* Two integer values are easy. */
       if (ref1->format == vpiIntVal && ref2->format == vpiIntVal)
 	    return ref1->value.integer == ref2->value.integer;
@@ -206,6 +230,45 @@ static int compare_value_eequal(s_vpi_value*ref1, s_vpi_value*ref2,
 }
 
 /*
+ * Find the matching member and optionally its one-based position. Leave the
+ * iterator positioned after the match. A failed search exhausts and frees it.
+ */
+static vpiHandle find_enum_value(vpiHandle enum_list, vpiHandle arg_var,
+                                PLI_UINT32*position)
+{
+      PLI_INT32 width = vpi_get(vpiSize, arg_var);
+      PLI_UINT32 loc = 0;
+      vpiHandle cur;
+      s_vpi_value cur_val, var_val;
+
+      var_val.format = vpiObjTypeVal;
+      vpi_get_value(arg_var, &var_val);
+
+	/* Preserve vector storage across subsequent vpi_get_value() calls. */
+      if (var_val.format == vpiVectorVal) {
+	    PLI_INT32 words = (width - 1)/32 + 1;
+	    p_vpi_vecval copy = malloc(words*sizeof(s_vpi_vecval));
+	    assert(copy);
+	    memcpy(copy, var_val.value.vector, words*sizeof(s_vpi_vecval));
+	    var_val.value.vector = copy;
+      }
+
+      do {
+	    cur = vpi_scan(enum_list);
+	    if (cur == 0) break;
+
+	    cur_val.format = vpiObjTypeVal;
+	    vpi_get_value(cur, &cur_val);
+	    assert(width == vpi_get(vpiSize, cur));
+	    loc += 1;
+      } while (!compare_value_eequal(&cur_val, &var_val, width));
+
+      if (var_val.format == vpiVectorVal) free(var_val.value.vector);
+      if (position) *position = loc;
+      return cur;
+}
+
+/*
  * If the current value is not found in the enumeration. Then we need to
  * return X/0 for the next()/prev() value.
  */
@@ -245,12 +308,11 @@ static PLI_INT32 ivl_enum_method_next_prev_calltf(ICARUS_VPI_CONST PLI_BYTE8*nam
 
       vpiHandle enum_list;
       vpiHandle cur;
-      PLI_INT32 var_width = vpi_get(vpiSize, arg_var);
       PLI_UINT32 enum_size = vpi_get(vpiSize, arg_enum);
       PLI_UINT32 count = 1;
       PLI_UINT32 loc = 0;
 
-      s_vpi_value cur_val, var_val;
+      s_vpi_value cur_val;
 
 	/* Get the count value if one was given. */
       if (arg_count) {
@@ -266,44 +328,18 @@ static PLI_INT32 ivl_enum_method_next_prev_calltf(ICARUS_VPI_CONST PLI_BYTE8*nam
 	    vpi_free_object(argv);
       }
 
-	/* Get the current value. */
-      var_val.format = vpiObjTypeVal;
-      vpi_get_value(arg_var, &var_val);
-
 	/* If the count is zero then just return the current value. */
       if (count == 0) {
-	    vpi_put_value(sys, &var_val, 0, vpiNoDelay);
+	    cur_val.format = vpiObjTypeVal;
+	    vpi_get_value(arg_var, &cur_val);
+	    vpi_put_value(sys, &cur_val, 0, vpiNoDelay);
 	    return 0;
-      }
-
-	/* If the current value is a vector, then make a safe copy of
-	   it so that other vpi_get_value() calls don't trash the value. */
-      if (var_val.format == vpiVectorVal) {
-	    PLI_INT32 idx;
-	    PLI_INT32 words = (var_width - 1)/32 + 1;
-	    p_vpi_vecval nvec = malloc(words*sizeof(s_vpi_vecval));
-	    for (idx = 0 ; idx < words ; idx += 1) {
-		  nvec[idx].aval = var_val.value.vector[idx].aval;
-		  nvec[idx].bval = var_val.value.vector[idx].bval;
-	    }
-	    var_val.value.vector = nvec;
       }
 
 	/* Search for the current value in the enumeration list. */
       enum_list = vpi_iterate(vpiEnumConst, arg_enum);
       assert(enum_list);
-      do {
-	    cur = vpi_scan(enum_list);
-	    if (cur == 0) break;
-
-	    cur_val.format = vpiObjTypeVal;
-	    vpi_get_value(cur, &cur_val);
-	    assert(var_width == vpi_get(vpiSize, cur));
-	    loc += 1;
-      } while (! compare_value_eequal(&cur_val, &var_val, var_width));
-
-	/* If the variable is a vector then free the copy we created above. */
-      if (var_val.format == vpiVectorVal) free(var_val.value.vector);
+      cur = find_enum_value(enum_list, arg_var, &loc);
 
 	/* The current value was not found in the list so return X/0. */
       if (cur == 0) {
@@ -455,46 +491,18 @@ static PLI_INT32 ivl_enum_method_name_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
       vpiHandle enum_list;
       vpiHandle cur;
-      PLI_INT32 var_width = vpi_get(vpiSize, arg_var);
 
-      s_vpi_value cur_val, var_val;
+      s_vpi_value cur_val;
 
       (void)name; /* Parameter is not used. */
 
 	/* Free the argument iterator. */
       vpi_free_object(argv);
 
-	/* Get the current value. */
-      var_val.format = vpiObjTypeVal;
-      vpi_get_value(arg_var, &var_val);
-
-	/* If the current value is a vector, then make a safe copy of
-	   it so that other vpi_get_value() calls don't trash the value. */
-      if (var_val.format == vpiVectorVal) {
-	    PLI_INT32 idx;
-	    PLI_INT32 words = (var_width - 1)/32 + 1;
-	    p_vpi_vecval nvec = malloc(words*sizeof(s_vpi_vecval));
-	    for (idx = 0 ; idx < words ; idx += 1) {
-		  nvec[idx].aval = var_val.value.vector[idx].aval;
-		  nvec[idx].bval = var_val.value.vector[idx].bval;
-	    }
-	    var_val.value.vector = nvec;
-      }
-
 	/* Search for the current value in the enumeration list. */
       enum_list = vpi_iterate(vpiEnumConst, arg_enum);
       assert(enum_list);
-      do {
-	    cur = vpi_scan(enum_list);
-	    if (cur == 0) break;
-
-	    cur_val.format = vpiObjTypeVal;
-	    vpi_get_value(cur, &cur_val);
-	    assert(var_width == vpi_get(vpiSize, cur));
-      } while (! compare_value_eequal(&cur_val, &var_val, var_width));
-
-	/* If the variable is a vector then free the copy we created above. */
-      if (var_val.format == vpiVectorVal) free(var_val.value.vector);
+      cur = find_enum_value(enum_list, arg_var, 0);
 
 	/* The current value was not found in the list so return an empty
 	 * string. */

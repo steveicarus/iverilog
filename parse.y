@@ -2755,7 +2755,9 @@ modport_ports_declaration
 
 modport_tf_port
   : K_task IDENTIFIER tf_port_list_parens_opt
+      { delete[]$2; }
   | K_function data_type_or_implicit_or_void_plus_id tf_port_list_parens_opt
+      { delete[]$2.id; }
   ;
 
 non_integer_type /* IEEE1800-2005: A.2.2.1 */
@@ -3519,6 +3521,7 @@ block_item_decl
       }
   | ps_type_identifier_dim error ';'
       { yyerror(@1, "error: Syntax error in variable list.");
+	delete $1;
 	yyerrok;
       }
   ;
@@ -4768,28 +4771,6 @@ expr_primary
 	$$ = tmp;
 	delete $1;
       }
-  /* These are array methods that cannot be matched with the above rule */
-  | hierarchy_identifier '.' K_and
-      { pform_name_t * nm = $1;
-	nm->push_back(name_component_t(lex_strings.make("and")));
-	PEIdent*tmp = pform_new_ident(@1, *nm);
-	$$ = tmp;
-	delete nm;
-      }
-  | hierarchy_identifier '.' K_or
-      { pform_name_t * nm = $1;
-	nm->push_back(name_component_t(lex_strings.make("or")));
-	PEIdent*tmp = pform_new_ident(@1, *nm);
-	$$ = tmp;
-	delete nm;
-      }
-  | hierarchy_identifier '.' K_xor
-      { pform_name_t * nm = $1;
-	nm->push_back(name_component_t(lex_strings.make("xor")));
-	PEIdent*tmp = pform_new_ident(@1, *nm);
-	$$ = tmp;
-	delete nm;
-      }
   | package_scope hierarchy_identifier
       { lex_in_package_scope(0);
 	$$ = pform_package_ident(@2, $1, $2);
@@ -5288,11 +5269,29 @@ hierarchy_identifier
 	delete[]$3;
 	$$ = tmp;
       }
-  /* "unique" is a keyword (K_unique) but also a queue/array method name. */
-  | hierarchy_identifier '.' K_unique index_components_opt
+  /* These are array methods that cannot be matched with the above rule */
+  | hierarchy_identifier '.' K_unique
       { auto tmp = $1;
 	append_hierarchy_identifier_component(*tmp, lex_strings.make("unique"),
-					      $4);
+					      nullptr);
+	$$ = tmp;
+      }
+  | hierarchy_identifier '.' K_and
+      { auto tmp = $1;
+	append_hierarchy_identifier_component(*tmp, lex_strings.make("and"),
+					      nullptr);
+	$$ = tmp;
+      }
+  | hierarchy_identifier '.' K_or
+      { auto tmp = $1;
+	append_hierarchy_identifier_component(*tmp, lex_strings.make("or"),
+					      nullptr);
+	$$ = tmp;
+      }
+  | hierarchy_identifier '.' K_xor
+      { auto tmp = $1;
+	append_hierarchy_identifier_component(*tmp, lex_strings.make("xor"),
+					      nullptr);
 	$$ = tmp;
       }
   ;
@@ -7104,6 +7103,16 @@ specify_edge_path
     K_SG '(' specify_path_identifiers polarity_operator expression ')' ')'
       { int edge_flag = $2? 1 : -1;
 	$$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, true, $7, $9);
+      }
+  | '(' edge_operator specify_path_identifiers spec_polarity
+    K_EG specify_path_identifiers ')'
+      { int edge_flag = $2? 1 : -1;
+	$$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, false, $6, 0);
+      }
+  | '(' edge_operator specify_path_identifiers spec_polarity
+    K_SG specify_path_identifiers ')'
+      { int edge_flag = $2? 1 : -1;
+	$$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, true, $6, 0);
       }
   ;
 

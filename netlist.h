@@ -890,6 +890,78 @@ class NetNet  : public NetObj, public PortType {
 };
 
 /*
+ * Keep a signal referenced while it is used by an expression or l-value.
+ * These references prevent optimization from removing the signal; they
+ * do not own or delete it. Use get() for a borrowed signal pointer.
+ */
+template <void (NetNet::*acquire)(), void (NetNet::*release)()>
+class NetNetRef {
+    public:
+      explicit NetNetRef(NetNet*net = nullptr)
+      : net_(net)
+      {
+	    if (net_) (net_->*acquire)();
+      }
+
+      NetNetRef(const NetNetRef&that)
+      : NetNetRef(that.net_)
+      {
+      }
+
+      NetNetRef(NetNetRef&&that) noexcept
+      : net_(that.net_)
+      {
+	    that.net_ = nullptr;
+      }
+
+      ~NetNetRef()
+      {
+	    if (net_) (net_->*release)();
+      }
+
+      NetNetRef&operator=(NetNetRef that) noexcept
+      {
+	    swap(that);
+	    return *this;
+      }
+
+      void swap(NetNetRef&that) noexcept
+      {
+	    std::swap(net_, that.net_);
+      }
+
+      NetNet*get() const
+      {
+	    return net_;
+      }
+
+      NetNet*operator->() const
+      {
+	    return net_;
+      }
+
+      explicit operator bool() const
+      {
+	    return net_ != nullptr;
+      }
+
+    private:
+      NetNet*net_;
+};
+
+/*
+ * Use for signals read by expressions or synthesized array-read nodes.
+ * The expression reference count keeps these signals from being removed.
+ */
+using NetERef = NetNetRef<&NetNet::incr_eref, &NetNet::decr_eref>;
+
+/*
+ * Use for signals targeted by procedural assignment l-values. The l-value
+ * reference count also records that the signal is procedurally assigned.
+ */
+using NetLRef = NetNetRef<&NetNet::incr_lref, &NetNet::decr_lref>;
+
+/*
  * This object type is used for holding local variable values when
  * evaluating constant user functions.
  */
@@ -1523,7 +1595,7 @@ class NetArrayDq  : public NetNode {
       virtual bool emit_node(struct target_t*) const override;
 
     private:
-      NetNet*mem_;
+      NetERef mem_;
       unsigned awidth_;
 
 };
@@ -2984,11 +3056,12 @@ class NetAssign_ {
       void set_property(const perm_string&name, unsigned int idx);
       inline int get_property_idx(void) const { return member_idx_; }
 
-	// Determine if the assigned object is signed or unsigned.
-	// This is used when determining the expression type for
-	// a compressed assignment statement.
-      bool get_signed() const { return signed_; }
-      void set_signed(bool flag) { signed_ = flag; }
+	// Return the l-value's signedness for compound assignments.
+      bool get_signed() const;
+	// Treat the l-value as an unsigned integral assignment target, without
+	// the declared type's assignment restrictions. Its width and two-state
+	// or four-state behavior are preserved.
+      void set_untyped();
 
 	// Get the width of the r-value that this node expects. This
 	// method accounts for the presence of the mux, so it is not
@@ -3029,16 +3102,21 @@ class NetAssign_ {
       void dump_lval(std::ostream&o) const;
 
     private:
+	// Return the type of this l-value component, if any. Return nullptr
+	// if more components follow. Unlike net_type(), this retains the type
+	// when the component is marked untyped.
+      ivl_type_t component_type() const;
+
 	// Nested l-value. If this is set, sig_ must NOT be set!
       NetAssign_*nest_;
-      NetNet *sig_;
+      NetLRef sig_;
 	// Memory word index
       NetExpr*word_;
 	// member/property if signal is a class.
       perm_string member_;
       int member_idx_ = -1;
 
-      bool signed_;
+      bool untyped_ = false;
       bool turn_sig_to_wire_on_release_;
 	// indexed part select base
       NetExpr*base_;
@@ -4033,7 +4111,7 @@ class NetELast : public NetExpr {
       explicit NetELast(NetNet*sig);
       ~NetELast() override;
 
-      inline const NetNet*sig() const { return sig_; }
+      inline const NetNet*sig() const { return sig_.get(); }
 
       virtual ivl_variable_type_t expr_type() const override;
       virtual void dump(std::ostream&) const override;
@@ -4044,7 +4122,7 @@ class NetELast : public NetExpr {
                                   bool nested_func = false) const override;
 
     private:
-      NetNet*sig_;
+      NetERef sig_;
 };
 
 /*
@@ -4735,7 +4813,7 @@ class NetEProperty : public NetExpr {
       NetEProperty(NetNet*n, size_t pidx_, NetExpr*canon_index =0);
       ~NetEProperty() override;
 
-      inline const NetNet* get_sig() const { return net_; }
+      inline const NetNet* get_sig() const { return net_.get(); }
       inline size_t property_idx() const { return pidx_; }
       inline const NetExpr*get_index() const { return index_.get(); }
 
@@ -4748,7 +4826,7 @@ class NetEProperty : public NetExpr {
       virtual void dump(std::ostream&os) const override;
 
     private:
-      NetNet*net_;
+      NetERef net_;
       size_t pidx_;
       NetExpr::Ptr index_;
 };
@@ -5129,7 +5207,7 @@ class NetESignal  : public NetExpr {
       virtual void dump(std::ostream&) const override;
 
     private:
-      NetNet*net_;
+      NetERef net_;
 	// Expression to select a word from the net.
       std::unique_ptr<NetExpr> word_;
 };

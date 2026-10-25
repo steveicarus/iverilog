@@ -15,6 +15,8 @@ def assemble_iverilog_cmd(options: dict, cfg: dict, outfile: str) -> list:
         res += ["valgrind", "--trace-children=yes"]
     res += ["iverilog"+cfg['suffix'], "-o", os.path.join("work", outfile)]
     res += options['iverilog_args']
+    if options.get('vpi_sources'):
+        res += ["-Lwork", "-m" + options['key']]
     res += [options['source']]
     return res
 
@@ -124,10 +126,22 @@ def compare_files(log_path, gold_path):
     return True
 
 
-def run_cmd(cmd: list) -> subprocess.CompletedProcess:
+def run_cmd(cmd: list, cwd=None) -> subprocess.CompletedProcess:
     '''Run the given command'''
-    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    res = subprocess.run(cmd, cwd=cwd, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, check=False)
     return res
+
+def build_vpi(options: dict, cfg: dict) -> list:
+    '''Build a test's VPI module in the work directory.'''
+    build_runtime(options['key'])
+    cmd = ["iverilog-vpi" + cfg['suffix'], "--name=" + options['key']]
+    cmd += [os.path.abspath(source) for source in options['vpi_sources']]
+    res = run_cmd(cmd, cwd="work")
+    log_results(options['key'], "iverilog-vpi", res)
+    if res.returncode != 0:
+        return [1, "Failed - VPI module compilation failed."]
+    return [0, "Passed."]
 
 def is_execution_error(returncode: int) -> bool:
     '''Check if a command failed due to an execution error.'''
@@ -244,6 +258,8 @@ def options_to_pass(options: dict) -> list:
         rtn.append("-gspecify")
     if "-ginterconnect" in options['iverilog_args']:
         rtn.append("-ginterconnect")
+    if "-gstrict-ca-eval" in options['iverilog_args']:
+        rtn.append("-gstrict-ca-eval")
     if "-Tmin" in options['iverilog_args']:
         rtn.append("-Tmin")
     if "-Ttyp" in options['iverilog_args']:

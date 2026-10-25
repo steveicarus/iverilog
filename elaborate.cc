@@ -1262,11 +1262,20 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
 	// reflects the positions of the named ports.
       if (pins_) {
 	    unsigned nexp = rmod->port_count();
+	    bool seen_wildcard = false;
 
 	      // Scan the bindings, matching them with port names.
 	    for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
 		    // Handle wildcard named port.
 		  if (pins_[idx].name[0] == '*') {
+			if (seen_wildcard) {
+			      cerr << get_fileline() << ": error: "
+			           << "Wildcard port connection already specified."
+			           << endl;
+			      des->errors += 1;
+			      continue;
+			}
+			seen_wildcard = true;
 			const auto &wildcard = pins_[idx];
 			for (unsigned j = 0 ; j < nexp ; j += 1) {
 			      if (rmod->ports[j] && !pins[j] && !pins_is_explicitly_not_connected[j]) {
@@ -1310,11 +1319,9 @@ bool PGModule::match_module_ports_(Design*des, const Module*rmod,
 			delete pins[pidx];
 			pins_fromwc[pidx] = false;
 
-		    // If I already explicitly bound something to
-		    // this port, then the pins array will already
-		    // have a pointer value where I want to place this
-		    // expression.
-		  } else if (pins[pidx]) {
+		    // An explicit binding is recorded by either an
+		    // expression or the explicitly unconnected flag.
+		  } else if (pins[pidx] || pins_is_explicitly_not_connected[pidx]) {
 			cerr << get_fileline() << ": error: port ``" <<
 			      pins_[idx].name << "'' already bound." <<
 			      endl;
@@ -1751,10 +1758,10 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		  continue;
 	    }
 
-	      // If the port is unconnected, substitute the default
-	      // value. The parser ensures that a default value only
-	      // exists for input ports.
-	    if (pins[idx] == 0) {
+	      // Substitute the default for an omitted input connection,
+	      // but leave an explicit empty named connection unconnected.
+	      // The parser only allows defaults for input ports.
+	    if (pins[idx] == nullptr && !pins_is_explicitly_not_connected[idx]) {
 		  PExpr*default_value = rmod->get_port_default_value(idx);
 		  if (default_value) {
 			pins[idx] = default_value;
@@ -1762,9 +1769,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		  }
 	    }
 
-	      // Skip unconnected module ports. This happens when a
-	      // null parameter is passed in and there is no default
-	      // value.
+	      // Skip unconnected module ports.
 	    if (pins[idx] == 0) {
 
 		  if (pins_fromwc[idx]) {
@@ -6428,17 +6433,14 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 	    stat = new NetBlock(NetBlock::SEQU, 0);
       if (stat == 0) return 0;
 
-	// If the expression is a constant, handle certain special
-	// iteration counts.
+	// Elide loops that have no iterations. Keep single iterations to
+	// preserve the loop targets of break and continue statements.
       if (const NetEConst*ce = dynamic_cast<NetEConst*>(expr)) {
 	    long val = ce->value().as_long();
 	    if (val <= 0) {
 		  delete expr;
 		  delete stat;
 		  return new NetBlock(NetBlock::SEQU, 0);
-	    } else if (val == 1) {
-		  delete expr;
-		  return stat;
 	    }
       }
 
@@ -6908,10 +6910,11 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 					       conditional, !full_flag_);
 	    path->set_line(*this);
 
-	      // The presence of the data_source_expression indicates
-	      // that this is an edge sensitive path. If so, then set
-	      // the edges. Note that edge==0 is BOTH edges.
-	    if (data_source_expression) {
+	      // An edge sensitive path has either a data source
+	      // expression or an explicit edge keyword. When neither is
+	      // present the path is a simple (non-edge) path. Note that
+	      // edge==0 with a data source expression is BOTH edges.
+	    if (data_source_expression || edge != 0) {
 		  if (edge >= 0) path->set_posedge();
 		  if (edge <= 0) path->set_negedge();
 	    }

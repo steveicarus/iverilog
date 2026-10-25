@@ -1,0 +1,10 @@
+{
+    "type"          : "normal",
+    "source"        : "vpi_enum_constant_signedness.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vpi-sources"   : [ "vpi/enum_constant_value.c" ],
+    "vlog95" : {
+        "__comment" : "The translated design has no enum typespecs for the VPI lookup",
+        "type"      : "NI"
+    }
+}

@@ -293,10 +293,31 @@ static void real_ex_pop(ivl_expr_t expr)
 
 static void draw_sfunc_real(ivl_expr_t expr)
 {
+      unsigned parm_count = ivl_expr_parms(expr);
+
+      if ((strcmp(ivl_expr_name(expr), "$ivl_uparr_method$sum_real") == 0 ||
+           strcmp(ivl_expr_name(expr), "$ivl_uparr_method$product_real") == 0) &&
+          parm_count == 1) {
+	    ivl_expr_t arg = ivl_expr_parm(expr, 0);
+	    const char* op = strcmp(ivl_expr_name(expr), "$ivl_uparr_method$product_real") == 0
+	                            ? "product"
+	                            : "sum";
+	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
+		  fprintf(stderr, "%s:%u: Sorry: No support for '%s' from a class.\n",
+		          ivl_expr_file(expr), ivl_expr_lineno(expr), op);
+		  vvp_errors += 1;
+		  return;
+	    }
+	    assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
+	    fprintf(vvp_out, "    %%uparr/%s/r v%p_0;\n",
+	            op, ivl_expr_signal(arg));
+	    return;
+      }
+
       switch (ivl_expr_value(expr)) {
 
 	  case IVL_VT_REAL:
-	    if (ivl_expr_parms(expr) == 0) {
+	    if (parm_count == 0) {
 		  fprintf(vvp_out, "    %%vpi_func/r %u %u \"%s\" {0 0 0};\n",
 			  ivl_file_table_index(ivl_expr_file(expr)),
 			  ivl_expr_lineno(expr), ivl_expr_name(expr));
@@ -363,72 +384,34 @@ static void draw_signal_real(ivl_expr_t expr)
       }
 }
 
-/* If we have nested ternary operators they are likely tail recursive.
- * This code is structured to allow this recursion without overflowing
- * the available thread words. */
-static void draw_ternary_real(ivl_expr_t expr)
-{
-      ivl_expr_t cond = ivl_expr_oper1(expr);
-      ivl_expr_t true_ex = ivl_expr_oper2(expr);
-      ivl_expr_t false_ex = ivl_expr_oper3(expr);
-
-      unsigned lab_false = local_count++;
-      unsigned lab_out = local_count++;
-
-      fprintf(vvp_out, "; Start of ternary condition expr.\n");
-      int use_flag = draw_eval_condition(cond);
-
-	/* The condition flag is used after possibly other statements,
-	   so we need to put it into a non-common place. Allocate a
-	   safe flag bit and move the condition to the flag position. */
-      if (use_flag < 8) {
-            int tmp_flag = allocate_flag();
-            assert(tmp_flag >= 8);
-            fprintf(vvp_out, "    %%flag_mov %d, %d;\n", tmp_flag, use_flag);
-            use_flag = tmp_flag;
-      }
-
-	/* If the condition is just false then we only need to calculate
-	   the false expression. */
-      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_false, use_flag);
-      fprintf(vvp_out, "; Start of true expr.\n");
-      draw_eval_real(true_ex);
-
-	/* If the condition is true, then we only need the true expression. */
-      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
-      fprintf(vvp_out, "T_%u.%u; Start of false expr.\n", thread_count, lab_false);
-      draw_eval_real(false_ex);
-
-	/* If the condition is false, then we only need the false expression. */
-      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
-
-	/* This handles the case that the condition is undefined (x/z). */
-      fprintf(vvp_out, "    %%blend/wr;\n");
-      fprintf(vvp_out, "T_%u.%u; End of ternary.\n", thread_count, lab_out);
-
-      clr_flag(use_flag);
-}
-
 static void increment(ivl_expr_t e, bool pre)
 {
       ivl_signal_t sig = ivl_expr_signal(e);
-      fprintf(vvp_out, "    %%load/real v%p_0;\n", sig);
+      draw_eval_real(e);
       if (!pre) fprintf(vvp_out, "    %%dup/real;\n");
       fprintf(vvp_out, "    %%pushi/real 1, 0x1000;\n");
       fprintf(vvp_out, "    %%add/wr;\n");
       if ( pre) fprintf(vvp_out, "    %%dup/real;\n");
-      fprintf(vvp_out, "    %%store/real v%p_0;\n", sig);
+      if (signal_is_return_value(sig)) {
+	    fprintf(vvp_out, "    %%ret/real 0;\n");
+      } else {
+	    fprintf(vvp_out, "    %%store/real v%p_0;\n", sig);
+      }
 }
 
 static void decrement(ivl_expr_t e, bool pre)
 {
       ivl_signal_t sig = ivl_expr_signal(e);
-      fprintf(vvp_out, "    %%load/real v%p_0;\n", sig);
+      draw_eval_real(e);
       if (!pre) fprintf(vvp_out, "    %%dup/real;\n");
       fprintf(vvp_out, "    %%pushi/real 1, 0x1000;\n");
       fprintf(vvp_out, "    %%sub/wr;\n");
       if ( pre) fprintf(vvp_out, "    %%dup/real;\n");
-      fprintf(vvp_out, "    %%store/real v%p_0;\n", sig);
+      if (signal_is_return_value(sig)) {
+	    fprintf(vvp_out, "    %%ret/real 0;\n");
+      } else {
+	    fprintf(vvp_out, "    %%store/real v%p_0;\n", sig);
+      }
 }
 
 static void draw_unary_real(ivl_expr_t expr)
@@ -547,11 +530,11 @@ void draw_eval_real(ivl_expr_t expr)
 	    break;
 
 	  case IVL_EX_TERNARY:
-	    draw_ternary_real(expr);
+	    draw_eval_ternary(expr, draw_eval_real, "%blend/wr");
 	    break;
 
 	  case IVL_EX_UFUNC:
-	    draw_ufunc_real(expr);
+	    draw_ufunc(expr);
 	    break;
 
 	  case IVL_EX_UNARY:

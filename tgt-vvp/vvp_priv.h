@@ -90,9 +90,7 @@ extern void draw_lpm_substitute(ivl_lpm_t net);
    plain array-to-array assignment and for passing an array to a subroutine. */
 extern int draw_array_copy(ivl_signal_t dst, ivl_expr_t rval);
 
-extern void draw_ufunc_vec4(ivl_expr_t expr);
-extern void draw_ufunc_real(ivl_expr_t expr);
-extern void draw_ufunc_string(ivl_expr_t expr);
+extern void draw_ufunc(ivl_expr_t expr);
 extern void draw_ufunc_object(ivl_expr_t expr);
 
 extern char* process_octal_codes(const char*txt, unsigned wid);
@@ -196,6 +194,20 @@ extern void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix);
  * operand for conditional jump instructions.
  */
 extern int draw_eval_condition(ivl_expr_t expr);
+
+/*
+ * Evaluate a comparison and return the flag containing its result.
+ * Vector callers can copy this flag onto the expression stack.
+ */
+extern int draw_eval_compare(ivl_expr_t expr);
+
+/*
+ * Evaluate a ternary using draw_eval for its branches and blend to combine
+ * their results when the condition is unknown. Both must use the same
+ * expression stack.
+ */
+extern void draw_eval_ternary(ivl_expr_t expr, void(*draw_eval)(ivl_expr_t),
+                              const char*blend);
 
 /*
  * Return true if the signal is the return value of a function.

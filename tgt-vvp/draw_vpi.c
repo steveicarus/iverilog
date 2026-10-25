@@ -187,6 +187,12 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 	    if (ivl_expr_type(vexpr) != IVL_EX_SIGNAL &&
 	        ivl_expr_type(vexpr) != IVL_EX_SELECT) return 0;
 
+	      /* Return values have no signal handle for a part select. */
+	    if (ivl_expr_type(vexpr) == IVL_EX_SIGNAL &&
+		signal_is_return_value(ivl_expr_signal(vexpr))) {
+		  return 0;
+	    }
+
 	      /* If the expression is a substring expression, then
 		 the xPV method of passing the argument will not work
 		 and we have to resort to the default method. */
@@ -315,21 +321,27 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		case IVL_EX_NUMBER: {
 		  if (( par = ivl_expr_parameter(expr) )) {
 			snprintf(buffer, sizeof buffer, "P_%p", par);
+			args[idx].text = strdup(buffer);
 		  } else {
 			unsigned bit, wid = ivl_expr_width(expr);
 			const char*bits = ivl_expr_bits(expr);
+			size_t prefix_len, needed_len;
 			char*dp;
 
-			snprintf(buffer, sizeof buffer, "%u'%sb",
-			         wid, ivl_expr_signed(expr)? "s" : "");
-			dp = buffer + strlen(buffer);
+			  /* The literal can be arbitrarily wide, so size
+			     the text to fit the width prefix plus one
+			     character per bit and the terminating nul. */
+			prefix_len = snprintf(buffer, sizeof buffer, "%u'%sb",
+			                      wid, ivl_expr_signed(expr)? "s" : "");
+			needed_len = prefix_len + wid + 1;
+			args[idx].text = malloc(needed_len);
+			memcpy(args[idx].text, buffer, prefix_len);
+			dp = args[idx].text + prefix_len;
 			for (bit = wid ;  bit > 0 ;  bit -= 1)
 			      *dp++ = bits[bit-1];
 			*dp++ = 0;
-			assert(dp >= buffer);
-			assert((unsigned)(dp - buffer) <= sizeof buffer);
+			assert((size_t)(dp - args[idx].text) == needed_len);
 		  }
-		  args[idx].text = strdup(buffer);
 		  continue;
 		}
 

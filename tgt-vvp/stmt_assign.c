@@ -140,14 +140,17 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
 	    assert(use_word == 0);
 	    assert(part_off == 0);
-	    assert(!signal_is_return_value(sig)); // NOT IMPLEMENTED
 
 	    slice->type = SLICE_PART_SELECT_DYNAMIC;
 
 	    slice->u_.part_select_dynamic.word_idx_reg = allocate_word();
 	    slice->u_.part_select_dynamic.x_flag = allocate_flag();
 
-	    fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
+	    if (signal_is_return_value(sig)) {
+		  fprintf(vvp_out, "    %%retload/vec4 0;\n");
+	    } else {
+		  fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
+	    }
 	    draw_eval_vec4(part_off_ex);
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
 	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", slice->u_.part_select_dynamic.word_idx_reg);
@@ -1259,11 +1262,16 @@ static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
 	                    max_elems, ivl_signal_basename(var), max_size, max_size);
 	    max_elems = max_size;
       }
-      for (idx = 0 ; idx < max_elems ; idx += 1) {
+	/* Discard excess values only after evaluating their expressions. */
+      for (idx = 0 ; idx < ivl_expr_parms(rval) ; idx += 1) {
 	    switch (ivl_type_base(element_type)) {
 		case IVL_VT_BOOL:
 		case IVL_VT_LOGIC:
 		  draw_eval_vec4(ivl_expr_parm(rval,idx));
+		  if (idx >= max_elems) {
+			fprintf(vvp_out, "    %%pop/vec4 1;\n");
+			break;
+		  }
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%store/qdar/v v%p_0, %d, %u;\n", var, max_idx,
@@ -1272,6 +1280,10 @@ static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
 
 		case IVL_VT_REAL:
 		  draw_eval_real(ivl_expr_parm(rval,idx));
+		  if (idx >= max_elems) {
+			fprintf(vvp_out, "    %%pop/real 1;\n");
+			break;
+		  }
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%store/qdar/r v%p_0, %d;\n", var, max_idx);
@@ -1279,6 +1291,10 @@ static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
 
 		case IVL_VT_STRING:
 		  draw_eval_string(ivl_expr_parm(rval,idx));
+		  if (idx >= max_elems) {
+			fprintf(vvp_out, "    %%pop/str 1;\n");
+			break;
+		  }
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%store/qdar/str v%p_0, %d;\n", var, max_idx);
@@ -1482,7 +1498,7 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		 variable. */
 	    errors += draw_eval_object(rval);
 
-	    if (ivl_signal_array_count(sig) > 1) {
+	    if (ivl_signal_dimensions(sig) > 0) {
 		  unsigned ix;
 		  ivl_expr_t aidx = ivl_lval_idx(lval);
 

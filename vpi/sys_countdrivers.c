@@ -157,9 +157,13 @@ static PLI_INT32 sys_countdrivers_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       arg = vpi_scan(argv);
       assert(arg);
       if (vpi_get(vpiType, arg) == vpiPartSelect) {
+	    PLI_INT32 left, right;
             idx = vpi_get(vpiLeftRange, arg);
             arg = vpi_handle(vpiParent, arg);
             assert(arg);
+	    left = vpi_get(vpiLeftRange, arg);
+	    right = vpi_get(vpiRightRange, arg);
+	    idx = left >= right ? idx - right : right - idx;
       }
 
         /* Get the net driver counts from the runtime. */

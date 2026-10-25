@@ -507,7 +507,25 @@ static unsigned emit_assign_and_opt_opcode(ivl_scope_t scope, ivl_statement_t st
       }
       fprintf(vlog_out, " = ");
       if (opcode) {
+	      /* Signed packed members are emitted as unsigned part selects.
+	       * Cast only for arithmetic right shifts and signed non-shift
+	       * operations. The other operations produce the same result
+	       * with an unsigned member read. */
+	    unsigned cast_signed = ivl_stmt_lvals(stmt) == 1 &&
+		  ivl_lval_part_off(ivl_stmt_lval(stmt, 0)) &&
+		  (opcode == 'R' ||
+		   (opcode != 'l' && opcode != 'r' && ivl_expr_signed(rval)));
+	    if (cast_signed) {
+		  fprintf(vlog_out, "$signed(");
+		  if (!allow_signed) {
+			fprintf(stderr, "%s:%u: vlog95 error: $signed() is not "
+				"supported.\n", ivl_stmt_file(stmt),
+				ivl_stmt_lineno(stmt));
+			vlog_errors += 1;
+		  }
+	    }
 	    unsigned twid = emit_stmt_lval(scope, stmt);
+	    if (cast_signed) fprintf(vlog_out, ")");
 	    assert(twid == wid);
 	    fprintf(vlog_out, " %s ", opcode_str);
 	      /* The >>>= assignment operator is only allowed when the allow

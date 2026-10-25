@@ -1433,14 +1433,9 @@ NetArrayDq::NetArrayDq(NetScope*s, perm_string n, NetNet*mem__, unsigned awid)
 {
       pin(0).set_dir(Link::OUTPUT); // Result
       pin(1).set_dir(Link::INPUT);  // Address
-	// Increment the expression reference count for the target
-	// memory so that it is not deleted underneath me.
-      mem_->incr_eref();
 }
 
-NetArrayDq::~NetArrayDq()
-{
-}
+NetArrayDq::~NetArrayDq() = default;
 
 unsigned NetArrayDq::width() const
 {
@@ -1454,7 +1449,7 @@ unsigned NetArrayDq::awidth() const
 
 const NetNet* NetArrayDq::mem() const
 {
-      return mem_;
+      return mem_.get();
 }
 
 Link& NetArrayDq::pin_Result()
@@ -2417,14 +2412,12 @@ const NetScope* NetEScope::scope() const
 NetESignal::NetESignal(NetNet*n)
 : NetExpr(n->net_type()), net_(n)
 {
-      net_->incr_eref();
       set_line(*n);
 }
 
 NetESignal::NetESignal(NetNet*n, NetExpr*w)
 : NetExpr(n->vector_width()), net_(n), word_(w)
 {
-      net_->incr_eref();
       set_line(*n);
 
       if (word_)
@@ -2433,10 +2426,7 @@ NetESignal::NetESignal(NetNet*n, NetExpr*w)
 	    set_net_type(net_->array_type());
 }
 
-NetESignal::~NetESignal()
-{
-      net_->decr_eref();
-}
+NetESignal::~NetESignal() = default;
 
 perm_string NetESignal::name() const
 {
@@ -2455,12 +2445,12 @@ unsigned NetESignal::vector_width() const
 
 const NetNet* NetESignal::sig() const
 {
-      return net_;
+      return net_.get();
 }
 
 NetNet* NetESignal::sig()
 {
-      return net_;
+      return net_.get();
 }
 
 /*

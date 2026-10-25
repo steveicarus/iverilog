@@ -148,32 +148,51 @@ int show_stmt_forloop(ivl_statement_t net, ivl_scope_t scope)
 int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
-      unsigned lab_top = local_count++, lab_out = local_count++;
       ivl_expr_t expr = ivl_stmt_cond_expr(net);
       const char *sign = ivl_expr_signed(expr) ? "s" : "u";
-
-      unsigned save_break_label, save_continue_label;
-      PUSH_JUMPS(lab_out, lab_top);
+      unsigned int width = ivl_expr_width(expr);
 
       show_stmt_file_line(net, "Repeat statement.");
 
 	/* Calculate the repeat count onto the top of the vec4 stack. */
       draw_eval_vec4(expr);
 
-	/* Test that 0 < expr, escape if expr <= 0. If the expr is
-	   unsigned, then we only need to try to escape if expr==0 as
-	   it will never be <0. */
-      fprintf(vvp_out, "T_%u.%u %%dup/vec4;\n", thread_count, lab_top);
-      fprintf(vvp_out, "    %%cmpi/%s 0, 0, %u;\n", sign, ivl_expr_width(expr));
-      if (ivl_expr_signed(expr))
+	/*
+	 * A signed one-bit count cannot be positive. Keep the expression
+	 * evaluation for its side effects, but omit the loop.
+	 */
+      if (ivl_expr_signed(expr) && width == 1) {
+	    fprintf(vvp_out, "    %%pop/vec4 1;\n");
+	    return 0;
+      }
+
+      unsigned int lab_top = local_count++, lab_cont = local_count++;
+      unsigned int lab_out = local_count++;
+      unsigned int save_break_label, save_continue_label;
+      PUSH_JUMPS(lab_out, lab_cont);
+
+      fprintf(vvp_out, "    %%dup/vec4;\n");
+      if (ivl_expr_signed(expr) || ivl_expr_value(expr) != IVL_VT_BOOL) {
+	      /*
+	       * Reject nonpositive or undefined counts before entering the loop.
+	       */
+	    fprintf(vvp_out, "    %%cmpi/%s 1, 0, %u;\n", sign, width);
 	    fprintf(vvp_out, "    %%jmp/1xz T_%u.%u, 5;\n", thread_count, lab_out);
-      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n", thread_count, lab_out);
-	/* This adds -1 (all ones in 2's complement) to the count. */
-      fprintf(vvp_out, "    %%subi 1, 0, %u;\n",  ivl_expr_width(expr));
+      } else {
+	      /* Unsigned 2-state counts only need an equality check. */
+	    fprintf(vvp_out, "    %%cmpi/e 0, 0, %u;\n", width);
+	    fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n", thread_count, lab_out);
+      }
+	/* Decrement before the body so continue can jump to the loop test. */
+      fprintf(vvp_out, "T_%u.%u %%subi 1, 0, %u;\n",
+	      thread_count, lab_top, width);
 
       rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
 
-      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
+	/* Decrementing a defined positive count can only reach zero. */
+      fprintf(vvp_out, "T_%u.%u %%dup/vec4;\n", thread_count, lab_cont);
+      fprintf(vvp_out, "    %%cmpi/e 0, 0, %u;\n", width);
+      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, 4;\n", thread_count, lab_top);
       fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
       fprintf(vvp_out, "    %%pop/vec4 1;\n");
 

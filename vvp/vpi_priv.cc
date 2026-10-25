@@ -856,13 +856,13 @@ void vpip_vec2_get_value(const vvp_vector2_t&word_val, unsigned width,
 	  case vpiSuppressVal:
 	    break;
 
-	  case vpiObjTypeVal:
-	    vp->format = vpiIntVal;
-	    // fallthrough
 	  case vpiIntVal:
 	    vector2_to_value(word_val, vp->value.integer, signed_flag);
 	    break;
 
+	  case vpiObjTypeVal:
+	    vp->format = vpiVectorVal;
+	    // fallthrough
 	  case vpiVectorVal: {
 		unsigned hwid = (width + 31)/32;
 
