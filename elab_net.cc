@@ -925,8 +925,10 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       if (sig->type() == NetNet::UNRESOLVED_WIRE) {
 	    ivl_assert(*this, widx_flag || (widx == 0));
 	    long wcount = widx_flag ? 1 : sig->pin_count();
+	      // Bits outside the declaration do not have driver-mask entries.
+	    unsigned driven_midx = min<unsigned>(midx, sig->vector_width()-1);
 	    for (long idx = 0; idx < wcount; idx += 1) {
-		  if (sig->test_and_set_part_driver(midx, lidx, widx + idx)) {
+		  if (sig->test_and_set_part_driver(driven_midx, lidx, widx + idx)) {
 			cerr << get_fileline() << ": error: ";
 			if (sig->coerced_to_uwire())
 			      cerr << "Variable '";
@@ -964,13 +966,11 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    return sig;
       }
 
-	/* If the desired l-value vector is narrower than the
-	   signal itself, then use a NetPartSelect node to
-	   arrange for connection to the desired bits. All this
-	   can be skipped if the desired width matches the
-	   original vector. */
+	/* Use a NetPartSelect node unless the l-value covers the
+	   whole signal at offset zero. A select with the same width
+	   can still be offset and extend beyond the signal. */
 
-      if (subnet_wid != sig->vector_width()) {
+      if (subnet_wid != sig->vector_width() || lidx != 0) {
 	      /* If we are processing a tran or inout, then the
 		 partselect is bi-directional. Otherwise, it is a
 		 Part-to-Vector select. */
@@ -991,22 +991,50 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    subsig->local_flag(true);
 	    subsig->set_line(*this);
 
+	      // Keep the full l-value width for sizing the r-value, but
+	      // connect only the bits that fit in the destination. The
+	      // part-to-vector devices require an in-range input width.
+	    unsigned part_wid = min<unsigned>(subnet_wid, sig->vector_width()-lidx);
+	    NetNet*part_sig = subsig;
+	    if (part_wid < subnet_wid) {
+		  const netvector_t*part_vec = new netvector_t(sig->data_type(),
+		                                                part_wid-1, 0);
+		  part_sig = new NetNet(sig->scope(), scope->local_symbol(),
+		                       NetNet::WIRE, part_vec);
+		  part_sig->local_flag(true);
+		  part_sig->set_line(*this);
+		  if (bidirectional_flag) {
+			NetTran*trim = new NetTran(scope, scope->local_symbol(),
+			                            subnet_wid, part_wid, 0);
+			trim->set_line(*this);
+			des->add_node(trim);
+			connect(trim->pin(0), subsig->pin(0));
+			connect(trim->pin(1), part_sig->pin(0));
+		  } else {
+			NetPartSelect*trim = new NetPartSelect(subsig, 0, part_wid,
+			                                     NetPartSelect::VP);
+			trim->set_line(*this);
+			des->add_node(trim);
+			connect(trim->pin(0), part_sig->pin(0));
+		  }
+	    }
+
 	    if (bidirectional_flag) {
 		    // Make a tran(VP)
 		  NetTran*sub = new NetTran(scope, scope->local_symbol(),
 					    sig->vector_width(),
-					    subnet_wid, lidx);
+					    part_wid, lidx);
 		  sub->set_line(*this);
 		  des->add_node(sub);
 		  connect(sub->pin(0), sig->pin(0));
-		  connect(sub->pin(1), subsig->pin(0));
+		  connect(sub->pin(1), part_sig->pin(0));
 
 	    } else {
-		  NetPartSelect*sub = new NetPartSelect(sig, lidx, subnet_wid,
+		  NetPartSelect*sub = new NetPartSelect(sig, lidx, part_wid,
 							NetPartSelect::PV);
 		  des->add_node(sub);
 		  sub->set_line(*this);
-		  connect(sub->pin(0), subsig->pin(0));
+		  connect(sub->pin(0), part_sig->pin(0));
 		  collapse_partselect_pv_to_concat(des, sig);
 	    }
 	    sig = subsig;

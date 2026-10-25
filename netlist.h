@@ -730,7 +730,7 @@ class NetNet  : public NetObj, public PortType {
         // This method returns true if we have changed the net type from being
         // a variable to being an unresolved wire. This happens in SystemVerilog
         // when we find a continuous assignment to a variable.
-      bool coerced_to_uwire() { return coerced_to_uwire_; }
+      bool coerced_to_uwire() const { return coerced_to_uwire_; }
 
       PortType port_type() const;
       void port_type(PortType t);
