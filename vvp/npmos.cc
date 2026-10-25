@@ -173,6 +173,19 @@ void vvp_fun_cmos_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t &bit,
       generate_output_(ptr);
 }
 
+void vvp_fun_cmos_::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
+{
+      if (ptr.port() == 1 || ptr.port() == 2) {
+	    recv_vec4(ptr, reduce4(bit), nullptr);
+	    return;
+      }
+
+      if (ptr.port() != 0) return;
+
+      bit_ = bit;
+      generate_output_(ptr);
+}
+
 void vvp_fun_cmos_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 			         unsigned base, unsigned vwid, vvp_context_t ctx)
 {
@@ -234,35 +247,7 @@ vvp_fun_cmos::vvp_fun_cmos()
 {
 }
 
-void vvp_fun_cmos::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
-{
-      if (ptr.port() == 1 || ptr.port() == 2) {
-	    recv_vec4(ptr, reduce4(bit), 0);
-	    return;
-      }
-
-      if (ptr.port() != 0)
-	    return;
-
-      bit_ = bit;
-      generate_output_(ptr);
-}
-
 vvp_fun_rcmos::vvp_fun_rcmos()
 : vvp_fun_cmos_(true)
 {
-}
-
-void vvp_fun_rcmos::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
-{
-      if (ptr.port() == 1 || ptr.port() == 2) {
-	    recv_vec4(ptr, reduce4(bit), 0);
-	    return;
-      }
-
-      if (ptr.port() != 0)
-	    return;
-
-      bit_ = bit;
-      generate_output_(ptr);
 }
