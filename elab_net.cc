@@ -727,7 +727,10 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  }
 		  ivl_assert(*this, tmp_index.size() == 1);
 		  const index_component_t&tail_sel = tmp_index.back();
-		  ivl_assert(*this, tail_sel.sel == index_component_t::SEL_PART || tail_sel.sel == index_component_t::SEL_BIT);
+		  ivl_assert(*this, tail_sel.sel == index_component_t::SEL_PART ||
+				    tail_sel.sel == index_component_t::SEL_BIT ||
+				    tail_sel.sel == index_component_t::SEL_IDX_UP ||
+				    tail_sel.sel == index_component_t::SEL_IDX_DO);
 		  long tmp_off;
 		  unsigned long tmp_wid;
 		  bool rc = calculate_part(this, des, scope, tail_sel, tmp_off, tmp_wid);
