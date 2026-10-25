@@ -147,9 +147,14 @@ void compile_enum2_type(char*label, long width, bool signed_flag,
       size_t idx = 0;
       for (list<struct enum_name_s>::iterator cur = names->begin()
 		 ; cur != names->end() ;  ++cur, ++idx) {
-	    assert(cur->val4 == 0);
 	    spec->names[idx].name = cur->text;
-	    spec->names[idx].val2 = vvp_vector2_t(cur->val2, width);
+	    if (cur->val4) {
+		  spec->names[idx].val2 = vvp_vector2_t(vector4_from_text(cur->val4, width));
+		  free(cur->val4);
+		  cur->val4 = 0;
+	    } else {
+		  spec->names[idx].val2 = vvp_vector2_t(cur->val2, width);
+	    }
 	    spec->names[idx].is_signed = signed_flag;
       }
 
