@@ -1,0 +1,5 @@
+{
+    "type"   : "normal",
+    "source" : "scope_fullname_long.v",
+    "iverilog-args" : [ "-pRECURSIVE_MOD_LIMIT=100" ]
+}
