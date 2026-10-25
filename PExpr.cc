@@ -25,6 +25,7 @@
 
 # include  "compiler.h"
 # include  "PExpr.h"
+# include  "PGenerate.h"
 # include  "PPackage.h"
 # include  "PWire.h"
 # include  "Module.h"
@@ -473,6 +474,15 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
                         return;
                   if (find_enum_constant(ss, name))
                         return;
+                  /* The index of a generate loop is an implicit
+                     localparam inside the loop body. When it was
+                     declared in the loop header (for (genvar i = ...)),
+                     it is not in the genvars of any enclosing scope. */
+                  if (const PGenerate*gen = dynamic_cast<const PGenerate*>(ss)) {
+                        if (gen->scheme_type == PGenerate::GS_LOOP
+                            && gen->loop_index == name)
+                              return;
+                  }
                   /* Strictly speaking, we should also check for name clashes
                      with tasks, functions, named blocks, module instances,
                      and generate blocks. However, this information is not
