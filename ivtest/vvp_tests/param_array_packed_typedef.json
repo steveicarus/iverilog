@@ -1,5 +1,9 @@
 {
     "type"          : "normal",
     "source"        : "param_array_packed_typedef.v",
-    "iverilog-args" : [ "-g2005-sv" ]
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+
 }
