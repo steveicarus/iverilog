@@ -5437,6 +5437,13 @@ ivl_type_t PEIdent::resolve_type_(Design *des, const symbol_search_results &sr,
 			if (index_depth < array_size)
 			      return type;
 
+			// A part select of a packed array selects bits, not
+			// an element
+			auto last = std::next(index, array_size - 1);
+			if (dynamic_cast<const netparray_t*>(array)
+			    && last->sel != index_component_t::SEL_BIT)
+			      return type;
+
 			index_depth -= array_size;
 			while (array_size--)
 			      index++;
