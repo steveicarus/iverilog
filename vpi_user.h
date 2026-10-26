@@ -293,13 +293,6 @@ typedef struct t_vpi_delay  {
 #define vpiPathTerm    43
 #define vpiPort        44
 #define vpiPortBit     45
-/* vpiHighConn/vpiLowConn are the IEEE 1364 port-connection relationships.
-   Icarus uses its own constant numbering, so these take the next free
-   values rather than the standard 89/90 (already used here for other
-   relationships). vpiLowConn is the net inside the module (the formal),
-   vpiHighConn the net outside (the actual). */
-#define vpiHighConn    135
-#define vpiLowConn     136
 #define vpiRealVar     47
 #define vpiReg         48
 #define vpiRegBit      49
@@ -310,8 +303,10 @@ typedef struct t_vpi_delay  {
 #define vpiUdpDefn     66
 #define vpiUserSystf   67
 #define vpiNetArray   114
+#define vpiHighConn    76
 #define vpiIndex       78
 #define vpiLeftRange   79
+#define vpiLowConn     80
 #define vpiParent      81
 #define vpiRightRange  83
 #define vpiScope       84
