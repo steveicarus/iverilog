@@ -18,7 +18,8 @@ module main;
    initial begin
       ival = 'hx3x2x1x0;
       #1 $display("ival = %h, oval = %h", ival, oval);
-      if (oval !== 64'hzzzzzzzzxcxdxexf) begin
+      // Unassigned packed-variable elements retain their default X.
+      if (oval !== 64'hxxxxxxxxxcxdxexf) begin
 	 $display("FAILED -- oval=%h", oval);
 	 $finish;
       end
