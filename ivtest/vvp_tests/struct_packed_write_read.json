@@ -1,5 +1,9 @@
 {
     "type"   : "normal",
     "source" : "struct_packed_write_read.v",
-    "iverilog-args" : [ "-g2009" ]
+    "iverilog-args" : [ "-g2009" ],
+    "vlog95" : {
+        "__comment"     : "variables are cast to wires",
+        "type"          : "EF"
+    }
 }
