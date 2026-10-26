@@ -545,7 +545,8 @@ class PEIdent : public PExpr {
 					  unsigned long elem_w,
 					  bool packed_layout,
 					  NetExpr*sel,
-					  perm_string name) const;
+					  perm_string name,
+					  long slice_off =0) const;
       NetExpr*elaborate_expr_param_uarray_(Design*des,
 					   NetScope*scope,
 					   const NetEConst*par_ex,
