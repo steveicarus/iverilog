@@ -259,7 +259,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 				        bool is_force, bool is_cassign,
 					NetNet *reg, ivl_type_t data_type,
-					const pform_name_t tail_path) const
+					const pform_name_t member_path) const
 {
 	// We are processing the tail of a string of names. For
 	// example, the Verilog may be "a.b.c", so we are processing
@@ -285,34 +285,34 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 
 	// If we find that the matched variable is a packed struct,
 	// then we can handled it with the net_packed_member_ method.
-      if (reg->struct_type() && !tail_path.empty()) {
+      if (reg->struct_type() && !member_path.empty()) {
 	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_packed_member_(des, scope, lv, tail_path, is_force);
+	    elaborate_lval_net_packed_member_(des, scope, lv, member_path, is_force);
 	    return lv;
       }
 
 	// If the variable is a class object, then handle it with the
 	// net_class_member_ method.
       const netclass_t *class_type = dynamic_cast<const netclass_t *>(data_type);
-      if (class_type && !tail_path.empty() && gn_system_verilog())
+      if (class_type && !member_path.empty() && gn_system_verilog())
 	    return elaborate_lval_net_class_member_(des, scope, is_force,
 						   is_cassign, class_type,
-						   reg, tail_path);
+						   reg, member_path);
 
 
 	// Past this point, we should have taken care of the cases
 	// where the name is a member/method of a struct/class.
 	// XXXX ivl_assert(*this, method_name.nil());
-      if (!tail_path.empty()) {
+      if (!member_path.empty()) {
 	    cerr << get_fileline() << ": error: Variable "
 		 << reg->name()
 		 << " does not have a field named: "
-		 << tail_path << "." << endl;
+		 << member_path << "." << endl;
 	    des->errors += 1;
 	    return nullptr;
       }
 
-      ivl_assert(*this, tail_path.empty());
+      ivl_assert(*this, member_path.empty());
 
       bool need_const_idx = is_cassign || is_force;
 
