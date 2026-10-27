@@ -284,10 +284,26 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 	    return elaborate_lval_array_(des, scope, is_force, reg);
       }
 
+      bool need_const_idx = is_cassign || is_force;
+
+      NetAssign_*lv = nullptr;
+      if (reg->unpacked_dimensions() > 0) {
+	    lv = elaborate_lval_net_word_(des, scope, reg, base_path, need_const_idx, is_force);
+      } else if (reg->get_scalar() && use_sel != index_component_t::SEL_NONE) {
+	    cerr << get_fileline() << ": error: can not select part of ";
+	    if (reg->data_type() == IVL_VT_REAL) cerr << "real: ";
+	    else cerr << "scalar: ";
+	    cerr << reg->name() << endl;
+	    des->errors += 1;
+      } else {
+	    lv = new NetAssign_(reg);
+      }
+      if (lv == nullptr)
+	    return nullptr;
+
 	// If we find that the matched variable is a packed struct,
 	// then we can handled it with the net_packed_member_ method.
       if (reg->struct_type() && !member_path.empty()) {
-	    NetAssign_*lv = new NetAssign_(reg);
 	    elaborate_lval_net_packed_member_(des, scope, lv, member_path, is_force);
 	    return lv;
       }
@@ -310,27 +326,11 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 		 << " does not have a field named: "
 		 << member_path << "." << endl;
 	    des->errors += 1;
+	    delete lv;
 	    return nullptr;
       }
 
       ivl_assert(*this, member_path.empty());
-
-      bool need_const_idx = is_cassign || is_force;
-
-      NetAssign_*lv = nullptr;
-      if (reg->unpacked_dimensions() > 0) {
-	    lv = elaborate_lval_net_word_(des, scope, reg, base_path, need_const_idx, is_force);
-      } else if (reg->get_scalar() && use_sel != index_component_t::SEL_NONE) {
-	    cerr << get_fileline() << ": error: can not select part of ";
-	    if (reg->data_type() == IVL_VT_REAL) cerr << "real: ";
-	    else cerr << "scalar: ";
-	    cerr << reg->name() << endl;
-	    des->errors += 1;
-      } else {
-	    lv = new NetAssign_(reg);
-      }
-      if (lv == nullptr)
-	    return nullptr;
 
       if (use_sel == index_component_t::SEL_PART) {
 	    elaborate_lval_net_part_(des, scope, lv, is_force);
@@ -1286,9 +1286,6 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
       ++ name_idx;
       const name_component_t&name_base = *name_idx;
 
-	// Shouldn't be seeing unpacked arrays of packed structs...
-      ivl_assert(*this, reg->unpacked_dimensions() == 0);
-
 	// These make up the "part" select that is the equivilent of
 	// following the member path through the nested structs. To
 	// start with, the off[set] is zero, and use_width is the
@@ -1570,14 +1567,14 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 		 << endl;
       }
 
-	// The dimensions in the expression must match the packed
+	// The dimensions in the expression must match the
 	// dimensions that are declared for the variable. For example,
 	// if foo is a packed array of struct, then this expression
 	// must be "b[n][m]" with the right number of dimensions to
 	// match the declaration of "b".
 	// Note that one of the packed dimensions is the packed struct
 	// itself.
-      ivl_assert(*this, name_base.index.size()+1 == reg->packed_dimensions());
+      ivl_assert(*this, name_base.index.size()+1 == (reg->unpacked_dimensions() + reg->packed_dimensions()));
 
 	// Generate an expression that takes the input array of
 	// expressions and generates a canonical offset into the
