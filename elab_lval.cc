@@ -279,7 +279,7 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 	// Special case: The l-value is an entire memory, or array
 	// slice. Detect the situation by noting if the index count
 	// is less than the array dimensions (unpacked).
-      if (reg->unpacked_dimensions() > name_tail.index.size()) {
+      if (member_path.empty() && reg->unpacked_dimensions() > name_tail.index.size()) {
 	    return elaborate_lval_array_(des, scope, is_force, reg);
       }
 
