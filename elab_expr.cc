@@ -5437,6 +5437,13 @@ ivl_type_t PEIdent::resolve_type_(Design *des, const symbol_search_results &sr,
 			if (index_depth < array_size)
 			      return type;
 
+			// A part select of a packed array selects bits, not
+			// an element
+			auto last = std::next(index, array_size - 1);
+			if (dynamic_cast<const netparray_t*>(array)
+			    && last->sel != index_component_t::SEL_BIT)
+			      return type;
+
 			index_depth -= array_size;
 			while (array_size--)
 			      index++;
@@ -5766,7 +5773,6 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 		  && dynamic_cast<const netsarray_t*>(sr.type)
 		  && !dynamic_cast<const netparray_t*>(sr.type);
 	    bool packed_elem_sel = use_sel == index_component_t::SEL_BIT
-		  && name_tail.index.size() == 1
 		  && dynamic_cast<const netparray_t*>(sr.type);
 	    if (!unpacked_elem_sel && !packed_elem_sel)
 		  return test_width_parameter_(sr.par_val, mode);
@@ -6650,6 +6656,51 @@ static NetExpr* scale_expr_by_const(NetExpr*expr, unsigned long val)
 }
 
 /*
+ * The last index of a select of a multi-dimension packed array parameter
+ * applies to the dimension after the prefix indices, as it does for a
+ * variable. Return the range of that dimension, the width of each of its
+ * elements, and the bit offset of the slice that the prefix indices select.
+ * Any other parameter has only the range that calculate_param_range() finds.
+ */
+static bool calculate_param_slice(const LineInfo&line, Design*des,
+				  NetScope*scope, ivl_type_t par_type,
+				  long length,
+				  const list<index_component_t>&indices,
+				  long&par_msv, long&par_lsv,
+				  long&slice_off, unsigned long&slice_wid)
+{
+      slice_off = 0;
+      slice_wid = 1;
+      if (!par_type || !par_type->packed()
+	  || par_type->slice_dimensions().size() < 2)
+	    return calculate_param_range(line, par_type, par_msv, par_lsv,
+					 length);
+
+	// Every index but the last is a constant prefix that picks one slice,
+	// exactly as for a variable.
+      list<long> prefix_indices;
+      if (!evaluate_index_prefix(des, scope, prefix_indices, indices))
+	    return false;
+
+      const netranges_t dims = par_type->slice_dimensions();
+      if (prefix_indices.size() >= dims.size()) {
+	    cerr << line.get_fileline() << ": error: the number of indices ("
+		 << indices.size()
+		 << ") is greater than the number of dimensions ("
+		 << dims.size()
+		 << ")." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+	// The last index selects within the dimension after the prefix.
+      const netrange_t&last_dim = dims[prefix_indices.size()];
+      par_msv = last_dim.get_msb();
+      par_lsv = last_dim.get_lsb();
+      return prefix_to_slice(dims, prefix_indices, par_lsv, slice_off,
+			     slice_wid);
+}
+
+/*
  * Handle an index select of a multi-dimension packed array parameter, e.g.
  *
  *    localparam logic [0:63][3:0] MEM = '{ ... };
@@ -6659,9 +6710,9 @@ static NetExpr* scale_expr_by_const(NetExpr*expr, unsigned long val)
  * 4-bit slice), not a single bit. The parameter value is a flat packed
  * constant, so this becomes a fixed-width part select of the flat value: for a
  * constant index we fold it directly, otherwise we build an indexed part
- * select over a NetEConstParam. Only the outermost dimension is indexed here
- * (the common ROM/LUT case, `name[idx]`); the selected element keeps the
- * remaining dimensions as its width.
+ * select over a NetEConstParam. For a packed array, slice_off is the bit
+ * offset of the slice that any prefix indices select; the selected element
+ * keeps the remaining dimensions as its width.
  *
  * The flat bit layout differs between packed and unpacked array parameters:
  *   - packed (packed_layout true): the value comes from a concatenation, so
@@ -6677,7 +6728,8 @@ NetExpr* PEIdent::elaborate_expr_param_slice_(const NetEConst*par_ex,
 					      unsigned long elem_w,
 					      bool packed_layout,
 					      NetExpr*sel,
-					      perm_string name) const
+					      perm_string name,
+					      long slice_off) const
 {
       long min_idx = (msb0 <= lsb0) ? msb0 : lsb0;
       long max_idx = (msb0 <= lsb0) ? lsb0 : msb0;
@@ -6690,18 +6742,19 @@ NetExpr* PEIdent::elaborate_expr_param_slice_(const NetEConst*par_ex,
 
 	// Constant index: fold to the selected element bits directly.
       if (const NetEConst*sel_c = dynamic_cast<NetEConst*>(sel)) {
-	    if (! sel_c->value().is_defined()) {
-		  NetEConst*res = new NetEConst(verinum(verinum::Vx, elem_w, true));
-		  res->set_line(*this);
-		  return res;
-	    }
 	    long sel_v = sel_c->value().as_long();
 	      // Canonical element index counting from the LSB end of the flat
 	      // value.
 	    long cidx = packed_layout
 		  ? ((msb0 >= lsb0) ? (sel_v - lsb0) : (lsb0 - sel_v))
 		  : (sel_v - min_idx);
-	    long lsv = cidx * (long)elem_w;
+	    bool index_in_range = cidx >= 0 && cidx <= max_idx - min_idx;
+	    if (! sel_c->value().is_defined() || ! index_in_range) {
+		  NetEConst*res = new NetEConst(verinum(verinum::Vx, elem_w, true));
+		  res->set_line(*this);
+		  return res;
+	    }
+	    long lsv = slice_off + cidx * (long)elem_w;
 	    verinum result = param_part_select_bits(par_ex->value(), elem_w, lsv);
 	    NetEConst*res = new NetEConst(result);
 	    res->set_line(*this);
@@ -6710,9 +6763,12 @@ NetExpr* PEIdent::elaborate_expr_param_slice_(const NetEConst*par_ex,
 
 	// Variable index: build an indexed part select over the flat value.
 	// Normalize the outer index to a canonical element index, then scale
-	// it up to a bit offset by the element width.
+	// it up to a bit offset by the element width. The prefix indices
+	// already moved the start of the slice by slice_off bits.
+      long slice_off_elems = slice_off / (long)elem_w;
       NetExpr*base = packed_layout
-	    ? normalize_variable_base(sel, msb0, lsb0, elem_w, msb0 > lsb0)
+	    ? normalize_variable_base(sel, msb0, lsb0, elem_w, msb0 > lsb0,
+				      slice_off_elems)
 	    : normalize_variable_base(sel, max_idx, min_idx, elem_w, true);
       base = scale_expr_by_const(base, elem_w);
 
@@ -6910,34 +6966,21 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 
 	// An index select of an array parameter selects a whole element, not
 	// a single bit. This applies to a multi-dimension packed array,
-	// e.g. localparam logic [0:63][3:0] MEM = '{...}, to a packed array of
-	// a typedef, e.g. localparam word_t [0:63] MEM = '{...}, and to an
+	// e.g. localparam logic [0:63][3:0] MEM = '{...}, and to an
 	// unpacked array, e.g. localparam logic [3:0] MEM [0:63] = '{...}
 	// (whose value has been flattened to the packed-equivalent constant).
 	// The selected element keeps the remaining dimensions as its width.
-      if (const netvector_t*par_vec = dynamic_cast<const netvector_t*>(par_type)) {
-	    if (par_vec->packed_dims().size() > 1) {
-		  const netranges_t&pdims = par_vec->packed_dims();
-		  long msb0 = pdims[0].get_msb();
-		  long lsb0 = pdims[0].get_lsb();
-		  unsigned long outer_w =
-			(msb0 >= lsb0) ? (unsigned long)(msb0 - lsb0 + 1)
-				       : (unsigned long)(lsb0 - msb0 + 1);
-		  unsigned long elem_w = par_vec->packed_width() / outer_w;
-		  return elaborate_expr_param_slice_(par_ex, found_in,
-						     msb0, lsb0, elem_w,
-						     true, sel, name);
-	    }
-      }
-      if (const netparray_t*par_arr = dynamic_cast<const netparray_t*>(par_type)) {
-	    if (name_tail.index.size() == 1) {
-		  const netrange_t&outer = par_arr->static_dimensions()[0];
-		  unsigned long elem_w = par_arr->packed_width() / outer.width();
-		  return elaborate_expr_param_slice_(par_ex, found_in,
-						     outer.get_msb(),
-						     outer.get_lsb(), elem_w,
-						     true, sel, name);
-	    }
+      if (par_type && par_type->packed()
+	  && par_type->slice_dimensions().size() > 1) {
+	    long msb0, lsb0, slice_off;
+	    unsigned long elem_w;
+	    if (!calculate_param_slice(*this, des, scope, par_type,
+				       par_ex->value().len(), name_tail.index,
+				       msb0, lsb0, slice_off, elem_w))
+		  return 0;
+	    return elaborate_expr_param_slice_(par_ex, found_in, msb0, lsb0,
+					       elem_w, true, sel, name,
+					       slice_off);
       }
       if (const netsarray_t*par_arr = dynamic_cast<const netsarray_t*>(par_type)) {
 	    if (!dynamic_cast<const netparray_t*>(par_arr)) {
@@ -7046,9 +7089,12 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
       ivl_assert(*this, par_ex);
 
 
-      long par_msv, par_lsv;
-      if (! calculate_param_range(*this, par_type, par_msv, par_lsv,
-				  par_ex->value().len())) return 0;
+      long par_msv, par_lsv, slice_off;
+      unsigned long slice_wid;
+      if (! calculate_param_slice(*this, des, scope, par_type,
+				  par_ex->value().len(), path_.back().index,
+				  par_msv, par_lsv, slice_off, slice_wid))
+	    return 0;
 
       if (! parts_defined_flag) {
 	    if (warn_ob_select) {
@@ -7081,7 +7127,10 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      long wid = 1 + labs(msv-lsv);
+	// The range counts elements of the last dimension, each slice_wid
+	// bits wide.
+      long elem_count = 1 + labs(msv-lsv);
+      long wid = elem_count * slice_wid;
 
 	// Watch out for reversed bit numbering. We're making
 	// the part select from LSB to MSB.
@@ -7091,6 +7140,8 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
       } else {
 	    base = lsv - par_lsv;
       }
+	// Convert the element offset into a bit offset within the slice.
+      base = slice_off + base * slice_wid;
 
       if (warn_ob_select) {
 	    if (base < 0) {
@@ -7165,15 +7216,21 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_do_(Design*des, NetScope*scope,
       const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
       ivl_assert(*this, par_ex);
 
-      long par_msv, par_lsv;
-      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
-				 par_ex->value().len())) return 0;
+      long par_msv, par_lsv, slice_off;
+      unsigned long slice_wid;
+      if (! calculate_param_slice(*this, des, scope, par_type,
+				  par_ex->value().len(), path_.back().index,
+				  par_msv, par_lsv, slice_off, slice_wid))
+	    return 0;
 
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
       if (base == 0) return 0;
 
 	// Use the part select width already calculated by test_width().
+	// The width in the select counts elements of the last dimension,
+	// each slice_wid bits wide.
       unsigned long wid = min_width_;
+      unsigned long elem_count = wid / slice_wid;
 
       perm_string name = peek_tail_name(path_);
 
@@ -7209,7 +7266,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_do_(Design*des, NetScope*scope,
 	    long lsv = base_c->value().as_long();
 	    long par_base = par_lsv;
 	    if (!up)
-		  par_base += wid - 1;
+		  par_base += elem_count - 1;
 
 	      // Watch out for reversed bit numbering. We're making
 	      // the part select from LSB to MSB.
@@ -7217,7 +7274,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_do_(Design*des, NetScope*scope,
 		  par_base = lsv;
 		  lsv = par_lsv;
 		  if (up)
-			lsv -= wid - 1;
+			lsv -= elem_count - 1;
 	    }
 
 	    if (warn_ob_select) {
@@ -7229,18 +7286,27 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_do_(Design*des, NetScope*scope,
 		    // Get the parameter values width.
                   long pwid = -1;
                   if (par_ex->has_width()) pwid = par_ex->expr_width()-1;
-                  warn_param_ob(par_msv, par_lsv, defined, lsv-par_base, wid,
-                                pwid, this, name, up);
+                  warn_param_ob(par_msv, par_lsv, defined, lsv-par_base,
+                                elem_count, pwid, this, name, up);
 	    }
 
+	      // Convert the element offset into a bit offset within the slice.
+	    long base_bit = slice_off + (lsv-par_base) * slice_wid;
 	    verinum result = param_part_select_bits(par_ex->value(), wid,
-						    lsv-par_base);
+						    base_bit);
 	    NetEConst*result_ex = new NetEConst(result);
 	    result_ex->set_line(*this);
 	    return result_ex;
       }
 
-      base = normalize_variable_base(base, par_msv, par_lsv, wid, up);
+	// Normalize the variable base to an element offset, then scale it to
+	// a bit offset. The prefix indices already moved the start of the
+	// slice by slice_off bits.
+      long slice_off_elems = slice_off / (long)slice_wid;
+      base = normalize_variable_base(base, par_msv, par_lsv, elem_count, up,
+				     slice_off_elems);
+      if (slice_wid > 1)
+	    base = scale_expr_by_const(base, slice_wid);
 
 	/* Create a parameter reference for the variable select. */
       NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
