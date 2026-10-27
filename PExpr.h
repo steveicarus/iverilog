@@ -481,8 +481,10 @@ class PEIdent : public PExpr {
       NetAssign_ *elaborate_lval_var_(Design *des, NetScope *scope,
 				      bool is_force, bool is_cassign,
 				      NetNet *reg, ivl_type_t data_type,
+				      pform_name_t base_path,
 				      pform_name_t member_path) const;
       NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*,
+				          pform_name_t base_path,
 					  bool need_const_idx, bool is_force) const;
       bool elaborate_lval_net_bit_(Design*, NetScope*, NetAssign_*,
 				   bool need_const_idx, bool is_force) const;

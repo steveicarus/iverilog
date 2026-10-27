@@ -182,6 +182,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    return nullptr;
 
       NetNet *reg = sr.net;
+      const pform_name_t &base_path = sr.path_head;
       const pform_name_t &member_path = sr.path_tail;
 
 	/* The l-value must be a variable. If not, then give up and
@@ -224,7 +225,6 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    else
 		  cerr << get_fileline() << ": " << __func__ << ": "
 		       << "reg->net_type()=<nil>" << endl;
-	    const pform_name_t &base_path = sr.path_head;
 	    cerr << get_fileline() << ": " << __func__ << ": "
 		 << " base_path=" << base_path
 		 << ", member_path=" << member_path
@@ -253,12 +253,13 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
       return elaborate_lval_var_(des, scope, is_force, is_cassign, reg,
-			         sr.type, member_path);
+			         sr.type, base_path, member_path);
 }
 
 NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 				        bool is_force, bool is_cassign,
 					NetNet *reg, ivl_type_t data_type,
+					const pform_name_t base_path,
 					const pform_name_t member_path) const
 {
 	// We are processing the tail of a string of names. For
@@ -318,7 +319,7 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 
       NetAssign_*lv = nullptr;
       if (reg->unpacked_dimensions() > 0) {
-	    lv = elaborate_lval_net_word_(des, scope, reg, need_const_idx, is_force);
+	    lv = elaborate_lval_net_word_(des, scope, reg, base_path, need_const_idx, is_force);
       } else if (reg->get_scalar() && use_sel != index_component_t::SEL_NONE) {
 	    cerr << get_fileline() << ": error: can not select part of ";
 	    if (reg->data_type() == IVL_VT_REAL) cerr << "real: ";
@@ -400,10 +401,11 @@ NetAssign_*PEIdent::elaborate_lval_array_(Design *des, NetScope *,
 NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 					      NetScope*scope,
 					      NetNet*reg,
+					      const pform_name_t base_path,
 					      bool need_const_idx,
 					      bool is_force) const
 {
-      const name_component_t&name_tail = path_.back();
+      const name_component_t&name_tail = base_path.back();
       ivl_assert(*this, !name_tail.index.empty());
 
       if (debug_elaborate) {
@@ -1129,7 +1131,7 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 		  }
 
 		  return elaborate_lval_var_(des, scope, is_force, is_cassign,
-					     psig, psig->net_type(), pform_name_t());
+					     psig, psig->net_type(), path_.name, pform_name_t());
 
 	    } else if (qual.test_const()) {
 		 auto method_scope = find_method_containing_scope(*this, scope);
