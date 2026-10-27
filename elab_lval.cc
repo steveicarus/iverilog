@@ -266,14 +266,14 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 	// "c" at this point.
       const name_component_t&name_tail = path_.back();
 
-	// Use the last index to determine what kind of select
+	// Use the last index to determine what (if any) kind of select
 	// (bit/part/etc) we are processing. For example, the Verilog
 	// may be "a.b.c[1][2][<index>]". All but the last index must
 	// be simple expressions, only the <index> may be a part
 	// select etc., so look at it to determine how we will be
-	// proceeding.
+	// proceeding. Exclude array indices.
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
-      if (!name_tail.index.empty())
+      if (name_tail.index.size() > reg->unpacked_dimensions())
 	    use_sel = name_tail.index.back().sel;
 
 	// Special case: The l-value is an entire memory, or array
@@ -316,41 +316,37 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 
       bool need_const_idx = is_cassign || is_force;
 
-      if (reg->unpacked_dimensions() > 0)
-	    return elaborate_lval_net_word_(des, scope, reg, need_const_idx, is_force);
-
-	// This must be after the array word elaboration above!
-      if (reg->get_scalar() &&
-          use_sel != index_component_t::SEL_NONE) {
+      NetAssign_*lv = nullptr;
+      if (reg->unpacked_dimensions() > 0) {
+	    lv = elaborate_lval_net_word_(des, scope, reg, need_const_idx, is_force);
+      } else if (reg->get_scalar() && use_sel != index_component_t::SEL_NONE) {
 	    cerr << get_fileline() << ": error: can not select part of ";
 	    if (reg->data_type() == IVL_VT_REAL) cerr << "real: ";
 	    else cerr << "scalar: ";
 	    cerr << reg->name() << endl;
 	    des->errors += 1;
-	    return 0;
+      } else {
+	    lv = new NetAssign_(reg);
       }
+      if (lv == nullptr)
+	    return nullptr;
 
       if (use_sel == index_component_t::SEL_PART) {
-	    NetAssign_*lv = new NetAssign_(reg);
 	    elaborate_lval_net_part_(des, scope, lv, is_force);
 	    return lv;
       }
 
       if (use_sel == index_component_t::SEL_IDX_UP ||
           use_sel == index_component_t::SEL_IDX_DO) {
-	    NetAssign_*lv = new NetAssign_(reg);
 	    elaborate_lval_net_idx_(des, scope, lv, use_sel, need_const_idx, is_force);
 	    return lv;
       }
 
-
       if (use_sel == index_component_t::SEL_BIT) {
 	    if (reg->darray_type()) {
-		  NetAssign_*lv = new NetAssign_(reg);
 		  elaborate_lval_darray_bit_(des, scope, lv, is_force);
 		  return lv;
 	    } else {
-		  NetAssign_*lv = new NetAssign_(reg);
 		  elaborate_lval_net_bit_(des, scope, lv, need_const_idx, is_force);
 		  return lv;
 	    }
@@ -358,16 +354,17 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 
       ivl_assert(*this, use_sel == index_component_t::SEL_NONE);
 
-      if (reg->type()==NetNet::UNRESOLVED_WIRE && !is_force) {
+      if (reg->type()==NetNet::UNRESOLVED_WIRE && reg->unpacked_dimensions() == 0 && !is_force) {
 	    ivl_assert(*this, reg->coerced_to_uwire());
 	    report_mixed_assignment_conflict_("variable");
 	    des->errors += 1;
-	    return 0;
+	    delete lv;
+	    return nullptr;
       }
 
 	/* No select expressions. */
 
-      return new NetAssign_(reg);
+      return lv;
 }
 
 NetAssign_*PEIdent::elaborate_lval_array_(Design *des, NetScope *,
@@ -503,34 +500,17 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: Set array word=" << *canon_index << endl;
 
-
-	/* An array word may also have part selects applied to them. */
-
-      index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
-      if (name_tail.index.size() > reg->unpacked_dimensions())
-	    use_sel = name_tail.index.back().sel;
-
       if (reg->get_scalar() &&
-          use_sel != index_component_t::SEL_NONE) {
+          name_tail.index.size() > reg->unpacked_dimensions()) {
 	    cerr << get_fileline() << ": error: can not select part of ";
 	    if (reg->data_type() == IVL_VT_REAL) cerr << "real";
 	    else cerr << "scalar";
 	    cerr << " array word: " << reg->name()
 	         << as_indices(unpacked_indices) << endl;
 	    des->errors += 1;
-	    return 0;
+	    delete lv;
+	    return nullptr;
       }
-
-      if (use_sel == index_component_t::SEL_BIT)
-	    elaborate_lval_net_bit_(des, scope, lv, need_const_idx, is_force);
-
-      if (use_sel == index_component_t::SEL_PART)
-	    elaborate_lval_net_part_(des, scope, lv, is_force);
-
-      if (use_sel == index_component_t::SEL_IDX_UP ||
-          use_sel == index_component_t::SEL_IDX_DO)
-	    elaborate_lval_net_idx_(des, scope, lv, use_sel,
-				    need_const_idx, is_force);
 
       return lv;
 }
