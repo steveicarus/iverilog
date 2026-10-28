@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "defparam_mintypmax.v",
+    "iverilog-args" : [ "-Ttyp", "-DEXPECTED=2" ]
+}
