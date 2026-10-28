@@ -628,6 +628,7 @@ sv_named_type_var_fail	vvp_tests/sv_named_type_var_fail.json
 sv_net_array_decl_assign	vvp_tests/sv_net_array_decl_assign.json
 sv_net_decl_assign		vvp_tests/sv_net_decl_assign.json
 sv_null_default_argument	vvp_tests/sv_null_default_argument.json
+sv_package_delay			vvp_tests/sv_package_delay.json
 sv_package_event_trigger		vvp_tests/sv_package_event_trigger.json
 sv_package_function_void_cast	vvp_tests/sv_package_function_void_cast.json
 sv_package_import_copy_new	vvp_tests/sv_package_import_copy_new.json
