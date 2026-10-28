@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "udp_ansi_input_list.v",
+    "iverilog-args" : [ "-g2001" ]
+}
