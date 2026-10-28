@@ -6260,6 +6260,10 @@ generate_case_item
       { pform_generate_case_item(@1, 0); }
     generate_block
       { pform_endgenerate(false); }
+  | K_default
+      { pform_generate_case_item(@1, nullptr); }
+    generate_block
+      { pform_endgenerate(false); }
   ;
 
 generate_item
