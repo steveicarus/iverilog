@@ -838,6 +838,7 @@ timing_check_syntax		vvp_tests/timing_check_syntax.json
 timing_check_delayed_signals	vvp_tests/timing_check_delayed_signals.json
 udp_ansi_initial_nonreg_fail	vvp_tests/udp_ansi_initial_nonreg_fail.json
 udp_ansi_initial_reg		vvp_tests/udp_ansi_initial_reg.json
+udp_ansi_input_list			vvp_tests/udp_ansi_input_list.json
 udp_empty_table_fail		vvp_tests/udp_empty_table_fail.json
 udp_initial_nonreg_fail		vvp_tests/udp_initial_nonreg_fail.json
 udp_instance_reference_order	vvp_tests/udp_instance_reference_order.json
