@@ -4007,6 +4007,12 @@ delay_value_simple
 	      FILE_NAME($$, @1);
 	}
       }
+  | package_scope IDENTIFIER
+      { lex_in_package_scope(nullptr);
+	pform_name_t name = { name_component_t(lex_strings.make($2)) };
+	$$ = pform_package_ident(@2, $1, &name);
+	delete[]$2;
+      }
   | IDENTIFIER
       { pform_name_t tmp_name = { name_component_t(lex_strings.make($1)) };
 	auto tmp = pform_new_ident(@1, tmp_name);
