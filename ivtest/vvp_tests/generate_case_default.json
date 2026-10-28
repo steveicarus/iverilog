@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "generate_case_default.v",
+    "iverilog-args" : [ "-g2001" ],
+    "vlog95" : {
+        "__comment" : "Generate scopes are not translated by vlog95.",
+        "type"      : "CE"
+    }
+}
