@@ -5724,6 +5724,11 @@ module_port_list_opt
      that the port declarations may use them. */
 module_parameter_port_list_opt
   :
+  | '#' '(' ')'
+      { pform_requires_sv(@1, "Empty parameter port list");
+	pform_start_parameter_port_list();
+	pform_end_parameter_port_list();
+      }
   | '#' '('
       { pform_start_parameter_port_list(); }
     module_parameter_port_list
