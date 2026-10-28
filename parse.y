@@ -7719,7 +7719,7 @@ non_block_statement_item
 	delete $2;
 	$$ = tmp;
       }
-  | K_TRIGGER package_scope hierarchy_identifier
+  | K_TRIGGER package_scope hierarchy_identifier ';'
       { lex_in_package_scope(0);
 	PTrigger*tmp = pform_new_trigger(@3, $2, *$3);
 	delete $3;
