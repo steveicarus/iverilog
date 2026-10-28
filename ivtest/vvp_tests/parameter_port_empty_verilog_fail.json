@@ -1,0 +1,8 @@
+{
+    "type"          : "CE",
+    "source"        : "parameter_port_empty.v",
+    "iverilog-args" : [ "-g2005" ],
+    "force-sv" : {
+        "type" : "normal"
+    }
+}

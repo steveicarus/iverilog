@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "parameter_port_empty_named_override_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
