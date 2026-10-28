@@ -8287,6 +8287,8 @@ udp_input_declaration_list
       { $$ = list_from_identifier($2, @2.lexical_pos); }
   | udp_input_declaration_list ',' K_input IDENTIFIER
       { $$ = list_from_identifier($1, $4, @4.lexical_pos); }
+  | udp_input_declaration_list ',' IDENTIFIER
+      { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
   ;
 
 udp_primitive
