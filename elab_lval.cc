@@ -311,11 +311,18 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 	// If the variable is a class object, then handle it with the
 	// net_class_member_ method.
       const netclass_t *class_type = dynamic_cast<const netclass_t *>(data_type);
-      if (class_type && !member_path.empty() && gn_system_verilog())
+      if (class_type && !member_path.empty() && gn_system_verilog()) {
+	    if (reg->unpacked_dimensions() > 0) {
+		  cerr << get_fileline() << ": sorry: writing to class members in an unpacked "
+					    "array of objects is not yet supported." << endl;
+		  des->errors += 1;
+		  delete lv;
+		  return nullptr;
+	    }
 	    return elaborate_lval_net_class_member_(des, scope, is_force,
 						   is_cassign, class_type,
-						   reg, member_path);
-
+						   lv, member_path);
+      }
 
 	// Past this point, we should have taken care of the cases
 	// where the name is a member/method of a struct/class.
@@ -1064,25 +1071,24 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
  */
 NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
 				    bool is_force, bool is_cassign,
-				    const netclass_t *class_type, NetNet*sig,
+				    const netclass_t *class_type, NetAssign_*lv,
 				    pform_name_t member_path) const
 {
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PEIdent::elaborate_lval_net_class_member_: "
 		 << "l-value is property " << member_path
-		 << " of " << sig->name() << "." << endl;
+		 << " of " << lv->sig()->name() << "." << endl;
       }
 
       ivl_assert(*this, class_type);
 
-	// Iterate over the member_path. This handles nested class
-	// object, by generating nested NetAssign_ object. We start
-	// with lv==0, so the front of the member_path is the member
-	// of the outermost class. This generates an lv from sig. Then
-	// iterate over the remaining of the member_path, replacing
-	// the outer lv with an lv that nests the lv from the previous
-	// iteration.
-      NetAssign_*lv = 0;
+	// Iterate over the member_path. This handles nested class objects, by
+	// generating nested NetAssign_ object. We start with the lv passed in
+	// by the caller, and use that to access the first element in the
+	// member_path. We then iterate over the remaining of the member_path,
+	// replacing the outer lv with an lv that nests the lv from the
+	// previous iteration.
+      bool need_nested_lv = false;
       do {
 	      // Start with the first component of the member path...
 	    perm_string method_name = peek_head_name(member_path);
@@ -1163,8 +1169,10 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 		 }
 	    }
 
-	    lv = lv? new NetAssign_(lv) : new NetAssign_(sig);
+	    if (need_nested_lv)
+		lv = new NetAssign_(lv);
 	    lv->set_property(method_name, pidx);
+	    need_nested_lv = true;
 
 	      // Now get the type of the property.
 	    ivl_type_t ptype = class_type->get_prop_type(pidx);

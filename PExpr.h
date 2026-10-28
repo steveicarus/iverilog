@@ -497,7 +497,7 @@ class PEIdent : public PExpr {
 						   bool is_force,
 						   bool is_cassign,
 						   const netclass_t *class_type,
-						   NetNet*,
+						   NetAssign_*,
 						   pform_name_t) const;
       bool elaborate_lval_net_packed_member_(Design*, NetScope*,
 					     NetAssign_*,
