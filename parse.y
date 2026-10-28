@@ -4204,6 +4204,15 @@ event_control /* A.K.A. clocking_event */
 	$$ = tmps;
 	delete $2;
       }
+  | '@' package_scope IDENTIFIER
+      { lex_in_package_scope(nullptr);
+	pform_name_t name = { name_component_t(lex_strings.make($3)) };
+	auto expr = pform_package_ident(@3, $2, &name);
+	auto event = new PEEvent(PEEvent::ANYEDGE, expr);
+	$$ = new PEventStatement(event);
+	FILE_NAME($$, @1);
+	delete[]$3;
+      }
   | '@' '(' event_expression_list ')'
       { PEventStatement*tmp = new PEventStatement(*$3);
 	FILE_NAME(tmp, @1);
