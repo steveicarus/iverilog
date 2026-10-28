@@ -6036,8 +6036,13 @@ module_item
       { PProcess*tmp = pform_make_behavior(IVL_PR_ALWAYS_LATCH, $3, $1);
 	FILE_NAME(tmp, @2);
       }
-  | attribute_list_opt K_initial statement_item
-      { PProcess*tmp = pform_make_behavior(IVL_PR_INITIAL, $3, $1);
+  | attribute_list_opt K_initial statement_or_null
+      { if ($3 == nullptr) {
+	      pform_requires_sv(@2, "Null initial statement");
+	      $3 = new PBlock(PBlock::BL_SEQ);
+	      FILE_NAME($3, @2);
+	}
+	PProcess*tmp = pform_make_behavior(IVL_PR_INITIAL, $3, $1);
 	FILE_NAME(tmp, @2);
       }
   | attribute_list_opt K_final statement_item
