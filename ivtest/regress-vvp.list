@@ -247,6 +247,7 @@ hier_index_queue_fail		vvp_tests/hier_index_queue_fail.json
 hier_index_root_name_fail		vvp_tests/hier_index_root_name_fail.json
 implicit_cast14			vvp_tests/implicit_cast14.json
 line_directive			vvp_tests/line_directive.json
+line_directive_long		vvp_tests/line_directive_long.json
 localparam_type			vvp_tests/localparam_type.json
 loop_condition_real		vvp_tests/loop_condition_real.json
 macro_str_esc			vvp_tests/macro_str_esc.json
