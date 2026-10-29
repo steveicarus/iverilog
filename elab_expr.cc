@@ -3068,7 +3068,16 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 			  // the bit with of the result.
 			long loff;
 			unsigned long lwid;
-			prefix_to_slice(mem_packed_dims, prefix_indices, tail_off, loff, lwid);
+			if (!prefix_to_slice(mem_packed_dims, prefix_indices, tail_off, loff, lwid)) {
+			      if (warn_ob_select) {
+				    cerr << li->get_fileline() << ": warning: "
+					 << "Select of member " << member_name
+					 << " is out of range, returning 'bx." << endl;
+			      }
+			      NetEConst*xxx = make_const_x(lwid * tail_wid);
+			      xxx->set_line(*li);
+			      return xxx;
+			}
 
 			if (debug_elaborate) {
 			      cerr << li->get_fileline() << ": check_for_struct_members: "
@@ -3137,10 +3146,20 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		    // offset and width of the addressed slice of the member.
 		  long loff;
 		  unsigned long lwid;
-		  prefix_to_slice(mem_packed_dims, prefix_indices, tmp, loff, lwid);
+		  bool in_range = prefix_to_slice(mem_packed_dims, prefix_indices, tmp, loff, lwid);
 
 		  ivl_type_t element_type = array->element_type();
 		  long element_width = element_type->packed_width();
+		  if (!in_range) {
+			if (warn_ob_select) {
+			      cerr << li->get_fileline() << ": warning: "
+				   << "Select of member " << member_name
+				   << " is out of range, returning 'bx." << endl;
+			}
+			NetEConst*xxx = make_const_x(lwid * element_width);
+			xxx->set_line(*li);
+			return xxx;
+		  }
 		  if (debug_elaborate) {
 			cerr << li->get_fileline() << ": PEIdent::elaborate_lval_net_packed_member_: "
 			     << "parray subselection loff=" << loff

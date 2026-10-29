@@ -1434,7 +1434,15 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 			  // offset and width of the addressed slice of the member.
 			long loff;
 			unsigned long lwid;
-			prefix_to_slice(mem_packed_dims, prefix_indices, tail_off, loff, lwid);
+			if (!prefix_to_slice(mem_packed_dims, prefix_indices, tail_off, loff, lwid)) {
+			      if (warn_ob_select) {
+				    cerr << get_fileline() << ": warning: "
+					 << "L-value select of member " << member_name
+					 << " is out of range and is ignored." << endl;
+			      }
+			      lv->set_part(new NetEConst(verinum(verinum::Vx)), lwid * tail_wid);
+			      return true;
+			}
 
 			if (debug_elaborate) {
 			      cerr << get_fileline() << ": PEIdent::elaborate_lval_net_packed_member_: "
@@ -1509,10 +1517,19 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 		    // offset and width of the addressed slice of the member.
 		  long loff;
 		  unsigned long lwid;
-		  prefix_to_slice(mem_packed_dims, prefix_indices, tmp, loff, lwid);
+		  bool in_range = prefix_to_slice(mem_packed_dims, prefix_indices, tmp, loff, lwid);
 
 		  ivl_type_t element_type = array->element_type();
 		  long element_width = element_type->packed_width();
+		  if (!in_range) {
+			if (warn_ob_select) {
+			      cerr << get_fileline() << ": warning: "
+				   << "L-value select of member " << member_name
+				   << " is out of range and is ignored." << endl;
+			}
+			lv->set_part(new NetEConst(verinum(verinum::Vx)), lwid * element_width);
+			return true;
+		  }
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_lval_net_packed_member_: "
 			     << "parray subselection loff=" << loff
