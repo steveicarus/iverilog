@@ -2159,8 +2159,6 @@ description /* IEEE1800-2005: A.1.2 */
 	delete[] $3;
 	delete[] $5;
       }
-  | ';'
-      { }
   ;
 
 description_list
@@ -2872,6 +2870,8 @@ package_item /* IEEE1800-2005 A.1.10 */
   | data_declaration
   | class_declaration
   | package_export_declaration
+  | ';'
+      { }
   ;
 
 package_item_list
