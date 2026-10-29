@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_package_empty_item.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
