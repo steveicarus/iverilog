@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "array_of_packed_struct.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

@@ -2706,23 +2706,6 @@ vvp_vector2_t& vvp_vector2_t::operator >>= (unsigned shift)
       return *this;
 }
 
-static unsigned long add_carry(unsigned long a, unsigned long b,
-			       unsigned long&carry)
-{
-      unsigned long out = carry;
-      carry = 0;
-
-      if ((ULONG_MAX - out) < a)
-	    carry += 1;
-      out += a;
-
-      if ((ULONG_MAX - out) < b)
-	    carry += 1;
-      out += b;
-
-      return out;
-}
-
 vvp_vector2_t& vvp_vector2_t::operator += (const vvp_vector2_t&that)
 {
       assert(wid_ == that.wid_);
@@ -2733,7 +2716,7 @@ vvp_vector2_t& vvp_vector2_t::operator += (const vvp_vector2_t&that)
 
       unsigned long carry = 0;
       for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
-	    vec_[idx] = add_carry(vec_[idx], that.vec_[idx], carry);
+	    vec_[idx] = add_with_carry(vec_[idx], that.vec_[idx], carry);
       }
 
 
@@ -2754,7 +2737,7 @@ vvp_vector2_t& vvp_vector2_t::operator -= (const vvp_vector2_t&that)
 
       unsigned long carry = 1;
       for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
-	    vec_[idx] = add_carry(vec_[idx], ~that.vec_[idx], carry);
+	    vec_[idx] = add_with_carry(vec_[idx], ~that.vec_[idx], carry);
       }
 
       return *this;
@@ -2919,7 +2902,7 @@ vvp_vector2_t operator * (const vvp_vector2_t&a, const vvp_vector2_t&b)
 			     ; (adx+bdx+sdx) < words
 			     ;  sdx += 1) {
 
-			r.vec_[adx+bdx+sdx] = add_carry(r.vec_[adx+bdx+sdx],
+			r.vec_[adx+bdx+sdx] = add_with_carry(r.vec_[adx+bdx+sdx],
 							low, carry);
 			low = hig;
 			hig = 0;

@@ -666,9 +666,10 @@ NetExpr* normalize_variable_unpacked(const LineInfo&loc, const netranges_t&dims,
 	    } else {
 		  bool expr_has_sign = canonical_expr->has_sign() &&
 		                        tmp_scaled->has_sign();
+		  unsigned use_wid = max(canonical_expr->expr_width(),
+					 tmp_scaled->expr_width());
 		  canonical_expr = new NetEBAdd('+', canonical_expr, tmp_scaled,
-						canonical_expr->expr_width()+1,
-		                                expr_has_sign);
+						use_wid+1, expr_has_sign);
 	    }
       }
 

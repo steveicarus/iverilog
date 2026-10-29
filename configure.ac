@@ -453,6 +453,7 @@ AC_CONFIG_FILES([
     ivtest/Makefile
     libveriuser/Makefile
     tgt-blif/Makefile
+    tgt-flow/Makefile
     tgt-fpga/Makefile
     tgt-null/Makefile
     tgt-pal/Makefile

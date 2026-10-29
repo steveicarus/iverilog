@@ -53,8 +53,25 @@ struct cprop_functor  : public functor_t {
       static void lpm_compare_eq_(Design*des, const NetCompare*obj);
  };
 
-void cprop_functor::signal(Design*, NetNet*)
+void cprop_functor::signal(Design*des, NetNet*obj)
 {
+      if (!obj->coerced_to_uwire() || obj->peek_lref() != 0)
+	    return;
+      if (obj->data_type() != IVL_VT_LOGIC && obj->data_type() != IVL_VT_BOOL)
+	    return;
+
+      // An assignment outside the declaration can leave a converted
+      // variable (or an array word) with no connected driver at all.
+      // Preserve the variable default instead of using an undriven net.
+      for (unsigned idx = 0; idx < obj->pin_count(); idx += 1) {
+	    if (obj->pin(idx).nexus()->drivers_present())
+		  continue;
+	    NetNet*val = obj->data_type() == IVL_VT_BOOL
+	                 ? make_const_0(des, obj->scope(), obj->vector_width())
+	                 : make_const_x(des, obj->scope(), obj->vector_width());
+	    connect(obj->pin(idx), val->pin(0));
+	    count += 1;
+      }
 }
 
 void cprop_functor::lpm_add_sub(Design*, NetAddSub*)
@@ -218,6 +235,7 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
       vector<NetPartSelect*> obj_set;
 
       bool output_2_state = false;
+      bool output_variable = false;
 
       for (Link*cur = nex->first_nlink() ; cur ; cur = cur->next_nlink()) {
 
@@ -227,6 +245,12 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
 	    const NetNet*net_obj = dynamic_cast<NetNet*> (tmp_obj);
 	    if (net_obj && (net_obj->data_type() == IVL_VT_BOOL))
 		  output_2_state = true;
+	      // A continuously assigned variable retains its default value
+	      // in untouched bits even after conversion to an unresolved wire.
+	      // Procedurally assigned bits must remain separate from this
+	      // concatenation so that input changes do not overwrite them.
+	    if (net_obj && net_obj->coerced_to_uwire() && net_obj->peek_lref() == 0)
+		  output_variable = true;
 
 	      // If this is an input (or passive) then ignore it.
 	    if (cur->get_dir() != Link::OUTPUT)
@@ -249,12 +273,11 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
 	    obj_set.push_back(cur_obj);
       }
 
-	// When driving a 4-state signal, we only want to create a
-	// concatenation if we have more than one part select. But
-	// when driving a 2-state signal, create a concatenation
-	// even if there's only one part select, which forces the
-	// undriven bits to zero without needing an explicit cast.
-      if ((obj_set.size() == 0) || ((obj_set.size() == 1) && !output_2_state))
+	// Variables need a concatenation even for a single part select
+	// so that untouched bits retain their default value: X for
+	// four-state variables and zero for two-state values.
+      if ((obj_set.size() == 0) ||
+          ((obj_set.size() == 1) && !output_2_state && !output_variable))
 	    return;
 
       if (debug_optimizer)
@@ -320,6 +343,8 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
 	    if (cobj->base() > off) {
 		  NetNet*val = output_2_state
                              ? make_const_0(des, scope, cobj->base()-off)
+                             : output_variable
+                             ? make_const_x(des, scope, cobj->base()-off)
                              : make_const_z(des, scope, cobj->base()-off);
 		  connect(cncat->pin(concat_pin), val->pin(0));
 		  concat_pin += 1;
@@ -332,6 +357,8 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
       if (off < sig_width) {
 	    NetNet*val = output_2_state
                        ? make_const_0(des, scope, sig_width-off)
+                       : output_variable
+                       ? make_const_x(des, scope, sig_width-off)
                        : make_const_z(des, scope, sig_width-off);
 	    connect(cncat->pin(concat_pin), val->pin(0));
 	    concat_pin += 1;

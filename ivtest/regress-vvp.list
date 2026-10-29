@@ -7,9 +7,12 @@ always4B			vvp_tests/always4B.json
 analog1				vvp_tests/analog1.json
 analog2				vvp_tests/analog2.json
 array_index_real_fail		vvp_tests/array_index_real_fail.json
+array_of_objects		vvp_tests/array_of_objects.json
+array_of_packed_struct		vvp_tests/array_of_packed_struct.json
 array_packed_sysfunct		vvp_tests/array_packed_sysfunct.json
 array_packed_value_list		vvp_tests/array_packed_value_list.json
 array_packed_write_read		vvp_tests/array_packed_write_read.json
+array_query_invalid_signedness	vvp_tests/array_query_invalid_signedness.json
 array_slice_concat		vvp_tests/array_slice_concat.json
 assign_op_return_select		vvp_tests/assign_op_return_select.json
 assign_op_signed1		vvp_tests/assign_op_signed1.json
@@ -90,7 +93,10 @@ class_property_array_invalid_compare	vvp_tests/class_property_array_invalid_comp
 class_property_array_invalid_read	vvp_tests/class_property_array_invalid_read.json
 class_property_array_invalid_write	vvp_tests/class_property_array_invalid_write.json
 constfunc_call_signedness	vvp_tests/constfunc_call_signedness.json
+packed_typedef_part_select	vvp_tests/packed_typedef_part_select.json
 param_array_packed		vvp_tests/param_array_packed.json
+param_array_packed_select	vvp_tests/param_array_packed_select.json
+param_array_packed_select_fail	vvp_tests/param_array_packed_select_fail.json
 param_array_packed_typedef	vvp_tests/param_array_packed_typedef.json
 param_array_unpacked		vvp_tests/param_array_unpacked.json
 func_return_uarray		vvp_tests/func_return_uarray.json
@@ -130,6 +136,7 @@ br_gh1591a			vvp_tests/br_gh1591a.json
 br_gh1591b			vvp_tests/br_gh1591b.json
 br_gh1591c			vvp_tests/br_gh1591c.json
 br_gh1639			vvp_tests/br_gh1639.json
+br_gh1618			vvp_tests/br_gh1618.json
 ca_time_real			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json
@@ -219,6 +226,7 @@ final_nested_block_task_fail	vvp_tests/final_nested_block_task_fail.json
 fmonitor1			vvp_tests/fmonitor1.json
 fmonitor2			vvp_tests/fmonitor2.json
 force_concat_invalid_array	vvp_tests/force_concat_invalid_array.json
+force_unknown_select		vvp_tests/force_unknown_select.json
 fread-error			vvp_tests/fread-error.json
 func_nested_block_nb_fail	vvp_tests/func_nested_block_nb_fail.json
 func_return_inc_dec		vvp_tests/func_return_inc_dec.json
@@ -240,6 +248,7 @@ hier_index_queue_fail		vvp_tests/hier_index_queue_fail.json
 hier_index_root_name_fail		vvp_tests/hier_index_root_name_fail.json
 implicit_cast14			vvp_tests/implicit_cast14.json
 line_directive			vvp_tests/line_directive.json
+line_directive_long		vvp_tests/line_directive_long.json
 localparam_type			vvp_tests/localparam_type.json
 loop_condition_real		vvp_tests/loop_condition_real.json
 macro_str_esc			vvp_tests/macro_str_esc.json
@@ -336,6 +345,7 @@ real_unary_minus_inf		vvp_tests/real_unary_minus_inf.json
 real_unary_minus_nan		vvp_tests/real_unary_minus_nan.json
 real_unary_minus_zero		vvp_tests/real_unary_minus_zero.json
 release_concat_invalid_array	vvp_tests/release_concat_invalid_array.json
+release_concat_unknown_select	vvp_tests/release_concat_unknown_select.json
 repeat_one_break		vvp_tests/repeat_one_break.json
 repeat_one_break_nested		vvp_tests/repeat_one_break_nested.json
 repeat_one_continue		vvp_tests/repeat_one_continue.json
@@ -613,6 +623,7 @@ sv_named_type_var_fail	vvp_tests/sv_named_type_var_fail.json
 sv_net_array_decl_assign	vvp_tests/sv_net_array_decl_assign.json
 sv_net_decl_assign		vvp_tests/sv_net_decl_assign.json
 sv_null_default_argument	vvp_tests/sv_null_default_argument.json
+sv_package_event_trigger		vvp_tests/sv_package_event_trigger.json
 sv_package_function_void_cast	vvp_tests/sv_package_function_void_cast.json
 sv_package_import_copy_new	vvp_tests/sv_package_import_copy_new.json
 sv_package_import_cross_unit	vvp_tests/sv_package_import_cross_unit.json
@@ -849,14 +860,18 @@ vams_abs3			vvp_tests/vams_abs3.json
 vams_min_max_default_argument	vvp_tests/vams_min_max_default_argument.json
 vardly_undefined_vec		vvp_tests/vardly_undefined_vec.json
 va_math				vvp_tests/va_math.json
+vpi_array_pattern_prefix		vvp_tests/vpi_array_pattern_prefix.json
 vpi_array_word_int		vvp_tests/vpi_array_word_int.json
 vpi_array_word_scalar		vvp_tests/vpi_array_word_scalar.json
 vpi_array_word_select_signedness	vvp_tests/vpi_array_word_select_signedness.json
 vpi_array_word_vector		vvp_tests/vpi_array_word_vector.json
+vpi_class_array_pattern_prefix	vvp_tests/vpi_class_array_pattern_prefix.json
 vpi_enum_constant_signedness	vvp_tests/vpi_enum_constant_signedness.json
 vpi_escaped_scope_names		vvp_tests/vpi_escaped_scope_names.json
+vpi_expression_real_signedness	vvp_tests/vpi_expression_real_signedness.json
 vpi_net_array_word_select_signedness	vvp_tests/vpi_net_array_word_select_signedness.json
 vpi_part_select_range		vvp_tests/vpi_part_select_range.json
+vpi_queue_pattern_prefix		vvp_tests/vpi_queue_pattern_prefix.json
 vpi_short_package_fullname	vvp_tests/vpi_short_package_fullname.json
 vvp_quiet_mode			vvp_tests/vvp_quiet_mode.json
 wait_condition_real		vvp_tests/wait_condition_real.json

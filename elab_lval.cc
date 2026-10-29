@@ -182,6 +182,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    return nullptr;
 
       NetNet *reg = sr.net;
+      const pform_name_t &base_path = sr.path_head;
       const pform_name_t &member_path = sr.path_tail;
 
 	/* The l-value must be a variable. If not, then give up and
@@ -224,7 +225,6 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    else
 		  cerr << get_fileline() << ": " << __func__ << ": "
 		       << "reg->net_type()=<nil>" << endl;
-	    const pform_name_t &base_path = sr.path_head;
 	    cerr << get_fileline() << ": " << __func__ << ": "
 		 << " base_path=" << base_path
 		 << ", member_path=" << member_path
@@ -253,104 +253,108 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
       return elaborate_lval_var_(des, scope, is_force, is_cassign, reg,
-			         sr.type, member_path);
+			         sr.type, base_path, member_path);
 }
 
 NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 				        bool is_force, bool is_cassign,
 					NetNet *reg, ivl_type_t data_type,
-					const pform_name_t tail_path) const
+					const pform_name_t base_path,
+					const pform_name_t member_path) const
 {
 	// We are processing the tail of a string of names. For
 	// example, the Verilog may be "a.b.c", so we are processing
 	// "c" at this point.
       const name_component_t&name_tail = path_.back();
 
-	// Use the last index to determine what kind of select
+	// Use the last index to determine what (if any) kind of select
 	// (bit/part/etc) we are processing. For example, the Verilog
 	// may be "a.b.c[1][2][<index>]". All but the last index must
 	// be simple expressions, only the <index> may be a part
 	// select etc., so look at it to determine how we will be
-	// proceeding.
+	// proceeding. Exclude array indices.
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
-      if (!name_tail.index.empty())
+      if (name_tail.index.size() > reg->unpacked_dimensions())
 	    use_sel = name_tail.index.back().sel;
 
 	// Special case: The l-value is an entire memory, or array
 	// slice. Detect the situation by noting if the index count
 	// is less than the array dimensions (unpacked).
-      if (reg->unpacked_dimensions() > name_tail.index.size()) {
+      if (member_path.empty() && reg->unpacked_dimensions() > name_tail.index.size()) {
 	    return elaborate_lval_array_(des, scope, is_force, reg);
       }
 
+      bool need_const_idx = is_cassign || is_force;
+
+      NetAssign_*lv = nullptr;
+      if (reg->unpacked_dimensions() > 0) {
+	    lv = elaborate_lval_net_word_(des, scope, reg, base_path, need_const_idx, is_force);
+      } else if (reg->get_scalar() && use_sel != index_component_t::SEL_NONE) {
+	    cerr << get_fileline() << ": error: can not select part of ";
+	    if (reg->data_type() == IVL_VT_REAL) cerr << "real: ";
+	    else cerr << "scalar: ";
+	    cerr << reg->name() << endl;
+	    des->errors += 1;
+      } else {
+	    lv = new NetAssign_(reg);
+      }
+      if (lv == nullptr)
+	    return nullptr;
+
 	// If we find that the matched variable is a packed struct,
 	// then we can handled it with the net_packed_member_ method.
-      if (reg->struct_type() && !tail_path.empty()) {
-	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_packed_member_(des, scope, lv, tail_path, is_force);
+      if (reg->struct_type() && !member_path.empty()) {
+	    elaborate_lval_net_packed_member_(des, scope, lv, member_path, is_force);
 	    return lv;
       }
 
 	// If the variable is a class object, then handle it with the
 	// net_class_member_ method.
       const netclass_t *class_type = dynamic_cast<const netclass_t *>(data_type);
-      if (class_type && !tail_path.empty() && gn_system_verilog())
+      if (class_type && !member_path.empty() && gn_system_verilog()) {
+	    if (reg->unpacked_dimensions() > 0) {
+		  cerr << get_fileline() << ": sorry: writing to class members in an unpacked "
+					    "array of objects is not yet supported." << endl;
+		  des->errors += 1;
+		  delete lv;
+		  return nullptr;
+	    }
 	    return elaborate_lval_net_class_member_(des, scope, is_force,
 						   is_cassign, class_type,
-						   reg, tail_path);
-
+						   lv, member_path);
+      }
 
 	// Past this point, we should have taken care of the cases
 	// where the name is a member/method of a struct/class.
 	// XXXX ivl_assert(*this, method_name.nil());
-      if (!tail_path.empty()) {
+      if (!member_path.empty()) {
 	    cerr << get_fileline() << ": error: Variable "
 		 << reg->name()
 		 << " does not have a field named: "
-		 << tail_path << "." << endl;
+		 << member_path << "." << endl;
 	    des->errors += 1;
+	    delete lv;
 	    return nullptr;
       }
 
-      ivl_assert(*this, tail_path.empty());
-
-      bool need_const_idx = is_cassign || is_force;
-
-      if (reg->unpacked_dimensions() > 0)
-	    return elaborate_lval_net_word_(des, scope, reg, need_const_idx, is_force);
-
-	// This must be after the array word elaboration above!
-      if (reg->get_scalar() &&
-          use_sel != index_component_t::SEL_NONE) {
-	    cerr << get_fileline() << ": error: can not select part of ";
-	    if (reg->data_type() == IVL_VT_REAL) cerr << "real: ";
-	    else cerr << "scalar: ";
-	    cerr << reg->name() << endl;
-	    des->errors += 1;
-	    return 0;
-      }
+      ivl_assert(*this, member_path.empty());
 
       if (use_sel == index_component_t::SEL_PART) {
-	    NetAssign_*lv = new NetAssign_(reg);
 	    elaborate_lval_net_part_(des, scope, lv, is_force);
 	    return lv;
       }
 
       if (use_sel == index_component_t::SEL_IDX_UP ||
           use_sel == index_component_t::SEL_IDX_DO) {
-	    NetAssign_*lv = new NetAssign_(reg);
 	    elaborate_lval_net_idx_(des, scope, lv, use_sel, need_const_idx, is_force);
 	    return lv;
       }
 
-
       if (use_sel == index_component_t::SEL_BIT) {
 	    if (reg->darray_type()) {
-		  NetAssign_*lv = new NetAssign_(reg);
 		  elaborate_lval_darray_bit_(des, scope, lv, is_force);
 		  return lv;
 	    } else {
-		  NetAssign_*lv = new NetAssign_(reg);
 		  elaborate_lval_net_bit_(des, scope, lv, need_const_idx, is_force);
 		  return lv;
 	    }
@@ -358,16 +362,17 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 
       ivl_assert(*this, use_sel == index_component_t::SEL_NONE);
 
-      if (reg->type()==NetNet::UNRESOLVED_WIRE && !is_force) {
+      if (reg->type()==NetNet::UNRESOLVED_WIRE && reg->unpacked_dimensions() == 0 && !is_force) {
 	    ivl_assert(*this, reg->coerced_to_uwire());
 	    report_mixed_assignment_conflict_("variable");
 	    des->errors += 1;
-	    return 0;
+	    delete lv;
+	    return nullptr;
       }
 
 	/* No select expressions. */
 
-      return new NetAssign_(reg);
+      return lv;
 }
 
 NetAssign_*PEIdent::elaborate_lval_array_(Design *des, NetScope *,
@@ -403,10 +408,11 @@ NetAssign_*PEIdent::elaborate_lval_array_(Design *des, NetScope *,
 NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 					      NetScope*scope,
 					      NetNet*reg,
+					      const pform_name_t base_path,
 					      bool need_const_idx,
 					      bool is_force) const
 {
-      const name_component_t&name_tail = path_.back();
+      const name_component_t&name_tail = base_path.back();
       ivl_assert(*this, !name_tail.index.empty());
 
       if (debug_elaborate) {
@@ -503,34 +509,17 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: Set array word=" << *canon_index << endl;
 
-
-	/* An array word may also have part selects applied to them. */
-
-      index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
-      if (name_tail.index.size() > reg->unpacked_dimensions())
-	    use_sel = name_tail.index.back().sel;
-
       if (reg->get_scalar() &&
-          use_sel != index_component_t::SEL_NONE) {
+          name_tail.index.size() > reg->unpacked_dimensions()) {
 	    cerr << get_fileline() << ": error: can not select part of ";
 	    if (reg->data_type() == IVL_VT_REAL) cerr << "real";
 	    else cerr << "scalar";
 	    cerr << " array word: " << reg->name()
 	         << as_indices(unpacked_indices) << endl;
 	    des->errors += 1;
-	    return 0;
+	    delete lv;
+	    return nullptr;
       }
-
-      if (use_sel == index_component_t::SEL_BIT)
-	    elaborate_lval_net_bit_(des, scope, lv, need_const_idx, is_force);
-
-      if (use_sel == index_component_t::SEL_PART)
-	    elaborate_lval_net_part_(des, scope, lv, is_force);
-
-      if (use_sel == index_component_t::SEL_IDX_UP ||
-          use_sel == index_component_t::SEL_IDX_DO)
-	    elaborate_lval_net_idx_(des, scope, lv, use_sel,
-				    need_const_idx, is_force);
 
       return lv;
 }
@@ -1082,25 +1071,24 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
  */
 NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
 				    bool is_force, bool is_cassign,
-				    const netclass_t *class_type, NetNet*sig,
+				    const netclass_t *class_type, NetAssign_*lv,
 				    pform_name_t member_path) const
 {
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PEIdent::elaborate_lval_net_class_member_: "
 		 << "l-value is property " << member_path
-		 << " of " << sig->name() << "." << endl;
+		 << " of " << lv->sig()->name() << "." << endl;
       }
 
       ivl_assert(*this, class_type);
 
-	// Iterate over the member_path. This handles nested class
-	// object, by generating nested NetAssign_ object. We start
-	// with lv==0, so the front of the member_path is the member
-	// of the outermost class. This generates an lv from sig. Then
-	// iterate over the remaining of the member_path, replacing
-	// the outer lv with an lv that nests the lv from the previous
-	// iteration.
-      NetAssign_*lv = 0;
+	// Iterate over the member_path. This handles nested class objects, by
+	// generating nested NetAssign_ object. We start with the lv passed in
+	// by the caller, and use that to access the first element in the
+	// member_path. We then iterate over the remaining of the member_path,
+	// replacing the outer lv with an lv that nests the lv from the
+	// previous iteration.
+      bool need_nested_lv = false;
       do {
 	      // Start with the first component of the member path...
 	    perm_string method_name = peek_head_name(member_path);
@@ -1149,7 +1137,7 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 		  }
 
 		  return elaborate_lval_var_(des, scope, is_force, is_cassign,
-					     psig, psig->net_type(), pform_name_t());
+					     psig, psig->net_type(), path_.name, pform_name_t());
 
 	    } else if (qual.test_const()) {
 		 auto method_scope = find_method_containing_scope(*this, scope);
@@ -1181,8 +1169,10 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 		 }
 	    }
 
-	    lv = lv? new NetAssign_(lv) : new NetAssign_(sig);
+	    if (need_nested_lv)
+		lv = new NetAssign_(lv);
 	    lv->set_property(method_name, pidx);
+	    need_nested_lv = true;
 
 	      // Now get the type of the property.
 	    ivl_type_t ptype = class_type->get_prop_type(pidx);
@@ -1303,9 +1293,6 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
       ivl_assert(*this, name_idx->name == peek_head_name(member_path));
       ++ name_idx;
       const name_component_t&name_base = *name_idx;
-
-	// Shouldn't be seeing unpacked arrays of packed structs...
-      ivl_assert(*this, reg->unpacked_dimensions() == 0);
 
 	// These make up the "part" select that is the equivilent of
 	// following the member path through the nested structs. To
@@ -1605,14 +1592,14 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 		 << endl;
       }
 
-	// The dimensions in the expression must match the packed
+	// The dimensions in the expression must match the
 	// dimensions that are declared for the variable. For example,
 	// if foo is a packed array of struct, then this expression
 	// must be "b[n][m]" with the right number of dimensions to
 	// match the declaration of "b".
 	// Note that one of the packed dimensions is the packed struct
 	// itself.
-      ivl_assert(*this, name_base.index.size()+1 == reg->packed_dimensions());
+      ivl_assert(*this, name_base.index.size()+1 == (reg->unpacked_dimensions() + reg->packed_dimensions()));
 
 	// Generate an expression that takes the input array of
 	// expressions and generates a canonical offset into the
