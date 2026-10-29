@@ -368,6 +368,11 @@ AC_CHECK_FUNCS(fopen64)
 # systems we may need to use the compiler in C99 mode to get a definition.
 # autoconf >= 2.70 will enable C99 if it is available. For older autoconf
 # versions, we requested C99 mode earlier with AC_PROG_CC_C99.
+AH_TEMPLATE([HAVE_LROUND], [Define if lround is available])
+AH_TEMPLATE([HAVE_LLROUND], [Define if llround is available])
+AH_TEMPLATE([HAVE_NAN], [Define if nan is available])
+AH_TEMPLATE([HAVE_FMIN], [Define if fmin is available])
+AH_TEMPLATE([HAVE_FMAX], [Define if fmax is available])
 AC_SEARCH_LIBS([lround], [m], [AC_DEFINE([HAVE_LROUND], [1])])
 AC_SEARCH_LIBS([llround], [m], [AC_DEFINE([HAVE_LLROUND], [1])])
 AC_SEARCH_LIBS([nan], [m], [AC_DEFINE([HAVE_NAN], [1])])
@@ -397,7 +402,8 @@ uint64_t uival = 1;
 result &= check(uival);
 return !result;]])],
    [AC_MSG_RESULT(no)],
-   [AC_DEFINE([UINT64_T_AND_ULONG_SAME], [1]) AC_MSG_RESULT(yes)])
+   [AH_TEMPLATE([UINT64_T_AND_ULONG_SAME], [Define if uint64_t and unsigned long are the same type])
+    AC_DEFINE([UINT64_T_AND_ULONG_SAME], [1]) AC_MSG_RESULT(yes)])
 
 # Linker option used when compiling the target
 AX_LD_RDYNAMIC
