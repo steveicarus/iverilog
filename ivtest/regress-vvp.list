@@ -9,6 +9,7 @@ analog2				vvp_tests/analog2.json
 array_index_real_fail		vvp_tests/array_index_real_fail.json
 array_of_objects		vvp_tests/array_of_objects.json
 array_of_packed_struct		vvp_tests/array_of_packed_struct.json
+array_of_packed_struct2		vvp_tests/array_of_packed_struct2.json
 array_packed_sysfunct		vvp_tests/array_packed_sysfunct.json
 array_packed_value_list		vvp_tests/array_packed_value_list.json
 array_packed_write_read		vvp_tests/array_packed_write_read.json
