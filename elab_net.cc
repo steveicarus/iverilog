@@ -787,138 +787,109 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		       << "\" with " << sig->pin_count() << " elements." << endl;
 	    }
 
-      } else if (sig_is_array) {
-
+      } else {
 	    list<long> unpacked_indices_const;
 
-	      // Make sure there are enough indices to address an array element.
-	    if (path_tail.index.size() < sig->unpacked_dimensions()) {
-		  cerr << get_fileline() << ": error: Array " << path()
-		       << " needs " << sig->unpacked_dimensions() << " indices,"
-		       << " but got only " << path_tail.index.size() << ". (net)" << endl;
-		  cerr << get_fileline() << ":      : Assignment to a whole array requires SystemVerilog."
-		       << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
+            if (sig_is_array) {
 
-	      // Evaluate all the index expressions into an
-	      // "unpacked_indices" array.
-	    list<NetExpr*>unpacked_indices;
-	    indices_flags flags;
-	    indices_to_expressions(des, scope, this,
-				   path_tail.index, sig->unpacked_dimensions(),
-				   true,
-				   flags,
-				   unpacked_indices,
-				   unpacked_indices_const);
+		    // Make sure there are enough indices to address an array element.
+		  if (path_tail.index.size() < sig->unpacked_dimensions()) {
+			cerr << get_fileline() << ": error: Array " << path()
+			     << " needs " << sig->unpacked_dimensions() << " indices,"
+			     << " but got only " << path_tail.index.size() << ". (net)" << endl;
+			cerr << get_fileline() << ":	  : Assignment to a whole array requires SystemVerilog."
+			     << endl;
+			des->errors += 1;
+			return 0;
+		  }
 
-	    if (flags.invalid) {
-		  return 0;
+		    // Evaluate all the index expressions into an
+		    // "unpacked_indices" array.
+		  list<NetExpr*>unpacked_indices;
+		  indices_flags flags;
+		  indices_to_expressions(des, scope, this,
+					 path_tail.index, sig->unpacked_dimensions(),
+					 true,
+					 flags,
+					 unpacked_indices,
+					 unpacked_indices_const);
 
-	    } else if (flags.variable) {
-		  cerr << get_fileline() << ": error: array '" << sig->name()
-		       << "' index must be a constant in this context." << endl;
-		  des->errors += 1;
-		  return 0;
+		  if (flags.invalid) {
+			return 0;
 
-	    } else if (flags.undefined) {
-		  cerr << get_fileline() << ": warning: "
-		       << "ignoring undefined l-value array access "
-		       << sig->name() << as_indices(unpacked_indices)
-		       << "." << endl;
-		  widx = -1;
-		  widx_flag = true;
+		  } else if (flags.variable) {
+			cerr << get_fileline() << ": error: array '" << sig->name()
+			     << "' index must be a constant in this context." << endl;
+			des->errors += 1;
+			return 0;
 
-	    } else {
-		  NetExpr*canon_index = 0;
-		  ivl_assert(*this, unpacked_indices_const.size() == sig->unpacked_dimensions());
-		  canon_index = normalize_variable_unpacked(sig, unpacked_indices_const);
-
-		  if (canon_index == 0) {
+		  } else if (flags.undefined) {
 			cerr << get_fileline() << ": warning: "
-			     << "ignoring out of bounds l-value array access "
-			     << sig->name() << as_indices(unpacked_indices_const)
+			     << "ignoring undefined l-value array access "
+			     << sig->name() << as_indices(unpacked_indices)
 			     << "." << endl;
 			widx = -1;
 			widx_flag = true;
 
 		  } else {
-			const NetEConst*canon_const = dynamic_cast<NetEConst*>(canon_index);
-			ivl_assert(*this, canon_const);
+			NetExpr*canon_index = 0;
+			ivl_assert(*this, unpacked_indices_const.size() == sig->unpacked_dimensions());
+			canon_index = normalize_variable_unpacked(sig, unpacked_indices_const);
 
-			widx = canon_const->value().as_long();
-			widx_flag = true;
-			delete canon_index;
+			if (canon_index == 0) {
+			      cerr << get_fileline() << ": warning: "
+				   << "ignoring out of bounds l-value array access "
+				   << sig->name() << as_indices(unpacked_indices_const)
+				   << "." << endl;
+			      widx = -1;
+			      widx_flag = true;
+
+			} else {
+			      const NetEConst*canon_const = dynamic_cast<NetEConst*>(canon_index);
+			      ivl_assert(*this, canon_const);
+
+			      widx = canon_const->value().as_long();
+			      widx_flag = true;
+			      delete canon_index;
+			}
 		  }
+
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: Use [" << widx << "]"
+			     << " to index l-value array." << endl;
 	    }
 
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: Use [" << widx << "]"
-		       << " to index l-value array." << endl;
-
-	      /* The array has a part/bit select at the end. */
 	    if (path_tail.index.size() > sig->unpacked_dimensions()) {
+
+		    // This is a bit/slice select. Calculate a canonical part select.
+
 		  if (sig->get_scalar()) {
-		        cerr << get_fileline() << ": error: "
-		             << "can not select part of ";
+			cerr << get_fileline() << ": error: "
+			     << "can not select part of ";
 			if (sig->data_type() == IVL_VT_REAL) cerr << "real";
 			else cerr << "scalar";
-			cerr << " array word: " << sig->name()
-			     << as_indices(unpacked_indices_const) << endl;
-		        des->errors += 1;
-		        return 0;
+			if (sig_is_array) cerr << " array word";
+			cerr << ": " << sig->name();
+			if (sig_is_array) cerr << as_indices(unpacked_indices_const);
+			cerr << endl;
+			des->errors += 1;
+			return 0;
 		  }
 
 		  long midx_tmp, lidx_tmp;
 		  if (! eval_part_select_(des, scope, sig, midx_tmp, lidx_tmp))
-		        return 0;
+			return 0;
 
 		  if (lidx_tmp < 0) {
-		        cerr << get_fileline() << ": sorry: part selects "
-		                "straddling the start of signal (" << path_
-		             << ") are not currently supported." << endl;
-		        des->errors += 1;
-		        return 0;
+			cerr << get_fileline() << ": sorry: part selects "
+				"straddling the start of signal (" << path_
+			     << ") are not currently supported." << endl;
+			des->errors += 1;
+			return 0;
 		  }
 		  midx = midx_tmp;
 		  lidx = lidx_tmp;
 	    }
-
-      } else if (!path_tail.index.empty()) {
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
-		       << "path_tail.index.size()=" << path_tail.index.size()
-		       << endl;
-	    }
-
-	      // There are index expressions on the name, so this is a
-	      // bit/slice select of the name. Calculate a canonical
-	      // part select.
-
-	    if (sig->get_scalar()) {
-		  cerr << get_fileline() << ": error: "
-		       << "can not select part of ";
-		  if (sig->data_type() == IVL_VT_REAL) cerr << "real: ";
-		  else cerr << "scalar: ";
-		  cerr << sig->name() << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    long midx_tmp, lidx_tmp;
-	    if (! eval_part_select_(des, scope, sig, midx_tmp, lidx_tmp))
-		  return 0;
-
-	    if (lidx_tmp < 0) {
-		  cerr << get_fileline() << ": sorry: part selects "
-		          "straddling the start of signal (" << path_
-                       << ") are not currently supported." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-	    midx = midx_tmp;
-	    lidx = lidx_tmp;
       }
 
       unsigned subnet_wid = midx-lidx+1;
