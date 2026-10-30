@@ -616,9 +616,9 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    return nullptr;
       }
 
-      // Some parts below need the tail component. This is a convenient
-      // reference to it.
-      const name_component_t&path_tail = path_.back();
+	// Some parts below need the tail component of the base path.
+	// This is a convenient reference to it.
+      const name_component_t&path_tail = base_path.back();
 
       // Default part select is the entire word.
       unsigned midx = sig->vector_width()-1, lidx = 0;
@@ -632,24 +632,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       // Whether the signal is an array
       const bool sig_is_array = sig->unpacked_dimensions() > 0;
 
-      // Detect the net is a structure and there was a method path
-      // detected. We have already broken the path_ into the path to
-      // the net, and the path of member names. For example, if the
-      // path_ is a.b.x.y, we have determined that a.b is a reference
-      // to the net, and that x.y are the member_path. So in this case
-      // we handle the member_path.
-      if (sig->struct_type() && !member_path.empty()) {
-
-	    if (debug_elaborate) {
-	          cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
-		       << "Signal " << sig->name() << " is a structure, "
-		       << "try to match member path " << member_path << endl;
-	    }
-
-	    if (!elaborate_lnet_packed_member_(des, scope, sig, base_path, member_path, midx, lidx))
-		  return nullptr;
-
-      } else if (gn_system_verilog() && sig_is_array && path_tail.index.empty()) {
+      if (gn_system_verilog() && sig_is_array && member_path.empty() && path_tail.index.empty()) {
 
 	      // In this case, we are doing a continuous assignment to
 	      // an unpacked array. The NetNet representation is a
@@ -738,7 +721,29 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 			     << " to index l-value array." << endl;
 	    }
 
-	    if (path_tail.index.size() > sig->unpacked_dimensions()) {
+	    if (sig->struct_type() && !member_path.empty()) {
+
+		    // This is a structure and there was a method path detected.
+		    // We have already broken the path_ into the path to the net
+		    // and the path of member names. For example, if the path_
+		    // is a.b.x.y, we have determined that a.b is a reference to
+		    // the net, and that x.y are the member_path. So in this case
+		    // we handle the member_path.
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: ";
+			if (sig_is_array) cerr << "Array word ";
+			else cerr << "Signal ";
+			cerr << sig->name();
+			if (sig_is_array) cerr << as_indices(unpacked_indices_const);
+			cerr << " is a structure, try to match member path "
+			     << member_path << endl;
+		  }
+
+		  if (!elaborate_lnet_packed_member_(des, scope, sig, base_path,
+						     member_path, midx, lidx))
+			return nullptr;
+
+	    } else if (path_tail.index.size() > sig->unpacked_dimensions()) {
 
 		    // This is a bit/slice select. Calculate a canonical part select.
 
