@@ -3903,7 +3903,7 @@ charge_strength_opt
   ;
 
 defparam_assign
-  : hierarchy_identifier '=' expression
+  : hierarchy_identifier '=' expr_mintypmax
       { pform_set_defparam(*$1, $3);
 	delete $1;
       }
