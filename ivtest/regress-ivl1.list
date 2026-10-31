@@ -132,7 +132,6 @@ pr2877555		normal			ivltests
 real4			normal			ivltests
 realtobits		normal			ivltests
 specparam1		normal			ivltests
-specparam2		normal			ivltests
 tern3			normal			ivltests gold=tern3.gold
 v2005_math		normal			ivltests
 

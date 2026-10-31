@@ -7349,10 +7349,10 @@ NetExpr* PEIdent::elaborate_expr_param_or_specparam_(Design*des,
       if (need_const && !(ANNOTATABLE & flags)) {
             perm_string name = peek_tail_name(path_);
             if (found_in->make_parameter_unannotatable(name)) {
-                  cerr << get_fileline() << ": warning: specparam '" << name
-                       << "' is being used in a constant expression." << endl;
-                  cerr << get_fileline() << ":        : This will prevent it "
-                          "being annotated at run time." << endl;
+		  cerr << get_fileline() << ": error: specparam '" << name
+		       << "' cannot be used in a constant expression." << endl;
+		  des->errors += 1;
+		    // Allow the assignment to happen to check more code.
             }
       }
 
