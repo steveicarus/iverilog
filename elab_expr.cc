@@ -4125,7 +4125,7 @@ static void check_number_of_args(Design*des, perm_string name,
                                  unsigned expected, unsigned given)
 {
       if (given != expected) {
-	    cerr << loc.get_fileline() << ": error: String method '" << name
+	    cerr << loc.get_fileline() << ": error: string method '" << name
 	         << "()' takes ";
 	    switch (expected) {
 		case 0: cerr << "no arguments"; break;
@@ -4136,6 +4136,27 @@ static void check_number_of_args(Design*des, perm_string name,
 	    cerr << ", given " << given << "." << endl;
 	    des->errors += 1;
       }
+}
+
+/* Check if the argument is a string or string compatiable type. */
+static bool arg_is_string(const NetExpr*expr)
+{
+      if (! expr) return false;
+	// A string type.
+      if (expr->expr_type() == IVL_VT_STRING) return true;
+      const NetEConst*tmp = dynamic_cast<const NetEConst*>(expr);
+	// A string constant.
+      if (tmp && tmp->value().is_string()) return true;
+      return false;
+}
+
+/* Check if the argument is an int compatiable type. */
+static bool arg_is_int(const NetExpr*expr)
+{
+      if (! expr) return false;
+      if ((expr->expr_type() == IVL_VT_BOOL) ||
+          (expr->expr_type() == IVL_VT_LOGIC)) return true;
+      return false;
 }
 
 /*
@@ -4436,6 +4457,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			auto args = map_named_args(des, parm_names, parms_);
 			auto expr = elaborate_rval_expr(des, scope, &netvector_t::atom4s32,
 			                                args[0], false);
+			if (! arg_is_int(expr) ) {
+			      cerr << get_fileline() << ": error: string method '"
+			           << method_name << "()' argument (" << *parms_[0].parm
+			           << ") cannot be converted to an int." << endl;
+			      des->errors += 1;
+			}
 			sys_expr->parm(1, expr);
 		  }
 		  return sys_expr;
@@ -4459,18 +4486,33 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  return sys_expr;
 	    }
 
-	    if (method_name == "compare") {
+	    if ((method_name == "compare") ||
+	        (method_name == "icompare")) {
 		  check_number_of_args(des, method_name, *this, 1, parms_.size());
-		  cerr << get_fileline() << ": sorry: String method 'compare()' "
-		          "is not currently supported." << endl;
-		  return 0;
-	    }
-
-	    if (method_name == "icompare") {
-		  check_number_of_args(des, method_name, *this, 1, parms_.size());
-		  cerr << get_fileline() << ": sorry: String method 'icompare()' "
-		          "is not currently supported." << endl;
-		  return 0;
+		  const char* name = (method_name ==
+		                      "compare") ? "$ivl_string_method$compare" :
+		                                   "$ivl_string_method$icompare";
+		  NetESFunc*sys_expr = new NetESFunc(name, &netvector_t::atom2s32,
+						     parms_.size() > 0 ? 2 : 1);
+		  sys_expr->set_line(*this);
+		  sys_expr->parm(0, sub_expr);
+		  if (parms_.size() > 0) {
+			static const std::vector<perm_string> parm_names = {
+			      perm_string::literal("s"),
+			};
+			auto args = map_named_args(des, parm_names, parms_);
+			auto expr = elaborate_rval_expr(des, scope,
+			                                &netstring_t::type_string,
+			                                args[0], false);
+			if (! arg_is_string(expr)) {
+			      cerr << get_fileline() << ": error: string method '"
+			           << method_name << "()' argument (" << *parms_[0].parm
+			           << ") cannot be converted to a string." << endl;
+			      des->errors += 1;
+			}
+			sys_expr->parm(1, expr);
+		  }
+		  return sys_expr;
 	    }
 
 	    if (method_name == "substr") {
@@ -4561,7 +4603,27 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 
       return 0;
 }
-static long get_const_int_param(Design*des, NetScope*scope, PExpr*expr, const LineInfo &loc)
+
+static string get_const_str_param(Design*des, NetScope*scope, PExpr*expr,
+                                  const perm_string name, const LineInfo &loc)
+{
+      string ret;
+      NetExpr*tmp = elab_and_eval(des, scope, expr, -1, true);
+      const NetEConst*cval = dynamic_cast<const NetEConst*>(tmp);
+      if (cval && cval->value().is_string()) {
+	    ret = cval->value().as_string();
+      } else {
+	    cerr << loc.get_fileline() << ": error: string method '"
+	         << name << "()' argument (" << *expr
+	         << ") cannot be converted to a constant string." << endl;
+	    ret = string("");
+	    des->errors += 1;
+      }
+      return ret;
+}
+
+static long get_const_int_param(Design*des, NetScope*scope, PExpr*expr,
+                                const perm_string name, const LineInfo &loc)
 {
       long ret;
       NetExpr*tmp = elab_and_eval(des, scope, expr, -1, true);
@@ -4570,7 +4632,8 @@ static long get_const_int_param(Design*des, NetScope*scope, PExpr*expr, const Li
       if (cval && ! cval->value().is_defined()) {
 	    ret = -1;
       } else if (! eval_as_long(ret, tmp)) {
-	    cerr << loc.get_fileline() << ": error: int index (" << *expr
+	    cerr << loc.get_fileline() << ": error: string method '" << name
+	         << "()' argument (" << *expr
 	         << ") cannot be converted to a constant int." << endl;
 	    ret = -1;
 	    des->errors += 1;
@@ -4623,9 +4686,10 @@ NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, NetScope*scope,
 	    if (method_name == "getc") {
 		  check_number_of_args(des, method_name, *this, 1, parms_.size());
 		  long idx = -1;
-		  if (parms_.size() > 0) idx = get_const_int_param(des, scope,
-		                                                   parms_[0].parm,
-		                                                   *this);
+		  if (parms_.size() > 0) {
+			idx = get_const_int_param(des, scope, parms_[0].parm,
+			                          method_name, *this);
+		  }
 		  NetEConst*ret_val;
 		  if ((idx < 0) || (static_cast<unsigned>(idx) > par_value.size())) {
 			ret_val = make_const_val_s(0);
@@ -4658,18 +4722,31 @@ NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, NetScope*scope,
 
 	    if (method_name=="compare") {
 		  check_number_of_args(des, method_name, *this, 1, parms_.size());
-		  cerr << get_fileline() << ": sorry: string method: '"
-		       << method_name << "()' is not currently supported."
-		       << endl;
-		  return 0;
+		  string str = par_value;
+		  if (parms_.size() > 0) {
+			str = get_const_str_param(des, scope, parms_[0].parm,
+			                          method_name, *this);
+		  }
+		  NetEConst*ret_val = make_const_val_s(par_value.compare(str));
+		  ret_val->set_line(*this);
+		  return ret_val;
 	    }
 
 	    if (method_name=="icompare") {
 		  check_number_of_args(des, method_name, *this, 1, parms_.size());
-		  cerr << get_fileline() << ": sorry: string method: '"
-		       << method_name << "()' is not currently supported."
-		       << endl;
-		  return 0;
+		  string s_lower = par_value;
+		  std::transform(s_lower.begin(), s_lower.end(), s_lower.begin(),
+				 [](unsigned char c){ return std::tolower(c); });
+		  string str = s_lower;
+		  if (parms_.size() > 0) {
+			str = get_const_str_param(des, scope, parms_[0].parm,
+			                          method_name, *this);
+			std::transform(str.begin(), str.end(), str.begin(),
+			               [](unsigned char c){ return std::tolower(c); });
+		  }
+		  NetEConst*ret_val = make_const_val_s(s_lower.compare(str));
+		  ret_val->set_line(*this);
+		  return ret_val;
 	    }
 
 	    if (method_name=="substr") {
