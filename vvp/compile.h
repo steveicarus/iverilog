@@ -486,7 +486,8 @@ extern void compile_codelabel(char*label);
  * The implementations of these live in the vpi_scope.cc file.
  */
 extern void compile_scope_decl(char*typ, char*lab, char*nam, char*tnam,
-                               char*par, long file_idx, long lineno,
+                               char*func_ret_val, char*parent,
+                               long file_idx, long lineno,
                                long def_file_idx, long def_lineno,
                                long is_cell);
 extern void compile_scope_recall(char*sym);

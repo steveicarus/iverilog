@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -707,11 +707,15 @@ statement
      parent scope, then this is a root scope. */
 
 	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING T_NUMBER T_NUMBER ';'
-		{ compile_scope_decl($1, $3, $5, $6, 0, $7, $8, $7, $8, 0); }
+		{ compile_scope_decl($1, $3, $5, $6, 0, 0, $7, $8, $7, $8, 0); }
 
 	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING T_NUMBER T_NUMBER ','
 	  T_NUMBER T_NUMBER T_NUMBER ',' T_SYMBOL ';'
-		{ compile_scope_decl($1, $3, $5, $6, $14, $7, $8, $10, $11, $12); }
+		{ compile_scope_decl($1, $3, $5, $6, 0, $14, $7, $8, $10, $11, $12); }
+
+	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING T_NUMBER T_NUMBER ','
+	  T_NUMBER T_NUMBER T_NUMBER ',' T_SYMBOL ',' T_SYMBOL ';'
+		{ compile_scope_decl($1, $3, $5, $6, $14, $16, $7, $8, $10, $11, $12); }
 
   /* Scope recall has no label of its own, but refers by label to a
      declared scope. */
