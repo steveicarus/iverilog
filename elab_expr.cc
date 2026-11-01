@@ -4565,7 +4565,11 @@ static long get_const_int_param(Design*des, NetScope*scope, PExpr*expr, const Li
 {
       long ret;
       NetExpr*tmp = elab_and_eval(des, scope, expr, -1, true);
-      if (! eval_as_long(ret, tmp)) {
+      const NetEConst*cval = dynamic_cast<const NetEConst*>(tmp);
+	// Map an index with undefined bit to be out of range.
+      if (cval && ! cval->value().is_defined()) {
+	    ret = -1;
+      } else if (! eval_as_long(ret, tmp)) {
 	    cerr << loc.get_fileline() << ": error: int index (" << *expr
 	         << ") cannot be converted to a constant int." << endl;
 	    ret = -1;

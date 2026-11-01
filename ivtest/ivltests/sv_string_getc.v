@@ -19,8 +19,8 @@ module top;
       passed = 1'b0;
     end
 
-    if (chrx !== 0) begin
-      $display("FAILED: Expected 0 for index x, got (%0d)", chrx);
+    if ((chrx !== 0) && (chrx !== 72)) begin
+      $display("FAILED: Expected 0 or 72 for index x, got (%0d)", chrx);
       passed = 1'b0;
     end
 
@@ -43,10 +43,13 @@ module top;
       passed = 1'b0;
     end
 
-    if (chrx !== 0) begin
-      $display("FAILED: Expected 0 for variable index x, got (%0d)", chrx);
+    if ((chrx !== 0) && (chrx !== 72)) begin
+      $display("FAILED: Expected 0 or 72 for variable index x, got (%0d)", chrx);
       passed = 1'b0;
     end
+
+    if (chrx === 0) $display("Undefined index bits are mapped to out of range.");
+    if (chrx === 72) $display("Undefined index bits are mapped to zero.");
 
     if (passed) $display("PASSED");
   end
