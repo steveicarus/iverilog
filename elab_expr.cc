@@ -9065,7 +9065,8 @@ NetExpr* PETernary::elab_and_eval_alternative_(Design*des, NetScope*scope,
                                                unsigned flags, bool short_cct) const
 {
       int context_wid = expr_wid;
-      if (type_is_vectorable(expr->expr_type()) && !type_is_vectorable(expr_type_)) {
+      if (expr_type_ == IVL_VT_STRING ||
+          (type_is_vectorable(expr->expr_type()) && !type_is_vectorable(expr_type_))) {
 	    expr_wid = expr->expr_width();
             context_wid = -1;
       } else {
