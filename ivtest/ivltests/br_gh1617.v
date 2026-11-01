@@ -19,6 +19,12 @@ module test;
       failed = 1'b1;
     end
 
+    q[$] += 1;
+    if (q.size() != 4 || q[3] != 41) begin
+      $display("FAILED: q = %p", q);
+      failed = 1'b1;
+    end
+
     // Writing to the last element of an empty queue is ignored.
     e[$] = 5;
     if (e.size() != 0) begin

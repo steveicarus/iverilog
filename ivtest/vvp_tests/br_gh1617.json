@@ -1,5 +1,9 @@
 {
     "type"          : "normal",
     "source"        : "br_gh1617.v",
-    "iverilog-args" : [ "-g2012" ]
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "SystemVerilog queues are not supported",
+        "type"      : "CE"
+    }
 }
