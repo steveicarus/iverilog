@@ -350,7 +350,8 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 	    return lv;
       }
 
-      if (use_sel == index_component_t::SEL_BIT) {
+      if (use_sel == index_component_t::SEL_BIT ||
+	  (use_sel == index_component_t::SEL_BIT_LAST && reg->darray_type())) {
 	    if (reg->darray_type()) {
 		  elaborate_lval_darray_bit_(des, scope, lv, is_force);
 		  return lv;
@@ -733,11 +734,17 @@ bool PEIdent::elaborate_lval_darray_bit_(Design*des,
       }
 
       const index_component_t&index_tail = name_tail.index.back();
-      ivl_assert(*this, index_tail.msb != 0);
       ivl_assert(*this, index_tail.lsb == 0);
 
-	// Evaluate the select expression...
-      NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1);
+	// Evaluate the select expression, or use the last element for [$].
+      NetExpr*mux;
+      if (index_tail.sel == index_component_t::SEL_BIT_LAST) {
+	    mux = new NetELast(lv->sig());
+	    mux->set_line(*this);
+      } else {
+	    ivl_assert(*this, index_tail.msb != 0);
+	    mux = elab_and_eval(des, scope, index_tail.msb, -1);
+      }
 
       lv->set_word(mux);
 
