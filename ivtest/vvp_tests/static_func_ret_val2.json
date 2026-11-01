@@ -1,0 +1,10 @@
+{
+    "type" : "normal",
+    "source" : "static_func_ret_val2.v",
+    "gold" : "static_func_ret_val2",
+    "vlog95" : {
+        "__comment" : "Real nets are not supported.",
+        "type"      : "CE",
+        "gold"      : ""
+    }
+}

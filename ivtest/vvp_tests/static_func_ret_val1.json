@@ -1,0 +1,9 @@
+{
+    "type" : "normal",
+    "source" : "static_func_ret_val1.v",
+    "gold" : "static_func_ret_val1",
+    "vlog95" : {
+        "__comment" : "tgt-vlog95 does not support hierarchical names on RHS of CA.",
+        "type"      : "TE"
+    }
+}
