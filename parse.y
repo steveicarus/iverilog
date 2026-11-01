@@ -5736,7 +5736,9 @@ module_parameter_port_list_opt
 	pform_end_parameter_port_list();
       }
   | '#' '('
-      { pform_start_parameter_port_list(); }
+      { param_is_local = false;
+	pform_start_parameter_port_list();
+      }
     module_parameter_port_list
       { pform_end_parameter_port_list(); }
     ')'
