@@ -1046,7 +1046,7 @@ class PECallFunction : public PExpr {
       NetExpr* elaborate_expr_method_(Design*des, NetScope*scope,
 				      symbol_search_results&search_results)
 				      const;
-      NetExpr* elaborate_expr_method_par_(Design*des, const NetScope*scope,
+      NetExpr* elaborate_expr_method_par_(Design*des, NetScope*scope,
 					  const symbol_search_results&search_results)
 					  const;
 

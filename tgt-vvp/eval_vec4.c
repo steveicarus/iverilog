@@ -743,6 +743,23 @@ static void draw_darray_pop(ivl_expr_t expr)
       }
 }
 
+static void draw_string_getc(ivl_expr_t expr)
+{
+      ivl_expr_t arg;
+      unsigned arg1;
+      assert(ivl_expr_parms(expr) == 2);
+
+      arg = ivl_expr_parm(expr,0);
+      draw_eval_string(arg);
+
+      arg = ivl_expr_parm(expr, 1);
+      arg1 = allocate_word();
+      draw_eval_expr_into_integer(arg, arg1);
+
+      fprintf(vvp_out, "    %%getc %u;\n", arg1);
+      clr_word(arg1);
+}
+
 static void draw_sfunc_vec4(ivl_expr_t expr)
 {
       unsigned parm_count = ivl_expr_parms(expr);
@@ -830,6 +847,11 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 	    assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
 	    fprintf(vvp_out, "    %%uparr/%s/v v%p_0, %u;\n",
 	            op, ivl_expr_signal(arg), wid);
+	    return;
+      }
+
+      if (strcmp(ivl_expr_name(expr), "$ivl_string_method$getc") == 0 ) {
+	    draw_string_getc(expr);
 	    return;
       }
 
