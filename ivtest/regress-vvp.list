@@ -867,6 +867,7 @@ task_return_fail1		vvp_tests/task_return_fail1.json
 task_return_fail2		vvp_tests/task_return_fail2.json
 test_va_math			vvp_tests/test_va_math.json
 test_vams_math			vvp_tests/test_vams_math.json
+timeformat_neg_width		vvp_tests/timeformat_neg_width.json
 timing_check_syntax		vvp_tests/timing_check_syntax.json
 timing_check_delayed_signals	vvp_tests/timing_check_delayed_signals.json
 udp_ansi_initial_nonreg_fail	vvp_tests/udp_ansi_initial_nonreg_fail.json
