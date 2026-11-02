@@ -149,3 +149,5 @@ vpi_control		normal			vpi_control.c		vpi_control.log
 # version or if it uses something not implemented (NI) by other
 # versions of the program it will also need a version specific
 # line above.
+
+enum_typespec		normal,-g2012		enum_typespec.c		enum_typespec.gold

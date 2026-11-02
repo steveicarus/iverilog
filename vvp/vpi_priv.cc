@@ -856,6 +856,15 @@ void vpip_vec2_get_value(const vvp_vector2_t&word_val, unsigned width,
 	  case vpiSuppressVal:
 	    break;
 
+	  case vpiBinStrVal: {
+            char*rbuf = static_cast<char*>(need_result_buf(width+1, RBUF_VAL));
+            for (unsigned idx = 0; idx < width; idx += 1)
+                  rbuf[width-idx-1] = word_val.value(idx) ? '1' : '0';
+            rbuf[width] = 0;
+            vp->value.str = rbuf;
+            break;
+      }
+
 	  case vpiIntVal:
 	    vector2_to_value(word_val, vp->value.integer, signed_flag);
 	    break;

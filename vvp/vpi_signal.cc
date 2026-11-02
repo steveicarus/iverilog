@@ -659,6 +659,9 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
 
       switch (code) {
 
+	  case vpiTypespec:
+	    return rfp->enum_typespec;
+
 	  case vpiParent:
 	    return rfp->is_netarray? rfp->within.parent : NULL;
 

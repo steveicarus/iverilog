@@ -62,6 +62,7 @@ EXTERN_C_START
 #define vpiArrayVar         vpiRegArray
 
 /********* TYPESPECS *************/
+#define vpiTypespec         605
 #define vpiClassTypespec    630
 #define vpiEnumTypespec     633
 #define vpiEnumConst        634

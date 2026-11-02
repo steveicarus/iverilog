@@ -42,6 +42,13 @@ static struct vcd_info *vcd_list = NULL;
 static struct vcd_info *vcd_const_list = NULL;
 static struct vcd_info *vcd_dmp_list = NULL;
 
+/* Enum typespecs are shared by variables using the same declared type. */
+static struct enum_info {
+      vpiHandle typespec;
+      fstEnumHandle handle;
+      struct enum_info*next;
+} *enum_list = NULL;
+
 static PLI_UINT64 vcd_cur_time = 0;
 static int dump_is_off = 0;
 static long dump_limit = 0;
@@ -208,6 +215,12 @@ static PLI_INT32 finish_cb(p_cb_data cause)
       }
 
       fstWriterClose(dump_file);
+
+      while (enum_list) {
+            struct enum_info*next_enum = enum_list->next;
+            free(enum_list);
+            enum_list = next_enum;
+      }
 
       for (cur = vcd_list ;  cur ;  cur = next) {
 	    next = cur->next;
@@ -429,6 +442,54 @@ static PLI_INT32 sys_dumplimit_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
+static void emit_enum_table(vpiHandle item)
+{
+      vpiHandle typespec = vpi_handle(vpiTypespec, item);
+      struct enum_info*info;
+      vpiHandle constants, constant;
+      const char **names, **values;
+      unsigned count, idx;
+      char name[32];
+      s_vpi_value value;
+
+      if (!typespec || vpi_get(vpiType, typespec) != vpiEnumTypespec) return;
+
+      for (info = enum_list; info; info = info->next) {
+            if (info->typespec == typespec) {
+                  fstWriterEmitEnumTableRef(dump_file, info->handle);
+                  return;
+            }
+      }
+
+      count = vpi_get(vpiSize, typespec);
+      names = malloc(count * sizeof(*names));
+      values = malloc(count * sizeof(*values));
+      constants = vpi_iterate(vpiEnumConst, typespec);
+      for (idx = 0; (constant = vpi_scan(constants)); idx += 1) {
+            assert(idx < count);
+            names[idx] = strdup(vpi_get_str(vpiName, constant));
+            value.format = vpiBinStrVal;
+            vpi_get_value(constant, &value);
+            values[idx] = strdup(value.value.str);
+      }
+      assert(idx == count);
+
+      info = malloc(sizeof(*info));
+      info->typespec = typespec;
+      /* Typespecs currently have no VPI name. Use a unique file-local name. */
+      snprintf(name, sizeof(name), "enum%u", enum_list ? enum_list->handle + 1 : 1);
+      info->handle = fstWriterCreateEnumTable(dump_file, name, count, 0, names, values);
+      info->next = enum_list;
+      enum_list = info;
+
+      for (idx = 0; idx < count; idx += 1) {
+            free((char*)names[idx]);
+            free((char*)values[idx]);
+      }
+      free(names);
+      free(values);
+}
+
 static void scan_item(unsigned depth, vpiHandle item, int skip)
 {
       struct t_cb_data cb;
@@ -571,6 +632,8 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	       * is a port set the direction to one of the following:
 	       *   FST_VD_INPUT, FST_VD_OUTPUT or FST_VD_INOUT */
 	    dir = FST_VD_IMPLICIT;
+
+	    emit_enum_table(item);
 
 	    if (size > 1 || vpi_get(vpiLeftRange, item) != 0) {
 		  char *buf = malloc(strlen(escname) + 65);

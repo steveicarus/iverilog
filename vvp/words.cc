@@ -172,7 +172,7 @@ void compile_var_cobject(char*label, char*name)
  */
 void compile_variable(char*label, char*name,
 		      int msb, int lsb, int vpi_type_code,
-		      bool signed_flag, bool local_flag)
+		      bool signed_flag, bool local_flag, char*enum_label)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
@@ -215,6 +215,13 @@ void compile_variable(char*label, char*name,
 	    }
 	    assert(obj);
 	    compile_vpi_symbol(label, obj);
+	    if (enum_label) {
+		  __vpiSignal*sig = dynamic_cast<__vpiSignal*>(obj);
+		  assert(sig);
+		  compile_vpi_lookup(&sig->enum_typespec, enum_label);
+	    }
+      } else {
+	    free(enum_label);
       }
 	// If the signal has a name, then it goes into the current
 	// scope as a signal.

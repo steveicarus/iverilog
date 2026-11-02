@@ -369,6 +369,7 @@ struct __vpiSignal : public __vpiHandle {
       void make_bits();
 
       struct __vpiBit*bits;
+      vpiHandle enum_typespec; // Owned by its declaring scope.
 
     public:
       union { // The scope or parent array that contains me.
@@ -391,7 +392,7 @@ struct __vpiSignal : public __vpiHandle {
       static void*operator new(std::size_t size);
       static void operator delete(void*); // not implemented
     protected:
-      inline __vpiSignal() : bits(NULL) { }
+      inline __vpiSignal() : bits(NULL), enum_typespec(NULL) { }
     private: // Not implemented
       static void*operator new[] (std::size_t size);
       static void operator delete[](void*);

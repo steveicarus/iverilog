@@ -111,6 +111,7 @@ dep
 /driver-vpi/iverilog-vpi
 /ivl
 /ivlpp/ivlpp
+/ivtest/fst_enum_reader
 /vhdlpp/vhdlpp
 /vvp/vvp
 
