@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2026 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1054,7 +1054,7 @@ int emit_scope(ivl_scope_t scope, const ivl_scope_t parent)
 		    /* If the module has parameters then it may not be unique
 		     * so we create a mangled name version instead. */
 		  fprintf(vlog_out, "\n%*c", indent, ' ');
-		  emit_mangled_name(scope, !parent && !emitting_scopes);
+		  emit_mangled_name(scope, false);
 		  fprintf(vlog_out, " ");
 		  emit_id(ivl_scope_basename(scope));
 		  fprintf(vlog_out, "(");
@@ -1081,7 +1081,7 @@ int emit_scope(ivl_scope_t scope, const ivl_scope_t parent)
 	                      ivl_scope_def_file(scope),
 	                      ivl_scope_def_lineno(scope));
 	    fprintf(vlog_out, "module ");
-	    emit_mangled_name(scope, !parent && !emitting_scopes);
+	    emit_mangled_name(scope, !emitting_scopes);
 	    emit_module_ports(scope);
 	    break;
 	case IVL_SCT_FUNCTION:

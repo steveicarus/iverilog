@@ -136,7 +136,7 @@ static struct { struct net_ent*items; size_t count, cap; } nets = { NULL, 0, 0 }
 
 /* Find or create the net id (1-based) for a nexus. `hint`, when given,
    provides the canonical name/path (the first/parent signal). */
-static int net_id(ivl_nexus_t nex, ivl_signal_t hint)
+static int get_net_id(ivl_nexus_t nex, ivl_signal_t hint)
 {
       size_t i;
       struct net_ent ent;
@@ -188,7 +188,7 @@ static int net_id(ivl_nexus_t nex, ivl_signal_t hint)
 static int net_of_sig(ivl_signal_t sig, ivl_signal_t hint)
 {
       if (!sig) return 0;
-      return net_id(ivl_signal_nex(sig, 0), hint);
+      return get_net_id(ivl_signal_nex(sig, 0), hint);
 }
 
 /* ================================================================== */
@@ -331,19 +331,19 @@ static void collect_events(ivl_statement_t s, struct cell_ent*c)
 	    if (!ev)
 		  continue;
 	    for (k = 0 ; k < ivl_event_npos(ev) ; k += 1) {
-		  int id = net_id(ivl_event_pos(ev, k), 0);
+		  int id = get_net_id(ivl_event_pos(ev, k), 0);
 		  cell_read(c, id);
 		  c->clocked = 1;
 		  if (c->clock_net == 0) c->clock_net = id;
 	    }
 	    for (k = 0 ; k < ivl_event_nneg(ev) ; k += 1) {
-		  int id = net_id(ivl_event_neg(ev, k), 0);
+		  int id = get_net_id(ivl_event_neg(ev, k), 0);
 		  cell_read(c, id);
 		  c->clocked = 1;
 		  if (c->clock_net == 0) c->clock_net = id;
 	    }
 	    for (k = 0 ; k < ivl_event_nany(ev) ; k += 1)
-		  cell_read(c, net_id(ivl_event_any(ev, k), 0));
+		  cell_read(c, get_net_id(ivl_event_any(ev, k), 0));
       }
 }
 
@@ -482,9 +482,9 @@ static void build_logic(ivl_net_logic_t log)
 	       ? ivl_logic_basename(log) : "gate");
       /* pin 0 is the output, the rest are inputs. */
       if (np > 0)
-	    cell_drive(c, net_id(ivl_logic_pin(log, 0), 0));
+	    cell_drive(c, get_net_id(ivl_logic_pin(log, 0), 0));
       for (i = 1 ; i < np ; i += 1)
-	    cell_read(c, net_id(ivl_logic_pin(log, i), 0));
+	    cell_read(c, get_net_id(ivl_logic_pin(log, i), 0));
 }
 
 /* Resolve an LPM's valid input set into `buf` (returns the count). The
@@ -548,15 +548,15 @@ static void build_lpm(ivl_lpm_t lpm)
       snprintf(c->label, sizeof c->label, "%s", ivl_lpm_basename(lpm)
 	       ? ivl_lpm_basename(lpm) : "lpm");
 
-      cell_drive(c, net_id(ivl_lpm_q(lpm), 0));
+      cell_drive(c, get_net_id(ivl_lpm_q(lpm), 0));
       for (i = 0 ; i < ni ; i += 1)
-	    cell_read(c, net_id(ins[i], 0));
+	    cell_read(c, get_net_id(ins[i], 0));
 
       /* Sequential LPMs (FF) carry an explicit clock pin. */
       if (ivl_lpm_type(lpm) == IVL_LPM_FF) {
 	    ivl_nexus_t clk = ivl_lpm_clk(lpm);
 	    if (clk) {
-		  int id = net_id(clk, 0);
+		  int id = get_net_id(clk, 0);
 		  c->clocked = 1;
 		  c->clock_net = id;
 	    }
@@ -570,7 +570,7 @@ static void build_const(ivl_net_const_t con)
       if (!c)
 	    return;
       snprintf(c->label, sizeof c->label, "const");
-      cell_drive(c, net_id(ivl_const_nex(con), 0));
+      cell_drive(c, get_net_id(ivl_const_nex(con), 0));
 }
 
 /* Walk a scope tree collecting logic + lpm cells (processes and consts
@@ -602,7 +602,7 @@ static int prereg_nets(ivl_scope_t sc, void*cd)
 	    unsigned w, words = ivl_signal_array_count(sig);
 	    if (words == 0) words = 1;
 	    for (w = 0 ; w < words ; w += 1)
-		  net_id(ivl_signal_nex(sig, w), sig);
+		  get_net_id(ivl_signal_nex(sig, w), sig);
       }
       ivl_scope_children(sc, prereg_nets, 0);
       return 0;
@@ -950,9 +950,10 @@ static void put_param_value(ivl_parameter_t par)
       ivl_expr_t e = par ? ivl_parameter_expr(par) : 0;
       if (e && ivl_expr_type(e) == IVL_EX_NUMBER) {
 	    const char*bits = ivl_expr_bits(e);
-	    unsigned w = ivl_expr_width(e), i;
-	    int pure = 1;
+	    unsigned w = ivl_expr_width(e);
 	    if (bits) {
+		  unsigned i;
+		  int pure = 1;
 		  for (i = 0 ; i < w ; i += 1)
 			if (bits[i] != '0' && bits[i] != '1') { pure = 0; break; }
 		  if (pure && w <= 64) {
@@ -966,7 +967,7 @@ static void put_param_value(ivl_parameter_t par)
 		  for (i = w ; i > 0 ; i -= 1) putc(bits[i-1], out);
 		  putc('"', out);
 		  return;
-      }
+	    }
       }
       fputs("null", out);
 }
@@ -1259,7 +1260,7 @@ static void cn_stmt(ivl_statement_t s, struct nameset*reads,
       }
 }
 
-static void put_name_array(struct nameset*ns)
+static void put_name_array(const struct nameset*ns)
 {
       size_t i;
       putc('[', out);
@@ -1342,7 +1343,7 @@ static int synth_name(const char*s)
 static void cone_reads(int net_id, ivl_scope_t scope,
 		       struct nameset*acc, char*visited)
 {
-      struct net_ent*ne;
+      const struct net_ent*ne;
       size_t di, ri;
       if (net_id < 1 || (size_t)net_id > nets.count || visited[net_id])
 	    return;
@@ -1367,7 +1368,7 @@ static void cone_reads(int net_id, ivl_scope_t scope,
    not by a process (a process output belongs in processes[], not here). */
 static int net_comb_driven(int net_id)
 {
-      struct net_ent*ne;
+      const struct net_ent*ne;
       size_t di;
       int comb = 0;
       if (net_id < 1 || (size_t)net_id > nets.count)

@@ -1147,7 +1147,7 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 					     psig, psig->net_type(), path_.name, pform_name_t());
 
 	    } else if (qual.test_const()) {
-		 auto method_scope = find_method_containing_scope(*this, scope);
+		 const auto method_scope = find_method_containing_scope(*this, scope);
 		 if (class_type->get_prop_initialized(pidx)) {
 		       cerr << get_fileline() << ": error: "
 			    << "Property " << class_type->get_prop_name(pidx)
@@ -1264,7 +1264,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 		 << endl;
       }
 
-      NetNet*reg = lv->sig();
+      const NetNet*reg = lv->sig();
       ivl_assert(*this, reg);
 
       const netstruct_t*struct_type = reg->struct_type();

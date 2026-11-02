@@ -1955,7 +1955,7 @@ static void do_include(void)
     } else {
 	unsigned idx, start = 1;
 	char path[4096];
-	char *cp;
+	const char *cp;
 	struct include_stack_t* isp;
 
 	/* Add the current path to the start of the include_dir list. */

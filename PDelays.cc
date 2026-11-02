@@ -84,7 +84,7 @@ static NetExpr::Ptr calculate_val(Design*des, NetScope*scope, PExpr*expr)
 	   constant, then evaluate it, scale it to the local time
 	   units, and return an adjusted value. */
 
-      if (NetECReal*tmp = dynamic_cast<NetECReal*>(dex.get())) {
+      if (const NetECReal*tmp = dynamic_cast<NetECReal*>(dex.get())) {
 	    uint64_t delay = get_scaled_time_from_real(des, scope, tmp);
 
 	    NetExpr::Ptr tmp2(new NetEConst(verinum(delay, 64)));
@@ -93,7 +93,7 @@ static NetExpr::Ptr calculate_val(Design*des, NetScope*scope, PExpr*expr)
       }
 
 
-      if (NetEConst*tmp = dynamic_cast<NetEConst*>(dex.get())) {
+      if (const NetEConst*tmp = dynamic_cast<NetEConst*>(dex.get())) {
 	    verinum fn = tmp->value();
 	    uint64_t delay = des->scale_to_precision(fn.as_ulong64(), scope);
 

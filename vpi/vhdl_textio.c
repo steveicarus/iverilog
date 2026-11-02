@@ -742,7 +742,7 @@ static PLI_INT32 ivlh_read_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
         case FORMAT_HEX:
             val.format = vpiIntVal;
-            if(sscanf(string, "%x%n", &val.value.integer, &processed_chars) != 1)
+            if(sscanf(string, "%x%n", (unsigned int *)&val.value.integer, &processed_chars) != 1)
                 fail = 1;
             break;
 

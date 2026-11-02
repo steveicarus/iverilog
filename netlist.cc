@@ -2128,7 +2128,7 @@ NetSTask::NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
                    const vector<NetExpr*>&pa)
 : name_(lex_strings.make(na)), sfunc_as_task_(sfat)
 {
-      for (auto*parm : pa) parms_.emplace_back(parm);
+      for (auto*lparm : pa) parms_.emplace_back(lparm);
       ivl_assert(*this, name_.str()[0] == '$');
 }
 

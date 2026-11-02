@@ -259,7 +259,7 @@ static NetExpr* elab_array_reduction_method_real(Design* des, NetScope* scope,
                                                  NetExpr* array_arg,
                                                  ivl_type_t element_type,
                                                  const vector<named_pexpr_t>& parms,
-                                                 PExpr* with_expr)
+                                                 const PExpr* with_expr)
 {
       if (method_name != "product" && method_name != "sum") {
 	    cerr << loc.get_fileline() << ": error: " << method_name
@@ -4608,7 +4608,7 @@ static string get_const_str_param(Design*des, NetScope*scope, PExpr*expr,
                                   const perm_string name, const LineInfo &loc)
 {
       string ret;
-      NetExpr*tmp = elab_and_eval(des, scope, expr, -1, true);
+      const NetExpr*tmp = elab_and_eval(des, scope, expr, -1, true);
       const NetEConst*cval = dynamic_cast<const NetEConst*>(tmp);
       if (cval && cval->value().is_string()) {
 	    ret = cval->value().as_string();
@@ -4626,7 +4626,7 @@ static long get_const_int_param(Design*des, NetScope*scope, PExpr*expr,
                                 const perm_string name, const LineInfo &loc)
 {
       long ret;
-      NetExpr*tmp = elab_and_eval(des, scope, expr, -1, true);
+      const NetExpr*tmp = elab_and_eval(des, scope, expr, -1, true);
       const NetEConst*cval = dynamic_cast<const NetEConst*>(tmp);
 	// Map an index with undefined bit to be out of range.
       if (cval && ! cval->value().is_defined()) {
@@ -6188,7 +6188,6 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       if (sr.net->queue_type() && path_.size() > 1) {
 	    const name_component_t member_comp = path_.back();
 	    const netqueue_t*queue = sr.net->queue_type();
-	    ivl_type_t element_type = queue->element_type();
 	    if (member_comp.name == "size") {
 		  NetESFunc*fun = new NetESFunc("$size",
 						&netvector_t::atom2s32,
@@ -6201,6 +6200,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    }
 	    if ((member_comp.name == "pop_back") ||
 	        (member_comp.name == "pop_front")) {
+		  ivl_type_t element_type = queue->element_type();
 		  return build_queue_method(*this, sr, element_type, member_comp.name);
 	    }
 
@@ -6488,7 +6488,6 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 			? path_.back()
 			: sr.path_tail.front();
 		  const netqueue_t*queue = sr.net->queue_type();
-		  ivl_type_t element_type = queue->element_type();
 		  if (member_comp.name == "size") {
 			NetESFunc*fun = new NetESFunc("$size",
 						      &netvector_t::atom2s32,
@@ -6504,6 +6503,7 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
 
 		  if ((member_comp.name == "pop_back") ||
 		      (member_comp.name == "pop_front")) {
+			ivl_type_t element_type = queue->element_type();
 			return build_queue_method(*this, sr, element_type, member_comp.name);
 		  }
 

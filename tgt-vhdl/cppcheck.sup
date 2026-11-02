@@ -11,7 +11,7 @@ unusedFunction:vhdl.cc:137
 useStlAlgorithm
 
 // cppcheck does not notice that the condition is asserted to be true at least once
-nullPointer:stmt.cc:1543
+nullPointer:stmt.cc:1544
 
 // Other unused functions
 unusedFunction:expr.cc

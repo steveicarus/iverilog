@@ -605,8 +605,9 @@ class PEIdent : public PExpr {
 				     bool var_allowed_in_sv) const;
 
       bool elaborate_lnet_packed_member_(Design*des, NetScope*scope,
-					 NetNet*sig, pform_name_t base_path,
-					 pform_name_t member_path,
+					 const NetNet*sig,
+					 const pform_name_t&base_path,
+					 const pform_name_t&member_path,
 					 unsigned&midx, unsigned&lidx) const;
 
       bool eval_part_select_(Design*des, NetScope*scope, const NetNet*sig,

@@ -74,7 +74,7 @@ class SubprogramHeader : public LineInfo {
 
 	// Return true if the specification (name, types, ports)
 	// matches this subprogram and that subprogram.
-      bool compare_specification(SubprogramHeader*that) const;
+      bool compare_specification(const SubprogramHeader*that) const;
 
       int param_count() const { return ports_ ? ports_->size() : 0; }
       const InterfacePort*find_param(perm_string nam) const;

@@ -902,8 +902,9 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 }
 
 bool PEIdent::elaborate_lnet_packed_member_(Design*des, NetScope*scope,
-					    NetNet*sig, pform_name_t base_path,
-					    pform_name_t member_path,
+					    const NetNet*sig,
+					    const pform_name_t&base_path,
+					    const pform_name_t&member_path,
 					    unsigned&midx, unsigned&lidx) const
 {
       const netstruct_t*struct_type = sig->struct_type();
