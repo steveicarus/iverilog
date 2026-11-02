@@ -1808,8 +1808,18 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 void PCase::elaborate_scope(Design*des, NetScope*scope) const
 {
       ivl_assert(*this, items_);
+      bool default_seen = false;
       for (unsigned idx = 0 ;  idx < (*items_).size() ;  idx += 1) {
 	    ivl_assert(*this, (*items_)[idx]);
+
+	    if ((*items_)[idx]->expr.empty()) {
+		  if (default_seen) {
+			cerr << get_fileline()
+			     << ": error: Multiple default case items." << endl;
+			des->errors += 1;
+		  }
+		  default_seen = true;
+	    }
 
 	    if (const Statement*sp = (*items_)[idx]->stat)
 		  sp -> elaborate_scope(des, scope);
