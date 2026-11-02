@@ -62,6 +62,11 @@
 
 using namespace std;
 
+// Defined in elab_expr.cc. Selects the array word of an unpacked array of queues.
+extern NetESignal* elaborate_unpacked_word_signal(Design*des, NetScope*scope,
+						  const LineInfo*loc, NetNet*net,
+						  const std::list<index_component_t>&index);
+
 // Implemented in elab_scope.cc
 extern void set_scope_timescale(Design*des, NetScope*scope, const PScope*pscope);
 
@@ -4497,6 +4502,48 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 						    "$ivl_string_method$realtoa",
 						    parm_names);
 	    }
+      }
+
+	// An array of queues: apply the method to the queue in the array word.
+      if (net->queue_type() && net->unpacked_dimensions() > 0 &&
+	  !sr.path_head.empty()) {
+	    NetESignal*word = elaborate_unpacked_word_signal(des, scope, this, net,
+							    sr.path_head.back().index);
+	    if (!word) return 0;
+
+	    const netdarray_t*use_darray = net->darray_type();
+	    if (method_name == "push_back" || method_name == "push_front") {
+		  static const std::vector<perm_string> parm_names = {
+			perm_string::literal("item")
+		  };
+		  const char*task_name = method_name == "push_back"
+			? "$ivl_queue_method$push_back"
+			: "$ivl_queue_method$push_front";
+		  return elaborate_queue_method_expr_(des, scope, word, use_darray,
+						      method_name, task_name,
+						      parm_names);
+	    } else if (method_name == "insert") {
+		  static const std::vector<perm_string> parm_names = {
+			perm_string::literal("index"),
+			perm_string::literal("item")
+		  };
+		  return elaborate_queue_method_expr_(des, scope, word, use_darray,
+						      method_name,
+						      "$ivl_queue_method$insert",
+						      parm_names);
+	    } else if (method_name == "pop_front" || method_name == "pop_back") {
+		  const char*task_name = method_name == "pop_front"
+			? "$ivl_queue_method$pop_front"
+			: "$ivl_queue_method$pop_back";
+		  return elaborate_method_func_expr_(scope, word,
+						     use_darray->element_type(),
+						     method_name, task_name);
+	    }
+
+	    cerr << get_fileline() << ": sorry: method " << method_name
+		 << "() is not yet supported for an array of queues." << endl;
+	    des->errors += 1;
+	    return 0;
       }
 
 	// Is this a delete method for dynamic arrays or queues?
