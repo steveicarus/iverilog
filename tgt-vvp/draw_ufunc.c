@@ -71,6 +71,12 @@ static void draw_eval_function_argument(ivl_signal_t port, ivl_expr_t expr)
 	  case IVL_VT_DARRAY:
 	    vvp_errors += draw_eval_object(expr);
 	    break;
+	  case IVL_VT_QUEUE:
+	      /* Pass by value: the function gets its own copy. */
+	    vvp_errors += draw_eval_object(expr);
+	    fprintf(vvp_out, "    %%dup/obj;\n");
+	    fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+	    break;
 	  default:
 	    fprintf(stderr, "XXXX function argument %s type=%d?!\n",
 		    ivl_signal_basename(port), dtype);
@@ -107,6 +113,7 @@ static void draw_send_function_argument(ivl_signal_t port, ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%store/str v%p_0;\n", port);
 	    break;
 	  case IVL_VT_DARRAY:
+	  case IVL_VT_QUEUE:
 	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", port);
 	    break;
 	  default:
