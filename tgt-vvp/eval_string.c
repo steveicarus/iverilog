@@ -183,7 +183,6 @@ static void string_ex_pop(ivl_expr_t expr)
 
 static void draw_sfunc_string(ivl_expr_t expr)
 {
-    assert(ivl_expr_value(expr) == IVL_VT_STRING);
     draw_vpi_sfunc_call(expr);
 }
 
