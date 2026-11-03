@@ -1,0 +1,11 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "local_cell") (INSTANCE back\\slash)
+  (DELAY (ABSOLUTE (IOPATH A\.dot Z\\out (3) (5)))))
+ (CELL (CELLTYPE "local_cell") (INSTANCE literal\/slash)
+  (DELAY (ABSOLUTE (IOPATH A\.dot Z\\out (5) (7)))))
+ (CELL (CELLTYPE "local_cell") (INSTANCE \CELL)
+  (DELAY (ABSOLUTE (IOPATH A\.dot Z\\out (7) (9)))))
+ (CELL (CELLTYPE "local_cell") (INSTANCE plain)
+  (DELAY (ABSOLUTE (IOPATH A\.dot Z\\out (9) (11)))))
+)

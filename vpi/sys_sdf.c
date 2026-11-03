@@ -56,11 +56,28 @@ static double sdf_delay_scale(vpiHandle scope)
 }
 static char* sdf_fname = NULL;
 
-static vpiHandle find_scope(vpiHandle scope, const char*name)
+/* Hierarchy separators have been normalized to dots by the parser. Split
+   before decoding escapes so a literal dot remains part of its local name.
+   The lexer guarantees that a backslash is followed by a character. */
+static char* next_component(char**cursor)
 {
-      vpiHandle idx = vpi_iterate(vpiModule, scope);
-	/* If this scope has no modules then it can't have the one we
-	 * are looking for so just return 0. */
+      char*name = *cursor;
+      char*src = name;
+      char*dst = name;
+      while (*src && *src != '.') {
+	    if (*src == '\\') src += 1;
+	    *dst++ = *src++;
+      }
+      *cursor = *src ? src + 1 : 0;
+      *dst = 0;
+      return name;
+}
+
+static vpiHandle find_scope(vpiHandle scope, const char*name, int type)
+{
+      vpiHandle idx = vpi_iterate(type, scope);
+	/* If this scope has no children of this type, it cannot contain
+	 * the requested name. */
       if (idx == 0) return 0;
 
       vpiHandle cur;
@@ -90,8 +107,6 @@ void sdf_warn_file_line(const int sdf_lineno)
 
 void sdf_select_instance(const char*celltype, const char*cellinst, const int sdf_lineno)
 {
-      char buffer[128];
-
 	/* Test for wildcard character */
       if (cellinst == NULL) {
 	    if (sdf_flag_warning) {
@@ -106,35 +121,27 @@ void sdf_select_instance(const char*celltype, const char*cellinst, const int sdf
 	/* First follow the hierarchical parts of the cellinst name to
 	   get to the cell that I'm looking for. */
       vpiHandle scope = sdf_scope;
+      char*buffer = strdup(cellinst);
+      char*cursor = cellinst[0] ? buffer : 0;
       const char*src = cellinst;
-      const char*dp;
-      while ( (dp=strchr(src, '.')) ) {
-	    unsigned len = dp - src;
-	    assert(dp >= src);
-	    assert(len < sizeof buffer);
-	    strncpy(buffer, src, len);
-	    buffer[len] = 0;
-
-	    vpiHandle tmp_scope = find_scope(scope, buffer);
+      while (cursor) {
+	    src = next_component(&cursor);
+	    vpiHandle tmp_scope = find_scope(scope, src, vpiModule);
 	    if (tmp_scope == 0) {
 		  vpi_printf("SDF ERROR: %s:%d: Cannot find %s in scope %s.\n",
-		             sdf_fname, sdf_lineno, buffer, vpi_get_str(vpiFullName, scope));
+		             sdf_fname, sdf_lineno, src, vpi_get_str(vpiFullName, scope));
+		  scope = 0;
 		  break;
 	    }
 	    assert(tmp_scope);
 	    scope = tmp_scope;
-
-	    src = dp + 1;
       }
 
-	/* Now find the cell. */
-      if (src[0] == 0)
-	    sdf_cur_cell = sdf_scope;
-      else
-	    sdf_cur_cell = find_scope(scope, src);
+      sdf_cur_cell = scope;
       if (sdf_cur_cell == 0) {
 	    vpi_printf("SDF ERROR: %s:%d: Unable to find %s in scope %s.\n",
-	               sdf_fname, sdf_lineno, src, vpi_get_str(vpiFullName, scope));
+	               sdf_fname, sdf_lineno, cellinst, vpi_get_str(vpiFullName, sdf_scope));
+	    free(buffer);
 	    return;
       }
 
@@ -150,7 +157,7 @@ void sdf_select_instance(const char*celltype, const char*cellinst, const int sdf
 	               sdf_fname, sdf_lineno, src, vpi_get_str(vpiFullName, scope), celltype);
 	    vpi_printf("%s\n", vpi_get_str(vpiDefName, sdf_cur_cell));
       }
-
+      free(buffer);
 }
 
 static const char*edge_str(int vpi_edge)
@@ -167,31 +174,26 @@ static const char*edge_str(int vpi_edge)
 static vpiHandle get_port_handle(char* port_name, const int sdf_lineno)
 {
       vpiHandle scope = sdf_cur_cell;
+      if (!scope) return 0;
+      char*cursor = port_name;
+      char*token = next_component(&cursor);
 
-	// Get occurences of '.' in the name
-      int submodules = 0;
-
-      for (int i=0; port_name[i] != '\0'; i++) {
-	    if (port_name[i] == '.') submodules++;
-      }
-
-	// Extract the first token
-      char* token = strtok(port_name, ".");;
-
-	// Change scope into submodule
-      while (submodules--) {
-	    scope = vpi_handle_by_name(token, scope);
-
-	    if (!scope) vpi_printf("SDF ERROR: %s:%d: Submodule %s in port path not found!\n", sdf_fname, sdf_lineno, token);
-
-	      // Extract next token
-	    token = strtok(NULL, ".");
+	// Resolve exact local scope names without parsing literal dots again.
+      while (cursor) {
+	    scope = find_scope(scope, token, vpiInternalScope);
+	    if (!scope) {
+		  vpi_printf("SDF ERROR: %s:%d: Submodule %s in port path not found!\n", sdf_fname, sdf_lineno, token);
+		  return 0;
+	    }
+	    token = next_component(&cursor);
       }
 
 	// Iterate over ports
       vpiHandle port_i = vpi_iterate(vpiPort, scope) ;
       vpiHandle port;
       vpiHandle port_handle = NULL;
+
+      if (!port_i) return 0;
 
       while ((port=vpi_scan(port_i)) != NULL) {
 	    const char *port_name_ = vpi_get_str(vpiName, port) ;
@@ -217,6 +219,10 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 	// After calling get_port_handle, the name is invalid
       vpiHandle port1_handle = get_port_handle(port1.name, sdf_lineno);
       vpiHandle port2_handle = get_port_handle(port2.name, sdf_lineno);
+      if (!port1_handle || !port2_handle) {
+	    vpi_printf("SDF ERROR: %s:%d: Could not find handles for both ports!\n", sdf_fname, sdf_lineno);
+	    return;
+      }
 
 	// Check whether we have a single bit of a port for port1
       if (port1.has_index) {

@@ -1,0 +1,6 @@
+SDF ERROR: ivltests/sdf_escaped_missing.sdf:3: Cannot find a.b in scope top.
+SDF ERROR: ivltests/sdf_escaped_missing.sdf:3: Unable to find a\.b in scope top.
+SDF ERROR: ivltests/sdf_escaped_missing.sdf:7: Submodule missing.sink in port path not found!
+SDF ERROR: ivltests/sdf_escaped_missing.sdf:7: Could not find handles for both ports!
+SDF ERROR: ivltests/sdf_escaped_missing.sdf:8: Could not find handles for both ports!
+PASSED

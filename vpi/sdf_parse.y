@@ -29,6 +29,20 @@ static void yyerror(const char*msg);
 # include  <stdlib.h>
 # include  "ivl_alloc.h"
 
+/* Decode a local name in place. Hierarchical names retain their escapes
+   until sys_sdf.c splits them into individual components. */
+static char* unescape_identifier(char*text)
+{
+      char*src = text;
+      char*dst = text;
+      while (*src) {
+	    if (*src == '\\') src += 1;
+	    *dst++ = *src++;
+      }
+      *dst = 0;
+      return text;
+}
+
 /* Convert an SDF (TIMESCALE <number> <unit>) entry into seconds. The unit is
    one of s, ms, us, ns, ps or fs, and IEEE 1497 restricts the number to 1, 10
    or 100. */
@@ -257,13 +271,15 @@ temperature
 
 time_scale
   : '(' K_TIMESCALE REAL_NUMBER IDENTIFIER ')'
-      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Timescale: %f%s\n",
+      { unescape_identifier($4);
+	if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Timescale: %f%s\n",
 	                                sdf_parse_path, @2.first_line, $3, $4);
 	set_timescale($3, $4, @2.first_line);
 	free($4);
       }
   | '(' K_TIMESCALE INTEGER IDENTIFIER ')'
-      { if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Timescale: %lu%s\n",
+      { unescape_identifier($4);
+	if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Timescale: %lu%s\n",
 	                                sdf_parse_path, @2.first_line, $3, $4);
 	set_timescale((double)$3, $4, @2.first_line);
 	free($4);
@@ -505,7 +521,7 @@ port_instance
 
 port
   : hierarchical_identifier
-      { $$ = $1; }
+      { $$ = unescape_identifier($1); }
     /* | hierarchical_identifier '[' INTEGER ']' */
   ;
 
