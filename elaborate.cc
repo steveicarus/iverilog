@@ -3256,9 +3256,9 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	// nonblocking assignments to elements of dynamically sized
 	// array variables. Assigning the whole array is fine.
       if (is_darray_element_(lv)) {
-	    cerr << get_fileline() << ": error: nonblocking assignment to "
-		    "an element of a dynamically sized array is not "
-		    "allowed." << endl;
+	    cerr << get_fileline() << ": error: elements of dynamically sized arrays "
+		    "may not be assigned values using non-blocking "
+		    "assignments." << endl;
 	    des->errors += 1;
 	    delete lv;
 	    return 0;
