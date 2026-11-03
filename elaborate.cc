@@ -3244,6 +3244,17 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
 
+	// IEEE 1800-2023 10.4.2: it is illegal to make nonblocking
+	// assignments to elements of dynamically sized array variables.
+      if (lv->word() && !lv->nest() && lv->sig()->darray_type()) {
+	    cerr << get_fileline() << ": error: nonblocking assignment to "
+		    "an element of a dynamic array or queue is not "
+		    "allowed." << endl;
+	    des->errors += 1;
+	    delete lv;
+	    return 0;
+      }
+
       if (scope->program_block() && lval_not_program_variable(lv)) {
 	    cerr << get_fileline() << ": warning: Program non-blocking "
 	            "assignments are not currently scheduled in the "
