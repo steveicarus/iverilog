@@ -620,6 +620,16 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	// This is a convenient reference to it.
       const name_component_t&path_tail = base_path.back();
 
+	// IEEE 1800-2023 6.21: elements of dynamically sized arrays
+	// cannot be written by continuous assignments.
+      if (sig->darray_type() && member_path.empty() && !path_tail.index.empty()) {
+	    cerr << get_fileline() << ": error: elements of dynamically "
+		    "sized arrays may not be assigned values using "
+		    "continuous assignments." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       // Default part select is the entire word.
       unsigned midx = sig->vector_width()-1, lidx = 0;
       // The default word select is the first.
