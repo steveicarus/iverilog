@@ -3209,6 +3209,14 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 }
 
 /*
+ * True if the l-value is a single element of a dynamic array or queue.
+ */
+static bool is_darray_element_(const NetAssign_*lv)
+{
+      return lv->word() && !lv->nest() && lv->sig()->darray_type();
+}
+
+/*
  * Elaborate non-blocking assignments. The statement is of the general
  * form:
  *
@@ -3243,6 +3251,18 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	/* Elaborate the l-value. */
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
+
+	// IEEE 1800-2023 6.21 and 10.4.2: it is illegal to make
+	// nonblocking assignments to elements of dynamically sized
+	// array variables. Assigning the whole array is fine.
+      if (is_darray_element_(lv)) {
+	    cerr << get_fileline() << ": error: elements of dynamically sized arrays "
+		    "may not be assigned values using non-blocking "
+		    "assignments." << endl;
+	    des->errors += 1;
+	    delete lv;
+	    return 0;
+      }
 
       if (scope->program_block() && lval_not_program_variable(lv)) {
 	    cerr << get_fileline() << ": warning: Program non-blocking "
@@ -5177,6 +5197,15 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
       if (lval == 0)
 	    return 0;
 
+      if (is_darray_element_(lval)) {
+	    cerr << get_fileline() << ": error: elements of dynamically "
+		    "sized arrays may not be assigned values using "
+		    "procedural continuous assignments." << endl;
+	    des->errors += 1;
+	    delete lval;
+	    return 0;
+      }
+
       unsigned lwid = count_lval_width(lval);
       ivl_variable_type_t ltype = lval->expr_type();
 
@@ -5981,6 +6010,15 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
       NetAssign_*lval = lval_->elaborate_lval(des, scope, false, true);
       if (lval == 0)
 	    return 0;
+
+      if (is_darray_element_(lval)) {
+	    cerr << get_fileline() << ": error: elements of dynamically "
+		    "sized arrays may not be assigned values using "
+		    "procedural force statements." << endl;
+	    des->errors += 1;
+	    delete lval;
+	    return 0;
+      }
 
       unsigned lwid = count_lval_width(lval);
       ivl_variable_type_t ltype = lval->expr_type();

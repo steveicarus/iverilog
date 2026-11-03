@@ -146,6 +146,10 @@ br_gh1617			vvp_tests/br_gh1617.json
 br_gh1618			vvp_tests/br_gh1618.json
 br_gh1639			vvp_tests/br_gh1639.json
 br_gh1653			vvp_tests/br_gh1653.json
+br_gh1692			vvp_tests/br_gh1692.json
+br_gh1692b			vvp_tests/br_gh1692b.json
+br_gh1692c			vvp_tests/br_gh1692c.json
+br_gh1692d			vvp_tests/br_gh1692d.json
 ca_time_real			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json
