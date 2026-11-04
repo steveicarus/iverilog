@@ -350,8 +350,16 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 	    return lv;
       }
 
+      if (use_sel == index_component_t::SEL_BIT_LAST && !reg->queue_type()) {
+	    cerr << get_fileline() << ": error: "
+		 << "The $ index is only allowed for queues." << endl;
+	    des->errors += 1;
+	    delete lv;
+	    return nullptr;
+      }
+
       if (use_sel == index_component_t::SEL_BIT ||
-	  (use_sel == index_component_t::SEL_BIT_LAST && reg->darray_type())) {
+	  use_sel == index_component_t::SEL_BIT_LAST) {
 	    if (reg->darray_type()) {
 		  elaborate_lval_darray_bit_(des, scope, lv, is_force);
 		  return lv;
