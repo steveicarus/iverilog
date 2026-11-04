@@ -195,7 +195,7 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
       friend class vvp_fun_modpath;
 
     public:
-      explicit vvp_fun_modpath_src(vvp_time64_t const del[12]);
+      explicit vvp_fun_modpath_src(vvp_time64_t const del[12], bool wait_for_edge = false);
     protected:
       ~vvp_fun_modpath_src() override;
 
@@ -215,6 +215,7 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
 
       vvp_time64_t wake_time_;
       bool condition_flag_;
+      bool waiting_for_edge_;
 
     private:
       vvp_fun_modpath_src(const vvp_fun_modpath_src&);

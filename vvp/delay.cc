@@ -571,8 +571,8 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       list<vvp_fun_modpath_src*>candidate_list;
       vvp_time64_t candidate_wake_time = 0;
       for (vvp_fun_modpath_src*cur = src_list_ ;  cur ;  cur=cur->next_) {
-	      /* Skip paths that are disabled by conditions. */
-	    if (cur->condition_flag_ == false)
+	      /* A zero timestamp can also be a real edge at time zero. */
+	    if (!cur->condition_flag_ || cur->waiting_for_edge_)
 		  continue;
 
 	    if (candidate_list.empty()) {
@@ -592,6 +592,8 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	 * if there are no normal delays. */
       vvp_time64_t ifnone_wake_time = candidate_wake_time;
       for (vvp_fun_modpath_src*cur = ifnone_list_ ;  cur ;  cur=cur->next_) {
+	    if (cur->waiting_for_edge_)
+		  continue;
 	    if (candidate_list.empty()) {
 		  candidate_list.push_back(cur);
 		  ifnone_wake_time = cur->wake_time_;
@@ -681,7 +683,8 @@ void vvp_fun_modpath::run_run()
       net_->send_vec4(cur_vec4_, 0);
 }
 
-vvp_fun_modpath_src::vvp_fun_modpath_src(vvp_time64_t const del[12])
+vvp_fun_modpath_src::vvp_fun_modpath_src(vvp_time64_t const del[12], bool wait_for_edge)
+: waiting_for_edge_(wait_for_edge)
 {
       for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
 	    delay_[idx] = del[idx];
@@ -712,8 +715,10 @@ void vvp_fun_modpath_src::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 {
       if (port.port() == 0) {
 	      // The modpath input...
-	    if (test_vec4(bit))
+	    if (test_vec4(bit)) {
 		  wake_time_ = schedule_simtime();
+		  waiting_for_edge_ = false;
+	    }
 
       } else if (port.port() == 1) {
 	      // The modpath condition input...
@@ -731,7 +736,7 @@ bool vvp_fun_modpath_src::test_vec4(const vvp_vector4_t&)
 
 vvp_fun_modpath_edge::vvp_fun_modpath_edge(vvp_time64_t del[12],
 					   bool pos, bool neg)
-: vvp_fun_modpath_src(del)
+: vvp_fun_modpath_src(del, true)
 {
       old_value_ = BIT4_X;
       posedge_ = pos;
