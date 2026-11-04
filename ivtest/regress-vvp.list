@@ -519,6 +519,8 @@ sv_const_fail8			vvp_tests/sv_const_fail8.json
 sv_const_fail9			vvp_tests/sv_const_fail9.json
 sv_darray_assign_op		vvp_tests/sv_darray_assign_op.json
 sv_darray_find_locators		vvp_tests/sv_darray_find_locators.json
+sv_darray_last_read_fail	vvp_tests/sv_darray_last_read_fail.json
+sv_darray_last_write_fail	vvp_tests/sv_darray_last_write_fail.json
 sv_darray_min_max		vvp_tests/sv_darray_min_max.json
 sv_darray_min_max_with		vvp_tests/sv_darray_min_max_with.json
 sv_darray_new_function		vvp_tests/sv_darray_new_function.json
