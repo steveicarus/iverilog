@@ -89,6 +89,7 @@ br_gh1163			vvp_tests/br_gh1163.json
 br_gh1180a			vvp_tests/br_gh1180a.json
 br_gh1180b			vvp_tests/br_gh1180b.json
 br_gh1180c			vvp_tests/br_gh1180c.json
+br_gh1699			vvp_tests/br_gh1699.json
 ca_func2			vvp_tests/ca_func2.json
 class_property_array_invalid_compare	vvp_tests/class_property_array_invalid_compare.json
 class_property_array_invalid_read	vvp_tests/class_property_array_invalid_read.json
