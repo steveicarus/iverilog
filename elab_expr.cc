@@ -8335,11 +8335,19 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
       return ss;
 }
 
-NetExpr* PEIdent::elaborate_expr_net_bit_last_(Design*, NetScope*,
+NetExpr* PEIdent::elaborate_expr_net_bit_last_(Design*des, NetScope*,
 					       NetESignal*net,
 					       NetScope* /* found_in */,
 					       bool need_const) const
 {
+      if (!net->sig()->queue_type()) {
+	    cerr << get_fileline() << ": error: "
+		 << "The $ index is only allowed for queues." << endl;
+	    des->errors += 1;
+	    delete net;
+	    return nullptr;
+      }
+
       if (need_const) {
 	    cerr << get_fileline() << ": error: "
 		 << "Expression with \"[$]\" is not constant." << endl;
