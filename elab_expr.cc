@@ -602,6 +602,20 @@ unsigned PEAssignPattern::test_width(Design*, NetScope*, width_mode_t&)
       return 1;
 }
 
+/*
+ * A default value is applied to the elements of a struct or array, but a
+ * simple bit vector (a single packed dimension) takes it as a whole.
+ */
+static bool default_recurses_(ivl_type_t type)
+{
+      if (auto vec = dynamic_cast<const netvector_t*>(type))
+	    return vec->packed_dims().size() > 1;
+
+      return dynamic_cast<const netstruct_t*>(type) ||
+	     dynamic_cast<const netparray_t*>(type) ||
+	     dynamic_cast<const netuarray_t*>(type);
+}
+
 NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 					ivl_type_t ntype, unsigned flags) const
 {
@@ -626,6 +640,18 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
       }
 
       if (auto parray_type = dynamic_cast<const netparray_t*>(ntype)) {
+	    ivl_type_t etype = parray_type->element_type();
+	    if (recurse_default_ && default_recurses_(etype)) {
+		  NetExpr *elem = elaborate_expr(des, scope, etype, flags);
+		  if (!elem)
+			return nullptr;
+		  NetEConcat *res = new NetEConcat(1, parray_type->packed_width() /
+						      etype->packed_width(),
+						   parray_type->base_type());
+		  res->set(0, elem);
+		  res->set_line(*this);
+		  return res;
+	    }
 	    return elaborate_expr_packed_(des, scope, parray_type->base_type(),
 					  parray_type->packed_width(),
 					  parray_type->slice_dimensions(), 0,
@@ -812,6 +838,7 @@ bool PEAssignPattern::expand_keyed_struct_(Design *des,
 	    dflt.push_back({nullptr, default_});
 	    member_default = new PEAssignPattern(dflt);
 	    member_default->set_line(*this);
+	    static_cast<PEAssignPattern*>(member_default)->recurse_default_ = true;
       }
 
       for (size_t idx = 0; idx < items.size(); idx++) {
@@ -819,10 +846,7 @@ bool PEAssignPattern::expand_keyed_struct_(Design *des,
 		  continue;
 	    if (default_) {
 		  ivl_type_t mtype = members[idx].net_type;
-		  bool recurse = dynamic_cast<const netstruct_t*>(mtype) ||
-				 dynamic_cast<const netparray_t*>(mtype) ||
-				 dynamic_cast<const netuarray_t*>(mtype);
-		  items[idx] = recurse ? member_default : default_;
+		  items[idx] = default_recurses_(mtype) ? member_default : default_;
 	    } else if (ok) {
 		  cerr << get_fileline() << ": error: Assignment pattern has no"
 		       << " value for member `" << members[idx].name
@@ -961,7 +985,11 @@ NetExpr* PEAssignPattern::elaborate_expr_packed_(Design *des, NetScope *scope,
 	    // generic elaborate_expr() API and assigment patterns is the only
 	    // place where we need it.
 	    const auto ap = dynamic_cast<PEAssignPattern*>(parms[idx]);
-	    if (ap)
+	    if (recurse_default_ && parms[idx] == default_ &&
+	        cur_dim + 1 < dims.size())
+		  expr = elaborate_expr_packed_(des, scope, base_type, width,
+						dims, cur_dim, need_const);
+	    else if (ap)
 		  expr = ap->elaborate_expr_packed_(des, scope, base_type,
 						    width, dims, cur_dim, need_const);
 	    else

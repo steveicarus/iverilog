@@ -29,6 +29,19 @@ module test;
     int  i;
   } pi_t;
 
+  typedef struct packed {
+    pq_t n;
+    logic [1:0][3:0] pa;
+    logic [7:0] v;
+  } o_t;
+
+  typedef struct packed {
+    ab_t [1:0] pa;
+    logic [3:0] z;
+  } s_t;
+
+  o_t o;
+  s_t s;
   pq_t pq;
   pi_t pi;
   ps_t ps;
@@ -71,6 +84,15 @@ module test;
     pi = '{default: 1};
     `check(pi.p, 8'h11)
     `check(pi.i, 1)
+
+    // Multi-dimensional packed vectors and arrays of structs are elements
+    // too, but a simple vector member takes the default as a whole
+    o = '{default: 1'b1};
+    `check(o.n, 16'h1111)
+    `check(o.pa, 8'h11)
+    `check(o.v, 8'h01)
+    s = '{default: 4'h4};
+    `check(s, 20'h44444)
 
     // The default may come first
     ps = '{default: 1, a: 2};

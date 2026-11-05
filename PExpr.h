@@ -279,6 +279,9 @@ class PEAssignPattern : public PExpr {
       std::vector<PExpr*>parms_;
       std::vector<pattern_item_t>keyed_;
       PExpr*default_ = nullptr;
+	// Set for the default-only pattern made for a struct member, where
+	// the default is applied to the elements of the member.
+      bool recurse_default_ = false;
 };
 
 class PEConcat : public PExpr {
