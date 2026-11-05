@@ -217,9 +217,9 @@ static PLI_INT32 finish_cb(p_cb_data cause)
       fstWriterClose(dump_file);
 
       while (enum_list) {
-            struct enum_info*next_enum = enum_list->next;
-            free(enum_list);
-            enum_list = next_enum;
+	    struct enum_info*next_enum = enum_list->next;
+	    free(enum_list);
+	    enum_list = next_enum;
       }
 
       for (cur = vcd_list ;  cur ;  cur = next) {
@@ -455,10 +455,10 @@ static void emit_enum_table(vpiHandle item)
       if (!typespec || vpi_get(vpiType, typespec) != vpiEnumTypespec) return;
 
       for (info = enum_list; info; info = info->next) {
-            if (info->typespec == typespec) {
-                  fstWriterEmitEnumTableRef(dump_file, info->handle);
-                  return;
-            }
+	    if (info->typespec == typespec) {
+		  fstWriterEmitEnumTableRef(dump_file, info->handle);
+		  return;
+	    }
       }
 
       count = vpi_get(vpiSize, typespec);
@@ -466,11 +466,11 @@ static void emit_enum_table(vpiHandle item)
       values = malloc(count * sizeof(*values));
       constants = vpi_iterate(vpiEnumConst, typespec);
       for (idx = 0; (constant = vpi_scan(constants)); idx += 1) {
-            assert(idx < count);
-            names[idx] = strdup(vpi_get_str(vpiName, constant));
-            value.format = vpiBinStrVal;
-            vpi_get_value(constant, &value);
-            values[idx] = strdup(value.value.str);
+	    assert(idx < count);
+	    names[idx] = strdup(vpi_get_str(vpiName, constant));
+	    value.format = vpiBinStrVal;
+	    vpi_get_value(constant, &value);
+	    values[idx] = strdup(value.value.str);
       }
       assert(idx == count);
 
@@ -483,8 +483,8 @@ static void emit_enum_table(vpiHandle item)
       enum_list = info;
 
       for (idx = 0; idx < count; idx += 1) {
-            free((char*)names[idx]);
-            free((char*)values[idx]);
+	    free((char*)names[idx]);
+	    free((char*)values[idx]);
       }
       free(names);
       free(values);
