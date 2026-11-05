@@ -924,3 +924,12 @@ writemem-invalid		vvp_tests/writemem-invalid.json
 uarray_subroutine_port	vvp_tests/uarray_subroutine_port.json
 uarray_ca_fail		vvp_tests/uarray_ca_fail.json
 param_array_param_ref	vvp_tests/param_array_param_ref.json
+
+# Escaped local identifiers versus hierarchy separators
+sdf_escaped_instance vvp_tests/sdf_escaped_instance.json
+sdf_escaped_instance_slash vvp_tests/sdf_escaped_instance_slash.json
+sdf_escaped_interconnect vvp_tests/sdf_escaped_interconnect.json
+sdf_escaped_interconnect_slash vvp_tests/sdf_escaped_interconnect_slash.json
+sdf_escaped_local vvp_tests/sdf_escaped_local.json
+sdf_escaped_missing vvp_tests/sdf_escaped_missing.json
+sdf_escaped_generate vvp_tests/sdf_escaped_generate.json
