@@ -253,7 +253,7 @@ class PEAssignPattern : public PExpr {
       bool is_keyed_() const { return !keyed_.empty() || default_; }
 	// Repeat the items of a replication pattern. Return false after
 	// reporting an error.
-      bool expand_repeat_(Design *des, NetScope *scope,
+      bool expand_repeat_(Design *des, NetScope *scope, size_t limit,
 			  std::vector<PExpr*> &items) const;
 	// Map a keyed pattern onto the positional list of items for an array
 	// dimension or a struct. Return false after reporting an error.

@@ -623,6 +623,14 @@ static bool default_recurses_(ivl_type_t type)
  * LRM only has concatenations there. A packed element keeps the
  * concatenation, which is a valid value for it.
  */
+static PEAssignPattern *concat_to_pattern_(const PEConcat *concat)
+{
+      list<PExpr*> items(concat->items().begin(), concat->items().end());
+      PEAssignPattern *tmp = new PEAssignPattern(concat->repeat(), items);
+      tmp->set_line(*concat);
+      return tmp;
+}
+
 static PExpr *concat_as_pattern_(PExpr *expr, ivl_type_t type)
 {
       const auto concat = dynamic_cast<PEConcat*>(expr);
@@ -633,10 +641,7 @@ static PExpr *concat_as_pattern_(PExpr *expr, ivl_type_t type)
 	  !dynamic_cast<const netdarray_t*>(type))
 	    return expr;
 
-      list<PExpr*> items(concat->items().begin(), concat->items().end());
-      PEAssignPattern *tmp = new PEAssignPattern(concat->repeat(), items);
-      tmp->set_line(*expr);
-      return tmp;
+      return concat_to_pattern_(concat);
 }
 
 NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
@@ -653,7 +658,7 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 		  return nullptr;
 	    }
 	    vector<PExpr*> expanded;
-	    if (repeat_ && !expand_repeat_(des, scope, expanded))
+	    if (repeat_ && !expand_repeat_(des, scope, SIZE_MAX, expanded))
 		  return nullptr;
 	    return elaborate_expr_array_(des, scope, darray_type,
 					 repeat_ ? expanded : parms_,
@@ -750,6 +755,7 @@ NetExpr* PEAssignPattern::elaborate_expr_array_(Design *des, NetScope *scope,
 }
 
 bool PEAssignPattern::expand_repeat_(Design *des, NetScope *scope,
+				     size_t limit,
 				     vector<PExpr*> &items) const
 {
       NetExpr *cnt = elab_and_eval(des, scope, repeat_, -1, true);
@@ -765,6 +771,13 @@ bool PEAssignPattern::expand_repeat_(Design *des, NetScope *scope,
 	    cerr << repeat_->get_fileline() << ": error: The replication count"
 		 << " of an assignment pattern must be greater than zero, got "
 		 << n << "." << endl;
+	    des->errors++;
+	    ok = false;
+      } else if ((unsigned long)n > limit / parms_.size()) {
+	    cerr << get_fileline() << ": error: Assignment pattern replicates "
+		 << parms_.size() << " item(s) " << n << " time(s), but the"
+		 << " context expects at most " << limit << " element(s)."
+		 << endl;
 	    des->errors++;
 	    ok = false;
       } else {
@@ -924,7 +937,8 @@ NetExpr* PEAssignPattern::elaborate_expr_uarray_(Design *des, NetScope *scope,
 	    return nullptr;
 
       vector<PExpr*> expanded;
-      if (repeat_ && !expand_repeat_(des, scope, expanded))
+      if (repeat_ && !expand_repeat_(des, scope, dims[cur_dim].width(),
+				     expanded))
 	    return nullptr;
       if (is_keyed_() && !expand_keyed_array_(des, scope, dims[cur_dim],
 					      expanded))
@@ -971,11 +985,9 @@ NetExpr* PEAssignPattern::elaborate_expr_uarray_(Design *des, NetScope *scope,
 		  sorry_default = true;
 	    } else if (const auto c = dynamic_cast<PEConcat*>(parms[idx])) {
 		  // Braces for an inner dimension are a nested pattern.
-		  list<PExpr*> items(c->items().begin(), c->items().end());
-		  PEAssignPattern inner(c->repeat(), items);
-		  inner.set_line(*c);
-		  expr = inner.elaborate_expr_uarray_(des, scope, uarray_type,
-						      dims, cur_dim, need_const);
+		  expr = concat_to_pattern_(c)->elaborate_expr_uarray_(
+				des, scope, uarray_type, dims, cur_dim,
+				need_const);
 	    } else if (dynamic_cast<PEIdent*>(parms[idx])) {
 		  // The only other thing that's allow in this
 		  // context is an array slice or identifier.
@@ -1020,7 +1032,8 @@ NetExpr* PEAssignPattern::elaborate_expr_packed_(Design *des, NetScope *scope,
       }
 
       vector<PExpr*> expanded;
-      if (repeat_ && !expand_repeat_(des, scope, expanded))
+      if (repeat_ && !expand_repeat_(des, scope, dims[cur_dim].width(),
+				     expanded))
 	    return nullptr;
       if (is_keyed_() && !expand_keyed_array_(des, scope, dims[cur_dim],
 					      expanded))
@@ -1071,7 +1084,7 @@ NetExpr* PEAssignPattern::elaborate_expr_struct_(Design *des, NetScope *scope,
       auto &members = struct_type->members();
 
       vector<PExpr*> expanded;
-      if (repeat_ && !expand_repeat_(des, scope, expanded))
+      if (repeat_ && !expand_repeat_(des, scope, members.size(), expanded))
 	    return nullptr;
       if (is_keyed_() && !expand_keyed_struct_(des, struct_type, expanded))
 	    return nullptr;
@@ -1089,9 +1102,7 @@ NetExpr* PEAssignPattern::elaborate_expr_struct_(Design *des, NetScope *scope,
       for (size_t idx = 0; idx < std::min(parms.size(), members.size()); idx++) {
 	    auto expr = elaborate_rval_expr(des, scope,
 					    members[idx].net_type,
-					    concat_as_pattern_(parms[idx],
-							       members[idx].net_type),
-					    need_const);
+					    parms[idx], need_const);
 	    if (expr)
 		  neconcat->set(idx, expr);
       }

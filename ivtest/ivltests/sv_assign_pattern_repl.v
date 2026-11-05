@@ -92,6 +92,13 @@ module test;
     q = '{2{1, 2}};
     `check(q.size(), 4)
     `check(q[3], 2)
+    q = '{1{7}};
+    `check(q.size(), 1)
+    `check(q[0], 7)
+    d = '{2{5, 6, 7}};
+    `check(d.size(), 6)
+    `check(d[3], 5)
+    `check(d[5], 7)
 
     // A replication concatenation as a positional item is not a pattern
     w = '{{2{4'h3}}, {2{4'hA}}};
