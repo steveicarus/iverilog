@@ -3279,6 +3279,11 @@ extern "C" int ivl_type_packed_msb(ivl_type_t net, unsigned dim)
       return slice[dim].get_msb();
 }
 
+extern "C" ivl_enumtype_t ivl_type_enumtype(ivl_type_t net)
+{
+      return dynamic_cast<const netenum_t*>(net);
+}
+
 extern "C" const char* ivl_type_name(ivl_type_t net)
 {
       if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(net))

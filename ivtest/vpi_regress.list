@@ -80,6 +80,7 @@ callback1		normal			callback1.c		callback1.log
 celldefine		normal			celldefine.c		celldefine.gold
 check_version		normal			check_version.c		check_version.gold
 display_array		normal,-g2009		display_array.c		display_array.gold
+enum_typespec		normal,-g2012		enum_typespec.c		enum_typespec.gold
 event1			normal			event1.c		event1.log
 event2			normal			event2.c		event2.log
 final			normal,-g2009		final.c			final.gold

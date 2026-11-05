@@ -506,7 +506,7 @@ extern void compile_thread(char*start_sym, char*flag);
  */
 extern void compile_variable(char*label, char*name,
 			     int msb, int lsb, int vpi_type_code,
-			     bool signed_flag, bool local_flag);
+			     bool signed_flag, bool local_flag, char*enum_label);
 
 extern void compile_var_real(char*label, char*name, bool local_flag);
 extern void compile_var_string(char*label, char*name);

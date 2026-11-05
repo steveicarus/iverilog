@@ -559,9 +559,13 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 
       } else {
 
-	    fprintf(vvp_out, "v%p_0 .var%s %s\"%s\", %d %d;%s\n",
+	    ivl_enumtype_t enumtype = ivl_type_enumtype(ivl_signal_net_type(sig));
+
+	    fprintf(vvp_out, "v%p_0 .var%s %s\"%s\", %d %d",
 		    sig, datatype_flag, local_flag,
-		    vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb,
+		    vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
+	    if (enumtype) fprintf(vvp_out, ", enum%p", enumtype);
+	    fprintf(vvp_out, ";%s\n",
 		    ivl_signal_local(sig)? " Local signal" : "" );
       }
 }
