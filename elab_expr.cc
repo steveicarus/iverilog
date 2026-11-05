@@ -616,6 +616,29 @@ static bool default_recurses_(ivl_type_t type)
 	     dynamic_cast<const netuarray_t*>(type);
 }
 
+/*
+ * Braces without an apostrophe that are an item of an assignment pattern
+ * and stand for an unpacked array are a nested pattern, as
+ * in `'{{0, 1}, {2, 3}}`. Other tools accept this, although strictly the
+ * LRM only has concatenations there. A packed element keeps the
+ * concatenation, which is a valid value for it.
+ */
+static PExpr *concat_as_pattern_(PExpr *expr, ivl_type_t type)
+{
+      const auto concat = dynamic_cast<PEConcat*>(expr);
+      if (!concat)
+	    return expr;
+
+      if (!dynamic_cast<const netuarray_t*>(type) &&
+	  !dynamic_cast<const netdarray_t*>(type))
+	    return expr;
+
+      list<PExpr*> items(concat->items().begin(), concat->items().end());
+      PEAssignPattern *tmp = new PEAssignPattern(concat->repeat(), items);
+      tmp->set_line(*expr);
+      return tmp;
+}
+
 NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 					ivl_type_t ntype, unsigned flags) const
 {
@@ -704,7 +727,9 @@ NetExpr* PEAssignPattern::elaborate_expr_array_(Design *des, NetScope *scope,
       size_t elem_idx = up ? 0 : parms.size() - 1;
       for (size_t idx = 0 ; idx < parms.size() ; idx += 1) {
 	    NetExpr* tmp = elaborate_rval_expr(des, scope, elem_type,
-	                                       parms[idx], need_const);
+	                                       concat_as_pattern_(parms[idx],
+								  elem_type),
+					       need_const);
 	      // Trim the expression if it is too large and a type that
 	      // can be trimmed.
 	    if (tmp && (tmp->expr_width() > elem_type->packed_width()) &&
@@ -944,11 +969,13 @@ NetExpr* PEAssignPattern::elaborate_expr_uarray_(Design *des, NetScope *scope,
 			des->errors++;
 		  }
 		  sorry_default = true;
-	    } else if (dynamic_cast<PEConcat*>(parms[idx])) {
-		  cerr << get_fileline() << ": sorry: "
-		       << "Array concatenation is not yet supported."
-		       << endl;
-		  des->errors++;
+	    } else if (const auto c = dynamic_cast<PEConcat*>(parms[idx])) {
+		  // Braces for an inner dimension are a nested pattern.
+		  list<PExpr*> items(c->items().begin(), c->items().end());
+		  PEAssignPattern inner(c->repeat(), items);
+		  inner.set_line(*c);
+		  expr = inner.elaborate_expr_uarray_(des, scope, uarray_type,
+						      dims, cur_dim, need_const);
 	    } else if (dynamic_cast<PEIdent*>(parms[idx])) {
 		  // The only other thing that's allow in this
 		  // context is an array slice or identifier.
@@ -1062,7 +1089,9 @@ NetExpr* PEAssignPattern::elaborate_expr_struct_(Design *des, NetScope *scope,
       for (size_t idx = 0; idx < std::min(parms.size(), members.size()); idx++) {
 	    auto expr = elaborate_rval_expr(des, scope,
 					    members[idx].net_type,
-					    parms[idx], need_const);
+					    concat_as_pattern_(parms[idx],
+							       members[idx].net_type),
+					    need_const);
 	    if (expr)
 		  neconcat->set(idx, expr);
       }

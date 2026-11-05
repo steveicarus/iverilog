@@ -324,6 +324,10 @@ class PEConcat : public PExpr {
 					 bool is_init = false) const override;
       virtual bool is_collapsible_net(Design*des, NetScope*scope,
                                       NetNet::PortType port_type) const override;
+
+	// The operands and the repeat count (null if none) of the concatenation.
+      const std::vector<PExpr*>& items() const { return parms_; }
+      PExpr* repeat() const { return repeat_; }
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
 				     bool bidirectional_flag,
