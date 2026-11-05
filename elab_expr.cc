@@ -712,7 +712,13 @@ bool PEAssignPattern::expand_keyed_array_(Design *des, NetScope *scope,
       for (const auto &item : keyed_) {
 	    NetExpr *key = elab_and_eval(des, scope, item.key, -1, true);
 	    long idx;
-	    if (!key || !eval_as_long(idx, key)) {
+	    if (key && key->expr_type() == IVL_VT_REAL) {
+		  cerr << item.key->get_fileline() << ": error: The key of an"
+		       << " array assignment pattern item can not be a real"
+		       << " value." << endl;
+		  des->errors++;
+		  ok = false;
+	    } else if (!key || !eval_as_long(idx, key)) {
 		  cerr << item.key->get_fileline() << ": error: The key of an"
 		       << " array assignment pattern item must be a constant"
 		       << " integer expression." << endl;
@@ -797,11 +803,26 @@ bool PEAssignPattern::expand_keyed_struct_(Design *des,
 	    }
       }
 
+	// A plain default value for a member that is itself a struct or an
+	// array applies to the elements of that member (IEEE 1800-2017
+	// 10.9.2), so wrap it in a default-only pattern for the member.
+      PExpr *member_default = default_;
+      if (default_ && !dynamic_cast<PEAssignPattern*>(default_)) {
+	    list<pattern_item_t> dflt;
+	    dflt.push_back({nullptr, default_});
+	    member_default = new PEAssignPattern(dflt);
+	    member_default->set_line(*this);
+      }
+
       for (size_t idx = 0; idx < items.size(); idx++) {
 	    if (items[idx])
 		  continue;
 	    if (default_) {
-		  items[idx] = default_;
+		  ivl_type_t mtype = members[idx].net_type;
+		  bool recurse = dynamic_cast<const netstruct_t*>(mtype) ||
+				 dynamic_cast<const netparray_t*>(mtype) ||
+				 dynamic_cast<const netuarray_t*>(mtype);
+		  items[idx] = recurse ? member_default : default_;
 	    } else if (ok) {
 		  cerr << get_fileline() << ": error: Assignment pattern has no"
 		       << " value for member `" << members[idx].name

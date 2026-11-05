@@ -19,6 +19,7 @@ module test;
   int ua_neg[-1:1];
   ps_t sa[3];
   int ua2[2][3];
+  logic [1:0][1:0][3:0] p2;
 
   bit failed = 1'b0;
 
@@ -88,6 +89,17 @@ module test;
     `check(ua2[1][0], 1)
     `check(ua2[1][1], 2)
     `check(ua2[1][2], 2)
+
+    sa = '{0: '{a: 4'h1, b: 4'h2}, default: '{default: 4'h7}};
+    `check(sa[0], 8'h12)
+    `check(sa[1], 8'h77)
+    `check(sa[2], 8'h77)
+
+    // Nested packed arrays
+    p2 = '{default: '{default: 4'h6}};
+    `check(p2, 16'h6666)
+    p2 = '{1: '{0: 4'h1, default: 4'h2}, default: '{default: 4'h3}};
+    `check(p2, 16'h2133)
 
     if (!failed) begin
       $display("PASSED");
