@@ -449,31 +449,29 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	    break;
       }
 
-	/* Special Case: If this variable is the return value of a function,
-	   then it need to exist as an actual variable. */
-      if ((ivl_signal_data_type(sig)==IVL_VT_REAL)
-	  && signal_is_return_value(sig)) {
-	    fprintf(vvp_out, "; Variable %s is REAL return value of scope S_%p\n",
-		    ivl_signal_basename(sig), ivl_signal_scope(sig));
-	    return;
-      }
-      if ((ivl_signal_data_type(sig)==IVL_VT_STRING)
-	  && signal_is_return_value(sig)) {
-	    fprintf(vvp_out, "; Variable %s is string return value of scope S_%p\n",
-		    ivl_signal_basename(sig), ivl_signal_scope(sig));
-	    return;
-      }
-      if ((ivl_signal_data_type(sig)==IVL_VT_LOGIC)
-	  && signal_is_return_value(sig)) {
-	    fprintf(vvp_out, "; Variable %s is vec4 return value of scope S_%p\n",
-		    ivl_signal_basename(sig), ivl_signal_scope(sig));
-	    return;
-      }
-      if ((ivl_signal_data_type(sig)==IVL_VT_BOOL)
-	  && signal_is_return_value(sig)) {
-	    fprintf(vvp_out, "; Variable %s is bool return value of scope S_%p\n",
-		    ivl_signal_basename(sig), ivl_signal_scope(sig));
-	    return;
+	/* Special Case: If this variable is the return value of an automatic
+           function, then it doesn't need to exist as an actual variable. */
+      if (ivl_scope_is_auto(ivl_signal_scope(sig)) && signal_is_return_value(sig)) {
+            if (ivl_signal_data_type(sig)==IVL_VT_REAL) {
+                  fprintf(vvp_out, "; Variable %s is REAL return value of scope S_%p\n",
+                          ivl_signal_basename(sig), ivl_signal_scope(sig));
+                  return;
+            }
+            if (ivl_signal_data_type(sig)==IVL_VT_STRING) {
+                  fprintf(vvp_out, "; Variable %s is string return value of scope S_%p\n",
+                          ivl_signal_basename(sig), ivl_signal_scope(sig));
+                  return;
+            }
+            if (ivl_signal_data_type(sig)==IVL_VT_LOGIC) {
+                  fprintf(vvp_out, "; Variable %s is vec4 return value of scope S_%p\n",
+                          ivl_signal_basename(sig), ivl_signal_scope(sig));
+                  return;
+            }
+            if (ivl_signal_data_type(sig)==IVL_VT_BOOL) {
+                  fprintf(vvp_out, "; Variable %s is bool return value of scope S_%p\n",
+                          ivl_signal_basename(sig), ivl_signal_scope(sig));
+                  return;
+            }
       }
 
       const char *datatype_flag = ivl_signal_integer(sig) ? "/i" :
@@ -2406,9 +2404,21 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
               ivl_scope_lineno(net));
 
       if (parent) {
-	    fprintf(vvp_out, ", %u %u %u, S_%p;\n",
-	            ivl_file_table_index(ivl_scope_def_file(net)),
-	            ivl_scope_def_lineno(net), ivl_scope_is_cell(net), parent);
+	    fprintf(vvp_out, ", %u %u %u",
+		    ivl_file_table_index(ivl_scope_def_file(net)),
+		    ivl_scope_def_lineno(net), ivl_scope_is_cell(net));
+	    if (ivl_scope_type(net) == IVL_SCT_FUNCTION && !ivl_scope_is_auto(net)
+		&& ivl_scope_func_type(net) != IVL_VT_VOID) {
+		  ivl_signal_t sig = 0;
+		  for (idx = 0; idx < ivl_scope_sigs(net); idx += 1) {
+			sig = ivl_scope_sig(net, idx);
+			if (strcmp(ivl_signal_basename(sig), ivl_scope_basename(net)) == 0)
+			      break;
+		  }
+		  assert(sig);
+		  fprintf(vvp_out, ", v%p_0", sig);
+	    }
+	    fprintf(vvp_out, ", S_%p;\n", parent);
       } else {
 
 	    fprintf(vvp_out, ";\n");
