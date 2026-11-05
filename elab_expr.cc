@@ -616,13 +616,6 @@ static bool default_recurses_(ivl_type_t type)
 	     dynamic_cast<const netuarray_t*>(type);
 }
 
-/*
- * Braces without an apostrophe that are an item of an assignment pattern
- * and stand for an unpacked array are a nested pattern, as
- * in `'{{0, 1}, {2, 3}}`. Other tools accept this, although strictly the
- * LRM only has concatenations there. A packed element keeps the
- * concatenation, which is a valid value for it.
- */
 static PEAssignPattern *concat_to_pattern_(const PEConcat *concat)
 {
       list<PExpr*> items(concat->items().begin(), concat->items().end());
@@ -631,6 +624,13 @@ static PEAssignPattern *concat_to_pattern_(const PEConcat *concat)
       return tmp;
 }
 
+/*
+ * Braces without an apostrophe that are an item of an assignment pattern
+ * and stand for an unpacked array are a nested pattern, as
+ * in `'{{0, 1}, {2, 3}}`. Other tools accept this, although strictly the
+ * LRM only has concatenations there. A packed element keeps the
+ * concatenation, which is a valid value for it.
+ */
 static PExpr *concat_as_pattern_(PExpr *expr, ivl_type_t type)
 {
       const auto concat = dynamic_cast<PEConcat*>(expr);
