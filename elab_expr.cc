@@ -607,8 +607,17 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 {
       bool need_const = NEED_CONST & flags;
 
-      if (auto darray_type = dynamic_cast<const netdarray_t*>(ntype))
-	    return elaborate_expr_array_(des, scope, darray_type, need_const, true);
+      if (auto darray_type = dynamic_cast<const netdarray_t*>(ntype)) {
+	    if (is_keyed_()) {
+		  cerr << get_fileline() << ": sorry: Keyed assignment patterns"
+		       << " are not supported for dynamic arrays and queues."
+		       << endl;
+		  des->errors++;
+		  return nullptr;
+	    }
+	    return elaborate_expr_array_(des, scope, darray_type, parms_,
+					 need_const, true);
+      }
 
       if (auto uarray_type = dynamic_cast<const netuarray_t*>(ntype)) {
 	    return elaborate_expr_uarray_(des, scope, uarray_type,
@@ -645,12 +654,13 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 
 NetExpr* PEAssignPattern::elaborate_expr_array_(Design *des, NetScope *scope,
 					        const netarray_t *array_type,
+					        const vector<PExpr*> &parms,
 					        bool need_const, bool up) const
 {
 	// Special case: If this is an empty pattern (i.e. '{}) then convert
 	// this to a null handle. Internally, Icarus Verilog uses this to
 	// represent nil dynamic arrays.
-      if (parms_.empty()) {
+      if (parms.empty()) {
 	    NetENull *tmp = new NetENull;
 	    tmp->set_line(*this);
 	    return tmp;
@@ -660,11 +670,11 @@ NetExpr* PEAssignPattern::elaborate_expr_array_(Design *des, NetScope *scope,
 	// the expression and elaborate each as if they are
 	// element_type expressions.
       ivl_type_t elem_type = array_type->element_type();
-      vector<NetExpr*> elem_exprs (parms_.size());
-      size_t elem_idx = up ? 0 : parms_.size() - 1;
-      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
+      vector<NetExpr*> elem_exprs (parms.size());
+      size_t elem_idx = up ? 0 : parms.size() - 1;
+      for (size_t idx = 0 ; idx < parms.size() ; idx += 1) {
 	    NetExpr* tmp = elaborate_rval_expr(des, scope, elem_type,
-	                                       parms_[idx], need_const);
+	                                       parms[idx], need_const);
 	      // Trim the expression if it is too large and a type that
 	      // can be trimmed.
 	    if ((tmp->expr_width() > elem_type->packed_width()) &&
@@ -684,6 +694,126 @@ NetExpr* PEAssignPattern::elaborate_expr_array_(Design *des, NetScope *scope,
       return res;
 }
 
+bool PEAssignPattern::expand_keyed_array_(Design *des, NetScope *scope,
+					  const netrange_t &range,
+					  vector<PExpr*> &items) const
+{
+      bool ok = true;
+      const long msb = range.get_msb();
+      const long lsb = range.get_lsb();
+      const long lo = std::min(msb, lsb);
+      const long hi = std::max(msb, lsb);
+      const bool down = msb >= lsb;
+
+      items.assign(range.width(), nullptr);
+
+	// The items of a positional pattern run from the left of the
+	// range to the right, so map the index to that position.
+      for (const auto &item : keyed_) {
+	    NetExpr *key = elab_and_eval(des, scope, item.key, -1, true);
+	    long idx;
+	    if (!key || !eval_as_long(idx, key)) {
+		  cerr << item.key->get_fileline() << ": error: The key of an"
+		       << " array assignment pattern item must be a constant"
+		       << " integer expression." << endl;
+		  des->errors++;
+		  ok = false;
+	    } else if (idx < lo || idx > hi) {
+		  cerr << item.key->get_fileline() << ": error: Index " << idx
+		       << " in assignment pattern is out of range [" << msb
+		       << ":" << lsb << "]." << endl;
+		  des->errors++;
+		  ok = false;
+	    } else {
+		  PExpr *&slot = items[down ? msb - idx : idx - msb];
+		  if (slot) {
+			cerr << item.key->get_fileline() << ": error: Index "
+			     << idx << " is specified more than once in the"
+			     << " assignment pattern." << endl;
+			des->errors++;
+			ok = false;
+		  }
+		  slot = item.value;
+	    }
+	    delete key;
+      }
+
+      for (size_t pos = 0; pos < items.size(); pos++) {
+	    if (items[pos])
+		  continue;
+	    if (default_) {
+		  items[pos] = default_;
+	    } else if (ok) {
+		  cerr << get_fileline() << ": error: Assignment pattern has no"
+		       << " value for index "
+		       << (down ? msb - (long)pos : msb + (long)pos)
+		       << " and no default." << endl;
+		  des->errors++;
+		  ok = false;
+	    }
+      }
+
+      return ok;
+}
+
+bool PEAssignPattern::expand_keyed_struct_(Design *des,
+					   const netstruct_t *struct_type,
+					   vector<PExpr*> &items) const
+{
+      bool ok = true;
+      auto &members = struct_type->members();
+      items.assign(members.size(), nullptr);
+
+      for (const auto &item : keyed_) {
+	    const PEIdent *id = dynamic_cast<const PEIdent*>(item.key);
+	    if (!id || id->path().package || id->path().size() != 1 ||
+	        !id->path().back().index.empty()) {
+		  cerr << item.key->get_fileline() << ": error: The key of a"
+		       << " struct assignment pattern item must be a member"
+		       << " name." << endl;
+		  des->errors++;
+		  ok = false;
+		  continue;
+	    }
+
+	    perm_string name = id->path().back().name;
+	    size_t idx = 0;
+	    while (idx < members.size() && members[idx].name != name)
+		  idx++;
+
+	    if (idx == members.size()) {
+		  cerr << item.key->get_fileline() << ": error: Struct has no"
+		       << " member named `" << name << "`." << endl;
+		  des->errors++;
+		  ok = false;
+	    } else if (items[idx]) {
+		  cerr << item.key->get_fileline() << ": error: Member `"
+		       << name << "` is specified more than once in the"
+		       << " assignment pattern." << endl;
+		  des->errors++;
+		  ok = false;
+	    } else {
+		  items[idx] = item.value;
+	    }
+      }
+
+      for (size_t idx = 0; idx < items.size(); idx++) {
+	    if (items[idx])
+		  continue;
+	    if (default_) {
+		  items[idx] = default_;
+	    } else if (ok) {
+		  cerr << get_fileline() << ": error: Assignment pattern has no"
+		       << " value for member `" << members[idx].name
+		       << "` and no default." << endl;
+		  des->errors++;
+		  ok = false;
+	    }
+      }
+
+      return ok;
+}
+
 NetExpr* PEAssignPattern::elaborate_expr_uarray_(Design *des, NetScope *scope,
 						 const netuarray_t *uarray_type,
 						 const netranges_t &dims,
@@ -693,49 +823,65 @@ NetExpr* PEAssignPattern::elaborate_expr_uarray_(Design *des, NetScope *scope,
       if (dims.size() <= cur_dim)
 	    return nullptr;
 
-      if (dims[cur_dim].width() != parms_.size()) {
+      vector<PExpr*> expanded;
+      if (is_keyed_() && !expand_keyed_array_(des, scope, dims[cur_dim],
+					      expanded))
+	    return nullptr;
+      const vector<PExpr*> &parms = is_keyed_() ? expanded : parms_;
+
+      if (dims[cur_dim].width() != parms.size()) {
 	    cerr << get_fileline() << ": error: Unpacked array assignment pattern expects "
 	         << dims[cur_dim].width() << " element(s) in this context.\n"
 	         << get_fileline() << ":      : Found "
-		 << parms_.size() << " element(s)." << endl;
+		 << parms.size() << " element(s)." << endl;
 	    des->errors++;
       }
 
       bool up = dims[cur_dim].get_msb() < dims[cur_dim].get_lsb();
       if  (cur_dim == dims.size() - 1) {
-	    return elaborate_expr_array_(des, scope, uarray_type, need_const, up);
+	    return elaborate_expr_array_(des, scope, uarray_type, parms,
+					 need_const, up);
       }
 
+      bool sorry_default = false;
       cur_dim++;
-      vector<NetExpr*> elem_exprs(parms_.size());
-      size_t elem_idx = up ? 0 : parms_.size() - 1;
-      for (size_t idx = 0; idx < parms_.size(); idx++) {
+      vector<NetExpr*> elem_exprs(parms.size());
+      size_t elem_idx = up ? 0 : parms.size() - 1;
+      for (size_t idx = 0; idx < parms.size(); idx++) {
 	    NetExpr *expr = nullptr;
 	    // Handle nested assignment patterns as a special case. We do not
 	    // have a good way of passing the inner dimensions through the
 	    // generic elaborate_expr() API and assigment patterns is the only
 	    // place where we need it.
-	    if (const auto ap = dynamic_cast<PEAssignPattern*>(parms_[idx])) {
+	    if (const auto ap = dynamic_cast<PEAssignPattern*>(parms[idx])) {
 		  expr = ap->elaborate_expr_uarray_(des, scope, uarray_type,
 						    dims, cur_dim, need_const);
-	    } else if (const auto s = dynamic_cast<PEString*>(parms_[idx])) {
+	    } else if (const auto s = dynamic_cast<PEString*>(parms[idx])) {
 		  expr = s->elaborate_expr_uarray_(des, scope, uarray_type,
 						   dims, cur_dim);
-	    } else if (dynamic_cast<PEConcat*>(parms_[idx])) {
+	    } else if (default_ && parms[idx] == default_) {
+		  if (!sorry_default) {
+			cerr << get_fileline() << ": sorry: The default of a"
+			     << " multi-dimensional unpacked array pattern must"
+			     << " be an assignment pattern." << endl;
+			des->errors++;
+		  }
+		  sorry_default = true;
+	    } else if (dynamic_cast<PEConcat*>(parms[idx])) {
 		  cerr << get_fileline() << ": sorry: "
 		       << "Array concatenation is not yet supported."
 		       << endl;
 		  des->errors++;
-	    } else if (dynamic_cast<PEIdent*>(parms_[idx])) {
+	    } else if (dynamic_cast<PEIdent*>(parms[idx])) {
 		  // The only other thing that's allow in this
 		  // context is an array slice or identifier.
 		  cerr << get_fileline() << ": sorry: "
 		       << "Procedural assignment of array or array slice"
 		       << " is not yet supported." << endl;
 		  des->errors++;
-	    } else if (parms_[idx]) {
+	    } else if (parms[idx]) {
 		  cerr << get_fileline() << ": error: Expression "
-		       << *parms_[idx]
+		       << *parms[idx]
 		       << " is not compatible with this context."
 		       << " Expected array or array-like expression."
 		       << endl;
@@ -769,32 +915,38 @@ NetExpr* PEAssignPattern::elaborate_expr_packed_(Design *des, NetScope *scope,
 	    return nullptr;
       }
 
-      if (dims[cur_dim].width() != parms_.size()) {
+      vector<PExpr*> expanded;
+      if (is_keyed_() && !expand_keyed_array_(des, scope, dims[cur_dim],
+					      expanded))
+	    return nullptr;
+      const vector<PExpr*> &parms = is_keyed_() ? expanded : parms_;
+
+      if (dims[cur_dim].width() != parms.size()) {
 	    cerr << get_fileline() << ": error: Packed array assignment pattern expects "
 	         << dims[cur_dim].width() << " element(s) in this context.\n"
 	         << get_fileline() << ":      : Found "
-		 << parms_.size() << " element(s)." << endl;
+		 << parms.size() << " element(s)." << endl;
 	    des->errors++;
       }
 
       width /= dims[cur_dim].width();
       cur_dim++;
 
-      NetEConcat *neconcat = new NetEConcat(parms_.size(), 1, base_type);
-      for (size_t idx = 0; idx < parms_.size(); idx++) {
+      NetEConcat *neconcat = new NetEConcat(parms.size(), 1, base_type);
+      for (size_t idx = 0; idx < parms.size(); idx++) {
 	    NetExpr *expr;
 	    // Handle nested assignment patterns as a special case. We do not
 	    // have a good way of passing the inner dimensions through the
 	    // generic elaborate_expr() API and assigment patterns is the only
 	    // place where we need it.
-	    const auto ap = dynamic_cast<PEAssignPattern*>(parms_[idx]);
+	    const auto ap = dynamic_cast<PEAssignPattern*>(parms[idx]);
 	    if (ap)
 		  expr = ap->elaborate_expr_packed_(des, scope, base_type,
 						    width, dims, cur_dim, need_const);
 	    else
 		  expr = elaborate_rval_expr(des, scope, nullptr,
 					     base_type, width,
-					     parms_[idx], need_const);
+					     parms[idx], need_const);
 	    if (expr)
 		  neconcat->set(idx, expr);
       }
@@ -808,19 +960,24 @@ NetExpr* PEAssignPattern::elaborate_expr_struct_(Design *des, NetScope *scope,
 {
       auto &members = struct_type->members();
 
-      if (members.size() != parms_.size()) {
+      vector<PExpr*> expanded;
+      if (is_keyed_() && !expand_keyed_struct_(des, struct_type, expanded))
+	    return nullptr;
+      const vector<PExpr*> &parms = is_keyed_() ? expanded : parms_;
+
+      if (members.size() != parms.size()) {
 	    cerr << get_fileline() << ": error: Struct assignment pattern expects "
 	         << members.size() << " element(s) in this context.\n"
 	         << get_fileline() << ":      : Found "
-		 << parms_.size() << " element(s)." << endl;
+		 << parms.size() << " element(s)." << endl;
 	    des->errors++;
       }
 
-      NetEConcat *neconcat = new NetEConcat(parms_.size(), 1, struct_type->base_type());
-      for (size_t idx = 0; idx < std::min(parms_.size(), members.size()); idx++) {
+      NetEConcat *neconcat = new NetEConcat(parms.size(), 1, struct_type->base_type());
+      for (size_t idx = 0; idx < std::min(parms.size(), members.size()); idx++) {
 	    auto expr = elaborate_rval_expr(des, scope,
 					    members[idx].net_type,
-					    parms_[idx], need_const);
+					    parms[idx], need_const);
 	    if (expr)
 		  neconcat->set(idx, expr);
       }

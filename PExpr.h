@@ -220,10 +220,20 @@ class PExpr : public LineInfo {
 
 std::ostream& operator << (std::ostream&, const PExpr&);
 
+/*
+ * An item of a keyed assignment pattern, `key : value`. The key is null for
+ * a `default : value` item.
+ */
+struct pattern_item_t {
+      PExpr*key;
+      PExpr*value;
+};
+
 class PEAssignPattern : public PExpr {
     public:
       explicit PEAssignPattern();
       explicit PEAssignPattern(const std::list<PExpr*>&p);
+      explicit PEAssignPattern(const std::list<pattern_item_t>&p);
       ~PEAssignPattern() override;
 
       void dump(std::ostream&) const override;
@@ -238,6 +248,14 @@ class PEAssignPattern : public PExpr {
 				     unsigned expr_wid,
                                      unsigned flags) const override;
     private:
+      bool is_keyed_() const { return !keyed_.empty() || default_; }
+	// Map a keyed pattern onto the positional list of items for an array
+	// dimension or a struct. Return false after reporting an error.
+      bool expand_keyed_array_(Design *des, NetScope *scope,
+			       const netrange_t &range,
+			       std::vector<PExpr*> &items) const;
+      bool expand_keyed_struct_(Design *des, const netstruct_t *struct_type,
+				std::vector<PExpr*> &items) const;
       NetExpr* elaborate_expr_packed_(Design *des, NetScope *scope,
 				      ivl_variable_type_t base_type,
 				      unsigned int width,
@@ -249,6 +267,7 @@ class PEAssignPattern : public PExpr {
 				      bool need_const) const;
       NetExpr* elaborate_expr_array_(Design *des, NetScope *scope,
 				     const netarray_t *array_type,
+				     const std::vector<PExpr*> &parms,
 				     bool need_const, bool up) const;
       NetExpr* elaborate_expr_uarray_(Design *des, NetScope *scope,
 				      const netuarray_t *uarray_type,
@@ -258,6 +277,8 @@ class PEAssignPattern : public PExpr {
 
     private:
       std::vector<PExpr*>parms_;
+      std::vector<pattern_item_t>keyed_;
+      PExpr*default_ = nullptr;
 };
 
 class PEConcat : public PExpr {

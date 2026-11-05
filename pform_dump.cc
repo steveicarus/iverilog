@@ -398,6 +398,18 @@ void PExpr::dump(ostream&out) const
 
 void PEAssignPattern::dump(ostream&out) const
 {
+      if (is_keyed_()) {
+	    out << "'{";
+	    const char*sep = "";
+	    for (const auto &item : keyed_) {
+		  out << sep << *item.key << ": " << *item.value;
+		  sep = ", ";
+	    }
+	    if (default_)
+		  out << sep << "default: " << *default_;
+	    out << "}";
+	    return;
+      }
       out << "'{" << parms_ << "}";
 }
 
