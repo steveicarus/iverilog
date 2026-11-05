@@ -332,4 +332,4 @@ endif
 	rm -f "$(DESTDIR)$(ivl_includedir)/libvvp.h"
 endif
 
--include $(patsubst %.o, dep/%.d, $LIB_OBJ)
+-include $(patsubst %.o, dep/%.d, $(LIB_OBJ))

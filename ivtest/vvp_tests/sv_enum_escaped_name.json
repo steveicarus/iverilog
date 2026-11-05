@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_enum_escaped_name.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

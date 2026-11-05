@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "genvar_loop_decl_assign_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

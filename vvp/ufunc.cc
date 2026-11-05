@@ -229,10 +229,12 @@ void ufunc_real::finish_thread()
  * The portv list is a list of variables that the function reads as
  * inputs. The core assigns values to these nets as part of the startup.
  */
-void compile_ufunc_real(char*label, char*code, unsigned wid,
-		   unsigned argc,  struct symb_s*argv,
-		   unsigned portc, struct symb_s*portv,
-		   char*scope_label, char*trigger_label)
+template <class FUNCTOR>
+static void compile_ufunc(char*label, char*code, unsigned wid,
+                          unsigned argc, struct symb_s*argv,
+                          unsigned portc, struct symb_s*portv,
+                          char*scope_label, char*trigger_label,
+                          vvp_code_fun exec_opcode)
 {
 	/* The input argument list and port list must have the same
 	   sizes, since internally we will be mapping the inputs list
@@ -249,7 +251,7 @@ void compile_ufunc_real(char*label, char*code, unsigned wid,
 	   last instruction is the usual %end. So the thread looks
 	   like this:
 
-	      %exec_ufunc/real <core>;
+	      %exec_ufunc/<type> <core>;
 	      %reap_ufunc;
 	      %end;
 
@@ -258,7 +260,7 @@ void compile_ufunc_real(char*label, char*code, unsigned wid,
 	   the output value to the destination net functor. */
 
       vvp_code_t exec_code = codespace_allocate();
-      exec_code->opcode = of_EXEC_UFUNC_REAL;
+      exec_code->opcode = exec_opcode;
       code_label_lookup(exec_code, code, false);
 
       vvp_code_t reap_code = codespace_allocate();
@@ -279,9 +281,8 @@ void compile_ufunc_real(char*label, char*code, unsigned wid,
 	   it about the start address of the code stub, and the scope
 	   that will contain the execution. */
       vvp_net_t*ptr = new vvp_net_t;
-      ufunc_core*fcore = new ufunc_real(wid, ptr, portc, ports,
-					exec_code, call_scope,
-					scope_label);
+      ufunc_core*fcore = new FUNCTOR(wid, ptr, portc, ports,
+				      exec_code, call_scope, scope_label);
       ptr->fun = fcore;
       define_functor_symbol(label, ptr);
       free(label);
@@ -300,75 +301,22 @@ void compile_ufunc_real(char*label, char*code, unsigned wid,
       free(portv);
 }
 
-void compile_ufunc_vec4(char*label, char*code, unsigned wid,
-		   unsigned argc,  struct symb_s*argv,
-		   unsigned portc, struct symb_s*portv,
-		   char*scope_label, char*trigger_label)
+void compile_ufunc_real(char*label, char*code, unsigned wid,
+                        unsigned argc, struct symb_s*argv,
+                        unsigned portc, struct symb_s*portv,
+                        char*scope_label, char*trigger_label)
 {
-	/* The input argument list and port list must have the same
-	   sizes, since internally we will be mapping the inputs list
-	   to the ports list. */
-      assert(argc == portc);
+      compile_ufunc<ufunc_real>(label, code, wid, argc, argv, portc, portv,
+                                scope_label, trigger_label, of_EXEC_UFUNC_REAL);
+}
 
-      __vpiScope*call_scope = vpip_peek_current_scope();
-      assert(call_scope);
-
-	/* Construct some phantom code that is the thread of the
-	   function call. The first instruction, at the start_address
-	   of the function, loads the ports and calls the function.
-	   The second instruction collects the function result. The
-	   last instruction is the usual %end. So the thread looks
-	   like this:
-
-	      %exec_ufunc/vec4 <core>;
-	      %reap_ufunc;
-	      %end;
-
-	   The %exec_ufunc copies the input values into local regs
-           and runs the function code. The %reap_ufunc then copies
-	   the output value to the destination net functor. */
-
-      vvp_code_t exec_code = codespace_allocate();
-      exec_code->opcode = of_EXEC_UFUNC_VEC4;
-      code_label_lookup(exec_code, code, false);
-
-      vvp_code_t reap_code = codespace_allocate();
-      reap_code->opcode = of_REAP_UFUNC;
-
-      vvp_code_t end_code = codespace_allocate();
-      end_code->opcode = &of_END;
-
-	/* Run through the function ports (which are related to but
-	   not the same as the input ports) and arrange for their
-	   binding. */
-      vvp_net_t**ports = new vvp_net_t*[portc];
-      for (unsigned idx = 0 ;  idx < portc ;  idx += 1) {
-	    functor_ref_lookup(&ports[idx], portv[idx].text);
-      }
-
-	/* Create the output functor and attach it to the label. Tell
-	   it about the start address of the code stub, and the scope
-	   that will contain the execution. */
-      vvp_net_t*ptr = new vvp_net_t;
-      ufunc_core*fcore = new ufunc_vec4(wid, ptr, portc, ports,
-					exec_code, call_scope,
-					scope_label);
-      ptr->fun = fcore;
-      define_functor_symbol(label, ptr);
-      free(label);
-
-      exec_code->ufunc_core_ptr = fcore;
-      reap_code->ufunc_core_ptr = fcore;
-
-      wide_inputs_connect(fcore, argc, argv);
-
-        /* If this function has a trigger event, connect the functor to
-           that event. */
-      if (trigger_label)
-            input_connect(ptr, 0, trigger_label);
-
-      free(argv);
-      free(portv);
+void compile_ufunc_vec4(char*label, char*code, unsigned wid,
+                        unsigned argc, struct symb_s*argv,
+                        unsigned portc, struct symb_s*portv,
+                        char*scope_label, char*trigger_label)
+{
+      compile_ufunc<ufunc_vec4>(label, code, wid, argc, argv, portc, portv,
+                                scope_label, trigger_label, of_EXEC_UFUNC_VEC4);
 }
 #ifdef CHECK_WITH_VALGRIND
 static std::map<ufunc_core*, bool> ufunc_map;

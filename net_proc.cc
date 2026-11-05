@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -108,7 +108,7 @@ void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
 void NetCase::prune()
 {
 	// Test whether the case expression has been padded out
-      NetESelect*padded_expr = dynamic_cast<NetESelect*>(expr_.get());
+      const NetESelect*padded_expr = dynamic_cast<NetESelect*>(expr_.get());
       if ((padded_expr == 0) || (padded_expr->select() != 0))
 	    return;
 
@@ -155,7 +155,7 @@ void NetCase::prune()
 	    if (items_[idx].guard == 0)
 		  continue;
 
-	    NetEConst*gc = dynamic_cast<NetEConst*>(items_[idx].guard.get());
+	    const NetEConst*gc = dynamic_cast<NetEConst*>(items_[idx].guard.get());
 	    ivl_assert(*this, gc);
 
 	    verinum value(gc->value(), prune_width);

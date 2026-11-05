@@ -34,7 +34,7 @@ initial begin
     #1 l2 = 7;
     #1 r  = 8.0;
     #1 ->e;
-    // NOTE: the value change callback on a part select returns the value of the entire variable.
+    // The callback on p4[1:0] returns 2.
     #1 p4 = 4'd10;
     #1 a4[0] = 4'd11;
     #1 a4[1] = 4'd12;

@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "vpi_array_pattern_prefix.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Dynamic arrays are not supported",
+        "type"      : "CE"
+    }
+}

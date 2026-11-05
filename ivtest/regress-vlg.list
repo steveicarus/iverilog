@@ -376,7 +376,10 @@ br_gh1225b		CE			ivltests gold=br_gh1225b.gold
 br_gh1225c		CE			ivltests gold=br_gh1225c.gold
 br_gh1237		normal			ivltests
 br_gh1268a		CE			ivltests
+br_gh1497a		normal,-gspecify	ivltests gold=br_gh1497.gold
+br_gh1497b		normal,-gspecify	ivltests gold=br_gh1497.gold
 br_gh1537		normal			ivltests
+br_gh1592		normal			ivltests
 br_ml20150315		normal			ivltests gold=br_ml_20150315.gold
 br_ml20150321		CE			ivltests
 br_mw20171108		normal			ivltests
@@ -1628,15 +1631,21 @@ signed_net_display	normal			ivltests
 signed_part		normal			ivltests
 signed_pv		normal			ivltests
 sp2			normal			ivltests diff=work/sp2.inv:gold/sp2.inv
+spar_assign_to_lpar	CE			ivltests
+spar_assign_to_par	CE			ivltests
+spar_in_gen_if		CE			ivltests
 specify1		CO			ivltests
 specify2		normal,-gspecify	ivltests
 specify3		normal,-gspecify	ivltests gold=specify3.gold
 specify4		normal,-gspecify	ivltests gold=specify4.gold
 specify5		normal,-gspecify	ivltests gold=specify5.gold
 specify_01		normal,-gspecify	ivltests test # Yet another version of specify
+specparam2		CE			ivltests # Using a spar in a const context is illegal
 sqrt32			normal			ivltests
 sscanf_u		normal			ivltests
 sscanf_z		normal			ivltests
+sscanf_u_width	normal			ivltests
+sscanf_z_width	normal			ivltests
 stask_parm1		normal			ivltests
 stask_parm2		normal			ivltests gold=stask_parm2.gold
 stask_sens_null_arg	normal			ivltests

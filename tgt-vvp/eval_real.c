@@ -384,52 +384,6 @@ static void draw_signal_real(ivl_expr_t expr)
       }
 }
 
-/* If we have nested ternary operators they are likely tail recursive.
- * This code is structured to allow this recursion without overflowing
- * the available thread words. */
-static void draw_ternary_real(ivl_expr_t expr)
-{
-      ivl_expr_t cond = ivl_expr_oper1(expr);
-      ivl_expr_t true_ex = ivl_expr_oper2(expr);
-      ivl_expr_t false_ex = ivl_expr_oper3(expr);
-
-      unsigned lab_false = local_count++;
-      unsigned lab_out = local_count++;
-
-      fprintf(vvp_out, "; Start of ternary condition expr.\n");
-      int use_flag = draw_eval_condition(cond);
-
-	/* The condition flag is used after possibly other statements,
-	   so we need to put it into a non-common place. Allocate a
-	   safe flag bit and move the condition to the flag position. */
-      if (use_flag < 8) {
-            int tmp_flag = allocate_flag();
-            assert(tmp_flag >= 8);
-            fprintf(vvp_out, "    %%flag_mov %d, %d;\n", tmp_flag, use_flag);
-            use_flag = tmp_flag;
-      }
-
-	/* If the condition is just false then we only need to calculate
-	   the false expression. */
-      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_false, use_flag);
-      fprintf(vvp_out, "; Start of true expr.\n");
-      draw_eval_real(true_ex);
-
-	/* If the condition is true, then we only need the true expression. */
-      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
-      fprintf(vvp_out, "T_%u.%u; Start of false expr.\n", thread_count, lab_false);
-      draw_eval_real(false_ex);
-
-	/* If the condition is false, then we only need the false expression. */
-      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, %d;\n", thread_count, lab_out, use_flag);
-
-	/* This handles the case that the condition is undefined (x/z). */
-      fprintf(vvp_out, "    %%blend/wr;\n");
-      fprintf(vvp_out, "T_%u.%u; End of ternary.\n", thread_count, lab_out);
-
-      clr_flag(use_flag);
-}
-
 static void increment(ivl_expr_t e, bool pre)
 {
       ivl_signal_t sig = ivl_expr_signal(e);
@@ -576,7 +530,7 @@ void draw_eval_real(ivl_expr_t expr)
 	    break;
 
 	  case IVL_EX_TERNARY:
-	    draw_ternary_real(expr);
+	    draw_eval_ternary(expr, draw_eval_real, "%blend/wr");
 	    break;
 
 	  case IVL_EX_UFUNC:

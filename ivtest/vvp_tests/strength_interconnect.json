@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "strength_interconnect.v",
+    "iverilog-args" : [ "-ginterconnect" ]
+}

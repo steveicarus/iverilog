@@ -374,14 +374,17 @@ void property_object::destruct(char*buf) const
 
 void property_object::set_object(char*buf, const vvp_object_t&val, uint64_t idx)
 {
-      assert(idx < array_size_);
+      if (idx >= array_size_) return;
       vvp_object_t*tmp = reinterpret_cast<vvp_object_t*>(buf+offset_);
       tmp[idx] = val;
 }
 
 void property_object::get_object(char*buf, vvp_object_t&val, uint64_t idx)
 {
-      assert(idx < array_size_);
+      if (idx >= array_size_) {
+	    val.reset(nullptr);
+	    return;
+      }
       const vvp_object_t*tmp = reinterpret_cast<vvp_object_t*>(buf+offset_);
       val = tmp[idx];
 }

@@ -15,13 +15,13 @@ constVariablePointer:main.cc:438
 constVariablePointer:main.cc:688
 
 // const auto should be const
-constVariablePointer:elab_expr.cc:643
-constVariablePointer:elab_expr.cc:646
-constVariablePointer:elab_expr.cc:715
-constVariablePointer:elab_expr.cc:4476
-constVariablePointer:elab_lval.cc:1149
+constVariablePointer:elab_expr.cc:718
+constVariablePointer:elab_expr.cc:721
+constVariablePointer:elab_expr.cc:790
+constVariablePointer:elab_expr.cc:4852
+constVariablePointer:elab_lval.cc:1150
 constVariablePointer:elab_scope.cc:1538
-constVariablePointer:parse.y:5389
+constVariablePointer:parse.y:5428
 
 // The reference cannot be const since it is updated in the calling function.
 constParameterReference:net_udp.cc:37
@@ -40,11 +40,11 @@ uninitMemberVar:t-dll.cc:41
 uninitMemberVar:t-dll.cc:109
 
 // By convention we put statics at the top scope.
-variableScope:pform.cc:3635
+variableScope:pform.cc:3634
 
 // These are correct and are used to find the base (zero) pin.
-thisSubtraction:netlist.h:5384
-thisSubtraction:netlist.h:5393
+thisSubtraction:netlist.h:5467
+thisSubtraction:netlist.h:5476
 
 // This is used when running a debugger
 // debugger_release
@@ -56,7 +56,7 @@ knownConditionTrueFalse:elab_sig.cc:272
 knownConditionTrueFalse:elab_sig.cc:345
 
 // Yes, it's a duplicate
-duplicateCondition:elaborate.cc:8288
+duplicateCondition:elaborate.cc:8220
 
 // To complicated to use std::find_if()
 useStlAlgorithm:map_named_args.cc:38
@@ -722,9 +722,9 @@ unusedFunction:t-dll-api.cc:980
 // has_compat_attributes()
 unusedFunction:Attrib.cc:72
 // bl_type()
-unusedFunction:Statement.h:193
+unusedFunction:Statement.h:194
 // chain_args()
-unusedFunction:Statement.h:370
+unusedFunction:Statement.h:371
 // gn_modules_nest()
 unusedFunction:compiler.h:250
 // driven_mask()
@@ -745,10 +745,16 @@ unusedFunction:netlist.cc:113
 unusedFunction:netlist.cc:304
 // set_module_port_index()
 unusedFunction:netlist.cc:658
+// incr_eref()
+unusedFunction:netlist.cc:825
+// decr_eref()
+unusedFunction:netlist.cc:830
+// incr_lref()
+unusedFunction:netlist.cc:893
 // width_a()
-unusedFunction:netlist.cc:1685
+unusedFunction:netlist.cc:1680
 // width_b()
-unusedFunction:netlist.cc:1690
+unusedFunction:netlist.cc:1685
 // result_sig()
 unusedFunction:netlist.cc:2191
 // soft_union()
@@ -766,7 +772,7 @@ unusedFunction:t-dll-expr.cc:91
 // net_assign()
 unusedFunction:t-dll.cc:2300
 // is_before()
-unusedFunction:verinum.cc:588
+unusedFunction:verinum.cc:599
 
 // Errors/limitations in the generated yacc and lex files
 constVariablePointer:<stdout>

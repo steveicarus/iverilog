@@ -28,7 +28,6 @@ static PLI_INT32 one_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv;
-      vpiHandle arg;
 
       argv = vpi_iterate(vpiArgument, callh);
       if (argv == 0) {
@@ -40,18 +39,17 @@ static PLI_INT32 one_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    return 0;
       }
 
-      arg =  vpi_scan(argv);
-      if (arg == 0) return 0;
-
-      arg = vpi_scan(argv);
-      if (arg != 0) {
+	// The first argument is always a string.
+      if (! is_string_obj(vpi_scan(argv))) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s has too many arguments.\n", name);
+	    vpi_printf("%s's first argument must be a string.\n", name);
 	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
-	    return 0;
       }
+
+	/* Make sure there are no extra arguments. */
+      check_for_extra_args(argv, callh, name, "one string argument", 0);
 
       return 0;
 }
@@ -72,14 +70,13 @@ static PLI_INT32 two_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    return 0;
       }
 
-      arg = vpi_scan(argv);
-      if (arg == 0) {
+	// The first argument is always a string.
+      if (! is_string_obj(vpi_scan(argv))) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s missing object argument.\n", name);
+	    vpi_printf("%s's first argument must be a string.\n", name);
 	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
-	    return 0;
       }
 
       arg = vpi_scan(argv);
@@ -92,15 +89,57 @@ static PLI_INT32 two_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    return 0;
       }
 
-      arg = vpi_scan(argv);
-      if (arg != 0) {
+	/* Make sure there are no extra arguments. */
+      check_for_extra_args(argv, callh, name, "one string argument", 0);
+
+      return 0;
+}
+
+static PLI_INT32 two_str_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv;
+      vpiHandle arg;
+
+      argv = vpi_iterate(vpiArgument, callh);
+      if (argv == 0) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s has too many arguments.\n", name);
+	    vpi_printf("%s missing arguments.\n", name);
 	    vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
+
+	// The first argument is always a string.
+      if (! is_string_obj(vpi_scan(argv))) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's first argument must be a string.\n", name);
+	    vpip_set_return_value(1);
+	    vpi_control(vpiFinish, 1);
+      }
+
+      arg = vpi_scan(argv);
+      if (arg == 0) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s missing second string argument.\n", name);
+	    vpip_set_return_value(1);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      if (! is_string_obj(arg)) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's second argument must be a string.\n", name);
+	    vpip_set_return_value(1);
+	    vpi_control(vpiFinish, 1);
+      }
+
+	/* Make sure there are no extra arguments. */
+      check_for_extra_args(argv, callh, name, "two string arguments", 0);
 
       return 0;
 }
@@ -285,6 +324,54 @@ static PLI_INT32 toupperlower_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
+static PLI_INT32 i_compare_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv;
+      vpiHandle str, arg;
+      s_vpi_value value;
+      char*cstr;
+      char*carg;
+      int res;
+
+      argv = vpi_iterate(vpiArgument, callh);
+      assert(argv);
+      str = vpi_scan(argv);
+      assert(str);
+      arg = vpi_scan(argv);
+      assert(arg);
+      vpi_free_object(argv);
+
+      value.format = vpiStringVal;
+      vpi_get_value(str, &value);
+      cstr = strdup(value.value.str);
+
+      value.format = vpiStringVal;
+      vpi_get_value(arg, &value);
+      carg = strdup(value.value.str);
+
+      if (strcmp(name, "$ivl_string_method$icompare") == 0) {
+	    for (int i = 0; cstr[i] != '\0'; i++) {
+		  cstr[i] = tolower((unsigned char)cstr[i]);
+	    }
+	    for (int i = 0; carg[i] != '\0'; i++) {
+		  carg[i] = tolower((unsigned char)carg[i]);
+	    }
+      }
+
+      res = strcmp(cstr, carg);
+
+      free(cstr);
+      free(carg);
+
+      value.format = vpiIntVal;
+      value.value.integer = res;
+
+      vpi_put_value(callh, &value, 0, vpiNoDelay);
+
+      return 0;
+}
+
 /*
  * Convert a val to a text string that represents the value. The base
  * is the integer base to use for the conversion. The base will be one
@@ -458,6 +545,26 @@ void v2009_string_register(void)
       tf_data.compiletf = one_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "l";
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.tfname    = "$ivl_string_method$compare";
+      tf_data.calltf    = i_compare_calltf;
+      tf_data.compiletf = two_str_arg_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$ivl_string_method$compare";
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.tfname    = "$ivl_string_method$icompare";
+      tf_data.calltf    = i_compare_calltf;
+      tf_data.compiletf = two_str_arg_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$ivl_string_method$icompare";
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 

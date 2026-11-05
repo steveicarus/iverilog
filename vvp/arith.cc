@@ -610,15 +610,8 @@ void vvp_cmp_eeq::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       dispatch_operand_(ptr, bit);
 
       vvp_vector4_t eeq (1);
-      eeq.set_bit(0, BIT4_1);
-
       assert(op_a_.size() == op_b_.size());
-      for (unsigned idx = 0 ;  idx < op_a_.size() ;  idx += 1)
-	    if (op_a_.value(idx) != op_b_.value(idx)) {
-		  eeq.set_bit(0, BIT4_0);
-		  break;
-	    }
-
+      eeq.set_bit(0, op_a_.eeq(op_b_) ? BIT4_1 : BIT4_0);
 
       vvp_net_t*net = ptr.ptr();
       net->send_vec4(eeq, 0);
@@ -635,15 +628,8 @@ void vvp_cmp_nee::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       dispatch_operand_(ptr, bit);
 
       vvp_vector4_t eeq (1);
-      eeq.set_bit(0, BIT4_0);
-
       assert(op_a_.size() == op_b_.size());
-      for (unsigned idx = 0 ;  idx < op_a_.size() ;  idx += 1)
-	    if (op_a_.value(idx) != op_b_.value(idx)) {
-		  eeq.set_bit(0, BIT4_1);
-		  break;
-	    }
-
+      eeq.set_bit(0, op_a_.eeq(op_b_) ? BIT4_0 : BIT4_1);
 
       vvp_net_t*net = ptr.ptr();
       net->send_vec4(eeq, 0);

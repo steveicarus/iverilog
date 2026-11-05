@@ -481,8 +481,10 @@ class PEIdent : public PExpr {
       NetAssign_ *elaborate_lval_var_(Design *des, NetScope *scope,
 				      bool is_force, bool is_cassign,
 				      NetNet *reg, ivl_type_t data_type,
-				      pform_name_t tail_path) const;
+				      pform_name_t base_path,
+				      pform_name_t member_path) const;
       NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*,
+				          pform_name_t base_path,
 					  bool need_const_idx, bool is_force) const;
       bool elaborate_lval_net_bit_(Design*, NetScope*, NetAssign_*,
 				   bool need_const_idx, bool is_force) const;
@@ -495,7 +497,7 @@ class PEIdent : public PExpr {
 						   bool is_force,
 						   bool is_cassign,
 						   const netclass_t *class_type,
-						   NetNet*,
+						   NetAssign_*,
 						   pform_name_t) const;
       bool elaborate_lval_net_packed_member_(Design*, NetScope*,
 					     NetAssign_*,
@@ -545,7 +547,8 @@ class PEIdent : public PExpr {
 					  unsigned long elem_w,
 					  bool packed_layout,
 					  NetExpr*sel,
-					  perm_string name) const;
+					  perm_string name,
+					  long slice_off =0) const;
       NetExpr*elaborate_expr_param_uarray_(Design*des,
 					   NetScope*scope,
 					   const NetEConst*par_ex,
@@ -601,6 +604,11 @@ class PEIdent : public PExpr {
 				     bool bidirectional_flag,
 				     bool var_allowed_in_sv) const;
 
+      bool elaborate_lnet_packed_member_(Design*des, NetScope*scope,
+					 const NetNet*sig,
+					 const pform_name_t&base_path,
+					 const pform_name_t&member_path,
+					 unsigned&midx, unsigned&lidx) const;
 
       bool eval_part_select_(Design*des, NetScope*scope, const NetNet*sig,
 			     long&midx, long&lidx) const;
@@ -1039,7 +1047,7 @@ class PECallFunction : public PExpr {
       NetExpr* elaborate_expr_method_(Design*des, NetScope*scope,
 				      symbol_search_results&search_results)
 				      const;
-      NetExpr* elaborate_expr_method_par_(Design*des, const NetScope*scope,
+      NetExpr* elaborate_expr_method_par_(Design*des, NetScope*scope,
 					  const symbol_search_results&search_results)
 					  const;
 

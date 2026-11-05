@@ -241,10 +241,93 @@ static int draw_compare_vec4_le(ivl_expr_t expr)
       }
 }
 
+static int draw_compare_class(ivl_expr_t expr)
+{
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      if (ivl_expr_type(le) == IVL_EX_NULL) {
+	    ivl_expr_t tmp = le;
+	    le = re;
+	    re = tmp;
+      }
+
+	/* Special case: If both operands are null, then the
+	   expression has a constant value. */
+      if (ivl_expr_type(le)==IVL_EX_NULL && ivl_expr_type(re)==IVL_EX_NULL) {
+	    switch (ivl_expr_opcode(expr)) {
+		case 'e': /* == */
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 1;\n");
+		  break;
+		case 'n': /* != */
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+		  break;
+		default:
+		  assert(0);
+		  break;
+	    }
+	    return 4;
+      }
+
+	/* A signal/variable is compared to null. Implement this with
+	   the %test_nul statement, which peeks at the variable
+	   contents directly. */
+      if (ivl_expr_type(re)==IVL_EX_NULL && ivl_expr_type(le)==IVL_EX_SIGNAL) {
+	    ivl_signal_t sig= ivl_expr_signal(le);
+
+	    if (ivl_signal_dimensions(sig) == 0) {
+		  fprintf(vvp_out, "    %%test_nul v%p_0;\n", sig);
+	    } else {
+		  ivl_expr_t word_ex = ivl_expr_oper1(le);
+		  int word_ix = allocate_word();
+		  draw_eval_expr_into_integer(word_ex, word_ix);
+		  fprintf(vvp_out, "    %%test_nul/a v%p, %d;\n", sig, word_ix);
+		  clr_word(word_ix);
+	    }
+	    if (ivl_expr_opcode(expr) == 'n')
+		  fprintf(vvp_out, "    %%flag_inv 4;\n");
+	    return 4;
+      }
+
+      if (ivl_expr_type(re)==IVL_EX_NULL && ivl_expr_type(le)==IVL_EX_PROPERTY) {
+	    ivl_signal_t sig = ivl_expr_signal(le);
+	    unsigned pidx = ivl_expr_property_idx(le);
+	    ivl_expr_t idx_expr = ivl_expr_oper1(le);
+	    int idx = 0;
+
+	      /* If the property has an array index, then evaluate it
+		 into an index register. */
+	    if ( idx_expr ) {
+		  idx = allocate_word();
+		  draw_eval_expr_into_integer(idx_expr, idx);
+	    }
+
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+	    fprintf(vvp_out, "    %%test_nul/prop %u, %d;\n", pidx, idx);
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    if (ivl_expr_opcode(expr) == 'n')
+		  fprintf(vvp_out, "    %%flag_inv 4;\n");
+
+	    if (idx != 0) clr_word(idx);
+	    return 4;
+      }
+
+      fprintf(stderr, "SORRY: Compare class handles not implemented\n");
+      fprintf(vvp_out, " ; XXXX compare class handles. re-type=%d, le-type=%d\n",
+	      ivl_expr_type(re), ivl_expr_type(le));
+      vvp_errors += 1;
+      return 4;
+}
+
 int draw_eval_compare(ivl_expr_t expr)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
+
+      if (ivl_expr_value(le) == IVL_VT_CLASS &&
+          ivl_expr_value(re) == IVL_VT_CLASS) {
+	    return draw_compare_class(expr);
+      }
 
       if (ivl_expr_value(le) == IVL_VT_REAL ||
           ivl_expr_value(re) == IVL_VT_REAL) {
@@ -324,10 +407,6 @@ static int draw_condition_binary(ivl_expr_t expr)
 	  case 'N': /* !== */
 	  case 'w': /* ==? */
 	  case 'W': /* !=? */
-	    if (ivl_expr_value(ivl_expr_oper1(expr)) == IVL_VT_CLASS &&
-	        ivl_expr_value(ivl_expr_oper2(expr)) == IVL_VT_CLASS) {
-		  return draw_condition_fallback(expr);
-	    }
 	    return draw_eval_compare(expr);
 	  case '<':
 	  case '>':

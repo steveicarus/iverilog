@@ -485,7 +485,11 @@ static void cmd_help(unsigned, const char*[])
 static void invoke_command(char*txt)
 {
       unsigned argc = 0;
-      const char**argv = const_cast<const char**>(new char*[strlen(txt)/2]);
+	/* A line of N words needs at most (strlen(txt)+1)/2 slots (each word
+	   is at least one character and words are separated by at least one
+	   space). strlen(txt)/2 rounds that down and is one short for a line
+	   of single-character words, so add one. */
+      const char**argv = const_cast<const char**>(new char*[strlen(txt)/2 + 1]);
 
 	/* Chop the line into words. */
       for (char*cp = txt+strspn(txt, " ")

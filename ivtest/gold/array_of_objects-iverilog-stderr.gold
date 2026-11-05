@@ -1,0 +1,2 @@
+ivltests/array_of_objects.v:17: sorry: writing to class members in an unpacked array of objects is not yet supported.
+1 error(s) during elaboration.

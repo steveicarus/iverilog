@@ -1,0 +1,5 @@
+{
+    "type"          : "EF",
+    "source"        : "br_gh1548.v",
+    "iverilog-args" : [ "-g2012" ]
+}

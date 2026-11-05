@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "array_query_invalid_signedness.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

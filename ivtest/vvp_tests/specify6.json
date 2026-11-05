@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "specify6.v",
+    "iverilog-args" : [ "-gspecify" ]
+}

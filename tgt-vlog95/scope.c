@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2026 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -821,7 +821,8 @@ static void emit_specify_paths(ivl_scope_t scope, ivl_signal_t sig)
 	    ivl_delaypath_t dpath = ivl_signal_path(sig, idx);
 	    ivl_nexus_t cond = ivl_path_condit(dpath);
 	    ivl_nexus_t source = ivl_path_source(dpath);
-	    unsigned has_edge = 0;
+	    unsigned posedge = ivl_path_source_posedge(dpath);
+	    unsigned negedge = ivl_path_source_negedge(dpath);
 	    fprintf(vlog_out, "%*c", indent, ' ');
 	    if (cond) {
 		  fprintf(vlog_out, "if (");
@@ -831,13 +832,11 @@ static void emit_specify_paths(ivl_scope_t scope, ivl_signal_t sig)
 		  fprintf(vlog_out, "ifnone ");
 	    }
 	    fprintf(vlog_out, "(");
-	    if (ivl_path_source_posedge(dpath)) {
+	    if (posedge && !negedge) {
 		  fprintf(vlog_out, "posedge ");
-		  has_edge = 1;
 	    }
-	    if (ivl_path_source_negedge(dpath)) {
+	    if (negedge && !posedge) {
 		  fprintf(vlog_out, "negedge ");
-		  has_edge = 1;
 	    }
 	    emit_nexus_as_ca(scope, source, 0, 0);
 	    if (ivl_path_is_parallel(dpath)) {
@@ -847,7 +846,7 @@ static void emit_specify_paths(ivl_scope_t scope, ivl_signal_t sig)
 	    }
 	      /* The compiler does not keep the source expression for an edge
 	       * sensitive path so add a constant to get the syntax right. */
-	    if (has_edge) {
+	    if (posedge || negedge) {
 		  fprintf(vlog_out, "(%s : 1'bx /* Missing */)",
 		                    ivl_signal_basename(sig));
 	    } else {
@@ -1055,7 +1054,7 @@ int emit_scope(ivl_scope_t scope, const ivl_scope_t parent)
 		    /* If the module has parameters then it may not be unique
 		     * so we create a mangled name version instead. */
 		  fprintf(vlog_out, "\n%*c", indent, ' ');
-		  emit_mangled_name(scope, !parent && !emitting_scopes);
+		  emit_mangled_name(scope, false);
 		  fprintf(vlog_out, " ");
 		  emit_id(ivl_scope_basename(scope));
 		  fprintf(vlog_out, "(");
@@ -1082,7 +1081,7 @@ int emit_scope(ivl_scope_t scope, const ivl_scope_t parent)
 	                      ivl_scope_def_file(scope),
 	                      ivl_scope_def_lineno(scope));
 	    fprintf(vlog_out, "module ");
-	    emit_mangled_name(scope, !parent && !emitting_scopes);
+	    emit_mangled_name(scope, !emitting_scopes);
 	    emit_module_ports(scope);
 	    break;
 	case IVL_SCT_FUNCTION:

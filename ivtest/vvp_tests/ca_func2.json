@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "ca_func2.v",
+    "iverilog-args" : [ "-gstrict-ca-eval" ]
+}

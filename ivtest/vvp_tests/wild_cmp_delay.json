@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "wild_cmp_delay.v",
+    "iverilog-args" : ["-g2005-sv"],
+    "vlog95" : {
+        "__comment" : "Wildcard equality and inequality operators are not supported",
+        "type"      : "CE"
+    }
+}

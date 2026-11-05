@@ -239,6 +239,7 @@ inline uint64_t strtouint64(const char*str, char**endptr, int base)
 ".tranif1"      { return K_TRANIF1; }
 ".tranvp"       { return K_TRANVP; }
 ".ufunc/real"   { return K_UFUNC_REAL; }
+".ufunc/real/e" { return K_UFUNC_REAL_E; }
 ".ufunc/vec4"   { return K_UFUNC_VEC4; }
 ".ufunc/e"      { return K_UFUNC_E; }
 ".var"          { return K_VAR; }

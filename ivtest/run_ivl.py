@@ -258,6 +258,8 @@ def options_to_pass(options: dict) -> list:
         rtn.append("-gspecify")
     if "-ginterconnect" in options['iverilog_args']:
         rtn.append("-ginterconnect")
+    if "-gstrict-ca-eval" in options['iverilog_args']:
+        rtn.append("-gstrict-ca-eval")
     if "-Tmin" in options['iverilog_args']:
         rtn.append("-Tmin")
     if "-Ttyp" in options['iverilog_args']:

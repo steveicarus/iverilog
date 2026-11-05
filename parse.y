@@ -1098,6 +1098,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
       std::vector<PEEvent*>*event_exprs;
 
       ivl_case_quality_t case_quality;
+      NetCase::TYPE case_type;
       NetNet::Type nettype;
       PGBuiltin::Type gatetype;
       NetNet::PortType porttype;
@@ -1320,6 +1321,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 
 %type <citem>  case_item
 %type <citems> case_items
+%type <case_type> case_keyword
 
 %type <gate>  gate_instance gate_instance_connections gate_instance_ports
 %type <gate>  gate_instance_positional_connections
@@ -1635,6 +1637,18 @@ class_item /* IEEE1800-2005: A.1.8 */
       }
   | K_extern method_qualifier_opt K_task IDENTIFIER tf_port_list_parens_opt ';'
       { yyerror(@1, "sorry: External methods are not yet supported.");
+	delete[] $4;
+      }
+
+    /* Pure virtual class method declarations (IEEE1800-2012: A.1.8)... */
+
+  | K_pure K_virtual K_function data_type_or_implicit_or_void_plus_id
+    tf_port_list_parens_opt ';'
+      { yyerror(@1, "sorry: Pure virtual methods are not yet supported.");
+	delete_type_id_range($4);
+      }
+  | K_pure K_virtual K_task IDENTIFIER tf_port_list_parens_opt ';'
+      { yyerror(@1, "sorry: Pure virtual methods are not yet supported.");
 	delete[] $4;
       }
 
@@ -2147,8 +2161,6 @@ description /* IEEE1800-2005: A.1.2 */
 	delete[] $3;
 	delete[] $5;
       }
-  | ';'
-      { }
   ;
 
 description_list
@@ -2860,6 +2872,8 @@ package_item /* IEEE1800-2005 A.1.10 */
   | data_declaration
   | class_declaration
   | package_export_declaration
+  | ';'
+      { }
   ;
 
 package_item_list
@@ -3845,6 +3859,12 @@ struct_union_member /* IEEE 1800-2012 A.2.2.1 */
       }
   ;
 
+case_keyword
+  : K_case  { $$ = NetCase::EQ; }
+  | K_casex { $$ = NetCase::EQX; }
+  | K_casez { $$ = NetCase::EQZ; }
+  ;
+
 case_item
   : expression_list_proper ':' statement_or_null
       { PCase::Item*tmp = new PCase::Item;
@@ -3891,7 +3911,7 @@ charge_strength_opt
   ;
 
 defparam_assign
-  : hierarchy_identifier '=' expression
+  : hierarchy_identifier '=' expr_mintypmax
       { pform_set_defparam(*$1, $3);
 	delete $1;
       }
@@ -3994,6 +4014,12 @@ delay_value_simple
 	      $$ = new PEFNumber(tmp);
 	      FILE_NAME($$, @1);
 	}
+      }
+  | package_scope IDENTIFIER
+      { lex_in_package_scope(nullptr);
+	pform_name_t name = { name_component_t(lex_strings.make($2)) };
+	$$ = pform_package_ident(@2, $1, &name);
+	delete[]$2;
       }
   | IDENTIFIER
       { pform_name_t tmp_name = { name_component_t(lex_strings.make($1)) };
@@ -4191,6 +4217,15 @@ event_control /* A.K.A. clocking_event */
 	FILE_NAME(tmps, @1);
 	$$ = tmps;
 	delete $2;
+      }
+  | '@' package_scope IDENTIFIER
+      { lex_in_package_scope(nullptr);
+	pform_name_t name = { name_component_t(lex_strings.make($3)) };
+	auto expr = pform_package_ident(@3, $2, &name);
+	auto event = new PEEvent(PEEvent::ANYEDGE, expr);
+	$$ = new PEventStatement(event);
+	FILE_NAME($$, @1);
+	delete[]$3;
       }
   | '@' '(' event_expression_list ')'
       { PEventStatement*tmp = new PEventStatement(*$3);
@@ -5703,8 +5738,15 @@ module_port_list_opt
      that the port declarations may use them. */
 module_parameter_port_list_opt
   :
+  | '#' '(' ')'
+      { pform_requires_sv(@1, "Empty parameter port list");
+	pform_start_parameter_port_list();
+	pform_end_parameter_port_list();
+      }
   | '#' '('
-      { pform_start_parameter_port_list(); }
+      { param_is_local = false;
+	pform_start_parameter_port_list();
+      }
     module_parameter_port_list
       { pform_end_parameter_port_list(); }
     ')'
@@ -6024,8 +6066,13 @@ module_item
       { PProcess*tmp = pform_make_behavior(IVL_PR_ALWAYS_LATCH, $3, $1);
 	FILE_NAME(tmp, @2);
       }
-  | attribute_list_opt K_initial statement_item
-      { PProcess*tmp = pform_make_behavior(IVL_PR_INITIAL, $3, $1);
+  | attribute_list_opt K_initial statement_or_null
+      { if ($3 == nullptr) {
+	      pform_requires_sv(@2, "Null initial statement");
+	      $3 = new PBlock(PBlock::BL_SEQ);
+	      FILE_NAME($3, @2);
+	}
+	PProcess*tmp = pform_make_behavior(IVL_PR_INITIAL, $3, $1);
 	FILE_NAME(tmp, @2);
       }
   | attribute_list_opt K_final statement_item
@@ -6232,6 +6279,10 @@ generate_case_item
       { pform_endgenerate(false); }
   | K_default ':'
       { pform_generate_case_item(@1, 0); }
+    generate_block
+      { pform_endgenerate(false); }
+  | K_default
+      { pform_generate_case_item(@1, nullptr); }
     generate_block
       { pform_endgenerate(false); }
   ;
@@ -7104,6 +7155,16 @@ specify_edge_path
       { int edge_flag = $2? 1 : -1;
 	$$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, true, $7, $9);
       }
+  | '(' edge_operator specify_path_identifiers spec_polarity
+    K_EG specify_path_identifiers ')'
+      { int edge_flag = $2? 1 : -1;
+	$$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, false, $6, 0);
+      }
+  | '(' edge_operator specify_path_identifiers spec_polarity
+    K_SG specify_path_identifiers ')'
+      { int edge_flag = $2? 1 : -1;
+	$$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, true, $6, 0);
+      }
   ;
 
 polarity_operator
@@ -7697,7 +7758,7 @@ non_block_statement_item
 	delete $2;
 	$$ = tmp;
       }
-  | K_TRIGGER package_scope hierarchy_identifier
+  | K_TRIGGER package_scope hierarchy_identifier ';'
       { lex_in_package_scope(0);
 	PTrigger*tmp = pform_new_trigger(@3, $2, *$3);
 	delete $3;
@@ -7736,26 +7797,12 @@ non_block_statement_item
   | jump_statement
       { $$ = $1; }
 
-  | unique_priority K_case '(' expression ')' case_items K_endcase
-      { PCase*tmp = new PCase($1, NetCase::EQ, $4, $6);
+  | unique_priority case_keyword '(' expression ')' case_items K_endcase
+      { auto tmp = new PCase($1, $2, $4, $6);
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
-  | unique_priority K_casex '(' expression ')' case_items K_endcase
-      { PCase*tmp = new PCase($1, NetCase::EQX, $4, $6);
-	FILE_NAME(tmp, @2);
-	$$ = tmp;
-      }
-  | unique_priority K_casez '(' expression ')' case_items K_endcase
-      { PCase*tmp = new PCase($1, NetCase::EQZ, $4, $6);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | unique_priority K_case '(' expression ')' error K_endcase
-      { yyerrok; }
-  | unique_priority K_casex '(' expression ')' error K_endcase
-      { yyerrok; }
-  | unique_priority K_casez '(' expression ')' error K_endcase
+  | unique_priority case_keyword '(' expression ')' error K_endcase
       { yyerrok; }
 
   | K_if '(' expression ')' statement_or_null %prec less_than_K_else
@@ -8265,6 +8312,8 @@ udp_input_declaration_list
       { $$ = list_from_identifier($2, @2.lexical_pos); }
   | udp_input_declaration_list ',' K_input IDENTIFIER
       { $$ = list_from_identifier($1, $4, @4.lexical_pos); }
+  | udp_input_declaration_list ',' IDENTIFIER
+      { $$ = list_from_identifier($1, $3, @3.lexical_pos); }
   ;
 
 udp_primitive

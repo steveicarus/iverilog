@@ -773,9 +773,13 @@ The .ufunc statements define a call to a user defined function.
 	<label> .ufunc/e <flabel>, <wid>, <trigger>,
             <isymbols> ( <psymbols> ) <ssymbol>;
 
-The first variant is used for functions that only need to be called
-when one of their inputs changes value. The second variant is used
-for functions that also need to be called when a trigger event occurs.
+	<label> .ufunc/real/e <flabel>, <wid>, <trigger>,
+            [<isymbols> ( <psymbols> )] <ssymbol>;
+
+The variants without ``/e`` call the function when one of its inputs
+changes value. The ``/e`` variants also call it when a trigger event
+occurs. The ``/real`` variants return a real value; the other variants
+return a vector.
 
 The <flabel> is the code label for the first instruction of the
 function implementation. This is code that the simulator will branch

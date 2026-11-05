@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "initial_null.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

@@ -86,7 +86,11 @@ static void draw_modpath_record(const char*label, const char*driver,
 	    ivl_delaypath_t path = ivl_signal_path(path_sig, idx);
 	    int ppos = ivl_path_source_posedge(path);
 	    int pneg = ivl_path_source_negedge(path);
-	    const char*edge = ppos? " +" : pneg ? " -" : "";
+	      /*
+	       * An omitted edge qualifier sets both flags. Observe every
+	       * input transition in that case.
+	       */
+	    const char*edge = ppos == pneg ? "" : ppos ? " +" : " -";
 	    ivl_signal_t src_sig;
 
 	    fprintf(vvp_out, ",\n   %s%s", src_drivers[idx], edge);

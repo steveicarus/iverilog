@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright CERN 2015
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -106,7 +106,7 @@ SubprogramHeader::~SubprogramHeader()
     }
 }
 
-bool SubprogramHeader::compare_specification(SubprogramHeader*that) const
+bool SubprogramHeader::compare_specification(const SubprogramHeader*that) const
 {
       if (name_ != that->name_)
 	    return false;

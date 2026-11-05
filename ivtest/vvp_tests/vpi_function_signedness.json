@@ -1,0 +1,10 @@
+{
+    "type"          : "normal",
+    "source"        : "vpi_function_signedness.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vpi-sources"   : [ "vpi/function_signedness.c" ],
+    "vlog95" : {
+        "__comment" : "Automatic functions are not supported",
+        "type"      : "CE"
+    }
+}

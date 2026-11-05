@@ -1,0 +1,10 @@
+{
+    "type"          : "normal",
+    "source"        : "queue_bounded_pattern_integer.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "SystemVerilog queues are not supported",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}

@@ -37,8 +37,8 @@ useInitializationList:delay.cc:513
 constParameterPointer:vpi_priv.cc:1458
 
 // Operator new/delete are static so cannot override
-duplInheritedMember:vvp_net.h:1481
-duplInheritedMember:vvp_net.h:1482
+duplInheritedMember:vvp_net.h:1483
+duplInheritedMember:vvp_net.h:1484
 duplInheritedMember:vvp_net_sig.h:187
 duplInheritedMember:vvp_net_sig.h:188
 duplInheritedMember:vvp_net_sig.h:253
@@ -76,6 +76,7 @@ duplInheritedMember:symbols.h:112
 
 // This is not always true
 duplicateValueTernary:class_type.cc:268
+knownConditionTrueFalse:class_type.cc:272
 
 // cppcheck is wrong this can be true or false
 knownConditionTrueFalse:vthread.cc:3823
@@ -92,7 +93,7 @@ knownConditionTrueFalse:vthread.cc:3571
 duplicateExpression:vpi_signal.cc:1207
 
 // cppcheck does not relize this is deleted[] in the called routine
-leakNoVarFunctionCall:compile.cc:522
+leakNoVarFunctionCall:compile.cc:529
 
 // Yes, these are not currently initialized in the constructor
 // All are added after __vpiSysTaskCall is built
@@ -104,16 +105,16 @@ uninitMemberVar:delay.h:79
 // The array values are added after it is allocated
 noConstructor:vpi_priv.h:780
 // The enum values are added after this is built
-uninitMemberVar:enum_type.cc:54
+uninitMemberVar:enum_type.cc:55
 // The names for the enum values are added after allocation
-uninitMemberVar:enum_type.cc:100
+uninitMemberVar:enum_type.cc:101
 // The thread values get assigned after being created
 uninitMemberVar:vthread.cc:316
 // The mod path has the values added after creation
-uninitMemberVar:delay.cc:1006
-uninitMemberVar:delay.cc:1046
+uninitMemberVar:delay.cc:1001
+uninitMemberVar:delay.cc:1041
 // The intermod path has the values added after creation
-uninitMemberVar:delay.cc:1396
+uninitMemberVar:delay.cc:1386
 // The island values are set after creation
 uninitDerivedMemberVar:island_tran.cc:60
 // The cb_data is set after creation
@@ -127,7 +128,7 @@ uninitMemberVar:vpi_scope.cc:341
 // The real var values are set after creation
 uninitMemberVar:vpi_real.cc:158
 // The PV values are set after creation
-uninitMemberVar:vpi_signal.cc:1595
+uninitMemberVar:vpi_signal.cc:1598
 // The info/is_user_defn are added ater creation
 uninitMemberVar:vpi_tasks.cc:41
 // All the values are set after creation using the default constructor
@@ -151,13 +152,13 @@ knownConditionTrueFalse:vpi_modules.cc:118
 redundantAssignment:vpi_modules.cc:117
 
 // cppcheck does not undestand the format types match
-invalidScanfArgType_int:compile.cc:667
-invalidScanfArgType_int:compile.cc:673
-invalidScanfArgType_int:compile.cc:679
-invalidScanfArgType_int:vthread.cc:4832
-invalidScanfArgType_int:vthread.cc:4835
-invalidScanfArgType_int:vthread.cc:4838
-invalidScanfArgType_int:vthread.cc:4841
+invalidScanfArgType_int:compile.cc:674
+invalidScanfArgType_int:compile.cc:680
+invalidScanfArgType_int:compile.cc:686
+invalidScanfArgType_int:vthread.cc:4886
+invalidScanfArgType_int:vthread.cc:4889
+invalidScanfArgType_int:vthread.cc:4892
+invalidScanfArgType_int:vthread.cc:4895
 
 // The new() operator is always used to allocate space for this class and
 // pool is defined there.
@@ -211,7 +212,7 @@ unusedFunction:vpi_priv.cc:1505
 // alias_word()
 unusedFunction:array.cc:848
 // intermodpath_delete()
-unusedFunction:delay.cc:1463
+unusedFunction:delay.cc:1453
 // count_force4_pool()
 unusedFunction:schedule.cc:404
 // call_scope()
@@ -221,15 +222,15 @@ unusedFunction:vpi_priv.h:479
 // copy_bits()
 unusedFunction:vvp_net.cc:615
 // mov()
-unusedFunction:vvp_net.cc:1547
+unusedFunction:vvp_net.cc:1548
 // eq_xz()
-unusedFunction:vvp_net.cc:1752
+unusedFunction:vvp_net.cc:1753
 // as_string()
-unusedFunction:vvp_net.cc:1855
+unusedFunction:vvp_net.cc:1856
 // fully_featured_resolv_()
-unusedFunction:vvp_net.cc:3704
+unusedFunction:vvp_net.cc:3689
 // words()
-unusedFunction:vvp_net.h:600
+unusedFunction:vvp_net.h:602
 // force_vec8()
 unusedFunction:vvp_net_sig.cc:128
 
@@ -239,7 +240,6 @@ duplicateBreak:lexor.cc
 unusedStructMember:lexor.lex
 constVariablePointer:lexor.cc
 cstyleCast:lexor.cc
-knownConditionTrueFalse:lexor.cc
 nullPointer:lexor.cc
 redundantInitialization:lexor.cc
 unusedFunction:lexor.cc

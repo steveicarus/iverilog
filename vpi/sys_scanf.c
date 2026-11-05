@@ -838,8 +838,10 @@ static int scan_format_two_state(vpiHandle callh, vpiHandle argv,
 	    }
       }
 
-	/* Mask the upper bits to match the specified width when required. */
-      if (width != UINT_MAX) {
+	/* Mask the upper bits to match the specified width when required.
+	 * Only the words that fit in the variable were stored, so skip the
+	 * mask when the width spans more words than the variable holds. */
+      if ((width != UINT_MAX) && (words <= (unsigned)varlen)) {
 	    PLI_INT32 mask = UINT32_MAX >> (32U - ((width - 1U) % 32U + 1U));
 	    val_ptr[words-1].aval &= mask;
       }
@@ -981,8 +983,10 @@ static int scan_format_four_state(vpiHandle callh, vpiHandle argv,
 	    }
       }
 
-	/* Mask the upper bits to match the specified width when required. */
-      if (width != UINT_MAX) {
+	/* Mask the upper bits to match the specified width when required.
+	 * Only the words that fit in the variable were stored, so skip the
+	 * mask when the width spans more words than the variable holds. */
+      if ((width != UINT_MAX) && (words <= (unsigned)varlen)) {
 	    PLI_INT32 mask = UINT32_MAX >> (32U - ((width - 1U) % 32U + 1U));
 	    val_ptr[words-1].aval &= mask;
 	    val_ptr[words-1].bval &= mask;

@@ -1,0 +1,10 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_string_i_compare.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Strings are not supported",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}

@@ -2245,7 +2245,9 @@ NetEConst* NetESFunc::evaluate_array_funcs_(ID id,
       if (check_dimension(arg1, dim)) return 0;
 	/* If dimension is less than 1 return undefined. */
       if (dim < 1) {
-	    return new NetEConst(verinum(verinum::Vx, integer_width));
+	    verinum value(verinum::Vx, integer_width);
+	    value.has_sign(true);
+	    return new NetEConst(value);
       }
 	/* Get the left/right information for this dimension if it exists. */
       long left = 0;
@@ -2256,7 +2258,9 @@ NetEConst* NetESFunc::evaluate_array_funcs_(ID id,
 	       * call since the left/right information is dynamic and is
 	       * not available yet. */
 	    if (defer) return 0;
-	    return new NetEConst(verinum(verinum::Vx, integer_width));
+	    verinum value(verinum::Vx, integer_width);
+	    value.has_sign(true);
+	    return new NetEConst(value);
       }
 	/* Calculate the appropriate array function result. */
       long res;

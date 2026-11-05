@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "array_of_objects.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "gold"          : "array_of_objects"
+}

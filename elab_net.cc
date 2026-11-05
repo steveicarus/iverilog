@@ -616,9 +616,19 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    return nullptr;
       }
 
-      // Some parts below need the tail component. This is a convenient
-      // reference to it.
-      const name_component_t&path_tail = path_.back();
+	// Some parts below need the tail component of the base path.
+	// This is a convenient reference to it.
+      const name_component_t&path_tail = base_path.back();
+
+	// IEEE 1800-2023 6.21: elements of dynamically sized arrays
+	// cannot be written by continuous assignments.
+      if (sig->darray_type() && member_path.empty() && !path_tail.index.empty()) {
+	    cerr << get_fileline() << ": error: elements of dynamically "
+		    "sized arrays may not be assigned values using "
+		    "continuous assignments." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       // Default part select is the entire word.
       unsigned midx = sig->vector_width()-1, lidx = 0;
@@ -632,142 +642,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       // Whether the signal is an array
       const bool sig_is_array = sig->unpacked_dimensions() > 0;
 
-      // Detect the net is a structure and there was a method path
-      // detected. We have already broken the path_ into the path to
-      // the net, and the path of member names. For example, if the
-      // path_ is a.b.x.y, we have determined that a.b is a reference
-      // to the net, and that x.y are the member_path. So in this case
-      // we handle the member_path.
-      const netstruct_t*struct_type = 0;
-      if ((struct_type = sig->struct_type()) && !member_path.empty()) {
-
-	    if (debug_elaborate) {
-	          cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
-		       << "Signal " << sig->name() << " is a structure, "
-		       << "try to match member path " << member_path << endl;
-	    }
-
-	    unsigned long member_off = 0;
-	    unsigned long member_width = sig->vector_width();
-
-	    // Might be an array of structs, like a.b[N].x.y. (A packed
-	    // array.) Handle that here by taking a part select that
-	    // reflects the array index.
-	    if (sig->packed_dimensions() > 1) {
-		  list<index_component_t>tmp_index = base_path.back().index;
-		  index_component_t member_select;
-		  member_select.sel = index_component_t::SEL_BIT;
-		  member_select.msb = new PENumber(new verinum(member_off));
-		  tmp_index.push_back(member_select);
-		  NetExpr*packed_base = collapse_array_indices(des, scope, sig, tmp_index);
-		  if (debug_elaborate) {
-		        cerr << get_fileline() << ": " << __func__ << ": "
-			     << "packed_base=" << *packed_base
-			     << endl;
-		  }
-
-		  long tmp;
-		  if (packed_base && eval_as_long(tmp, packed_base)) {
-		        member_off = tmp;
-			member_width = struct_type->packed_width();
-			delete packed_base;
-			packed_base = 0;
-		  }
-
-		  // Only support constant dimensions here.
-		  ivl_assert(*this, packed_base == 0);
-	    }
-
-	    // Now run through the member names, possibly nested, to take
-	    // further part selects reflected by the member name. So for
-	    // example, (.x.y) member x has an offset and width within the
-	    // containing vector, and member y an offset and width within
-	    // that.
-	    pform_name_t use_path = member_path;
-
-	    while (! use_path.empty()) {
-	          const name_component_t member_comp = use_path.front();
-	          const perm_string&member_name = member_comp.name;
-
-		  unsigned long tmp_off;
-
-		  const struct netstruct_t::member_t*member = struct_type->packed_member(member_name, tmp_off);
-
-                  if(!member) {
-                    cerr << get_fileline() << ": error: missing element " << path() << endl;
-		    des->errors += 1;
-		    return 0;
-                  }
-
-		  use_path.pop_front();
-
-		  member_off += tmp_off;
-		  member_width = member->net_type->packed_width();
-
-		  if (const netstruct_t*tmp_struct = dynamic_cast<const netstruct_t*> (member->net_type)) {
-		        struct_type = tmp_struct;
-		  } else {
-		        struct_type = 0;
-			assert (use_path.empty());
-		  }
-	    }
-
-	    // Look for part selects on the final member. For example if
-	    // the path is a.b.x.y[3:0], the end of the member_path will
-	    // have an index that needs to be handled.
-	    // For now, assume there is unly a single part/bit select, and
-	    // assume it's constant.
-	    if (member_path.back().index.size() > 0) {
-		  list<index_component_t>tmp_index = member_path.back().index;
-		  if (debug_elaborate) {
-		        cerr << get_fileline() << ": " << __func__ << ": "
-			     << "Process trailing bit/part select. "
-			     << "index.size()=" << tmp_index.size()
-			     << endl;
-		  }
-		  ivl_assert(*this, tmp_index.size() == 1);
-		  const index_component_t&tail_sel = tmp_index.back();
-		  ivl_assert(*this, tail_sel.sel == index_component_t::SEL_PART || tail_sel.sel == index_component_t::SEL_BIT);
-		  long tmp_off;
-		  unsigned long tmp_wid;
-		  bool rc = calculate_part(this, des, scope, tail_sel, tmp_off, tmp_wid);
-		  ivl_assert(*this, rc);
-		  member_off += tmp_off;
-		  member_width = tmp_wid;
-	    }
-
-	    if (debug_elaborate) {
-	          cerr << get_fileline() << ": " << __func__ << ": "
-		       << "Final, calculated member " << member_path
-		       << " offset=" << member_off
-		       << " width=" << member_width
-		       << endl;
-	    }
-
-	    // Rewrite a member select of a packed structure as a
-	    // part select of the base variable.
-	    lidx = member_off;
-	    midx = lidx + member_width - 1;
-
-	    // Elaborate an expression from the packed indices and
-	    // the member offset (into the structure) to get a
-	    // canonical expression into the packed signal vector.
-	    if (sig->packed_dimensions() > 1) {
-		  list<index_component_t>tmp_index = base_path.back().index;
-		  index_component_t member_select;
-		  member_select.sel = index_component_t::SEL_BIT;
-		  member_select.msb = new PENumber(new verinum(member_off));
-		  tmp_index.push_back(member_select);
-		  const NetExpr*packed_base = collapse_array_indices(des, scope, sig, tmp_index);
-
-		  if (debug_elaborate) {
-			cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
-			     << "packed_base=" << *packed_base
-			     << ", member_off=" << member_off << endl;
-		  }
-	    }
-
-      } else if (gn_system_verilog() && sig_is_array && path_tail.index.empty()) {
+      if (gn_system_verilog() && sig_is_array && member_path.empty() && path_tail.index.empty()) {
 
 	      // In this case, we are doing a continuous assignment to
 	      // an unpacked array. The NetNet representation is a
@@ -784,138 +659,131 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		       << "\" with " << sig->pin_count() << " elements." << endl;
 	    }
 
-      } else if (sig_is_array) {
-
+      } else {
 	    list<long> unpacked_indices_const;
 
-	      // Make sure there are enough indices to address an array element.
-	    if (path_tail.index.size() < sig->unpacked_dimensions()) {
-		  cerr << get_fileline() << ": error: Array " << path()
-		       << " needs " << sig->unpacked_dimensions() << " indices,"
-		       << " but got only " << path_tail.index.size() << ". (net)" << endl;
-		  cerr << get_fileline() << ":      : Assignment to a whole array requires SystemVerilog."
-		       << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
+            if (sig_is_array) {
 
-	      // Evaluate all the index expressions into an
-	      // "unpacked_indices" array.
-	    list<NetExpr*>unpacked_indices;
-	    indices_flags flags;
-	    indices_to_expressions(des, scope, this,
-				   path_tail.index, sig->unpacked_dimensions(),
-				   true,
-				   flags,
-				   unpacked_indices,
-				   unpacked_indices_const);
+		    // Make sure there are enough indices to address an array element.
+		  if (path_tail.index.size() < sig->unpacked_dimensions()) {
+			cerr << get_fileline() << ": error: Array " << path()
+			     << " needs " << sig->unpacked_dimensions() << " indices,"
+			     << " but got only " << path_tail.index.size() << ". (net)" << endl;
+			cerr << get_fileline() << ":	  : Assignment to a whole array requires SystemVerilog."
+			     << endl;
+			des->errors += 1;
+			return 0;
+		  }
 
-	    if (flags.invalid) {
-		  return 0;
+		    // Evaluate all the index expressions into an
+		    // "unpacked_indices" array.
+		  list<NetExpr*>unpacked_indices;
+		  indices_flags flags;
+		  indices_to_expressions(des, scope, this,
+					 path_tail.index, sig->unpacked_dimensions(),
+					 true,
+					 flags,
+					 unpacked_indices,
+					 unpacked_indices_const);
 
-	    } else if (flags.variable) {
-		  cerr << get_fileline() << ": error: array '" << sig->name()
-		       << "' index must be a constant in this context." << endl;
-		  des->errors += 1;
-		  return 0;
+		  if (flags.invalid) {
+			return 0;
 
-	    } else if (flags.undefined) {
-		  cerr << get_fileline() << ": warning: "
-		       << "ignoring undefined l-value array access "
-		       << sig->name() << as_indices(unpacked_indices)
-		       << "." << endl;
-		  widx = -1;
-		  widx_flag = true;
+		  } else if (flags.variable) {
+			cerr << get_fileline() << ": error: array '" << sig->name()
+			     << "' index must be a constant in this context." << endl;
+			des->errors += 1;
+			return 0;
 
-	    } else {
-		  NetExpr*canon_index = 0;
-		  ivl_assert(*this, unpacked_indices_const.size() == sig->unpacked_dimensions());
-		  canon_index = normalize_variable_unpacked(sig, unpacked_indices_const);
-
-		  if (canon_index == 0) {
+		  } else if (flags.undefined) {
 			cerr << get_fileline() << ": warning: "
-			     << "ignoring out of bounds l-value array access "
-			     << sig->name() << as_indices(unpacked_indices_const)
+			     << "ignoring undefined l-value array access "
+			     << sig->name() << as_indices(unpacked_indices)
 			     << "." << endl;
 			widx = -1;
 			widx_flag = true;
 
 		  } else {
-			const NetEConst*canon_const = dynamic_cast<NetEConst*>(canon_index);
-			ivl_assert(*this, canon_const);
+			NetExpr*canon_index = 0;
+			ivl_assert(*this, unpacked_indices_const.size() == sig->unpacked_dimensions());
+			canon_index = normalize_variable_unpacked(sig, unpacked_indices_const);
 
-			widx = canon_const->value().as_long();
-			widx_flag = true;
-			delete canon_index;
+			if (canon_index == 0) {
+			      cerr << get_fileline() << ": warning: "
+				   << "ignoring out of bounds l-value array access "
+				   << sig->name() << as_indices(unpacked_indices_const)
+				   << "." << endl;
+			      widx = -1;
+			      widx_flag = true;
+
+			} else {
+			      const NetEConst*canon_const = dynamic_cast<NetEConst*>(canon_index);
+			      ivl_assert(*this, canon_const);
+
+			      widx = canon_const->value().as_long();
+			      widx_flag = true;
+			      delete canon_index;
+			}
 		  }
+
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: Use [" << widx << "]"
+			     << " to index l-value array." << endl;
 	    }
 
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: Use [" << widx << "]"
-		       << " to index l-value array." << endl;
+	    if (sig->struct_type() && !member_path.empty()) {
 
-	      /* The array has a part/bit select at the end. */
-	    if (path_tail.index.size() > sig->unpacked_dimensions()) {
+		    // This is a structure and there was a method path detected.
+		    // We have already broken the path_ into the path to the net
+		    // and the path of member names. For example, if the path_
+		    // is a.b.x.y, we have determined that a.b is a reference to
+		    // the net, and that x.y are the member_path. So in this case
+		    // we handle the member_path.
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: ";
+			if (sig_is_array) cerr << "Array word ";
+			else cerr << "Signal ";
+			cerr << sig->name();
+			if (sig_is_array) cerr << as_indices(unpacked_indices_const);
+			cerr << " is a structure, try to match member path "
+			     << member_path << endl;
+		  }
+
+		  if (!elaborate_lnet_packed_member_(des, scope, sig, base_path,
+						     member_path, midx, lidx))
+			return nullptr;
+
+	    } else if (path_tail.index.size() > sig->unpacked_dimensions()) {
+
+		    // This is a bit/slice select. Calculate a canonical part select.
+
 		  if (sig->get_scalar()) {
-		        cerr << get_fileline() << ": error: "
-		             << "can not select part of ";
+			cerr << get_fileline() << ": error: "
+			     << "can not select part of ";
 			if (sig->data_type() == IVL_VT_REAL) cerr << "real";
 			else cerr << "scalar";
-			cerr << " array word: " << sig->name()
-			     << as_indices(unpacked_indices_const) << endl;
-		        des->errors += 1;
-		        return 0;
+			if (sig_is_array) cerr << " array word";
+			cerr << ": " << sig->name();
+			if (sig_is_array) cerr << as_indices(unpacked_indices_const);
+			cerr << endl;
+			des->errors += 1;
+			return 0;
 		  }
 
 		  long midx_tmp, lidx_tmp;
 		  if (! eval_part_select_(des, scope, sig, midx_tmp, lidx_tmp))
-		        return 0;
+			return 0;
 
 		  if (lidx_tmp < 0) {
-		        cerr << get_fileline() << ": sorry: part selects "
-		                "straddling the start of signal (" << path_
-		             << ") are not currently supported." << endl;
-		        des->errors += 1;
-		        return 0;
+			cerr << get_fileline() << ": sorry: part selects "
+				"straddling the start of signal (" << path_
+			     << ") are not currently supported." << endl;
+			des->errors += 1;
+			return 0;
 		  }
 		  midx = midx_tmp;
 		  lidx = lidx_tmp;
 	    }
-
-      } else if (!path_tail.index.empty()) {
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
-		       << "path_tail.index.size()=" << path_tail.index.size()
-		       << endl;
-	    }
-
-	      // There are index expressions on the name, so this is a
-	      // bit/slice select of the name. Calculate a canonical
-	      // part select.
-
-	    if (sig->get_scalar()) {
-		  cerr << get_fileline() << ": error: "
-		       << "can not select part of ";
-		  if (sig->data_type() == IVL_VT_REAL) cerr << "real: ";
-		  else cerr << "scalar: ";
-		  cerr << sig->name() << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    long midx_tmp, lidx_tmp;
-	    if (! eval_part_select_(des, scope, sig, midx_tmp, lidx_tmp))
-		  return 0;
-
-	    if (lidx_tmp < 0) {
-		  cerr << get_fileline() << ": sorry: part selects "
-		          "straddling the start of signal (" << path_
-                       << ") are not currently supported." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-	    midx = midx_tmp;
-	    lidx = lidx_tmp;
       }
 
       unsigned subnet_wid = midx-lidx+1;
@@ -925,8 +793,10 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       if (sig->type() == NetNet::UNRESOLVED_WIRE) {
 	    ivl_assert(*this, widx_flag || (widx == 0));
 	    long wcount = widx_flag ? 1 : sig->pin_count();
+	      // Bits outside the declaration do not have driver-mask entries.
+	    unsigned driven_midx = min<unsigned>(midx, sig->vector_width()-1);
 	    for (long idx = 0; idx < wcount; idx += 1) {
-		  if (sig->test_and_set_part_driver(midx, lidx, widx + idx)) {
+		  if (sig->test_and_set_part_driver(driven_midx, lidx, widx + idx)) {
 			cerr << get_fileline() << ": error: ";
 			if (sig->coerced_to_uwire())
 			      cerr << "Variable '";
@@ -964,13 +834,11 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    return sig;
       }
 
-	/* If the desired l-value vector is narrower than the
-	   signal itself, then use a NetPartSelect node to
-	   arrange for connection to the desired bits. All this
-	   can be skipped if the desired width matches the
-	   original vector. */
+	/* Use a NetPartSelect node unless the l-value covers the
+	   whole signal at offset zero. A select with the same width
+	   can still be offset and extend beyond the signal. */
 
-      if (subnet_wid != sig->vector_width()) {
+      if (subnet_wid != sig->vector_width() || lidx != 0) {
 	      /* If we are processing a tran or inout, then the
 		 partselect is bi-directional. Otherwise, it is a
 		 Part-to-Vector select. */
@@ -991,28 +859,191 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    subsig->local_flag(true);
 	    subsig->set_line(*this);
 
+	      // Keep the full l-value width for sizing the r-value, but
+	      // connect only the bits that fit in the destination. The
+	      // part-to-vector devices require an in-range input width.
+	    unsigned part_wid = min<unsigned>(subnet_wid, sig->vector_width()-lidx);
+	    NetNet*part_sig = subsig;
+	    if (part_wid < subnet_wid) {
+		  const netvector_t*part_vec = new netvector_t(sig->data_type(),
+		                                                part_wid-1, 0);
+		  part_sig = new NetNet(sig->scope(), scope->local_symbol(),
+		                       NetNet::WIRE, part_vec);
+		  part_sig->local_flag(true);
+		  part_sig->set_line(*this);
+		  if (bidirectional_flag) {
+			NetTran*trim = new NetTran(scope, scope->local_symbol(),
+			                            subnet_wid, part_wid, 0);
+			trim->set_line(*this);
+			des->add_node(trim);
+			connect(trim->pin(0), subsig->pin(0));
+			connect(trim->pin(1), part_sig->pin(0));
+		  } else {
+			NetPartSelect*trim = new NetPartSelect(subsig, 0, part_wid,
+			                                     NetPartSelect::VP);
+			trim->set_line(*this);
+			des->add_node(trim);
+			connect(trim->pin(0), part_sig->pin(0));
+		  }
+	    }
+
 	    if (bidirectional_flag) {
 		    // Make a tran(VP)
 		  NetTran*sub = new NetTran(scope, scope->local_symbol(),
 					    sig->vector_width(),
-					    subnet_wid, lidx);
+					    part_wid, lidx);
 		  sub->set_line(*this);
 		  des->add_node(sub);
 		  connect(sub->pin(0), sig->pin(0));
-		  connect(sub->pin(1), subsig->pin(0));
+		  connect(sub->pin(1), part_sig->pin(0));
 
 	    } else {
-		  NetPartSelect*sub = new NetPartSelect(sig, lidx, subnet_wid,
+		  NetPartSelect*sub = new NetPartSelect(sig, lidx, part_wid,
 							NetPartSelect::PV);
 		  des->add_node(sub);
 		  sub->set_line(*this);
-		  connect(sub->pin(0), subsig->pin(0));
+		  connect(sub->pin(0), part_sig->pin(0));
 		  collapse_partselect_pv_to_concat(des, sig);
 	    }
 	    sig = subsig;
       }
 
       return sig;
+}
+
+bool PEIdent::elaborate_lnet_packed_member_(Design*des, NetScope*scope,
+					    const NetNet*sig,
+					    const pform_name_t&base_path,
+					    const pform_name_t&member_path,
+					    unsigned&midx, unsigned&lidx) const
+{
+      const netstruct_t*struct_type = sig->struct_type();
+      ivl_assert(*this, struct_type);
+
+      unsigned long member_off = 0;
+      unsigned long member_width = sig->vector_width();
+
+	// Might be an array of structs, like a.b[N].x.y. (A packed
+	// array.) Handle that here by taking a part select that
+	// reflects the array index.
+      if (sig->packed_dimensions() > 1) {
+	    list<index_component_t>tmp_index = base_path.back().index;
+	    index_component_t member_select;
+	    member_select.sel = index_component_t::SEL_BIT;
+	    member_select.msb = new PENumber(new verinum(member_off));
+	    tmp_index.push_back(member_select);
+	    NetExpr*packed_base = collapse_array_indices(des, scope, sig, tmp_index);
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "packed_base=" << *packed_base
+		       << endl;
+	    }
+
+	    long tmp;
+	    if (packed_base && eval_as_long(tmp, packed_base)) {
+		  member_off = tmp;
+		  member_width = struct_type->packed_width();
+		  delete packed_base;
+		  packed_base = 0;
+	    }
+
+	      // Only support constant dimensions here.
+	    ivl_assert(*this, packed_base == 0);
+      }
+
+	// Now run through the member names, possibly nested, to take
+	// further part selects reflected by the member name. So for
+	// example, (.x.y) member x has an offset and width within the
+	// containing vector, and member y an offset and width within
+	// that.
+      pform_name_t use_path = member_path;
+
+      while (! use_path.empty()) {
+	    const name_component_t member_comp = use_path.front();
+	    const perm_string&member_name = member_comp.name;
+
+	    unsigned long tmp_off;
+
+	    const struct netstruct_t::member_t*member = struct_type->packed_member(member_name, tmp_off);
+
+	    if(!member) {
+		  cerr << get_fileline() << ": error: missing element " << path() << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+
+	    use_path.pop_front();
+
+	    member_off += tmp_off;
+	    member_width = member->net_type->packed_width();
+
+	    if (const netstruct_t*tmp_struct = dynamic_cast<const netstruct_t*> (member->net_type)) {
+		  struct_type = tmp_struct;
+	    } else {
+		  struct_type = 0;
+		  assert (use_path.empty());
+	    }
+      }
+
+	// Look for part selects on the final member. For example if
+	// the path is a.b.x.y[3:0], the end of the member_path will
+	// have an index that needs to be handled.
+	// For now, assume there is unly a single part/bit select, and
+	// assume it's constant.
+      if (member_path.back().index.size() > 0) {
+	    list<index_component_t>tmp_index = member_path.back().index;
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "Process trailing bit/part select. "
+		       << "index.size()=" << tmp_index.size()
+		       << endl;
+	    }
+	    ivl_assert(*this, tmp_index.size() == 1);
+	    const index_component_t&tail_sel = tmp_index.back();
+	    ivl_assert(*this, tail_sel.sel == index_component_t::SEL_PART ||
+			      tail_sel.sel == index_component_t::SEL_BIT ||
+			      tail_sel.sel == index_component_t::SEL_IDX_UP ||
+			      tail_sel.sel == index_component_t::SEL_IDX_DO);
+	    long tmp_off;
+	    unsigned long tmp_wid;
+	    bool rc = calculate_part(this, des, scope, tail_sel, tmp_off, tmp_wid);
+	    ivl_assert(*this, rc);
+	    member_off += tmp_off;
+	    member_width = tmp_wid;
+      }
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "Final, calculated member " << member_path
+		 << " offset=" << member_off
+		 << " width=" << member_width
+		 << endl;
+      }
+
+	// Rewrite a member select of a packed structure as a
+	// part select of the base variable.
+      lidx = member_off;
+      midx = lidx + member_width - 1;
+
+	// Elaborate an expression from the packed indices and
+	// the member offset (into the structure) to get a
+	// canonical expression into the packed signal vector.
+      if (sig->packed_dimensions() > 1) {
+	    list<index_component_t>tmp_index = base_path.back().index;
+	    index_component_t member_select;
+	    member_select.sel = index_component_t::SEL_BIT;
+	    member_select.msb = new PENumber(new verinum(member_off));
+	    tmp_index.push_back(member_select);
+	    const NetExpr*packed_base = collapse_array_indices(des, scope, sig, tmp_index);
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_packed_member_: "
+		       << "packed_base=" << *packed_base
+		       << ", member_off=" << member_off << endl;
+	    }
+      }
+
+      return true;
 }
 
 /*

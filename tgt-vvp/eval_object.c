@@ -205,9 +205,11 @@ static int eval_array_pattern_object(ivl_expr_t ex)
       switch (ivl_type_base(element_type)) {
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
-	    for (unsigned idx = 0; idx < max_elems; idx += 1) {
+	    for (unsigned idx = 0 ; idx < ivl_expr_parms(ex) ; idx += 1) {
 		  draw_eval_vec4(ivl_expr_parm(ex, idx));
-		  if (base_type == IVL_VT_QUEUE) {
+		  if (idx >= max_elems) {
+			fprintf(vvp_out, "    %%pop/vec4 1;\n");
+		  } else if (base_type == IVL_VT_QUEUE) {
 			fprintf(vvp_out, "    %%queue/append_word/v %u;\n",
 			        ivl_type_packed_width(element_type));
 		  } else {

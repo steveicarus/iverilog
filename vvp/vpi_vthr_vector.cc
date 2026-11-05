@@ -289,7 +289,7 @@ class __vpiVThrVec4Stack : public __vpiHandle {
       static void vpi_get_value_binstr_(p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_decstr_(p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_int_   (p_vpi_value vp, const vvp_vector4_t&val);
-      static void vpi_get_value_real_  (p_vpi_value vp, const vvp_vector4_t&val);
+      void vpi_get_value_real_  (p_vpi_value vp, const vvp_vector4_t&val);
       static void vpi_get_value_strength_(p_vpi_value vp, const vvp_vector4_t&val);
       static void vpi_get_value_octstr_(p_vpi_value vp, const vvp_vector4_t&val);
       static void vpi_get_value_hexstr_(p_vpi_value vp, const vvp_vector4_t&val);
@@ -503,14 +503,7 @@ void __vpiVThrVec4Stack::vpi_get_value_int_(p_vpi_value vp, const vvp_vector4_t&
 
 void __vpiVThrVec4Stack::vpi_get_value_real_(p_vpi_value vp, const vvp_vector4_t&val)
 {
-      unsigned wid = val.size();
-      vp->value.real = 0.0;
-
-      for (unsigned idx = wid ; idx > 0 ; idx -= 1) {
-	    vp->value.real *= 2.0;
-	    if (val.value(idx-1) == BIT4_1)
-		  vp->value.real += 1.0;
-      }
+      vector4_to_value(val, vp->value.real, signed_flag_);
 }
 
 void __vpiVThrVec4Stack::vpi_get_value_string_(p_vpi_value vp, const vvp_vector4_t&val)

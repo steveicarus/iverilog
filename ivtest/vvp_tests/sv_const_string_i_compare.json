@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_const_string_i_compare.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

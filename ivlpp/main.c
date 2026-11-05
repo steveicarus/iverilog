@@ -155,8 +155,8 @@ static int flist_read_flags(const char*path)
 	    } else if (strcmp(cp,"keyword") == 0) {
 		  char*buf = malloc(strlen(arg) + 2);
 		  buf[0] = '`';
-		  strcpy(buf+1, optarg);
-		  define_macro(optarg, buf, 1, 0);
+		  strcpy(buf+1, arg);
+		  define_macro(arg, buf, 1, 0);
 		  free(buf);
 
 	    } else if ((strcmp(cp,"Ma") == 0)

@@ -277,7 +277,7 @@ void vpip_dec_str_to_vec4(vvp_vector4_t&vec, const char*buf)
 		  slen--;
 		  continue;
 	    }
-	    while (buf[slen-idx-1] == '_') {
+	    while (idx+1 < slen && buf[slen-idx-1] == '_') {
 		  slen--;
 	    }
 	    if (isdigit(buf[slen-idx-1]))
@@ -289,6 +289,7 @@ void vpip_dec_str_to_vec4(vvp_vector4_t&vec, const char*buf)
 		  for (unsigned jdx = 0 ;  jdx < vec.size() ;  jdx += 1) {
 			vec.set_bit(jdx, BIT4_X);
 		  }
+		  delete[]str;
 		  return;
             }
       }

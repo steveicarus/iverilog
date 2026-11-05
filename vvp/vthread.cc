@@ -3705,6 +3705,22 @@ bool of_FREE(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_GETC(vthread_t thr, vvp_code_t cp)
+{
+      int32_t idx = thr->words[cp->bit_idx[0]].w_int;
+      const string str = thr->pop_str();
+      int8_t byte = 0;
+
+      if (idx >= 0 && idx < (int32_t)str.size() &&
+          (thr->flags[4] == BIT4_0)) {
+	    byte = str[idx];
+      }
+
+      thr->push_vec4(vvp_vector4_t(8, byte));
+
+      return true;
+}
+
 /*
  * %inv
  *
@@ -5127,6 +5143,19 @@ bool of_POW_WR(vthread_t thr, vvp_code_t)
 }
 
 /*
+ * Preserve the full index until checking the property bounds. Map unknown
+ * or overflowing indices to a sentinel that cannot name an array element.
+ */
+static size_t property_object_index(vthread_t thr, unsigned reg)
+{
+      if (reg == 0) return 0;
+      assert(reg < vthread_s::WORDS_COUNT);
+      uint64_t index = thr->words[reg].w_uint;
+      if (thr->flags[4] != BIT4_0 || index >= SIZE_MAX) return SIZE_MAX;
+      return index;
+}
+
+/*
  * %prop/obj <pid>, <idx>
  *
  * Load an object value from the cobject and push it onto the object stack.
@@ -5134,12 +5163,7 @@ bool of_POW_WR(vthread_t thr, vvp_code_t)
 bool of_PROP_OBJ(vthread_t thr, vvp_code_t cp)
 {
       unsigned pid = cp->number;
-      unsigned idx = cp->bit_idx[0];
-
-      if (idx != 0) {
-	    assert(idx < vthread_s::WORDS_COUNT);
-	    idx = thr->words[idx].w_uint;
-      }
+      size_t idx = property_object_index(thr, cp->bit_idx[0]);
 
       vvp_object_t&obj = thr->peek_object();
       vvp_cobject*cobj = obj.peek<vvp_cobject>();
@@ -6115,12 +6139,7 @@ bool of_STORE_OBJA(vthread_t thr, vvp_code_t cp)
 bool of_STORE_PROP_OBJ(vthread_t thr, vvp_code_t cp)
 {
       size_t pid = cp->number;
-      unsigned idx = cp->bit_idx[0];
-
-      if (idx != 0) {
-	    assert(idx < vthread_s::WORDS_COUNT);
-	    idx = thr->words[idx].w_uint;
-      }
+      size_t idx = property_object_index(thr, cp->bit_idx[0]);
 
       vvp_object_t val;
       thr->pop_object(val);
@@ -7689,9 +7708,11 @@ bool of_SUBSTR(vthread_t thr, vvp_code_t cp)
 {
       int32_t first = thr->words[cp->bit_idx[0]].w_int;
       int32_t last = thr->words[cp->bit_idx[1]].w_int;
+      // FIXME: if either index has an undefined value we should return ""
       string&val = thr->peek_str(0);
 
-      if (first < 0 || last < first || last >= (int32_t)val.size()) {
+      if (first < 0 || last < first || last >= (int32_t)val.size() ||
+          (thr->flags[4] == BIT4_1)) {
 	    val = string("");
 	    return true;
       }
@@ -7804,12 +7825,7 @@ bool of_TEST_NUL_OBJ(vthread_t thr, vvp_code_t)
 bool of_TEST_NUL_PROP(vthread_t thr, vvp_code_t cp)
 {
       unsigned pid = cp->number;
-      unsigned idx = cp->bit_idx[0];
-
-      if (idx != 0) {
-	    assert(idx < vthread_s::WORDS_COUNT);
-	    idx = thr->words[idx].w_uint;
-      }
+      size_t idx = property_object_index(thr, cp->bit_idx[0]);
 
       vvp_object_t&obj = thr->peek_object();
       vvp_cobject*cobj  = obj.peek<vvp_cobject>();

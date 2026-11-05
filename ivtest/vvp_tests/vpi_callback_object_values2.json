@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "vpi_callback_object_values2.v",
+    "iverilog-args" : [ "-g2001" ],
+    "vpi-sources"   : [ "vpi/callback_object_values.c" ],
+    "vlog95" : {
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}

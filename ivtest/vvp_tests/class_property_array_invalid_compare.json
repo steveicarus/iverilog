@@ -1,0 +1,10 @@
+{
+    "type"          : "normal",
+    "source"        : "class_property_array_invalid_compare.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Class scopes and class handles are not supported by vlog95.",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}

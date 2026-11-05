@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "array_of_packed_struct2.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Array nets are not supported.",
+        "type"      : "CE"
+    }
+}
