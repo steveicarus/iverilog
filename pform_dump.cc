@@ -410,7 +410,10 @@ void PEAssignPattern::dump(ostream&out) const
 	    out << "}";
 	    return;
       }
-      out << "'{" << parms_ << "}";
+      if (repeat_)
+	    out << "'{" << *repeat_ << "{" << parms_ << "}}";
+      else
+	    out << "'{" << parms_ << "}";
 }
 
 void PEConcat::dump(ostream&out) const

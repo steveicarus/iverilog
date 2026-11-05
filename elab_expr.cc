@@ -629,7 +629,11 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 		  des->errors++;
 		  return nullptr;
 	    }
-	    return elaborate_expr_array_(des, scope, darray_type, parms_,
+	    vector<PExpr*> expanded;
+	    if (repeat_ && !expand_repeat_(des, scope, expanded))
+		  return nullptr;
+	    return elaborate_expr_array_(des, scope, darray_type,
+					 repeat_ ? expanded : parms_,
 					 need_const, true);
       }
 
@@ -718,6 +722,32 @@ NetExpr* PEAssignPattern::elaborate_expr_array_(Design *des, NetScope *scope,
       NetEArrayPattern*res = new NetEArrayPattern(array_type, elem_exprs);
       res->set_line(*this);
       return res;
+}
+
+bool PEAssignPattern::expand_repeat_(Design *des, NetScope *scope,
+				     vector<PExpr*> &items) const
+{
+      NetExpr *cnt = elab_and_eval(des, scope, repeat_, -1, true);
+      long n;
+      bool ok = true;
+      if (!cnt || cnt->expr_type() == IVL_VT_REAL || !eval_as_long(n, cnt)) {
+	    cerr << repeat_->get_fileline() << ": error: The replication count"
+		 << " of an assignment pattern must be a constant integer"
+		 << " expression." << endl;
+	    des->errors++;
+	    ok = false;
+      } else if (n <= 0) {
+	    cerr << repeat_->get_fileline() << ": error: The replication count"
+		 << " of an assignment pattern must be greater than zero, got "
+		 << n << "." << endl;
+	    des->errors++;
+	    ok = false;
+      } else {
+	    for (long idx = 0; idx < n; idx++)
+		  items.insert(items.end(), parms_.begin(), parms_.end());
+      }
+      delete cnt;
+      return ok;
 }
 
 bool PEAssignPattern::expand_keyed_array_(Design *des, NetScope *scope,
@@ -869,10 +899,12 @@ NetExpr* PEAssignPattern::elaborate_expr_uarray_(Design *des, NetScope *scope,
 	    return nullptr;
 
       vector<PExpr*> expanded;
+      if (repeat_ && !expand_repeat_(des, scope, expanded))
+	    return nullptr;
       if (is_keyed_() && !expand_keyed_array_(des, scope, dims[cur_dim],
 					      expanded))
 	    return nullptr;
-      const vector<PExpr*> &parms = is_keyed_() ? expanded : parms_;
+      const vector<PExpr*> &parms = (repeat_ || is_keyed_()) ? expanded : parms_;
 
       if (dims[cur_dim].width() != parms.size()) {
 	    cerr << get_fileline() << ": error: Unpacked array assignment pattern expects "
@@ -961,10 +993,12 @@ NetExpr* PEAssignPattern::elaborate_expr_packed_(Design *des, NetScope *scope,
       }
 
       vector<PExpr*> expanded;
+      if (repeat_ && !expand_repeat_(des, scope, expanded))
+	    return nullptr;
       if (is_keyed_() && !expand_keyed_array_(des, scope, dims[cur_dim],
 					      expanded))
 	    return nullptr;
-      const vector<PExpr*> &parms = is_keyed_() ? expanded : parms_;
+      const vector<PExpr*> &parms = (repeat_ || is_keyed_()) ? expanded : parms_;
 
       if (dims[cur_dim].width() != parms.size()) {
 	    cerr << get_fileline() << ": error: Packed array assignment pattern expects "
@@ -1010,9 +1044,11 @@ NetExpr* PEAssignPattern::elaborate_expr_struct_(Design *des, NetScope *scope,
       auto &members = struct_type->members();
 
       vector<PExpr*> expanded;
+      if (repeat_ && !expand_repeat_(des, scope, expanded))
+	    return nullptr;
       if (is_keyed_() && !expand_keyed_struct_(des, struct_type, expanded))
 	    return nullptr;
-      const vector<PExpr*> &parms = is_keyed_() ? expanded : parms_;
+      const vector<PExpr*> &parms = (repeat_ || is_keyed_()) ? expanded : parms_;
 
       if (members.size() != parms.size()) {
 	    cerr << get_fileline() << ": error: Struct assignment pattern expects "
