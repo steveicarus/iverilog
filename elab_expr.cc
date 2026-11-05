@@ -667,7 +667,7 @@ NetExpr* PEAssignPattern::elaborate_expr_array_(Design *des, NetScope *scope,
 	                                       parms_[idx], need_const);
 	      // Trim the expression if it is too large and a type that
 	      // can be trimmed.
-	    if ((tmp->expr_width() > elem_type->packed_width()) &&
+	    if (tmp && (tmp->expr_width() > elem_type->packed_width()) &&
 		((elem_type->base_type() == IVL_VT_LOGIC) ||
 		 (elem_type->base_type() == IVL_VT_BOOL))) {
 		  tmp = new NetESelect(tmp, 0, elem_type->packed_width());
