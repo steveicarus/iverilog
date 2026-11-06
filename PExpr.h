@@ -234,6 +234,8 @@ class PEAssignPattern : public PExpr {
       explicit PEAssignPattern();
       explicit PEAssignPattern(const std::list<PExpr*>&p);
       explicit PEAssignPattern(const std::list<pattern_item_t>&p);
+	// A replication pattern, `'{r{p}}`, where the items p are repeated r times.
+      PEAssignPattern(PExpr*r, const std::list<PExpr*>&p);
       ~PEAssignPattern() override;
 
       void dump(std::ostream&) const override;
@@ -249,6 +251,10 @@ class PEAssignPattern : public PExpr {
                                      unsigned flags) const override;
     private:
       bool is_keyed_() const { return !keyed_.empty() || default_; }
+	// Repeat the items of a replication pattern. Return false after
+	// reporting an error.
+      bool expand_repeat_(Design *des, NetScope *scope, size_t limit,
+			  std::vector<PExpr*> &items) const;
 	// Map a keyed pattern onto the positional list of items for an array
 	// dimension or a struct. Return false after reporting an error.
       bool expand_keyed_array_(Design *des, NetScope *scope,
@@ -277,6 +283,7 @@ class PEAssignPattern : public PExpr {
 
     private:
       std::vector<PExpr*>parms_;
+      PExpr*repeat_ = nullptr;
       std::vector<pattern_item_t>keyed_;
       PExpr*default_ = nullptr;
 	// Set for the default-only pattern made for a struct member, where
@@ -317,6 +324,10 @@ class PEConcat : public PExpr {
 					 bool is_init = false) const override;
       virtual bool is_collapsible_net(Design*des, NetScope*scope,
                                       NetNet::PortType port_type) const override;
+
+	// The operands and the repeat count (null if none) of the concatenation.
+      const std::vector<PExpr*>& items() const { return parms_; }
+      PExpr* repeat() const { return repeat_; }
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
 				     bool bidirectional_flag,
