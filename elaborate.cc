@@ -4629,7 +4629,9 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	    NetESignal*use_this = new NetESignal(net);
 	    use_this->set_line(*this);
 
-	    return elaborate_build_call_(des, scope, task, use_this);
+	    // A call through super is not virtual.
+	    bool nonvirtual = !use_path.empty() && use_path.back().name == "#";
+	    return elaborate_build_call_(des, scope, task, use_this, nonvirtual);
       }
 
       return 0;
@@ -4725,7 +4727,8 @@ NetProc* PCallTask::elaborate_void_function_(Design*des, NetScope*scope,
 }
 
 NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
-					  NetScope*task, NetExpr*use_this) const
+					  NetScope*task, NetExpr*use_this,
+					  bool nonvirtual) const
 {
       const NetBaseDef*def = 0;
       if (task->type() == NetScope::TASK) {
@@ -4767,6 +4770,20 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
       unsigned parm_count = def->port_count();
 
+	/* A call to a virtual function is bound to the virtual
+	   declaration, which dispatches to the override that matches
+	   the class of the object. The arguments are passed to the
+	   ports of the declaration, which are the same as the ports of
+	   the method found above. */
+      NetScope*callee = task;
+      const NetBaseDef*pdef = def;
+      if (task->type() == NetScope::FUNC && !nonvirtual) {
+	    if (NetScope*root = netclass_t::virtual_root(task)) {
+		  callee = root;
+		  pdef = root->func_def();
+	    }
+      }
+
       if (parms_.size() > parm_count) {
 	    cerr << get_fileline() << ": error: "
 		 << "Too many arguments (" << parms_.size()
@@ -4783,7 +4800,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	   task, all the assignments, etc. Just return a no-op. */
 
       if (const NetBlock*tp = dynamic_cast<const NetBlock*>(def->proc())) {
-	    if (tp->proc_first() == 0) {
+	    if (tp->proc_first() == 0 && callee == task) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PCallTask::elaborate_build_call_: "
 			     << "Eliding call to empty task " << task->basename() << endl;
@@ -4796,7 +4813,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
            allocate the local storage. */
 
       if (task->is_auto()) {
-	    NetAlloc*ap = new NetAlloc(task);
+	    NetAlloc*ap = new NetAlloc(callee);
 	    ap->set_line(*this);
 	    block->append(ap);
       }
@@ -4808,7 +4825,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
       if (use_this) {
 	    ivl_assert(*this, def->port_count() >= 1);
-	    NetNet*port = def->port(0);
+	    NetNet*port = pdef->port(0);
 	    ivl_assert(*this, port->port_type()==NetNet::PINPUT);
 
 	    NetAssign_*lv = new NetAssign_(port);
@@ -4829,7 +4846,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
       for (unsigned int idx = off; idx < parm_count; idx++) {
 	    size_t parms_idx = idx - off;
 
-	    NetNet*port = def->port(idx);
+	    NetNet*port = pdef->port(idx);
 	    ivl_assert(*this, port->port_type() != NetNet::NOT_A_PORT);
 	    if (port->port_type() == NetNet::POUTPUT)
 		  continue;
@@ -4883,7 +4900,8 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
       }
 
 	/* Generate the task call proper... */
-      NetUTask*cur = new NetUTask(task);
+      NetUTask*cur = new NetUTask(callee);
+      cur->set_nonvirtual(nonvirtual);
       cur->set_line(*this);
       block->append(cur);
 
@@ -4901,7 +4919,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
 	    size_t parms_idx = idx - off;
 
-	    NetNet*port = def->port(idx);
+	    NetNet*port = pdef->port(idx);
 
 	      /* Skip input ports. */
 	    ivl_assert(*this, port->port_type() != NetNet::NOT_A_PORT);

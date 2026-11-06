@@ -4149,6 +4149,12 @@ class NetEUFunc  : public NetExpr {
 
       const NetScope* func() const;
 
+	// A call to a virtual method is normally dispatched on the
+	// class of the object. A non-virtual call (super.method())
+	// runs the selected method directly.
+      void set_nonvirtual(bool flag) { nonvirtual_ = flag; }
+      bool nonvirtual() const { return nonvirtual_; }
+
       virtual void dump(std::ostream&) const override;
 
       virtual void expr_scan(struct expr_scan_t*) const override;
@@ -4167,6 +4173,7 @@ class NetEUFunc  : public NetExpr {
       NetESignal*result_sig_;
       std::vector<NetExpr*> parms_;
       bool need_const_;
+      bool nonvirtual_;
 
     private: // not implemented
       NetEUFunc(const NetEUFunc&);
@@ -4213,6 +4220,10 @@ class NetUTask  : public NetProc {
 
       const NetScope* task() const;
 
+	// See NetEUFunc::set_nonvirtual().
+      void set_nonvirtual(bool flag) { nonvirtual_ = flag; }
+      bool nonvirtual() const { return nonvirtual_; }
+
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                                   bool nested_func = false) const override;
       virtual void nex_output(NexusSet&) override;
@@ -4223,6 +4234,7 @@ class NetUTask  : public NetProc {
 
     private:
       NetScope*task_;
+      bool nonvirtual_;
 };
 
 /*

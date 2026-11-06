@@ -303,6 +303,7 @@ NetEUFunc* NetEUFunc::dup_expr() const
 
       tmp = new NetEUFunc(scope_, func_, result_sig_->dup_expr(), tmp_parms,
                           need_const_);
+      tmp->nonvirtual_ = nonvirtual_;
 
       ivl_assert(*this, tmp);
       tmp->set_line(*this);
