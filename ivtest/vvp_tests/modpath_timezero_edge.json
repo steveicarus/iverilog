@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "modpath_timezero_edge.v",
+    "iverilog-args" : [ "-g2012", "-gspecify" ]
+}
