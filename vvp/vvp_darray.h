@@ -111,6 +111,7 @@ class vvp_darray_vec2 : public vvp_darray {
       void set_word(unsigned adr, const vvp_vector4_t&value) override;
       void get_word(unsigned adr, vvp_vector4_t&value) override;
       void shallow_copy(const vvp_object*obj) override;
+      vvp_object* duplicate(void) const override;
       vvp_vector4_t get_bitstream(bool as_vec4) override;
 
     private:
@@ -224,6 +225,7 @@ class vvp_queue_real : public vvp_queue {
       void reverse_elems(void) override;
       void sort_elems(bool ascending) override;
       void shuffle_elems(void) override;
+      vvp_object* duplicate(void) const override { return new vvp_queue_real(*this); }
 
     private:
       std::deque<double> queue;
@@ -247,6 +249,7 @@ class vvp_queue_string : public vvp_queue {
       void reverse_elems(void) override;
       void sort_elems(bool ascending) override;
       void shuffle_elems(void) override;
+      vvp_object* duplicate(void) const override { return new vvp_queue_string(*this); }
 
     private:
       std::deque<std::string> queue;
@@ -270,6 +273,7 @@ class vvp_queue_vec4 : public vvp_queue {
       void reverse_elems(void) override;
       void sort_elems(bool ascending) override;
       void shuffle_elems(void) override;
+      vvp_object* duplicate(void) const override { return new vvp_queue_vec4(*this); }
 
     private:
       std::deque<vvp_vector4_t> queue;
