@@ -67,6 +67,22 @@ static void set_timescale(double mult, const char*unit, int lineno)
       sdf_timescale = mult * base;
 }
 
+/* The hierarchy production preserves escaped characters and joins components
+   with an unescaped dot. A local condition may itself contain an escaped dot;
+   do not turn an unsupported hierarchical condition into that local name. */
+static char* local_condition_name(char*text)
+{
+      const char*cp;
+      for (cp = text; *cp; cp += 1) {
+            if (*cp == '\\' && cp[1]) cp += 1;
+            else if (*cp == '.') {
+                  free(text);
+                  return 0;
+            }
+      }
+      return unescape_identifier(text);
+}
+
 /* This is the hierarchy separator to use. */
 char sdf_use_hchar = '.';
 
@@ -99,6 +115,8 @@ char sdf_use_hchar = '.';
 %token <real_val> REAL_NUMBER
 %token <int_val> INTEGER
 
+%type <string_val> conditional_port_expr
+%destructor { free($$); } conditional_port_expr
 %type <string_val> celltype
 %type <string_val> cell_instance
 %type <string_val> hierarchical_identifier
@@ -371,20 +389,21 @@ del_def
 	           sdf_parse_path, @2.first_line); }
   | '(' K_COND conditional_port_expr
     '(' K_IOPATH port_spec port_instance delval_list ')' ')'
-      { if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
-	                                 "COND not supported.\n",
-	                                 sdf_parse_path, @2.first_line);
-	free($6.string_val);
-	free($7);
+      { if ($3)
+            sdf_cond_iopath_delays($3, $6.vpi_edge, $6.string_val, $7, &$8, @2.first_line);
+        else if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
+                                             "COND not supported.\n",
+                                             sdf_parse_path, @2.first_line);
+        free($3); free($6.string_val); free($7);
       }
   | '(' K_COND QSTRING conditional_port_expr
     '(' K_IOPATH port_spec port_instance delval_list ')' ')'
-      { if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
-	                                 "COND not supported.\n",
-	                                 sdf_parse_path, @2.first_line);
-	free($3);
-	free($7.string_val);
-	free($8);
+      { if ($4)
+            sdf_cond_iopath_delays($4, $7.vpi_edge, $7.string_val, $8, &$9, @2.first_line);
+        else if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
+                                             "COND not supported.\n",
+                                             sdf_parse_path, @2.first_line);
+        free($4); free($7.string_val); free($8); free($3);
       }
   | '(' K_COND error ')'
       { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed COND\n",
@@ -477,16 +496,15 @@ timing_check_condition
 
   /* This is not complete! */
 conditional_port_expr
-  : port
-      { free($1); }
-  | scalar_constant
-  | '(' conditional_port_expr ')'
-  | conditional_port_expr K_LAND conditional_port_expr
-  | conditional_port_expr K_LOR conditional_port_expr
-  | conditional_port_expr K_EQ conditional_port_expr
-  | conditional_port_expr K_NE conditional_port_expr
-  | conditional_port_expr K_CEQ conditional_port_expr
-  | conditional_port_expr K_CNE conditional_port_expr
+  : hierarchical_identifier { $$ = local_condition_name($1); }
+  | scalar_constant { $$ = 0; }
+  | '(' conditional_port_expr ')' { $$ = $2; }
+  | conditional_port_expr K_LAND conditional_port_expr { free($1); free($3); $$ = 0; }
+  | conditional_port_expr K_LOR conditional_port_expr { free($1); free($3); $$ = 0; }
+  | conditional_port_expr K_EQ conditional_port_expr { free($1); free($3); $$ = 0; }
+  | conditional_port_expr K_NE conditional_port_expr { free($1); free($3); $$ = 0; }
+  | conditional_port_expr K_CEQ conditional_port_expr { free($1); free($3); $$ = 0; }
+  | conditional_port_expr K_CNE conditional_port_expr { free($1); free($3); $$ = 0; }
   ;
 
 equality_operator

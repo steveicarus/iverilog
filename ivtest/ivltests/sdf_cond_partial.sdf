@@ -1,0 +1,8 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "conditional_cell") (INSTANCE u)
+  (DELAY (ABSOLUTE
+   (COND E (IOPATH A Z (3) (5)))
+   (COND E (IOPATH A Z () (7)))
+   (COND E (IOPATH A Z (11) ())))))
+)

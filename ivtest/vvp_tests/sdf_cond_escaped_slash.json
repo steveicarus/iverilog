@@ -1,0 +1,14 @@
+{
+    "type": "normal",
+    "source": "sdf_cond_escaped.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-DSLASH_DIVIDER"
+    ],
+    "gold": "sdf_cond_escaped_slash",
+    "vvp-args-extended": [
+        "-sdf-warn"
+    ]
+}

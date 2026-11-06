@@ -309,7 +309,7 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
       }
 }
 
-void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
+void sdf_cond_iopath_delays(const char*key, int vpi_edge, const char*src, const char*dst,
                        const struct sdf_delval_list_s*delval_list,
                        const int sdf_lineno)
 {
@@ -355,6 +355,13 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 	    if (strcmp(dst,vpi_get_str(vpiName,path_out)) != 0)
 		  continue;
 
+            /* A COND names the original source condition, independently of
+               its current value. Never fall back to an endpoint-only match. */
+            if (key) {
+                  const char*condition = vpi_get_str(_vpiModPathCondition, path);
+                  if (!condition || strcmp(key, condition) != 0) continue;
+            }
+
 	      /* Ah, this must be a match! */
 	    delays.da = delay_vals;
 	    delays.no_of_delays = delval_list->count;
@@ -382,6 +389,13 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 	               edge_str(vpi_edge), src, dst,
 	               vpi_get_str(vpiFullName, sdf_cur_cell));
       }
+}
+
+void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
+                       const struct sdf_delval_list_s*delval_list,
+                       const int sdf_lineno)
+{
+      sdf_cond_iopath_delays(0, vpi_edge, src, dst, delval_list, sdf_lineno);
 }
 
 static void check_command_line_args(void)

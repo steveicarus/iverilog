@@ -194,6 +194,7 @@ extern struct dll_target dll_target_obj;
  */
 
 struct ivl_delaypath_s {
+      std::string sdf_condition;
       ivl_scope_t scope;
       ivl_nexus_t src;
       ivl_nexus_t condit;

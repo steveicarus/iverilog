@@ -454,6 +454,11 @@ activates the delay.
 
 <width> specifies the bit width of the input net.
 
+For a conditional source, an optional quoted condition identifier follows
+the path's input-terminal symbol. This records the original local scalar
+identifier for SDF ``COND`` matching. It is omitted for other expressions
+and does not change how the condition is evaluated at runtime.
+
 Array Index Statements
 ----------------------
 

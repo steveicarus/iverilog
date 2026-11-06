@@ -246,7 +246,7 @@ extern void compile_modpath_src(__vpiModPath*dst,
 				const struct symb_s&src,
 				struct numbv_s&vals,
 				const struct symb_s&condit_src,
-				const struct symb_s&path_term_in);
+				const struct symb_s&path_term_in, const char* key = nullptr);
 extern void compile_modpath_src(__vpiModPath*dst,
 				char edge_c,
 				const struct symb_s&src,

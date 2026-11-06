@@ -937,3 +937,13 @@ sdf_escaped_interconnect_slash vvp_tests/sdf_escaped_interconnect_slash.json
 sdf_escaped_local vvp_tests/sdf_escaped_local.json
 sdf_escaped_missing vvp_tests/sdf_escaped_missing.json
 sdf_escaped_generate vvp_tests/sdf_escaped_generate.json
+
+# Scalar identifier conditions in SDF path annotation.
+sdf_cond_scalar	vvp_tests/sdf_cond_scalar.json
+sdf_cond_scalar_2state	vvp_tests/sdf_cond_scalar_2state.json
+sdf_cond_edges	vvp_tests/sdf_cond_edges.json
+sdf_cond_partial	vvp_tests/sdf_cond_partial.json
+sdf_cond_multimatch	vvp_tests/sdf_cond_multimatch.json
+sdf_cond_escaped	vvp_tests/sdf_cond_escaped.json
+sdf_cond_escaped_slash	vvp_tests/sdf_cond_escaped_slash.json
+sdf_cond_reject	vvp_tests/sdf_cond_reject.json

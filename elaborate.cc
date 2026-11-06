@@ -6811,6 +6811,22 @@ bool PProcess::elaborate(Design*des, NetScope*scope) const
       return true;
 }
 
+// Preserve the original bare scalar condition name for SDF matching. Do not
+// infer it from an optimized condition nexus: a compound expression can share
+// that nexus without being the same source condition.
+static std::string ordinary_path_condition_key(Design*des, NetScope*scope, const PExpr*expr)
+{
+      const PEIdent*id = dynamic_cast<const PEIdent*>(expr);
+      if (!id || id->path().package || id->path().name.size() != 1
+          || !id->path().name.front().index.empty()) return {};
+      NetNet*sig = des->find_signal(scope, id->path().name);
+      if (!sig || sig->scope() != scope || sig->vector_width() != 1
+          || sig->unpacked_dimensions()) return {};
+      if (sig->data_type() != IVL_VT_LOGIC && sig->data_type() != IVL_VT_BOOL)
+            return {};
+      return sig->name().str();
+}
+
 void PSpecPath::elaborate(Design*des, NetScope*scope) const
 {
       uint64_t delay_value[12];
@@ -6947,6 +6963,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 					       src.size(), condit_sig,
 					       conditional, !full_flag_);
 	    path->set_line(*this);
+	    path->sdf_condition = ordinary_path_condition_key(des, scope, condition);
 
 	      // An edge sensitive path has either a data source
 	      // expression or an explicit edge keyword. When neither is

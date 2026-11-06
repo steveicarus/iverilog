@@ -1948,6 +1948,12 @@ extern "C" ivl_scope_t ivl_parameter_scope(ivl_parameter_t net)
       return net->scope;
 }
 
+extern "C" const char* ivl_path_condition_key(ivl_delaypath_t obj)
+{
+      assert(obj);
+      return obj->sdf_condition.c_str();
+}
+
 extern "C" ivl_nexus_t ivl_path_condit(ivl_delaypath_t obj)
 {
       assert(obj);

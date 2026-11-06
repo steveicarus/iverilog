@@ -1,0 +1,10 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER .) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "escaped_cond_cell") (INSTANCE u)
+  (DELAY (ABSOLUTE
+   (COND gate\.dot (IOPATH A ZD (3) (5)))
+   (COND gate\/slash (IOPATH A ZS (7) (9)))
+   (COND gate\"quote (IOPATH A ZQ (11) (13)))
+   (COND gate\\back (IOPATH A ZB (15) (17)))
+   (COND gate.dot (IOPATH A ZD (41) (43))))))
+)

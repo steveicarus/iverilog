@@ -1,0 +1,11 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "edge_cell") (INSTANCE edge_u)
+  (DELAY (ABSOLUTE
+   (COND E (IOPATH (posedge A) Z (3) (13)))
+   (COND E (IOPATH (negedge A) Z (17) (5))))))
+ (CELL (CELLTYPE "ordinary_cell") (INSTANCE ordinary_u)
+  (DELAY (ABSOLUTE (IOPATH A Z (7) (9)))))
+ (CELL (CELLTYPE "legacy_conditional_cell") (INSTANCE legacy_u)
+  (DELAY (ABSOLUTE (IOPATH A Z (11) (13)))))
+)
