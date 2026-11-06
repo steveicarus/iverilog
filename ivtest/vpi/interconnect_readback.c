@@ -102,6 +102,7 @@ static int endpoint(vpiHandle port, int direction, char *name, size_t size)
       vpiHandle module;
       const char *text;
       char scope[64];
+      size_t scope_len, port_len;
       if (!port) return 0;
       require(vpi_get(vpiType, port) == vpiPort, "endpoint type");
       require(vpi_get(vpiSize, port) == 1, "endpoint scalar width");
@@ -110,10 +111,17 @@ static int endpoint(vpiHandle port, int direction, char *name, size_t size)
       if (!module) return 0;
       text = vpi_get_str(vpiFullName, module);
       if (!text) return 0;
-      snprintf(scope, sizeof scope, "%s", text);
+      scope_len = strlen(text);
+      if (scope_len >= sizeof scope) return 0;
+      memcpy(scope, text, scope_len + 1);
       text = vpi_get_str(vpiName, port);
       if (!text) return 0;
-      snprintf(name, size, "%s.%s", scope, text);
+      port_len = strlen(text);
+      if (scope_len + 1 >= size || port_len >= size - scope_len - 1)
+            return 0;
+      memcpy(name, scope, scope_len);
+      name[scope_len] = '.';
+      memcpy(name + scope_len + 1, text, port_len + 1);
       return 1;
 }
 
