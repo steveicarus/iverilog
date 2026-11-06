@@ -104,6 +104,9 @@ bool dll_target::func_def(const NetScope*net)
       ivl_scope_t scop = lookup_scope_(net);
       const NetFuncDef*def = net->func_def();
 
+      if (NetScope*root = netclass_t::virtual_root(const_cast<NetScope*>(net)))
+	    scop->virtual_root = lookup_scope_(root);
+
       assert(def);
       assert(def->proc());
       assert(stmt_cur_ == 0);
@@ -921,6 +924,7 @@ void dll_target::proc_utask(const NetUTask*net)
 
       stmt_cur_->type_ = IVL_ST_UTASK;
       stmt_cur_->u_.utask_.def = lookup_scope_(net->task());
+      stmt_cur_->u_.utask_.nonvirtual = net->nonvirtual();
 }
 
 bool dll_target::proc_wait(const NetEvWait*net)

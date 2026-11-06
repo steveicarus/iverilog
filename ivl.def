@@ -57,6 +57,7 @@ ivl_expr_type
 ivl_expr_bits
 ivl_expr_branch
 ivl_expr_def
+ivl_expr_nonvirtual
 ivl_expr_delay_val
 ivl_expr_dvalue
 ivl_expr_enumtype
@@ -222,6 +223,7 @@ ivl_scope_func_signed
 ivl_scope_func_width
 ivl_scope_is_auto
 ivl_scope_is_cell
+ivl_scope_virtual_root
 ivl_scope_lineno
 ivl_scope_logs
 ivl_scope_log
@@ -285,6 +287,7 @@ ivl_stmt_block_count
 ivl_stmt_block_scope
 ivl_stmt_block_stmt
 ivl_stmt_call
+ivl_stmt_nonvirtual
 ivl_stmt_case_count
 ivl_stmt_case_expr
 ivl_stmt_case_quality
@@ -341,6 +344,9 @@ ivl_type_prop_type
 ivl_type_properties
 ivl_type_queue_max
 ivl_type_signed
+ivl_type_virtual_impl
+ivl_type_virtual_root
+ivl_type_virtuals
 
 ivl_udp_init
 ivl_udp_file

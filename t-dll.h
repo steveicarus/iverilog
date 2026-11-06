@@ -166,6 +166,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 					      const char*name);
 
       void add_root(const NetScope *s);
+      void fill_virtual_tables_(ivl_scope_t scope);
 
       bool make_assign_lvals_(const NetAssignBase*net);
       bool make_single_lval_(const LineInfo*li, struct ivl_lval_s*cur, const NetAssign_*asn);
@@ -313,6 +314,7 @@ struct ivl_expr_s {
 		  ivl_scope_t def;
 		  ivl_expr_t  *parm;
 		  unsigned    parms;
+		  unsigned    nonvirtual;
 	    } ufunc_;
 
 	    struct {
@@ -660,6 +662,13 @@ struct ivl_process_s {
  * by following its child pointer, then following sibling pointers from
  * there.
  */
+/*
+ * The tables of overridden virtual functions of the class types.
+ * See ivl_type_virtuals().
+ */
+typedef std::vector<std::pair<ivl_scope_t,ivl_scope_t> > ivl_virtual_table_t;
+extern std::map<ivl_type_t,ivl_virtual_table_t> ivl_virtual_tables;
+
 struct ivl_scope_s {
       ivl_scope_s();
 
@@ -696,6 +705,8 @@ struct ivl_scope_s {
 	/* Scopes that are tasks/functions have a definition. */
       ivl_statement_t def;
       unsigned is_auto;
+	/* The virtual declaration that this method implements. */
+      ivl_scope_t virtual_root;
       ivl_variable_type_t func_type;
       bool func_signed;
       unsigned func_width;
@@ -864,6 +875,7 @@ struct ivl_statement_s {
 
 	    struct { /* IVL_ST_UTASK */
 		  ivl_scope_t def;
+		  unsigned nonvirtual;
 	    } utask_;
 
 	    struct { /* IVL_ST_TRIGGER IVL_ST_NB_TRIGGER IVL_ST_WAIT */
