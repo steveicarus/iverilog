@@ -205,6 +205,51 @@ The module author provides, along with the ".vpi" file that is the module, a
 is named "example.sft", pass it to the "iverilog" command line or in the
 command file exactly as if it were an ordinary source file.
 
+Discovering Annotated Interconnect Delays
+----------------------------------------
+
+Icarus provides the global relationship
+``vpi_iterate(vpiInterModPath, NULL)`` to enumerate the intermodule path objects
+that have already been created, including those created by SDF INTERCONNECT
+annotation. This global relationship is an Icarus extension. It returns NULL
+when no objects exist, and does not create connections or change delay values.
+In contrast, Icarus uses ``vpi_handle_multi(vpiInterModPath, ...)`` to create an
+intermodule delay object; it is not a read-only lookup operation.
+
+An iterator contains a snapshot of the existing object handles. Exhausting it
+with ``vpi_scan``, or releasing it early with ``vpi_release_handle``, releases
+the iterator without releasing the paths. The path handles remain valid through
+the end-of-simulation callbacks. Releasing a path handle does not remove its
+connection or invalidate another handle to the same object. Enumeration order
+is not an object identifier. Endpoints identify the connection; use the handle
+for object identity within a simulation. Multiple inserted objects may have
+the same endpoint pair, so callers must not assume that pair is unique.
+
+For a scalar path, ``vpi_iterate(vpiPort, path)`` returns its source and
+destination port handles, in that order. The existing ``vpi_get_delays``
+operation reads the effective values from the delay object used for execution.
+For example, to read rise and fall delays in global simulation ticks::
+
+  s_vpi_time values[2] = {{0}};
+  s_vpi_delay delays = {0};
+  delays.da = values;
+  delays.no_of_delays = 2;
+  delays.time_type = vpiSimTime;
+  vpi_get_delays(path, &delays);
+
+Combine each value's ``high`` and ``low`` fields to obtain its tick count.
+The global time precision can be obtained with
+``vpi_get(vpiTimePrecision, NULL)``. Query after annotation has completed, for
+example in a subsequent read-only synchronization callback. An empty query
+before annotation does not establish that later annotation will also be empty.
+
+This interface reports the objects that exist; it does not determine whether
+every intended SDF entry was annotated or every path was exercised. Separate
+annotation checks and receiving-event observations are needed for those claims.
+The scalar endpoint relationship does not provide bit-select identity for
+indexed INTERCONNECT entries. This addition does not change annotation,
+timebase conversion, path scheduling or reannotation behavior.
+
 Cadence PLI Modules
 -------------------
 

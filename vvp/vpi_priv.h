@@ -598,7 +598,6 @@ struct __vpiInterModPath : public __vpiHandle {
       vpiHandle vpi_iterate(int code) override;
       void vpi_get_delays(p_vpi_delay del) override;
       void vpi_put_delays(p_vpi_delay del) override;
-      free_object_fun_t free_object_fun(void) override;
 
       __vpiScope   *scope ;
 
@@ -617,6 +616,7 @@ struct __vpiInterModPath : public __vpiHandle {
  */
 
 extern struct __vpiInterModPath* vpip_make_intermodpath(vvp_net_t *net, vpiPortInfo* port1, vpiPortInfo* port2);
+extern vpiHandle vpip_make_intermodpath_iterator(void);
 
 /*
  * These methods support the vpi creation of events. The name string

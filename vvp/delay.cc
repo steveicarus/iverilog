@@ -27,6 +27,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <list>
+#include <vector>
 #include <cassert>
 #include <cmath>
 #include "ivl_alloc.h"
@@ -1422,25 +1423,28 @@ void __vpiInterModPath::vpi_get_delays(p_vpi_delay del)
 void __vpiInterModPath::vpi_put_delays(p_vpi_delay del)
 { intermodpath_put_delays(this, del); }
 
-static int intermodpath_free_object( vpiHandle ref )
+/*
+ * These handles belong to the simulation, not to an individual VPI query.
+ * They use the default no-op handle release so that multiple iterators can
+ * safely refer to the same path. The net pool owns the delay functors.
+ */
+static vector<__vpiInterModPath*> intermodpaths;
+
+vpiHandle vpip_make_intermodpath_iterator()
 {
-      delete ref;
-      return 1 ;
+      if (intermodpaths.empty())
+	    return 0;
+
+      vpiHandle*args = static_cast<vpiHandle*>
+	    (calloc(intermodpaths.size(), sizeof(vpiHandle)));
+      for (unsigned idx = 0; idx < intermodpaths.size(); idx += 1)
+	    args[idx] = intermodpaths[idx];
+
+	/* The iterator owns the array, but not the path handles. */
+      return vpip_make_iterator(intermodpaths.size(), args, true);
 }
 
-__vpiHandle::free_object_fun_t __vpiInterModPath::free_object_fun(void)
-{ return &intermodpath_free_object; }
-
-/*
- * This function will construct a vpiInterModPath Object.
- * give a respective "net", and will point to his
- * respective functor
- */
-
-#ifdef CHECK_WITH_VALGRIND
-static struct __vpiInterModPath**imp_list = 0;
-static unsigned imp_count = 0;
-#endif
+/* Construct a handle for an intermodule delay functor. */
 
 struct __vpiInterModPath* vpip_make_intermodpath(vvp_net_t *net, vpiPortInfo* port1, vpiPortInfo* port2)
 {
@@ -1451,24 +1455,16 @@ struct __vpiInterModPath* vpip_make_intermodpath(vvp_net_t *net, vpiPortInfo* po
       obj->port1 = port1;
       obj->port2 = port2;
 
-#ifdef CHECK_WITH_VALGRIND
-      imp_count += 1;
-      imp_list = static_cast<struct __vpiInterModPath **>
-                 (realloc(imp_list,
-                  imp_count*sizeof(struct __vpiInterModPath **)));
-      imp_list[imp_count-1] = obj;
-#endif
+      intermodpaths.push_back(obj);
       return obj;
 }
 
 #ifdef CHECK_WITH_VALGRIND
 void intermodpath_delete()
 {
-      for (unsigned idx = 0; idx < mp_count; idx += 1) {
-	    delete imp_list[idx];
+      for (unsigned idx = 0; idx < intermodpaths.size(); idx += 1) {
+	    delete intermodpaths[idx];
       }
-      free(imp_list);
-      imp_list = 0;
-      imp_count = 0;
+      intermodpaths.clear();
 }
 #endif

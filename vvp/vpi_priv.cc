@@ -1326,6 +1326,9 @@ static vpiHandle vpi_iterate_global(int type)
 
 	  case vpiUserSystf:
 	    return vpip_make_systf_iterator();
+
+	  case vpiInterModPath:
+	    return vpip_make_intermodpath_iterator();
       }
 
       return 0;
