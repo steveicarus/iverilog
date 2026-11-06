@@ -380,6 +380,10 @@ sdf_interconnect1		vvp_tests/sdf_interconnect1.json
 sdf_interconnect2		vvp_tests/sdf_interconnect2.json
 sdf_interconnect3		vvp_tests/sdf_interconnect3.json
 sdf_interconnect4		vvp_tests/sdf_interconnect4.json
+sdf_interconnect_pulse_rearm	vvp_tests/sdf_interconnect_pulse_rearm.json
+sdf_interconnect_pulse_asymmetric	vvp_tests/sdf_interconnect_pulse_asymmetric.json
+sdf_interconnect_pulse_fanout	vvp_tests/sdf_interconnect_pulse_fanout.json
+sdf_interconnect_pulse_finish	vvp_tests/sdf_interconnect_pulse_finish.json
 sf_countbits_fail		vvp_tests/sf_countbits_fail.json
 sf_countones_fail		vvp_tests/sf_countones_fail.json
 sf_isunknown_fail		vvp_tests/sf_isunknown_fail.json
