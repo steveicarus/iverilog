@@ -95,6 +95,12 @@ class netclass_t : public ivl_type_s {
 	// The task method scopes from the method name.
       NetScope*method_from_name(perm_string mname) const;
 
+	// If the method is virtual, either because it was declared
+	// "virtual" or because it overrides a virtual method of a base
+	// class (IEEE1800-2017 8.20), return the base-most virtual
+	// declaration that it implements. Otherwise return nil.
+      static NetScope* virtual_root(NetScope*method);
+
 	// Returns the constructor task method of the class. Might be nullptr if
 	// there is nothing to do in the constructor.
       NetScope* get_constructor() const;

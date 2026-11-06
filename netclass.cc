@@ -172,6 +172,20 @@ NetScope*netclass_t::method_from_name(perm_string name) const
 
 }
 
+NetScope* netclass_t::virtual_root(NetScope*method)
+{
+      const netclass_t*cls = method->parent()->class_def();
+      if (cls && cls->super_) {
+	    NetScope*base = cls->super_->method_from_name(method->basename());
+	    if (base) {
+		  if (NetScope*root = virtual_root(base))
+			return root;
+	    }
+      }
+
+      return method->is_virtual() ? method : nullptr;
+}
+
 NetScope* netclass_t::get_constructor() const
 {
       auto task = class_scope_->child(hname_t(perm_string::literal("new")));

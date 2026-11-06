@@ -1269,6 +1269,11 @@ class NetScope : public Definitions, public Attrib {
       void is_auto(bool is_auto__) { is_auto_ = is_auto__; };
       bool is_auto() const { return is_auto_; };
 
+	/* Was the method declared with the "virtual" qualifier. Use
+	   netclass_t::virtual_root() to also account for inheritance. */
+      void is_virtual(bool is_virtual__) { is_virtual_ = is_virtual__; };
+      bool is_virtual() const { return is_virtual_; };
+
 	/* Is the module a cell (is in a `celldefine) */
       void is_cell(bool is_cell__) { is_cell_ = is_cell__; };
       bool is_cell() const { return is_cell_; };
@@ -1506,7 +1511,7 @@ class NetScope : public Definitions, public Attrib {
       std::map<perm_string,std::map<long,interface_port_alias_t> > interface_port_alias_arrays_;
 
       unsigned lcounter_;
-      bool need_const_func_, is_const_func_, is_auto_, is_cell_, calls_stask_;
+      bool need_const_func_, is_const_func_, is_auto_, is_virtual_, is_cell_, calls_stask_;
 
       /* Final procedures sets this to notify statements that
 	 they are part of a final procedure. */
