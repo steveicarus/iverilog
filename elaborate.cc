@@ -4770,17 +4770,20 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
       unsigned parm_count = def->port_count();
 
-	/* A call to a virtual function is bound to the virtual
+	/* A call to a virtual method is bound to the virtual
 	   declaration, which dispatches to the override that matches
 	   the class of the object. The arguments are passed to the
 	   ports of the declaration, which are the same as the ports of
 	   the method found above. */
       NetScope*callee = task;
       const NetBaseDef*pdef = def;
-      if (task->type() == NetScope::FUNC && !nonvirtual) {
+      if (!nonvirtual) {
 	    if (NetScope*root = netclass_t::virtual_root(task)) {
 		  callee = root;
-		  pdef = root->func_def();
+		  if (root->type() == NetScope::TASK)
+			pdef = root->task_def();
+		  else
+			pdef = root->func_def();
 	    }
       }
 
@@ -4995,7 +4998,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
         /* If this is an automatic task, generate a statement to free
            the local storage. */
       if (task->is_auto()) {
-	    NetFree*fp = new NetFree(task);
+	    NetFree*fp = new NetFree(callee);
 	    fp->set_line(*this);
 	    block->append(fp);
       }
@@ -7357,17 +7360,20 @@ static bool virtual_types_match(ivl_type_t base, ivl_type_t over, bool covariant
       }
 }
 
+static const NetBaseDef*method_def(const NetScope*method)
+{
+      if (method->type() == NetScope::FUNC)
+	    return method->func_def();
+      return method->task_def();
+}
+
 static const char*virtual_mismatch(NetScope*over, NetScope*root)
 {
       if (over->type() != root->type())
 	    return "a function and a task";
 
-      const NetBaseDef*odef = over->type()==NetScope::FUNC
-	    ? static_cast<const NetBaseDef*>(over->func_def())
-	    : static_cast<const NetBaseDef*>(over->task_def());
-      const NetBaseDef*rdef = root->type()==NetScope::FUNC
-	    ? static_cast<const NetBaseDef*>(root->func_def())
-	    : static_cast<const NetBaseDef*>(root->task_def());
+      const NetBaseDef*odef = method_def(over);
+      const NetBaseDef*rdef = method_def(root);
       if (odef == 0 || rdef == 0)
 	    return 0;
 
@@ -7451,7 +7457,23 @@ void netclass_t::elaborate(Design*des, PClass*pclass)
       for (perm_string name : names) {
 	    NetScope*method = class_scope_->child( hname_t(name) );
 	    NetScope*root = virtual_root(method);
-	    if (root == 0 || root == method)
+	    if (root == 0)
+		  continue;
+
+	    // The code that passes the arguments of a virtual method on
+	    // to an override does not copy unpacked arrays.
+	    const NetBaseDef*def = method_def(method);
+	    for (unsigned idx = 0 ; def && idx < def->port_count() ; idx += 1) {
+		  if (def->port(idx)->unpacked_dimensions() == 0)
+			continue;
+		  cerr << method->get_fileline() << ": sorry: Method `"
+		       << method->basename() << "` of class " << name_
+		       << " is virtual and has an unpacked array argument." << endl;
+		  des->errors += 1;
+		  break;
+	    }
+
+	    if (root == method)
 		  continue;
 	    if (const char*what = virtual_mismatch(method, root)) {
 		  cerr << method->get_fileline() << ": error: Method `"
