@@ -1,5 +1,9 @@
 {
     "type"          : "EF",
     "source"        : "br_gh1548.v",
-    "iverilog-args" : [ "-g2012" ]
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "__comment" : "Strings are not supported",
+        "type"      : "CE"
+    }
 }

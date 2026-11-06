@@ -6,5 +6,9 @@
         "-gspecify",
         "-Ttyp",
         "-ginterconnect"
-    ]
+    ],
+    "vlog95" : {
+        "__comment" : "Named generate scopes are not translated by vlog95",
+        "type"      : "CE"
+    }
 }

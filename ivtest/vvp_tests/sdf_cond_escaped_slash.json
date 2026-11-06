@@ -10,5 +10,10 @@
     "gold": "sdf_cond_escaped_slash",
     "vvp-args-extended": [
         "-sdf-warn"
-    ]
+    ],
+    "vlog95" : {
+        "__comment" : "Named generate scopes are not translated by vlog95",
+        "type"      : "CE",
+        "gold"      : ""
+    }
 }
