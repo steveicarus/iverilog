@@ -4774,6 +4774,9 @@ call_chain_expr
 	      delete $4;
 	      $$ = 0;
 	} else {
+	      if (cf->peek_with_clause()) {
+		    yyerror(@2, "error: Duplicate with clause.");
+	      }
 	      cf->set_with_clause($4);
 	      $$ = cf;
 	}

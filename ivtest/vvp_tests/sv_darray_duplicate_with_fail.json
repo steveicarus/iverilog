@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_darray_duplicate_with_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
