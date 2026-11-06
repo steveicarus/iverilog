@@ -1586,26 +1586,103 @@ bool of_CALLF_OBJ(vthread_t thr, vvp_code_t cp)
       // XXXX NOT IMPLEMENTED
 }
 
+static void do_init_func_real_ret_val(vthread_t thr, vthread_t child,
+				      vpiScopeFunction*scope_func)
+{
+      if (scope_func->func_ret_val) {
+	    const vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(scope_func->func_ret_val->fil);
+	    assert(sig);
+	    thr->push_real(sig->real_value());
+      } else {
+	    thr->push_real(0.0);
+      }
+      child->args_real.push_back(0);
+}
+
+static void do_save_func_real_ret_val(vthread_t thr, vpiScopeFunction*scope_func)
+{
+      if (scope_func->func_ret_val) {
+	      // We have a static function return value, so store the new value.
+	    vvp_net_ptr_t ptr(scope_func->func_ret_val, 0);
+	    vvp_send_real(ptr, thr->peek_real(0), thr->wt_context);
+      }
+}
+
 bool of_CALLF_REAL(vthread_t thr, vvp_code_t cp)
 {
       vthread_t child = vthread_new(cp->cptr2, cp->scope);
 
-	// This is the return value. Push a place-holder value. The function
-	// will replace this with the actual value using a %ret/real instruction.
-      thr->push_real(0.0);
-      child->args_real.push_back(0);
+      vpiScopeFunction*scope_func = dynamic_cast<vpiScopeFunction*>(cp->scope);
+      assert(scope_func);
 
-      return do_callf_void(thr, child);
+      do_init_func_real_ret_val(thr, child, scope_func);
+
+      bool ret = do_callf_void(thr, child);
+
+      do_save_func_real_ret_val(thr, scope_func);
+
+      return ret;
+}
+
+static void do_init_func_string_ret_val(vthread_t thr, vthread_t child,
+				        vpiScopeFunction*scope_func)
+{
+      if (scope_func->func_ret_val) {
+            vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*>(scope_func->func_ret_val->fun);
+            assert(fun);
+            const string&val = fun->get_string();
+            thr->push_str(val);
+      } else {
+	    thr->push_str("");
+      }
+      child->args_str.push_back(0);
+}
+
+static void do_save_func_string_ret_val(vthread_t thr, vpiScopeFunction*scope_func)
+{
+      if (scope_func->func_ret_val) {
+	      // We have a static function return value, so store the new value.
+	    vvp_net_ptr_t ptr(scope_func->func_ret_val, 0);
+	    vvp_send_string(ptr, thr->peek_str(0), thr->wt_context);
+      }
 }
 
 bool of_CALLF_STR(vthread_t thr, vvp_code_t cp)
 {
       vthread_t child = vthread_new(cp->cptr2, cp->scope);
 
-      thr->push_str("");
-      child->args_str.push_back(0);
+      vpiScopeFunction*scope_func = dynamic_cast<vpiScopeFunction*>(cp->scope);
+      assert(scope_func);
 
-      return do_callf_void(thr, child);
+      do_init_func_string_ret_val(thr, child, scope_func);
+
+      bool ret = do_callf_void(thr, child);
+
+      do_save_func_string_ret_val(thr, scope_func);
+
+      return ret;
+}
+
+static void do_init_func_vec4_ret_val(vthread_t thr, vthread_t child,
+				      vpiScopeFunction*scope_func)
+{
+      thr->push_vec4(vvp_vector4_t(scope_func->get_func_width(), scope_func->get_func_init_val()));
+      if (scope_func->func_ret_val) {
+	      // We have a static function return value, so load the old value.
+	    const vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(scope_func->func_ret_val->fil);
+	    assert(sig);
+	    sig->vec4_value(thr->peek_vec4());
+      }
+      child->args_vec4.push_back(0);
+}
+
+static void do_save_func_vec4_ret_val(vthread_t thr, vpiScopeFunction*scope_func)
+{
+      if (scope_func->func_ret_val) {
+	      // We have a static function return value, so store the new value.
+	    vvp_net_ptr_t ptr(scope_func->func_ret_val, 0);
+	    vvp_send_vec4(ptr, thr->peek_vec4(), thr->wt_context);
+      }
 }
 
 bool of_CALLF_VEC4(vthread_t thr, vvp_code_t cp)
@@ -1615,12 +1692,13 @@ bool of_CALLF_VEC4(vthread_t thr, vvp_code_t cp)
       vpiScopeFunction*scope_func = dynamic_cast<vpiScopeFunction*>(cp->scope);
       assert(scope_func);
 
-	// This is the return value. Push a place-holder value. The function
-	// will replace this with the actual value using a %ret/real instruction.
-      thr->push_vec4(vvp_vector4_t(scope_func->get_func_width(), scope_func->get_func_init_val()));
-      child->args_vec4.push_back(0);
+      do_init_func_vec4_ret_val(thr, child, scope_func);
 
-      return do_callf_void(thr, child);
+      bool ret = do_callf_void(thr, child);
+
+      do_save_func_vec4_ret_val(thr, scope_func);
+
+      return ret;
 }
 
 bool of_CALLF_VOID(vthread_t thr, vvp_code_t cp)
@@ -8308,12 +8386,18 @@ bool of_EXEC_UFUNC_REAL(vthread_t thr, vvp_code_t cp)
       __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
       assert(child_scope);
 
-	/* Create a temporary thread and run it immediately. */
-      vthread_t child = vthread_new(cp->cptr, child_scope);
-      thr->push_real(0.0);
-      child->args_real.push_back(0);
+      vpiScopeFunction*scope_func = dynamic_cast<vpiScopeFunction*>(child_scope);
+      assert(scope_func);
 
-      return do_exec_ufunc(thr, cp, child);
+      vthread_t child = vthread_new(cp->cptr, child_scope);
+
+      do_init_func_real_ret_val(thr, child, scope_func);
+
+      bool ret = do_exec_ufunc(thr, cp, child);
+
+      do_save_func_real_ret_val(thr, scope_func);
+
+      return ret;
 }
 
 bool of_EXEC_UFUNC_VEC4(vthread_t thr, vvp_code_t cp)
@@ -8324,12 +8408,15 @@ bool of_EXEC_UFUNC_VEC4(vthread_t thr, vvp_code_t cp)
       vpiScopeFunction*scope_func = dynamic_cast<vpiScopeFunction*>(child_scope);
       assert(scope_func);
 
-	/* Create a temporary thread and run it immediately. */
       vthread_t child = vthread_new(cp->cptr, child_scope);
-      thr->push_vec4(vvp_vector4_t(scope_func->get_func_width(), scope_func->get_func_init_val()));
-      child->args_vec4.push_back(0);
 
-      return do_exec_ufunc(thr, cp, child);
+      do_init_func_vec4_ret_val(thr, child, scope_func);
+
+      bool ret = do_exec_ufunc(thr, cp, child);
+
+      do_save_func_vec4_ret_val(thr, scope_func);
+
+      return ret;
 }
 
 /*

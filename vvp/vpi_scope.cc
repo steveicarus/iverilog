@@ -468,7 +468,7 @@ void vpip_attach_to_scope(__vpiScope*scope, vpiHandle obj)
  */
 void
 compile_scope_decl(char*label, char*type, char*name, char*tname,
-                   char*parent, long file_idx, long lineno,
+                   char*func_ret_val, char*parent, long file_idx, long lineno,
                    long def_file_idx, long def_lineno, long is_cell)
 {
       count_vpi_scopes += 1;
@@ -548,6 +548,11 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
       } else {
 	    scope = new vpiScopeModule(name, tname);
 	    assert(0);
+      }
+      if (func_ret_val) {
+	    vpiScopeFunction*func_scope = dynamic_cast<vpiScopeFunction*>(scope);
+	    assert(func_scope);
+	    functor_ref_lookup(&func_scope->func_ret_val, func_ret_val);
       }
 
       scope->file_idx = (unsigned) file_idx;

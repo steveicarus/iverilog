@@ -197,6 +197,22 @@ to do this as root to gain access to installation directories.
 The generated Makefiles also include the uninstall target. This should
 remove all the files that `make install` creates.
 
+### Enum names in FST waveforms
+
+Scalar enum variables include their literal-to-value mappings in FST output.
+Run the simulation with `vvp sim.vvp -fst` and use `$dumpfile("wave.fst")` and
+`$dumpvars` in the testbench. In GTKWave, select the signals and choose
+**Edit > Data Format > Enum** to display the names. VCD output is unchanged.
+
+Package typedefs and shared enum types retain their mappings across module
+instances. Enum nets/ports, arrays and struct members are not fully supported
+by this metadata path. The literal names are preserved; the FST table name
+is generated rather than taken from the typedef name.
+
+VVP declarations now carry an optional enum type reference. The updated
+runtime accepts existing VVP files, but older runtimes cannot read the new
+enum declarations. Compile and simulate with matching Icarus Verilog builds.
+
 ## How Icarus Verilog Works
 
 This tool includes a parser which reads in Verilog (plus extensions)

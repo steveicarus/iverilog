@@ -329,6 +329,7 @@ ivl_switch_width
 
 ivl_type_base
 ivl_type_element
+ivl_type_enumtype
 ivl_type_name
 ivl_type_packed_dimensions
 ivl_type_packed_lsb

@@ -480,6 +480,7 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 
             LexicalScope*ss = scope;
             while (ss) {
+                  if (ss->explicit_imports.count(name)) return;
                   if (ss->wires.find(name) != ss->wires.end())
                         return;
                   if (ss->parameters.find(name) != ss->parameters.end())

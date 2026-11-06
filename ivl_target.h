@@ -1,7 +1,7 @@
 #ifndef IVL_ivl_target_H
 #define IVL_ivl_target_H
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2390,6 +2390,8 @@ extern unsigned ivl_switch_lineno(ivl_switch_t net);
  */
 extern ivl_variable_type_t ivl_type_base(ivl_type_t net);
 extern ivl_type_t ivl_type_element(ivl_type_t net);
+/* Return the enum type, or NULL for a non-enum type. */
+extern ivl_enumtype_t ivl_type_enumtype(ivl_type_t net);
 extern unsigned ivl_type_packed_dimensions(ivl_type_t net);
 extern int ivl_type_packed_lsb(ivl_type_t net, unsigned dim);
 extern int ivl_type_packed_msb(ivl_type_t net, unsigned dim);

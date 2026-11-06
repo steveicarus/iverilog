@@ -114,3 +114,22 @@ for the VPI tests can be found in the vpi_regress.list file.
 
 With Windows 10 and MSYS2, there are now very few differences
 between the Windows and Linux builds.
+
+####################
+# FST enum metadata test
+####################
+
+After building and installing Icarus Verilog, run:
+
+make check-installed-fst
+
+This test also runs automatically as part of make check-installed. Like the
+other installed tests, it finds iverilog and vvp on PATH and supports the
+configured executable suffix. The reader is built using the configured C
+compiler, flags and libraries, and the bundled FST objects from the build
+directory. A build configured without zlib reports that this test is skipped.
+
+The test checks enum mappings, shared type references, ordinary signals,
+signed and wide values, X/Z literals, and the recorded state transitions.
+It also checks a package typedef shared by multiple module instances and
+an anonymous enum declaration. No GUI is required.
