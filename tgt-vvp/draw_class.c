@@ -93,4 +93,11 @@ void draw_class_in_scope(ivl_type_t classtype)
       }
 
       fprintf(vvp_out, " ;\n");
+
+      for (idx = 0 ; idx < ivl_type_virtuals(classtype) ; idx += 1) {
+	    ivl_scope_t root = ivl_type_virtual_root(classtype, idx);
+	    ivl_scope_t impl = ivl_type_virtual_impl(classtype, idx);
+	    fprintf(vvp_out, "    .virt C%p, S_%p, TA_%p_%p;\n",
+		    classtype, root, root, impl);
+      }
 }

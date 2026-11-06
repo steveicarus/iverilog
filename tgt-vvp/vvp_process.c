@@ -1599,8 +1599,12 @@ static int show_stmt_utask(ivl_statement_t net)
 
       if (ivl_scope_type(task) == IVL_SCT_FUNCTION) {
 	      // A function called as a task is (presumably) a void function.
-	      // Use the %callf/void instruction to call it.
-	    fprintf(vvp_out, "    %%callf/void TD_%p", task);
+	      // Use the %callf/void instruction to call it. A non-virtual
+	      // call of a virtual function skips the dispatch to an
+	      // override at the start of it.
+	    const char*entry = (ivl_stmt_nonvirtual(net)
+				&& ivl_scope_virtual_root(task) == task) ? "TB" : "TD";
+	    fprintf(vvp_out, "    %%callf/void %s_%p", entry, task);
 	    fprintf(vvp_out, ", S_%p; %s\n", task,
 		    ivl_scope_name(task));
       } else {
@@ -2624,13 +2628,26 @@ int draw_func_definition(ivl_scope_t scope)
 {
       int rc = 0;
       ivl_statement_t def = ivl_scope_def(scope);
+      ivl_scope_t root = ivl_scope_virtual_root(scope);
 
       fprintf(vvp_out, "TD_%p ; %s\n", scope, ivl_scope_name(scope));
+
+	/* The virtual declaration of a function starts by running the
+	   override that matches the class of the object, if any. A
+	   non-virtual call skips that and starts at the TB label. */
+      if (root == scope) {
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", ivl_scope_port(scope, 1));
+	    fprintf(vvp_out, "    %%dispatch/virt S_%p;\n", scope);
+	    fprintf(vvp_out, "TB_%p ;\n", scope);
+      }
 
       assert(def);
       rc += show_statement(def, scope);
 
       fprintf(vvp_out, "    %%end;\n");
+
+      if (root && root != scope)
+	    rc += draw_virtual_adapter(root, scope);
 
       thread_count += 1;
       return rc;

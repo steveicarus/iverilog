@@ -147,33 +147,36 @@ static void draw_ufunc_preamble(ivl_expr_t expr)
 	    draw_send_function_argument(port, ivl_expr_parm(expr, idx-1));
       }
 
-	/* Call the function */
+	/* Call the function. A non-virtual call of a virtual function
+	   skips the dispatch to an override at the start of it. */
+      const char*entry = (ivl_expr_nonvirtual(expr)
+			  && ivl_scope_virtual_root(def) == def) ? "TB" : "TD";
       switch (ivl_expr_value(expr)) {
 	  case IVL_VT_VOID:
-	    fprintf(vvp_out, "    %%callf/void TD_%p", def);
+	    fprintf(vvp_out, "    %%callf/void %s_%p", entry, def);
 	    fprintf(vvp_out, ", S_%p; %s\n", def,
 		    ivl_scope_name(def));
 	    break;
 	  case IVL_VT_REAL:
-	    fprintf(vvp_out, "    %%callf/real TD_%p", def);
+	    fprintf(vvp_out, "    %%callf/real %s_%p", entry, def);
 	    fprintf(vvp_out, ", S_%p; %s\n", def,
 		    ivl_scope_name(def));
 	    break;
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
-	    fprintf(vvp_out, "    %%callf/vec4 TD_%p", def);
+	    fprintf(vvp_out, "    %%callf/vec4 %s_%p", entry, def);
 	    fprintf(vvp_out, ", S_%p; %s\n", def,
 		    ivl_scope_name(def));
 	    break;
 	  case IVL_VT_STRING:
-	    fprintf(vvp_out, "    %%callf/str TD_%p", def);
+	    fprintf(vvp_out, "    %%callf/str %s_%p", entry, def);
 	    fprintf(vvp_out, ", S_%p; %s\n", def,
 		    ivl_scope_name(def));
 	    break;
 	  case IVL_VT_CLASS:
 	  case IVL_VT_DARRAY:
 	  case IVL_VT_QUEUE:
-	    fprintf(vvp_out, "    %%callf/obj TD_%p", def);
+	    fprintf(vvp_out, "    %%callf/obj %s_%p", entry, def);
 	    fprintf(vvp_out, ", S_%p; %s\n", def,
 		    ivl_scope_name(def));
 	    break;
@@ -218,4 +221,88 @@ void draw_ufunc_object(ivl_expr_t expr)
       fprintf(vvp_out, "    %%load/obj v%p_0;\n", retval);
 
       draw_ufunc_epilogue(expr);
+}
+
+/*
+ * Draw the code that a call of the virtual function root runs for an
+ * object whose class overrides it with the function impl. The caller
+ * has put the arguments in the variables of root and started its code,
+ * which jumped here. Pass the arguments on to impl, call it and return
+ * its result as the result of root.
+ */
+int draw_virtual_adapter(ivl_scope_t root, ivl_scope_t impl)
+{
+      int rc = 0;
+      unsigned idx;
+      ivl_signal_t rret = ivl_scope_port(root, 0);
+      ivl_signal_t iret = ivl_scope_port(impl, 0);
+
+      fprintf(vvp_out, "TA_%p_%p ; %s -> %s\n", root, impl,
+	      ivl_scope_name(root), ivl_scope_name(impl));
+      fprintf(vvp_out, "    %%alloc S_%p;\n", impl);
+
+      assert(ivl_scope_ports(root) == ivl_scope_ports(impl));
+      for (idx = 1 ; idx < ivl_scope_ports(root) ; idx += 1) {
+	    ivl_signal_t from = ivl_scope_port(root, idx);
+	    ivl_signal_t to = ivl_scope_port(impl, idx);
+
+	    if (ivl_signal_dimensions(to) > 0) {
+		  fprintf(stderr, "%s:%u: sorry: an unpacked array argument "
+			  "of a virtual function is not supported.\n",
+			  ivl_scope_file(impl), ivl_scope_lineno(impl));
+		  rc += 1;
+		  continue;
+	    }
+
+	    switch (ivl_signal_data_type(to)) {
+		case IVL_VT_BOOL:
+		case IVL_VT_LOGIC:
+		  fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", from);
+		  fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", to,
+			  ivl_signal_width(to));
+		  break;
+		case IVL_VT_REAL:
+		  fprintf(vvp_out, "    %%load/real v%p_0;\n", from);
+		  fprintf(vvp_out, "    %%store/real v%p_0;\n", to);
+		  break;
+		case IVL_VT_STRING:
+		  fprintf(vvp_out, "    %%load/str v%p_0;\n", from);
+		  fprintf(vvp_out, "    %%store/str v%p_0;\n", to);
+		  break;
+		default:
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", from);
+		  fprintf(vvp_out, "    %%store/obj v%p_0;\n", to);
+		  break;
+	    }
+      }
+
+      switch (ivl_scope_func_type(impl)) {
+	  case IVL_VT_VOID:
+	    fprintf(vvp_out, "    %%callf/void TD_%p, S_%p;\n", impl, impl);
+	    break;
+	  case IVL_VT_REAL:
+	    fprintf(vvp_out, "    %%callf/real TD_%p, S_%p;\n", impl, impl);
+	    fprintf(vvp_out, "    %%ret/real 0;\n");
+	    break;
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    fprintf(vvp_out, "    %%callf/vec4 TD_%p, S_%p;\n", impl, impl);
+	    fprintf(vvp_out, "    %%ret/vec4 0, 0, %u;\n",
+		    ivl_scope_func_width(impl));
+	    break;
+	  case IVL_VT_STRING:
+	    fprintf(vvp_out, "    %%callf/str TD_%p, S_%p;\n", impl, impl);
+	    fprintf(vvp_out, "    %%ret/str 0;\n");
+	    break;
+	  default:
+	    fprintf(vvp_out, "    %%callf/obj TD_%p, S_%p;\n", impl, impl);
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", iret);
+	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", rret);
+	    break;
+      }
+
+      fprintf(vvp_out, "    %%free S_%p;\n", impl);
+      fprintf(vvp_out, "    %%end;\n");
+
+      return rc;
 }
