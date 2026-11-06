@@ -80,6 +80,9 @@ void dll_target::task_def(const NetScope*net)
       ivl_scope_t scop = lookup_scope_(net);
       const NetTaskDef*def = net->task_def();
 
+      if (NetScope*root = netclass_t::virtual_root(const_cast<NetScope*>(net)))
+	    scop->virtual_root = lookup_scope_(root);
+
       assert(def);
       assert(def->proc());
       assert(stmt_cur_ == 0);

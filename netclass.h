@@ -104,11 +104,15 @@ class netclass_t : public ivl_type_s {
 	// The methods of the class, not including inherited methods.
       void add_method(NetScope*method) { methods_.push_back(method); }
 
-	// Collect the virtual functions that are overridden in this
+	// Collect the virtual methods that are overridden in this
 	// class or one of its base classes. Each entry is a virtual
-	// declaration and the function that a call of it runs for an
+	// declaration and the method that a call of it runs for an
 	// object of this class.
       void virtual_table(std::vector<std::pair<NetScope*,NetScope*> >&table) const;
+
+	// The methods of virtual_table() as seen by the code generator
+	// (the overrides, the declaration is their ivl_scope_virtual_root).
+      std::vector<ivl_scope_t>& virtual_scopes() const { return virtual_scopes_; }
 
 	// Returns the constructor task method of the class. Might be nullptr if
 	// there is nothing to do in the constructor.
@@ -161,6 +165,7 @@ class netclass_t : public ivl_type_s {
 	// This holds task/function definitions for methods.
       NetScope*class_scope_;
       std::vector<NetScope*> methods_;
+      mutable std::vector<ivl_scope_t> virtual_scopes_;
 
 	// This holds the context for the class type definition.
       NetScope*definition_scope_;

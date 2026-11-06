@@ -2421,13 +2421,12 @@ extern int         ivl_type_properties(ivl_type_t net);
 extern const char* ivl_type_prop_name(ivl_type_t net, int idx);
 extern ivl_type_t  ivl_type_prop_type(ivl_type_t net, int idx);
 
-/* A class type has a table of the virtual functions that are
-   overridden in the class or one of its base classes. Each entry
-   gives the scope of the virtual declaration and of the function
-   that a call of it runs for an object of this class. */
+/* A class type has a table of the virtual methods that the class or a
+   base class overrides. Each entry is the override that a call of the
+   virtual declaration (its ivl_scope_virtual_root) runs for an object
+   of this class. */
 extern unsigned    ivl_type_virtuals(ivl_type_t net);
-extern ivl_scope_t ivl_type_virtual_root(ivl_type_t net, unsigned idx);
-extern ivl_scope_t ivl_type_virtual_impl(ivl_type_t net, unsigned idx);
+extern ivl_scope_t ivl_type_virtual(ivl_type_t net, unsigned idx);
 
 /* Maximum element count for a queue type (0 = unbounded). Only valid
  * when ivl_type_base(net) == IVL_VT_QUEUE. */

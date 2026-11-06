@@ -658,10 +658,8 @@ bool dll_target::start_design(const Design*des)
  * Here ivl is telling us that the design is scanned completely, and
  * here is where we call the API to process the constructed design.
  */
-std::map<ivl_type_t,ivl_virtual_table_t> ivl_virtual_tables;
-
 /*
- * Translate the virtual function table of each class declared in the
+ * Translate the virtual method table of each class declared in the
  * scope, and the scopes within it. This is done once all the scopes
  * exist, so that the functions can be looked up.
  */
@@ -672,10 +670,9 @@ void dll_target::fill_virtual_tables_(ivl_scope_t scope)
 	    vector<pair<NetScope*,NetScope*> > table;
 	    cls->virtual_table(table);
 	    for (auto&cur : table) {
-		  ivl_scope_t root = lookup_scope_(cur.first);
 		  ivl_scope_t impl = lookup_scope_(cur.second);
-		  ivl_assert(*cls->class_scope(), root && impl);
-		  ivl_virtual_tables[type].push_back(make_pair(root, impl));
+		  ivl_assert(*cls->class_scope(), impl);
+		  cls->virtual_scopes().push_back(impl);
 	    }
       }
 

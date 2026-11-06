@@ -193,7 +193,7 @@ void netclass_t::virtual_table(vector<pair<NetScope*,NetScope*> >&table) const
 
       for (NetScope*method : methods_) {
 	    NetScope*root = virtual_root(method);
-	    if (method->type() != NetScope::FUNC || root == 0 || root == method)
+	    if (root == 0 || root == method)
 		  continue;
 
 	      // An override in a derived class replaces the entry of

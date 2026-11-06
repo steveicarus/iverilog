@@ -662,13 +662,6 @@ struct ivl_process_s {
  * by following its child pointer, then following sibling pointers from
  * there.
  */
-/*
- * The tables of overridden virtual functions of the class types.
- * See ivl_type_virtuals().
- */
-typedef std::vector<std::pair<ivl_scope_t,ivl_scope_t> > ivl_virtual_table_t;
-extern std::map<ivl_type_t,ivl_virtual_table_t> ivl_virtual_tables;
-
 struct ivl_scope_s {
       ivl_scope_s();
 

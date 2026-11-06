@@ -3345,20 +3345,17 @@ extern "C" ivl_type_t ivl_type_prop_type(ivl_type_t net, int idx)
 
 extern "C" unsigned ivl_type_virtuals(ivl_type_t net)
 {
-      auto cur = ivl_virtual_tables.find(net);
-      return cur == ivl_virtual_tables.end() ? 0 : cur->second.size();
+      const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
+      assert(class_type);
+      return class_type->virtual_scopes().size();
 }
 
-extern "C" ivl_scope_t ivl_type_virtual_root(ivl_type_t net, unsigned idx)
+extern "C" ivl_scope_t ivl_type_virtual(ivl_type_t net, unsigned idx)
 {
-      assert(idx < ivl_type_virtuals(net));
-      return ivl_virtual_tables[net][idx].first;
-}
-
-extern "C" ivl_scope_t ivl_type_virtual_impl(ivl_type_t net, unsigned idx)
-{
-      assert(idx < ivl_type_virtuals(net));
-      return ivl_virtual_tables[net][idx].second;
+      const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
+      assert(class_type);
+      assert(idx < class_type->virtual_scopes().size());
+      return class_type->virtual_scopes()[idx];
 }
 
 extern "C" unsigned ivl_type_queue_max(ivl_type_t net)
