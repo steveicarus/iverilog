@@ -1091,6 +1091,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 
       PExpr*expr;
       std::list<PExpr*>*exprs;
+      std::list<pattern_item_t>*pattern_items;
 
       PEIdent*identifier;
 
@@ -1351,6 +1352,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
 %type <exprs> expression_list_with_nuls expression_list_proper
+%type <pattern_items> assignment_pattern_items
 %type <exprs> cont_assign cont_assign_list
 
 %type <decl_assignment> net_decl_assign variable_decl_assignment
@@ -1507,10 +1509,59 @@ assignment_pattern /* IEEE1800-2005: A.6.7.1 */
 	delete $2;
 	$$ = tmp;
       }
+  | K_LP expression_list_proper ',' expression ':' expression '}'
+      { yyerror(@1, "error: Positional and keyed items can not be mixed in an assignment pattern.");
+	delete $2;
+	$$ = new PEAssignPattern;
+      }
+  | K_LP expression_list_proper ',' K_default ':' expression '}'
+      { yyerror(@1, "error: Positional and keyed items can not be mixed in an assignment pattern.");
+	delete $2;
+	$$ = new PEAssignPattern;
+      }
+  | K_LP assignment_pattern_items '}'
+      { PEAssignPattern*tmp = new PEAssignPattern(*$2);
+	FILE_NAME(tmp, @1);
+	delete $2;
+	$$ = tmp;
+      }
   | K_LP '}'
       { PEAssignPattern*tmp = new PEAssignPattern;
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
+      }
+  ;
+
+  /* A keyed assignment pattern, IEEE1800-2017 10.9.1 and 10.9.2. The items
+     must all be keyed, a pattern can not mix them with positional items. */
+assignment_pattern_items
+  : assignment_pattern_items ',' expression ':' expression
+      { $1->push_back({$3, $5});
+	$$ = $1;
+      }
+  | assignment_pattern_items ',' K_default ':' expression
+      { for (const auto &item : *$1) {
+	      if (!item.key) {
+		    yyerror(@3, "error: Multiple default items in an assignment pattern.");
+		    break;
+	      }
+	}
+	$1->push_back({nullptr, $5});
+	$$ = $1;
+      }
+  | assignment_pattern_items ',' expression
+      { if (!$1->empty())
+	      yyerror(@3, "error: Positional and keyed items can not be mixed in an assignment pattern.");
+	delete $1;
+	$$ = new std::list<pattern_item_t>;
+      }
+  | expression ':' expression
+      { $$ = new std::list<pattern_item_t>;
+	$$->push_back({$1, $3});
+      }
+  | K_default ':' expression
+      { $$ = new std::list<pattern_item_t>;
+	$$->push_back({nullptr, $3});
       }
   ;
 

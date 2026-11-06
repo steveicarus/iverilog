@@ -106,6 +106,16 @@ PEAssignPattern::PEAssignPattern(const list<PExpr*>&p)
 {
 }
 
+PEAssignPattern::PEAssignPattern(const list<pattern_item_t>&p)
+{
+      for (const auto &item : p) {
+	    if (item.key)
+		  keyed_.push_back(item);
+	    else
+		  default_ = item.value;
+      }
+}
+
 PEAssignPattern::~PEAssignPattern()
 {
 }
@@ -117,6 +127,12 @@ bool PEAssignPattern::has_aa_term(Design*des, NetScope*scope) const
 	    if (parm)
 		  flag = parm->has_aa_term(des, scope) || flag;
       }
+      for (const auto &item : keyed_) {
+	    if (item.value)
+		  flag = item.value->has_aa_term(des, scope) || flag;
+      }
+      if (default_)
+	    flag = default_->has_aa_term(des, scope) || flag;
       return flag;
 }
 

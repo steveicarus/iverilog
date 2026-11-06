@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_assign_pattern_key_nonconst_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
