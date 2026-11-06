@@ -1,0 +1,11 @@
+{
+    "type": "normal",
+    "source": "sdf_escaped_missing.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-ginterconnect"
+    ],
+    "gold": "sdf_escaped_missing"
+}

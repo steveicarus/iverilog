@@ -7,6 +7,11 @@ static void display_scope(vpiHandle scope)
     vpiHandle iter;
     vpiHandle item;
 
+    if (scope && vpi_get(vpiType, scope) == vpiFunction) {
+        // Skip the implicit register that holds the function return value.
+        return;
+    }
+
     iter = vpi_iterate(vpiReg, scope);
     if (iter) {
         while ( (item = vpi_scan(iter)) ) {

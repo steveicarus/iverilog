@@ -1,0 +1,5 @@
+{
+    "type"   : "CE",
+    "source" : "br_gh1692d.v",
+    "iverilog-args" : [ "-g2012" ]
+}

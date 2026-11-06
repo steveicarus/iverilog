@@ -312,7 +312,9 @@ class vpiScopeFunction  : public __vpiScope {
     public:
       inline vpiScopeFunction(const char*nam, const char*tnam,
 			      bool auto_flag, int func_type, unsigned func_wid, vvp_bit4_t func_init_val)
-      : __vpiScope(nam,tnam, auto_flag), func_type_(func_type), func_wid_(func_wid), func_init_val_(func_init_val)
+      : __vpiScope(nam,tnam, auto_flag), func_ret_val(0), func_type_(func_type),
+        func_wid_(func_wid), func_init_val_(func_init_val)
+
       { }
 
       int get_type_code(void) const override { return vpiFunction; }
@@ -329,6 +331,7 @@ class vpiScopeFunction  : public __vpiScope {
     public:
       inline unsigned get_func_width(void) const { return func_wid_; }
       inline vvp_bit4_t get_func_init_val(void) const { return func_init_val_; }
+      vvp_net_t*func_ret_val;
 
     private:
       int func_type_;
@@ -369,6 +372,7 @@ struct __vpiSignal : public __vpiHandle {
       void make_bits();
 
       struct __vpiBit*bits;
+      vpiHandle enum_typespec; // Owned by its declaring scope.
 
     public:
       union { // The scope or parent array that contains me.
@@ -391,7 +395,7 @@ struct __vpiSignal : public __vpiHandle {
       static void*operator new(std::size_t size);
       static void operator delete(void*); // not implemented
     protected:
-      inline __vpiSignal() : bits(NULL) { }
+      inline __vpiSignal() : bits(NULL), enum_typespec(NULL) { }
     private: // Not implemented
       static void*operator new[] (std::size_t size);
       static void operator delete[](void*);

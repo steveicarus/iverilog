@@ -1,0 +1,6 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER .) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "top") (INSTANCE)
+  (DELAY (ABSOLUTE
+   (INTERCONNECT g\[0\].d.Z[1] g\[0\].r.A[1] (3) (5)))))
+)

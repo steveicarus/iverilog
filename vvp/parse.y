@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -123,6 +123,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %type <symb>  symbol symbol_opt
 %type <symbv> symbols symbols_net
 %type <numbv> numbers
+%type <text> enum_ref_opt
 %type <text> label_opt
 %type <opa>  operand operands operands_opt
 %type <table> udp_table
@@ -707,11 +708,15 @@ statement
      parent scope, then this is a root scope. */
 
 	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING T_NUMBER T_NUMBER ';'
-		{ compile_scope_decl($1, $3, $5, $6, 0, $7, $8, $7, $8, 0); }
+		{ compile_scope_decl($1, $3, $5, $6, 0, 0, $7, $8, $7, $8, 0); }
 
 	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING T_NUMBER T_NUMBER ','
 	  T_NUMBER T_NUMBER T_NUMBER ',' T_SYMBOL ';'
-		{ compile_scope_decl($1, $3, $5, $6, $14, $7, $8, $10, $11, $12); }
+		{ compile_scope_decl($1, $3, $5, $6, 0, $14, $7, $8, $10, $11, $12); }
+
+	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING T_NUMBER T_NUMBER ','
+	  T_NUMBER T_NUMBER T_NUMBER ',' T_SYMBOL ',' T_SYMBOL ';'
+		{ compile_scope_decl($1, $3, $5, $6, $14, $16, $7, $8, $10, $11, $12); }
 
   /* Scope recall has no label of its own, but refers by label to a
      declared scope. */
@@ -753,20 +758,20 @@ statement
      creates a functor with the same name that acts as the output of
      the variable in the netlist. */
 
-  | T_LABEL K_VAR local_flag T_STRING ',' signed_t_number signed_t_number ';'
-      { compile_variable($1, $4, $6, $7, vpiLogicVar, false, $3); }
+  | T_LABEL K_VAR local_flag T_STRING ',' signed_t_number signed_t_number enum_ref_opt ';'
+      { compile_variable($1, $4, $6, $7, vpiLogicVar, false, $3, $8); }
 
-  | T_LABEL K_VAR_S local_flag T_STRING ',' signed_t_number signed_t_number ';'
-      { compile_variable($1, $4, $6, $7, vpiLogicVar, true, $3); }
+  | T_LABEL K_VAR_S local_flag T_STRING ',' signed_t_number signed_t_number enum_ref_opt ';'
+      { compile_variable($1, $4, $6, $7, vpiLogicVar, true, $3, $8); }
 
-  | T_LABEL K_VAR_I local_flag T_STRING ',' T_NUMBER T_NUMBER ';'
-      { compile_variable($1, $4, $6, $7, vpiIntegerVar, true, $3); }
+  | T_LABEL K_VAR_I local_flag T_STRING ',' T_NUMBER T_NUMBER enum_ref_opt ';'
+      { compile_variable($1, $4, $6, $7, vpiIntegerVar, true, $3, $8); }
 
-  | T_LABEL K_VAR_2S local_flag T_STRING ',' signed_t_number signed_t_number ';'
-      { compile_variable($1, $4, $6, $7, vpiIntVar, true, $3); }
+  | T_LABEL K_VAR_2S local_flag T_STRING ',' signed_t_number signed_t_number enum_ref_opt ';'
+      { compile_variable($1, $4, $6, $7, vpiIntVar, true, $3, $8); }
 
-  | T_LABEL K_VAR_2U local_flag T_STRING ',' signed_t_number signed_t_number ';'
-      { compile_variable($1, $4, $6, $7, vpiIntVar, false, $3); }
+  | T_LABEL K_VAR_2U local_flag T_STRING ',' signed_t_number signed_t_number enum_ref_opt ';'
+      { compile_variable($1, $4, $6, $7, vpiIntVar, false, $3, $8); }
 
   | T_LABEL K_VAR_R local_flag T_STRING ',' signed_t_number signed_t_number ';'
       { compile_var_real($1, $4, $3); }
@@ -986,6 +991,11 @@ enum_type_name
       { $$.text = $1; $$.val2 = $2; $$.val4 = 0; }
   | T_STRING T_VECTOR
       { $$.text = $1; $$.val2 = 0; $$.val4 = $2.text; }
+  ;
+
+enum_ref_opt
+  : ',' T_SYMBOL { $$ = $2; }
+  | { $$ = 0; }
   ;
 
 local_flag

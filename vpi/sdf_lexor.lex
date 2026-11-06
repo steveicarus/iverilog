@@ -178,24 +178,14 @@ void stop_edge_id(void)
 
 static int lookup_keyword(const char*text)
 {
-      unsigned idx, len, skip;
+      unsigned idx;
       for (idx = 0 ;  keywords[idx].name ;  idx += 1) {
 	    if (strcasecmp(text, keywords[idx].name) == 0)
 		  return keywords[idx].code;
       }
 
-	/* Process any escaped characters. */
-      skip = 0;
-      len = strlen(yytext);
-      for (idx = 0; idx < len; idx += 1) {
-	    if (yytext[idx] == '\\') {
-		  skip += 1;
-		  idx += 1;
-	    }
-	    yytext[idx-skip] = yytext[idx];
-      }
-      yytext[idx-skip] = 0;
-
+	/* Preserve escapes until the consumer distinguishes local names from
+	   hierarchy separators. Unescaping here loses literal dots. */
       yylval.string_val = strdup(yytext);
       return IDENTIFIER;
 }

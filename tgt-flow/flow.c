@@ -1486,7 +1486,7 @@ static void emit_signals(ivl_scope_t scope)
 
 static void emit_instance_obj(ivl_scope_t child, int first)
 {
-      if (!first) fputs(", ", out);
+      if (!first) fputs(",", out);
       fputs("\n        {\"label\": ", out);  put_jstr(ivl_scope_basename(child));
       fputs(", \"module\": ", out);          put_jstr(ivl_scope_tname(child));
       fputs(", \"is_module_inst\": true, \"pos\": ", out);

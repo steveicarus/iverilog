@@ -323,6 +323,17 @@ general syntax of a variable is::
 	<label> .var/i "name", <msb>, <lsb>; vpiIntegerVar variable
 	<label> .var/str "name"; vpiStringVar variable
 
+Enum variables may append a reference to an enumeration definition before
+the terminating semicolon::
+
+        <label> .var "name", <msb> <lsb>, <enum-label>;
+
+This optional reference is also accepted by the ``/s``, ``/2u``, ``/2s``
+and ``/i`` forms. It identifies the enum typespec exposed through
+``vpi_handle(vpiTypespec, variable)``; it does not change the stored value.
+Declarations without this reference retain their existing behavior.
+Older VVP runtimes do not accept declarations containing this reference.
+
 The "name" is the declared base name of the original variable, for the
 sake of VPI code that might access it. The variable is placed in the
 current scope. The variable also has a width, defined by the indices

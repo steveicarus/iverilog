@@ -1098,6 +1098,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
       std::vector<PEEvent*>*event_exprs;
 
       ivl_case_quality_t case_quality;
+      NetCase::TYPE case_type;
       NetNet::Type nettype;
       PGBuiltin::Type gatetype;
       NetNet::PortType porttype;
@@ -1320,6 +1321,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 
 %type <citem>  case_item
 %type <citems> case_items
+%type <case_type> case_keyword
 
 %type <gate>  gate_instance gate_instance_connections gate_instance_ports
 %type <gate>  gate_instance_positional_connections
@@ -3857,6 +3859,12 @@ struct_union_member /* IEEE 1800-2012 A.2.2.1 */
       }
   ;
 
+case_keyword
+  : K_case  { $$ = NetCase::EQ; }
+  | K_casex { $$ = NetCase::EQX; }
+  | K_casez { $$ = NetCase::EQZ; }
+  ;
+
 case_item
   : expression_list_proper ':' statement_or_null
       { PCase::Item*tmp = new PCase::Item;
@@ -5736,7 +5744,9 @@ module_parameter_port_list_opt
 	pform_end_parameter_port_list();
       }
   | '#' '('
-      { pform_start_parameter_port_list(); }
+      { param_is_local = false;
+	pform_start_parameter_port_list();
+      }
     module_parameter_port_list
       { pform_end_parameter_port_list(); }
     ')'
@@ -7787,26 +7797,12 @@ non_block_statement_item
   | jump_statement
       { $$ = $1; }
 
-  | unique_priority K_case '(' expression ')' case_items K_endcase
-      { PCase*tmp = new PCase($1, NetCase::EQ, $4, $6);
+  | unique_priority case_keyword '(' expression ')' case_items K_endcase
+      { auto tmp = new PCase($1, $2, $4, $6);
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
-  | unique_priority K_casex '(' expression ')' case_items K_endcase
-      { PCase*tmp = new PCase($1, NetCase::EQX, $4, $6);
-	FILE_NAME(tmp, @2);
-	$$ = tmp;
-      }
-  | unique_priority K_casez '(' expression ')' case_items K_endcase
-      { PCase*tmp = new PCase($1, NetCase::EQZ, $4, $6);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | unique_priority K_case '(' expression ')' error K_endcase
-      { yyerrok; }
-  | unique_priority K_casex '(' expression ')' error K_endcase
-      { yyerrok; }
-  | unique_priority K_casez '(' expression ')' error K_endcase
+  | unique_priority case_keyword '(' expression ')' error K_endcase
       { yyerrok; }
 
   | K_if '(' expression ')' statement_or_null %prec less_than_K_else

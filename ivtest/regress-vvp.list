@@ -48,6 +48,7 @@ br_gh383a			vvp_tests/br_gh383a.json
 br_gh383b			vvp_tests/br_gh383b.json
 br_gh383c			vvp_tests/br_gh383c.json
 br_gh383d			vvp_tests/br_gh383d.json
+br_gh413			vvp_tests/br_gh413.json
 br_gh440			vvp_tests/br_gh440.json
 br_gh483a			vvp_tests/br_gh483a.json
 br_gh483b			vvp_tests/br_gh483b.json
@@ -89,7 +90,9 @@ br_gh1163			vvp_tests/br_gh1163.json
 br_gh1180a			vvp_tests/br_gh1180a.json
 br_gh1180b			vvp_tests/br_gh1180b.json
 br_gh1180c			vvp_tests/br_gh1180c.json
+br_gh1699			vvp_tests/br_gh1699.json
 ca_func2			vvp_tests/ca_func2.json
+case_duplicate_default_fail	vvp_tests/case_duplicate_default_fail.json
 class_property_array_invalid_compare	vvp_tests/class_property_array_invalid_compare.json
 class_property_array_invalid_read	vvp_tests/class_property_array_invalid_read.json
 class_property_array_invalid_write	vvp_tests/class_property_array_invalid_write.json
@@ -130,6 +133,7 @@ br_gh1407			vvp_tests/br_gh1407.json
 br_gh1512			vvp_tests/br_gh1512.json
 br_gh1541			vvp_tests/br_gh1541.json
 br_gh1542			vvp_tests/br_gh1542.json
+br_gh1548			vvp_tests/br_gh1548.json
 br_gh1549			vvp_tests/br_gh1549.json
 br_gh1549b			vvp_tests/br_gh1549b.json
 br_gh1554a			vvp_tests/br_gh1554a.json
@@ -148,6 +152,10 @@ br_gh1617			vvp_tests/br_gh1617.json
 br_gh1618			vvp_tests/br_gh1618.json
 br_gh1639			vvp_tests/br_gh1639.json
 br_gh1653			vvp_tests/br_gh1653.json
+br_gh1692			vvp_tests/br_gh1692.json
+br_gh1692b			vvp_tests/br_gh1692b.json
+br_gh1692c			vvp_tests/br_gh1692c.json
+br_gh1692d			vvp_tests/br_gh1692d.json
 ca_time_real			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json
@@ -304,6 +312,7 @@ parameter_port_empty		vvp_tests/parameter_port_empty.json
 parameter_port_empty_defparam_override_fail	vvp_tests/parameter_port_empty_defparam_override_fail.json
 parameter_port_empty_named_override_fail	vvp_tests/parameter_port_empty_named_override_fail.json
 parameter_port_empty_verilog_fail	vvp_tests/parameter_port_empty_verilog_fail.json
+parameter_port_state_named	vvp_tests/parameter_port_state_named.json
 partsel_invalid_idx1		vvp_tests/partsel_invalid_idx1.json
 partsel_invalid_idx2		vvp_tests/partsel_invalid_idx2.json
 partsel_invalid_idx3		vvp_tests/partsel_invalid_idx3.json
@@ -386,6 +395,8 @@ specparam_range_list_generate_fail	vvp_tests/specparam_range_list_generate_fail.
 specparam_reference_order_fail	vvp_tests/specparam_reference_order_fail.json
 specparam_specify_reference_order	vvp_tests/specparam_specify_reference_order.json
 statement_attributes_error_recovery_fail	vvp_tests/statement_attributes_error_recovery_fail.json
+static_func_ret_val1		vvp_tests/static_func_ret_val1.json
+static_func_ret_val2		vvp_tests/static_func_ret_val2.json
 strength_concat			vvp_tests/strength_concat.json
 strength_feedback		vvp_tests/strength_feedback.json
 strength_feedback_delay		vvp_tests/strength_feedback_delay.json
@@ -428,6 +439,7 @@ sv_assertion_label_duplicate_fail	vvp_tests/sv_assertion_label_duplicate_fail.js
 sv_assertion_label_hides_type_fail	vvp_tests/sv_assertion_label_hides_type_fail.json
 sv_assertion_label_scope		vvp_tests/sv_assertion_label_scope.json
 sv_assign_pattern_auto_force_fail	vvp_tests/sv_assign_pattern_auto_force_fail.json
+sv_assign_pattern_unbound_fail	vvp_tests/sv_assign_pattern_unbound_fail.json
 sv_automatic_2state		vvp_tests/sv_automatic_2state.json
 sv_bad_member_lval_proc_fail	vvp_tests/sv_bad_member_lval_proc_fail.json
 sv_block_prefix_label			vvp_tests/sv_block_prefix_label.json
@@ -516,6 +528,8 @@ sv_const_fail8			vvp_tests/sv_const_fail8.json
 sv_const_fail9			vvp_tests/sv_const_fail9.json
 sv_darray_assign_op		vvp_tests/sv_darray_assign_op.json
 sv_darray_find_locators		vvp_tests/sv_darray_find_locators.json
+sv_darray_last_read_fail	vvp_tests/sv_darray_last_read_fail.json
+sv_darray_last_write_fail	vvp_tests/sv_darray_last_write_fail.json
 sv_darray_min_max		vvp_tests/sv_darray_min_max.json
 sv_darray_min_max_with		vvp_tests/sv_darray_min_max_with.json
 sv_darray_new_function		vvp_tests/sv_darray_new_function.json
@@ -917,3 +931,12 @@ writemem-invalid		vvp_tests/writemem-invalid.json
 uarray_subroutine_port	vvp_tests/uarray_subroutine_port.json
 uarray_ca_fail		vvp_tests/uarray_ca_fail.json
 param_array_param_ref	vvp_tests/param_array_param_ref.json
+
+# Escaped local identifiers versus hierarchy separators
+sdf_escaped_instance vvp_tests/sdf_escaped_instance.json
+sdf_escaped_instance_slash vvp_tests/sdf_escaped_instance_slash.json
+sdf_escaped_interconnect vvp_tests/sdf_escaped_interconnect.json
+sdf_escaped_interconnect_slash vvp_tests/sdf_escaped_interconnect_slash.json
+sdf_escaped_local vvp_tests/sdf_escaped_local.json
+sdf_escaped_missing vvp_tests/sdf_escaped_missing.json
+sdf_escaped_generate vvp_tests/sdf_escaped_generate.json

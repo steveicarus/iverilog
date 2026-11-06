@@ -1,0 +1,10 @@
+(DELAYFILE
+  (SDFVERSION "3.0")
+  (DESIGN "top")
+  (DIVIDER /)
+  (TIMESCALE 1ps)
+  (CELL (CELLTYPE "delay_cell") (INSTANCE a\.b)
+    (DELAY (ABSOLUTE (IOPATH A Z (3) (5)))))
+  (CELL (CELLTYPE "delay_cell") (INSTANCE a/b)
+    (DELAY (ABSOLUTE (IOPATH A Z (11) (13)))))
+)
