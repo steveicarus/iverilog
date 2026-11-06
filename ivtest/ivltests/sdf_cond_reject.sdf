@@ -1,0 +1,18 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "conditional_cell") (INSTANCE u)
+  (DELAY (ABSOLUTE
+   (COND missing (IOPATH A Z (3) (5)))
+   (COND (E && F) (IOPATH A Z (7) (9)))
+   (COND F (IOPATH A Z (23) (29))))))
+ (CELL (CELLTYPE "expression_cell") (INSTANCE ue)
+  (DELAY (ABSOLUTE (COND E (IOPATH A Z (3) (5))))))
+ (CELL (CELLTYPE "vector_condition_cell") (INSTANCE uv)
+  (DELAY (ABSOLUTE (COND E (IOPATH A Z (3) (5))))))
+ (CELL (CELLTYPE "selected_condition_cell") (INSTANCE us)
+  (DELAY (ABSOLUTE (COND E (IOPATH A Z (3) (5))))))
+ (CELL (CELLTYPE "unconditional_cell") (INSTANCE uu)
+  (DELAY (ABSOLUTE (COND E (IOPATH A Z (3) (5))))))
+ (CELL (CELLTYPE "conditional_cell") (INSTANCE u)
+  (DELAY (ABSOLUTE (COND 1'b1 (IOPATH A Z (3) (5))))))
+)

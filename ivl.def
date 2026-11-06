@@ -183,6 +183,7 @@ ivl_parameter_signed
 ivl_parameter_width
 
 ivl_path_condit
+ivl_path_condition_key
 ivl_path_delay
 ivl_path_is_condit
 ivl_path_is_parallel

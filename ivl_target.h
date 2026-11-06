@@ -527,6 +527,12 @@ extern ivl_island_t ivl_branch_island(ivl_branch_t obj);
  * ivl_path_condit
  *    This returns the nexus that tracks the condition for the
  *    delay. If the delay path is unconditional, this returns nil.
+ *
+ * ivl_path_condition_key
+ *    The original local scalar condition identifier, without Verilog escapes.
+ *    Returns an empty string for unconditional paths or other expressions.
+ *    This metadata is for annotation matching, not condition evaluation.
+ *
  * ivl_path_is_condit
  *    Is this a conditional structure? Needed for ifnone.
  *
@@ -541,6 +547,7 @@ extern ivl_island_t ivl_branch_island(ivl_branch_t obj);
 extern ivl_scope_t ivl_path_scope(ivl_delaypath_t obj);
 extern ivl_nexus_t ivl_path_source(ivl_delaypath_t obj);
 extern uint64_t ivl_path_delay(ivl_delaypath_t obj, ivl_path_edge_t pt);
+extern const char* ivl_path_condition_key(ivl_delaypath_t obj);
 extern ivl_nexus_t ivl_path_condit(ivl_delaypath_t obj);
 extern int ivl_path_is_condit(ivl_delaypath_t obj);
 

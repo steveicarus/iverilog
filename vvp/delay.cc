@@ -1012,6 +1012,13 @@ int __vpiModPathSrc::get_type_code(void) const
 int __vpiModPathSrc::vpi_get(int code)
 { return modpath_src_get(code, this); }
 
+char* __vpiModPathSrc::vpi_get_str(int code)
+{
+      if (code == _vpiModPathCondition && !sdf_condition.empty())
+            return simple_set_rbuf_str(sdf_condition.c_str());
+      return 0;
+}
+
 void __vpiModPathSrc::vpi_get_value(p_vpi_value val)
 { modpath_src_get_value(this, val); }
 

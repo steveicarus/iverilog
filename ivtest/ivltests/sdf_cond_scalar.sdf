@@ -1,0 +1,11 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "conditional_cell") (INSTANCE u0)
+  (DELAY (ABSOLUTE
+   (COND "first condition" (E) (IOPATH A Z (3) (5)))
+   (COND F (IOPATH A Z (7) (11))))))
+ (CELL (CELLTYPE "conditional_cell") (INSTANCE u1)
+  (DELAY (ABSOLUTE
+   (COND E (IOPATH A Z (13) (17)))
+   (COND "second condition" (F) (IOPATH A Z (19) (23))))))
+)

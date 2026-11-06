@@ -120,6 +120,8 @@ static void draw_modpath_record(const char*label, const char*driver,
 
 	    src_sig = find_path_source_port(path);
 	    fprintf(vvp_out, " v%p_0", src_sig);
+            const char*key = ivl_path_condition_key(path);
+            if (key[0]) fprintf(vvp_out, " \"%s\"", vvp_mangle_name(key));
       }
 
       fprintf(vvp_out, ";\n");

@@ -1717,10 +1717,11 @@ void compile_modpath_src(struct __vpiModPath*dst, char edge_c,
 			 const struct symb_s&src,
 			 struct numbv_s&vals,
 			 const struct symb_s&condit_src,
-			 const struct symb_s&path_term_in)
+			 const struct symb_s&path_term_in, const char* key)
 {
       struct __vpiModPathSrc*obj =
 	    make_modpath_src(dst, edge_c, src, vals, false);
+      if (key) obj->sdf_condition = key;
       input_connect(obj->net, 1, condit_src.text);
       compile_vpi_lookup(&obj->path_term_in.expr, path_term_in.text);
 }

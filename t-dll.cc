@@ -2765,6 +2765,7 @@ bool dll_target::signal_paths(const NetNet*net)
 		  obj->path[ptr].scope = lookup_scope_(src->scope());
 		  obj->path[ptr].src = nex->t_cookie();
 		  obj->path[ptr].condit = path_condit;
+		  obj->path[ptr].sdf_condition = src->sdf_condition;
 		  obj->path[ptr].conditional = src->is_condit();
 		  obj->path[ptr].parallel = src->is_parallel();
 		  obj->path[ptr].posedge = src->is_posedge();

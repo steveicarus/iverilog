@@ -408,6 +408,9 @@ typedef struct t_vpi_delay  {
 #  define _vpiDelaySelMaximum 3
 /* used in vvp/vpi_priv.h  0x1000003 */
 /* used in vvp/vpi_priv.h  0x1000004 */
+/* vpi_get_str on vpiModPath: original local scalar condition identifier,
+   or NULL for an unconditional path or an unsupported expression. */
+#define _vpiModPathCondition 0x1000005
 
 /* DELAY MODES */
 #define vpiNoDelay            1

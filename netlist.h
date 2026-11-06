@@ -635,6 +635,7 @@ class NetDelaySrc  : public NetObj {
       const Link&condit_pin() const;
 
       bool is_parallel() const;
+      std::string sdf_condition;
 
       void dump(std::ostream&, unsigned ind) const;
 
