@@ -162,6 +162,8 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
 */
 class vvp_fun_modpath;
 class vvp_fun_modpath_src;
+struct modpath_scalar_event;
+struct modpath_scalar_state;
 
 class vvp_fun_modpath  : public vvp_net_fun_t, private vvp_gen_event_s {
 
@@ -176,11 +178,15 @@ class vvp_fun_modpath  : public vvp_net_fun_t, private vvp_gen_event_s {
 
     private:
       virtual void run_run() override;
+      void scalar_request_(vvp_bit4_t value, vvp_time64_t delay,
+                           vvp_time64_t reject_limit);
+      friend struct modpath_scalar_event;
 
     private:
       vvp_net_t*net_;
 
       vvp_vector4_t cur_vec4_;
+      modpath_scalar_state*scalar_;
 
       vvp_fun_modpath_src*src_list_;
       vvp_fun_modpath_src*ifnone_list_;

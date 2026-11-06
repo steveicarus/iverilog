@@ -507,8 +507,127 @@ void vvp_fun_delay::run_run_real_(const struct vvp_fun_delay::event_*cur)
       net_->send_real(cur_real_, 0);
 }
 
+// Keep functional requests separate from values already delivered. Each
+// surviving scalar transaction owns its value and scheduled delivery time.
+struct modpath_scalar_state {
+      vvp_bit4_t delivered;
+      list<modpath_scalar_event*> pending;
+      modpath_scalar_state() : delivered(BIT4_X) { }
+};
+
+struct modpath_event_registry;
+struct modpath_scalar_event : public vvp_gen_event_s {
+      modpath_scalar_event(vvp_fun_modpath*, vvp_bit4_t, vvp_time64_t);
+      ~modpath_scalar_event() override;
+      void run_run() override;
+      void detach();
+
+      vvp_fun_modpath*owner;
+      const vvp_bit4_t target;
+      const vvp_time64_t due;
+      list<modpath_scalar_event*>::iterator pending;
+      list<modpath_scalar_event*>::iterator lifetime;
+      modpath_event_registry&registry;
+};
+
+// The generic scheduler deletes dispatched payloads, but does not dispatch
+// future events after $finish. Keep those payloads until post-simulation
+// cleanup, independently of whether they remain in an owner's pending list.
+struct modpath_event_registry {
+      list<modpath_scalar_event*> outstanding;
+      modpath_event_registry();
+      ~modpath_event_registry() { cleanup(); }
+      void cleanup()
+      {
+            while (!outstanding.empty()) delete outstanding.front();
+      }
+      static PLI_INT32 postsim(p_cb_data);
+};
+
+static modpath_event_registry&modpath_registry()
+{
+      static modpath_event_registry registry;
+      return registry;
+}
+
+modpath_event_registry::modpath_event_registry()
+{
+      s_cb_data cb = {};
+      cb.reason = cbEndOfSimulation;
+      cb.cb_rtn = postsim;
+      cb.user_data = reinterpret_cast<PLI_BYTE8*>(this);
+      vpiHandle handle = vpi_register_cb(&cb);
+      assert(handle);
+}
+
+PLI_INT32 modpath_event_registry::postsim(p_cb_data cb)
+{
+      // Final blocks have run and the scheduler will not dispatch again.
+      const_cast<modpath_event_registry*>(
+            reinterpret_cast<const modpath_event_registry*>(cb->user_data))->cleanup();
+      return 0;
+}
+
+modpath_scalar_event::modpath_scalar_event(vvp_fun_modpath*o, vvp_bit4_t v,
+                                         vvp_time64_t when)
+: owner(o), target(v), due(when), registry(modpath_registry())
+{
+      owner->scalar_->pending.push_back(this);
+      pending = --owner->scalar_->pending.end();
+      registry.outstanding.push_back(this);
+      lifetime = --registry.outstanding.end();
+}
+
+void modpath_scalar_event::detach()
+{
+      if (!owner) return;
+      owner->scalar_->pending.erase(pending);
+      owner = 0;
+}
+
+modpath_scalar_event::~modpath_scalar_event()
+{
+      detach();
+      registry.outstanding.erase(lifetime);
+}
+
+void modpath_scalar_event::run_run()
+{
+      if (!owner) return; // A canceled callback cannot deliver a newer request.
+      assert(schedule_simtime() == due);
+      vvp_fun_modpath*o = owner;
+      detach();
+      o->scalar_->delivered = target;
+      o->net_->send_vec4(vvp_vector4_t(1, target), 0);
+      // The generic scheduler deletes this payload after return.
+}
+
+void vvp_fun_modpath::scalar_request_(vvp_bit4_t value, vvp_time64_t delay,
+                                    vvp_time64_t reject_limit)
+{
+      const vvp_time64_t due = schedule_simtime() + delay;
+      cur_vec4_.set_bit(0, value);
+
+      // Default pulse rejection uses the trailing transition's full path
+      // delay. Reject negative or shorter nominal output pulses; equality
+      // survives. Canceled payloads remain scheduler-owned until dispatched.
+      while (!scalar_->pending.empty()) {
+            modpath_scalar_event*p = scalar_->pending.back();
+            if (due >= p->due && due - p->due >= reject_limit) break;
+            p->detach();
+      }
+
+      // A due-now transaction is still the projected output until it runs.
+      const vvp_bit4_t base = scalar_->pending.empty() ? scalar_->delivered
+                            : scalar_->pending.back()->target;
+      if (value == base) return;
+      modpath_scalar_event*event = new modpath_scalar_event(this, value, due);
+      schedule_generic(event, delay, false, true, true);
+}
+
 vvp_fun_modpath::vvp_fun_modpath(vvp_net_t*net, unsigned width)
-: net_(net), src_list_(0), ifnone_list_(0)
+: net_(net), scalar_(width == 1 ? new modpath_scalar_state : 0),
+  src_list_(0), ifnone_list_(0)
 {
       cur_vec4_ = vvp_vector4_t(width, BIT4_X);
       schedule_init_propagate(net_, cur_vec4_);
@@ -516,6 +635,10 @@ vvp_fun_modpath::vvp_fun_modpath(vvp_net_t*net, unsigned width)
 
 vvp_fun_modpath::~vvp_fun_modpath()
 {
+      if (scalar_) {
+            while (!scalar_->pending.empty()) scalar_->pending.back()->detach();
+            delete scalar_;
+      }
 	// Delete the source probes.
       while (src_list_) {
 	    vvp_fun_modpath_src*tmp = src_list_;
@@ -611,6 +734,10 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	   conditional delays is incomplete, leaving some cases
 	   uncovered. In that case, just pass the data without delay */
       if (candidate_list.empty()) {
+	    if (scalar_) {
+		  scalar_request_(bit.value(0), 0, 0);
+		  return;
+	    }
 	    cur_vec4_ = bit;
 	    schedule_generic(this, 0, false);
 	    return;
@@ -621,6 +748,7 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	   candidates. This minimum set becomes the chosen delay to
 	   use. */
       vvp_time64_t out_at[12];
+      vvp_time64_t full_delay[12];
       vvp_time64_t now = schedule_simtime();
 
       typedef list<vvp_fun_modpath_src*>::const_iterator iter_t;
@@ -629,6 +757,7 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       const vvp_fun_modpath_src*src = *cur;
 
       for (unsigned idx = 0 ;  idx < 12 ;  idx += 1) {
+	    full_delay[idx] = src->delay_[idx];
 	    out_at[idx] = src->wake_time_ + src->delay_[idx];
 	    if (out_at[idx] <= now)
 		  out_at[idx] = 0;
@@ -639,6 +768,8 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       for (++ cur ; cur != candidate_list.end() ; ++ cur ) {
 	    src = *cur;
 	    for (unsigned idx = 0 ;  idx < 12 ;  idx += 1) {
+		  if (src->delay_[idx] < full_delay[idx])
+			full_delay[idx] = src->delay_[idx];
 		  vvp_time64_t tmp = src->wake_time_ + src->delay_[idx];
 		  if (tmp <= now)
 			tmp = 0;
@@ -653,6 +784,13 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       vvp_time64_t use_delay = delay_from_edge(cur_vec4_.value(0),
 					       bit.value(0),
 					       out_at);
+
+      if (scalar_) {
+	    vvp_time64_t limit = delay_from_edge(cur_vec4_.value(0),
+					        bit.value(0), full_delay);
+	    scalar_request_(bit.value(0), use_delay, limit);
+	    return;
+      }
 
 	/* FIXME: This bases the edge delay on only the least
 	   bit. This is WRONG! I need to find all the possible delays,
