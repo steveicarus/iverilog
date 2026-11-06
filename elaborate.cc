@@ -7317,6 +7317,68 @@ bool Module::elaborate(Design*des, NetScope*scope) const
  * child scope for each definition and use that for the context of the
  * function.
  */
+/*
+ * Compare the type of an argument or return value of a virtual method
+ * with the one in the method that it overrides. Class return values may
+ * be covariant, in which case the override returns a derived class.
+ */
+static bool virtual_types_match(ivl_type_t base, ivl_type_t over, bool covariant)
+{
+      if (base == 0 || over == 0)
+	    return base == over;
+      if (base->base_type() != over->base_type())
+	    return false;
+      switch (base->base_type()) {
+	  case IVL_VT_CLASS:
+	    return covariant ? base->type_compatible(over) : base == over;
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    return base->type_equivalent(over);
+	  default:
+	    return true;
+      }
+}
+
+static const char*virtual_mismatch(NetScope*over, NetScope*root)
+{
+      if (over->type() != root->type())
+	    return "a function and a task";
+
+      const NetBaseDef*odef = over->type()==NetScope::FUNC
+	    ? static_cast<const NetBaseDef*>(over->func_def())
+	    : static_cast<const NetBaseDef*>(over->task_def());
+      const NetBaseDef*rdef = root->type()==NetScope::FUNC
+	    ? static_cast<const NetBaseDef*>(root->func_def())
+	    : static_cast<const NetBaseDef*>(root->task_def());
+      if (odef == 0 || rdef == 0)
+	    return 0;
+
+      if (odef->port_count() != rdef->port_count())
+	    return "a different number of arguments";
+
+	// Port 0 is the implicit "this" argument.
+      for (unsigned idx = 1 ; idx < odef->port_count() ; idx += 1) {
+	    const NetNet*op = odef->port(idx);
+	    const NetNet*rp = rdef->port(idx);
+	    if (op->port_type() != rp->port_type())
+		  return "a different argument direction";
+	    if (op->unpacked_dimensions() != rp->unpacked_dimensions()
+		|| !virtual_types_match(rp->net_type(), op->net_type(), false))
+		  return "a different argument type";
+      }
+
+      if (over->type() == NetScope::FUNC) {
+	    const NetNet*ores = over->find_signal(over->basename());
+	    const NetNet*rres = root->find_signal(root->basename());
+	    if ((ores == 0) != (rres == 0))
+		  return "a different return type";
+	    if (ores && !virtual_types_match(rres->net_type(), ores->net_type(), true))
+		  return "a different return type";
+      }
+
+      return 0;
+}
+
 void netclass_t::elaborate(Design*des, PClass*pclass)
 {
       if (! pclass->type->initialize_static.empty()) {
@@ -7356,6 +7418,32 @@ void netclass_t::elaborate(Design*des, PClass*pclass)
 	    NetScope*scope = class_scope_->child( hname_t(cur->first) );
 	    ivl_assert(*cur->second, scope);
 	    cur->second->elaborate(des, scope);
+      }
+
+	// Check that each override of a virtual method has the same
+	// signature as the virtual method that it overrides.
+      std::vector<perm_string> names;
+      for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
+		 ; cur != pclass->funcs.end() ; ++ cur)
+	    names.push_back(cur->first);
+      for (map<perm_string,PTask*>::iterator cur = pclass->tasks.begin()
+		 ; cur != pclass->tasks.end() ; ++ cur)
+	    names.push_back(cur->first);
+
+      for (perm_string name : names) {
+	    NetScope*method = class_scope_->child( hname_t(name) );
+	    NetScope*root = virtual_root(method);
+	    if (root == 0 || root == method)
+		  continue;
+	    if (const char*what = virtual_mismatch(method, root)) {
+		  cerr << method->get_fileline() << ": error: Method `"
+		       << method->basename() << "` of class " << name_
+		       << " overrides a virtual method but has " << what
+		       << "." << endl;
+		  cerr << root->get_fileline() << ":      : "
+		       << "The virtual method is declared here." << endl;
+		  des->errors += 1;
+	    }
       }
 }
 
