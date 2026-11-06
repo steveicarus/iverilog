@@ -63,12 +63,24 @@ module test;
     endfunction
   endclass
 
+  // An unpacked array argument is fine if nothing overrides the function
+  class Arr;
+    virtual function int sum(int a[3]);
+      return a[0] + a[1] + a[2];
+    endfunction
+  endclass
+
+  Arr arr;
+  int v[3] = '{1, 2, 3};
   Base b;
   Derived d;
   Item it;
   int errors = 0;
 
   initial begin
+    arr = new;
+    if (arr.sum(v) != 6) errors += 1;
+
     b = new;
     if (b.vec(8'h0f, 8'h01) !== 8'h10) errors += 1;
     if (b.i32(10, 3) != 7) errors += 1;

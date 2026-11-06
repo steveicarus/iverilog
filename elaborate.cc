@@ -7457,7 +7457,7 @@ void netclass_t::elaborate(Design*des, PClass*pclass)
       for (perm_string name : names) {
 	    NetScope*method = class_scope_->child( hname_t(name) );
 	    NetScope*root = virtual_root(method);
-	    if (root == 0)
+	    if (root == 0 || root == method)
 		  continue;
 
 	    // The code that passes the arguments of a virtual method on
@@ -7473,8 +7473,6 @@ void netclass_t::elaborate(Design*des, PClass*pclass)
 		  break;
 	    }
 
-	    if (root == method)
-		  continue;
 	    if (const char*what = virtual_mismatch(method, root)) {
 		  cerr << method->get_fileline() << ": error: Method `"
 		       << method->basename() << "` of class " << name_
