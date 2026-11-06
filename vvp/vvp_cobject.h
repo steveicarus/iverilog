@@ -46,6 +46,10 @@ class vvp_cobject : public vvp_object {
 
       void shallow_copy(const vvp_object*that) override;
 
+	// See class_type::get_virtual().
+      vvp_code_t get_virtual(vpiHandle scope) const
+      { return defn_->get_virtual(scope); }
+
     private:
       const class_type* defn_;
 	// For now, only support 32bit bool signed properties.
