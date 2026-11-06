@@ -69,8 +69,6 @@ static void draw_eval_function_argument(ivl_signal_t port, ivl_expr_t expr)
 	    draw_eval_string(expr);
 	    break;
 	  case IVL_VT_DARRAY:
-	    vvp_errors += draw_eval_object(expr);
-	    break;
 	  case IVL_VT_QUEUE:
 	      /* Pass by value: the function gets its own copy. */
 	    vvp_errors += draw_eval_object(expr);

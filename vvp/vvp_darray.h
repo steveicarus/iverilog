@@ -111,6 +111,7 @@ class vvp_darray_vec2 : public vvp_darray {
       void set_word(unsigned adr, const vvp_vector4_t&value) override;
       void get_word(unsigned adr, vvp_vector4_t&value) override;
       void shallow_copy(const vvp_object*obj) override;
+      vvp_object* duplicate(void) const override;
       vvp_vector4_t get_bitstream(bool as_vec4) override;
 
     private:
