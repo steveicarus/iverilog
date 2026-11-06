@@ -20,7 +20,7 @@ wire [31:0] random_value = random.random;
 initial begin
 // Icarus can't do this:
 // $monitor("saw random value: %x", random.random);
-// Do this instead: 
+// Do this instead:
   $monitor("saw random value: %x", random_value);
 
   $display("got random value: %x", random(0));

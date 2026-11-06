@@ -20,7 +20,7 @@ wire real my_func_value = my_func.my_func;
 initial begin
 // Icarus can't do this:
 //$monitor("saw my_func value: %f", my_func.my_func);
-// Do this instead: 
+// Do this instead:
   $monitor("saw my_func value: %f", my_func_value);
 
   $display("got my_func value: %f", my_func(10.0));
