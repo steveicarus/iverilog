@@ -4050,7 +4050,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
 	/* Handle non-automatic tasks with no parameters specially. There is
            no need to make a sequential block to hold the generated code. */
-      if ((parm_count == 0) && !task->is_auto()) {
+      if (parm_count == 0 && parms_.empty() && !task->is_auto()) {
 	      // Check if a task call is allowed in this context.
 	    test_task_calls_ok_(des, scope);
 
