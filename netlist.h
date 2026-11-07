@@ -962,6 +962,51 @@ using NetERef = NetNetRef<&NetNet::incr_eref, &NetNet::decr_eref>;
  */
 using NetLRef = NetNetRef<&NetNet::incr_lref, &NetNet::decr_lref>;
 
+/* One elaborated WIDTH declaration, with signal references kept alive. */
+class NetWidth : public LineInfo {
+    public:
+      NetWidth(NetScope*scope, NetNet*reference, NetNet*notifier,
+               bool posedge, double limit, double threshold)
+      : scope_(scope), reference_(reference), notifier_(notifier),
+        posedge_(posedge), limit_(limit), threshold_(threshold) { }
+
+      NetScope*scope() const { return scope_; }
+      NetNet*reference() const { return reference_.get(); }
+      NetNet*notifier() const { return notifier_.get(); }
+      bool posedge() const { return posedge_; }
+      double limit() const { return limit_; }
+      double threshold() const { return threshold_; }
+
+    private:
+      NetScope*scope_;
+      NetERef reference_;
+      NetLRef notifier_;
+      bool posedge_;
+      double limit_, threshold_;
+};
+
+/* One elaborated PERIOD declaration, with signal references kept alive. */
+class NetPeriod : public LineInfo {
+    public:
+      NetPeriod(NetScope*scope, NetNet*reference, NetNet*notifier,
+                bool posedge, double limit)
+      : scope_(scope), reference_(reference), notifier_(notifier),
+        posedge_(posedge), limit_(limit) { }
+
+      NetScope*scope() const { return scope_; }
+      NetNet*reference() const { return reference_.get(); }
+      NetNet*notifier() const { return notifier_.get(); }
+      bool posedge() const { return posedge_; }
+      double limit() const { return limit_; }
+
+    private:
+      NetScope*scope_;
+      NetERef reference_;
+      NetLRef notifier_;
+      bool posedge_;
+      double limit_;
+};
+
 /*
  * This object type is used for holding local variable values when
  * evaluating constant user functions.
@@ -1128,6 +1173,11 @@ class NetScope : public Definitions, public Attrib {
 
 	/* These methods set or access events that live in this
 	   scope. */
+
+      void add_width(std::unique_ptr<NetWidth> check)
+      { widths_.push_back(std::move(check)); }
+      void add_period(std::unique_ptr<NetPeriod> check)
+      { periods_.push_back(std::move(check)); }
 
       void add_event(NetEvent*);
       void rem_event(NetEvent*);
@@ -1477,6 +1527,8 @@ class NetScope : public Definitions, public Attrib {
       std::map<perm_string,unsigned int> gate_names_;
 
       NetEvent *events_;
+      std::vector<std::unique_ptr<NetWidth> > widths_;
+      std::vector<std::unique_ptr<NetPeriod> > periods_;
 
       std::map<perm_string,LineInfo*> genvars_;
 

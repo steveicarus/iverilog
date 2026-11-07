@@ -1,7 +1,7 @@
 #ifndef IVL_PTimingCheck_H
 #define IVL_PTimingCheck_H
 /*
- * Copyright (c) 2006-2025 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2006-2026 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,6 +57,34 @@ class PTimingCheck  : public LineInfo {
       virtual void elaborate(class Design*des, class NetScope*scope) const = 0;
 
       virtual void dump(std::ostream&out, unsigned ind) const = 0;
+};
+
+/* The parsed unconditional scalar $width declaration. */
+class PWidth : public PTimingCheck {
+    public:
+      PWidth(event_t*reference, PExpr*limit, PExpr*threshold,
+             pform_name_t*notifier);
+      void elaborate(class Design*des, class NetScope*scope) const override;
+      void dump(std::ostream&out, unsigned ind) const override;
+
+    private:
+      std::unique_ptr<event_t> reference_;
+      std::unique_ptr<PExpr> limit_;
+      std::unique_ptr<PExpr> threshold_;
+      std::unique_ptr<pform_name_t> notifier_;
+};
+
+/* The parsed unconditional scalar $period declaration. */
+class PPeriod : public PTimingCheck {
+    public:
+      PPeriod(event_t*reference, PExpr*limit, pform_name_t*notifier);
+      void elaborate(class Design*des, class NetScope*scope) const override;
+      void dump(std::ostream&out, unsigned ind) const override;
+
+    private:
+      std::unique_ptr<event_t> reference_;
+      std::unique_ptr<PExpr> limit_;
+      std::unique_ptr<pform_name_t> notifier_;
 };
 
 /*

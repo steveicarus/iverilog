@@ -87,11 +87,15 @@ struct dll_target  : public target_t, public expr_scan_t {
       void convert_module_ports(const NetScope*) override;
       void signal(const NetNet*) override;
       bool signal_paths(const NetNet*) override;
+      void width_check(const NetWidth*) override;
+      void period_check(const NetPeriod*) override;
       ivl_dll_t dll_;
 
       ivl_design_s des_;
 
       target_design_f target_;
+      bool width_checks_supported_;
+      bool period_checks_supported_;
 
 
 	/* These methods and members are used for forming the
@@ -681,6 +685,8 @@ struct ivl_scope_s {
       std::vector<ivl_enumtype_t> enumerations_;
 
       std::vector<ivl_signal_t> sigs_;
+      std::vector<ivl_width_t> widths_;
+      std::vector<ivl_period_t> periods_;
 
       unsigned nlog_;
       ivl_net_logic_t*log_;
@@ -773,6 +779,29 @@ struct ivl_signal_s {
  * is defined by the ivl_statement_type_t enumeration. Given the type,
  * certain information about the statement may be available.
  */
+/* Typed unconditional WIDTH check; times remain in declaring-scope units. */
+struct ivl_width_s {
+      ivl_scope_t scope;
+      ivl_signal_t reference;
+      ivl_signal_t notifier;
+      bool posedge;
+      double limit;
+      double threshold;
+      perm_string file;
+      unsigned lineno;
+};
+
+/* Typed unconditional PERIOD check; the limit uses declaring-scope units. */
+struct ivl_period_s {
+      ivl_scope_t scope;
+      ivl_signal_t reference;
+      ivl_signal_t notifier;
+      bool posedge;
+      double limit;
+      perm_string file;
+      unsigned lineno;
+};
+
 struct ivl_statement_s {
       enum ivl_statement_type_e type_;
       perm_string file;

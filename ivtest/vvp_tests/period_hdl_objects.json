@@ -1,0 +1,15 @@
+{
+    "type": "normal",
+    "source": "period_hdl_objects.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-Iivltests",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/period_objects.c"
+    ]
+}

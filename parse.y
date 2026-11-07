@@ -7018,12 +7018,9 @@ specify_item
   | K_Speriod '(' spec_reference_event ',' delay_value
     spec_notifier_opt ')' ';'
       {
-	if (gn_specify_blocks_flag) {
-	      yywarn(@3, "warning: Timing checks are not supported.");
-	}
-	delete $3; // spec_reference_event
-	delete $5; // delay_value
-	delete $6; // spec_notifier_opt
+	PPeriod*period = new PPeriod($3, $5, $6);
+	FILE_NAME(period, @1);
+	pform_module_timing_check(period);
       }
   | K_Srecovery '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
@@ -7122,21 +7119,15 @@ specify_item
   | K_Swidth '(' spec_reference_event ',' delay_value ',' expression
     spec_notifier_opt ')' ';'
       {
-	if (gn_specify_blocks_flag) {
-	      yywarn(@3, "warning: Timing checks are not supported.");
-	}
-	delete $3; // spec_reference_event
-	delete $5; // delay_value
-	delete $7; // expression
-	delete $8;
+	PWidth*width = new PWidth($3, $5, $7, $8);
+	FILE_NAME(width, @1);
+	pform_module_timing_check(width);
       }
   | K_Swidth '(' spec_reference_event ',' delay_value ')' ';'
       {
-	if (gn_specify_blocks_flag) {
-	      yywarn(@3, "warning: Timing checks are not supported.");
-	}
-	delete $3; // spec_reference_event
-	delete $5; // delay_value
+	PWidth*width = new PWidth($3, $5, nullptr, nullptr);
+	FILE_NAME(width, @1);
+	pform_module_timing_check(width);
       }
   | K_pulsestyle_onevent specify_path_identifiers ';'
       {
