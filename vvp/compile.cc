@@ -1629,7 +1629,8 @@ void compile_extend_signed(char*label, long wid, struct symb_s arg)
 }
 
 struct __vpiModPath* compile_modpath(char*label, unsigned width,
-                                     struct symb_s drv, struct symb_s dest)
+                                     struct symb_s drv, struct symb_s dest,
+				     char*data)
 {
       vvp_net_t*net = new vvp_net_t;
       vvp_fun_modpath*obj = new vvp_fun_modpath(net, width);
@@ -1642,6 +1643,7 @@ struct __vpiModPath* compile_modpath(char*label, unsigned width,
       __vpiModPath*modpath = vpip_make_modpath(net);
 
       compile_vpi_lookup(&modpath->path_term_out.expr, dest.text);
+      if (data) compile_vpi_lookup(&modpath->data_net, data);
 
       free(label);
 

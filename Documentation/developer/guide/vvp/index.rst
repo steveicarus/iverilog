@@ -8,6 +8,7 @@ VVP - Verilog Virtual Processor
    vvp
    opcodes
    vpi
+   vpi_modpath_data
    vthread
    debug
 

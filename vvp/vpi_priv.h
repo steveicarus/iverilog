@@ -566,6 +566,7 @@ struct __vpiModPath {
       class vvp_fun_modpath*modpath;
 
       struct __vpiModPathTerm path_term_out;
+      vpiHandle data_net; // Borrowed from its owning scope, never deleted here.
       vvp_net_t *input_net  ;
 };
 
