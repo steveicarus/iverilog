@@ -288,6 +288,10 @@ memsynth9			vvp_tests/memsynth9.json
 memsynth9-synth			vvp_tests/memsynth9-synth.json
 mix_reset			vvp_tests/mix_reset.json
 mix_reset-synth			vvp_tests/mix_reset-synth.json
+modpath_pulse_asymmetric		vvp_tests/modpath_pulse_asymmetric.json
+modpath_pulse_finish		vvp_tests/modpath_pulse_finish.json
+modpath_pulse_rearm		vvp_tests/modpath_pulse_rearm.json
+modpath_pulse_values		vvp_tests/modpath_pulse_values.json
 module_instance_initializer_fail	vvp_tests/module_instance_initializer_fail.json
 module_instance_no_ports_duplicate_fail	vvp_tests/module_instance_no_ports_duplicate_fail.json
 module_instance_no_ports_fail	vvp_tests/module_instance_no_ports_fail.json
