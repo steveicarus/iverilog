@@ -19,6 +19,12 @@
 
 # include  "PTimingCheck.h"
 
+PWidth::PWidth(event_t*reference, PExpr*limit, PExpr*threshold,
+               pform_name_t*notifier)
+: reference_(reference), limit_(limit), threshold_(threshold), notifier_(notifier)
+{
+}
+
 PRecRem::PRecRem(event_t* reference_event,
       event_t* data_event,
       PExpr* setup_limit,

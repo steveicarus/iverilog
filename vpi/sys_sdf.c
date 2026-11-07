@@ -474,6 +474,71 @@ static PLI_INT32 sys_sdf_annotate_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
+/* Check the same scope-precision rounding and global tick range used by
+ * the WIDTH object's vpi_put_delays implementation. The VPI setter returns
+ * void, so reject an unrepresentable SDF value before reporting annotation. */
+static int sdf_width_limit_valid(double value, vpiHandle scope)
+{
+      if (!scope || !isfinite(value) || value < 0) return 0;
+      int precision = vpi_get(vpiTimePrecision, scope);
+      int local_shift = vpi_get(vpiTimeUnit, scope) - precision;
+      int global_shift = precision - vpi_get(vpiTimePrecision, 0);
+      if (local_shift < 0 || global_shift < 0) return 0;
+      double scaled = value * pow(10.0, local_shift);
+      if (!isfinite(scaled)) return 0;
+      double rounded = floor(scaled + 0.5);
+      long double total = (long double)rounded * powl(10.0L, global_shift);
+      return isfinite(total) && total < ldexpl(1.0L, 64);
+}
+
+/* WIDTH matching follows the timing-check object/terminal scheme introduced
+ * by Leo Moser's timingcheck-width work. Values use the SDF header timescale. */
+void sdf_width_limits(int edge, const char* reference,
+                      struct sdf_delay_s limit, int lineno)
+{
+      if (!sdf_cur_cell || !limit.defined) return;
+      if (!isfinite(limit.value) || limit.value < 0) {
+            vpi_printf("SDF ERROR: %s:%d: invalid WIDTH limit\n", sdf_fname, lineno);
+            return;
+      }
+      vpiHandle checks = vpi_iterate(vpiTchk, sdf_cur_cell);
+      vpiHandle check;
+      unsigned matches = 0;
+      while (checks && (check = vpi_scan(checks))) {
+            if (vpi_get(vpiTchkType, check) != vpiWidth) continue;
+            vpiHandle term = vpi_handle(vpiTchkRefTerm, check);
+            if (!term || (edge != vpiNoEdge && vpi_get(vpiEdge, term) != edge)) continue;
+            vpiHandle signal = vpi_handle(vpiExpr, term);
+            if (!signal || strcmp(reference, vpi_get_str(vpiName, signal))) continue;
+            /* Count object bindings, not successful value updates. */
+            matches += 1;
+            vpiHandle scope = vpi_handle(vpiScope, check);
+            double scaled_limit = limit.value * sdf_delay_scale(scope);
+            if (!sdf_width_limit_valid(scaled_limit, scope)) {
+                  vpi_printf("SDF ERROR: %s:%d: unrepresentable WIDTH limit for %s\n",
+                             sdf_fname, lineno, reference);
+                  continue;
+            }
+            s_vpi_time value;
+            s_vpi_delay delays;
+            memset(&value, 0, sizeof value);
+            memset(&delays, 0, sizeof delays);
+            value.type = vpiScaledRealTime;
+            value.real = scaled_limit;
+            delays.da = &value;
+            delays.no_of_delays = 1;
+            delays.time_type = vpiScaledRealTime;
+            vpi_put_delays(check, &delays);
+            if (sdf_flag_inform)
+                  vpi_printf("SDF INFO: %s:%d: WIDTH %s limit %g\n",
+                             sdf_fname, lineno, reference, value.real);
+      }
+      if (!matches)
+            vpi_printf("SDF ERROR: %s:%d: Unable to match WIDTH %s%s in %s\n",
+                       sdf_fname, lineno, edge_str(edge), reference,
+                       vpi_get_str(vpiFullName, sdf_cur_cell));
+}
+
 static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
 	/* IEEE 1497: a file with no (TIMESCALE ...) entry defaults to 1ns. Reset

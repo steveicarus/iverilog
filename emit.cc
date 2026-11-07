@@ -529,6 +529,9 @@ void NetScope::emit_scope(struct target_t*tgt) const
 	    tgt->signal_paths(cur->second);
       }
 
+      for (const auto& check : widths_)
+	    tgt->width_check(check.get());
+
       if (type_ == MODULE) tgt->convert_module_ports(this);
 }
 

@@ -1,0 +1,11 @@
+{
+    "type": "normal",
+    "source": "width_hdl_negative_zero.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Iivltests",
+        "-s",
+        "tb"
+    ]
+}

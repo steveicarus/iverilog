@@ -79,5 +79,8 @@ extern void sdf_interconnect_delays(struct interconnect_port_s port1,
                                     const struct sdf_delval_list_s*delval_list,
                                     const int sdf_lineno);
 
+extern void sdf_width_limits(int edge, const char* reference,
+                              struct sdf_delay_s limit, int lineno);
+
 #endif /* IVL_sdf_priv_h */
 

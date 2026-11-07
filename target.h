@@ -75,6 +75,7 @@ struct target_t {
 	/* Output a signal (called for each signal) */
       virtual void signal(const NetNet*) =0;
       virtual bool signal_paths(const NetNet*);
+      virtual void width_check(const NetWidth*);
 
         /* Analog branches */
       virtual bool branch(const NetBranch*);

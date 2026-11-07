@@ -59,6 +59,21 @@ class PTimingCheck  : public LineInfo {
       virtual void dump(std::ostream&out, unsigned ind) const = 0;
 };
 
+/* The parsed unconditional scalar $width declaration. */
+class PWidth : public PTimingCheck {
+    public:
+      PWidth(event_t*reference, PExpr*limit, PExpr*threshold,
+             pform_name_t*notifier);
+      void elaborate(class Design*des, class NetScope*scope) const override;
+      void dump(std::ostream&out, unsigned ind) const override;
+
+    private:
+      std::unique_ptr<event_t> reference_;
+      std::unique_ptr<PExpr> limit_;
+      std::unique_ptr<PExpr> threshold_;
+      std::unique_ptr<pform_name_t> notifier_;
+};
+
 /*
 * The PRecRem is the parse of a $recrem timing check
 */

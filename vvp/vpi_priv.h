@@ -618,6 +618,42 @@ struct __vpiInterModPath : public __vpiHandle {
 
 extern struct __vpiInterModPath* vpip_make_intermodpath(vvp_net_t *net, vpiPortInfo* port1, vpiPortInfo* port2);
 
+/* Unconditional WIDTH objects and their borrowed reference terminal. */
+class vvp_fun_tchk_width;
+class __vpiTchkRefTerm : public __vpiHandle {
+    public:
+      __vpiTchkRefTerm(int edge, vpiHandle expr) : edge_(edge), expr_(expr) { }
+      int get_type_code(void) const override { return vpiTchkTerm; }
+      int vpi_get(int code) override;
+      vpiHandle vpi_handle(int code) override;
+    private:
+      int edge_;
+      vpiHandle expr_;
+};
+
+class __vpiTchkWidth : public __vpiHandle {
+    public:
+      __vpiTchkWidth(__vpiScope* scope, unsigned file_idx, unsigned lineno,
+                     vvp_fun_tchk_width* fun);
+      ~__vpiTchkWidth();
+      int get_type_code(void) const override { return vpiTchk; }
+      int vpi_get(int code) override;
+      vpiHandle vpi_handle(int code) override;
+      void vpi_get_delays(p_vpi_delay delays) override;
+      void vpi_put_delays(p_vpi_delay delays) override;
+      vpiHandle reference_;
+      vpiHandle notifier_;
+    private:
+      __vpiScope* scope_;
+      unsigned file_idx_;
+      unsigned lineno_;
+      vvp_fun_tchk_width* fun_;
+      __vpiTchkRefTerm* reference_term_;
+      friend class vvp_fun_tchk_width;
+};
+
+extern void vpip_tchk_violation(vpiHandle tchk);
+
 /*
  * These methods support the vpi creation of events. The name string
  * passed in will be saved, so the caller must allocate it (or not
