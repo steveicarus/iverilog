@@ -176,6 +176,8 @@ typedef _CLASS ivl_discipline_s*ivl_discipline_t;
 typedef const _CLASS netenum_t*ivl_enumtype_t;
 typedef struct ivl_event_s    *ivl_event_t;
 typedef struct ivl_width_s    *ivl_width_t;
+typedef struct ivl_setup_s    *ivl_setup_t;
+typedef struct ivl_hold_s    *ivl_hold_t;
 typedef struct ivl_period_s   *ivl_period_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
 typedef struct ivl_island_s   *ivl_island_t;
@@ -1909,6 +1911,34 @@ extern double ivl_width_limit(ivl_width_t check);
 extern double ivl_width_threshold(ivl_width_t check);
 extern const char*ivl_width_file(ivl_width_t check);
 extern unsigned ivl_width_lineno(ivl_width_t check);
+
+/* Standalone SETUP: normalized reference/data roles; limits use declaring
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+extern unsigned ivl_scope_setups(ivl_scope_t net);
+extern ivl_setup_t ivl_scope_setup(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_setup_scope(ivl_setup_t check);
+extern ivl_signal_t ivl_setup_reference(ivl_setup_t check);
+extern ivl_signal_t ivl_setup_data(ivl_setup_t check);
+extern ivl_signal_t ivl_setup_notifier(ivl_setup_t check);
+extern int ivl_setup_reference_edge(ivl_setup_t check);
+extern int ivl_setup_data_edge(ivl_setup_t check);
+extern double ivl_setup_limit(ivl_setup_t check);
+extern const char*ivl_setup_file(ivl_setup_t check);
+extern unsigned ivl_setup_lineno(ivl_setup_t check);
+
+/* Standalone HOLD: normalized reference/data roles; limits use declaring
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+extern unsigned ivl_scope_holds(ivl_scope_t net);
+extern ivl_hold_t ivl_scope_hold(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_hold_scope(ivl_hold_t check);
+extern ivl_signal_t ivl_hold_reference(ivl_hold_t check);
+extern ivl_signal_t ivl_hold_data(ivl_hold_t check);
+extern ivl_signal_t ivl_hold_notifier(ivl_hold_t check);
+extern int ivl_hold_reference_edge(ivl_hold_t check);
+extern int ivl_hold_data_edge(ivl_hold_t check);
+extern double ivl_hold_limit(ivl_hold_t check);
+extern const char*ivl_hold_file(ivl_hold_t check);
+extern unsigned ivl_hold_lineno(ivl_hold_t check);
 
 /* Unconditional scalar PERIOD checks. The limit is expressed in the units
  * of ivl_period_scope(); a null notifier means it was omitted. */

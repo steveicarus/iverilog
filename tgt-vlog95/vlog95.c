@@ -259,6 +259,8 @@ const char* target_query(const char*key)
       if (strcmp(key,"version") == 0) return version_string;
       if (strcmp(key,"supports-width") == 0) return "1";
       if (strcmp(key,"supports-period") == 0) return "1";
+      if (strcmp(key,"supports-setup") == 0) return "1";
+      if (strcmp(key,"supports-hold") == 0) return "1";
 
       return 0;
 }

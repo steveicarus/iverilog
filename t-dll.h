@@ -88,6 +88,8 @@ struct dll_target  : public target_t, public expr_scan_t {
       void signal(const NetNet*) override;
       bool signal_paths(const NetNet*) override;
       void width_check(const NetWidth*) override;
+      void setup_check(const NetSetup*) override;
+      void hold_check(const NetHold*) override;
       void period_check(const NetPeriod*) override;
       ivl_dll_t dll_;
 
@@ -95,6 +97,8 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       target_design_f target_;
       bool width_checks_supported_;
+      bool setup_checks_supported_;
+      bool hold_checks_supported_;
       bool period_checks_supported_;
 
 
@@ -687,6 +691,8 @@ struct ivl_scope_s {
 
       std::vector<ivl_signal_t> sigs_;
       std::vector<ivl_width_t> widths_;
+      std::vector<ivl_setup_t> setups_;
+      std::vector<ivl_hold_t> holds_;
       std::vector<ivl_period_t> periods_;
 
       unsigned nlog_;
@@ -788,6 +794,26 @@ struct ivl_width_s {
       bool posedge;
       double limit;
       double threshold;
+      perm_string file;
+      unsigned lineno;
+};
+
+/* Typed standalone SETUP check, normalized reference/data roles. */
+struct ivl_setup_s {
+      ivl_scope_t scope;
+      ivl_signal_t reference, data, notifier;
+      int reference_edge, data_edge;
+      double limit;
+      perm_string file;
+      unsigned lineno;
+};
+
+/* Typed standalone HOLD check, normalized reference/data roles. */
+struct ivl_hold_s {
+      ivl_scope_t scope;
+      ivl_signal_t reference, data, notifier;
+      int reference_edge, data_edge;
+      double limit;
       perm_string file;
       unsigned lineno;
 };

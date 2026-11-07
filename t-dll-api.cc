@@ -2182,6 +2182,72 @@ extern "C" const char*ivl_width_file(ivl_width_t check)
 extern "C" unsigned ivl_width_lineno(ivl_width_t check)
 { assert(check); return check->lineno; }
 
+extern "C" unsigned ivl_scope_setups(ivl_scope_t net)
+{ assert(net); return net->setups_.size(); }
+
+extern "C" ivl_setup_t ivl_scope_setup(ivl_scope_t net, unsigned idx)
+{ assert(net && idx < net->setups_.size()); return net->setups_[idx]; }
+
+extern "C" ivl_scope_t ivl_setup_scope(ivl_setup_t check)
+{ assert(check); return check->scope; }
+
+extern "C" ivl_signal_t ivl_setup_reference(ivl_setup_t check)
+{ assert(check); return check->reference; }
+
+extern "C" ivl_signal_t ivl_setup_data(ivl_setup_t check)
+{ assert(check); return check->data; }
+
+extern "C" ivl_signal_t ivl_setup_notifier(ivl_setup_t check)
+{ assert(check); return check->notifier; }
+
+extern "C" int ivl_setup_reference_edge(ivl_setup_t check)
+{ assert(check); return check->reference_edge; }
+
+extern "C" int ivl_setup_data_edge(ivl_setup_t check)
+{ assert(check); return check->data_edge; }
+
+extern "C" double ivl_setup_limit(ivl_setup_t check)
+{ assert(check); return check->limit; }
+
+extern "C" const char*ivl_setup_file(ivl_setup_t check)
+{ assert(check); return check->file.str(); }
+
+extern "C" unsigned ivl_setup_lineno(ivl_setup_t check)
+{ assert(check); return check->lineno; }
+
+extern "C" unsigned ivl_scope_holds(ivl_scope_t net)
+{ assert(net); return net->holds_.size(); }
+
+extern "C" ivl_hold_t ivl_scope_hold(ivl_scope_t net, unsigned idx)
+{ assert(net && idx < net->holds_.size()); return net->holds_[idx]; }
+
+extern "C" ivl_scope_t ivl_hold_scope(ivl_hold_t check)
+{ assert(check); return check->scope; }
+
+extern "C" ivl_signal_t ivl_hold_reference(ivl_hold_t check)
+{ assert(check); return check->reference; }
+
+extern "C" ivl_signal_t ivl_hold_data(ivl_hold_t check)
+{ assert(check); return check->data; }
+
+extern "C" ivl_signal_t ivl_hold_notifier(ivl_hold_t check)
+{ assert(check); return check->notifier; }
+
+extern "C" int ivl_hold_reference_edge(ivl_hold_t check)
+{ assert(check); return check->reference_edge; }
+
+extern "C" int ivl_hold_data_edge(ivl_hold_t check)
+{ assert(check); return check->data_edge; }
+
+extern "C" double ivl_hold_limit(ivl_hold_t check)
+{ assert(check); return check->limit; }
+
+extern "C" const char*ivl_hold_file(ivl_hold_t check)
+{ assert(check); return check->file.str(); }
+
+extern "C" unsigned ivl_hold_lineno(ivl_hold_t check)
+{ assert(check); return check->lineno; }
+
 extern "C" unsigned ivl_scope_periods(ivl_scope_t net)
 { assert(net); return net->periods_.size(); }
 

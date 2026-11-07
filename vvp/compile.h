@@ -565,6 +565,12 @@ extern void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
                                  struct symb_s reference, double limit,
                                  char* notifier);
 
+// SETUP/HOLD records use normalized reference/data order for both checks.
+extern void compile_tchk_two_event(bool setup, unsigned file_idx, unsigned lineno,
+                                    char* reference_edge, struct symb_s reference,
+                                    char* data_edge, struct symb_s data,
+                                    double limit, char* notifier);
+
 extern void compile_island(char*label, char*type);
 extern void compile_island_port(char*label, char*island, char*src);
 extern void compile_island_import(char*label, char*island, char*src);

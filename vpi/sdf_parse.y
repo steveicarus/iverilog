@@ -484,14 +484,18 @@ tchk_def_list
   | tchk_def
   ;
 
-  /* Unconditional scalar WIDTH and PERIOD annotation. */
+  /* Unconditional scalar timing-check annotation. */
 tchk_def
-  : '(' K_SETUP port_tchk port_tchk rvalue ')'
-      { vpi_printf("SDF WARNING: %s:%d: SETUP not supported.\n",
-                   sdf_parse_path, @2.first_line); }
-  | '(' K_HOLD port_tchk port_tchk rvalue ')'
-      { vpi_printf("SDF WARNING: %s:%d: HOLD not supported.\n",
-                   sdf_parse_path, @2.first_line); }
+  : '(' K_SETUP scalar_port_tchk scalar_port_tchk rvalue ')'
+      { sdf_setup_hold_limits(vpiSetup, $3, $4, $5, @2.first_line);
+        free($3.string_val);
+        free($4.string_val);
+      }
+  | '(' K_HOLD scalar_port_tchk scalar_port_tchk rvalue ')'
+      { sdf_setup_hold_limits(vpiHold, $3, $4, $5, @2.first_line);
+        free($3.string_val);
+        free($4.string_val);
+      }
   | '(' K_SETUPHOLD port_tchk port_tchk rvalue rvalue ')'
       { vpi_printf("SDF WARNING: %s:%d: SETUPHOLD not supported.\n",
                    sdf_parse_path, @2.first_line); }

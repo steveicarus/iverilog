@@ -1008,6 +1008,42 @@ class NetPeriod : public LineInfo {
       double limit_;
 };
 
+/* Standalone two-event checks keep both terminals and the notifier alive.
+ * Edge values are -1 (negedge), 0 (any change), or 1 (posedge). */
+class NetTwoEventCheck : public LineInfo {
+    public:
+      NetTwoEventCheck(NetScope*scope, NetNet*reference, NetNet*data,
+                       NetNet*notifier, int reference_edge, int data_edge,
+                       double limit)
+      : scope_(scope), reference_(reference), data_(data), notifier_(notifier),
+        reference_edge_(reference_edge), data_edge_(data_edge), limit_(limit) { }
+
+      NetScope*scope() const { return scope_; }
+      NetNet*reference() const { return reference_.get(); }
+      NetNet*data() const { return data_.get(); }
+      NetNet*notifier() const { return notifier_.get(); }
+      int reference_edge() const { return reference_edge_; }
+      int data_edge() const { return data_edge_; }
+      double limit() const { return limit_; }
+
+    private:
+      NetScope*scope_;
+      NetERef reference_, data_;
+      NetLRef notifier_;
+      int reference_edge_, data_edge_;
+      double limit_;
+};
+
+class NetSetup : public NetTwoEventCheck {
+    public:
+      using NetTwoEventCheck::NetTwoEventCheck;
+};
+
+class NetHold : public NetTwoEventCheck {
+    public:
+      using NetTwoEventCheck::NetTwoEventCheck;
+};
+
 /*
  * This object type is used for holding local variable values when
  * evaluating constant user functions.
@@ -1179,6 +1215,10 @@ class NetScope : public Definitions, public Attrib {
       { widths_.push_back(std::move(check)); }
       void add_period(std::unique_ptr<NetPeriod> check)
       { periods_.push_back(std::move(check)); }
+      void add_setup(std::unique_ptr<NetSetup> check)
+      { setups_.push_back(std::move(check)); }
+      void add_hold(std::unique_ptr<NetHold> check)
+      { holds_.push_back(std::move(check)); }
 
       void add_event(NetEvent*);
       void rem_event(NetEvent*);
@@ -1530,6 +1570,8 @@ class NetScope : public Definitions, public Attrib {
       NetEvent *events_;
       std::vector<std::unique_ptr<NetWidth> > widths_;
       std::vector<std::unique_ptr<NetPeriod> > periods_;
+      std::vector<std::unique_ptr<NetSetup> > setups_;
+      std::vector<std::unique_ptr<NetHold> > holds_;
 
       std::map<perm_string,LineInfo*> genvars_;
 

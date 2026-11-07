@@ -1,0 +1,11 @@
+{
+    "type": "CE",
+    "source": "setup_hdl_negative_limit_fail.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ]
+}

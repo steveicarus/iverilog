@@ -2217,3 +2217,49 @@ void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
       else free(notifier);
       vpip_attach_to_current_scope(obj);
 }
+
+
+static bool parse_tchk_event_edge(const char* text, int& result)
+{
+      if (strcmp(text, "posedge") == 0) result = 1;
+      else if (strcmp(text, "negedge") == 0) result = -1;
+      else if (strcmp(text, "any") == 0) result = 0;
+      else return false;
+      return true;
+}
+
+void compile_tchk_two_event(bool setup, unsigned file_idx, unsigned lineno,
+                             char* reference_edge_text, struct symb_s reference,
+                             char* data_edge_text, struct symb_s data,
+                             double limit, char* notifier)
+{
+      int reference_edge = 0, data_edge = 0;
+      bool edges_valid = parse_tchk_event_edge(reference_edge_text, reference_edge)
+                      && parse_tchk_event_edge(data_edge_text, data_edge);
+      delete[] reference_edge_text;
+      delete[] data_edge_text;
+      __vpiScope* scope = vpip_peek_current_scope();
+      vvp_time64_t limit_ticks;
+      if (!edges_valid || !vpip_tchk_delay_to_ticks(limit, scope, limit_ticks)) {
+            yyerror(setup ? "invalid SETUP edge or unrepresentable limit"
+                          : "invalid HOLD edge or unrepresentable limit");
+            free(reference.text);
+            free(data.text);
+            free(notifier);
+            return;
+      }
+
+      vvp_net_t* net = new vvp_net_t;
+      vvp_fun_tchk_two_event* fun = new vvp_fun_tchk_two_event(
+            setup, reference_edge, data_edge, limit_ticks);
+      net->fun = fun;
+      __vpiTchkTwoEvent* obj = new __vpiTchkTwoEvent(scope, file_idx, lineno, fun);
+      fun->vpi_tchk = obj;
+      input_connect(net, 0, strdup(reference.text));
+      input_connect(net, 1, strdup(data.text));
+      compile_vpi_lookup(&obj->reference_, reference.text);
+      compile_vpi_lookup(&obj->data_, data.text);
+      if (*notifier) compile_vpi_lookup(&obj->notifier_, notifier);
+      else free(notifier);
+      vpip_attach_to_current_scope(obj);
+}

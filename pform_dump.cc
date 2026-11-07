@@ -1444,6 +1444,37 @@ void PPeriod::dump(std::ostream&out, unsigned ind) const
       out << ");" << endl;
 }
 
+static void dump_simple_timing_event(std::ostream&out,
+                                      const PTimingCheck::event_t&event)
+{
+      if (event.posedge) out << "posedge ";
+      else if (event.negedge) out << "negedge ";
+      out << event.name;
+      if (event.condition) out << " &&& " << *event.condition;
+}
+
+void PSetup::dump(std::ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "$setup(";
+      dump_simple_timing_event(out, *data_);
+      out << ", ";
+      dump_simple_timing_event(out, *reference_);
+      out << ", " << *limit_;
+      if (notifier_) out << ", " << *notifier_;
+      out << ");" << endl;
+}
+
+void PHold::dump(std::ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "$hold(";
+      dump_simple_timing_event(out, *reference_);
+      out << ", ";
+      dump_simple_timing_event(out, *data_);
+      out << ", " << *limit_;
+      if (notifier_) out << ", " << *notifier_;
+      out << ");" << endl;
+}
+
 void PRecRem::dump(std::ostream&out, unsigned ind) const
 {
 	    out << setw(ind) << "" << "recrem ";

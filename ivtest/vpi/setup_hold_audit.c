@@ -1,0 +1,219 @@
+/* Copyright (c) 2026 Stephen Williams (steve@icarus.com)
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ * Independent fixture expectations: identify both terminals and check actual
+ * timing callbacks separately from notifier changes. No DUT decision is used
+ * to calculate an expected violation time. */
+#include <vpi_user.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#define MAX_CHECKS 64
+#define MAX_EVENTS 32
+static unsigned failed, started, finished, check_count, notifier_count;
+#ifdef vpiTchk
+struct watched_check {
+    vpiHandle object;
+    unsigned expected, seen;
+    unsigned long long times[MAX_EVENTS];
+};
+struct watched_notifier {
+    vpiHandle signal;
+    unsigned expected, seen;
+    unsigned long long times[MAX_CHECKS * MAX_EVENTS];
+    PLI_INT32 previous;
+};
+static struct watched_check checks[MAX_CHECKS];
+static struct watched_notifier notifiers[MAX_CHECKS];
+static unsigned notifier_indices[MAX_CHECKS];
+#endif
+static void fail(const char *why)
+{
+    failed = 1;
+    vpi_printf("FAILED SETUP/HOLD audit: %s\n", why);
+    vpi_control(vpiFinish, 1);
+}
+static unsigned long long now(void)
+{
+    s_vpi_time t = {0}; t.type = vpiSimTime;
+    vpi_get_time(NULL, &t);
+    return ((unsigned long long)t.high << 32) | t.low;
+}
+static PLI_INT32 scalar(vpiHandle h)
+{
+    s_vpi_value v = {0}; v.format = vpiScalarVal;
+    vpi_get_value(h, &v); return v.value.scalar;
+}
+#ifdef vpiTchk
+static char *string_arg(vpiHandle iter)
+{
+    vpiHandle a = vpi_scan(iter); s_vpi_value v = {0};
+    char *s; size_t n;
+    if (!a) { fail("missing string argument"); return NULL; }
+    v.format = vpiStringVal; vpi_get_value(a, &v);
+    n = strlen(v.value.str)+1; s = (char *)malloc(n);
+    if (!s) { fail("allocation"); return NULL; }
+    memcpy(s, v.value.str, n); return s;
+}
+static double number_arg(vpiHandle iter)
+{
+    vpiHandle a = vpi_scan(iter); s_vpi_value v = {0};
+    if (!a) { fail("missing numerical argument"); return 0; }
+    v.format = vpiRealVal; vpi_get_value(a, &v); return v.value.real;
+}
+static int edge_code(const char *s)
+{
+    if (!strcmp(s,"posedge")) return vpiPosedge;
+    if (!strcmp(s,"negedge")) return vpiNegedge;
+    if (!strcmp(s,"any")) return vpiNoEdge;
+    fail("unknown fixture edge"); return -1;
+}
+static int terminal(vpiHandle obj, int role, vpiHandle scope,
+                    const char *name, int edge)
+{
+    vpiHandle t = vpi_handle(role,obj), e;
+    if (!t || t != vpi_handle(role,obj) || vpi_get(vpiEdge,t) != edge) return 0;
+    e = vpi_handle(vpiExpr,t);
+    return e && vpi_handle(vpiScope,e)==scope &&
+           !strcmp(vpi_get_str(vpiName,e),name);
+}
+static PLI_INT32 watch(PLI_BYTE8 *unused)
+{
+    vpiHandle call = vpi_handle(vpiSysTfCall,NULL), args, scope, iter, obj, match=NULL;
+    char *owner,*kind,*ref,*re,*data,*de,*nname;
+    double expected_limit; unsigned long long expected_ticks;
+    int type, redge, dedge; unsigned expected, i, count=0, ni=0;
+    vpiHandle notifier;
+    (void)unused;
+    if (started || check_count==MAX_CHECKS) { fail("late/too many watches"); return 0; }
+    args=vpi_iterate(vpiArgument,call);
+    if (!args) { fail("missing watch arguments"); return 0; }
+    owner=string_arg(args); kind=string_arg(args); ref=string_arg(args); re=string_arg(args);
+    data=string_arg(args); de=string_arg(args); expected_limit=number_arg(args);
+    expected_ticks=(unsigned long long)number_arg(args); nname=string_arg(args);
+    expected=(unsigned)number_arg(args);
+    if (failed || expected>MAX_EVENTS) { fail("invalid expectation"); return 0; }
+    type=!strcmp(kind,"setup")?vpiSetup:!strcmp(kind,"hold")?vpiHold:0;
+    redge=edge_code(re); dedge=edge_code(de);
+    scope=vpi_handle_by_name(owner,NULL);
+    if (!scope || !type) { fail("scope/check type"); return 0; }
+    iter=vpi_iterate(vpiTchk,scope);
+    if (!iter) { fail("missing compiled SETUP/HOLD objects"); return 0; }
+    while ((obj=vpi_scan(iter))) {
+        s_vpi_time t={0}; s_vpi_delay d={0};
+        if (vpi_get(vpiTchkType,obj)!=type || !terminal(obj,vpiTchkRefTerm,scope,ref,redge) ||
+            !terminal(obj,vpiTchkDataTerm,scope,data,dedge)) continue;
+        d.da=&t; d.no_of_delays=1; d.time_type=vpiScaledRealTime; vpi_get_delays(obj,&d);
+        if (fabs(t.real-expected_limit)>1e-10) continue;
+        notifier=vpi_handle(vpiTchkNotifier,obj);
+        if ((*nname && (!notifier || vpi_handle(vpiScope,notifier)!=scope ||
+                        strcmp(vpi_get_str(vpiName,notifier),nname))) ||
+            (!*nname && notifier)) continue;
+        d.time_type=vpiSimTime; vpi_get_delays(obj,&d);
+        if ((((unsigned long long)t.high<<32)|t.low)!=expected_ticks ||
+            vpi_handle(vpiScope,obj)!=scope || vpi_handle(vpiModule,obj)!=scope) {
+            fail("limit units or scope identity"); return 0;
+        }
+        ++count; match=obj;
+    }
+    if (count!=1) { fail("exact two-terminal object/limit matching"); return 0; }
+    for (i=0;i<check_count;++i) if (checks[i].object==match) { fail("duplicate watch");return 0; }
+    notifier=vpi_handle(vpiTchkNotifier,match);
+    if ((*nname && (!notifier || vpi_handle(vpiScope,notifier)!=scope ||
+                        strcmp(vpi_get_str(vpiName,notifier),nname))) ||
+        (!*nname && notifier)) { fail("notifier binding");return 0; }
+    checks[check_count].object=match; checks[check_count].expected=expected;
+    if (notifier) {
+        for (ni=0;ni<notifier_count;++ni) if (notifiers[ni].signal==notifier) break;
+        if (ni==notifier_count) {
+            if (notifier_count==MAX_CHECKS) { fail("too many notifiers");return 0; }
+            notifiers[ni].signal=notifier; notifiers[ni].previous=scalar(notifier); ++notifier_count;
+        }
+    }
+    for (i=0;i<expected;++i) {
+        unsigned long long t=(unsigned long long)number_arg(args);
+        checks[check_count].times[i]=t;
+        if (i && t<checks[check_count].times[i-1]) { fail("unordered fixture times");return 0; }
+        if (notifier && notifiers[ni].previous!=vpiZ)
+            notifiers[ni].times[notifiers[ni].expected++]=t;
+    }
+    if (vpi_scan(args)) { fail("extra watch argument");return 0; }
+    vpi_printf("SH_OBJECT %s %s %s/%s %s/%s limit=%g ticks=%llu events=%u\n",
+               owner,kind,ref,re,data,de,expected_limit,expected_ticks,expected);
+    ++check_count;
+    free(owner);free(kind);free(ref);free(re);free(data);free(de);free(nname);
+    return 0;
+}
+static PLI_INT32 violation(p_cb_data cb)
+{
+    unsigned i;
+    for (i=0;i<check_count;++i) if (checks[i].object==cb->obj) break;
+    if (i==check_count || checks[i].seen>=checks[i].expected ||
+        now()!=checks[i].times[checks[i].seen]) {
+        fail("extra/wrong identity/type/time timing callback"); return 0;
+    }
+    ++checks[i].seen;
+    vpi_printf("SH_VIOLATION %u %llu\n",i,now()); return 0;
+}
+static PLI_INT32 changed(p_cb_data cb)
+{
+    unsigned i=*(unsigned *)cb->user_data; struct watched_notifier *n;
+    PLI_INT32 value;
+    if (i>=notifier_count) { fail("notifier callback index");return 0; }
+    n=&notifiers[i]; value=scalar(cb->obj);
+    if (cb->obj!=n->signal || n->seen>=n->expected || now()!=n->times[n->seen] ||
+        (value!=vpi0 && value!=vpi1) ||
+        (n->previous==vpi0 && value!=vpi1) || (n->previous==vpi1 && value!=vpi0) ||
+        n->previous==vpiZ) { fail("notifier transition identity/time/value");return 0; }
+    n->previous=value; ++n->seen; return 0;
+}
+static int cmp_time(const void *a,const void *b)
+{
+    unsigned long long x=*(const unsigned long long *)a,y=*(const unsigned long long *)b;
+    return x>y?1:x<y?-1:0;
+}
+static PLI_INT32 start(PLI_BYTE8 *unused)
+{
+    s_cb_data cb={0}; s_vpi_time time={0}; unsigned i;
+    (void)unused;
+    if (started || !check_count) { fail("empty/repeated start");return 0; }
+    started=1; time.type=vpiSimTime;
+    for (i=0;i<notifier_count;++i) {
+        qsort(notifiers[i].times,notifiers[i].expected,sizeof(unsigned long long),cmp_time);
+        notifier_indices[i]=i; memset(&cb,0,sizeof(cb));cb.reason=cbValueChange;
+        cb.obj=notifiers[i].signal;cb.cb_rtn=changed;cb.time=&time;
+        cb.user_data=(PLI_BYTE8 *)&notifier_indices[i];
+        if (!vpi_register_cb(&cb)) { fail("notifier callback registration");return 0; }
+    }
+    memset(&cb,0,sizeof(cb));cb.reason=cbTchkViolation;cb.cb_rtn=violation;cb.time=&time;
+    if (!vpi_register_cb(&cb)) fail("timing callback registration");
+    return 0;
+}
+static PLI_INT32 finish(PLI_BYTE8 *unused)
+{
+    unsigned i,total=0; (void)unused;
+    if (!started || finished || failed) { fail("missing/repeated start/finish");return 0; }
+    for (i=0;i<check_count;++i) {
+        if (checks[i].seen!=checks[i].expected) { fail("missing timing callbacks");return 0; }
+        total+=checks[i].seen;
+    }
+    for (i=0;i<notifier_count;++i) if (notifiers[i].seen!=notifiers[i].expected ||
+        scalar(notifiers[i].signal)!=notifiers[i].previous) {
+        fail("missing notifier callbacks/final value");return 0;
+    }
+    finished=1;vpi_printf("SH_COMPLETE objects=%u callbacks=%u\nPASSED\n",check_count,total);
+    return 0;
+}
+#else
+static PLI_INT32 watch(PLI_BYTE8 *u) { (void)u;fail("timing API unavailable");return 0; }
+static PLI_INT32 start(PLI_BYTE8 *u) { (void)u;fail("timing API unavailable");return 0; }
+static PLI_INT32 finish(PLI_BYTE8 *u) { (void)u;fail("timing API unavailable");return 0; }
+#endif
+static void register_all(void)
+{
+    s_vpi_systf_data tf={0};tf.type=vpiSysTask;
+    tf.tfname="$sh_watch";tf.calltf=watch;vpi_register_systf(&tf);
+    tf.tfname="$sh_start";tf.calltf=start;vpi_register_systf(&tf);
+    tf.tfname="$sh_finish";tf.calltf=finish;vpi_register_systf(&tf);
+}
+void (*vlog_startup_routines[])(void)={register_all,0};
