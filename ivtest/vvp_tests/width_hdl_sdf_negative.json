@@ -1,0 +1,16 @@
+{
+    "type": "normal",
+    "source": "width_hdl_sdf_negative.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-Iivltests",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/width_rejected_limits.c"
+    ],
+    "gold": "width_hdl_sdf_negative"
+}

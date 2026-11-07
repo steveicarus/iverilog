@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -127,8 +127,8 @@ char sdf_use_hchar = '.';
 %type <real_val> signed_real_number
 %type <delay> delval rvalue_opt rvalue rtriple signed_real_number_opt
 
-%type <int_val> edge_identifier
-%type <port_with_edge> port_edge port_spec
+%type <int_val> edge_identifier cond_edge_start cond_edge_identifier
+%type <port_with_edge> port_edge port_spec scalar_port_tchk
 
 %type <delval_list> delval_list
 
@@ -351,8 +351,6 @@ timing_spec
       { vpi_printf("SDF ERROR: %s:%d: Syntax error in CELL DELAY SPEC\n",
 	           sdf_parse_path, @2.first_line); }
   | '(' K_TIMINGCHECK tchk_def_list ')'
-      { vpi_printf("SDF WARNING: %s:%d: TIMINGCHECK not supported.\n",
-	           sdf_parse_path, @2.first_line); }
   | '(' K_TIMINGCHECK error ')'
       { vpi_printf("SDF ERROR: %s:%d: Syntax error in TIMINGCHECK SPEC\n",
 	           sdf_parse_path, @2.first_line); }
@@ -440,16 +438,58 @@ tchk_def_list
   | tchk_def
   ;
 
-  /* Timing checks are ignored. */
+  /* Unconditional scalar WIDTH and PERIOD annotation. */
 tchk_def
   : '(' K_SETUP port_tchk port_tchk rvalue ')'
+      { vpi_printf("SDF WARNING: %s:%d: SETUP not supported.\n",
+                   sdf_parse_path, @2.first_line); }
   | '(' K_HOLD port_tchk port_tchk rvalue ')'
+      { vpi_printf("SDF WARNING: %s:%d: HOLD not supported.\n",
+                   sdf_parse_path, @2.first_line); }
   | '(' K_SETUPHOLD port_tchk port_tchk rvalue rvalue ')'
+      { vpi_printf("SDF WARNING: %s:%d: SETUPHOLD not supported.\n",
+                   sdf_parse_path, @2.first_line); }
   | '(' K_RECOVERY port_tchk port_tchk rvalue ')'
+      { vpi_printf("SDF WARNING: %s:%d: RECOVERY not supported.\n",
+                   sdf_parse_path, @2.first_line); }
   | '(' K_RECREM port_tchk port_tchk rvalue rvalue ')'
+      { vpi_printf("SDF WARNING: %s:%d: RECREM not supported.\n",
+                   sdf_parse_path, @2.first_line); }
   | '(' K_REMOVAL port_tchk port_tchk rvalue ')'
-  | '(' K_WIDTH port_tchk rvalue ')'
-  | '(' K_PERIOD port_tchk rvalue ')'
+      { vpi_printf("SDF WARNING: %s:%d: REMOVAL not supported.\n",
+                   sdf_parse_path, @2.first_line); }
+  | '(' K_WIDTH scalar_port_tchk rvalue ')'
+      { if ($3.string_val)
+              sdf_width_limits($3.vpi_edge, $3.string_val, $4, @2.first_line);
+        else
+              vpi_printf("SDF WARNING: %s:%d: conditional or hierarchical WIDTH event not supported.\n",
+                         sdf_parse_path, @2.first_line);
+        free($3.string_val);
+      }
+  | '(' K_PERIOD scalar_port_tchk rvalue ')'
+      { if ($3.string_val)
+              sdf_period_limits($3.vpi_edge, $3.string_val, $4, @2.first_line);
+        else
+              vpi_printf("SDF WARNING: %s:%d: conditional or hierarchical PERIOD event not supported.\n",
+                         sdf_parse_path, @2.first_line);
+        free($3.string_val);
+      }
+  ;
+
+/* Retain raw escapes until the local-name/hierarchy check has run. The
+   generic port_instance production has already decoded them. */
+scalar_port_tchk
+  : hierarchical_identifier
+      { $$.vpi_edge = vpiNoEdge; $$.string_val = local_condition_name($1); }
+  | cond_edge_start hierarchical_identifier ')'
+      { $$.vpi_edge = $1;
+        if ($1 == vpiNoEdge) { $$.string_val = 0; free($2); }
+        else $$.string_val = local_condition_name($2); }
+  | cond_edge_start timing_check_condition port_spec ')'
+      { $$.vpi_edge = vpiNoEdge; $$.string_val = 0; free($3.string_val); }
+  | cond_edge_start QSTRING timing_check_condition port_spec ')'
+      { $$.vpi_edge = vpiNoEdge; $$.string_val = 0;
+        free($2); free($4.string_val); }
   ;
 
 port_tchk
@@ -468,19 +508,19 @@ port_tchk
   ;
 
 cond_edge_start
-  : '(' { start_edge_id(1); } cond_edge_identifier { stop_edge_id(); }
+  : '(' { start_edge_id(1); } cond_edge_identifier { stop_edge_id(); $$ = $3; }
   ;
 
 cond_edge_identifier
-  : K_POSEDGE
-  | K_NEGEDGE
-  | K_01
-  | K_10
-  | K_0Z
-  | K_Z1
-  | K_1Z
-  | K_Z0
-  | K_COND
+  : K_POSEDGE { $$ = vpiPosedge; }
+  | K_NEGEDGE { $$ = vpiNegedge; }
+  | K_01 { $$ = vpiEdge01; }
+  | K_10 { $$ = vpiEdge10; }
+  | K_0Z { $$ = vpiEdge0x; }
+  | K_Z1 { $$ = vpiEdgex1; }
+  | K_1Z { $$ = vpiEdge1x; }
+  | K_Z0 { $$ = vpiEdgex0; }
+  | K_COND { $$ = vpiNoEdge; }
   ;
 
 timing_check_condition
@@ -673,7 +713,7 @@ signed_real_number
   | '-' REAL_NUMBER { $$ = -$2; }
   |     INTEGER { $$ = $1; }
   | '+' INTEGER { $$ = $2; }
-  | '-' INTEGER { $$ = -$2; }
+  | '-' INTEGER { $$ = -(double)$2; }
   ;
 
 %%

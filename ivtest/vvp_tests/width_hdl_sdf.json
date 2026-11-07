@@ -1,0 +1,12 @@
+{
+    "type": "normal",
+    "source": "width_hdl_sdf.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-Iivltests",
+        "-s",
+        "tb"
+    ]
+}

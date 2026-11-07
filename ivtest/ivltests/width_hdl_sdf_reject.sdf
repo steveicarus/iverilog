@@ -1,0 +1,12 @@
+(DELAYFILE
+  (SDFVERSION "3.0")
+  (TIMESCALE 1ps)
+  (CELL (CELLTYPE "width_reject_leaf") (INSTANCE conditional)
+    (TIMINGCHECK (WIDTH (COND en (posedge CLK)) (20:20:20))))
+  (CELL (CELLTYPE "width_reject_leaf") (INSTANCE malformed)
+    (TIMINGCHECK (WIDTH (COND CLK) (20:20:20))))
+  (CELL (CELLTYPE "width_reject_leaf") (INSTANCE wrong_edge)
+    (TIMINGCHECK (WIDTH (negedge CLK) (20:20:20))))
+  (CELL (CELLTYPE "width_reject_leaf") (INSTANCE overflow)
+    (TIMINGCHECK (WIDTH (posedge CLK) (1e30:1e30:1e30))))
+)
