@@ -1,0 +1,20 @@
+{
+    "__comment": "Destination 10ps precision rounds 7ps/13ps to 10ps/10ps despite SDF CELL 1ps.",
+    "type": "normal",
+    "source": "sdf_interconnect_scope.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-ginterconnect",
+        "-Ttyp",
+        "-s",
+        "top",
+        "-DLOAD_PREC=10ps",
+        "-DEXPECT_RISE=10",
+        "-DEXPECT_FALL=10"
+    ],
+    "vlog95": {
+        "__comment": "The timing oracle uses SystemVerilog explicit-unit delays and $fatal checks.",
+        "type": "NI"
+    }
+}

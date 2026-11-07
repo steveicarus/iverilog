@@ -1,0 +1,20 @@
+{
+    "__comment": "An unrelated lexically last root uses 1us/1ps.",
+    "type": "normal",
+    "source": "sdf_interconnect_scope.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-ginterconnect",
+        "-Ttyp",
+        "-s",
+        "top",
+        "-s",
+        "zz_unrelated",
+        "-DTAIL_UNIT=1us"
+    ],
+    "vlog95": {
+        "__comment": "The timing oracle uses SystemVerilog explicit-unit delays and $fatal checks.",
+        "type": "NI"
+    }
+}

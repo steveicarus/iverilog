@@ -45,9 +45,9 @@ double sdf_timescale = 1.0e-9;
 /* SDF delay values are expressed in the SDF file's own timescale, but
    vpi_put_delays() with vpiScaledRealTime interprets them in the time units
    of the module that contains the annotated object, so convert between the
-   two. That module is the cell currently being processed, which is not
-   necessarily the scope passed to $sdf_annotate: a cell library routinely
-   declares a different `timescale from the design that instantiates it. */
+   two. IOPATH uses the CELL being processed; INTERCONNECT uses the module
+   containing its destination port. Neither need have the same `timescale
+   as the scope passed to $sdf_annotate. */
 static double sdf_delay_scale(vpiHandle scope)
 {
       if (scope == 0) scope = sdf_scope;
@@ -277,6 +277,10 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 	    if (intermodpath) {
 		  if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Created a vpiInterModPath\n", sdf_fname, sdf_lineno);
 
+		    // INTERCONNECT is applied at the receiving port. Its module
+		    // can have different units from the CELL naming the path.
+		  vpiHandle delay_scope = vpi_handle(vpiScope, intermodpath);
+
 		  s_vpi_delay delays;
 		  struct t_vpi_time delay_vals[12];
 
@@ -292,7 +296,7 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 		  for (int idx = 0 ; idx < delval_list->count ; idx += 1) {
 			delay_vals[idx].type = vpiScaledRealTime;
 			if (delval_list->val[idx].defined) {
-			      double val = delval_list->val[idx].value * sdf_delay_scale(sdf_cur_cell);
+			      double val = delval_list->val[idx].value * sdf_delay_scale(delay_scope);
 			      if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Putting delay: %f for index %d\n",
 			                                      sdf_fname, sdf_lineno, val, idx);
 			      delay_vals[idx].real = val;

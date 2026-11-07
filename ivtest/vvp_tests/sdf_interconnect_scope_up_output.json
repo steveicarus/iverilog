@@ -1,0 +1,19 @@
+{
+    "__comment": "Hierarchical upward connection ends at the containing module output.",
+    "type": "normal",
+    "source": "sdf_interconnect_scope.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-ginterconnect",
+        "-Ttyp",
+        "-s",
+        "top",
+        "-DUP_OUTPUT",
+        "-DCELL_UNIT=1us"
+    ],
+    "vlog95": {
+        "__comment": "The timing oracle uses SystemVerilog explicit-unit delays and $fatal checks.",
+        "type": "NI"
+    }
+}

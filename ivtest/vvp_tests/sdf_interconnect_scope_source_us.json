@@ -1,0 +1,18 @@
+{
+    "__comment": "Source uses 1us/1ps; destination uses 1ns/1ps.",
+    "type": "normal",
+    "source": "sdf_interconnect_scope.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-ginterconnect",
+        "-Ttyp",
+        "-s",
+        "top",
+        "-DSOURCE_UNIT=1us"
+    ],
+    "vlog95": {
+        "__comment": "The timing oracle uses SystemVerilog explicit-unit delays and $fatal checks.",
+        "type": "NI"
+    }
+}
