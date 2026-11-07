@@ -535,6 +535,13 @@ extern ivl_island_t ivl_branch_island(ivl_branch_t obj);
  *    Returns an empty string for unconditional or unsupported conditions.
  *    This metadata does not evaluate the condition.
  *
+ * ivl_path_condition_text
+ *    A Verilog expression preserving the supported source condition identity
+ *    returned by ivl_path_condition_key. Identifiers are escaped and binary
+ *    grouping is explicit. Returns an empty string for unconditional or
+ *    unsupported conditions. This is source metadata, not an expression
+ *    reconstructed from the optimized condition nexus.
+ *
  * ivl_path_is_condit
  *    Is this a conditional structure? Needed for ifnone.
  *
@@ -550,6 +557,7 @@ extern ivl_scope_t ivl_path_scope(ivl_delaypath_t obj);
 extern ivl_nexus_t ivl_path_source(ivl_delaypath_t obj);
 extern uint64_t ivl_path_delay(ivl_delaypath_t obj, ivl_path_edge_t pt);
 extern const char* ivl_path_condition_key(ivl_delaypath_t obj);
+extern const char* ivl_path_condition_text(ivl_delaypath_t obj);
 extern ivl_nexus_t ivl_path_condit(ivl_delaypath_t obj);
 extern int ivl_path_is_condit(ivl_delaypath_t obj);
 

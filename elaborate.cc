@@ -6832,10 +6832,15 @@ static std::string ordinary_path_condition_name(Design*des, NetScope*scope,
 // which cannot occur in a Verilog identifier, and use typed, length-delimited
 // leaves and ordered binary trees. The SDF parser constructs the same keys.
 static std::string ordinary_path_condition_key(Design*des, NetScope*scope,
-                                              const PExpr*expr)
+                                              const PExpr*expr,
+                                              std::string&text)
 {
       const PEBinary*binary = dynamic_cast<const PEBinary*>(expr);
-      if (!binary) return ordinary_path_condition_name(des, scope, expr);
+      if (!binary) {
+            std::string name = ordinary_path_condition_name(des, scope, expr);
+            if (!name.empty()) text = "\\" + name + " ";
+            return name;
+      }
 
       if (binary->peek_opcode() == 'e') { // Logical equality, not case equality.
             std::string name = ordinary_path_condition_name(des, scope,
@@ -6848,17 +6853,21 @@ static std::string ordinary_path_condition_key(Design*des, NetScope*scope,
             std::ostringstream key;
             key << " E" << name.size() << ':' << name
                 << (value.is_zero() ? '0' : '1');
+            text = "(\\" + name + "  == 1'b" +
+                  (value.is_zero() ? "0)" : "1)");
             return key.str();
       }
 
       if (binary->peek_opcode() == 'a') {
+            std::string left_text, right_text;
             std::string left = ordinary_path_condition_key(des, scope,
-                                                           binary->peek_left());
+                                              binary->peek_left(), left_text);
             std::string right = ordinary_path_condition_key(des, scope,
-                                                            binary->peek_right());
+                                              binary->peek_right(), right_text);
             // AND leaves must be comparisons, not bare names or constants.
             if (left.empty() || right.empty()
                 || left[0] != ' ' || right[0] != ' ') return {};
+            text = "(" + left_text + " && " + right_text + ")";
             return " A" + left + right;
       }
 
@@ -7001,7 +7010,8 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 					       src.size(), condit_sig,
 					       conditional, !full_flag_);
 	    path->set_line(*this);
-	    path->sdf_condition = ordinary_path_condition_key(des, scope, condition);
+	    path->sdf_condition = ordinary_path_condition_key(des, scope, condition,
+						path->sdf_condition_text);
 
 	      // An edge sensitive path has either a data source
 	      // expression or an explicit edge keyword. When neither is

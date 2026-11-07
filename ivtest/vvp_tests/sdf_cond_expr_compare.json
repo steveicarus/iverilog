@@ -7,7 +7,7 @@
         "-Ttyp"
     ],
     "vlog95": {
-        "__comment": "Named generate scopes and/or specify condition expressions are not translated by vlog95",
+        "__comment": "Named generate scopes are not translated by vlog95",
         "type": "CE",
         "gold": ""
     }
