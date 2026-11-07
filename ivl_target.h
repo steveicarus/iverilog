@@ -1887,26 +1887,39 @@ extern unsigned   ivl_scope_classes(ivl_scope_t net);
 extern ivl_type_t ivl_scope_class(ivl_scope_t net, unsigned idx);
 extern unsigned       ivl_scope_enumerates(ivl_scope_t net);
 extern ivl_enumtype_t ivl_scope_enumerate(ivl_scope_t net, unsigned idx);
-/* Unconditional scalar WIDTH checks. Limit and threshold are expressed in
+/* Retained local scalar timing-event qualifier. NONE has no condition signal;
+ * BARE, EQ0 and EQ1 preserve the source form for targets such as vlog95. */
+typedef enum ivl_tchk_cond_e {
+      IVL_TCHK_COND_NONE = 0,
+      IVL_TCHK_COND_BARE = 1,
+      IVL_TCHK_COND_EQ0 = 2,
+      IVL_TCHK_COND_EQ1 = 3
+} ivl_tchk_cond_t;
+
+/* Scalar WIDTH checks. Limit and threshold are expressed in
  * the units of ivl_width_scope(); a null notifier means it was omitted. */
 extern unsigned ivl_scope_widths(ivl_scope_t net);
 extern ivl_width_t ivl_scope_width(ivl_scope_t net, unsigned idx);
 extern ivl_scope_t ivl_width_scope(ivl_width_t check);
 extern ivl_signal_t ivl_width_reference(ivl_width_t check);
 extern ivl_signal_t ivl_width_notifier(ivl_width_t check);
+extern ivl_signal_t ivl_width_condition(ivl_width_t check);
+extern ivl_tchk_cond_t ivl_width_condition_kind(ivl_width_t check);
 extern int ivl_width_posedge(ivl_width_t check);
 extern double ivl_width_limit(ivl_width_t check);
 extern double ivl_width_threshold(ivl_width_t check);
 extern const char*ivl_width_file(ivl_width_t check);
 extern unsigned ivl_width_lineno(ivl_width_t check);
 
-/* Unconditional scalar PERIOD checks. The limit is expressed in the units
+/* Scalar PERIOD checks. The limit is expressed in the units
  * of ivl_period_scope(); a null notifier means it was omitted. */
 extern unsigned ivl_scope_periods(ivl_scope_t net);
 extern ivl_period_t ivl_scope_period(ivl_scope_t net, unsigned idx);
 extern ivl_scope_t ivl_period_scope(ivl_period_t check);
 extern ivl_signal_t ivl_period_reference(ivl_period_t check);
 extern ivl_signal_t ivl_period_notifier(ivl_period_t check);
+extern ivl_signal_t ivl_period_condition(ivl_period_t check);
+extern ivl_tchk_cond_t ivl_period_condition_kind(ivl_period_t check);
 extern int ivl_period_posedge(ivl_period_t check);
 extern double ivl_period_limit(ivl_period_t check);
 extern const char*ivl_period_file(ivl_period_t check);

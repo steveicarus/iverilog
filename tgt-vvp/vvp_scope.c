@@ -2349,8 +2349,13 @@ static void draw_width_in_scope(ivl_width_t check)
               ivl_width_posedge(check) ? "posedge" : "negedge",
               ivl_width_reference(check), ivl_width_limit(check),
               ivl_width_threshold(check));
-      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
-      else fprintf(vvp_out, "\"\";\n");
+      if (notifier) fprintf(vvp_out, "v%p_0", notifier);
+      else fprintf(vvp_out, "\"\"");
+      ivl_signal_t condition = ivl_width_condition(check);
+      if (condition)
+            fprintf(vvp_out, ", v%p_0, %u", condition,
+                    ivl_width_condition_kind(check) == IVL_TCHK_COND_EQ0 ? 0 : 1);
+      fprintf(vvp_out, ";\n");
 }
 
 static void draw_period_in_scope(ivl_period_t check)
@@ -2360,8 +2365,13 @@ static void draw_period_in_scope(ivl_period_t check)
               ivl_file_table_index(ivl_period_file(check)), ivl_period_lineno(check),
               ivl_period_posedge(check) ? "posedge" : "negedge",
               ivl_period_reference(check), ivl_period_limit(check));
-      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
-      else fprintf(vvp_out, "\"\";\n");
+      if (notifier) fprintf(vvp_out, "v%p_0", notifier);
+      else fprintf(vvp_out, "\"\"");
+      ivl_signal_t condition = ivl_period_condition(check);
+      if (condition)
+            fprintf(vvp_out, ", v%p_0, %u", condition,
+                    ivl_period_condition_kind(check) == IVL_TCHK_COND_EQ0 ? 0 : 1);
+      fprintf(vvp_out, ";\n");
 }
 
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)

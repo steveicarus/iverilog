@@ -2161,6 +2161,12 @@ extern "C" ivl_signal_t ivl_width_reference(ivl_width_t check)
 extern "C" ivl_signal_t ivl_width_notifier(ivl_width_t check)
 { assert(check); return check->notifier; }
 
+extern "C" ivl_signal_t ivl_width_condition(ivl_width_t check)
+{ assert(check); return check->condition; }
+
+extern "C" ivl_tchk_cond_t ivl_width_condition_kind(ivl_width_t check)
+{ assert(check); return check->condition_kind; }
+
 extern "C" int ivl_width_posedge(ivl_width_t check)
 { assert(check); return check->posedge; }
 
@@ -2190,6 +2196,12 @@ extern "C" ivl_signal_t ivl_period_reference(ivl_period_t check)
 
 extern "C" ivl_signal_t ivl_period_notifier(ivl_period_t check)
 { assert(check); return check->notifier; }
+
+extern "C" ivl_signal_t ivl_period_condition(ivl_period_t check)
+{ assert(check); return check->condition; }
+
+extern "C" ivl_tchk_cond_t ivl_period_condition_kind(ivl_period_t check)
+{ assert(check); return check->condition_kind; }
 
 extern "C" int ivl_period_posedge(ivl_period_t check)
 { assert(check); return check->posedge; }

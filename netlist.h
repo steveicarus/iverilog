@@ -966,13 +966,17 @@ using NetLRef = NetNetRef<&NetNet::incr_lref, &NetNet::decr_lref>;
 class NetWidth : public LineInfo {
     public:
       NetWidth(NetScope*scope, NetNet*reference, NetNet*notifier,
-               bool posedge, double limit, double threshold)
+               bool posedge, double limit, double threshold,
+               NetNet*condition, ivl_tchk_cond_t condition_kind)
       : scope_(scope), reference_(reference), notifier_(notifier),
+        condition_(condition), condition_kind_(condition_kind),
         posedge_(posedge), limit_(limit), threshold_(threshold) { }
 
       NetScope*scope() const { return scope_; }
       NetNet*reference() const { return reference_.get(); }
       NetNet*notifier() const { return notifier_.get(); }
+      NetNet*condition() const { return condition_.get(); }
+      ivl_tchk_cond_t condition_kind() const { return condition_kind_; }
       bool posedge() const { return posedge_; }
       double limit() const { return limit_; }
       double threshold() const { return threshold_; }
@@ -981,6 +985,8 @@ class NetWidth : public LineInfo {
       NetScope*scope_;
       NetERef reference_;
       NetLRef notifier_;
+      NetERef condition_;
+      ivl_tchk_cond_t condition_kind_;
       bool posedge_;
       double limit_, threshold_;
 };
@@ -989,13 +995,17 @@ class NetWidth : public LineInfo {
 class NetPeriod : public LineInfo {
     public:
       NetPeriod(NetScope*scope, NetNet*reference, NetNet*notifier,
-                bool posedge, double limit)
+                bool posedge, double limit,
+                NetNet*condition, ivl_tchk_cond_t condition_kind)
       : scope_(scope), reference_(reference), notifier_(notifier),
+        condition_(condition), condition_kind_(condition_kind),
         posedge_(posedge), limit_(limit) { }
 
       NetScope*scope() const { return scope_; }
       NetNet*reference() const { return reference_.get(); }
       NetNet*notifier() const { return notifier_.get(); }
+      NetNet*condition() const { return condition_.get(); }
+      ivl_tchk_cond_t condition_kind() const { return condition_kind_; }
       bool posedge() const { return posedge_; }
       double limit() const { return limit_; }
 
@@ -1003,6 +1013,8 @@ class NetPeriod : public LineInfo {
       NetScope*scope_;
       NetERef reference_;
       NetLRef notifier_;
+      NetERef condition_;
+      ivl_tchk_cond_t condition_kind_;
       bool posedge_;
       double limit_;
 };

@@ -7111,15 +7111,56 @@ static NetNet*timing_check_signal(Design*des, NetScope*scope,
       return sig;
 }
 
+/* Preserve a small local qualifier directly, without adding a Boolean net or
+ * gating the physical timing signal. Check the parsed shape before expression
+ * optimization so unsupported expressions cannot become accidentally admitted. */
+static bool timing_check_condition(NetScope*scope, const PExpr*expr,
+                                    NetNet*&signal, ivl_tchk_cond_t&kind)
+{
+      signal = nullptr;
+      kind = IVL_TCHK_COND_NONE;
+      if (!expr) return true;
+      const PEIdent*id = dynamic_cast<const PEIdent*>(expr);
+      kind = IVL_TCHK_COND_BARE;
+      if (!id) {
+            const PEBComp*comparison = dynamic_cast<const PEBComp*>(expr);
+            if (!comparison || comparison->peek_opcode() != 'E') return false;
+            id = dynamic_cast<const PEIdent*>(comparison->peek_left());
+            const PENumber*number =
+                  dynamic_cast<const PENumber*>(comparison->peek_right());
+            if (!id || !number) return false;
+            const verinum&value = number->value();
+            if (!value.has_len() || value.len() != 1 || value.has_sign()
+                || value.is_single() || value.is_string() || !value.is_defined())
+                  return false;
+            kind = value.is_zero() ? IVL_TCHK_COND_EQ0 : IVL_TCHK_COND_EQ1;
+      }
+      if (id->path().package || id->path().name.size() != 1
+          || !id->path().name.front().index.empty()) return false;
+      signal = scope->find_signal(id->path().name.front().name);
+      return signal && signal->scope() == scope && signal->vector_width() == 1
+          && signal->packed_dimensions() == 0 && signal->unpacked_dimensions() == 0
+          && (signal->data_type() == IVL_VT_LOGIC || signal->data_type() == IVL_VT_BOOL);
+}
+
 void PWidth::elaborate(Design*des, NetScope*scope) const
 {
       if (!gn_specify_blocks_flag) return;
-      if (reference_->condition || reference_->posedge == reference_->negedge
+      if (reference_->posedge == reference_->negedge
 	  || !reference_->edges.empty()) {
-	    cerr << get_fileline() << ": error: $width supports only unconditional"
+	    cerr << get_fileline() << ": error: $width supports only"
 		 << " posedge or negedge scalar reference events." << endl;
 	    des->errors += 1;
 	    return;
+      }
+      NetNet*condition;
+      ivl_tchk_cond_t condition_kind;
+      if (!timing_check_condition(scope, reference_->condition.get(), condition,
+                                  condition_kind)) {
+            cerr << get_fileline() << ": error: $width condition must be a local"
+                 << " scalar signal or that signal === 1'b0 or 1'b1." << endl;
+            des->errors += 1;
+            return;
       }
       NetNet*reference = timing_check_signal(des, scope, reference_->name,
                                             *this, "$width", false);
@@ -7134,7 +7175,8 @@ void PWidth::elaborate(Design*des, NetScope*scope) const
                                               "$width", "threshold", threshold))
             return;
       std::unique_ptr<NetWidth> check(new NetWidth(scope, reference, notifier,
-					 reference_->posedge, limit, threshold));
+					 reference_->posedge, limit, threshold,
+                                         condition, condition_kind));
       check->set_line(*this);
       scope->add_width(std::move(check));
 }
@@ -7142,10 +7184,19 @@ void PWidth::elaborate(Design*des, NetScope*scope) const
 void PPeriod::elaborate(Design*des, NetScope*scope) const
 {
       if (!gn_specify_blocks_flag) return;
-      if (reference_->condition || reference_->posedge == reference_->negedge
+      if (reference_->posedge == reference_->negedge
           || !reference_->edges.empty()) {
-            cerr << get_fileline() << ": error: $period supports only unconditional"
+            cerr << get_fileline() << ": error: $period supports only"
                  << " posedge or negedge scalar reference events." << endl;
+            des->errors += 1;
+            return;
+      }
+      NetNet*condition;
+      ivl_tchk_cond_t condition_kind;
+      if (!timing_check_condition(scope, reference_->condition.get(), condition,
+                                  condition_kind)) {
+            cerr << get_fileline() << ": error: $period condition must be a local"
+                 << " scalar signal or that signal === 1'b0 or 1'b1." << endl;
             des->errors += 1;
             return;
       }
@@ -7159,7 +7210,8 @@ void PPeriod::elaborate(Design*des, NetScope*scope) const
       if (!timing_check_constant(des, scope, limit_.get(), *this,
                                  "$period", "limit", limit)) return;
       std::unique_ptr<NetPeriod> check(new NetPeriod(scope, reference, notifier,
-                                                   reference_->posedge, limit));
+                                                   reference_->posedge, limit,
+                                                   condition, condition_kind));
       check->set_line(*this);
       scope->add_period(std::move(check));
 }

@@ -858,6 +858,19 @@ static void emit_specify_paths(ivl_scope_t scope, ivl_signal_t sig)
       }
 }
 
+/* The admitted timing qualifier has no generated helper net. Retain its HDL
+ * source form so translation does not turn a conditional check unconditional. */
+static void emit_tchk_condition(ivl_signal_t signal, ivl_tchk_cond_t kind)
+{
+      if (!signal) { assert(kind == IVL_TCHK_COND_NONE); return; }
+      fprintf(vlog_out, " &&& (");
+      emit_id(ivl_signal_basename(signal));
+      if (kind == IVL_TCHK_COND_EQ0) fprintf(vlog_out, " === 1'b0");
+      else if (kind == IVL_TCHK_COND_EQ1) fprintf(vlog_out, " === 1'b1");
+      else assert(kind == IVL_TCHK_COND_BARE);
+      fprintf(vlog_out, ")");
+}
+
 static void emit_width_checks(ivl_scope_t scope)
 {
       unsigned idx;
@@ -867,6 +880,8 @@ static void emit_width_checks(ivl_scope_t scope)
             fprintf(vlog_out, "%*c$width(%s ", indent, ' ',
                     ivl_width_posedge(check) ? "posedge" : "negedge");
             emit_id(ivl_signal_basename(ivl_width_reference(check)));
+            emit_tchk_condition(ivl_width_condition(check),
+                                ivl_width_condition_kind(check));
               /* The elaborated values are in this module's time units. */
             fprintf(vlog_out, ", %.17e, %.17e", ivl_width_limit(check),
                     ivl_width_threshold(check));
@@ -887,6 +902,8 @@ static void emit_period_checks(ivl_scope_t scope)
             fprintf(vlog_out, "%*c$period(%s ", indent, ' ',
                     ivl_period_posedge(check) ? "posedge" : "negedge");
             emit_id(ivl_signal_basename(ivl_period_reference(check)));
+            emit_tchk_condition(ivl_period_condition(check),
+                                ivl_period_condition_kind(check));
             fprintf(vlog_out, ", %.17e", ivl_period_limit(check));
             if (notifier) {
                   fprintf(vlog_out, ", ");

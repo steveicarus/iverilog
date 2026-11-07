@@ -2741,6 +2741,8 @@ void dll_target::width_check(const NetWidth*check)
       obj->scope = find_scope(des_, check->scope());
       obj->reference = find_signal(des_, check->reference());
       obj->notifier = check->notifier() ? find_signal(des_, check->notifier()) : nullptr;
+      obj->condition = check->condition() ? find_signal(des_, check->condition()) : nullptr;
+      obj->condition_kind = check->condition_kind();
       obj->posedge = check->posedge();
       obj->limit = check->limit();
       obj->threshold = check->threshold();
@@ -2762,6 +2764,8 @@ void dll_target::period_check(const NetPeriod*check)
       obj->scope = find_scope(des_, check->scope());
       obj->reference = find_signal(des_, check->reference());
       obj->notifier = check->notifier() ? find_signal(des_, check->notifier()) : nullptr;
+      obj->condition = check->condition() ? find_signal(des_, check->condition()) : nullptr;
+      obj->condition_kind = check->condition_kind();
       obj->posedge = check->posedge();
       obj->limit = check->limit();
       obj->file = check->get_file();

@@ -1,0 +1,12 @@
+(DELAYFILE
+  (SDFVERSION "3.0")
+  (TIMESCALE 1ps)
+  (CELL
+    (CELLTYPE "pulse_sdf_leaf")
+    (INSTANCE)
+    (TIMINGCHECK
+      (WIDTH (posedge CLK) (30:30:30))
+      (PERIOD (posedge CLK) (40:40:40))
+    )
+  )
+)

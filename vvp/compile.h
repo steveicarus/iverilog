@@ -558,12 +558,15 @@ extern void compile_netw_real(char*label, char*array_symbol,
 // Standard HDL WIDTH declarations emit this explicit record.
 extern void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
                                 struct symb_s reference, double limit,
-                                double threshold, char* notifier);
+                                double threshold, char* notifier,
+                                char* condition = nullptr,
+                                uint64_t condition_value = 1);
 
 // PERIOD records carry one limit and no WIDTH threshold.
 extern void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
                                  struct symb_s reference, double limit,
-                                 char* notifier);
+                                 char* notifier, char* condition = nullptr,
+                                 uint64_t condition_value = 1);
 
 extern void compile_island(char*label, char*type);
 extern void compile_island_port(char*label, char*island, char*src);

@@ -59,7 +59,7 @@ class PTimingCheck  : public LineInfo {
       virtual void dump(std::ostream&out, unsigned ind) const = 0;
 };
 
-/* The parsed unconditional scalar $width declaration. */
+/* The parsed scalar $width declaration and its optional qualifier. */
 class PWidth : public PTimingCheck {
     public:
       PWidth(event_t*reference, PExpr*limit, PExpr*threshold,
@@ -74,7 +74,7 @@ class PWidth : public PTimingCheck {
       std::unique_ptr<pform_name_t> notifier_;
 };
 
-/* The parsed unconditional scalar $period declaration. */
+/* The parsed scalar $period declaration and its optional qualifier. */
 class PPeriod : public PTimingCheck {
     public:
       PPeriod(event_t*reference, PExpr*limit, pform_name_t*notifier);

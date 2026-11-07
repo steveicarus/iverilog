@@ -63,15 +63,21 @@ Icarus extensions that cannot be translated:
 Timing checks
 -------------
 
-With ``-gspecify``, the target emits unconditional scalar ``$width`` checks
+With ``-gspecify``, the target emits scalar ``$width`` checks
 with their selected edge, elaborated limit and threshold, and optional
 notifier. Values remain in the containing module's time units, and the
 module timescale is preserved. A module containing only timing checks still
 receives a ``specify`` block. The translated file must also be compiled with
 ``-gspecify`` to execute the checks.
 
-Unconditional scalar ``$period`` checks are emitted in the same way, with
+Scalar ``$period`` checks are emitted in the same way, with
 their selected edge, elaborated limit, and optional notifier.
+
+For either check, an admitted local scalar qualifier is preserved after ``&&&``:
+``signal``, ``signal === 1'b0`` or ``signal === 1'b1``. The translator retains the
+source form and escaped signal name, rather than synthesizing a gated reference
+or omitting the qualifier. Recompilation with VVP therefore uses the same
+qualified-history behavior as direct compilation.
 
 Known Issues and Limitations
 ----------------------------

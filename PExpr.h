@@ -858,6 +858,10 @@ class PEBinary : public PExpr {
       explicit PEBinary(char op, PExpr*l, PExpr*r);
       ~PEBinary() override;
 
+      char peek_opcode() const { return op_; }
+      const PExpr* peek_left() const { return left_; }
+      const PExpr* peek_right() const { return right_; }
+
       virtual void dump(std::ostream&out) const override;
 
       virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type) override;

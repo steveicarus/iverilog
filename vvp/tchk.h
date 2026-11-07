@@ -34,13 +34,14 @@ bool vpip_tchk_delay_to_ticks(double value, const __vpiScope* scope,
 class vvp_fun_tchk_width : public vvp_net_fun_t {
     public:
       vvp_fun_tchk_width(int start_edge, vvp_time64_t limit,
-                         vvp_time64_t threshold);
+                         vvp_time64_t threshold, unsigned condition_value);
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t& value,
                      vvp_context_t) override;
       __vpiTchkWidth* vpi_tchk;
 
     private:
       vvp_bit4_t previous_;
+      unsigned condition_value_;
       int start_edge_;
       int close_edge_;
       vvp_time64_t limit_;
@@ -53,13 +54,15 @@ class vvp_fun_tchk_width : public vvp_net_fun_t {
 
 class vvp_fun_tchk_period : public vvp_net_fun_t {
     public:
-      vvp_fun_tchk_period(int reference_edge, vvp_time64_t limit);
+      vvp_fun_tchk_period(int reference_edge, vvp_time64_t limit,
+                          unsigned condition_value);
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t& value,
                      vvp_context_t) override;
       __vpiTchkPeriod* vpi_tchk;
 
     private:
       vvp_bit4_t previous_;
+      unsigned condition_value_;
       int reference_edge_;
       vvp_time64_t limit_;
       vvp_time64_t reference_time_;
