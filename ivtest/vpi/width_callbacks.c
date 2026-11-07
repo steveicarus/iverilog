@@ -1,4 +1,7 @@
 /* Reuse the unchanged object audit; add persistent callback lifetime checks. */
+/* Preserve the Windows export declaration before renaming the included entry. */
+#include <vpi_user.h>
+
 #define audit base_audit
 #define finish base_finish
 #define register_all base_register_all
