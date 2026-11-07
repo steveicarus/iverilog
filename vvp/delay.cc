@@ -1428,7 +1428,26 @@ void __vpiInterModPath::vpi_put_delays(p_vpi_delay del)
  * They use the default no-op handle release so that multiple iterators can
  * safely refer to the same path. The net pool owns the delay functors.
  */
-static vector<__vpiInterModPath*> intermodpaths;
+/* Index by source port so lookup does not scan unrelated connections. */
+static multimap<vpiPortInfo*, __vpiInterModPath*> intermodpaths;
+
+__vpiInterModPath* vpip_find_intermodpath(
+      vpiPortInfo* port1, vpiPortInfo* port2,
+      bool port1_has_index, int port1_bit_index,
+      bool port2_has_index, int port2_bit_index)
+{
+      auto range = intermodpaths.equal_range(port1);
+      for (auto it = range.first; it != range.second; ++it) {
+	    __vpiInterModPath*obj = it->second;
+	    if (obj->port2 == port2 &&
+		obj->port1_has_index == port1_has_index &&
+		(!port1_has_index || obj->port1_bit_index == port1_bit_index) &&
+		obj->port2_has_index == port2_has_index &&
+		(!port2_has_index || obj->port2_bit_index == port2_bit_index))
+		  return obj;
+      }
+      return 0;
+}
 
 vpiHandle vpip_make_intermodpath_iterator()
 {
@@ -1437,8 +1456,9 @@ vpiHandle vpip_make_intermodpath_iterator()
 
       vpiHandle*args = static_cast<vpiHandle*>
 	    (calloc(intermodpaths.size(), sizeof(vpiHandle)));
-      for (unsigned idx = 0; idx < intermodpaths.size(); idx += 1)
-	    args[idx] = intermodpaths[idx];
+      unsigned idx = 0;
+      for (const auto&entry : intermodpaths)
+	    args[idx++] = entry.second;
 
 	/* The iterator owns the array, but not the path handles. */
       return vpip_make_iterator(intermodpaths.size(), args, true);
@@ -1446,7 +1466,10 @@ vpiHandle vpip_make_intermodpath_iterator()
 
 /* Construct a handle for an intermodule delay functor. */
 
-struct __vpiInterModPath* vpip_make_intermodpath(vvp_net_t *net, vpiPortInfo* port1, vpiPortInfo* port2)
+struct __vpiInterModPath* vpip_make_intermodpath(
+      vvp_net_t *net, vpiPortInfo* port1, vpiPortInfo* port2,
+      bool port1_has_index, int port1_bit_index,
+      bool port2_has_index, int port2_bit_index)
 {
       struct __vpiInterModPath*obj = new __vpiInterModPath;
       obj->scope = vpip_peek_current_scope ( );
@@ -1454,17 +1477,20 @@ struct __vpiInterModPath* vpip_make_intermodpath(vvp_net_t *net, vpiPortInfo* po
       obj->net = net;
       obj->port1 = port1;
       obj->port2 = port2;
+      obj->port1_has_index = port1_has_index;
+      obj->port1_bit_index = port1_bit_index;
+      obj->port2_has_index = port2_has_index;
+      obj->port2_bit_index = port2_bit_index;
 
-      intermodpaths.push_back(obj);
+      intermodpaths.insert(make_pair(port1, obj));
       return obj;
 }
 
 #ifdef CHECK_WITH_VALGRIND
 void intermodpath_delete()
 {
-      for (unsigned idx = 0; idx < intermodpaths.size(); idx += 1) {
-	    delete intermodpaths[idx];
-      }
+      for (const auto&entry : intermodpaths)
+	    delete entry.second;
       intermodpaths.clear();
 }
 #endif

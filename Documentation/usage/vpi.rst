@@ -213,17 +213,21 @@ Icarus provides the global relationship
 that have already been created, including those created by SDF INTERCONNECT
 annotation. This global relationship is an Icarus extension. It returns NULL
 when no objects exist, and does not create connections or change delay values.
-In contrast, Icarus uses ``vpi_handle_multi(vpiInterModPath, ...)`` to create an
-intermodule delay object; it is not a read-only lookup operation.
+When both endpoints are known, ``vpi_handle_multi(vpiInterModPath, source,
+destination)`` returns the existing path for that ordered endpoint request,
+including its bit selections. It creates a path only when none exists and the
+connection can be inserted. Repeated queries preserve the object's delays and
+do not insert another delay stage. Global enumeration also works when the
+caller does not already know the endpoints, and never creates paths.
 
 An iterator contains a snapshot of the existing object handles. Exhausting it
 with ``vpi_scan``, or releasing it early with ``vpi_release_handle``, releases
 the iterator without releasing the paths. The path handles remain valid through
 the end-of-simulation callbacks. Releasing a path handle does not remove its
 connection or invalidate another handle to the same object. Enumeration order
-is not an object identifier. Endpoints identify the connection; use the handle
-for object identity within a simulation. Multiple inserted objects may have
-the same endpoint pair, so callers must not assume that pair is unique.
+is not an object identifier. Use ``vpi_compare_objects`` to compare object
+identity within a simulation. The stored port handles identify the base ports;
+different bit-selected paths can therefore expose the same base-port pair.
 
 For a scalar path, ``vpi_iterate(vpiPort, path)`` returns its source and
 destination port handles, in that order. The existing ``vpi_get_delays``
@@ -247,8 +251,9 @@ This interface reports the objects that exist; it does not determine whether
 every intended SDF entry was annotated or every path was exercised. Separate
 annotation checks and receiving-event observations are needed for those claims.
 The scalar endpoint relationship does not provide bit-select identity for
-indexed INTERCONNECT entries. This addition does not change annotation,
-timebase conversion, path scheduling or reannotation behavior.
+indexed INTERCONNECT entries. Lookup reuse lets subsequent annotation update
+the same delay object. Delay arithmetic, timebase conversion and event
+scheduling are unchanged.
 
 Cadence PLI Modules
 -------------------

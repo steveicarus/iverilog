@@ -1723,6 +1723,13 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
 	    return nullptr;
       }
 
+	// Return an existing path before inspecting the rewired connection.
+	// Keep bit selections in the key: base ports alone do not identify it.
+      if (__vpiInterModPath*existing = vpip_find_intermodpath(
+		port1, port2, port1_has_index, port1_bit_index,
+		port2_has_index, port2_bit_index))
+	    return existing;
+
 	// Get the names of both ports
       std::string port1_name(vpi_get_str(vpiName, ref1));
       std::string port2_name(vpi_get_str(vpiName, ref2));
@@ -1863,7 +1870,9 @@ vpiHandle vpi_handle_multi(PLI_INT32 type,
 		  }
 
 		    // Create the VPI intermodpath object
-		  __vpiInterModPath* intermodpath = vpip_make_intermodpath(new_net, port1, port2);
+		  __vpiInterModPath* intermodpath = vpip_make_intermodpath(
+			new_net, port1, port2, port1_has_index, port1_bit_index,
+			port2_has_index, port2_bit_index);
 		  intermodpath->intermodpath = obj;
 
 		    // Finally done, return the intermodpath object
