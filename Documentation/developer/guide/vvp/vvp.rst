@@ -450,9 +450,20 @@ activates the delay.
 
 ::
 
-        .modpath <width> <input> , [ <src> (<delays> [? <condition>]) ] ;
+        <label> .modpath <width> <input> <destination> [<data-handle>],
+            <src> [<edge>] (<delays> [? <condition>]) <input-terminal> ["<condition-key>"],
+            ... ;
 
-<width> specifies the bit width of the input net.
+<width> specifies the bit width of the input net. <destination> is the
+VPI signal label for the public output after module-path processing.
+Each source entry supplies its trigger, optional ``+`` or ``-`` edge,
+delays and input-terminal VPI label.
+
+The optional <data-handle> is a VPI signal label for the existing UDP
+output before module-path processing. It records an observation
+relationship only; <input> remains the functional input. The vvp target
+emits this field for eligible paths when ``-pudp_prepath_vpi=1`` is set.
+See :doc:`vpi_modpath_data` for the extension's scope and handle semantics.
 
 For a conditional source, an optional quoted condition identifier follows
 the path's input-terminal symbol. This records the original local scalar

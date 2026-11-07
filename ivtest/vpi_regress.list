@@ -139,6 +139,9 @@ sim_time_cb2		normal			sim_time_cb2.c		sim_time_cb2.gold
 spec_delays		normal,-gspecify	spec_delays.c		spec_delays.log
 start_of_simtime1	normal			start_of_simtime1.c	start_of_simtime1.log
 timescale		PLI1			timescale.c		timescale.log
+udp_prepath		normal,-gspecify,-pudp_prepath_vpi=1	udp_prepath.c	udp_prepath.gold
+udp_prepath_disabled	normal,-gspecify,-Ivpi	udp_prepath.c	udp_prepath_disabled.gold
+udp_prepath_renamed	normal,-gspecify,-pudp_prepath_vpi=1,-Ivpi	udp_prepath.c	udp_prepath_renamed.gold
 value_change_cb1	normal,-g2009		value_change_cb1.c	value_change_cb1.gold
 value_change_cb2	normal,-g2009		value_change_cb2.c	value_change_cb2.gold
 value_change_cb3	normal,-g2009		value_change_cb3.c	value_change_cb3.gold

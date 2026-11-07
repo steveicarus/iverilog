@@ -44,6 +44,10 @@ extern unsigned transient_id;
  */
 extern unsigned show_file_line;
 
+/* Expose eligible UDP outputs before module-path delay, when requested. */
+extern int udp_prepath_vpi;
+extern int udp_prepath_vpi_eligible(ivl_net_logic_t net);
+
 struct vector_info {
       unsigned base;
       unsigned wid;
@@ -106,7 +110,8 @@ extern char* process_octal_codes(const char*txt, unsigned wid);
  * Note: draw_modpath drive_label must be malloc'ed by the
  * caller. This function will free the string sometime in the future.
  */
-extern void draw_modpath(ivl_signal_t path_sig, char*drive_label, unsigned drive_index);
+extern void draw_modpath(ivl_signal_t path_sig, char*drive_label,
+			 unsigned drive_index, ivl_net_logic_t driver);
 extern void cleanup_modpath(void);
 
 /*

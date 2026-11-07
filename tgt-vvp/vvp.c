@@ -47,6 +47,7 @@ COPYRIGHT "\n\n"
 FILE*vvp_out = 0;
 int vvp_errors = 0;
 unsigned show_file_line = 0;
+int udp_prepath_vpi = 0;
 
 int debug_draw = 0;
 
@@ -162,6 +163,16 @@ int target_design(ivl_design_t des)
 	 * printed for procedural statements. (e.g. -pfileline=1).
 	 * The default is no file/line information will be included. */
       const char*fileline = ivl_design_flag(des, "fileline");
+      const char*prepath = ivl_design_flag(des, "udp_prepath_vpi");
+
+      if (strcmp(prepath, "") == 0 || strcmp(prepath, "0") == 0) {
+	    udp_prepath_vpi = 0;
+      } else if (strcmp(prepath, "1") == 0) {
+	    udp_prepath_vpi = 1;
+      } else {
+	    fprintf(stderr, "vvp.tgt error: udp_prepath_vpi must be 0 or 1.\n");
+	    return 1;
+      }
 
       const char*debug_flags = ivl_design_flag(des, "debug_flags");
       process_debug_string(debug_flags);

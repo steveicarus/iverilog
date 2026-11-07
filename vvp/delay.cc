@@ -806,6 +806,9 @@ static vpiHandle modpath_src_get_handle(int code, vpiHandle ref)
 
 	  case vpiModPathOut:
 	    return &rfp->dest->path_term_out;
+
+	  case _vpiModPathData:
+	    return rfp->dest->data_net;
       }
       return 0;
 }
@@ -1085,6 +1088,7 @@ struct __vpiModPath* vpip_make_modpath(vvp_net_t *net)
       obj->scope = vpip_peek_current_scope ( );
 
       initialize_path_term(obj->path_term_out);
+      obj->data_net = 0;
       obj->input_net = net ;
 
 #ifdef CHECK_WITH_VALGRIND

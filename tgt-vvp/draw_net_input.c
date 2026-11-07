@@ -751,12 +751,13 @@ static void draw_net_input_x(ivl_nexus_t nex,
       if (ndrivers == 1 && res == IVL_SIT_TRI) {
 	    ivl_signal_t path_sig = find_modpath(nex);
 	    if (path_sig) {
+		  ivl_net_logic_t driver = ivl_nexus_ptr_log(drivers[0]);
 		  char*nex_str = draw_net_input_drive(nex, drivers[0]);
 		  char modpath_label[64];
 		  snprintf(modpath_label, sizeof modpath_label,
 			   "V_%p_0/m", path_sig);
 		  nex_private = strdup(modpath_label);
-		  draw_modpath(path_sig, nex_str, 0);
+		  draw_modpath(path_sig, nex_str, 0, driver);
 
 	    } else {
 		  nex_private = draw_net_input_drive(nex, drivers[0]);
@@ -785,7 +786,7 @@ static void draw_net_input_x(ivl_nexus_t nex,
 		  snprintf(modpath_label, sizeof modpath_label,
 			   "V_%p_%u/m", path_sig, idx);
 		  driver_labels[idx] = strdup(modpath_label);
-		  draw_modpath(path_sig, nex_str, idx);
+		  draw_modpath(path_sig, nex_str, idx, 0);
 	    }
       } else {
 	    for (idx = 0; idx < ndrivers; idx += 1) {
