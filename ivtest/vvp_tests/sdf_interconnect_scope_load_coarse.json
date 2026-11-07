@@ -12,9 +12,5 @@
         "-DLOAD_PREC=10ps",
         "-DEXPECT_RISE=10",
         "-DEXPECT_FALL=10"
-    ],
-    "vlog95": {
-        "__comment": "The timing oracle uses SystemVerilog explicit-unit delays and $fatal checks.",
-        "type": "NI"
-    }
+    ]
 }

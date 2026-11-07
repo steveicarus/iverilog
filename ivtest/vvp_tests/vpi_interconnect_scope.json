@@ -16,10 +16,6 @@
         "-DTAIL_UNIT=100ps",
         "-DTAIL_PREC=10ps"
     ],
-    "vlog95": {
-        "__comment": "The timing oracle uses SystemVerilog explicit-unit delays and $fatal checks.",
-        "type": "NI"
-    },
     "vpi-sources": [
         "vpi/interconnect_scope.c"
     ]

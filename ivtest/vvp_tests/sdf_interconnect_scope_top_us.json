@@ -10,9 +10,5 @@
         "-s",
         "top",
         "-DTOP_UNIT=1us"
-    ],
-    "vlog95": {
-        "__comment": "The timing oracle uses SystemVerilog explicit-unit delays and $fatal checks.",
-        "type": "NI"
-    }
+    ]
 }
