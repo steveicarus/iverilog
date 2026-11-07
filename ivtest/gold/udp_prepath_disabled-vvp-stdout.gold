@@ -1,0 +1,17 @@
+PUBLIC prepath_mux2 0 0 x
+PUBLIC prepath_mux2 1 9 0
+PUBLIC prepath_mux2 2 103 1
+PUBLIC prepath_mux2 3 205 0
+PUBLIC prepath_mux2 4 409 x
+PUBLIC prepath_mux2 5 509 1
+PUBLIC prepath_mux2 6 709 x
+PUBLIC prepath_mux2 7 809 1
+PUBLIC prepath_mux2 8 905 0
+PUBLIC prepath_mux4 0 0 x
+PUBLIC prepath_mux4 1 13 1
+PUBLIC prepath_mux4 2 111 0
+PUBLIC prepath_mux4 3 207 1
+PUBLIC prepath_mux4 4 361 0
+PUBLIC prepath_mux4 5 713 x
+PUBLIC prepath_mux4 6 813 0
+PASS udp_prepath enabled=0

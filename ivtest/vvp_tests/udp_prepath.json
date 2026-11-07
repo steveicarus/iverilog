@@ -1,0 +1,14 @@
+{
+    "__comment": "Reuse the VPI fixture and its independently derived pre/post histories in native and vlog95 roundtrip runs.",
+    "type": "normal",
+    "source": "../vpi/udp_prepath.v",
+    "iverilog-args": [
+        "-gspecify",
+        "-Ivpi",
+        "-pudp_prepath_vpi=1"
+    ],
+    "vpi-sources": [
+        "vpi/udp_prepath.c"
+    ],
+    "gold": "udp_prepath"
+}
