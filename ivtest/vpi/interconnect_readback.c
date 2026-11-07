@@ -1,4 +1,4 @@
-/* Read-only discovery and effective delay observation of scalar INTERCONNECTs.
+/* Diagnostic test of Icarus' global INTERCONNECT enumeration extension.
  * Expected delivery times are fixed independently of vpi_get_delays results.
  */
 #include <vpi_user.h>
@@ -143,6 +143,15 @@ static void read_path(vpiHandle handle, struct path *path)
       require(endpoint(destination, vpiInput, path->destination,
                        sizeof path->destination), "destination endpoint identity");
       require(vpi_scan(iterator) == 0, "exactly two endpoint ports");
+      /* Population checks belong to this diagnostic extension test, not the
+       * standard endpoint-lookup regressions. The subsequent snapshots must
+       * still contain exactly the original objects after repeated lookup. */
+      if (source && destination) {
+            vpiHandle again = vpi_handle_multi(vpiInterModPath,
+                                              source, destination);
+            require(again && vpi_compare_objects(handle, again),
+                    "endpoint lookup reuses the enumerated object");
+      }
       delays.da = times;
       delays.no_of_delays = 2;
       delays.time_type = vpiSimTime;

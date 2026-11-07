@@ -100,21 +100,6 @@ static void delays(vpiHandle path, unsigned rise, unsigned fall)
               "effective rise/fall delays");
 }
 
-static void population(int expected)
-{
-      vpiHandle iterator = vpi_iterate(vpiInterModPath, 0), path;
-      int count = 0, left_count = 0, right_count = 0;
-      if (iterator) while ((path = vpi_scan(iterator))) {
-            count += 1;
-            if (left && vpi_compare_objects(path, left)) left_count += 1;
-            if (right && vpi_compare_objects(path, right)) right_count += 1;
-      }
-      require(count == expected, "lookup does not add delay objects");
-      require(left_count == 1, "one object for the left endpoint pair");
-      require(right_count == (expected == 2),
-              "distinct fanout has its own object");
-}
-
 static void check_pair(unsigned rise)
 {
       vpiHandle again_left = lookup("top.left");
@@ -129,7 +114,6 @@ static void check_pair(unsigned rise)
                     "different fanout endpoints do not alias");
       delays(again_left, rise, 13);
       delays(again_right, 11, 19);
-      population(2);
 }
 
 static PLI_INT32 check_calltf(PLI_BYTE8 *unused)
@@ -148,7 +132,6 @@ static PLI_INT32 check_calltf(PLI_BYTE8 *unused)
                   require(vpi_compare_objects(left, again),
                           "repeated pre-annotation lookup reuses object");
             delays(again, 0, 0);
-            population(1);
       } else {
             check_pair(phase == 3 ? 17 : 7);
             if (phase == 2 && left) {

@@ -38,8 +38,8 @@ static vpiHandle port_bit(const char *scope, const char *name, int index)
 
 static PLI_INT32 check_calltf(PLI_BYTE8 *unused)
 {
-      int i, count = 0;
-      vpiHandle iterator, path;
+      int i;
+      vpiHandle path;
       (void)unused;
       calls += 1;
       for (i = 0; i < 2; i += 1) {
@@ -68,9 +68,6 @@ static PLI_INT32 check_calltf(PLI_BYTE8 *unused)
       if (saved[0] && saved[1])
             require(!vpi_compare_objects(saved[0], saved[1]),
                     "different indexed pairs do not alias");
-      iterator = vpi_iterate(vpiInterModPath, 0);
-      if (iterator) while (vpi_scan(iterator)) count += 1;
-      require(count == 2, "two indexed paths, no duplicate insertion");
       return 0;
 }
 
