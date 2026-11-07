@@ -128,7 +128,7 @@ char sdf_use_hchar = '.';
 %type <delay> delval rvalue_opt rvalue rtriple signed_real_number_opt
 
 %type <int_val> edge_identifier cond_edge_start cond_edge_identifier
-%type <port_with_edge> port_edge port_spec width_port_tchk
+%type <port_with_edge> port_edge port_spec scalar_port_tchk
 
 %type <delval_list> delval_list
 
@@ -438,7 +438,7 @@ tchk_def_list
   | tchk_def
   ;
 
-  /* Only unconditional WIDTH annotation is implemented here. */
+  /* Unconditional scalar WIDTH and PERIOD annotation. */
 tchk_def
   : '(' K_SETUP port_tchk port_tchk rvalue ')'
       { vpi_printf("SDF WARNING: %s:%d: SETUP not supported.\n",
@@ -458,7 +458,7 @@ tchk_def
   | '(' K_REMOVAL port_tchk port_tchk rvalue ')'
       { vpi_printf("SDF WARNING: %s:%d: REMOVAL not supported.\n",
                    sdf_parse_path, @2.first_line); }
-  | '(' K_WIDTH width_port_tchk rvalue ')'
+  | '(' K_WIDTH scalar_port_tchk rvalue ')'
       { if ($3.string_val)
               sdf_width_limits($3.vpi_edge, $3.string_val, $4, @2.first_line);
         else
@@ -466,14 +466,19 @@ tchk_def
                          sdf_parse_path, @2.first_line);
         free($3.string_val);
       }
-  | '(' K_PERIOD port_tchk rvalue ')'
-      { vpi_printf("SDF WARNING: %s:%d: PERIOD not supported.\n",
-                   sdf_parse_path, @2.first_line); }
+  | '(' K_PERIOD scalar_port_tchk rvalue ')'
+      { if ($3.string_val)
+              sdf_period_limits($3.vpi_edge, $3.string_val, $4, @2.first_line);
+        else
+              vpi_printf("SDF WARNING: %s:%d: conditional or hierarchical PERIOD event not supported.\n",
+                         sdf_parse_path, @2.first_line);
+        free($3.string_val);
+      }
   ;
 
 /* Retain raw escapes until the local-name/hierarchy check has run. The
    generic port_instance production has already decoded them. */
-width_port_tchk
+scalar_port_tchk
   : hierarchical_identifier
       { $$.vpi_edge = vpiNoEdge; $$.string_val = local_condition_name($1); }
   | cond_edge_start hierarchical_identifier ')'

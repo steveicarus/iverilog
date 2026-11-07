@@ -560,6 +560,11 @@ extern void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
                                 struct symb_s reference, double limit,
                                 double threshold, char* notifier);
 
+// PERIOD records carry one limit and no WIDTH threshold.
+extern void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
+                                 struct symb_s reference, double limit,
+                                 char* notifier);
+
 extern void compile_island(char*label, char*type);
 extern void compile_island_port(char*label, char*island, char*src);
 extern void compile_island_import(char*label, char*island, char*src);

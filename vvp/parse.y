@@ -99,7 +99,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_RESOLV K_RTRAN K_RTRANIF0 K_RTRANIF1
 %token K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_SUBSTITUTE
-%token K_TCHK_WIDTH
+%token K_TCHK_WIDTH K_TCHK_PERIOD
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC_REAL K_UFUNC_REAL_E K_UFUNC_VEC4 K_UFUNC_E K_UDP K_UDP_C K_UDP_S
 %token K_VAR K_VAR_COBJECT K_VAR_DARRAY
@@ -737,6 +737,14 @@ statement
                   char* notifier = strdup($13);
                   delete[] $13;
                   compile_tchk_width($2, $3, $5, $7, $9, $11, notifier); }
+
+        | K_TCHK_PERIOD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_SYMBOL ';'
+                { compile_tchk_period($2, $3, $5, $7, $9, $11); }
+        | K_TCHK_PERIOD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_STRING ';'
+                { /* T_STRING is new[]; lookup labels use malloc ownership. */
+                  char* notifier = strdup($11);
+                  delete[] $11;
+                  compile_tchk_period($2, $3, $5, $7, $9, notifier); }
 
   /* Port information for scopes... currently this is just meta-data for VPI queries */
 

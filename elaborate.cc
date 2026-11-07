@@ -7054,10 +7054,11 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       }
 }
 
-/* WIDTH arguments are constant physical times in this module's units.
+/* Timing-check arguments are constant physical times in this module's units.
  * Keep them real until the runtime applies the module precision. */
-static bool width_constant(Design*des, NetScope*scope, PExpr*expr,
-                           const LineInfo&loc, const char*which, double&value)
+static bool timing_check_constant(Design*des, NetScope*scope, PExpr*expr,
+                                  const LineInfo&loc, const char*kind,
+                                  const char*which, double&value)
 {
       // Timing-check limits may use specparams. Require a constant without
       // treating this timing context as a non-annotatable parameter use.
@@ -7074,7 +7075,7 @@ static bool width_constant(Design*des, NetScope*scope, PExpr*expr,
 	    }
       }
       if (!valid || !std::isfinite(value) || value < 0.0) {
-	    cerr << loc.get_fileline() << ": error: $width " << which
+	    cerr << loc.get_fileline() << ": error: " << kind << " " << which
 		 << " must be a finite nonnegative constant." << endl;
 	    des->errors += 1;
 	    return false;
@@ -7085,12 +7086,13 @@ static bool width_constant(Design*des, NetScope*scope, PExpr*expr,
       return true;
 }
 
-static NetNet*width_signal(Design*des, NetScope*scope, const pform_name_t&name,
-                           const LineInfo&loc, bool notifier)
+static NetNet*timing_check_signal(Design*des, NetScope*scope,
+                                 const pform_name_t&name, const LineInfo&loc,
+                                 const char*kind, bool notifier)
 {
       const char*role = notifier ? "notifier" : "reference";
       if (name.size() != 1 || !name.front().index.empty()) {
-	    cerr << loc.get_fileline() << ": error: $width " << role
+	    cerr << loc.get_fileline() << ": error: " << kind << " " << role
 		 << " must be an unselected local scalar signal." << endl;
 	    des->errors += 1;
 	    return nullptr;
@@ -7100,7 +7102,7 @@ static NetNet*width_signal(Design*des, NetScope*scope, const pform_name_t&name,
 	  || sig->unpacked_dimensions() != 0
 	  || (sig->data_type() != IVL_VT_LOGIC && sig->data_type() != IVL_VT_BOOL)
 	  || (notifier && sig->type() != NetNet::REG)) {
-	    cerr << loc.get_fileline() << ": error: $width " << role
+	    cerr << loc.get_fileline() << ": error: " << kind << " " << role
 		 << (notifier ? " must be a local scalar variable."
 		              : " must be a local scalar logic or bit signal.") << endl;
 	    des->errors += 1;
@@ -7119,18 +7121,47 @@ void PWidth::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return;
       }
-      NetNet*reference = width_signal(des, scope, reference_->name, *this, false);
-      NetNet*notifier = notifier_ ? width_signal(des, scope, *notifier_, *this, true)
-				: nullptr;
+      NetNet*reference = timing_check_signal(des, scope, reference_->name,
+                                            *this, "$width", false);
+      NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
+                                                      *this, "$width", true)
+                                  : nullptr;
       if (!reference || (notifier_ && !notifier)) return;
       double limit = 0.0, threshold = 0.0;
-      if (!width_constant(des, scope, limit_.get(), *this, "limit", limit)) return;
-      if (threshold_ && !width_constant(des, scope, threshold_.get(), *this,
-				       "threshold", threshold)) return;
+      if (!timing_check_constant(des, scope, limit_.get(), *this,
+                                 "$width", "limit", limit)) return;
+      if (threshold_ && !timing_check_constant(des, scope, threshold_.get(), *this,
+                                              "$width", "threshold", threshold))
+            return;
       std::unique_ptr<NetWidth> check(new NetWidth(scope, reference, notifier,
 					 reference_->posedge, limit, threshold));
       check->set_line(*this);
       scope->add_width(std::move(check));
+}
+
+void PPeriod::elaborate(Design*des, NetScope*scope) const
+{
+      if (!gn_specify_blocks_flag) return;
+      if (reference_->condition || reference_->posedge == reference_->negedge
+          || !reference_->edges.empty()) {
+            cerr << get_fileline() << ": error: $period supports only unconditional"
+                 << " posedge or negedge scalar reference events." << endl;
+            des->errors += 1;
+            return;
+      }
+      NetNet*reference = timing_check_signal(des, scope, reference_->name,
+                                            *this, "$period", false);
+      NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
+                                                      *this, "$period", true)
+                                  : nullptr;
+      if (!reference || (notifier_ && !notifier)) return;
+      double limit = 0.0;
+      if (!timing_check_constant(des, scope, limit_.get(), *this,
+                                 "$period", "limit", limit)) return;
+      std::unique_ptr<NetPeriod> check(new NetPeriod(scope, reference, notifier,
+                                                   reference_->posedge, limit));
+      check->set_line(*this);
+      scope->add_period(std::move(check));
 }
 
 void PRecRem::elaborate(Design*des, NetScope*scope) const

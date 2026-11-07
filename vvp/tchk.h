@@ -24,10 +24,11 @@
 
 class __vpiScope;
 class __vpiTchkWidth;
+class __vpiTchkPeriod;
 
 // The record values use the declaring module's units. Reject values that
 // cannot be rounded to its precision and represented in simulator ticks.
-bool vpip_width_delay_to_ticks(double value, const __vpiScope* scope,
+bool vpip_tchk_delay_to_ticks(double value, const __vpiScope* scope,
                                vvp_time64_t& ticks);
 
 class vvp_fun_tchk_width : public vvp_net_fun_t {
@@ -48,6 +49,23 @@ class vvp_fun_tchk_width : public vvp_net_fun_t {
       bool have_opening_;
       void violation(vvp_time64_t now, vvp_time64_t width);
       friend class __vpiTchkWidth;
+};
+
+class vvp_fun_tchk_period : public vvp_net_fun_t {
+    public:
+      vvp_fun_tchk_period(int reference_edge, vvp_time64_t limit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t& value,
+                     vvp_context_t) override;
+      __vpiTchkPeriod* vpi_tchk;
+
+    private:
+      vvp_bit4_t previous_;
+      int reference_edge_;
+      vvp_time64_t limit_;
+      vvp_time64_t reference_time_;
+      bool have_reference_;
+      void violation(vvp_time64_t now, vvp_time64_t period);
+      friend class __vpiTchkPeriod;
 };
 
 #endif

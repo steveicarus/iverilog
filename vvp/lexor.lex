@@ -237,6 +237,7 @@ width_real ([0-9]+[.][0-9]*|[0-9]*[.][0-9]+)([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0
 ".thread"       { return K_THREAD; }
 ".timescale"    { return K_TIMESCALE; }
 ".tchk_width"   { return K_TCHK_WIDTH; }
+".tchk_period"  { return K_TCHK_PERIOD; }
 ".tran"         { return K_TRAN; }
 ".tranif0"      { return K_TRANIF0; }
 ".tranif1"      { return K_TRANIF1; }

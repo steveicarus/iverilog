@@ -619,6 +619,8 @@ bool dll_target::start_design(const Design*des)
             (ivl_dlsym(dll_, LU "target_query" TU));
       const char*width_support = query ? query("supports-width") : nullptr;
       width_checks_supported_ = width_support && strcmp(width_support, "1") == 0;
+      const char*period_support = query ? query("supports-period") : nullptr;
+      period_checks_supported_ = period_support && strcmp(period_support, "1") == 0;
 
       stmt_cur_ = 0;
 
@@ -2745,6 +2747,26 @@ void dll_target::width_check(const NetWidth*check)
       obj->file = check->get_file();
       obj->lineno = check->get_lineno();
       obj->scope->widths_.push_back(obj);
+}
+
+void dll_target::period_check(const NetPeriod*check)
+{
+      if (!period_checks_supported_) {
+            cerr << check->get_fileline()
+                 << ": warning: target does not support $period; check ignored."
+                 << endl;
+            return;
+      }
+
+      ivl_period_t obj = new ivl_period_s;
+      obj->scope = find_scope(des_, check->scope());
+      obj->reference = find_signal(des_, check->reference());
+      obj->notifier = check->notifier() ? find_signal(des_, check->notifier()) : nullptr;
+      obj->posedge = check->posedge();
+      obj->limit = check->limit();
+      obj->file = check->get_file();
+      obj->lineno = check->get_lineno();
+      obj->scope->periods_.push_back(obj);
 }
 
 bool dll_target::signal_paths(const NetNet*net)

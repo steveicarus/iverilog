@@ -75,6 +75,12 @@ void target_t::width_check(const NetWidth*check)
       errors += 1;
 }
 
+void target_t::period_check(const NetPeriod*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $period." << endl;
+      errors += 1;
+}
+
 bool target_t::func_def(const NetScope*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "

@@ -104,10 +104,20 @@ These flags affect the general behavior of the compiler.
     measured pulse width is strictly above the threshold and below the limit.
     Standard ``$sdf_annotate`` can update the matching WIDTH limit.
 
-    Conditional, vector and hierarchical WIDTH declarations are diagnosed as
-    unsupported. Other targets warn that WIDTH is ignored. This does not enable
-    other timing-check kinds such as ``$period``. SDF annotation refusals are
-    reported as diagnostics and do not necessarily change the process exit code.
+    Unconditional ``$period`` checks accept the same local scalar reference,
+    constant limit and optional notifier forms, without a threshold argument.
+    They measure successive selected edges of the reference signal. The first
+    edge establishes history; each later selected edge compares the previous
+    reference time before refreshing it. An interval strictly below the limit
+    violates the check; equality is safe. Standard ``$sdf_annotate`` can update
+    the matching PERIOD limit independently of WIDTH checks on the same signal.
+
+    Conditional, vector and hierarchical WIDTH/PERIOD declarations are diagnosed
+    as unsupported. Other targets warn that these checks are ignored. This does
+    not enable other timing-check kinds. SDF annotation refusals are reported as
+    diagnostics and do not necessarily change the process exit code. Hot
+    reannotation and general four-state timing-check behavior are not qualified
+    by these finite implementations.
 
   * std-include/no-std-include
 

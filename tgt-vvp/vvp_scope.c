@@ -2353,6 +2353,17 @@ static void draw_width_in_scope(ivl_width_t check)
       else fprintf(vvp_out, "\"\";\n");
 }
 
+static void draw_period_in_scope(ivl_period_t check)
+{
+      ivl_signal_t notifier = ivl_period_notifier(check);
+      fprintf(vvp_out, "    .tchk_period %u %u, \"%s\", v%p_0, %.17e, ",
+              ivl_file_table_index(ivl_period_file(check)), ivl_period_lineno(check),
+              ivl_period_posedge(check) ? "posedge" : "negedge",
+              ivl_period_reference(check), ivl_period_limit(check));
+      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
+      else fprintf(vvp_out, "\"\";\n");
+}
+
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
@@ -2554,6 +2565,12 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    fprintf(vvp_out, "    .scope S_%p;\n", net);
 	    for (idx = 0; idx < ivl_scope_widths(net); idx += 1)
 		  draw_width_in_scope(ivl_scope_width(net, idx));
+      }
+
+      if (ivl_scope_periods(net)) {
+            fprintf(vvp_out, "    .scope S_%p;\n", net);
+            for (idx = 0; idx < ivl_scope_periods(net); idx += 1)
+                  draw_period_in_scope(ivl_scope_period(net, idx));
       }
 
       for (idx = 0 ;  idx < ivl_scope_events(net) ;  idx += 1) {

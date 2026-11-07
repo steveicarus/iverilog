@@ -37,6 +37,9 @@ static vpiHandle sdf_scope;
 static vpiHandle sdf_callh = 0;
   /* The cell in process. */
 static vpiHandle sdf_cur_cell;
+/* PERIOD requires the selected instance to match the SDF CELLTYPE. Keep
+   existing annotation kinds' historical mismatch behavior unchanged. */
+static int sdf_cur_cell_type_matches;
 
 /* Timescale from the SDF file header, in seconds. IEEE 1497 makes 1ns the
    default when the header carries no (TIMESCALE ...) entry. */
@@ -107,6 +110,7 @@ void sdf_warn_file_line(const int sdf_lineno)
 
 void sdf_select_instance(const char*celltype, const char*cellinst, const int sdf_lineno)
 {
+      sdf_cur_cell_type_matches = 0;
 	/* Test for wildcard character */
       if (cellinst == NULL) {
 	    if (sdf_flag_warning) {
@@ -156,6 +160,9 @@ void sdf_select_instance(const char*celltype, const char*cellinst, const int sdf
 	    vpi_printf("SDF ERROR: %s:%d: Module %s in %s is not a %s; it is a ",
 	               sdf_fname, sdf_lineno, src, vpi_get_str(vpiFullName, scope), celltype);
 	    vpi_printf("%s\n", vpi_get_str(vpiDefName, sdf_cur_cell));
+      } else {
+            sdf_cur_cell_type_matches =
+                  vpi_get(vpiType, sdf_cur_cell) == vpiModule;
       }
       free(buffer);
 }
@@ -475,9 +482,9 @@ static PLI_INT32 sys_sdf_annotate_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 }
 
 /* Check the same scope-precision rounding and global tick range used by
- * the WIDTH object's vpi_put_delays implementation. The VPI setter returns
+ * the single-limit timing object's vpi_put_delays implementation. The VPI setter returns
  * void, so reject an unrepresentable SDF value before reporting annotation. */
-static int sdf_width_limit_valid(double value, vpiHandle scope)
+static int sdf_tchk_limit_valid(double value, vpiHandle scope)
 {
       if (!scope || !isfinite(value) || value < 0) return 0;
       int precision = vpi_get(vpiTimePrecision, scope);
@@ -491,21 +498,23 @@ static int sdf_width_limit_valid(double value, vpiHandle scope)
       return isfinite(total) && total < ldexpl(1.0L, 64);
 }
 
-/* WIDTH matching follows the timing-check object/terminal scheme introduced
- * by Leo Moser's timingcheck-width work. Values use the SDF header timescale. */
-void sdf_width_limits(int edge, const char* reference,
-                      struct sdf_delay_s limit, int lineno)
+/* Single-limit matching follows the timing-check object/terminal scheme
+ * introduced by Leo Moser's timingcheck-width work. Values use the SDF header
+ * timescale; object type prevents WIDTH/PERIOD cross-binding. */
+static void sdf_single_limit(int check_type, const char* check_name,
+                             int edge, const char* reference,
+                             struct sdf_delay_s limit, int lineno)
 {
       if (!sdf_cur_cell || !limit.defined) return;
       if (!isfinite(limit.value) || limit.value < 0) {
-            vpi_printf("SDF ERROR: %s:%d: invalid WIDTH limit\n", sdf_fname, lineno);
+            vpi_printf("SDF ERROR: %s:%d: invalid %s limit\n", sdf_fname, lineno, check_name);
             return;
       }
       vpiHandle checks = vpi_iterate(vpiTchk, sdf_cur_cell);
       vpiHandle check;
       unsigned matches = 0;
       while (checks && (check = vpi_scan(checks))) {
-            if (vpi_get(vpiTchkType, check) != vpiWidth) continue;
+            if (vpi_get(vpiTchkType, check) != check_type) continue;
             vpiHandle term = vpi_handle(vpiTchkRefTerm, check);
             if (!term || (edge != vpiNoEdge && vpi_get(vpiEdge, term) != edge)) continue;
             vpiHandle signal = vpi_handle(vpiExpr, term);
@@ -514,9 +523,9 @@ void sdf_width_limits(int edge, const char* reference,
             matches += 1;
             vpiHandle scope = vpi_handle(vpiScope, check);
             double scaled_limit = limit.value * sdf_delay_scale(scope);
-            if (!sdf_width_limit_valid(scaled_limit, scope)) {
-                  vpi_printf("SDF ERROR: %s:%d: unrepresentable WIDTH limit for %s\n",
-                             sdf_fname, lineno, reference);
+            if (!sdf_tchk_limit_valid(scaled_limit, scope)) {
+                  vpi_printf("SDF ERROR: %s:%d: unrepresentable %s limit for %s\n",
+                             sdf_fname, lineno, check_name, reference);
                   continue;
             }
             s_vpi_time value;
@@ -530,13 +539,26 @@ void sdf_width_limits(int edge, const char* reference,
             delays.time_type = vpiScaledRealTime;
             vpi_put_delays(check, &delays);
             if (sdf_flag_inform)
-                  vpi_printf("SDF INFO: %s:%d: WIDTH %s limit %g\n",
-                             sdf_fname, lineno, reference, value.real);
+                  vpi_printf("SDF INFO: %s:%d: %s %s limit %g\n",
+                             sdf_fname, lineno, check_name, reference, value.real);
       }
       if (!matches)
-            vpi_printf("SDF ERROR: %s:%d: Unable to match WIDTH %s%s in %s\n",
-                       sdf_fname, lineno, edge_str(edge), reference,
+            vpi_printf("SDF ERROR: %s:%d: Unable to match %s %s%s in %s\n",
+                       sdf_fname, lineno, check_name, edge_str(edge), reference,
                        vpi_get_str(vpiFullName, sdf_cur_cell));
+}
+
+void sdf_width_limits(int edge, const char* reference,
+                      struct sdf_delay_s limit, int lineno)
+{
+      sdf_single_limit(vpiWidth, "WIDTH", edge, reference, limit, lineno);
+}
+
+void sdf_period_limits(int edge, const char* reference,
+                       struct sdf_delay_s limit, int lineno)
+{
+      if (!sdf_cur_cell_type_matches) return;
+      sdf_single_limit(vpiPeriod, "PERIOD", edge, reference, limit, lineno);
 }
 
 static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
@@ -545,6 +567,7 @@ static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	   here so a second $sdf_annotate cannot inherit the previous file's
 	   timescale. */
       sdf_timescale = 1.0e-9;
+      sdf_cur_cell_type_matches = 0;
 
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);

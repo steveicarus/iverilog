@@ -226,6 +226,15 @@ ivl_width_limit
 ivl_width_threshold
 ivl_width_file
 ivl_width_lineno
+ivl_scope_periods
+ivl_scope_period
+ivl_period_scope
+ivl_period_reference
+ivl_period_notifier
+ivl_period_posedge
+ivl_period_limit
+ivl_period_file
+ivl_period_lineno
 ivl_scope_file
 ivl_scope_func_type
 ivl_scope_func_signed

@@ -1,0 +1,12 @@
+{
+    "type": "normal",
+    "source": "period_hdl_units.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-Iivltests",
+        "-s",
+        "tb"
+    ]
+}

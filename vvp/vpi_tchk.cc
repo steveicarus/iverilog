@@ -77,8 +77,74 @@ void __vpiTchkWidth::vpi_put_delays(p_vpi_delay delays)
           delays->mtm_flag || delays->append_flag || delays->pulsere_flag) return;
       vvp_time64_t value;
       if (delays->time_type == vpiScaledRealTime) {
-            if (!vpip_width_delay_to_ticks(delays->da[0].real, scope_, value)) {
+            if (!vpip_tchk_delay_to_ticks(delays->da[0].real, scope_, value)) {
                   vpi_printf("VPI ERROR: invalid WIDTH limit\n");
+                  return;
+            }
+      } else if (delays->time_type == vpiSimTime) {
+            value = ((vvp_time64_t) delays->da[0].high << 32) | delays->da[0].low;
+      } else return;
+      fun_->limit_ = value;
+}
+
+__vpiTchkPeriod::__vpiTchkPeriod(__vpiScope* scope, unsigned file_idx,
+                               unsigned lineno, vvp_fun_tchk_period* fun)
+: reference_(nullptr), notifier_(nullptr), scope_(scope), file_idx_(file_idx),
+  lineno_(lineno), fun_(fun), reference_term_(nullptr)
+{
+}
+
+__vpiTchkPeriod::~__vpiTchkPeriod()
+{
+      delete reference_term_;
+}
+
+int __vpiTchkPeriod::vpi_get(int code)
+{
+      switch (code) {
+          case vpiTchkType: return vpiPeriod;
+          case vpiLineNo: return lineno_;
+          default: return vpiUndefined;
+      }
+}
+
+vpiHandle __vpiTchkPeriod::vpi_handle(int code)
+{
+      switch (code) {
+          case vpiScope: return scope_;
+          case vpiModule: return scope_;
+          case vpiTchkNotifier: return notifier_;
+          case vpiTchkRefTerm:
+            if (!reference_term_ && reference_)
+                  reference_term_ = new __vpiTchkRefTerm(
+                        fun_->reference_edge_ == 1 ? vpiPosedge : vpiNegedge,
+                        reference_);
+            return reference_term_;
+          case vpiTchkDataTerm: return nullptr;
+          default: return nullptr;
+      }
+}
+
+void __vpiTchkPeriod::vpi_get_delays(p_vpi_delay delays)
+{
+      if (!delays || delays->no_of_delays != 1 || !delays->da) return;
+      delays->da[0].type = delays->time_type;
+      if (delays->time_type == vpiScaledRealTime) {
+            delays->da[0].real = vpip_time_to_scaled_real(fun_->limit_, scope_);
+      } else if (delays->time_type == vpiSimTime) {
+            delays->da[0].high = fun_->limit_ >> 32;
+            delays->da[0].low = fun_->limit_ & 0xffffffff;
+      }
+}
+
+void __vpiTchkPeriod::vpi_put_delays(p_vpi_delay delays)
+{
+      if (!delays || delays->no_of_delays != 1 || !delays->da ||
+          delays->mtm_flag || delays->append_flag || delays->pulsere_flag) return;
+      vvp_time64_t value;
+      if (delays->time_type == vpiScaledRealTime) {
+            if (!vpip_tchk_delay_to_ticks(delays->da[0].real, scope_, value)) {
+                  vpi_printf("VPI ERROR: invalid PERIOD limit\n");
                   return;
             }
       } else if (delays->time_type == vpiSimTime) {

@@ -985,6 +985,28 @@ class NetWidth : public LineInfo {
       double limit_, threshold_;
 };
 
+/* One elaborated PERIOD declaration, with signal references kept alive. */
+class NetPeriod : public LineInfo {
+    public:
+      NetPeriod(NetScope*scope, NetNet*reference, NetNet*notifier,
+                bool posedge, double limit)
+      : scope_(scope), reference_(reference), notifier_(notifier),
+        posedge_(posedge), limit_(limit) { }
+
+      NetScope*scope() const { return scope_; }
+      NetNet*reference() const { return reference_.get(); }
+      NetNet*notifier() const { return notifier_.get(); }
+      bool posedge() const { return posedge_; }
+      double limit() const { return limit_; }
+
+    private:
+      NetScope*scope_;
+      NetERef reference_;
+      NetLRef notifier_;
+      bool posedge_;
+      double limit_;
+};
+
 /*
  * This object type is used for holding local variable values when
  * evaluating constant user functions.
@@ -1154,6 +1176,8 @@ class NetScope : public Definitions, public Attrib {
 
       void add_width(std::unique_ptr<NetWidth> check)
       { widths_.push_back(std::move(check)); }
+      void add_period(std::unique_ptr<NetPeriod> check)
+      { periods_.push_back(std::move(check)); }
 
       void add_event(NetEvent*);
       void rem_event(NetEvent*);
@@ -1504,6 +1528,7 @@ class NetScope : public Definitions, public Attrib {
 
       NetEvent *events_;
       std::vector<std::unique_ptr<NetWidth> > widths_;
+      std::vector<std::unique_ptr<NetPeriod> > periods_;
 
       std::map<perm_string,LineInfo*> genvars_;
 
