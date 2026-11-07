@@ -88,6 +88,16 @@ struct opcode_table_s {
       enum operand_e argt[OPERAND_MAX];
 };
 
+/* Opcodes for queues that are words of an unpacked array of queues. */
+extern bool of_LOAD_OBJA_Q(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_QO_QB_V(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_QO_QF_V(vthread_t thr, vvp_code_t code);
+extern bool of_QINSERT_QO_V(vthread_t thr, vvp_code_t code);
+extern bool of_QPOP_QO_B_V(vthread_t thr, vvp_code_t code);
+extern bool of_QPOP_QO_F_V(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_QO_DAR_VEC4(vthread_t thr, vvp_code_t code);
+extern bool of_QO_SIZE(vthread_t thr, vvp_code_t code);
+
 static const struct opcode_table_s opcode_table[] = {
       { "%abs/wr", of_ABS_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%add",    of_ADD,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
@@ -214,7 +224,9 @@ static const struct opcode_table_s opcode_table[] = {
       { "%load/dar/vec4",of_LOAD_DAR_VEC4,1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%load/obj",   of_LOAD_OBJ,  1,{OA_FUNC_PTR,OA_NONE, OA_NONE} },
       { "%load/obja",  of_LOAD_OBJA, 2,{OA_ARR_PTR, OA_BIT1, OA_NONE} },
+      { "%load/obja/q", of_LOAD_OBJA_Q, 2, {OA_ARR_PTR, OA_BIT1, OA_NONE} },
       { "%load/prop/dar/vec4", of_LOAD_PROP_DAR_VEC4, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
+      { "%load/qo/dar/vec4", of_LOAD_QO_DAR_VEC4, 1, {OA_BIT1, OA_NONE, OA_NONE} },
       { "%load/real",  of_LOAD_REAL, 1,{OA_VPI_PTR, OA_NONE, OA_NONE} },
       { "%load/str",   of_LOAD_STR,  1,{OA_FUNC_PTR,OA_NONE, OA_NONE} },
       { "%load/stra",  of_LOAD_STRA, 2,{OA_ARR_PTR, OA_BIT1, OA_NONE} },
@@ -266,9 +278,11 @@ static const struct opcode_table_s opcode_table[] = {
       { "%qinsert/prop/r",   of_QINSERT_PROP_R,   2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%qinsert/prop/str", of_QINSERT_PROP_STR, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%qinsert/prop/v",   of_QINSERT_PROP_V,   3, {OA_NUMBER, OA_BIT1, OA_BIT2} },
+      { "%qinsert/qo/v", of_QINSERT_QO_V, 2, {OA_BIT1, OA_BIT2, OA_NONE} },
       { "%qinsert/real",of_QINSERT_REAL,2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
       { "%qinsert/str", of_QINSERT_STR, 2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
       { "%qinsert/v",   of_QINSERT_V,   3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
+      { "%qo/size", of_QO_SIZE, 0, {OA_NONE, OA_NONE, OA_NONE} },
       { "%qpop/b/real",of_QPOP_B_REAL,1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
       { "%qpop/b/str", of_QPOP_B_STR, 1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
       { "%qpop/b/v",   of_QPOP_B_V,   2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
@@ -281,6 +295,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%qpop/prop/f/r",   of_QPOP_PROP_F_REAL, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%qpop/prop/f/str", of_QPOP_PROP_F_STR, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%qpop/prop/f/v",   of_QPOP_PROP_F_V,    2, {OA_NUMBER, OA_BIT1, OA_NONE} },
+      { "%qpop/qo/b/v", of_QPOP_QO_B_V, 1, {OA_BIT1, OA_NONE, OA_NONE} },
+      { "%qpop/qo/f/v", of_QPOP_QO_F_V, 1, {OA_BIT1, OA_NONE, OA_NONE} },
       { "%queue/append_word/v", of_QUEUE_APPEND_WORD_V, 1, {OA_BIT1, OA_NONE, OA_NONE} },
       { "%queue/find/index/prop/v", of_QUEUE_FIND_INDEX_PROP_V, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%queue/find/index/v", of_QUEUE_FIND_INDEX_V, 2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
@@ -360,6 +376,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%store/qf/r",   of_STORE_QF_R,    2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
       { "%store/qf/str", of_STORE_QF_STR,  2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
       { "%store/qf/v",   of_STORE_QF_V,    3, {OA_FUNC_PTR, OA_BIT1, OA_BIT2} },
+      { "%store/qo/qb/v", of_STORE_QO_QB_V, 2, {OA_BIT1, OA_BIT2, OA_NONE} },
+      { "%store/qo/qf/v", of_STORE_QO_QF_V, 2, {OA_BIT1, OA_BIT2, OA_NONE} },
       { "%store/qobj/r",  of_STORE_QOBJ_R,  2, {OA_FUNC_PTR,OA_BIT1, OA_NONE} },
       { "%store/qobj/str",of_STORE_QOBJ_STR,2, {OA_FUNC_PTR,OA_BIT1, OA_NONE} },
       { "%store/qobj/v",  of_STORE_QOBJ_V,  3, {OA_FUNC_PTR,OA_BIT1, OA_BIT2} },

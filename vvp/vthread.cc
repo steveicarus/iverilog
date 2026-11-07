@@ -6515,6 +6515,189 @@ bool of_QPOP_PROP_F_V(vthread_t thr, vvp_code_t cp)
       return qpop_f_prop<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[0]);
 }
 
+/*
+ * Queues that are words of an unpacked array of queues.
+ *
+ * %load/obja/q <array-label>, <index> loads the queue object from the array
+ * word and pushes it on the object stack. If the word does not yet hold a
+ * queue, then a vec4 queue is created and stored into the array word. The qo
+ * opcodes below then operate on the queue that is on top of the object stack.
+ * Like the class property opcodes, they do NOT pop the object stack.
+ */
+bool of_LOAD_OBJA_Q(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->bit_idx[0];
+      vvp_object_t word;
+
+	// An undefined address pushes nil.
+      if (thr->flags[4] != BIT4_1) {
+	    unsigned adr = thr->words[idx].w_int;
+	    cp->array->get_word_obj(adr, word);
+	    if (word.test_nil()) {
+		  word = vvp_object_t(new vvp_queue_vec4);
+		    // An out of range address is ignored by set_word().
+		  cp->array->set_word(adr, word);
+	    }
+      }
+
+      thr->push_object(word);
+      return true;
+}
+
+template <class QTYPE> static QTYPE* get_queue_top(vthread_t thr)
+{
+      vvp_object_t& top = thr->peek_object();
+      return top.peek<QTYPE>();
+}
+
+template <typename ELEM, class QTYPE>
+static bool store_qo_qb(vthread_t thr, vvp_code_t cp, unsigned wid)
+{
+      ELEM value;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_uint;
+      pop_value(thr, value, wid);
+
+      QTYPE* queue = get_queue_top<QTYPE>(thr);
+      if (queue) queue->push_back(value, max_size);
+      return true;
+}
+
+template <typename ELEM, class QTYPE>
+static bool store_qo_qf(vthread_t thr, vvp_code_t cp, unsigned wid)
+{
+      ELEM value;
+      unsigned max_size = thr->words[cp->bit_idx[0]].w_uint;
+      pop_value(thr, value, wid);
+
+      QTYPE* queue = get_queue_top<QTYPE>(thr);
+      if (queue) queue->push_front(value, max_size);
+      return true;
+}
+
+bool of_STORE_QO_QB_V(vthread_t thr, vvp_code_t cp)
+{
+      return store_qo_qb<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
+}
+
+bool of_STORE_QO_QF_V(vthread_t thr, vvp_code_t cp)
+{
+      return store_qo_qf<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
+}
+
+template <typename ELEM, class QTYPE>
+static bool qinsert_qo(vthread_t thr, vvp_code_t cp, unsigned wid)
+{
+      int64_t idx = thr->words[3].w_int;
+      ELEM value;
+      pop_value(thr, value, wid);
+
+      QTYPE* queue = get_queue_top<QTYPE>(thr);
+      if (idx < 0) {
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot insert at a negative "
+	         << get_queue_type(value)
+	         << " index (" << idx << "). ";
+	    print_queue_value(value);
+	    cerr << " was not added." << endl;
+      } else if (thr->flags[4] != BIT4_0) {
+	    cerr << thr->get_fileline()
+	         << "Warning: cannot insert at an undefined "
+	         << get_queue_type(value) << " index. ";
+	    print_queue_value(value);
+	    cerr << " was not added." << endl;
+      } else if (queue) {
+	    unsigned max_size = thr->words[cp->bit_idx[0]].w_int;
+	    queue->insert(idx, value, max_size);
+      }
+      return true;
+}
+
+bool of_QINSERT_QO_V(vthread_t thr, vvp_code_t cp)
+{
+      return qinsert_qo<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
+}
+
+template <typename ELEM, class QTYPE>
+static bool q_pop_qo(vthread_t thr,
+                     void (*get_val_func)(vvp_queue*, ELEM&),
+                     const char*loc, unsigned wid)
+{
+      QTYPE* queue = get_queue_top<QTYPE>(thr);
+
+      ELEM value;
+      if (queue && queue->get_size()) {
+	    get_val_func(queue, value);
+      } else {
+	    dq_default(value, wid);
+	    cerr << thr->get_fileline()
+	         << "Warning: pop_" << loc << "() on empty "
+	         << get_queue_type(value) << "." << endl;
+      }
+
+      push_value(thr, value, wid);
+      return true;
+}
+
+bool of_QPOP_QO_B_V(vthread_t thr, vvp_code_t cp)
+{
+      return q_pop_qo<vvp_vector4_t, vvp_queue_vec4>(thr, get_back_value<vvp_vector4_t>,
+						      "back", cp->bit_idx[0]);
+}
+
+bool of_QPOP_QO_F_V(vthread_t thr, vvp_code_t cp)
+{
+      return q_pop_qo<vvp_vector4_t, vvp_queue_vec4>(thr, get_front_value<vvp_vector4_t>,
+						      "front", cp->bit_idx[0]);
+}
+
+/*
+ * %load/qo/dar/vec4, %load/qo/dar/r and %load/qo/dar/str
+ *   Indexed read from the queue on top of the object stack. The index is in
+ *   words[3], like the %load/dar opcodes.
+ */
+template <typename ELEM>
+static bool load_qo_dar(vthread_t thr, unsigned wid)
+{
+      int64_t adr = thr->words[3].w_int;
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_darray*darray = top.peek<vvp_darray>();
+
+      ELEM word;
+      if (darray && (adr >= 0) && (thr->flags[4] == BIT4_0))
+	    darray->get_word(adr, word);
+      else
+	    dq_default(word, wid);
+
+      vthread_push(thr, word);
+      return true;
+}
+
+bool of_LOAD_QO_DAR_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      return load_qo_dar<vvp_vector4_t>(thr, cp->bit_idx[0]);
+}
+
+/*
+ * %qo/size
+ *   Push the size of the queue on top of the object stack as a 32bit vec4.
+ */
+bool of_QO_SIZE(vthread_t thr, vvp_code_t)
+{
+      vvp_object_t& top = thr->peek_object();
+      vvp_darray*darray = top.peek<vvp_darray>();
+
+      unsigned long ul = darray ? darray->get_size() : 0;
+
+      vvp_vector4_t val(32, BIT4_0);
+      for (unsigned idx = 0; idx < 32; idx++) {
+	    val.set_bit(idx, (ul & 1UL) ? BIT4_1 : BIT4_0);
+	    ul >>= 1;
+      }
+      thr->push_vec4(val);
+      return true;
+}
+
 static vvp_vector4_t queue_unique_ulong_to_vec4(unsigned long ul, unsigned bits)
 {
       vvp_vector4_t val(bits, BIT4_0);

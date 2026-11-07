@@ -498,6 +498,13 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	    datatype_flag = "/obj";
 	    vector_dims = 0;
 	    break;
+	  case IVL_VT_QUEUE:
+	      /* An array of queues is an array of objects. */
+	    if (ivl_signal_dimensions(sig) > 0) {
+		  datatype_flag = "/obj";
+		  vector_dims = 0;
+	    }
+	    break;
 	  default:
 	    break;
       }
