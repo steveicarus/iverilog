@@ -221,6 +221,8 @@ ivl_scope_width
 ivl_width_scope
 ivl_width_reference
 ivl_width_notifier
+ivl_width_condition
+ivl_width_condition_kind
 ivl_width_posedge
 ivl_width_limit
 ivl_width_threshold
@@ -231,6 +233,8 @@ ivl_scope_period
 ivl_period_scope
 ivl_period_reference
 ivl_period_notifier
+ivl_period_condition
+ivl_period_condition_kind
 ivl_period_posedge
 ivl_period_limit
 ivl_period_file
