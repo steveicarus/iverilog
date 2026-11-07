@@ -2,7 +2,7 @@
 # the Icarus Verilog vlog95 target.
 
 #
-# Copyright (c) 1999-2023 Guy Hutchison (ghutchis@pacbell.net)
+# Copyright (c) 1999-2026 Guy Hutchison (ghutchis@pacbell.net)
 #
 #    This source code is free software; you can redistribute it
 #    and/or modify it in source code form under the terms of the GNU
@@ -1121,3 +1121,9 @@ br_gh377		normal,-Ptest.name=	ivltests gold=br_gh377-vlog95.gold
 # names for a single nexus so this test now fails. This needs to be fixed
 # or the code needs to be reworked.
 pr1520314		NI
+
+# Timing checks, optional arguments and SDF survive the target round trip.
+width_hdl_vlog95	normal,-gspecify,-Ttyp	ivltests diff=work/width_hdl_vlog95.out:gold/tchk_vlog95.gold
+
+# Timing checks, optional arguments and SDF survive the target round trip.
+period_hdl_vlog95	normal,-gspecify,-Ttyp	ivltests diff=work/period_hdl_vlog95.out:gold/tchk_vlog95.gold

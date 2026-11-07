@@ -15,3 +15,5 @@ period_hdl_nonconstant_fail	vvp_tests/period_hdl_nonconstant_fail.json
 period_hdl_noedge_fail	vvp_tests/period_hdl_noedge_fail.json
 period_hdl_hierarchy_fail	vvp_tests/period_hdl_hierarchy_fail.json
 period_hdl_sdf_mixed	vvp_tests/period_hdl_sdf_mixed.json
+period_hdl_notifier	vvp_tests/period_hdl_notifier.json
+period_hdl_vlog95	vvp_tests/period_hdl_vlog95.json

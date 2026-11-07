@@ -1,7 +1,7 @@
 #ifndef IVL_PTimingCheck_H
 #define IVL_PTimingCheck_H
 /*
- * Copyright (c) 2006-2025 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2006-2026 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
