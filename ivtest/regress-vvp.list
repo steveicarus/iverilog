@@ -913,6 +913,9 @@ sv_wildcard_port_position	vvp_tests/sv_wildcard_port_position.json
 sdf_header			vvp_tests/sdf_header.json
 switch_instance_shadow_fail	vvp_tests/switch_instance_shadow_fail.json
 task_escaped_name		vvp_tests/task_escaped_name.json
+task_no_ports_argument_fail	vvp_tests/task_no_ports_argument_fail.json
+task_no_ports_empty_arguments_fail	vvp_tests/task_no_ports_empty_arguments_fail.json
+task_no_ports_named_argument_fail	vvp_tests/task_no_ports_named_argument_fail.json
 task_return1			vvp_tests/task_return1.json
 task_return2			vvp_tests/task_return2.json
 task_return_fail1		vvp_tests/task_return_fail1.json
