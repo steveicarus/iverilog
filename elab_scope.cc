@@ -530,6 +530,8 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 		  des->errors += 1;
 	    }
 	    method_scope->is_auto(true);
+	    method_scope->is_virtual(cur->second->is_virtual());
+	    use_class->add_method(method_scope);
 	    method_scope->set_line(cur->second);
 	    method_scope->add_imports(&cur->second->explicit_imports);
 
@@ -556,6 +558,8 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 		  des->errors += 1;
 	    }
 	    method_scope->is_auto(true);
+	    method_scope->is_virtual(cur->second->is_virtual());
+	    use_class->add_method(method_scope);
 	    method_scope->set_line(cur->second);
 	    method_scope->add_imports(&cur->second->explicit_imports);
 

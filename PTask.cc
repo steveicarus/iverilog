@@ -24,7 +24,7 @@
 using namespace std;
 
 PTaskFunc::PTaskFunc(perm_string n, LexicalScope*p)
-: PScope(n,p), this_type_(0), ports_(0)
+: PScope(n,p), this_type_(0), virtual_(false), ports_(0)
 {
 }
 

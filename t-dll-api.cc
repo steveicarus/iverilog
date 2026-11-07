@@ -422,6 +422,13 @@ extern "C" ivl_branch_t ivl_expr_branch(ivl_expr_t net)
       return net->u_.branch_.branch;
 }
 
+extern "C" unsigned ivl_expr_nonvirtual(ivl_expr_t net)
+{
+      assert(net);
+      assert(net->type_ == IVL_EX_UFUNC);
+      return net->u_.ufunc_.nonvirtual;
+}
+
 extern "C" ivl_scope_t ivl_expr_def(ivl_expr_t net)
 {
       assert(net);
@@ -2194,6 +2201,12 @@ extern "C" unsigned ivl_scope_is_auto(ivl_scope_t net)
       return net->is_auto;
 }
 
+extern "C" ivl_scope_t ivl_scope_virtual_root(ivl_scope_t net)
+{
+      assert(net);
+      return net->virtual_root;
+}
+
 extern "C" unsigned ivl_scope_is_cell(ivl_scope_t net)
 {
       assert(net);
@@ -2716,6 +2729,13 @@ extern "C" ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net,
 	    assert(0);
 	    return 0;
       }
+}
+
+extern "C" unsigned ivl_stmt_nonvirtual(ivl_statement_t net)
+{
+      assert(net);
+      assert(net->type_ == IVL_ST_UTASK);
+      return net->u_.utask_.nonvirtual;
 }
 
 extern "C" ivl_scope_t ivl_stmt_call(ivl_statement_t net)
@@ -3321,6 +3341,21 @@ extern "C" ivl_type_t ivl_type_prop_type(ivl_type_t net, int idx)
       assert(class_type);
 
       return class_type->get_prop_type(idx);
+}
+
+extern "C" unsigned ivl_type_virtuals(ivl_type_t net)
+{
+      const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
+      assert(class_type);
+      return class_type->virtual_scopes().size();
+}
+
+extern "C" ivl_scope_t ivl_type_virtual(ivl_type_t net, unsigned idx)
+{
+      const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
+      assert(class_type);
+      assert(idx < class_type->virtual_scopes().size());
+      return class_type->virtual_scopes()[idx];
 }
 
 extern "C" unsigned ivl_type_queue_max(ivl_type_t net)

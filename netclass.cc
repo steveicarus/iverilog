@@ -172,6 +172,42 @@ NetScope*netclass_t::method_from_name(perm_string name) const
 
 }
 
+NetScope* netclass_t::virtual_root(NetScope*method)
+{
+      const netclass_t*cls = method->parent()->class_def();
+      if (cls && cls->super_) {
+	    NetScope*base = cls->super_->method_from_name(method->basename());
+	    if (base) {
+		  if (NetScope*root = virtual_root(base))
+			return root;
+	    }
+      }
+
+      return method->is_virtual() ? method : nullptr;
+}
+
+void netclass_t::virtual_table(vector<pair<NetScope*,NetScope*> >&table) const
+{
+      if (super_)
+	    super_->virtual_table(table);
+
+      for (NetScope*method : methods_) {
+	    NetScope*root = virtual_root(method);
+	    if (root == 0 || root == method)
+		  continue;
+
+	      // An override in a derived class replaces the entry of
+	      // the base class.
+	    auto cur = table.begin();
+	    while (cur != table.end() && cur->first != root)
+		  ++cur;
+	    if (cur != table.end())
+		  cur->second = method;
+	    else
+		  table.push_back(make_pair(root, method));
+      }
+}
+
 NetScope* netclass_t::get_constructor() const
 {
       auto task = class_scope_->child(hname_t(perm_string::literal("new")));

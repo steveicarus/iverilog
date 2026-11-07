@@ -659,6 +659,7 @@ void dll_target::expr_ufunc(const NetEUFunc*net)
       expr->sized_= 1;
       FILE_NAME(expr, net);
 
+      expr->u_.ufunc_.nonvirtual = net->nonvirtual();
       expr->u_.ufunc_.def = lookup_scope_(net->func());
       if (expr->u_.ufunc_.def == 0) {
 	    cerr << net->get_fileline() << ": internal error: "

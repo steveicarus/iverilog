@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_virtual_func_void.v",
+    "iverilog-args" : [ "-g2012" ]
+}

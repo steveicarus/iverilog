@@ -127,10 +127,25 @@ void pform_class_property(const struct vlltype&loc,
       }
 }
 
+/*
+ * The "virtual" method qualifier is parsed before the function or task
+ * scope exists, so remember it here until pform_set_this_class() sees
+ * the method.
+ */
+static bool method_virtual_flag = false;
+
+void pform_set_method_virtual(bool flag)
+{
+      method_virtual_flag = flag;
+}
+
 void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net)
 {
       if (pform_cur_class == 0)
 	    return;
+
+      net->set_virtual(method_virtual_flag);
+      method_virtual_flag = false;
 
       list<pform_port_t>*this_name = new list<pform_port_t>;
       this_name->push_back(pform_port_t({ perm_string::literal(THIS_TOKEN), 0 }, 0, 0));

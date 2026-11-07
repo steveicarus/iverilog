@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_virtual_array_arg_fail.v",
+    "iverilog-args" : [ "-g2012" ]
+}

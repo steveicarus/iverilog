@@ -25,6 +25,7 @@
 # include  "logic.h"
 # include  "resolv.h"
 # include  "udp.h"
+# include  "class_type.h"
 # include  "symbols.h"
 # include  "codes.h"
 # include  "schedule.h"
@@ -164,6 +165,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%disable",  of_DISABLE, 1, {OA_VPI_PTR,OA_NONE,     OA_NONE} },
       { "%disable/flow", of_DISABLE_FLOW, 1, {OA_VPI_PTR,OA_NONE, OA_NONE} },
       { "%disable/fork",of_DISABLE_FORK,0,{OA_NONE,OA_NONE,  OA_NONE} },
+      { "%dispatch/virt", of_DISPATCH_VIRT, 1, {OA_VPI_PTR,OA_NONE, OA_NONE} },
       { "%div",      of_DIV,     0, {OA_NONE,   OA_NONE,     OA_NONE} },
       { "%div/s",    of_DIV_S,   0, {OA_NONE,   OA_NONE,     OA_NONE} },
       { "%div/wr",   of_DIV_WR,  0, {OA_NONE,   OA_NONE,     OA_NONE} },
@@ -826,6 +828,43 @@ static void compile_array_lookup(struct vvp_code_s*code, char*label)
       res->code  = code;
 
       resolv_submit(res);
+}
+
+/*
+ * Add an entry to the virtual function table of a class. The labels
+ * may all be defined later in the source file.
+ */
+struct virt_resolv_list_s: public resolv_list_s {
+      virt_resolv_list_s(char*cls, char*scope, char*code)
+      : resolv_list_s(cls), scope_(scope), code_(code) { }
+      ~virt_resolv_list_s() override { free(scope_); free(code_); }
+      virtual bool resolve(bool mes) override;
+      char*scope_;
+      char*code_;
+};
+
+bool virt_resolv_list_s::resolve(bool mes)
+{
+      symbol_value_t cls = sym_get_value(sym_vpi, label());
+      symbol_value_t scope = sym_get_value(sym_vpi, scope_);
+      symbol_value_t code = sym_get_value(sym_codespace, code_);
+      if (cls.ptr && scope.ptr && code.ptr) {
+	    class_type*defn = dynamic_cast<class_type*>(static_cast<vpiHandle>(cls.ptr));
+	    assert(defn);
+	    defn->set_virtual(static_cast<vpiHandle>(scope.ptr),
+			      reinterpret_cast<vvp_code_t>(code.ptr));
+	    return true;
+      }
+
+      if (mes)
+	    fprintf(stderr, "unresolved virtual function table entry: %s\n", label());
+
+      return false;
+}
+
+void compile_virt(char*cls, char*scope, char*code)
+{
+      resolv_submit(new virt_resolv_list_s(cls, scope, code));
 }
 
 static std::list<struct __vpiSysTaskCall*> scheduled_compiletf;

@@ -573,4 +573,12 @@ extern void compile_class_start(char*lab, char*nam, unsigned nprop);
 extern void compile_class_property(unsigned idx, char*nam, char*typ, uint64_t array_size);
 extern void compile_class_done(void);
 
+/*
+ * The .virt statement adds an entry to the virtual function table of a
+ * class. The first label is the class, the second is the scope of the
+ * virtual function and the third is the code that a call of the virtual
+ * function runs for objects of the class.
+ */
+extern void compile_virt(char*cls, char*scope, char*code);
+
 #endif /* IVL_compile_H */

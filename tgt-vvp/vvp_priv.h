@@ -80,6 +80,7 @@ extern int draw_process(ivl_process_t net, void*x);
 
 extern int draw_task_definition(ivl_scope_t scope);
 extern int draw_func_definition(ivl_scope_t scope);
+extern int draw_virtual_adapter(ivl_scope_t root, ivl_scope_t impl);
 
 extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 
