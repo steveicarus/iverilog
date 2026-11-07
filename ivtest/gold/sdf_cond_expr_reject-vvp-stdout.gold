@@ -1,0 +1,18 @@
+SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:5: Unable to match ModPath A -> Z in top.u
+SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:6: Unable to match ModPath A -> Z in top.u
+SDF WARNING: ivltests/sdf_cond_expr_reject.sdf:7: COND not supported.
+SDF WARNING: ivltests/sdf_cond_expr_reject.sdf:8: COND not supported.
+SDF WARNING: ivltests/sdf_cond_expr_reject.sdf:9: COND not supported.
+SDF WARNING: ivltests/sdf_cond_expr_reject.sdf:10: COND not supported.
+SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:11: Unable to match ModPath A -> Z in top.u
+SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:12: Unable to match ModPath A -> ZCASE in top.u
+SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:13: Unable to match ModPath A -> ZV in top.u
+SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:14: Unable to match ModPath A -> ZI in top.u
+SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:15: Unable to match ModPath A -> ZBARE in top.u
+SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:16: Unable to match ModPath A -> ZW in top.u
+SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:17: Unable to match ModPath A -> ZUNSIZED in top.u
+SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:18: Unable to match ModPath A -> ZSIGNED in top.u
+SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:19: Unable to match ModPath A -> ZWIDE in top.u
+SDF ERROR: ivltests/sdf_cond_expr_reject.sdf: Too many errors: syntax error
+SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:20: Invalid/malformed COND
+PASSED
