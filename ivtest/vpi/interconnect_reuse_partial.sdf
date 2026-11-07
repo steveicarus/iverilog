@@ -1,0 +1,15 @@
+(DELAYFILE
+  (SDFVERSION "3.0")
+  (DESIGN "top")
+  (DIVIDER .)
+  (TIMESCALE 1ps)
+  (CELL
+    (CELLTYPE "top")
+    (INSTANCE)
+    (DELAY
+      (ABSOLUTE
+        (INTERCONNECT source.Q left.I (17:17:17) ())
+      )
+    )
+  )
+)

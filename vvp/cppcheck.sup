@@ -211,8 +211,6 @@ unusedFunction:vpi_priv.cc:1505
 // The following are just unused.
 // alias_word()
 unusedFunction:array.cc:848
-// intermodpath_delete()
-unusedFunction:delay.cc:1453
 // count_force4_pool()
 unusedFunction:schedule.cc:404
 // call_scope()

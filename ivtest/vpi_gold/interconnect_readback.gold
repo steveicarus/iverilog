@@ -1,0 +1,12 @@
+Compiling vpi/interconnect_readback.c...
+Making interconnect_readback.vpi from  interconnect_readback.o...
+CONFIGURED: two paths, delays 7/13 and 11/19 ps
+HISTORY top.drive: 0=0 100=1 200=0 300=1 400=0
+HISTORY top.source.Q: 0=0 100=1 200=0 300=1 400=0
+HISTORY top.left.I: 13=0 107=1 213=0 307=1 413=0
+HISTORY top.left.Q: 13=0 107=1 213=0 307=1 413=0
+HISTORY top.right.I: 19=0 111=1 219=0 311=1 419=0
+HISTORY top.right.Q: 19=0 111=1 219=0 311=1 419=0
+HISTORY top.peer.I: 0=0 100=1 200=0 300=1 400=0
+HISTORY top.peer.Q: 0=0 100=1 200=0 300=1 400=0
+PASS: INTERCONNECT discovery/readback and passive delivery
