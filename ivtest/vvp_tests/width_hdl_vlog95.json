@@ -1,0 +1,11 @@
+{
+    "type": "normal",
+    "source": "width_hdl_vlog95.v",
+    "iverilog-args": [
+        "-g1995",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ]
+}

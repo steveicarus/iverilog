@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2023-2026 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2023 Leo Moser (leo.moser@pm.me)
  *
  *    This source code is free software; you can redistribute it

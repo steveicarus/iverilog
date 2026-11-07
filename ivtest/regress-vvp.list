@@ -999,3 +999,5 @@ width_hdl_sdf_negative	vvp_tests/width_hdl_sdf_negative.json
 width_hdl_sdf_escaped	vvp_tests/width_hdl_sdf_escaped.json
 width_hdl_negative_zero	vvp_tests/width_hdl_negative_zero.json
 width_hdl_sdf_negative_magnitude	vvp_tests/width_hdl_sdf_negative_magnitude.json
+width_hdl_notifier	vvp_tests/width_hdl_notifier.json
+width_hdl_vlog95	vvp_tests/width_hdl_vlog95.json

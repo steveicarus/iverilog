@@ -10,3 +10,5 @@ width_hdl_vector_fail	vvp_tests/width_hdl_vector_fail.json
 width_hdl_negative_limit_fail	vvp_tests/width_hdl_negative_limit_fail.json
 width_hdl_negative_threshold_fail	vvp_tests/width_hdl_negative_threshold_fail.json
 width_hdl_notifier_fail	vvp_tests/width_hdl_notifier_fail.json
+width_hdl_notifier	vvp_tests/width_hdl_notifier.json
+width_hdl_vlog95	vvp_tests/width_hdl_vlog95.json
