@@ -5385,6 +5385,17 @@ NetProc* PDoWhile::elaborate(Design*des, NetScope*scope) const
       return loop;
 }
 
+static bool check_event_select(Design*des, const name_component_t&name)
+{
+      if (name.index.empty()) return true;
+
+      cerr << name.index.front().get_fileline()
+	   << ": error: Cannot select from scalar event '" << name.name
+	   << "'." << endl;
+      des->errors += 1;
+      return false;
+}
+
 /*
  * An event statement is an event delay of some sort, attached to a
  * statement. Some Verilog examples are:
@@ -5595,6 +5606,7 @@ cerr << endl;
 		  symbol_search(this, des, scope, id->path(), id->lexical_pos(), &sr);
 
 		  if (sr.scope && sr.eve) {
+			if (!check_event_select(des, id->path().back())) continue;
 			wa->add_event(sr.eve);
 			  /* You can not look for the posedge or negedge of
 			   * an event. */
@@ -6681,6 +6693,8 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
+      if (!check_event_select(des, event_.back())) return nullptr;
+
       NetEvTrig*trig = new NetEvTrig(sr.eve);
       trig->set_line(*this);
       return trig;
@@ -6711,6 +6725,8 @@ NetProc* PNBTrigger::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return 0;
       }
+
+      if (!check_event_select(des, event_.back())) return nullptr;
 
       NetExpr*dly = 0;
       if (dly_) dly = elab_and_eval(des, scope, dly_, -1);
