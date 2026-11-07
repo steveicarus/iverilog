@@ -529,9 +529,11 @@ extern ivl_island_t ivl_branch_island(ivl_branch_t obj);
  *    delay. If the delay path is unconditional, this returns nil.
  *
  * ivl_path_condition_key
- *    The original local scalar condition identifier, without Verilog escapes.
- *    Returns an empty string for unconditional paths or other expressions.
- *    This metadata is for annotation matching, not condition evaluation.
+ *    An opaque source condition identity for SDF annotation matching. Bare
+ *    local scalar names retain their original unescaped representation;
+ *    supported comparison/AND expression keys start with a reserved space.
+ *    Returns an empty string for unconditional or unsupported conditions.
+ *    This metadata does not evaluate the condition.
  *
  * ivl_path_is_condit
  *    Is this a conditional structure? Needed for ifnone.

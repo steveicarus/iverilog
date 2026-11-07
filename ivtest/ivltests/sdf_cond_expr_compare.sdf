@@ -1,0 +1,11 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "compare_cell") (INSTANCE u0)
+  (DELAY (ABSOLUTE
+   (COND "enable" (E == 1'b1) (IOPATH A Z (3) (5)))
+   (COND F == 1'b0 (IOPATH A Z (7) (11))))))
+ (CELL (CELLTYPE "compare_cell") (INSTANCE u1)
+  (DELAY (ABSOLUTE
+   (COND (E == 1'b1) (IOPATH A Z (13) (17)))
+   (COND (F == 1'b0) (IOPATH A Z (19) (23))))))
+)

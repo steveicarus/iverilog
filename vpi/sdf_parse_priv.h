@@ -24,6 +24,20 @@
  * used to share declarations between the parse and the lexor.
  */
 
+/* Owned annotation identity while parsing a COND expression. */
+enum sdf_cond_kind {
+      SDF_COND_UNSUPPORTED,
+      SDF_COND_NAME,
+      SDF_COND_CONSTANT,
+      SDF_COND_EXPRESSION
+};
+
+struct sdf_cond_expr_s {
+      enum sdf_cond_kind kind;
+      char*key;
+      unsigned value;
+};
+
   /* Path to source for error messages. */
 extern const char*sdf_parse_path;
 
