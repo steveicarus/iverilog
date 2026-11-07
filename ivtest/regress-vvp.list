@@ -414,8 +414,10 @@ strength_net_change		vvp_tests/strength_net_change.json
 strength_net_release		vvp_tests/strength_net_release.json
 strength_notif			vvp_tests/strength_notif.json
 strength_resistive_mos		vvp_tests/strength_resistive_mos.json
+struct_duplicate_member_fail	vvp_tests/struct_duplicate_member_fail.json
 struct_enum_partsel		vvp_tests/struct_enum_partsel.json
 struct_field_left_right		vvp_tests/struct_field_left_right.json
+struct_member_name_scopes	vvp_tests/struct_member_name_scopes.json
 struct_nested1			vvp_tests/struct_nested1.json
 struct_packed_value_list	vvp_tests/struct_packed_value_list.json
 struct_packed_write_read	vvp_tests/struct_packed_write_read.json
@@ -930,6 +932,7 @@ udp_initial_nonreg_fail		vvp_tests/udp_initial_nonreg_fail.json
 udp_instance_reference_order	vvp_tests/udp_instance_reference_order.json
 udp_instance_shadow_fail		vvp_tests/udp_instance_shadow_fail.json
 udp_port_decl_conflict_fail	vvp_tests/udp_port_decl_conflict_fail.json
+union_duplicate_member_fail	vvp_tests/union_duplicate_member_fail.json
 uwire_fail2			vvp_tests/uwire_fail2.json
 uwire_fail3			vvp_tests/uwire_fail3.json
 value_range1			vvp_tests/value_range1.json
