@@ -1445,7 +1445,10 @@ static unsigned imp_count = 0;
 struct __vpiInterModPath* vpip_make_intermodpath(vvp_net_t *net, vpiPortInfo* port1, vpiPortInfo* port2)
 {
       struct __vpiInterModPath*obj = new __vpiInterModPath;
-      obj->scope = vpip_peek_current_scope ( );
+        // The delay is inserted before port2. Use that load's module for
+        // scaled-real units and precision, not the last compiled scope.
+      obj->scope = dynamic_cast<__vpiScope*>(port2->vpi_handle(vpiScope));
+      assert(obj->scope);
 
       obj->net = net;
       obj->port1 = port1;
