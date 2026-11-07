@@ -6723,6 +6723,7 @@ port
   | '.' IDENTIFIER '(' port_reference ')'
       { Module::port_t*tmp = $4;
 	tmp->name = lex_strings.make($2);
+	tmp->explicit_name = true;
 	delete[]$2;
 	$$ = tmp;
       }
@@ -6743,6 +6744,7 @@ port
   | '.' IDENTIFIER '(' '{' port_reference_list '}' ')'
       { Module::port_t*tmp = $5;
 	tmp->name = lex_strings.make($2);
+	tmp->explicit_name = true;
 	delete[]$2;
 	$$ = tmp;
       }

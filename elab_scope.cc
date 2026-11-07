@@ -796,6 +796,20 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 		 << "Elaborate " << scope_path(scope) << "." << endl;
       }
 
+      map<perm_string, bool> port_names;
+      for (const auto*port : ports) {
+	    if (!port || port->name.nil()) continue;
+
+	      // Repeated implicit references to the same port are legal.
+	    auto cur = port_names.emplace(port->name, port->explicit_name);
+	    if (!cur.second && (cur.first->second || port->explicit_name)) {
+		  cerr << get_fileline() << ": error: Duplicate port name '"
+		       << port->name << "'." << endl;
+		  des->errors++;
+	    }
+	    cur.first->second |= port->explicit_name;
+      }
+
       scope->add_typedefs(&typedefs);
       scope->add_gate_names(gates_);
 
