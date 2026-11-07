@@ -246,6 +246,9 @@ class vvp_fun_modpath_edge  : public vvp_fun_modpath_src {
 * Upon a (INTERCONNECT ...) statement an intermodpath will be inserted
 * between port1 and port2 and its delay can be annotated
 */
+struct intermodpath_scalar_event;
+struct intermodpath_scalar_state;
+
 class vvp_fun_intermodpath  : public vvp_net_fun_t, private vvp_gen_event_s {
 
     public:
@@ -260,11 +263,15 @@ class vvp_fun_intermodpath  : public vvp_net_fun_t, private vvp_gen_event_s {
 
     private:
       void run_run() override;
+      void scalar_request_(vvp_bit4_t value, vvp_time64_t delay);
+      friend struct intermodpath_scalar_event;
 
     private:
       vvp_net_t*net_;
 
       vvp_vector4_t cur_vec4_;
+      intermodpath_scalar_state*scalar_;
+      bool width_known_;
 
       vvp_time64_t delay_[12];
 

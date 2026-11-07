@@ -1,0 +1,10 @@
+{
+    "type": "normal",
+    "source": "sdf_interconnect_pulse_fanout.v",
+    "iverilog-args": [
+        "-g2012",
+        "-ginterconnect",
+        "-gspecify",
+        "-Ttyp"
+    ]
+}

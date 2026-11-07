@@ -1267,8 +1267,126 @@ struct __vpiModPathSrc* vpip_make_modpath_src(struct __vpiModPath*path,
       return obj;
 }
 
+// Each receiving connection has independent requested, pending and delivered
+// values. A canceled callback must not publish a later request's value.
+struct intermodpath_scalar_state {
+      vvp_bit4_t delivered;
+      list<intermodpath_scalar_event*> pending;
+      intermodpath_scalar_state() : delivered(BIT4_X) { }
+};
+
+struct intermodpath_event_registry;
+struct intermodpath_scalar_event : public vvp_gen_event_s {
+      intermodpath_scalar_event(vvp_fun_intermodpath*, vvp_bit4_t, vvp_time64_t);
+      ~intermodpath_scalar_event() override;
+      void run_run() override;
+      void detach();
+
+      vvp_fun_intermodpath*owner;
+      const vvp_bit4_t target;
+      const vvp_time64_t due;
+      list<intermodpath_scalar_event*>::iterator pending;
+      list<intermodpath_scalar_event*>::iterator lifetime;
+      intermodpath_event_registry&registry;
+};
+
+// The scheduler deletes dispatched payloads, but $finish may leave future
+// callbacks queued. Track payload lifetime separately from semantic membership
+// so both canceled and surviving undispatched payloads can be released.
+struct intermodpath_event_registry {
+      list<intermodpath_scalar_event*> outstanding;
+      intermodpath_event_registry();
+      ~intermodpath_event_registry() { cleanup(); }
+      void cleanup()
+      {
+            while (!outstanding.empty()) delete outstanding.front();
+      }
+      static PLI_INT32 postsim(p_cb_data);
+};
+
+static intermodpath_event_registry&intermodpath_registry()
+{
+      static intermodpath_event_registry registry;
+      return registry;
+}
+
+intermodpath_event_registry::intermodpath_event_registry()
+{
+      s_cb_data cb = {};
+      cb.reason = cbEndOfSimulation;
+      cb.cb_rtn = postsim;
+      cb.user_data = reinterpret_cast<PLI_BYTE8*>(this);
+      vpiHandle handle = vpi_register_cb(&cb);
+      assert(handle);
+}
+
+PLI_INT32 intermodpath_event_registry::postsim(p_cb_data cb)
+{
+      // Final blocks have run and the scheduler will not dispatch again.
+      const_cast<intermodpath_event_registry*>(
+            reinterpret_cast<const intermodpath_event_registry*>(cb->user_data))->cleanup();
+      return 0;
+}
+
+intermodpath_scalar_event::intermodpath_scalar_event(vvp_fun_intermodpath*o,
+                                                   vvp_bit4_t v,
+                                                   vvp_time64_t when)
+: owner(o), target(v), due(when), registry(intermodpath_registry())
+{
+      owner->scalar_->pending.push_back(this);
+      pending = --owner->scalar_->pending.end();
+      registry.outstanding.push_back(this);
+      lifetime = --registry.outstanding.end();
+}
+
+void intermodpath_scalar_event::detach()
+{
+      if (!owner) return;
+      owner->scalar_->pending.erase(pending);
+      owner = 0;
+}
+
+intermodpath_scalar_event::~intermodpath_scalar_event()
+{
+      detach();
+      registry.outstanding.erase(lifetime);
+}
+
+void intermodpath_scalar_event::run_run()
+{
+      if (!owner) return;
+      assert(schedule_simtime() == due);
+      vvp_fun_intermodpath*o = owner;
+      detach();
+      o->scalar_->delivered = target;
+      o->net_->send_vec4(vvp_vector4_t(1, target), 0);
+      // The generic scheduler deletes this payload after return.
+}
+
+void vvp_fun_intermodpath::scalar_request_(vvp_bit4_t value, vvp_time64_t delay)
+{
+      const vvp_time64_t due = schedule_simtime() + delay;
+      cur_vec4_.set_bit(0, value);
+
+      // The default rejection limit is this trailing transition's delay.
+      // Reject negative or shorter nominal pulses, preserving equality.
+      while (!scalar_->pending.empty()) {
+            intermodpath_scalar_event*p = scalar_->pending.back();
+            if (due >= p->due && due - p->due >= delay) break;
+            p->detach();
+      }
+
+      // Preserve a due-now transaction as the projected output until it runs.
+      const vvp_bit4_t base = scalar_->pending.empty() ? scalar_->delivered
+                            : scalar_->pending.back()->target;
+      if (value == base) return;
+      intermodpath_scalar_event*event = new intermodpath_scalar_event(this,
+                                                                   value, due);
+      schedule_generic(event, delay, false, true, true);
+}
+
 vvp_fun_intermodpath::vvp_fun_intermodpath(vvp_net_t*net, unsigned width)
-: net_(net)
+: net_(net), scalar_(0), width_known_(false)
 {
       for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
 	    delay_[idx] = 0;
@@ -1279,6 +1397,10 @@ vvp_fun_intermodpath::vvp_fun_intermodpath(vvp_net_t*net, unsigned width)
 
 vvp_fun_intermodpath::~vvp_fun_intermodpath()
 {
+      if (scalar_) {
+            while (!scalar_->pending.empty()) scalar_->pending.back()->detach();
+            delete scalar_;
+      }
 }
 
 void vvp_fun_intermodpath::get_delay12(vvp_time64_t val[12]) const
@@ -1307,6 +1429,15 @@ void vvp_fun_intermodpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit
       if (port.port() > 0)
 	    return;
 
+      // The constructor width may be a placeholder for an indexed port.
+      // Select the scalar algorithm once from the actual connection payload,
+      // before scheduling any events; wider connections keep the legacy path.
+      if (!width_known_) {
+            width_known_ = true;
+            if (bit.size() == 1) scalar_ = new intermodpath_scalar_state;
+      }
+      assert(!scalar_ || bit.size() == 1);
+
       if (cur_vec4_.eeq(bit))
 	    return;
 
@@ -1314,6 +1445,11 @@ void vvp_fun_intermodpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit
       vvp_time64_t use_delay = delay_from_edge(cur_vec4_.value(0),
 					       bit.value(0),
 					       delay_);
+
+      if (scalar_) {
+            scalar_request_(bit.value(0), use_delay);
+            return;
+      }
 
 	/* FIXME: This bases the edge delay on only the least
 	   bit. This is WRONG! I need to find all the possible delays,
