@@ -1,7 +1,7 @@
 #ifndef IVL_sdf_priv_h
 #define IVL_sdf_priv_h
 /*
- * Copyright (c) 2007-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -78,6 +78,9 @@ extern void sdf_interconnect_delays(struct interconnect_port_s port1,
                                     struct interconnect_port_s port2,
                                     const struct sdf_delval_list_s*delval_list,
                                     const int sdf_lineno);
+
+extern void sdf_width_limits(int edge, const char* reference,
+                              struct sdf_delay_s limit, int lineno);
 
 #endif /* IVL_sdf_priv_h */
 

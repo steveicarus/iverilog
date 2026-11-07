@@ -96,6 +96,19 @@ These flags affect the general behavior of the compiler.
     disabled, specify blocks are parsed but ignored. When enabled, specify
     blocks cause timing path and timing checks to be active.
 
+    The VVP target implements unconditional ``$width`` checks on local scalar
+    ``posedge`` or ``negedge`` references. Limits and optional thresholds must
+    be finite nonnegative constants; parameters and specparams are allowed.
+    Values use the declaring module's time unit and precision. A notifier, if
+    supplied, must be a local scalar variable. A violation occurs when the
+    measured pulse width is strictly above the threshold and below the limit.
+    Standard ``$sdf_annotate`` can update the matching WIDTH limit.
+
+    Conditional, vector and hierarchical WIDTH declarations are diagnosed as
+    unsupported. Other targets warn that WIDTH is ignored. This does not enable
+    other timing-check kinds such as ``$period``. SDF annotation refusals are
+    reported as diagnostics and do not necessarily change the process exit code.
+
   * std-include/no-std-include
 
     Enable or disable the search of a standard installation include directory

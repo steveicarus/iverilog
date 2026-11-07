@@ -60,6 +60,16 @@ Icarus extensions that cannot be translated:
 * Most Verilog-A constructs.
 
 
+Timing checks
+-------------
+
+With ``-gspecify``, the target emits unconditional scalar ``$width`` checks
+with their selected edge, elaborated limit and threshold, and optional
+notifier. Values remain in the containing module's time units, and the
+module timescale is preserved. A module containing only timing checks still
+receives a ``specify`` block. The translated file must also be compiled with
+``-gspecify`` to execute the checks.
+
 Known Issues and Limitations
 ----------------------------
 

@@ -858,6 +858,26 @@ static void emit_specify_paths(ivl_scope_t scope, ivl_signal_t sig)
       }
 }
 
+static void emit_width_checks(ivl_scope_t scope)
+{
+      unsigned idx;
+      for (idx = 0; idx < ivl_scope_widths(scope); idx += 1) {
+            ivl_width_t check = ivl_scope_width(scope, idx);
+            ivl_signal_t notifier = ivl_width_notifier(check);
+            fprintf(vlog_out, "%*c$width(%s ", indent, ' ',
+                    ivl_width_posedge(check) ? "posedge" : "negedge");
+            emit_id(ivl_signal_basename(ivl_width_reference(check)));
+              /* The elaborated values are in this module's time units. */
+            fprintf(vlog_out, ", %.17e, %.17e", ivl_width_limit(check),
+                    ivl_width_threshold(check));
+            if (notifier) {
+                  fprintf(vlog_out, ", ");
+                  emit_id(ivl_signal_basename(notifier));
+            }
+            fprintf(vlog_out, ");\n");
+      }
+}
+
 /*
  * The path delay information from the specify block is attached to the
  * output ports.
@@ -866,6 +886,12 @@ static void emit_specify(ivl_scope_t scope)
 {
       unsigned word, idx, count = ivl_scope_ports(scope);
       unsigned need_specify = 0;
+      if (ivl_scope_widths(scope)) {
+            fprintf(vlog_out, "\n%*cspecify\n", indent, ' ');
+            need_specify = 1;
+            indent += indent_incr;
+            emit_width_checks(scope);
+      }
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_t nex = ivl_scope_mod_port(scope, idx);
 	    ivl_signal_t port = get_port_from_nexus(scope, nex, &word);
