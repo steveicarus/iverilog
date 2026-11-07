@@ -1,0 +1,4 @@
+SDF ERROR: ivltests/sdf_cond_vlog95.sdf:15: Unable to match ModPath A -> ZL in top.u
+SDF ERROR: ivltests/sdf_cond_vlog95.sdf:16: Unable to match ModPath A -> ZL in top.u
+SDF ERROR: ivltests/sdf_cond_vlog95.sdf:17: Unable to match ModPath A -> ZH in top.u
+PASSED

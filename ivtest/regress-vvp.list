@@ -986,3 +986,12 @@ sdf_cond_multimatch	vvp_tests/sdf_cond_multimatch.json
 sdf_cond_escaped	vvp_tests/sdf_cond_escaped.json
 sdf_cond_escaped_slash	vvp_tests/sdf_cond_escaped_slash.json
 sdf_cond_reject	vvp_tests/sdf_cond_reject.json
+
+# Local scalar comparison and ordered-conjunction SDF identities.
+sdf_cond_expr_compare	vvp_tests/sdf_cond_expr_compare.json
+sdf_cond_expr_compare_bit	vvp_tests/sdf_cond_expr_compare_bit.json
+sdf_cond_expr_tree	vvp_tests/sdf_cond_expr_tree.json
+sdf_cond_expr_escaped	vvp_tests/sdf_cond_expr_escaped.json
+sdf_cond_expr_update	vvp_tests/sdf_cond_expr_update.json
+sdf_cond_expr_reject	vvp_tests/sdf_cond_expr_reject.json
+sdf_cond_vlog95	vvp_tests/sdf_cond_vlog95.json

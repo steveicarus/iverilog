@@ -1,0 +1,18 @@
+{
+    "type": "normal",
+    "source": "sdf_cond_expr_reject.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp"
+    ],
+    "gold": "sdf_cond_expr_reject",
+    "vvp-args-extended": [
+        "-sdf-warn"
+    ],
+    "vlog95": {
+        "__comment": "Named generate scopes are not translated by vlog95",
+        "type": "CE",
+        "gold": ""
+    }
+}

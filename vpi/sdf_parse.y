@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2023 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -83,6 +83,50 @@ static char* local_condition_name(char*text)
       return unescape_identifier(text);
 }
 
+/* Match the compiler's source identity without evaluating the condition.
+   Leading space distinguishes expression keys from all identifier names.
+   Length-delimited names and binary nodes preserve operand order and grouping.
+   This helper consumes both input keys, including on unsupported expressions. */
+static struct sdf_cond_expr_s condition_binary(char op,
+                                              struct sdf_cond_expr_s left,
+                                              struct sdf_cond_expr_s right)
+{
+      struct sdf_cond_expr_s result = {SDF_COND_UNSUPPORTED, 0, 0};
+      if (op == 'e' && left.kind == SDF_COND_NAME
+          && right.kind == SDF_COND_CONSTANT) {
+            char length[3*sizeof(size_t)+1];
+            size_t name_len = strlen(left.key);
+            size_t length_len;
+            sprintf(length, "%zu", name_len);
+            length_len = strlen(length);
+            if (name_len <= (size_t)-1 - length_len - 5) {
+                  result.key = malloc(name_len + length_len + 5);
+                  if (result.key) {
+                        sprintf(result.key, " E%s:%s%c", length, left.key,
+                                right.value ? '1' : '0');
+                        result.kind = SDF_COND_EXPRESSION;
+                  }
+            }
+      } else if (op == 'a' && left.kind == SDF_COND_EXPRESSION
+                 && right.kind == SDF_COND_EXPRESSION) {
+            size_t left_len = strlen(left.key);
+            size_t right_len = strlen(right.key);
+            if (right_len <= (size_t)-1 - 3
+                && left_len <= (size_t)-1 - right_len - 3) {
+                  result.key = malloc(left_len + right_len + 3);
+                  if (result.key) {
+                        memcpy(result.key, " A", 2);
+                        memcpy(result.key + 2, left.key, left_len);
+                        memcpy(result.key + 2 + left_len, right.key, right_len + 1);
+                        result.kind = SDF_COND_EXPRESSION;
+                  }
+            }
+      }
+      free(left.key);
+      free(right.key);
+      return result;
+}
+
 /* This is the hierarchy separator to use. */
 char sdf_use_hchar = '.';
 
@@ -97,6 +141,7 @@ char sdf_use_hchar = '.';
       struct port_with_edge_s port_with_edge;
       struct sdf_delval_list_s delval_list;
       struct interconnect_port_s interconnect_port;
+      struct sdf_cond_expr_s condition;
 };
 
 %token K_ABSOLUTE K_CELL K_CELLTYPE K_COND K_CONDELSE K_DATE K_DELAYFILE
@@ -115,8 +160,9 @@ char sdf_use_hchar = '.';
 %token <real_val> REAL_NUMBER
 %token <int_val> INTEGER
 
-%type <string_val> conditional_port_expr
-%destructor { free($$); } conditional_port_expr
+%type <condition> conditional_port_expr
+%destructor { free($$.key); } conditional_port_expr
+%type <int_val> scalar_constant
 %type <string_val> celltype
 %type <string_val> cell_instance
 %type <string_val> hierarchical_identifier
@@ -389,21 +435,21 @@ del_def
 	           sdf_parse_path, @2.first_line); }
   | '(' K_COND conditional_port_expr
     '(' K_IOPATH port_spec port_instance delval_list ')' ')'
-      { if ($3)
-            sdf_cond_iopath_delays($3, $6.vpi_edge, $6.string_val, $7, &$8, @2.first_line);
+      { if ($3.key)
+            sdf_cond_iopath_delays($3.key, $6.vpi_edge, $6.string_val, $7, &$8, @2.first_line);
         else if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
                                              "COND not supported.\n",
                                              sdf_parse_path, @2.first_line);
-        free($3); free($6.string_val); free($7);
+        free($3.key); free($6.string_val); free($7);
       }
   | '(' K_COND QSTRING conditional_port_expr
     '(' K_IOPATH port_spec port_instance delval_list ')' ')'
-      { if ($4)
-            sdf_cond_iopath_delays($4, $7.vpi_edge, $7.string_val, $8, &$9, @2.first_line);
+      { if ($4.key)
+            sdf_cond_iopath_delays($4.key, $7.vpi_edge, $7.string_val, $8, &$9, @2.first_line);
         else if (sdf_flag_warning) vpi_printf("SDF WARNING: %s:%d: "
                                              "COND not supported.\n",
                                              sdf_parse_path, @2.first_line);
-        free($4); free($7.string_val); free($8); free($3);
+        free($4.key); free($7.string_val); free($8); free($3);
       }
   | '(' K_COND error ')'
       { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed COND\n",
@@ -496,15 +542,20 @@ timing_check_condition
 
   /* This is not complete! */
 conditional_port_expr
-  : hierarchical_identifier { $$ = local_condition_name($1); }
-  | scalar_constant { $$ = 0; }
+  : hierarchical_identifier
+      { $$.key = local_condition_name($1);
+        $$.kind = $$.key ? SDF_COND_NAME : SDF_COND_UNSUPPORTED;
+        $$.value = 0;
+      }
+  | scalar_constant
+      { $$.kind = SDF_COND_CONSTANT; $$.key = 0; $$.value = $1; }
   | '(' conditional_port_expr ')' { $$ = $2; }
-  | conditional_port_expr K_LAND conditional_port_expr { free($1); free($3); $$ = 0; }
-  | conditional_port_expr K_LOR conditional_port_expr { free($1); free($3); $$ = 0; }
-  | conditional_port_expr K_EQ conditional_port_expr { free($1); free($3); $$ = 0; }
-  | conditional_port_expr K_NE conditional_port_expr { free($1); free($3); $$ = 0; }
-  | conditional_port_expr K_CEQ conditional_port_expr { free($1); free($3); $$ = 0; }
-  | conditional_port_expr K_CNE conditional_port_expr { free($1); free($3); $$ = 0; }
+  | conditional_port_expr K_LAND conditional_port_expr { $$ = condition_binary('a', $1, $3); }
+  | conditional_port_expr K_LOR conditional_port_expr { $$ = condition_binary(0, $1, $3); }
+  | conditional_port_expr K_EQ conditional_port_expr { $$ = condition_binary('e', $1, $3); }
+  | conditional_port_expr K_NE conditional_port_expr { $$ = condition_binary(0, $1, $3); }
+  | conditional_port_expr K_CEQ conditional_port_expr { $$ = condition_binary(0, $1, $3); }
+  | conditional_port_expr K_CNE conditional_port_expr { $$ = condition_binary(0, $1, $3); }
   ;
 
 equality_operator
@@ -515,8 +566,8 @@ equality_operator
   ;
 
 scalar_constant
-  : K_LOGICAL_ONE
-  | K_LOGICAL_ZERO
+  : K_LOGICAL_ONE { $$ = 1; }
+  | K_LOGICAL_ZERO { $$ = 0; }
   ;
 
 input_output_path_opt

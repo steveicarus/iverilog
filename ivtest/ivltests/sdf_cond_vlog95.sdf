@@ -1,0 +1,18 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "cond_vlog95_cell") (INSTANCE u)
+  (DELAY (ABSOLUTE
+   (COND E (IOPATH A ZB (3) (5)))
+   (COND enable_alias (IOPATH A ZA (7) (9)))
+   (COND E == 1'b1 (IOPATH A ZE (11) (13)))
+   (COND F == 1'b0 (IOPATH A ZF (15) (17)))
+   (COND ((E == 1'b1 && F == 1'b0) && G == 1'b1) (IOPATH A ZL (19) (21)))
+   (COND (E == 1'b1 && (F == 1'b0 && G == 1'b1)) (IOPATH A ZR (23) (25)))
+   (COND E\=\=1\'b1 (IOPATH A ZH (27) (29)))
+   (COND gate\"quote == 1'b1 (IOPATH A ZQ (31) (33)))
+   (COND gate\\back == 1'b1 (IOPATH A ZK (35) (37)))
+   (IOPATH A ZU (39) (41))
+   (COND (E == 1'b1 && (F == 1'b0 && G == 1'b1)) (IOPATH A ZL (91) (93)))
+   (COND ((F == 1'b0 && E == 1'b1) && G == 1'b1) (IOPATH A ZL (91) (93)))
+   (COND E == 1'b1 (IOPATH A ZH (91) (93))))))
+)
