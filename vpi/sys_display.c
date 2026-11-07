@@ -718,7 +718,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
 
           /* If the default buffer is too small make it big enough. */
           size = strlen(tbuf) + 1;
-          if ((signed)size < (width+1)) size = width+1;
+          if ((signed)size <= width) size = (unsigned)width + 1;
           if (size > ini_size) result = realloc(result, size*sizeof(char));
 
           if (ljust == 0) sprintf(result, "%*s", width, cp);
@@ -2042,8 +2042,6 @@ static PLI_INT32 sys_timeformat_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv  = vpi_iterate(vpiArgument, sys);
 
-      (void)name; /* Parameter is not used. */
-
       if (argv) {
             vpiHandle units = vpi_scan(argv);
             vpiHandle prec  = vpi_scan(argv);
@@ -2067,6 +2065,14 @@ static PLI_INT32 sys_timeformat_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
             value.format = vpiIntVal;
             vpi_get_value(wid, &value);
+            /* A minimum field width cannot be negative. */
+            if (value.value.integer < 0) {
+                  vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, sys),
+                             (int)vpi_get(vpiLineNo, sys));
+                  vpi_printf("%s's minimum width argument (%d) is negative, "
+                             "using 0.\n", name, (int)value.value.integer);
+                  value.value.integer = 0;
+            }
             timeformat_info.width = value.value.integer;
       } else {
             /* If no arguments are given then use the default values. */
