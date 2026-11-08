@@ -616,11 +616,11 @@ static bool default_recurses_(ivl_type_t type)
 	     dynamic_cast<const netuarray_t*>(type);
 }
 
-static PEAssignPattern *concat_to_pattern_(const PEConcat *concat)
+static PEAssignPattern *concat_to_pattern_(const PEConcat *ccat)
 {
-      list<PExpr*> items(concat->items().begin(), concat->items().end());
-      PEAssignPattern *tmp = new PEAssignPattern(concat->repeat(), items);
-      tmp->set_line(*concat);
+      list<PExpr*> items(ccat->items().begin(), ccat->items().end());
+      PEAssignPattern *tmp = new PEAssignPattern(ccat->repeat(), items);
+      tmp->set_line(*ccat);
       return tmp;
 }
 
@@ -633,15 +633,15 @@ static PEAssignPattern *concat_to_pattern_(const PEConcat *concat)
  */
 static PExpr *concat_as_pattern_(PExpr *expr, ivl_type_t type)
 {
-      const auto concat = dynamic_cast<PEConcat*>(expr);
-      if (!concat)
+      const auto ccat = dynamic_cast<PEConcat*>(expr);
+      if (!ccat)
 	    return expr;
 
       if (!dynamic_cast<const netuarray_t*>(type) &&
 	  !dynamic_cast<const netdarray_t*>(type))
 	    return expr;
 
-      return concat_to_pattern_(concat);
+      return concat_to_pattern_(ccat);
 }
 
 NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,

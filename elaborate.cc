@@ -4630,7 +4630,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	    use_this->set_line(*this);
 
 	    // A call through super is not virtual.
-	    bool nonvirtual = !use_path.empty() && use_path.back().name == "#";
+	    bool nonvirtual = use_path.back().name == "#";
 	    return elaborate_build_call_(des, scope, task, use_this, nonvirtual);
       }
 
