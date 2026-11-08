@@ -43,6 +43,10 @@ string_type_t::~string_type_t()
 {
 }
 
+chandle_type_t::~chandle_type_t()
+{
+}
+
 atom_type_t size_type (atom_type_t::INT, true);
 
 PNamedItem::SymbolType enum_name_t::symbol_type() const
