@@ -1,7 +1,7 @@
 #ifndef IVL_sdf_parse_priv_h
 #define IVL_sdf_parse_priv_h
 /*
- * Copyright (c) 2007-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,6 +23,20 @@
  * This file is only included by sdf_parse.y and sdf_lexor.lex. It is
  * used to share declarations between the parse and the lexor.
  */
+
+/* Owned annotation identity while parsing a COND expression. */
+enum sdf_cond_kind {
+      SDF_COND_UNSUPPORTED,
+      SDF_COND_NAME,
+      SDF_COND_CONSTANT,
+      SDF_COND_EXPRESSION
+};
+
+struct sdf_cond_expr_s {
+      enum sdf_cond_kind kind;
+      char*key;
+      unsigned value;
+};
 
   /* Path to source for error messages. */
 extern const char*sdf_parse_path;

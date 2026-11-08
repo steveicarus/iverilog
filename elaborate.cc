@@ -4050,7 +4050,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
 	/* Handle non-automatic tasks with no parameters specially. There is
            no need to make a sequential block to hold the generated code. */
-      if ((parm_count == 0) && !task->is_auto()) {
+      if (parm_count == 0 && parms_.empty() && !task->is_auto()) {
 	      // Check if a task call is allowed in this context.
 	    test_task_calls_ok_(des, scope);
 
@@ -6811,10 +6811,9 @@ bool PProcess::elaborate(Design*des, NetScope*scope) const
       return true;
 }
 
-// Preserve the original bare scalar condition name for SDF matching. Do not
-// infer it from an optimized condition nexus: a compound expression can share
-// that nexus without being the same source condition.
-static std::string ordinary_path_condition_key(Design*des, NetScope*scope, const PExpr*expr)
+static std::string ordinary_path_condition_name(Design*des, NetScope*scope,
+                                               const PExpr*expr,
+                                               bool comparison = false)
 {
       const PEIdent*id = dynamic_cast<const PEIdent*>(expr);
       if (!id || id->path().package || id->path().name.size() != 1
@@ -6824,7 +6823,55 @@ static std::string ordinary_path_condition_key(Design*des, NetScope*scope, const
           || sig->unpacked_dimensions()) return {};
       if (sig->data_type() != IVL_VT_LOGIC && sig->data_type() != IVL_VT_BOOL)
             return {};
+      if (comparison && sig->packed_dimensions()) return {};
       return sig->name().str();
+}
+
+// Preserve source condition identity, not its optimized condition nexus.
+// Bare names keep the existing encoding. Expression keys start with a space,
+// which cannot occur in a Verilog identifier, and use typed, length-delimited
+// leaves and ordered binary trees. The SDF parser constructs the same keys.
+static std::string ordinary_path_condition_key(Design*des, NetScope*scope,
+                                              const PExpr*expr,
+                                              std::string&text)
+{
+      const PEBinary*binary = dynamic_cast<const PEBinary*>(expr);
+      if (!binary) {
+            std::string name = ordinary_path_condition_name(des, scope, expr);
+            if (!name.empty()) text = "\\" + name + " ";
+            return name;
+      }
+
+      if (binary->peek_opcode() == 'e') { // Logical equality, not case equality.
+            std::string name = ordinary_path_condition_name(des, scope,
+                                                   binary->peek_left(), true);
+            const PENumber*number = dynamic_cast<const PENumber*>(binary->peek_right());
+            if (name.empty() || !number) return {};
+            const verinum&value = number->value();
+            if (!value.has_len() || value.len() != 1 || value.has_sign()
+                || value.is_single() || !value.is_defined()) return {};
+            std::ostringstream key;
+            key << " E" << name.size() << ':' << name
+                << (value.is_zero() ? '0' : '1');
+            text = "(\\" + name + "  == 1'b" +
+                  (value.is_zero() ? "0)" : "1)");
+            return key.str();
+      }
+
+      if (binary->peek_opcode() == 'a') {
+            std::string left_text, right_text;
+            std::string left = ordinary_path_condition_key(des, scope,
+                                              binary->peek_left(), left_text);
+            std::string right = ordinary_path_condition_key(des, scope,
+                                              binary->peek_right(), right_text);
+            // AND leaves must be comparisons, not bare names or constants.
+            if (left.empty() || right.empty()
+                || left[0] != ' ' || right[0] != ' ') return {};
+            text = "(" + left_text + " && " + right_text + ")";
+            return " A" + left + right;
+      }
+
+      return {};
 }
 
 void PSpecPath::elaborate(Design*des, NetScope*scope) const
@@ -6963,7 +7010,8 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 					       src.size(), condit_sig,
 					       conditional, !full_flag_);
 	    path->set_line(*this);
-	    path->sdf_condition = ordinary_path_condition_key(des, scope, condition);
+	    path->sdf_condition = ordinary_path_condition_key(des, scope, condition,
+						path->sdf_condition_text);
 
 	      // An edge sensitive path has either a data source
 	      // expression or an explicit edge keyword. When neither is

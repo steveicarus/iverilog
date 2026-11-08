@@ -2031,6 +2031,11 @@ atomic_type
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  | K_chandle
+      { chandle_type_t*tmp = new chandle_type_t;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
   ;
 
 block_reg_data_type
@@ -2073,6 +2078,11 @@ reg_prefixed_atomic_type
       }
   | K_string
       { string_type_t*tmp = new string_type_t;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_chandle
+      { chandle_type_t*tmp = new chandle_type_t;
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
@@ -5894,10 +5904,10 @@ module_item
 	delete $1;
       }
 
-  | K_trireg charge_strength_opt dimensions_opt delay3_opt list_of_identifiers ';'
-      { yyerror(@1, "sorry: trireg nets not supported.");
-	delete $3;
+  | attribute_list_opt K_trireg charge_strength_opt dimensions_opt delay3_opt list_of_identifiers ';'
+      { yyerror(@2, "sorry: trireg nets not supported.");
 	delete $4;
+	delete $5;
       }
 
 
@@ -6713,6 +6723,7 @@ port
   | '.' IDENTIFIER '(' port_reference ')'
       { Module::port_t*tmp = $4;
 	tmp->name = lex_strings.make($2);
+	tmp->explicit_name = true;
 	delete[]$2;
 	$$ = tmp;
       }
@@ -6733,6 +6744,7 @@ port
   | '.' IDENTIFIER '(' '{' port_reference_list '}' ')'
       { Module::port_t*tmp = $5;
 	tmp->name = lex_strings.make($2);
+	tmp->explicit_name = true;
 	delete[]$2;
 	$$ = tmp;
       }

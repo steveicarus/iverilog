@@ -30,6 +30,7 @@
 # include  "netstruct.h"
 # include  "netvector.h"
 # include  "netmisc.h"
+# include  <set>
 # include  <typeinfo>
 # include  "ivl_assert.h"
 
@@ -196,6 +197,14 @@ ivl_type_t string_type_t::elaborate_type_raw(Design*, NetScope*) const
       return &netstring_t::type_string;
 }
 
+ivl_type_t chandle_type_t::elaborate_type_raw(Design*des, NetScope*) const
+{
+      cerr << this->get_fileline() << " sorry: The chandle data type "
+              "is not currently supported." << endl;
+      des->errors++;
+      return &netchandle_t::type_chandle;
+}
+
 ivl_type_t parray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 {
       netranges_t packed;
@@ -228,6 +237,7 @@ ivl_type_t struct_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 	    res->union_flag(true, soft_flag);
       }
 
+      set<perm_string> member_names;
       for (list<struct_member_t*>::iterator cur = members->begin()
 		 ; cur != members->end() ; ++ cur) {
 
@@ -243,6 +253,13 @@ ivl_type_t struct_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 	    for (list<decl_assignment_t*>::iterator cur_name = curp->names->begin()
 		       ; cur_name != curp->names->end() ;  ++ cur_name) {
 		  decl_assignment_t*namep = *cur_name;
+
+		  if (!member_names.insert(namep->name.first).second) {
+			cerr << namep->get_fileline()
+			     << ": error: Duplicate " << (union_flag ? "union" : "struct")
+			     << " member '" << namep->name.first << "'." << endl;
+			des->errors++;
+		  }
 
 		  if (is_packed && namep->expr) {
 			cerr << namep->expr->get_fileline() << " error: "

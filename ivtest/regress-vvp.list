@@ -97,9 +97,12 @@ class_property_array_invalid_compare	vvp_tests/class_property_array_invalid_comp
 class_property_array_invalid_read	vvp_tests/class_property_array_invalid_read.json
 class_property_array_invalid_write	vvp_tests/class_property_array_invalid_write.json
 constfunc_call_signedness	vvp_tests/constfunc_call_signedness.json
+defparam_bit_select_fail	vvp_tests/defparam_bit_select_fail.json
+defparam_instance_array		vvp_tests/defparam_instance_array.json
 defparam_mintypmax_max		vvp_tests/defparam_mintypmax_max.json
 defparam_mintypmax_min		vvp_tests/defparam_mintypmax_min.json
 defparam_mintypmax_typ		vvp_tests/defparam_mintypmax_typ.json
+defparam_part_select_fail	vvp_tests/defparam_part_select_fail.json
 generate_case_default			vvp_tests/generate_case_default.json
 initial_null				vvp_tests/initial_null.json
 initial_null_verilog_fail		vvp_tests/initial_null_verilog_fail.json
@@ -288,6 +291,10 @@ memsynth9			vvp_tests/memsynth9.json
 memsynth9-synth			vvp_tests/memsynth9-synth.json
 mix_reset			vvp_tests/mix_reset.json
 mix_reset-synth			vvp_tests/mix_reset-synth.json
+modpath_pulse_asymmetric		vvp_tests/modpath_pulse_asymmetric.json
+modpath_pulse_finish		vvp_tests/modpath_pulse_finish.json
+modpath_pulse_rearm		vvp_tests/modpath_pulse_rearm.json
+modpath_pulse_values		vvp_tests/modpath_pulse_values.json
 module_instance_initializer_fail	vvp_tests/module_instance_initializer_fail.json
 module_instance_no_ports_duplicate_fail	vvp_tests/module_instance_no_ports_duplicate_fail.json
 module_instance_no_ports_fail	vvp_tests/module_instance_no_ports_fail.json
@@ -333,6 +340,10 @@ parameter_type			vvp_tests/parameter_type.json
 plusargs_dec_underscore		vvp_tests/plusargs_dec_underscore.json
 port_duplicate_after_empty_fail	vvp_tests/port_duplicate_after_empty_fail.json
 port_duplicate_empty_fail	vvp_tests/port_duplicate_empty_fail.json
+port_header_duplicate_concat_fail	vvp_tests/port_header_duplicate_concat_fail.json
+port_header_duplicate_explicit_first_fail	vvp_tests/port_header_duplicate_explicit_first_fail.json
+port_header_duplicate_fail	vvp_tests/port_header_duplicate_fail.json
+port_header_duplicate_implicit_first_fail	vvp_tests/port_header_duplicate_implicit_first_fail.json
 pr1388974			vvp_tests/pr1388974.json
 pr1701890			vvp_tests/pr1701890.json
 pr1864110a			vvp_tests/pr1864110a.json
@@ -382,6 +393,23 @@ sdf_interconnect1		vvp_tests/sdf_interconnect1.json
 sdf_interconnect2		vvp_tests/sdf_interconnect2.json
 sdf_interconnect3		vvp_tests/sdf_interconnect3.json
 sdf_interconnect4		vvp_tests/sdf_interconnect4.json
+sdf_interconnect_scope_same	vvp_tests/sdf_interconnect_scope_same.json
+sdf_interconnect_scope_top_us	vvp_tests/sdf_interconnect_scope_top_us.json
+sdf_interconnect_scope_cell_us	vvp_tests/sdf_interconnect_scope_cell_us.json
+sdf_interconnect_scope_source_us	vvp_tests/sdf_interconnect_scope_source_us.json
+sdf_interconnect_scope_load_us	vvp_tests/sdf_interconnect_scope_load_us.json
+sdf_interconnect_scope_tail_us	vvp_tests/sdf_interconnect_scope_tail_us.json
+sdf_interconnect_scope_head_us	vvp_tests/sdf_interconnect_scope_head_us.json
+sdf_interconnect_scope_root_order	vvp_tests/sdf_interconnect_scope_root_order.json
+sdf_interconnect_scope_tail_coarse	vvp_tests/sdf_interconnect_scope_tail_coarse.json
+sdf_interconnect_scope_load_coarse	vvp_tests/sdf_interconnect_scope_load_coarse.json
+sdf_interconnect_scope_cell_coarse	vvp_tests/sdf_interconnect_scope_cell_coarse.json
+sdf_interconnect_scope_up_output	vvp_tests/sdf_interconnect_scope_up_output.json
+vpi_interconnect_scope	vvp_tests/vpi_interconnect_scope.json
+sdf_interconnect_pulse_rearm	vvp_tests/sdf_interconnect_pulse_rearm.json
+sdf_interconnect_pulse_asymmetric	vvp_tests/sdf_interconnect_pulse_asymmetric.json
+sdf_interconnect_pulse_fanout	vvp_tests/sdf_interconnect_pulse_fanout.json
+sdf_interconnect_pulse_finish	vvp_tests/sdf_interconnect_pulse_finish.json
 sf_countbits_fail		vvp_tests/sf_countbits_fail.json
 sf_countones_fail		vvp_tests/sf_countones_fail.json
 sf_isunknown_fail		vvp_tests/sf_isunknown_fail.json
@@ -406,8 +434,10 @@ strength_net_change		vvp_tests/strength_net_change.json
 strength_net_release		vvp_tests/strength_net_release.json
 strength_notif			vvp_tests/strength_notif.json
 strength_resistive_mos		vvp_tests/strength_resistive_mos.json
+struct_duplicate_member_fail	vvp_tests/struct_duplicate_member_fail.json
 struct_enum_partsel		vvp_tests/struct_enum_partsel.json
 struct_field_left_right		vvp_tests/struct_field_left_right.json
+struct_member_name_scopes	vvp_tests/struct_member_name_scopes.json
 struct_nested1			vvp_tests/struct_nested1.json
 struct_packed_value_list	vvp_tests/struct_packed_value_list.json
 struct_packed_write_read	vvp_tests/struct_packed_write_read.json
@@ -905,12 +935,16 @@ sv_wildcard_port_position	vvp_tests/sv_wildcard_port_position.json
 sdf_header			vvp_tests/sdf_header.json
 switch_instance_shadow_fail	vvp_tests/switch_instance_shadow_fail.json
 task_escaped_name		vvp_tests/task_escaped_name.json
+task_no_ports_argument_fail	vvp_tests/task_no_ports_argument_fail.json
+task_no_ports_empty_arguments_fail	vvp_tests/task_no_ports_empty_arguments_fail.json
+task_no_ports_named_argument_fail	vvp_tests/task_no_ports_named_argument_fail.json
 task_return1			vvp_tests/task_return1.json
 task_return2			vvp_tests/task_return2.json
 task_return_fail1		vvp_tests/task_return_fail1.json
 task_return_fail2		vvp_tests/task_return_fail2.json
 test_va_math			vvp_tests/test_va_math.json
 test_vams_math			vvp_tests/test_vams_math.json
+timeformat_neg_width		vvp_tests/timeformat_neg_width.json
 timing_check_syntax		vvp_tests/timing_check_syntax.json
 timing_check_delayed_signals	vvp_tests/timing_check_delayed_signals.json
 udp_ansi_initial_nonreg_fail	vvp_tests/udp_ansi_initial_nonreg_fail.json
@@ -924,6 +958,7 @@ udp_port_decl_conflict_fail	vvp_tests/udp_port_decl_conflict_fail.json
 udp_prepath		vvp_tests/udp_prepath.json
 udp_prepath_disabled		vvp_tests/udp_prepath_disabled.json
 udp_prepath_renamed		vvp_tests/udp_prepath_renamed.json
+union_duplicate_member_fail	vvp_tests/union_duplicate_member_fail.json
 uwire_fail2			vvp_tests/uwire_fail2.json
 uwire_fail3			vvp_tests/uwire_fail3.json
 value_range1			vvp_tests/value_range1.json
@@ -981,3 +1016,12 @@ sdf_cond_multimatch	vvp_tests/sdf_cond_multimatch.json
 sdf_cond_escaped	vvp_tests/sdf_cond_escaped.json
 sdf_cond_escaped_slash	vvp_tests/sdf_cond_escaped_slash.json
 sdf_cond_reject	vvp_tests/sdf_cond_reject.json
+
+# Local scalar comparison and ordered-conjunction SDF identities.
+sdf_cond_expr_compare	vvp_tests/sdf_cond_expr_compare.json
+sdf_cond_expr_compare_bit	vvp_tests/sdf_cond_expr_compare_bit.json
+sdf_cond_expr_tree	vvp_tests/sdf_cond_expr_tree.json
+sdf_cond_expr_escaped	vvp_tests/sdf_cond_expr_escaped.json
+sdf_cond_expr_update	vvp_tests/sdf_cond_expr_update.json
+sdf_cond_expr_reject	vvp_tests/sdf_cond_expr_reject.json
+sdf_cond_vlog95	vvp_tests/sdf_cond_vlog95.json

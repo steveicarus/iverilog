@@ -408,8 +408,9 @@ typedef struct t_vpi_delay  {
 #  define _vpiDelaySelMaximum 3
 /* used in vvp/vpi_priv.h  0x1000003 */
 /* used in vvp/vpi_priv.h  0x1000004 */
-/* vpi_get_str on vpiModPath: original local scalar condition identifier,
-   or NULL for an unconditional path or an unsupported expression. */
+/* vpi_get_str on vpiModPath: opaque source condition identity for annotation.
+   Bare local scalar names are unescaped; expression keys start with a space.
+   Returns NULL for an unconditional path or an unsupported expression. */
 #define _vpiModPathCondition 0x1000005
 /* vpi_handle on vpiModPath: the actual scalar combinational UDP output
    before module-path delay, enabled by -pudp_prepath_vpi=1. Returns a borrowed

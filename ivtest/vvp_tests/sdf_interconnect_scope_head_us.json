@@ -1,0 +1,17 @@
+{
+    "__comment": "Rename the unrelated root to sort before top.",
+    "type": "normal",
+    "source": "sdf_interconnect_scope.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-ginterconnect",
+        "-Ttyp",
+        "-s",
+        "top",
+        "-s",
+        "aa_unrelated",
+        "-DTAIL_NAME=aa_unrelated",
+        "-DTAIL_UNIT=1us"
+    ]
+}

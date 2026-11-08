@@ -1,0 +1,5 @@
+./ivltests/param_string_compare_err.v:6: error: ==? operator may only have INTEGRAL operands, given 'string' and 'bool'.
+./ivltests/param_string_compare_err.v:6: error: Cannot evaluate genvar conditional expression: (Target)w("AA")
+./ivltests/param_string_compare_err.v:7: error: !=? operator may only have INTEGRAL operands, given 'string' and 'bool'.
+./ivltests/param_string_compare_err.v:7: error: Cannot evaluate genvar conditional expression: (Target)W("A")
+4 error(s) during elaboration.

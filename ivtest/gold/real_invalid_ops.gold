@@ -26,9 +26,9 @@
 ./ivltests/real_invalid_ops.v:19: error: Unable to elaborate r-value: (var1)X(var2)
 ./ivltests/real_invalid_ops.v:20: error: ~^ operator may not have REAL operands.
 ./ivltests/real_invalid_ops.v:20: error: Unable to elaborate r-value: (var1)X(var2)
-./ivltests/real_invalid_ops.v:22: error: === operator may not have REAL or STRING operands.
+./ivltests/real_invalid_ops.v:22: error: === operator may not have REAL operands.
 ./ivltests/real_invalid_ops.v:22: error: Unable to elaborate r-value: (var1)===(var2)
-./ivltests/real_invalid_ops.v:23: error: !== operator may not have REAL or STRING operands.
+./ivltests/real_invalid_ops.v:23: error: !== operator may not have REAL operands.
 ./ivltests/real_invalid_ops.v:23: error: Unable to elaborate r-value: (var1)!==(var2)
 ./ivltests/real_invalid_ops.v:25: error: <<(<) operator may not have REAL operands.
 ./ivltests/real_invalid_ops.v:25: error: Unable to elaborate r-value: (var1)<<(var2)
@@ -57,8 +57,8 @@
 ./ivltests/real_invalid_ops.v:52: error: ~| operator may not have REAL operands.
 ./ivltests/real_invalid_ops.v:53: error: ~^ operator may not have REAL operands.
 ./ivltests/real_invalid_ops.v:54: error: ~^ operator may not have REAL operands.
-./ivltests/real_invalid_ops.v:56: error: === operator may not have REAL or STRING operands.
-./ivltests/real_invalid_ops.v:57: error: !== operator may not have REAL or STRING operands.
+./ivltests/real_invalid_ops.v:56: error: === operator may not have REAL operands.
+./ivltests/real_invalid_ops.v:57: error: !== operator may not have REAL operands.
 ./ivltests/real_invalid_ops.v:59: error: <<(<) operator may not have REAL operands.
 ./ivltests/real_invalid_ops.v:60: error: <<(<) operator may not have REAL operands.
 ./ivltests/real_invalid_ops.v:61: error: >> operator may not have REAL operands.

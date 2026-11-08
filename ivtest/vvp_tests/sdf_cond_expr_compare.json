@@ -1,0 +1,13 @@
+{
+    "type": "normal",
+    "source": "sdf_cond_expr_compare.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp"
+    ],
+    "vlog95": {
+        "__comment": "Named generate scopes are not translated by vlog95",
+        "type": "CE"
+    }
+}

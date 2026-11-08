@@ -1,0 +1,8 @@
+{
+    "type" : "normal",
+    "source" : "timeformat_neg_width.v",
+    "gold" : "timeformat_neg_width",
+    "vlog95" : {
+        "gold" : "timeformat_neg_width_vlog95"
+    }
+}

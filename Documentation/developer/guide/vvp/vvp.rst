@@ -465,10 +465,22 @@ relationship only; <input> remains the functional input. The vvp target
 emits this field for eligible paths when ``-pudp_prepath_vpi=1`` is set.
 See :doc:`vpi_modpath_data` for the extension's scope and handle semantics.
 
-For a conditional source, an optional quoted condition identifier follows
-the path's input-terminal symbol. This records the original local scalar
-identifier for SDF ``COND`` matching. It is omitted for other expressions
-and does not change how the condition is evaluated at runtime.
+For a conditional source, an optional quoted condition identity follows
+the path's input-terminal symbol for SDF ``COND`` matching. A bare local
+scalar identifier retains its original unescaped name. Comparisons of a
+declaration-local scalar logic/bit signal with an explicitly sized, unsigned
+one-bit 0 or 1 using ``==``, and ordered ``&&`` trees of those comparisons,
+have opaque expression keys. Other expressions omit the identity. This
+metadata does not change how the condition is evaluated at runtime.
+
+Expression keys start with a space, which cannot occur in an identifier.
+A comparison is encoded as `` E<name-length>:<name><value>`` and an AND as
+`` A<left-key><right-key>``; name lengths count bytes. Length-delimited names
+and fixed binary arity preserve grouping and operand order without collisions
+with escaped names.
+Bare-name identities from older compiled files remain compatible. SDF scalar
+constants use the parser's existing normalized 0/1 syntax; no Boolean
+simplification or interchange of logical and case equality is performed.
 
 Array Index Statements
 ----------------------

@@ -399,6 +399,13 @@ struct string_type_t : public data_type_t {
       ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
 };
 
+struct chandle_type_t : public data_type_t {
+      inline explicit chandle_type_t() { }
+      ~chandle_type_t() override;
+
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
+};
+
 struct class_type_t : public data_type_t {
 
       inline explicit class_type_t(perm_string n) : name(n) { virtual_class = false; }
