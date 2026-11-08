@@ -277,6 +277,7 @@ line_directive			vvp_tests/line_directive.json
 line_directive_long		vvp_tests/line_directive_long.json
 localparam_type			vvp_tests/localparam_type.json
 loop_condition_real		vvp_tests/loop_condition_real.json
+lval_concat_expr_fail		vvp_tests/lval_concat_expr_fail.json
 macro_str_esc			vvp_tests/macro_str_esc.json
 memsynth1			vvp_tests/memsynth1.json
 memsynth2			vvp_tests/memsynth2.json
@@ -962,6 +963,7 @@ task_escaped_name		vvp_tests/task_escaped_name.json
 task_no_ports_argument_fail	vvp_tests/task_no_ports_argument_fail.json
 task_no_ports_empty_arguments_fail	vvp_tests/task_no_ports_empty_arguments_fail.json
 task_no_ports_named_argument_fail	vvp_tests/task_no_ports_named_argument_fail.json
+task_output_expr_fail		vvp_tests/task_output_expr_fail.json
 task_return1			vvp_tests/task_return1.json
 task_return2			vvp_tests/task_return2.json
 task_return_fail1		vvp_tests/task_return_fail1.json
