@@ -117,6 +117,36 @@ class PHold : public PTimingCheck {
       std::unique_ptr<pform_name_t> notifier_;
 };
 
+/* Parsed standalone $recovery declaration; events are stored by role. */
+class PRecovery : public PTimingCheck {
+    public:
+      PRecovery(event_t*reference, event_t*data, PExpr*limit,
+             pform_name_t*notifier);
+      void elaborate(class Design*des, class NetScope*scope) const override;
+      void dump(std::ostream&out, unsigned ind) const override;
+
+    private:
+      std::unique_ptr<event_t> reference_;
+      std::unique_ptr<event_t> data_;
+      std::unique_ptr<PExpr> limit_;
+      std::unique_ptr<pform_name_t> notifier_;
+};
+
+/* Parsed standalone $removal declaration; events are stored by role. */
+class PRemoval : public PTimingCheck {
+    public:
+      PRemoval(event_t*reference, event_t*data, PExpr*limit,
+             pform_name_t*notifier);
+      void elaborate(class Design*des, class NetScope*scope) const override;
+      void dump(std::ostream&out, unsigned ind) const override;
+
+    private:
+      std::unique_ptr<event_t> reference_;
+      std::unique_ptr<event_t> data_;
+      std::unique_ptr<PExpr> limit_;
+      std::unique_ptr<pform_name_t> notifier_;
+};
+
 /*
 * The PRecRem is the parse of a $recrem timing check
 */

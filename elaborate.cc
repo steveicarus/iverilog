@@ -7336,6 +7336,81 @@ void PHold::elaborate(Design*des, NetScope*scope) const
       scope->add_hold(std::move(check));
 }
 
+/* Keep RECOVERY/REMOVAL's unconditional admission boundary independent of
+ * the SETUP/HOLD qualifier support. */
+static bool unconditional_timing_check_event(Design*des, const LineInfo&loc,
+                                              const PTimingCheck::event_t&event,
+                                              const char*kind, const char*role,
+                                              int&edge)
+{
+      if (event.condition || !event.edges.empty() ||
+          (event.posedge && event.negedge)) {
+            cerr << loc.get_fileline() << ": error: " << kind << " " << role
+                 << " supports only unconditional scalar events with no edge,"
+                 << " posedge or negedge." << endl;
+            des->errors += 1;
+            return false;
+      }
+      edge = event.posedge ? 1 : event.negedge ? -1 : 0;
+      return true;
+}
+
+void PRecovery::elaborate(Design*des, NetScope*scope) const
+{
+      if (!gn_specify_blocks_flag) return;
+      int reference_edge, data_edge;
+      if (!unconditional_timing_check_event(des, *this, *reference_, "$recovery",
+                                            "reference", reference_edge) ||
+          !unconditional_timing_check_event(des, *this, *data_, "$recovery",
+                                            "data", data_edge))
+            return;
+      NetNet*reference = timing_check_signal(des, scope, reference_->name,
+                                             *this, "$recovery", false);
+      NetNet*data = timing_check_signal(des, scope, data_->name,
+                                        *this, "$recovery", false, "data");
+      NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
+                                                       *this, "$recovery", true)
+                                  : nullptr;
+      if (!reference || !data || (notifier_ && !notifier)) return;
+      double limit = 0.0;
+      if (!timing_check_constant(des, scope, limit_.get(), *this,
+                                 "$recovery", "limit", limit)) return;
+      std::unique_ptr<NetRecovery> check(new NetRecovery(scope, reference, data,
+                                          notifier, reference_edge, data_edge,
+                                          limit, nullptr, IVL_TCHK_COND_NONE,
+                                          nullptr, IVL_TCHK_COND_NONE));
+      check->set_line(*this);
+      scope->add_recovery(std::move(check));
+}
+
+void PRemoval::elaborate(Design*des, NetScope*scope) const
+{
+      if (!gn_specify_blocks_flag) return;
+      int reference_edge, data_edge;
+      if (!unconditional_timing_check_event(des, *this, *reference_, "$removal",
+                                            "reference", reference_edge) ||
+          !unconditional_timing_check_event(des, *this, *data_, "$removal",
+                                            "data", data_edge))
+            return;
+      NetNet*reference = timing_check_signal(des, scope, reference_->name,
+                                             *this, "$removal", false);
+      NetNet*data = timing_check_signal(des, scope, data_->name,
+                                        *this, "$removal", false, "data");
+      NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
+                                                       *this, "$removal", true)
+                                  : nullptr;
+      if (!reference || !data || (notifier_ && !notifier)) return;
+      double limit = 0.0;
+      if (!timing_check_constant(des, scope, limit_.get(), *this,
+                                 "$removal", "limit", limit)) return;
+      std::unique_ptr<NetRemoval> check(new NetRemoval(scope, reference, data,
+                                          notifier, reference_edge, data_edge,
+                                          limit, nullptr, IVL_TCHK_COND_NONE,
+                                          nullptr, IVL_TCHK_COND_NONE));
+      check->set_line(*this);
+      scope->add_removal(std::move(check));
+}
+
 void PRecRem::elaborate(Design*des, NetScope*scope) const
 {
       // At present, no timing checks are supported.

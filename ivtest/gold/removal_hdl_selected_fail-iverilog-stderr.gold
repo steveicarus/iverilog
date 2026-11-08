@@ -1,0 +1,2 @@
+ivltests/removal_hdl_selected_fail.v:7: error: $removal data must be an unselected local scalar signal.
+1 error(s) during elaboration.

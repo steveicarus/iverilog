@@ -93,6 +93,18 @@ void target_t::hold_check(const NetHold*check)
       errors += 1;
 }
 
+void target_t::recovery_check(const NetRecovery*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $recovery." << endl;
+      errors += 1;
+}
+
+void target_t::removal_check(const NetRemoval*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $removal." << endl;
+      errors += 1;
+}
+
 bool target_t::func_def(const NetScope*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "

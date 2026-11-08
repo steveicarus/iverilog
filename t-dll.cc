@@ -627,6 +627,10 @@ bool dll_target::start_design(const Design*des)
 
       const char*hold_support = query ? query("supports-hold") : nullptr;
       hold_checks_supported_ = hold_support && strcmp(hold_support, "1") == 0;
+      const char*recovery_support = query ? query("supports-recovery") : nullptr;
+      recovery_checks_supported_ = recovery_support && strcmp(recovery_support, "1") == 0;
+      const char*removal_support = query ? query("supports-removal") : nullptr;
+      removal_checks_supported_ = removal_support && strcmp(removal_support, "1") == 0;
 
       stmt_cur_ = 0;
 
@@ -2829,6 +2833,50 @@ void dll_target::hold_check(const NetHold*check)
       obj->file = check->get_file();
       obj->lineno = check->get_lineno();
       obj->scope->holds_.push_back(obj);
+}
+
+void dll_target::recovery_check(const NetRecovery*check)
+{
+      if (!recovery_checks_supported_) {
+            cerr << check->get_fileline()
+                 << ": warning: target does not support $recovery; check ignored."
+                 << endl;
+            return;
+      }
+
+      ivl_recovery_t obj = new ivl_recovery_s;
+      obj->scope = find_scope(des_, check->scope());
+      obj->reference = find_signal(des_, check->reference());
+      obj->data = find_signal(des_, check->data());
+      obj->notifier = check->notifier() ? find_signal(des_, check->notifier()) : nullptr;
+      obj->reference_edge = check->reference_edge();
+      obj->data_edge = check->data_edge();
+      obj->limit = check->limit();
+      obj->file = check->get_file();
+      obj->lineno = check->get_lineno();
+      obj->scope->recoveries_.push_back(obj);
+}
+
+void dll_target::removal_check(const NetRemoval*check)
+{
+      if (!removal_checks_supported_) {
+            cerr << check->get_fileline()
+                 << ": warning: target does not support $removal; check ignored."
+                 << endl;
+            return;
+      }
+
+      ivl_removal_t obj = new ivl_removal_s;
+      obj->scope = find_scope(des_, check->scope());
+      obj->reference = find_signal(des_, check->reference());
+      obj->data = find_signal(des_, check->data());
+      obj->notifier = check->notifier() ? find_signal(des_, check->notifier()) : nullptr;
+      obj->reference_edge = check->reference_edge();
+      obj->data_edge = check->data_edge();
+      obj->limit = check->limit();
+      obj->file = check->get_file();
+      obj->lineno = check->get_lineno();
+      obj->scope->removals_.push_back(obj);
 }
 
 bool dll_target::signal_paths(const NetNet*net)

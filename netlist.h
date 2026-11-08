@@ -1056,6 +1056,16 @@ class NetHold : public NetTwoEventCheck {
       using NetTwoEventCheck::NetTwoEventCheck;
 };
 
+class NetRecovery : public NetTwoEventCheck {
+    public:
+      using NetTwoEventCheck::NetTwoEventCheck;
+};
+
+class NetRemoval : public NetTwoEventCheck {
+    public:
+      using NetTwoEventCheck::NetTwoEventCheck;
+};
+
 /*
  * This object type is used for holding local variable values when
  * evaluating constant user functions.
@@ -1231,6 +1241,10 @@ class NetScope : public Definitions, public Attrib {
       { setups_.push_back(std::move(check)); }
       void add_hold(std::unique_ptr<NetHold> check)
       { holds_.push_back(std::move(check)); }
+      void add_recovery(std::unique_ptr<NetRecovery> check)
+      { recoveries_.push_back(std::move(check)); }
+      void add_removal(std::unique_ptr<NetRemoval> check)
+      { removals_.push_back(std::move(check)); }
 
       void add_event(NetEvent*);
       void rem_event(NetEvent*);
@@ -1584,6 +1598,8 @@ class NetScope : public Definitions, public Attrib {
       std::vector<std::unique_ptr<NetPeriod> > periods_;
       std::vector<std::unique_ptr<NetSetup> > setups_;
       std::vector<std::unique_ptr<NetHold> > holds_;
+      std::vector<std::unique_ptr<NetRecovery> > recoveries_;
+      std::vector<std::unique_ptr<NetRemoval> > removals_;
 
       std::map<perm_string,LineInfo*> genvars_;
 

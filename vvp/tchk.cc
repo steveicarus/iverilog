@@ -149,16 +149,18 @@ void vvp_fun_tchk_period::violation(vvp_time64_t now, vvp_time64_t period)
 }
 
 
-vvp_fun_tchk_two_event::vvp_fun_tchk_two_event(bool setup, int reference_edge,
+vvp_fun_tchk_two_event::vvp_fun_tchk_two_event(int kind, int reference_edge,
                                               int data_edge,
                                               vvp_time64_t limit,
                                               unsigned reference_condition_value,
                                               unsigned data_condition_value)
-: vpi_tchk(nullptr), setup_(setup), previous_{BIT4_X, BIT4_X},
+: vpi_tchk(nullptr), kind_(kind), previous_{BIT4_X, BIT4_X},
   condition_values_{reference_condition_value, data_condition_value},
   reference_edge_(reference_edge), data_edge_(data_edge), limit_(limit),
   timestamp_(0), have_timestamp_(false)
 {
+      assert(kind == vpiSetup || kind == vpiHold ||
+             kind == vpiRecovery || kind == vpiRemoval);
       assert(reference_edge >= -1 && reference_edge <= 1);
       assert(data_edge >= -1 && data_edge <= 1);
       assert(reference_condition_value <= 1 && data_condition_value <= 1);
@@ -174,6 +176,17 @@ static bool two_event_condition_satisfied(vpiHandle condition, unsigned wanted)
       value.format = vpiScalarVal;
       vpi_get_value(condition, &value);
       return value.value.scalar == (wanted ? vpi1 : vpi0);
+}
+
+const char* vvp_fun_tchk_two_event::name() const
+{
+      switch (kind_) {
+          case vpiSetup: return "setup";
+          case vpiHold: return "hold";
+          case vpiRecovery: return "recovery";
+          case vpiRemoval: return "removal";
+          default: assert(0); return "unknown";
+      }
 }
 
 static bool tchk_event_matches(int selected_edge, vvp_bit4_t before,
@@ -222,8 +235,12 @@ void vvp_fun_tchk_two_event::recv_vec4(vvp_net_ptr_t port,
 
 void vvp_fun_tchk_two_event::process_events(bool reference_event, bool data_event)
 {
-      bool timestamp_event = setup_ ? data_event : reference_event;
-      bool timecheck_event = setup_ ? reference_event : data_event;
+      // SETUP and REMOVAL timestamp data, then check reference. HOLD and
+      // RECOVERY timestamp reference, then check data. RR reference is the
+      // asynchronous control; data is the clock, matching the HDL/VPI roles.
+      bool timestamp_data = kind_ == vpiSetup || kind_ == vpiRemoval;
+      bool timestamp_event = timestamp_data ? data_event : reference_event;
+      bool timecheck_event = timestamp_data ? reference_event : data_event;
       vvp_time64_t now = schedule_simtime();
       if (timestamp_event) {
             timestamp_ = now;
@@ -232,9 +249,10 @@ void vvp_fun_tchk_two_event::process_events(bool reference_event, bool data_even
       if (!timecheck_event || !have_timestamp_) return;
 
       vvp_time64_t interval = now - timestamp_;
-      // SETUP excludes both endpoints; HOLD includes the reference endpoint.
-      // In particular, zero limits never violate, and missing history is not t=0.
-      if ((!setup_ || interval != 0) && interval < limit_)
+      // SETUP/REMOVAL exclude zero; HOLD/RECOVERY include it. Upper equality
+      // is safe for all four. Missing history is distinct from a real t=0 event.
+      bool include_zero = kind_ == vpiHold || kind_ == vpiRecovery;
+      if ((include_zero || interval != 0) && interval < limit_)
             violation(now, interval);
 }
 
@@ -244,7 +262,7 @@ void vvp_fun_tchk_two_event::violation(vvp_time64_t now, vvp_time64_t interval)
       __vpiScope* scope = vpi_tchk->scope_;
       vpi_printf("Timing violation: $%s at %g (module units), "
                  "interval=%g limit=%g, %s:%u, scope=%s\n",
-                 setup_ ? "setup" : "hold",
+                 name(),
                  vpip_time_to_scaled_real(now, scope),
                  vpip_time_to_scaled_real(interval, scope),
                  vpip_time_to_scaled_real(limit_, scope),

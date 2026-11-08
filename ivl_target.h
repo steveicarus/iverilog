@@ -178,6 +178,8 @@ typedef struct ivl_event_s    *ivl_event_t;
 typedef struct ivl_width_s    *ivl_width_t;
 typedef struct ivl_setup_s    *ivl_setup_t;
 typedef struct ivl_hold_s    *ivl_hold_t;
+typedef struct ivl_recovery_s    *ivl_recovery_t;
+typedef struct ivl_removal_s    *ivl_removal_t;
 typedef struct ivl_period_s   *ivl_period_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
 typedef struct ivl_island_s   *ivl_island_t;
@@ -1962,6 +1964,34 @@ extern int ivl_hold_data_edge(ivl_hold_t check);
 extern double ivl_hold_limit(ivl_hold_t check);
 extern const char*ivl_hold_file(ivl_hold_t check);
 extern unsigned ivl_hold_lineno(ivl_hold_t check);
+
+/* Standalone RECOVERY: normalized reference/data roles; limits use declaring
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+extern unsigned ivl_scope_recoveries(ivl_scope_t net);
+extern ivl_recovery_t ivl_scope_recovery(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_recovery_scope(ivl_recovery_t check);
+extern ivl_signal_t ivl_recovery_reference(ivl_recovery_t check);
+extern ivl_signal_t ivl_recovery_data(ivl_recovery_t check);
+extern ivl_signal_t ivl_recovery_notifier(ivl_recovery_t check);
+extern int ivl_recovery_reference_edge(ivl_recovery_t check);
+extern int ivl_recovery_data_edge(ivl_recovery_t check);
+extern double ivl_recovery_limit(ivl_recovery_t check);
+extern const char*ivl_recovery_file(ivl_recovery_t check);
+extern unsigned ivl_recovery_lineno(ivl_recovery_t check);
+
+/* Standalone REMOVAL: normalized reference/data roles; limits use declaring
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+extern unsigned ivl_scope_removals(ivl_scope_t net);
+extern ivl_removal_t ivl_scope_removal(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_removal_scope(ivl_removal_t check);
+extern ivl_signal_t ivl_removal_reference(ivl_removal_t check);
+extern ivl_signal_t ivl_removal_data(ivl_removal_t check);
+extern ivl_signal_t ivl_removal_notifier(ivl_removal_t check);
+extern int ivl_removal_reference_edge(ivl_removal_t check);
+extern int ivl_removal_data_edge(ivl_removal_t check);
+extern double ivl_removal_limit(ivl_removal_t check);
+extern const char*ivl_removal_file(ivl_removal_t check);
+extern unsigned ivl_removal_lineno(ivl_removal_t check);
 
 /* Unconditional scalar PERIOD checks. The limit is expressed in the units
  * of ivl_period_scope(); a null notifier means it was omitted. */

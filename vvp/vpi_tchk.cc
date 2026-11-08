@@ -172,7 +172,7 @@ __vpiTchkTwoEvent::~__vpiTchkTwoEvent()
 int __vpiTchkTwoEvent::vpi_get(int code)
 {
       switch (code) {
-          case vpiTchkType: return fun_->setup_ ? vpiSetup : vpiHold;
+          case vpiTchkType: return fun_->kind_;
           case vpiLineNo: return lineno_;
           default: return vpiUndefined;
       }
@@ -225,7 +225,9 @@ void __vpiTchkTwoEvent::vpi_put_delays(p_vpi_delay delays)
       if (delays->time_type == vpiScaledRealTime) {
             if (!vpip_tchk_delay_to_ticks(delays->da[0].real, scope_, value)) {
                   vpi_printf("VPI ERROR: invalid %s limit\n",
-                             fun_->setup_ ? "SETUP" : "HOLD");
+                             fun_->kind_ == vpiSetup ? "SETUP" :
+                             fun_->kind_ == vpiHold ? "HOLD" :
+                             fun_->kind_ == vpiRecovery ? "RECOVERY" : "REMOVAL");
                   return;
             }
       } else if (delays->time_type == vpiSimTime) {
