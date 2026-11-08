@@ -1,5 +1,6 @@
 {
     "type": "CE",
+    "gold": "setup_hdl_nonconstant_fail",
     "source": "setup_hdl_nonconstant_fail.v",
     "iverilog-args": [
         "-g2012",

@@ -1,5 +1,6 @@
 {
     "type": "CE",
+    "gold": "hold_hdl_vector_fail",
     "source": "hold_hdl_vector_fail.v",
     "iverilog-args": [
         "-g2012",
