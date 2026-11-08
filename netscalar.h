@@ -52,4 +52,18 @@ class netstring_t : public ivl_type_s {
       static netstring_t type_string;
 };
 
+class netchandle_t : public ivl_type_s {
+
+    public:
+      inline explicit netchandle_t() { }
+      ~netchandle_t() override;
+
+      ivl_variable_type_t base_type() const override;
+
+      std::ostream& debug_dump(std::ostream&) const override;
+
+    public:
+      static netchandle_t type_chandle;
+};
+
 #endif /* IVL_netscalar_H */

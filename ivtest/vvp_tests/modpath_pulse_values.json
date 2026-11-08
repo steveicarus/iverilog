@@ -1,0 +1,8 @@
+{
+    "type": "normal",
+    "source": "modpath_pulse_values.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify"
+    ]
+}
