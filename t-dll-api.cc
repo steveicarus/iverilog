@@ -2200,6 +2200,18 @@ extern "C" ivl_signal_t ivl_setup_data(ivl_setup_t check)
 extern "C" ivl_signal_t ivl_setup_notifier(ivl_setup_t check)
 { assert(check); return check->notifier; }
 
+extern "C" ivl_signal_t ivl_setup_reference_condition(ivl_setup_t check)
+{ assert(check); return check->reference_condition; }
+
+extern "C" ivl_tchk_cond_t ivl_setup_reference_condition_kind(ivl_setup_t check)
+{ assert(check); return check->reference_condition_kind; }
+
+extern "C" ivl_signal_t ivl_setup_data_condition(ivl_setup_t check)
+{ assert(check); return check->data_condition; }
+
+extern "C" ivl_tchk_cond_t ivl_setup_data_condition_kind(ivl_setup_t check)
+{ assert(check); return check->data_condition_kind; }
+
 extern "C" int ivl_setup_reference_edge(ivl_setup_t check)
 { assert(check); return check->reference_edge; }
 
@@ -2232,6 +2244,18 @@ extern "C" ivl_signal_t ivl_hold_data(ivl_hold_t check)
 
 extern "C" ivl_signal_t ivl_hold_notifier(ivl_hold_t check)
 { assert(check); return check->notifier; }
+
+extern "C" ivl_signal_t ivl_hold_reference_condition(ivl_hold_t check)
+{ assert(check); return check->reference_condition; }
+
+extern "C" ivl_tchk_cond_t ivl_hold_reference_condition_kind(ivl_hold_t check)
+{ assert(check); return check->reference_condition_kind; }
+
+extern "C" ivl_signal_t ivl_hold_data_condition(ivl_hold_t check)
+{ assert(check); return check->data_condition; }
+
+extern "C" ivl_tchk_cond_t ivl_hold_data_condition_kind(ivl_hold_t check)
+{ assert(check); return check->data_condition_kind; }
 
 extern "C" int ivl_hold_reference_edge(ivl_hold_t check)
 { assert(check); return check->reference_edge; }

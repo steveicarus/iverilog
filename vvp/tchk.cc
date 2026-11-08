@@ -151,13 +151,29 @@ void vvp_fun_tchk_period::violation(vvp_time64_t now, vvp_time64_t period)
 
 vvp_fun_tchk_two_event::vvp_fun_tchk_two_event(bool setup, int reference_edge,
                                               int data_edge,
-                                              vvp_time64_t limit)
+                                              vvp_time64_t limit,
+                                              unsigned reference_condition_value,
+                                              unsigned data_condition_value)
 : vpi_tchk(nullptr), setup_(setup), previous_{BIT4_X, BIT4_X},
+  condition_values_{reference_condition_value, data_condition_value},
   reference_edge_(reference_edge), data_edge_(data_edge), limit_(limit),
   timestamp_(0), have_timestamp_(false)
 {
       assert(reference_edge >= -1 && reference_edge <= 1);
       assert(data_edge >= -1 && data_edge <= 1);
+      assert(reference_condition_value <= 1 && data_condition_value <= 1);
+}
+
+// Qualifiers do not have event inputs. Read the scalar at the physical event,
+// avoiding a separately cached condition whose value would depend on fanout
+// order when the qualifier aliases a terminal.
+static bool two_event_condition_satisfied(vpiHandle condition, unsigned wanted)
+{
+      if (!condition) return true;
+      s_vpi_value value;
+      value.format = vpiScalarVal;
+      vpi_get_value(condition, &value);
+      return value.value.scalar == (wanted ? vpi1 : vpi0);
 }
 
 static bool tchk_event_matches(int selected_edge, vvp_bit4_t before,
@@ -185,6 +201,11 @@ void vvp_fun_tchk_two_event::recv_vec4(vvp_net_ptr_t port,
             bool ref_event = tchk_event_matches(reference_edge_, previous_[0], next);
             bool data_event = tchk_event_matches(data_edge_, previous_[0], next);
             previous_[0] = previous_[1] = next;
+            // Sample both roles before a comparison can change a notifier.
+            ref_event = ref_event && two_event_condition_satisfied(
+                  vpi_tchk->reference_condition_, condition_values_[0]);
+            data_event = data_event && two_event_condition_satisfied(
+                  vpi_tchk->data_condition_, condition_values_[1]);
             process_events(ref_event, data_event);
             return;
       }
@@ -192,6 +213,10 @@ void vvp_fun_tchk_two_event::recv_vec4(vvp_net_ptr_t port,
       int selected_edge = index == 0 ? reference_edge_ : data_edge_;
       bool matched = tchk_event_matches(selected_edge, previous_[index], next);
       previous_[index] = next;
+      vpiHandle condition = index == 0 ? vpi_tchk->reference_condition_
+                                      : vpi_tchk->data_condition_;
+      matched = matched && two_event_condition_satisfied(condition,
+                                                         condition_values_[index]);
       if (matched) process_events(index == 0, index == 1);
 }
 

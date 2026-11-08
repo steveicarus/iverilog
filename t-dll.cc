@@ -2789,6 +2789,12 @@ void dll_target::setup_check(const NetSetup*check)
       obj->reference = find_signal(des_, check->reference());
       obj->data = find_signal(des_, check->data());
       obj->notifier = check->notifier() ? find_signal(des_, check->notifier()) : nullptr;
+      obj->reference_condition = check->reference_condition()
+            ? find_signal(des_, check->reference_condition()) : nullptr;
+      obj->data_condition = check->data_condition()
+            ? find_signal(des_, check->data_condition()) : nullptr;
+      obj->reference_condition_kind = check->reference_condition_kind();
+      obj->data_condition_kind = check->data_condition_kind();
       obj->reference_edge = check->reference_edge();
       obj->data_edge = check->data_edge();
       obj->limit = check->limit();
@@ -2811,6 +2817,12 @@ void dll_target::hold_check(const NetHold*check)
       obj->reference = find_signal(des_, check->reference());
       obj->data = find_signal(des_, check->data());
       obj->notifier = check->notifier() ? find_signal(des_, check->notifier()) : nullptr;
+      obj->reference_condition = check->reference_condition()
+            ? find_signal(des_, check->reference_condition()) : nullptr;
+      obj->data_condition = check->data_condition()
+            ? find_signal(des_, check->data_condition()) : nullptr;
+      obj->reference_condition_kind = check->reference_condition_kind();
+      obj->data_condition_kind = check->data_condition_kind();
       obj->reference_edge = check->reference_edge();
       obj->data_edge = check->data_edge();
       obj->limit = check->limit();

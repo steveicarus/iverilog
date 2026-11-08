@@ -898,6 +898,18 @@ static void emit_period_checks(ivl_scope_t scope)
       }
 }
 
+/* Preserve the admitted qualifier's source form in translated specify blocks. */
+static void emit_tchk_condition(ivl_signal_t signal, ivl_tchk_cond_t kind)
+{
+      if (!signal) { assert(kind == IVL_TCHK_COND_NONE); return; }
+      fprintf(vlog_out, " &&& (");
+      emit_id(ivl_signal_basename(signal));
+      if (kind == IVL_TCHK_COND_EQ0) fprintf(vlog_out, " === 1'b0");
+      else if (kind == IVL_TCHK_COND_EQ1) fprintf(vlog_out, " === 1'b1");
+      else assert(kind == IVL_TCHK_COND_BARE);
+      fprintf(vlog_out, ")");
+}
+
 static void emit_simple_timing_event(ivl_signal_t signal, int edge)
 {
       if (edge == 1) fprintf(vlog_out, "posedge ");
@@ -914,9 +926,13 @@ static void emit_setup_checks(ivl_scope_t scope)
             fprintf(vlog_out, "%*c$setup(", indent, ' ');
             emit_simple_timing_event(ivl_setup_data(check),
                                      ivl_setup_data_edge(check));
+            emit_tchk_condition(ivl_setup_data_condition(check),
+                                ivl_setup_data_condition_kind(check));
             fprintf(vlog_out, ", ");
             emit_simple_timing_event(ivl_setup_reference(check),
                                      ivl_setup_reference_edge(check));
+            emit_tchk_condition(ivl_setup_reference_condition(check),
+                                ivl_setup_reference_condition_kind(check));
             fprintf(vlog_out, ", %.17e", ivl_setup_limit(check));
             if (notifier) {
                   fprintf(vlog_out, ", ");
@@ -935,9 +951,13 @@ static void emit_hold_checks(ivl_scope_t scope)
             fprintf(vlog_out, "%*c$hold(", indent, ' ');
             emit_simple_timing_event(ivl_hold_reference(check),
                                      ivl_hold_reference_edge(check));
+            emit_tchk_condition(ivl_hold_reference_condition(check),
+                                ivl_hold_reference_condition_kind(check));
             fprintf(vlog_out, ", ");
             emit_simple_timing_event(ivl_hold_data(check),
                                      ivl_hold_data_edge(check));
+            emit_tchk_condition(ivl_hold_data_condition(check),
+                                ivl_hold_data_condition_kind(check));
             fprintf(vlog_out, ", %.17e", ivl_hold_limit(check));
             if (notifier) {
                   fprintf(vlog_out, ", ");

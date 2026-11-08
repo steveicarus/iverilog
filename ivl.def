@@ -233,6 +233,10 @@ ivl_setup_scope
 ivl_setup_reference
 ivl_setup_data
 ivl_setup_notifier
+ivl_setup_reference_condition
+ivl_setup_reference_condition_kind
+ivl_setup_data_condition
+ivl_setup_data_condition_kind
 ivl_setup_reference_edge
 ivl_setup_data_edge
 ivl_setup_limit
@@ -244,6 +248,10 @@ ivl_hold_scope
 ivl_hold_reference
 ivl_hold_data
 ivl_hold_notifier
+ivl_hold_reference_condition
+ivl_hold_reference_condition_kind
+ivl_hold_data_condition
+ivl_hold_data_condition_kind
 ivl_hold_reference_edge
 ivl_hold_data_edge
 ivl_hold_limit

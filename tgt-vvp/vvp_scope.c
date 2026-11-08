@@ -2369,6 +2369,22 @@ static void draw_period_in_scope(ivl_period_t check)
       else fprintf(vvp_out, "\"\";\n");
 }
 
+/* Qualifier labels are quoted so the extended records remain unambiguous
+ * with both present and omitted notifiers. An absent role uses an empty label. */
+static void draw_two_event_conditions(ivl_signal_t reference,
+                                       ivl_tchk_cond_t reference_kind,
+                                       ivl_signal_t data,
+                                       ivl_tchk_cond_t data_kind)
+{
+      if (!reference && !data) return;
+      if (reference) fprintf(vvp_out, ", \"v%p_0\", %u", reference,
+                             reference_kind == IVL_TCHK_COND_EQ0 ? 0 : 1);
+      else fprintf(vvp_out, ", \"\", 1");
+      if (data) fprintf(vvp_out, ", \"v%p_0\", %u", data,
+                        data_kind == IVL_TCHK_COND_EQ0 ? 0 : 1);
+      else fprintf(vvp_out, ", \"\", 1");
+}
+
 static void draw_setup_in_scope(ivl_setup_t check)
 {
       ivl_signal_t notifier = ivl_setup_notifier(check);
@@ -2378,8 +2394,13 @@ static void draw_setup_in_scope(ivl_setup_t check)
               ivl_setup_reference(check),
               two_event_edge(ivl_setup_data_edge(check)), ivl_setup_data(check),
               ivl_setup_limit(check));
-      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
-      else fprintf(vvp_out, "\"\";\n");
+      if (notifier) fprintf(vvp_out, "v%p_0", notifier);
+      else fprintf(vvp_out, "\"\"");
+      draw_two_event_conditions(ivl_setup_reference_condition(check),
+                                ivl_setup_reference_condition_kind(check),
+                                ivl_setup_data_condition(check),
+                                ivl_setup_data_condition_kind(check));
+      fprintf(vvp_out, ";\n");
 }
 
 static void draw_hold_in_scope(ivl_hold_t check)
@@ -2391,8 +2412,13 @@ static void draw_hold_in_scope(ivl_hold_t check)
               ivl_hold_reference(check),
               two_event_edge(ivl_hold_data_edge(check)), ivl_hold_data(check),
               ivl_hold_limit(check));
-      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
-      else fprintf(vvp_out, "\"\";\n");
+      if (notifier) fprintf(vvp_out, "v%p_0", notifier);
+      else fprintf(vvp_out, "\"\"");
+      draw_two_event_conditions(ivl_hold_reference_condition(check),
+                                ivl_hold_reference_condition_kind(check),
+                                ivl_hold_data_condition(check),
+                                ivl_hold_data_condition_kind(check));
+      fprintf(vvp_out, ";\n");
 }
 
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)

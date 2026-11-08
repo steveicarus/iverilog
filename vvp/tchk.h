@@ -74,7 +74,8 @@ class vvp_fun_tchk_period : public vvp_net_fun_t {
 class vvp_fun_tchk_two_event : public vvp_net_fun_t {
     public:
       vvp_fun_tchk_two_event(bool setup, int reference_edge, int data_edge,
-                             vvp_time64_t limit);
+                             vvp_time64_t limit, unsigned reference_condition_value,
+                             unsigned data_condition_value);
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t& value,
                      vvp_context_t) override;
       __vpiTchkTwoEvent* vpi_tchk;
@@ -82,6 +83,7 @@ class vvp_fun_tchk_two_event : public vvp_net_fun_t {
     private:
       bool setup_;
       vvp_bit4_t previous_[2];
+      unsigned condition_values_[2];
       int reference_edge_;
       int data_edge_;
       vvp_time64_t limit_;

@@ -699,6 +699,8 @@ class __vpiTchkTwoEvent : public __vpiHandle {
       vpiHandle reference_;
       vpiHandle data_;
       vpiHandle notifier_;
+      vpiHandle reference_condition_;
+      vpiHandle data_condition_;
     private:
       __vpiScope* scope_;
       unsigned file_idx_;

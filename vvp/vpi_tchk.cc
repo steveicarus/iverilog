@@ -156,7 +156,8 @@ void __vpiTchkPeriod::vpi_put_delays(p_vpi_delay delays)
 __vpiTchkTwoEvent::__vpiTchkTwoEvent(__vpiScope* scope, unsigned file_idx,
                                      unsigned lineno,
                                      vvp_fun_tchk_two_event* fun)
-: reference_(nullptr), data_(nullptr), notifier_(nullptr), scope_(scope),
+: reference_(nullptr), data_(nullptr), notifier_(nullptr),
+  reference_condition_(nullptr), data_condition_(nullptr), scope_(scope),
   file_idx_(file_idx), lineno_(lineno), fun_(fun),
   reference_term_(nullptr), data_term_(nullptr)
 {

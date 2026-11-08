@@ -569,7 +569,11 @@ extern void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
 extern void compile_tchk_two_event(bool setup, unsigned file_idx, unsigned lineno,
                                     char* reference_edge, struct symb_s reference,
                                     char* data_edge, struct symb_s data,
-                                    double limit, char* notifier);
+                                    double limit, char* notifier,
+                                    char* reference_condition = nullptr,
+                                    uint64_t reference_condition_value = 1,
+                                    char* data_condition = nullptr,
+                                    uint64_t data_condition_value = 1);
 
 extern void compile_island(char*label, char*type);
 extern void compile_island_port(char*label, char*island, char*src);

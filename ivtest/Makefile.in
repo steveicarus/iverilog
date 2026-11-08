@@ -59,9 +59,18 @@ check-installed-vvp-py:
 	@echo "Running vvp_reg.py"
 	cd $(abs_srcdir); python3 vvp_reg.py $(opts)
 
+# Focused list selection is shared by native and emitted-Verilog checks.
+TCHK_CONDITIONAL_LIST = regress-setup-hold-conditional.list
+
+check-installed-conditional-native:
+	cd $(abs_srcdir); python3 vvp_reg.py $(opts) $(TCHK_CONDITIONAL_LIST)
+
+check-installed-conditional-vlog95:
+	cd $(abs_srcdir); python3 vvp_reg.py $(opts) --vlog95 $(TCHK_CONDITIONAL_LIST)
+
 # Exercise the emitted checks as well as their native VVP counterparts.
 check-installed-tchk-vlog95:
-	cd $(abs_srcdir); python3 vvp_reg.py $(opts) --vlog95 regress-tchk-notifier.list regress-tchk-target-corners.list regress-setup-hold-hdl.list
+	cd $(abs_srcdir); python3 vvp_reg.py $(opts) --vlog95 regress-tchk-notifier.list regress-tchk-target-corners.list regress-setup-hold-hdl.list $(TCHK_CONDITIONAL_LIST)
 
 ifeq (@HAVE_LIBZ@,yes)
 fst_enum_reader@EXEEXT@: $(srcdir)/fst_enum_reader.c ../vpi/fstapi.o ../vpi/fastlz.o ../vpi/lz4.o
@@ -91,3 +100,5 @@ Makefile: $(srcdir)/Makefile.in ../config.status
 .PHONY: check-installed-fst check-installed check-installed-vpi check-installed-vvp check-installed-vvp-py
 
 .PHONY: check-installed-tchk-vlog95
+
+.PHONY: check-installed-conditional-native check-installed-conditional-vlog95

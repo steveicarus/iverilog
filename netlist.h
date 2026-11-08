@@ -1008,20 +1008,30 @@ class NetPeriod : public LineInfo {
       double limit_;
 };
 
-/* Standalone two-event checks keep both terminals and the notifier alive.
+/* Standalone two-event checks keep both terminals, qualifiers and notifier alive.
  * Edge values are -1 (negedge), 0 (any change), or 1 (posedge). */
 class NetTwoEventCheck : public LineInfo {
     public:
       NetTwoEventCheck(NetScope*scope, NetNet*reference, NetNet*data,
                        NetNet*notifier, int reference_edge, int data_edge,
-                       double limit)
+                       double limit, NetNet*reference_condition,
+                       ivl_tchk_cond_t reference_condition_kind,
+                       NetNet*data_condition, ivl_tchk_cond_t data_condition_kind)
       : scope_(scope), reference_(reference), data_(data), notifier_(notifier),
+        reference_condition_(reference_condition), data_condition_(data_condition),
+        reference_condition_kind_(reference_condition_kind),
+        data_condition_kind_(data_condition_kind),
         reference_edge_(reference_edge), data_edge_(data_edge), limit_(limit) { }
 
       NetScope*scope() const { return scope_; }
       NetNet*reference() const { return reference_.get(); }
       NetNet*data() const { return data_.get(); }
       NetNet*notifier() const { return notifier_.get(); }
+      NetNet*reference_condition() const { return reference_condition_.get(); }
+      NetNet*data_condition() const { return data_condition_.get(); }
+      ivl_tchk_cond_t reference_condition_kind() const
+      { return reference_condition_kind_; }
+      ivl_tchk_cond_t data_condition_kind() const { return data_condition_kind_; }
       int reference_edge() const { return reference_edge_; }
       int data_edge() const { return data_edge_; }
       double limit() const { return limit_; }
@@ -1030,6 +1040,8 @@ class NetTwoEventCheck : public LineInfo {
       NetScope*scope_;
       NetERef reference_, data_;
       NetLRef notifier_;
+      NetERef reference_condition_, data_condition_;
+      ivl_tchk_cond_t reference_condition_kind_, data_condition_kind_;
       int reference_edge_, data_edge_;
       double limit_;
 };
