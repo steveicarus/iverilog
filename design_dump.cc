@@ -293,9 +293,16 @@ ostream& netreal_t::debug_dump(ostream&fd) const
       fd << "real";
       return fd;
 }
+
 ostream& netstring_t::debug_dump(ostream&fd) const
 {
       fd << "string";
+      return fd;
+}
+
+ostream& netchandle_t::debug_dump(ostream&fd) const
+{
+      fd << "chandle";
       return fd;
 }
 

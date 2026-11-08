@@ -36,6 +36,17 @@ Generator Flags
   Emit the original file and line information as a comment for each generated
   line (off by default).
 
+Conditional specify paths
+-------------------------
+
+With ``-gspecify``, the generated specify paths retain the source condition
+identity used for SDF annotation of bare local scalar signals, a local scalar
+signal on the left of ``==`` with an explicitly sized unsigned one-bit 0 or 1
+on the right, and ordered
+``&&`` trees of those comparisons. Operand order and grouping are preserved;
+Boolean-equivalent conditions are not normalized. Use ``-gspecify`` again
+when compiling the generated Verilog to simulate these paths.
+
 Structures that cannot be converted to 1995 compatible Verilog
 --------------------------------------------------------------
 

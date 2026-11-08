@@ -1,0 +1,2 @@
+WARNING: work/vlog95.v:14: $timeformat's minimum width argument (-1000) is negative, using 0.
+PASSED

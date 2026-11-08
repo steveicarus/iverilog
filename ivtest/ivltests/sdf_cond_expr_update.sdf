@@ -1,0 +1,14 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "duplicate_expr_cell") (INSTANCE ud)
+  (DELAY (ABSOLUTE
+   (COND E == 1'b1 (IOPATH A Z (3) (5)))
+   (COND E == 1'b1 (IOPATH A Z () (7)))
+   (COND E == 1'b1 (IOPATH A Z (11) ())))))
+ (CELL (CELLTYPE "edge_expr_cell") (INSTANCE ue)
+  (DELAY (ABSOLUTE
+   (COND E == 1'b1 (IOPATH (posedge A) Z (3) (41)))
+   (COND E == 1'b1 (IOPATH (negedge A) Z (43) (5))))))
+ (CELL (CELLTYPE "ordinary_expr_cell") (INSTANCE uo)
+  (DELAY (ABSOLUTE (IOPATH A Z (19) (23)))))
+)

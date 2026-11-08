@@ -598,7 +598,6 @@ struct __vpiInterModPath : public __vpiHandle {
       vpiHandle vpi_iterate(int code) override;
       void vpi_get_delays(p_vpi_delay del) override;
       void vpi_put_delays(p_vpi_delay del) override;
-      free_object_fun_t free_object_fun(void) override;
 
       __vpiScope   *scope ;
 
@@ -608,6 +607,10 @@ struct __vpiInterModPath : public __vpiHandle {
 
       vpiPortInfo* port1;
       vpiPortInfo* port2;
+      bool port1_has_index;
+      int port1_bit_index;
+      bool port2_has_index;
+      int port2_bit_index;
 };
 
 
@@ -616,7 +619,15 @@ struct __vpiInterModPath : public __vpiHandle {
  * for vpiInterModPath
  */
 
-extern struct __vpiInterModPath* vpip_make_intermodpath(vvp_net_t *net, vpiPortInfo* port1, vpiPortInfo* port2);
+extern struct __vpiInterModPath* vpip_find_intermodpath(
+      vpiPortInfo* port1, vpiPortInfo* port2,
+      bool port1_has_index, int port1_bit_index,
+      bool port2_has_index, int port2_bit_index);
+extern struct __vpiInterModPath* vpip_make_intermodpath(
+      vvp_net_t *net, vpiPortInfo* port1, vpiPortInfo* port2,
+      bool port1_has_index, int port1_bit_index,
+      bool port2_has_index, int port2_bit_index);
+extern vpiHandle vpip_make_intermodpath_iterator(void);
 
 /* Unconditional WIDTH objects and their borrowed reference terminal. */
 class vvp_fun_tchk_width;

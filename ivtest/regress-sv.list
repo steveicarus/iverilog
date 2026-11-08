@@ -2,7 +2,7 @@
 # supports SystemVerilog (1800-2012).
 
 #
-# Copyright (c) 1999-2021 Guy Hutchison (ghutchis@pacbell.net)
+# Copyright (c) 1999-2026 Guy Hutchison (ghutchis@pacbell.net)
 #
 #    This source code is free software; you can redistribute it
 #    and/or modify it in source code form under the terms of the GNU
@@ -426,7 +426,8 @@ net_string_fail		CE,-g2005-sv		ivltests
 package_vec_part_select	normal,-g2005-sv	ivltests
 packeda			normal,-g2009		ivltests
 packeda2		normal,-g2009		ivltests
-param_string_compare	normal,-g2009		ivltests
+param_string_compare	normal,-g2005-sv	ivltests
+param_string_compare_err	CE,-g2005-sv	ivltests gold=param_string_compare_err.gold
 parameter_in_generate2	CE,-g2005-sv		ivltests
 parameter_no_default	normal,-g2005-sv	ivltests
 parameter_no_default_fail1 CE			ivltests
@@ -499,6 +500,8 @@ size_cast_fail2		CE,-g2009		ivltests
 size_cast_fail3		CE,-g2009		ivltests
 slongint_test		normal,-g2005-sv	ivltests
 sshortint_test		normal,-g2005-sv	ivltests
+string_compare		normal,-g2005-sv	ivltests
+string_compare_err	CE,-g2005-sv		ivltests gold=string_compare_err.gold
 string_events		normal,-g2009		ivltests gold=string_events.gold
 string_index		normal,-g2005-sv	ivltests
 struct1			normal,-g2009		ivltests

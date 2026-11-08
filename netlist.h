@@ -636,6 +636,7 @@ class NetDelaySrc  : public NetObj {
 
       bool is_parallel() const;
       std::string sdf_condition;
+      std::string sdf_condition_text;
 
       void dump(std::ostream&, unsigned ind) const;
 
