@@ -1,5 +1,10 @@
 {
     "type"          : "normal",
     "source"        : "sv_virtual_task.v",
-    "iverilog-args" : [ "-g2012" ]
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "__comment"     : "Class scopes and class handles are not supported by vlog95.",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
 }
