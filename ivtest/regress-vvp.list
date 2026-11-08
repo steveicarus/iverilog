@@ -715,6 +715,14 @@ sv_module_port1			vvp_tests/sv_module_port1.json
 sv_module_port2			vvp_tests/sv_module_port2.json
 sv_module_port3			vvp_tests/sv_module_port3.json
 sv_module_port4			vvp_tests/sv_module_port4.json
+sv_named_arg_base_fail4		vvp_tests/sv_named_arg_base_fail4.json
+sv_named_arg_chained_fail4	vvp_tests/sv_named_arg_chained_fail4.json
+sv_named_arg_func4		vvp_tests/sv_named_arg_func4.json
+sv_named_arg_func_fail4		vvp_tests/sv_named_arg_func_fail4.json
+sv_named_arg_new_fail4		vvp_tests/sv_named_arg_new_fail4.json
+sv_named_arg_task_fail4		vvp_tests/sv_named_arg_task_fail4.json
+sv_named_arg_task_fail6		vvp_tests/sv_named_arg_task_fail6.json
+sv_named_arg_task_fail7		vvp_tests/sv_named_arg_task_fail7.json
 sv_named_type_class_property_fail	vvp_tests/sv_named_type_class_property_fail.json
 sv_named_type_enum_base_fail	vvp_tests/sv_named_type_enum_base_fail.json
 sv_named_type_packed_decl_fail	vvp_tests/sv_named_type_packed_decl_fail.json
