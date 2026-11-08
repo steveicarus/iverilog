@@ -4218,19 +4218,21 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
 NetExpr* PECallFunction::elaborate_class_method_net_(Design*des, NetScope*scope,
 						     NetNet*net, const netclass_t*class_type,
 						     perm_string method_name,
-						     const vector<named_pexpr_t>*src_parms) const
+						     const vector<named_pexpr_t>*src_parms,
+						     bool nonvirtual) const
 {
       NetESignal*ethis = new NetESignal(net);
       ethis->set_line(*this);
       return elaborate_class_method_net_this_(des, scope, ethis, class_type,
-						method_name, src_parms);
+						method_name, src_parms, nonvirtual);
 }
 
 NetExpr* PECallFunction::elaborate_class_method_net_this_(Design*des, NetScope*scope,
 							  NetExpr* this_expr,
 							  const netclass_t*class_type,
 							  perm_string method_name,
-							  const vector<named_pexpr_t>*src_parms) const
+							  const vector<named_pexpr_t>*src_parms,
+							  bool nonvirtual) const
 {
       NetScope*method = class_type->method_from_name(method_name);
 
@@ -4263,8 +4265,18 @@ NetExpr* PECallFunction::elaborate_class_method_net_this_(Design*des, NetScope*s
 
       elaborate_arguments_(des, scope, def, false, parms, 1, src_parms);
 
+	// A call to a virtual method is bound to the virtual declaration
+	// of the method. That is where the run-time dispatch to the
+	// override that matches the class of the object happens.
+      NetScope*callee = method;
+      if (!nonvirtual) {
+	    if (NetScope*root = netclass_t::virtual_root(method))
+		  callee = root;
+      }
+
       NetESignal*eres = new NetESignal(res);
-      NetEUFunc*call = new NetEUFunc(scope, method, eres, parms, false);
+      NetEUFunc*call = new NetEUFunc(scope, callee, eres, parms, false);
+      call->set_nonvirtual(nonvirtual);
       call->set_line(*this);
       return call;
 }
@@ -4699,8 +4711,11 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    NetNet*net = search_results.net;
 	    const netclass_t*class_type = dynamic_cast<const netclass_t*>(search_results.type);
 	    ivl_assert(*this, class_type);
+	    // A call through super is not virtual.
+	    bool nonvirtual = !search_results.path_head.empty()
+		  && search_results.path_head.back().name == "#";
 	    return elaborate_class_method_net_(des, scope, net, class_type,
-					       method_name, nullptr);
+					       method_name, nullptr, nonvirtual);
       }
 
       // String methods.
