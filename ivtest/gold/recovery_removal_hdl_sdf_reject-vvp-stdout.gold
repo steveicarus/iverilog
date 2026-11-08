@@ -9,8 +9,8 @@ SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:5: invalid REMOVAL limit
 SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:6: unrepresentable RECOVERY limit
 SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:6: unrepresentable REMOVAL limit
 SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:7: Module wrong_cell in tb.wrong_cell is not a different_cell; it is a rr_reject
-SDF WARNING: ivltests/recovery_removal_hdl_reject.sdf:8: conditional or hierarchical RECOVERY event not supported.
-SDF WARNING: ivltests/recovery_removal_hdl_reject.sdf:8: conditional or hierarchical REMOVAL event not supported.
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:8: Unable to match RECOVERY R -> C in tb.conditional
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:8: Unable to match REMOVAL R -> C in tb.conditional
 SDF WARNING: ivltests/recovery_removal_hdl_reject.sdf:9: conditional or hierarchical RECOVERY event not supported.
 SDF WARNING: ivltests/recovery_removal_hdl_reject.sdf:9: conditional or hierarchical REMOVAL event not supported.
 SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:11: Cannot find absent_instance in scope tb.

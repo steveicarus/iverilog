@@ -561,21 +561,63 @@ void sdf_period_limits(int edge, const char* reference,
       sdf_single_limit(vpiPeriod, "PERIOD", edge, reference, limit, lineno);
 }
 
-static int sdf_tchk_terminal_matches(vpiHandle check, int role,
-                                    struct port_with_edge_s port)
+/* Match the supported source expression, not its value at annotation time.
+ * An absent SDF condition is a wildcard; an explicit one requires the same
+ * local scalar signal and expression form on that timing-check terminal. */
+static int sdf_tchk_condition_matches(vpiHandle term,
+                                     struct sdf_tchk_condition_s condition)
 {
+      if (condition.kind == SDF_TCHK_COND_NONE) return 1;
+      vpiHandle expression = vpi_handle(vpiCondition, term);
+      if (!expression) return 0;
+      vpiHandle signal = expression;
+      if (condition.kind == SDF_TCHK_COND_EQ0 ||
+          condition.kind == SDF_TCHK_COND_EQ1) {
+            if (vpi_get(vpiType, expression) != vpiOperation ||
+                vpi_get(vpiOpType, expression) != vpiCaseEqOp) return 0;
+            vpiHandle operands = vpi_iterate(vpiOperand, expression);
+            vpiHandle operand, pair[2];
+            unsigned count = 0;
+            while (operands && (operand = vpi_scan(operands))) {
+                  if (count == 2) {
+                        vpi_free_object(operands);
+                        return 0;
+                  }
+                  pair[count++] = operand;
+            }
+            if (count != 2 || vpi_get(vpiType, pair[1]) != vpiConstant ||
+                vpi_get(vpiSize, pair[1]) != 1) return 0;
+            s_vpi_value value;
+            value.format = vpiScalarVal;
+            vpi_get_value(pair[1], &value);
+            int wanted = condition.kind == SDF_TCHK_COND_EQ0 ? vpi0 : vpi1;
+            if (value.value.scalar != wanted) return 0;
+            signal = pair[0];
+      } else if (condition.kind != SDF_TCHK_COND_BARE) return 0;
+      int type = vpi_get(vpiType, signal);
+      if ((type != vpiNet && type != vpiReg) || vpi_get(vpiSize, signal) != 1)
+            return 0;
+      const char* name = vpi_get_str(vpiName, signal);
+      return name && !strcmp(condition.name, name);
+}
+
+static int sdf_tchk_terminal_matches(vpiHandle check, int role,
+                                    struct sdf_tchk_port_s event)
+{
+      struct port_with_edge_s port = event.port;
       vpiHandle term = vpi_handle(role, check);
       if (!term || (port.vpi_edge != vpiNoEdge &&
                     vpi_get(vpiEdge, term) != port.vpi_edge)) return 0;
       vpiHandle signal = vpi_handle(vpiExpr, term);
-      return signal && !strcmp(port.string_val, vpi_get_str(vpiName, signal));
+      return signal && !strcmp(port.string_val, vpi_get_str(vpiName, signal)) &&
+            sdf_tchk_condition_matches(term, event.condition);
 }
 
 /* SETUP/HOLD SDF records list data before reference. RECOVERY/REMOVAL
  * records list the asynchronous reference before the clock/data event.
  * Match object roles explicitly; an unqualified SDF port matches either edge. */
-void sdf_two_event_limits(int check_type, struct port_with_edge_s first,
-                          struct port_with_edge_s second,
+void sdf_two_event_limits(int check_type, struct sdf_tchk_port_s first,
+                          struct sdf_tchk_port_s second,
                           struct sdf_delay_s limit, int lineno)
 {
       const char* name;
@@ -587,9 +629,11 @@ void sdf_two_event_limits(int check_type, struct port_with_edge_s first,
           case vpiRemoval: name = "REMOVAL"; reset_check = 1; break;
           default: assert(0); return;
       }
-      struct port_with_edge_s reference = reset_check ? first : second;
-      struct port_with_edge_s data = reset_check ? second : first;
-      if (!data.string_val || !reference.string_val) {
+      struct sdf_tchk_port_s reference = reset_check ? first : second;
+      struct sdf_tchk_port_s data = reset_check ? second : first;
+      if (!data.port.string_val || !reference.port.string_val ||
+          data.condition.kind == SDF_TCHK_COND_UNSUPPORTED ||
+          reference.condition.kind == SDF_TCHK_COND_UNSUPPORTED) {
             vpi_printf("SDF WARNING: %s:%d: conditional or hierarchical %s event not supported.\n",
                        sdf_fname, lineno, name);
             return;
@@ -628,13 +672,13 @@ void sdf_two_event_limits(int check_type, struct port_with_edge_s first,
             vpi_put_delays(check, &delays);
             if (sdf_flag_inform)
                   vpi_printf("SDF INFO: %s:%d: %s %s -> %s limit %g\n",
-                             sdf_fname, lineno, name, first.string_val,
-                             second.string_val, value.real);
+                             sdf_fname, lineno, name, first.port.string_val,
+                             second.port.string_val, value.real);
       }
       if (!matches)
             vpi_printf("SDF ERROR: %s:%d: Unable to match %s %s -> %s in %s\n",
-                       sdf_fname, lineno, name, first.string_val,
-                       second.string_val, vpi_get_str(vpiFullName, sdf_cur_cell));
+                       sdf_fname, lineno, name, first.port.string_val,
+                       second.port.string_val, vpi_get_str(vpiFullName, sdf_cur_cell));
 }
 
 static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)

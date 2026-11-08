@@ -1,0 +1,5 @@
+(DELAYFILE (SDFVERSION "3.0") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "dut") (INSTANCE u) (TIMINGCHECK
+  (SETUP (COND "escaped gate" gate\.pin === 1'b0 event\.pin) (COND enable\\pin (posedge clock\\pin)) (40:40:40))
+  (HOLD (COND "escaped gate" gate\.pin === 1'b0 event\.pin) (COND enable\\pin (posedge clock\\pin)) (20:20:20))))
+)

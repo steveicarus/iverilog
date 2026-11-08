@@ -2232,8 +2232,8 @@ void compile_tchk_two_event(int kind, unsigned file_idx, unsigned lineno,
                              char* reference_edge_text, struct symb_s reference,
                              char* data_edge_text, struct symb_s data,
                              double limit, char* notifier,
-                             char* reference_condition, uint64_t reference_condition_value,
-                             char* data_condition, uint64_t data_condition_value)
+                             char* reference_condition, uint64_t reference_condition_mode,
+                             char* data_condition, uint64_t data_condition_mode)
 {
       int reference_edge = 0, data_edge = 0;
       bool edges_valid = parse_tchk_event_edge(reference_edge_text, reference_edge)
@@ -2250,7 +2250,7 @@ void compile_tchk_two_event(int kind, unsigned file_idx, unsigned lineno,
       delete[] reference_condition;
       delete[] data_condition;
       vvp_time64_t limit_ticks;
-      if (!edges_valid || reference_condition_value > 1 || data_condition_value > 1
+      if (!edges_valid || reference_condition_mode > 2 || data_condition_mode > 2
           || !vpip_tchk_delay_to_ticks(limit, scope, limit_ticks)) {
             yyerror("invalid two-event timing-check edge or unrepresentable limit");
             free(reference.text);
@@ -2264,9 +2264,12 @@ void compile_tchk_two_event(int kind, unsigned file_idx, unsigned lineno,
       vvp_net_t* net = new vvp_net_t;
       vvp_fun_tchk_two_event* fun = new vvp_fun_tchk_two_event(
             kind, reference_edge, data_edge, limit_ticks,
-            reference_condition_value, data_condition_value);
+            reference_condition_mode == 0 ? 0 : 1,
+            data_condition_mode == 0 ? 0 : 1);
       net->fun = fun;
       __vpiTchkTwoEvent* obj = new __vpiTchkTwoEvent(scope, file_idx, lineno, fun);
+      obj->reference_condition_mode_ = reference_condition_mode;
+      obj->data_condition_mode_ = data_condition_mode;
       fun->vpi_tchk = obj;
       input_connect(net, 0, strdup(reference.text));
       input_connect(net, 1, strdup(data.text));

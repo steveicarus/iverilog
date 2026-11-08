@@ -571,9 +571,9 @@ extern void compile_tchk_two_event(int kind, unsigned file_idx, unsigned lineno,
                                     char* data_edge, struct symb_s data,
                                     double limit, char* notifier,
                                     char* reference_condition = nullptr,
-                                    uint64_t reference_condition_value = 1,
+                                    uint64_t reference_condition_mode = 1,
                                     char* data_condition = nullptr,
-                                    uint64_t data_condition_value = 1);
+                                    uint64_t data_condition_mode = 1);
 
 extern void compile_island(char*label, char*type);
 extern void compile_island_port(char*label, char*island, char*src);

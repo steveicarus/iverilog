@@ -2370,7 +2370,9 @@ static void draw_period_in_scope(ivl_period_t check)
 }
 
 /* Qualifier labels are quoted so the extended records remain unambiguous
- * with both present and omitted notifiers. An absent role uses an empty label. */
+ * with both present and omitted notifiers. An absent role uses an empty label.
+ * Modes 0/1 retain the case-equality value; mode 2 preserves a bare signal
+ * for standard VPI condition traversal without changing its runtime truth. */
 static void draw_two_event_conditions(ivl_signal_t reference,
                                        ivl_tchk_cond_t reference_kind,
                                        ivl_signal_t data,
@@ -2378,9 +2380,11 @@ static void draw_two_event_conditions(ivl_signal_t reference,
 {
       if (!reference && !data) return;
       if (reference) fprintf(vvp_out, ", \"v%p_0\", %u", reference,
+                             reference_kind == IVL_TCHK_COND_BARE ? 2 :
                              reference_kind == IVL_TCHK_COND_EQ0 ? 0 : 1);
       else fprintf(vvp_out, ", \"\", 1");
       if (data) fprintf(vvp_out, ", \"v%p_0\", %u", data,
+                        data_kind == IVL_TCHK_COND_BARE ? 2 :
                         data_kind == IVL_TCHK_COND_EQ0 ? 0 : 1);
       else fprintf(vvp_out, ", \"\", 1");
 }

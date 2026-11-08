@@ -382,6 +382,8 @@ const char* vpi_type_as_string(PLI_INT32 code)
 	    return "vpiNamedEvent";
 	  case vpiNamedFork:
 	    return "vpiNamedFork";
+	  case vpiOperation:
+	    return "vpiOperation";
 	  case vpiPackage:
 	    return "vpiPackage";
 	  case vpiPathTerm:

@@ -635,13 +635,17 @@ class vvp_fun_tchk_period;
 class vvp_fun_tchk_two_event;
 class __vpiTchkRefTerm : public __vpiHandle {
     public:
-      __vpiTchkRefTerm(int edge, vpiHandle expr) : edge_(edge), expr_(expr) { }
+      __vpiTchkRefTerm(int edge, vpiHandle expr, vpiHandle condition = nullptr,
+                      unsigned condition_mode = 2);
+      ~__vpiTchkRefTerm() override;
       int get_type_code(void) const override { return vpiTchkTerm; }
       int vpi_get(int code) override;
       vpiHandle vpi_handle(int code) override;
     private:
       int edge_;
       vpiHandle expr_;
+      vpiHandle condition_;
+      bool owns_condition_;
 };
 
 class __vpiTchkWidth : public __vpiHandle {
@@ -701,6 +705,8 @@ class __vpiTchkTwoEvent : public __vpiHandle {
       vpiHandle notifier_;
       vpiHandle reference_condition_;
       vpiHandle data_condition_;
+      unsigned reference_condition_mode_;
+      unsigned data_condition_mode_;
     private:
       __vpiScope* scope_;
       unsigned file_idx_;

@@ -21,6 +21,86 @@
 # include "tchk.h"
 # include "vpi_priv.h"
 
+/* The supported case-equality qualifier has a small, standard expression
+ * graph. It is descriptive metadata: timing evaluation still uses the
+ * existing condition signal and wanted value in vvp_fun_tchk_two_event. */
+class __vpiTchkCondition : public __vpiHandle {
+    public:
+      __vpiTchkCondition(vpiHandle signal, unsigned wanted)
+      : wanted_(wanted)
+      {
+            operands_[0] = signal;
+            operands_[1] = vpip_make_binary_const(1, wanted ? "1" : "0");
+      }
+
+      ~__vpiTchkCondition() override
+      {
+            delete operands_[1];
+      }
+
+      int get_type_code(void) const override { return vpiOperation; }
+
+      int vpi_get(int code) override
+      {
+            switch (code) {
+                case vpiOpType: return vpiCaseEqOp;
+                case vpiSize: return 1;
+                case vpiSigned: return 0;
+                default: return vpiUndefined;
+            }
+      }
+
+      char* vpi_get_str(int code) override
+      {
+            if (code == vpiOpType)
+                  return const_cast<char*>("vpiCaseEqOp");
+            if (code != vpiDecompile) return nullptr;
+            const char* name = ::vpi_get_str(vpiName, operands_[0]);
+            if (!name) return nullptr;
+            // Escaping also handles local identifiers containing punctuation.
+            decompile_ = "\\";
+            decompile_ += name;
+            decompile_ += wanted_ ? " === 1'b1" : " === 1'b0";
+            return const_cast<char*>(decompile_.c_str());
+      }
+
+      vpiHandle vpi_iterate(int code) override
+      {
+            return code == vpiOperand
+                  ? vpip_make_iterator(2, operands_, false) : nullptr;
+      }
+
+      void vpi_get_value(p_vpi_value value) override
+      {
+            s_vpi_value input;
+            input.format = vpiScalarVal;
+            operands_[0]->vpi_get_value(&input);
+            bool equal = input.value.scalar == (wanted_ ? vpi1 : vpi0);
+            vvp_vector4_t result(1, equal ? BIT4_1 : BIT4_0);
+            vpip_vec4_get_value(result, 1, false, value);
+      }
+
+    private:
+      vpiHandle operands_[2];
+      unsigned wanted_;
+      std::string decompile_;
+};
+
+__vpiTchkRefTerm::__vpiTchkRefTerm(int edge, vpiHandle expr,
+                                 vpiHandle condition, unsigned condition_mode)
+: edge_(edge), expr_(expr), condition_(condition), owns_condition_(false)
+{
+      if (condition && condition_mode != 2) {
+            condition_ = new __vpiTchkCondition(condition, condition_mode);
+            owns_condition_ = true;
+      }
+}
+
+__vpiTchkRefTerm::~__vpiTchkRefTerm()
+{
+      if (owns_condition_) delete condition_;
+}
+
 __vpiTchkWidth::__vpiTchkWidth(__vpiScope* scope, unsigned file_idx,
                                unsigned lineno, vvp_fun_tchk_width* fun)
 : reference_(nullptr), notifier_(nullptr), scope_(scope), file_idx_(file_idx),
@@ -157,7 +237,8 @@ __vpiTchkTwoEvent::__vpiTchkTwoEvent(__vpiScope* scope, unsigned file_idx,
                                      unsigned lineno,
                                      vvp_fun_tchk_two_event* fun)
 : reference_(nullptr), data_(nullptr), notifier_(nullptr),
-  reference_condition_(nullptr), data_condition_(nullptr), scope_(scope),
+  reference_condition_(nullptr), data_condition_(nullptr),
+  reference_condition_mode_(2), data_condition_mode_(2), scope_(scope),
   file_idx_(file_idx), lineno_(lineno), fun_(fun),
   reference_term_(nullptr), data_term_(nullptr)
 {
@@ -194,12 +275,14 @@ vpiHandle __vpiTchkTwoEvent::vpi_handle(int code)
           case vpiTchkRefTerm:
             if (!reference_term_ && reference_)
                   reference_term_ = new __vpiTchkRefTerm(
-                        tchk_vpi_edge(fun_->reference_edge_), reference_);
+                        tchk_vpi_edge(fun_->reference_edge_), reference_,
+                        reference_condition_, reference_condition_mode_);
             return reference_term_;
           case vpiTchkDataTerm:
             if (!data_term_ && data_)
                   data_term_ = new __vpiTchkRefTerm(
-                        tchk_vpi_edge(fun_->data_edge_), data_);
+                        tchk_vpi_edge(fun_->data_edge_), data_,
+                        data_condition_, data_condition_mode_);
             return data_term_;
           default: return nullptr;
       }
@@ -243,5 +326,9 @@ int __vpiTchkRefTerm::vpi_get(int code)
 
 vpiHandle __vpiTchkRefTerm::vpi_handle(int code)
 {
-      return code == vpiExpr ? expr_ : nullptr;
+      switch (code) {
+          case vpiExpr: return expr_;
+          case vpiCondition: return condition_;
+          default: return nullptr;
+      }
 }
