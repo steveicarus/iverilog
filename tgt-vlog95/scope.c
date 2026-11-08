@@ -976,9 +976,13 @@ static void emit_recovery_checks(ivl_scope_t scope)
             fprintf(vlog_out, "%*c$recovery(", indent, ' ');
             emit_simple_timing_event(ivl_recovery_reference(check),
                                      ivl_recovery_reference_edge(check));
+            emit_tchk_condition(ivl_recovery_reference_condition(check),
+                                ivl_recovery_reference_condition_kind(check));
             fprintf(vlog_out, ", ");
             emit_simple_timing_event(ivl_recovery_data(check),
                                      ivl_recovery_data_edge(check));
+            emit_tchk_condition(ivl_recovery_data_condition(check),
+                                ivl_recovery_data_condition_kind(check));
             fprintf(vlog_out, ", %.17e", ivl_recovery_limit(check));
             if (notifier) {
                   fprintf(vlog_out, ", ");
@@ -997,9 +1001,13 @@ static void emit_removal_checks(ivl_scope_t scope)
             fprintf(vlog_out, "%*c$removal(", indent, ' ');
             emit_simple_timing_event(ivl_removal_reference(check),
                                      ivl_removal_reference_edge(check));
+            emit_tchk_condition(ivl_removal_reference_condition(check),
+                                ivl_removal_reference_condition_kind(check));
             fprintf(vlog_out, ", ");
             emit_simple_timing_event(ivl_removal_data(check),
                                      ivl_removal_data_edge(check));
+            emit_tchk_condition(ivl_removal_data_condition(check),
+                                ivl_removal_data_condition_kind(check));
             fprintf(vlog_out, ", %.17e", ivl_removal_limit(check));
             if (notifier) {
                   fprintf(vlog_out, ", ");

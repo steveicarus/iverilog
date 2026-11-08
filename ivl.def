@@ -263,6 +263,10 @@ ivl_recovery_scope
 ivl_recovery_reference
 ivl_recovery_data
 ivl_recovery_notifier
+ivl_recovery_reference_condition
+ivl_recovery_reference_condition_kind
+ivl_recovery_data_condition
+ivl_recovery_data_condition_kind
 ivl_recovery_reference_edge
 ivl_recovery_data_edge
 ivl_recovery_limit
@@ -274,6 +278,10 @@ ivl_removal_scope
 ivl_removal_reference
 ivl_removal_data
 ivl_removal_notifier
+ivl_removal_reference_condition
+ivl_removal_reference_condition_kind
+ivl_removal_data_condition
+ivl_removal_data_condition_kind
 ivl_removal_reference_edge
 ivl_removal_data_edge
 ivl_removal_limit

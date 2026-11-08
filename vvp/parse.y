@@ -790,6 +790,23 @@ statement
                   delete[] $15;
                   compile_tchk_two_event(vpiRemoval, $2, $3, $5, $7, $9, $11, $13, notifier); }
 
+        | K_TCHK_RECOVERY T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_SYMBOL ',' T_STRING ',' T_NUMBER ',' T_STRING ',' T_NUMBER ';'
+                { compile_tchk_two_event(vpiRecovery, $2, $3, $5, $7, $9, $11, $13, $15,
+                                         $17, $19, $21, $23); }
+        | K_TCHK_RECOVERY T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_STRING ',' T_STRING ',' T_NUMBER ',' T_STRING ',' T_NUMBER ';'
+                { char* notifier = strdup($15);
+                  delete[] $15;
+                  compile_tchk_two_event(vpiRecovery, $2, $3, $5, $7, $9, $11, $13, notifier,
+                                         $17, $19, $21, $23); }
+        | K_TCHK_REMOVAL T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_SYMBOL ',' T_STRING ',' T_NUMBER ',' T_STRING ',' T_NUMBER ';'
+                { compile_tchk_two_event(vpiRemoval, $2, $3, $5, $7, $9, $11, $13, $15,
+                                         $17, $19, $21, $23); }
+        | K_TCHK_REMOVAL T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_STRING ',' T_STRING ',' T_NUMBER ',' T_STRING ',' T_NUMBER ';'
+                { char* notifier = strdup($15);
+                  delete[] $15;
+                  compile_tchk_two_event(vpiRemoval, $2, $3, $5, $7, $9, $11, $13, notifier,
+                                         $17, $19, $21, $23); }
+
   /* Port information for scopes... currently this is just meta-data for VPI queries */
 
 	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING T_SYMBOL ';'

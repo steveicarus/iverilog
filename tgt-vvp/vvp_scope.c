@@ -2430,8 +2430,13 @@ static void draw_recovery_in_scope(ivl_recovery_t check)
               ivl_recovery_reference(check),
               two_event_edge(ivl_recovery_data_edge(check)), ivl_recovery_data(check),
               ivl_recovery_limit(check));
-      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
-      else fprintf(vvp_out, "\"\";\n");
+      if (notifier) fprintf(vvp_out, "v%p_0", notifier);
+      else fprintf(vvp_out, "\"\"");
+      draw_two_event_conditions(ivl_recovery_reference_condition(check),
+                                ivl_recovery_reference_condition_kind(check),
+                                ivl_recovery_data_condition(check),
+                                ivl_recovery_data_condition_kind(check));
+      fprintf(vvp_out, ";\n");
 }
 
 static void draw_removal_in_scope(ivl_removal_t check)
@@ -2443,8 +2448,13 @@ static void draw_removal_in_scope(ivl_removal_t check)
               ivl_removal_reference(check),
               two_event_edge(ivl_removal_data_edge(check)), ivl_removal_data(check),
               ivl_removal_limit(check));
-      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
-      else fprintf(vvp_out, "\"\";\n");
+      if (notifier) fprintf(vvp_out, "v%p_0", notifier);
+      else fprintf(vvp_out, "\"\"");
+      draw_two_event_conditions(ivl_removal_reference_condition(check),
+                                ivl_removal_reference_condition_kind(check),
+                                ivl_removal_data_condition(check),
+                                ivl_removal_data_condition_kind(check));
+      fprintf(vvp_out, ";\n");
 }
 
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)
