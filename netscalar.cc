@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,6 +24,7 @@ using namespace std;
 netreal_t netreal_t::type_real;
 netreal_t netreal_t::type_shortreal;
 netstring_t netstring_t::type_string;
+netchandle_t netchandle_t::type_chandle;
 
 netreal_t::~netreal_t()
 {
@@ -41,4 +42,13 @@ netstring_t::~netstring_t()
 ivl_variable_type_t netstring_t::base_type() const
 {
       return IVL_VT_STRING;
+}
+
+netchandle_t::~netchandle_t()
+{
+}
+
+ivl_variable_type_t netchandle_t::base_type() const
+{
+      return IVL_VT_VOID;
 }

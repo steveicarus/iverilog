@@ -230,6 +230,7 @@ static void final_cleanup()
 	/* Clear the static result buffer. */
       (void)need_result_buf(0, RBUF_DEL);
       codespace_delete();
+      intermodpath_delete();
       root_table_delete();
       def_table_delete();
       vpi_mcd_delete();

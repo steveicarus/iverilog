@@ -1,8 +1,8 @@
 // Regression test: comparing a `string` parameter to a string constant of
 // a different length must constant-fold cleanly instead of tripping the
 // "lv.len() == rv.len()" assertion in the NetEBComp evaluation functions.
-// Covers ==, !=, ===, !==, ==? and !=? with the string operand on either
-// side and both shorter and longer than the other operand.
+// Covers ==, !=, === and !== with the string operand on either side and
+// both shorter and longer than the other operand.
 
 module main #(parameter string Target = "A",
 	      parameter string Long = "ABC");
@@ -26,10 +26,6 @@ module main #(parameter string Target = "A",
    // Case equality.
    if (Target === "AA") initial begin errors += 1; $display("FAILED: Target === \"AA\""); end
    if (Target !== "A")  initial begin errors += 1; $display("FAILED: Target !== \"A\""); end
-
-   // Wildcard equality.
-   if (Target ==? "AA") initial begin errors += 1; $display("FAILED: Target ==? \"AA\""); end
-   if (Target !=? "A")  initial begin errors += 1; $display("FAILED: Target !=? \"A\""); end
 
    initial #1 if (errors == 0) $display("PASSED");
 

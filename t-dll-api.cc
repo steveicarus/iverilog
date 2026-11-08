@@ -1954,6 +1954,12 @@ extern "C" const char* ivl_path_condition_key(ivl_delaypath_t obj)
       return obj->sdf_condition.c_str();
 }
 
+extern "C" const char* ivl_path_condition_text(ivl_delaypath_t obj)
+{
+      assert(obj);
+      return obj->sdf_condition_text.c_str();
+}
+
 extern "C" ivl_nexus_t ivl_path_condit(ivl_delaypath_t obj)
 {
       assert(obj);

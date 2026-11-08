@@ -205,6 +205,65 @@ The module author provides, along with the ".vpi" file that is the module, a
 is named "example.sft", pass it to the "iverilog" command line or in the
 command file exactly as if it were an ordinary source file.
 
+Reading Interconnect Delays
+--------------------------
+
+Use the standard VPI relationship
+``vpi_handle_multi(vpiInterModPath, source, destination)`` to obtain a path
+from its endpoint port handles. Icarus returns the existing object for the
+ordered endpoint request, including its bit selections. It creates a path only
+when none exists and the connection can be inserted. Repeated requests preserve
+the object's delays and do not insert another delay stage. SDF annotation uses
+this endpoint-based interface; ordinary application code should use it too.
+
+For a scalar path, ``vpi_iterate(vpiPort, path)`` returns its source and
+destination port handles, in that order. ``vpi_get_delays`` reads the effective
+values from the delay object used for execution. For example, to read rise and
+fall delays in global simulation ticks::
+
+  s_vpi_time values[2] = {{0}};
+  s_vpi_delay delays = {0};
+  delays.da = values;
+  delays.no_of_delays = 2;
+  delays.time_type = vpiSimTime;
+  vpi_get_delays(path, &delays);
+
+Combine each value's ``high`` and ``low`` fields to obtain its tick count.
+The global time precision can be obtained with
+``vpi_get(vpiTimePrecision, NULL)``. Read after annotation has completed, for
+example in a subsequent read-only synchronization callback.
+
+Path handles remain valid through the end-of-simulation callbacks. Releasing a
+path handle does not remove its connection or invalidate another handle to the
+same object. Use ``vpi_compare_objects`` to compare object identity within a
+simulation. The stored port handles identify the base ports; they do not expose
+the bit selections of indexed INTERCONNECT entries. Lookup reuse lets subsequent
+annotation update the same delay object. Delay arithmetic, timebase conversion
+and event scheduling are unchanged.
+
+Diagnostic global enumeration (Icarus extension)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``vpi_iterate(vpiInterModPath, NULL)`` is an Icarus extension for diagnostic
+purposes, such as dumping the entire list of intermodule delay objects. Keep
+ordinary annotation and lookup code on the standard endpoint-based interface
+above rather than depending on this global relationship.
+
+The iterator enumerates already-created objects, including those created by
+SDF INTERCONNECT annotation. It returns NULL when no objects exist, and does
+not create connections or change delay values. An empty query before annotation
+does not establish that later annotation will also be empty.
+
+An iterator contains a snapshot of the existing object handles. Exhausting it
+with ``vpi_scan``, or releasing it early with ``vpi_release_handle``, releases
+the iterator without releasing the paths. Enumeration order is not an object
+identifier. Different bit-selected paths can expose the same base-port pair.
+
+A diagnostic inventory reports the objects that exist; it does not determine
+whether every intended SDF entry was annotated or every path was exercised.
+Separate annotation checks and receiving-event observations are needed for
+those claims.
+
 Cadence PLI Modules
 -------------------
 

@@ -1,0 +1,11 @@
+Compiling vpi/interconnect_reuse.c...
+Making interconnect_reuse.vpi from  interconnect_reuse.o...
+HISTORY top.drive: 0=0 100=1 200=0 300=1 400=0 500=1 600=0
+HISTORY top.source.Q: 0=0 100=1 200=0 300=1 400=0 500=1 600=0
+HISTORY top.left.I: 13=0 107=1 213=0 317=1 413=0 507=1 613=0
+HISTORY top.left.Q: 13=0 107=1 213=0 317=1 413=0 507=1 613=0
+HISTORY top.right.I: 19=0 111=1 219=0 311=1 419=0 511=1 619=0
+HISTORY top.right.Q: 19=0 111=1 219=0 311=1 419=0 511=1 619=0
+HISTORY top.peer.I: 0=0 100=1 200=0 300=1 400=0 500=1 600=0
+HISTORY top.peer.Q: 0=0 100=1 200=0 300=1 400=0 500=1 600=0
+PASS: INTERCONNECT lookup reuse, partial annotation and fanout

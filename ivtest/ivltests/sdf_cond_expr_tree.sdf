@@ -1,0 +1,13 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "tree_cell") (INSTANCE u)
+  (DELAY (ABSOLUTE
+   (COND ((E0 == 1'b1 && E1 == 1'b0) && E2 == 1'b1) (IOPATH A Z3 (3) (5)))
+   (COND (E0 == 1'b1 && (E1 == 1'b0 && E2 == 1'b1)) (IOPATH A ZR (7) (9)))
+   (COND (((E0 == 1'b1 && E1 == 1'b0) && E2 == 1'b1) && E3 == 1'b0) (IOPATH A Z4 (11) (13)))
+   (COND ((((E0 == 1'b1 && E1 == 1'b0) && E2 == 1'b1) && E3 == 1'b0) && E4 == 1'b1) (IOPATH A Z5 (15) (17)))
+   (COND ((E1 == 1'b0 && E0 == 1'b1) && E2 == 1'b1) (IOPATH A Z3 (91) (93)))
+   (COND (E0 == 1'b1 && (E1 == 1'b0 && E2 == 1'b1)) (IOPATH A Z3 (91) (93)))
+   (COND ((((E0 == 1'b1 && E1 == 1'b0) && E2 == 1'b1) && E3 == 1'b0) && E4 == 1'b0) (IOPATH A Z5 (91) (93)))
+   (COND ((((E0 == 1'b1 && E1 == 1'b0) && E2 == 1'b1) && E3 == 1'b0) && E0 == 1'b1) (IOPATH A Z5 (91) (93))))))
+)

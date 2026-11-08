@@ -1,0 +1,2 @@
+WARNING: ivltests/timeformat_neg_width.v:8: $timeformat's minimum width argument (-1000) is negative, using 0.
+PASSED
