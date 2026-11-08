@@ -4796,6 +4796,9 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	    des->errors += 1;
       }
 
+      unsigned int off = use_this ? 1 : 0;
+      auto args = map_named_args(des, def, parms_, off);
+
       NetBlock*block = new NetBlock(NetBlock::SEQU, 0);
       block->set_line(*this);
 
@@ -4844,9 +4847,6 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	   expression the r-value. We know by definition that the port
 	   is a reg type, so this elaboration is pretty obvious. */
 
-      unsigned int off = use_this ? 1 : 0;
-
-      auto args = map_named_args(des, def, parms_, off);
       for (unsigned int idx = off; idx < parm_count; idx++) {
 	    size_t parms_idx = idx - off;
 
