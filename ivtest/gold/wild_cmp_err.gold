@@ -1,5 +1,5 @@
-./ivltests/wild_cmp_err.v:2: error: ==? operator may only have INTEGRAL operands.
-./ivltests/wild_cmp_err.v:3: error: ==? operator may only have INTEGRAL operands.
-./ivltests/wild_cmp_err.v:4: error: !=? operator may only have INTEGRAL operands.
-./ivltests/wild_cmp_err.v:5: error: !=? operator may only have INTEGRAL operands.
+./ivltests/wild_cmp_err.v:2: error: ==? operator may only have INTEGRAL operands, given 'logic' and 'real'.
+./ivltests/wild_cmp_err.v:3: error: ==? operator may only have INTEGRAL operands, given 'real' and 'logic'.
+./ivltests/wild_cmp_err.v:4: error: !=? operator may only have INTEGRAL operands, given 'logic' and 'real'.
+./ivltests/wild_cmp_err.v:5: error: !=? operator may only have INTEGRAL operands, given 'real' and 'logic'.
 4 error(s) during elaboration.

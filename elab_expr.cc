@@ -1587,12 +1587,10 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 	  case 'E': /* === */
 	  case 'N': /* !== */
 	    if (lp->expr_type() == IVL_VT_REAL ||
-		lp->expr_type() == IVL_VT_STRING ||
-		rp->expr_type() == IVL_VT_REAL ||
-		rp->expr_type() == IVL_VT_STRING) {
+		rp->expr_type() == IVL_VT_REAL) {
 		  cerr << get_fileline() << ": error: "
 		       << human_readable_op(op_)
-		       << " operator may not have REAL or STRING operands."
+		       << " operator may not have REAL operands."
 		       << endl;
 		  des->errors += 1;
 		  return 0;
@@ -1600,12 +1598,15 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 	    break;
 	  case 'w': /* ==? */
 	  case 'W': /* !=? */
-	    if ((lp->expr_type() != IVL_VT_BOOL && lp->expr_type() != IVL_VT_LOGIC) ||
-		(rp->expr_type() != IVL_VT_BOOL && rp->expr_type() != IVL_VT_LOGIC)) {
+	    if (((left_->expr_type() != IVL_VT_BOOL) &&
+	         (left_->expr_type() != IVL_VT_LOGIC)) ||
+		((right_->expr_type() != IVL_VT_BOOL) &&
+	         (right_->expr_type() != IVL_VT_LOGIC))) {
 		  cerr << get_fileline() << ": error: "
 		       << human_readable_op(op_)
-		       << " operator may only have INTEGRAL operands."
-		       << endl;
+		       << " operator may only have INTEGRAL operands, given '"
+		       << left_->expr_type() << "' and '" << right_->expr_type()
+		       << "'." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }

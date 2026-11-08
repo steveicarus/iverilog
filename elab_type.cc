@@ -196,6 +196,14 @@ ivl_type_t string_type_t::elaborate_type_raw(Design*, NetScope*) const
       return &netstring_t::type_string;
 }
 
+ivl_type_t chandle_type_t::elaborate_type_raw(Design*des, NetScope*) const
+{
+      cerr << this->get_fileline() << " sorry: The chandle data type "
+              "is not currently supported." << endl;
+      des->errors++;
+      return &netchandle_t::type_chandle;
+}
+
 ivl_type_t parray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 {
       netranges_t packed;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2014-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -124,9 +124,13 @@ static int draw_compare_real_string(ivl_expr_t expr, bool real)
       }
 
       switch (use_opcode) {
+	  case 'N': /* !== */
+	    assert(!real);
 	  case 'n': /* != */
 	    fprintf(vvp_out, "    %%flag_inv 4;\n");
 	    return 4;
+	  case 'E': /* === */
+	    assert(!real);
 	  case 'e': /* == */
 	    return 4;
 	  case 'L': /* <= */

@@ -825,8 +825,10 @@ static void emit_specify_paths(ivl_scope_t scope, ivl_signal_t sig)
 	    unsigned negedge = ivl_path_source_negedge(dpath);
 	    fprintf(vlog_out, "%*c", indent, ' ');
 	    if (cond) {
+		  const char*text = ivl_path_condition_text(dpath);
 		  fprintf(vlog_out, "if (");
-		  emit_nexus_as_ca(scope, cond, 0, 0);
+		  if (*text) fprintf(vlog_out, "%s", text);
+		  else emit_nexus_as_ca(scope, cond, 0, 0);
 		  fprintf(vlog_out, ") ");
 	    } else if (ivl_path_is_condit(dpath)) {
 		  fprintf(vlog_out, "ifnone ");

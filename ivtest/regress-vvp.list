@@ -288,6 +288,10 @@ memsynth9			vvp_tests/memsynth9.json
 memsynth9-synth			vvp_tests/memsynth9-synth.json
 mix_reset			vvp_tests/mix_reset.json
 mix_reset-synth			vvp_tests/mix_reset-synth.json
+modpath_pulse_asymmetric		vvp_tests/modpath_pulse_asymmetric.json
+modpath_pulse_finish		vvp_tests/modpath_pulse_finish.json
+modpath_pulse_rearm		vvp_tests/modpath_pulse_rearm.json
+modpath_pulse_values		vvp_tests/modpath_pulse_values.json
 module_instance_initializer_fail	vvp_tests/module_instance_initializer_fail.json
 module_instance_no_ports_duplicate_fail	vvp_tests/module_instance_no_ports_duplicate_fail.json
 module_instance_no_ports_fail	vvp_tests/module_instance_no_ports_fail.json
@@ -382,6 +386,10 @@ sdf_interconnect1		vvp_tests/sdf_interconnect1.json
 sdf_interconnect2		vvp_tests/sdf_interconnect2.json
 sdf_interconnect3		vvp_tests/sdf_interconnect3.json
 sdf_interconnect4		vvp_tests/sdf_interconnect4.json
+sdf_interconnect_pulse_rearm	vvp_tests/sdf_interconnect_pulse_rearm.json
+sdf_interconnect_pulse_asymmetric	vvp_tests/sdf_interconnect_pulse_asymmetric.json
+sdf_interconnect_pulse_fanout	vvp_tests/sdf_interconnect_pulse_fanout.json
+sdf_interconnect_pulse_finish	vvp_tests/sdf_interconnect_pulse_finish.json
 sf_countbits_fail		vvp_tests/sf_countbits_fail.json
 sf_countones_fail		vvp_tests/sf_countones_fail.json
 sf_isunknown_fail		vvp_tests/sf_isunknown_fail.json
@@ -911,6 +919,7 @@ task_return_fail1		vvp_tests/task_return_fail1.json
 task_return_fail2		vvp_tests/task_return_fail2.json
 test_va_math			vvp_tests/test_va_math.json
 test_vams_math			vvp_tests/test_vams_math.json
+timeformat_neg_width		vvp_tests/timeformat_neg_width.json
 timing_check_syntax		vvp_tests/timing_check_syntax.json
 timing_check_delayed_signals	vvp_tests/timing_check_delayed_signals.json
 udp_ansi_initial_nonreg_fail	vvp_tests/udp_ansi_initial_nonreg_fail.json
@@ -1035,3 +1044,11 @@ pulse_cond_sdf	vvp_tests/pulse_cond_sdf.json
 pulse_cond_threshold	vvp_tests/pulse_cond_threshold.json
 pulse_cond_alias	vvp_tests/pulse_cond_alias.json
 pulse_cond_no_notifier	vvp_tests/pulse_cond_no_notifier.json
+# Local scalar comparison and ordered-conjunction SDF identities.
+sdf_cond_expr_compare	vvp_tests/sdf_cond_expr_compare.json
+sdf_cond_expr_compare_bit	vvp_tests/sdf_cond_expr_compare_bit.json
+sdf_cond_expr_tree	vvp_tests/sdf_cond_expr_tree.json
+sdf_cond_expr_escaped	vvp_tests/sdf_cond_expr_escaped.json
+sdf_cond_expr_update	vvp_tests/sdf_cond_expr_update.json
+sdf_cond_expr_reject	vvp_tests/sdf_cond_expr_reject.json
+sdf_cond_vlog95	vvp_tests/sdf_cond_vlog95.json
