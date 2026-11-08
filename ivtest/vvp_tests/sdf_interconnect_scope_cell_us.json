@@ -1,0 +1,14 @@
+{
+    "__comment": "SDF CELL uses 1us/1ps; destination uses 1ns/1ps.",
+    "type": "normal",
+    "source": "sdf_interconnect_scope.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-ginterconnect",
+        "-Ttyp",
+        "-s",
+        "top",
+        "-DCELL_UNIT=1us"
+    ]
+}
