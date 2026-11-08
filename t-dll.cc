@@ -628,6 +628,9 @@ bool dll_target::start_design(const Design*des)
       const char*hold_support = query ? query("supports-hold") : nullptr;
       hold_checks_supported_ = hold_support && strcmp(hold_support, "1") == 0;
 
+      const char*setuphold_support = query ? query("supports-setuphold") : nullptr;
+      setuphold_checks_supported_ = setuphold_support && strcmp(setuphold_support, "1") == 0;
+
       stmt_cur_ = 0;
 
 	// Initialize the design object.
@@ -2817,6 +2820,29 @@ void dll_target::hold_check(const NetHold*check)
       obj->file = check->get_file();
       obj->lineno = check->get_lineno();
       obj->scope->holds_.push_back(obj);
+}
+
+void dll_target::setuphold_check(const NetSetupHold*check)
+{
+      if (!setuphold_checks_supported_) {
+            cerr << check->get_fileline()
+                 << ": warning: target does not support $setuphold; check ignored."
+                 << endl;
+            return;
+      }
+
+      ivl_setuphold_t obj = new ivl_setuphold_s;
+      obj->scope = find_scope(des_, check->scope());
+      obj->reference = find_signal(des_, check->reference());
+      obj->data = find_signal(des_, check->data());
+      obj->notifier = check->notifier() ? find_signal(des_, check->notifier()) : nullptr;
+      obj->reference_edge = check->reference_edge();
+      obj->data_edge = check->data_edge();
+      obj->setup_limit = check->setup_limit();
+      obj->hold_limit = check->hold_limit();
+      obj->file = check->get_file();
+      obj->lineno = check->get_lineno();
+      obj->scope->setupholds_.push_back(obj);
 }
 
 bool dll_target::signal_paths(const NetNet*net)

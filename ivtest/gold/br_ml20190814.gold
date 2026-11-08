@@ -1,5 +1,5 @@
-SDF WARNING: ivltests/br_ml20190814.sdf:39: SETUPHOLD not supported.
-SDF WARNING: ivltests/br_ml20190814.sdf:41: SETUPHOLD not supported.
+SDF ERROR: ivltests/br_ml20190814.sdf:39: Unable to match SETUPHOLD CE -> I in top.dut.clk_IBUF_BUFG_inst
+SDF ERROR: ivltests/br_ml20190814.sdf:41: Unable to match SETUPHOLD CE -> I in top.dut.clk_IBUF_BUFG_inst
 SDF ERROR: ivltests/br_ml20190814.sdf:43: Unable to match PERIOD posedge I in top.dut.clk_IBUF_BUFG_inst
 SDF ERROR: ivltests/br_ml20190814.sdf:45: Unable to match PERIOD negedge I in top.dut.clk_IBUF_BUFG_inst
 SDF ERROR: ivltests/br_ml20190814.sdf:47: Unable to match WIDTH negedge CE in top.dut.clk_IBUF_BUFG_inst

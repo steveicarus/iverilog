@@ -227,3 +227,95 @@ void vvp_fun_tchk_two_event::violation(vvp_time64_t now, vvp_time64_t interval)
                  vpi_get_str(vpiFullName, scope));
       notify_timing_violation(vpi_tchk, vpi_tchk->notifier_);
 }
+
+
+vvp_fun_tchk_setuphold::vvp_fun_tchk_setuphold(int reference_edge, int data_edge,
+                                               vvp_time64_t setup_limit,
+                                               vvp_time64_t hold_limit)
+: vpi_tchk(nullptr), previous_{BIT4_X, BIT4_X},
+  reference_edge_(reference_edge), data_edge_(data_edge),
+  setup_limit_(setup_limit), hold_limit_(hold_limit),
+  reference_time_(0), data_time_(0), have_reference_(false), have_data_(false)
+{
+      assert(reference_edge >= -1 && reference_edge <= 1);
+      assert(data_edge >= -1 && data_edge <= 1);
+}
+
+void vvp_fun_tchk_setuphold::recv_vec4(vvp_net_ptr_t port,
+                                       const vvp_vector4_t& value,
+                                       vvp_context_t)
+{
+      assert(port.port() < 2 && value.size() == 1 && vpi_tchk);
+      unsigned index = port.port();
+      vvp_bit4_t next = value.value(0);
+      __vpiSignal* reference = dynamic_cast<__vpiSignal*>(vpi_tchk->reference_);
+      __vpiSignal* data = dynamic_cast<__vpiSignal*>(vpi_tchk->data_);
+      assert(reference && data);
+
+      // As in the standalone checks, aliases name one physical delivery.
+      // Combine both roles before notifying, not two duplicate fanout visits.
+      if (reference->node == data->node) {
+            if (index != 0) return;
+            bool ref_event = tchk_event_matches(reference_edge_, previous_[0], next);
+            bool data_event = tchk_event_matches(data_edge_, previous_[0], next);
+            previous_[0] = previous_[1] = next;
+            process_events(ref_event, data_event);
+            return;
+      }
+
+      int selected_edge = index == 0 ? reference_edge_ : data_edge_;
+      bool matched = tchk_event_matches(selected_edge, previous_[index], next);
+      previous_[index] = next;
+      if (matched) process_events(index == 0, index == 1);
+}
+
+void vvp_fun_tchk_setuphold::process_events(bool reference_event, bool data_event)
+{
+      vvp_time64_t now = schedule_simtime();
+      if (reference_event) {
+            reference_time_ = now;
+            have_reference_ = true;
+      }
+      if (data_event) {
+            data_time_ = now;
+            have_data_ = true;
+      }
+
+      // With two positive limits, the combined check includes simultaneous
+      // events in either order. With a zero side, retain the corresponding
+      // standalone window; two zero limits therefore never violate.
+      bool setup_violation = false;
+      bool hold_violation = false;
+      vvp_time64_t setup_interval = 0, hold_interval = 0;
+      if (reference_event && have_data_) {
+            setup_interval = now - data_time_;
+            bool include_zero = setup_limit_ != 0 && hold_limit_ != 0;
+            setup_violation = (include_zero || setup_interval != 0)
+                            && setup_interval < setup_limit_;
+      }
+      if (data_event && have_reference_) {
+            hold_interval = now - reference_time_;
+            hold_violation = hold_interval < hold_limit_;
+      }
+      // A declaration produces one notification even if a single aliased
+      // delivery supplies both roles and lies in both positive windows.
+      if (setup_violation || hold_violation)
+            violation(now, setup_violation,
+                      setup_violation ? setup_interval : hold_interval);
+}
+
+void vvp_fun_tchk_setuphold::violation(vvp_time64_t now, bool setup,
+                                       vvp_time64_t interval)
+{
+      assert(vpi_tchk && vpi_tchk->file_idx_ < file_names.size());
+      __vpiScope* scope = vpi_tchk->scope_;
+      vpi_printf("Timing violation: $setuphold %s at %g (module units), "
+                 "interval=%g limit=%g, %s:%u, scope=%s\n",
+                 setup ? "setup" : "hold",
+                 vpip_time_to_scaled_real(now, scope),
+                 vpip_time_to_scaled_real(interval, scope),
+                 vpip_time_to_scaled_real(setup ? setup_limit_ : hold_limit_, scope),
+                 file_names[vpi_tchk->file_idx_], vpi_tchk->lineno_,
+                 vpi_get_str(vpiFullName, scope));
+      notify_timing_violation(vpi_tchk, vpi_tchk->notifier_);
+}

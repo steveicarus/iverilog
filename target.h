@@ -78,6 +78,7 @@ struct target_t {
       virtual void width_check(const NetWidth*);
       virtual void setup_check(const NetSetup*);
       virtual void hold_check(const NetHold*);
+      virtual void setuphold_check(const NetSetupHold*);
       virtual void period_check(const NetPeriod*);
 
         /* Analog branches */

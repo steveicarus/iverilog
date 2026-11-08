@@ -1,0 +1,2 @@
+ivltests/setuphold_hdl_vector_data_fail.v:7: error: $setuphold data must be a local scalar logic or bit signal.
+1 error(s) during elaboration.

@@ -8,6 +8,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#ifndef AUDIT_LABEL
+#define AUDIT_LABEL "SETUP/HOLD"
+#define AUDIT_TAG "SH"
+#define AUDIT_PREFIX "sh"
+#define AUDIT_CHECK_TYPE(s) (!strcmp(s,"setup")?vpiSetup:!strcmp(s,"hold")?vpiHold:0)
+#define AUDIT_LIMIT_COUNT(t) 1
+#endif
 #define MAX_CHECKS 64
 #define MAX_EVENTS 32
 static unsigned failed, started, finished, check_count, notifier_count;
@@ -30,7 +37,7 @@ static unsigned notifier_indices[MAX_CHECKS];
 static void fail(const char *why)
 {
     failed = 1;
-    vpi_printf("FAILED SETUP/HOLD audit: %s\n", why);
+    vpi_printf("FAILED " AUDIT_LABEL " audit: %s\n", why);
     vpi_control(vpiFinish, 1);
 }
 static unsigned long long now(void)
@@ -81,7 +88,8 @@ static PLI_INT32 watch(PLI_BYTE8 *unused)
 {
     vpiHandle call = vpi_handle(vpiSysTfCall,NULL), args, scope, iter, obj, match=NULL;
     char *owner,*kind,*ref,*re,*data,*de,*nname;
-    double expected_limit; unsigned long long expected_ticks;
+    double expected_limit[2]={0,0}; unsigned long long expected_ticks[2]={0,0};
+    unsigned limits, k;
     int type, redge, dedge; unsigned expected, i, count=0, ni=0;
     vpiHandle notifier;
     (void)unused;
@@ -89,34 +97,40 @@ static PLI_INT32 watch(PLI_BYTE8 *unused)
     args=vpi_iterate(vpiArgument,call);
     if (!args) { fail("missing watch arguments"); return 0; }
     owner=string_arg(args); kind=string_arg(args); ref=string_arg(args); re=string_arg(args);
-    data=string_arg(args); de=string_arg(args); expected_limit=number_arg(args);
-    expected_ticks=(unsigned long long)number_arg(args); nname=string_arg(args);
+    data=string_arg(args); de=string_arg(args);
+    type=AUDIT_CHECK_TYPE(kind); limits=AUDIT_LIMIT_COUNT(type);
+    for(k=0;k<limits;++k) { expected_limit[k]=number_arg(args);
+        expected_ticks[k]=(unsigned long long)number_arg(args); }
+    nname=string_arg(args);
     expected=(unsigned)number_arg(args);
     if (failed || expected>MAX_EVENTS) { fail("invalid expectation"); return 0; }
-    type=!strcmp(kind,"setup")?vpiSetup:!strcmp(kind,"hold")?vpiHold:0;
     redge=edge_code(re); dedge=edge_code(de);
     scope=vpi_handle_by_name(owner,NULL);
     if (!scope || !type) { fail("scope/check type"); return 0; }
     iter=vpi_iterate(vpiTchk,scope);
-    if (!iter) { fail("missing compiled SETUP/HOLD objects"); return 0; }
+    if (!iter) { fail("missing compiled " AUDIT_LABEL " objects"); return 0; }
     while ((obj=vpi_scan(iter))) {
-        s_vpi_time t={0}; s_vpi_delay d={0};
+        s_vpi_time t[2]={{0},{0}}; s_vpi_delay d={0};
         if (vpi_get(vpiTchkType,obj)!=type || !terminal(obj,vpiTchkRefTerm,scope,ref,redge) ||
             !terminal(obj,vpiTchkDataTerm,scope,data,dedge)) continue;
-        d.da=&t; d.no_of_delays=1; d.time_type=vpiScaledRealTime; vpi_get_delays(obj,&d);
-        if (fabs(t.real-expected_limit)>1e-10) continue;
+        d.da=t; d.no_of_delays=limits; d.time_type=vpiScaledRealTime; vpi_get_delays(obj,&d);
+        for(k=0;k<limits;++k) if(fabs(t[k].real-expected_limit[k])>1e-10) break;
+        if(k!=limits) continue;
         notifier=vpi_handle(vpiTchkNotifier,obj);
         if ((*nname && (!notifier || vpi_handle(vpiScope,notifier)!=scope ||
                         strcmp(vpi_get_str(vpiName,notifier),nname))) ||
             (!*nname && notifier)) continue;
         d.time_type=vpiSimTime; vpi_get_delays(obj,&d);
-        if ((((unsigned long long)t.high<<32)|t.low)!=expected_ticks ||
-            vpi_handle(vpiScope,obj)!=scope || vpi_handle(vpiModule,obj)!=scope) {
+        for(k=0;k<limits;++k) if((((unsigned long long)t[k].high<<32)|t[k].low)!=expected_ticks[k]) break;
+        if (k!=limits || vpi_handle(vpiScope,obj)!=scope || vpi_handle(vpiModule,obj)!=scope) {
             fail("limit units or scope identity"); return 0;
         }
         ++count; match=obj;
     }
     if (count!=1) { fail("exact two-terminal object/limit matching"); return 0; }
+    count=0;iter=vpi_iterate(vpiTchk,scope);
+    if(iter) while((obj=vpi_scan(iter))) if(obj==match) ++count;
+    if(count!=1) { fail("unstable combined/timing handle");return 0; }
     for (i=0;i<check_count;++i) if (checks[i].object==match) { fail("duplicate watch");return 0; }
     notifier=vpi_handle(vpiTchkNotifier,match);
     if ((*nname && (!notifier || vpi_handle(vpiScope,notifier)!=scope ||
@@ -138,12 +152,48 @@ static PLI_INT32 watch(PLI_BYTE8 *unused)
             notifiers[ni].times[notifiers[ni].expected++]=t;
     }
     if (vpi_scan(args)) { fail("extra watch argument");return 0; }
-    vpi_printf("SH_OBJECT %s %s %s/%s %s/%s limit=%g ticks=%llu events=%u\n",
-               owner,kind,ref,re,data,de,expected_limit,expected_ticks,expected);
+    vpi_printf(AUDIT_TAG "_OBJECT %s %s %s/%s %s/%s", owner,kind,ref,re,data,de);
+    for(k=0;k<limits;++k) vpi_printf(" limit=%g ticks=%llu",expected_limit[k],expected_ticks[k]);
+    vpi_printf(" events=%u\n",expected);
     ++check_count;
     free(owner);free(kind);free(ref);free(re);free(data);free(de);free(nname);
     return 0;
 }
+#ifdef AUDIT_SETUPHOLD
+static PLI_INT32 population(PLI_BYTE8 *unused)
+{
+    vpiHandle args=vpi_iterate(vpiArgument,vpi_handle(vpiSysTfCall,NULL));
+    char *owner=string_arg(args); unsigned want=(unsigned)number_arg(args), count=0;
+    vpiHandle scope=vpi_handle_by_name(owner,NULL), it, obj;
+    (void)unused;
+    if(!scope || vpi_scan(args)) { fail("population arguments");return 0; }
+    it=vpi_iterate(vpiTchk,scope);
+    if(it) while((obj=vpi_scan(it))) ++count;
+    if(count!=want || !want) fail("compiled population mismatch or empty expectation");
+    free(owner);return 0;
+}
+static PLI_INT32 put_limits(PLI_BYTE8 *unused)
+{
+    vpiHandle args=vpi_iterate(vpiArgument,vpi_handle(vpiSysTfCall,NULL));
+    char *owner=string_arg(args), *mode;
+    double a=number_arg(args), b=number_arg(args);
+    vpiHandle scope=vpi_handle_by_name(owner,NULL), it, obj, match=NULL;
+    s_vpi_time time[2]={{0},{0}};s_vpi_delay d={0};unsigned count=0,k;
+    double values[2]={a,b};(void)unused;mode=string_arg(args);
+    if(!scope || vpi_scan(args)) { fail("put arguments");return 0; }
+    it=vpi_iterate(vpiTchk,scope);
+    if(it) while((obj=vpi_scan(it))) if(vpi_get(vpiTchkType,obj)==vpiSetupHold) { match=obj;++count; }
+    if(count!=1) { fail("put requires one combined object");return 0; }
+    d.da=time;d.no_of_delays=2;
+    if(!strcmp(mode,"real")) { d.time_type=vpiScaledRealTime;time[0].real=a;time[1].real=b; }
+    else if(!strcmp(mode,"ticks")) { d.time_type=vpiSimTime;
+        for(k=0;k<2;++k) { unsigned long long n=(unsigned long long)values[k];
+            time[k].high=(PLI_UINT32)(n>>32);time[k].low=(PLI_UINT32)n; }
+    } else { fail("put units");return 0; }
+    vpi_put_delays(match,&d);
+    free(owner);free(mode);return 0;
+}
+#endif
 static PLI_INT32 violation(p_cb_data cb)
 {
     unsigned i;
@@ -153,7 +203,7 @@ static PLI_INT32 violation(p_cb_data cb)
         fail("extra/wrong identity/type/time timing callback"); return 0;
     }
     ++checks[i].seen;
-    vpi_printf("SH_VIOLATION %u %llu\n",i,now()); return 0;
+    vpi_printf(AUDIT_TAG "_VIOLATION %u %llu\n",i,now()); return 0;
 }
 static PLI_INT32 changed(p_cb_data cb)
 {
@@ -201,7 +251,7 @@ static PLI_INT32 finish(PLI_BYTE8 *unused)
         scalar(notifiers[i].signal)!=notifiers[i].previous) {
         fail("missing notifier callbacks/final value");return 0;
     }
-    finished=1;vpi_printf("SH_COMPLETE objects=%u callbacks=%u\nPASSED\n",check_count,total);
+    finished=1;vpi_printf(AUDIT_TAG "_COMPLETE objects=%u callbacks=%u\nPASSED\n",check_count,total);
     return 0;
 }
 #else
@@ -212,8 +262,12 @@ static PLI_INT32 finish(PLI_BYTE8 *u) { (void)u;fail("timing API unavailable");r
 static void register_all(void)
 {
     s_vpi_systf_data tf={0};tf.type=vpiSysTask;
-    tf.tfname="$sh_watch";tf.calltf=watch;vpi_register_systf(&tf);
-    tf.tfname="$sh_start";tf.calltf=start;vpi_register_systf(&tf);
-    tf.tfname="$sh_finish";tf.calltf=finish;vpi_register_systf(&tf);
+#if defined(AUDIT_SETUPHOLD) && defined(vpiTchk)
+    tf.tfname="$shc_population";tf.calltf=population;vpi_register_systf(&tf);
+    tf.tfname="$shc_put";tf.calltf=put_limits;vpi_register_systf(&tf);
+#endif
+    tf.tfname="$" AUDIT_PREFIX "_watch";tf.calltf=watch;vpi_register_systf(&tf);
+    tf.tfname="$" AUDIT_PREFIX "_start";tf.calltf=start;vpi_register_systf(&tf);
+    tf.tfname="$" AUDIT_PREFIX "_finish";tf.calltf=finish;vpi_register_systf(&tf);
 }
 void (*vlog_startup_routines[])(void)={register_all,0};

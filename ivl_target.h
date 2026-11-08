@@ -177,6 +177,7 @@ typedef const _CLASS netenum_t*ivl_enumtype_t;
 typedef struct ivl_event_s    *ivl_event_t;
 typedef struct ivl_width_s    *ivl_width_t;
 typedef struct ivl_setup_s    *ivl_setup_t;
+typedef struct ivl_setuphold_s *ivl_setuphold_t;
 typedef struct ivl_hold_s    *ivl_hold_t;
 typedef struct ivl_period_s   *ivl_period_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
@@ -1939,6 +1940,21 @@ extern int ivl_hold_data_edge(ivl_hold_t check);
 extern double ivl_hold_limit(ivl_hold_t check);
 extern const char*ivl_hold_file(ivl_hold_t check);
 extern unsigned ivl_hold_lineno(ivl_hold_t check);
+
+/* Combined SETUPHOLD: normalized reference/data roles; limits use declaring
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+extern unsigned ivl_scope_setupholds(ivl_scope_t net);
+extern ivl_setuphold_t ivl_scope_setuphold(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_setuphold_scope(ivl_setuphold_t check);
+extern ivl_signal_t ivl_setuphold_reference(ivl_setuphold_t check);
+extern ivl_signal_t ivl_setuphold_data(ivl_setuphold_t check);
+extern ivl_signal_t ivl_setuphold_notifier(ivl_setuphold_t check);
+extern int ivl_setuphold_reference_edge(ivl_setuphold_t check);
+extern int ivl_setuphold_data_edge(ivl_setuphold_t check);
+extern double ivl_setuphold_setup_limit(ivl_setuphold_t check);
+extern double ivl_setuphold_hold_limit(ivl_setuphold_t check);
+extern const char*ivl_setuphold_file(ivl_setuphold_t check);
+extern unsigned ivl_setuphold_lineno(ivl_setuphold_t check);
 
 /* Unconditional scalar PERIOD checks. The limit is expressed in the units
  * of ivl_period_scope(); a null notifier means it was omitted. */

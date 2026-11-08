@@ -537,6 +537,8 @@ void NetScope::emit_scope(struct target_t*tgt) const
             tgt->setup_check(check.get());
       for (const auto& check : holds_)
             tgt->hold_check(check.get());
+      for (const auto& check : setupholds_)
+            tgt->setuphold_check(check.get());
 
       if (type_ == MODULE) tgt->convert_module_ports(this);
 }

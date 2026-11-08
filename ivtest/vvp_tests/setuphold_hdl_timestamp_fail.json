@@ -1,0 +1,12 @@
+{
+    "type": "CE",
+    "gold": "setuphold_hdl_timestamp_fail",
+    "source": "setuphold_hdl_timestamp_fail.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ]
+}

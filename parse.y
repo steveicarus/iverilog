@@ -7077,15 +7077,6 @@ specify_item
   | K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
     ',' expr_mintypmax ',' expr_mintypmax setuphold_opt_args ')' ';'
       {
-	if (gn_specify_blocks_flag) {
-	      cerr << @3 << ": warning: Timing checks are not supported. ";
-	      if ($10->delayed_reference != nullptr || $10->delayed_data != nullptr) {
-		    cerr << "Delayed reference and data signals become copies of the"
-			 << " original reference and data signals.";
-	      }
-	      cerr << endl;
-	}
-
 	PSetupHold*setuphold = pform_make_setuphold(@1, $3, $5, $7, $9, $10);
 	pform_module_timing_check(setuphold);
 

@@ -1044,6 +1044,20 @@ class NetHold : public NetTwoEventCheck {
       using NetTwoEventCheck::NetTwoEventCheck;
 };
 
+/* A combined check owns one notifier and two ordered limits. */
+class NetSetupHold : public NetTwoEventCheck {
+    public:
+      NetSetupHold(NetScope*scope, NetNet*reference, NetNet*data,
+                   NetNet*notifier, int reference_edge, int data_edge,
+                   double setup_limit, double hold_limit)
+      : NetTwoEventCheck(scope, reference, data, notifier, reference_edge,
+                         data_edge, setup_limit), hold_limit_(hold_limit) { }
+      double setup_limit() const { return limit(); }
+      double hold_limit() const { return hold_limit_; }
+    private:
+      double hold_limit_;
+};
+
 /*
  * This object type is used for holding local variable values when
  * evaluating constant user functions.
@@ -1219,6 +1233,8 @@ class NetScope : public Definitions, public Attrib {
       { setups_.push_back(std::move(check)); }
       void add_hold(std::unique_ptr<NetHold> check)
       { holds_.push_back(std::move(check)); }
+      void add_setuphold(std::unique_ptr<NetSetupHold> check)
+      { setupholds_.push_back(std::move(check)); }
 
       void add_event(NetEvent*);
       void rem_event(NetEvent*);
@@ -1572,6 +1588,7 @@ class NetScope : public Definitions, public Attrib {
       std::vector<std::unique_ptr<NetPeriod> > periods_;
       std::vector<std::unique_ptr<NetSetup> > setups_;
       std::vector<std::unique_ptr<NetHold> > holds_;
+      std::vector<std::unique_ptr<NetSetupHold> > setupholds_;
 
       std::map<perm_string,LineInfo*> genvars_;
 

@@ -566,6 +566,12 @@ extern void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
                                  char* notifier);
 
 // SETUP/HOLD records use normalized reference/data order for both checks.
+extern void compile_tchk_setuphold(unsigned file_idx, unsigned lineno,
+                                   char* reference_edge_text, struct symb_s reference,
+                                   char* data_edge_text, struct symb_s data,
+                                   double setup_limit, double hold_limit,
+                                   char* notifier);
+
 extern void compile_tchk_two_event(bool setup, unsigned file_idx, unsigned lineno,
                                     char* reference_edge, struct symb_s reference,
                                     char* data_edge, struct symb_s data,

@@ -2263,3 +2263,40 @@ void compile_tchk_two_event(bool setup, unsigned file_idx, unsigned lineno,
       else free(notifier);
       vpip_attach_to_current_scope(obj);
 }
+
+
+void compile_tchk_setuphold(unsigned file_idx, unsigned lineno,
+                            char* reference_edge_text, struct symb_s reference,
+                            char* data_edge_text, struct symb_s data,
+                            double setup_limit, double hold_limit, char* notifier)
+{
+      int reference_edge = 0, data_edge = 0;
+      bool edges_valid = parse_tchk_event_edge(reference_edge_text, reference_edge)
+                      && parse_tchk_event_edge(data_edge_text, data_edge);
+      delete[] reference_edge_text;
+      delete[] data_edge_text;
+      __vpiScope* scope = vpip_peek_current_scope();
+      vvp_time64_t setup_ticks, hold_ticks;
+      if (!edges_valid || !vpip_tchk_delay_to_ticks(setup_limit, scope, setup_ticks) ||
+          !vpip_tchk_delay_to_ticks(hold_limit, scope, hold_ticks)) {
+            yyerror("invalid SETUPHOLD edge or unrepresentable limits");
+            free(reference.text);
+            free(data.text);
+            free(notifier);
+            return;
+      }
+
+      vvp_net_t* net = new vvp_net_t;
+      vvp_fun_tchk_setuphold* fun = new vvp_fun_tchk_setuphold(
+            reference_edge, data_edge, setup_ticks, hold_ticks);
+      net->fun = fun;
+      __vpiTchkSetupHold* obj = new __vpiTchkSetupHold(scope, file_idx, lineno, fun);
+      fun->vpi_tchk = obj;
+      input_connect(net, 0, strdup(reference.text));
+      input_connect(net, 1, strdup(data.text));
+      compile_vpi_lookup(&obj->reference_, reference.text);
+      compile_vpi_lookup(&obj->data_, data.text);
+      if (*notifier) compile_vpi_lookup(&obj->notifier_, notifier);
+      else free(notifier);
+      vpip_attach_to_current_scope(obj);
+}

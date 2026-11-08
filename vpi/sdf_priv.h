@@ -88,5 +88,10 @@ extern void sdf_setup_hold_limits(int check_type,
                                   struct port_with_edge_s reference,
                                   struct sdf_delay_s limit, int lineno);
 
+extern void sdf_setuphold_limits(struct port_with_edge_s data,
+                                 struct port_with_edge_s reference,
+                                 struct sdf_delay_s setup,
+                                 struct sdf_delay_s hold, int lineno);
+
 #endif /* IVL_sdf_priv_h */
 

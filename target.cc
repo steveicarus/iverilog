@@ -93,6 +93,12 @@ void target_t::hold_check(const NetHold*check)
       errors += 1;
 }
 
+void target_t::setuphold_check(const NetSetupHold*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $setuphold." << endl;
+      errors += 1;
+}
+
 bool target_t::func_def(const NetScope*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "

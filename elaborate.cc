@@ -7352,11 +7352,40 @@ void PRecRem::elaborate(Design*des, NetScope*scope) const
 
 void PSetupHold::elaborate(Design*des, NetScope*scope) const
 {
-      // At present, no timing checks are supported.
-      // Still, in order to get some models working
-      // assign the original reference and data signals to
-      // the delayed reference and data signals as per
-      // 15.5.4 Option behavior
+      if (gn_specify_blocks_flag) {
+            if (timestamp_cond_ || timecheck_cond_ || delayed_reference_ || delayed_data_) {
+                  cerr << get_fileline() << ": error: $setuphold timestamp/timecheck"
+                       << " conditions and delayed signals are not supported." << endl;
+                  des->errors += 1;
+                  return;
+            }
+            int reference_edge, data_edge;
+            if (!timing_check_event(des, *this, *reference_event_, "$setuphold",
+                                    "reference", reference_edge) ||
+                !timing_check_event(des, *this, *data_event_, "$setuphold",
+                                    "data", data_edge)) return;
+            NetNet*reference = timing_check_signal(des, scope, reference_event_->name,
+                                                   *this, "$setuphold", false);
+            NetNet*data = timing_check_signal(des, scope, data_event_->name,
+                                              *this, "$setuphold", false, "data");
+            NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
+                                                             *this, "$setuphold", true)
+                                        : nullptr;
+            if (!reference || !data || (notifier_ && !notifier)) return;
+            double setup_limit = 0.0, hold_limit = 0.0;
+            if (!timing_check_constant(des, scope, setup_limit_.get(), *this,
+                                       "$setuphold", "setup limit", setup_limit) ||
+                !timing_check_constant(des, scope, hold_limit_.get(), *this,
+                                       "$setuphold", "hold limit", hold_limit)) return;
+            std::unique_ptr<NetSetupHold> check(new NetSetupHold(scope, reference,
+                  data, notifier, reference_edge, data_edge, setup_limit, hold_limit));
+            check->set_line(*this);
+            scope->add_setuphold(std::move(check));
+            return;
+      }
+
+      // Preserve the historical delayed-terminal copies when specify timing
+      // is disabled. They do not create a runtime timing check.
 
       if (delayed_reference_ != nullptr)
       {

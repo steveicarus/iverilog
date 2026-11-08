@@ -261,6 +261,7 @@ const char* target_query(const char*key)
       if (strcmp(key,"supports-period") == 0) return "1";
       if (strcmp(key,"supports-setup") == 0) return "1";
       if (strcmp(key,"supports-hold") == 0) return "1";
+      if (strcmp(key,"supports-setuphold") == 0) return "1";
 
       return 0;
 }
