@@ -947,6 +947,48 @@ static void emit_hold_checks(ivl_scope_t scope)
       }
 }
 
+static void emit_recovery_checks(ivl_scope_t scope)
+{
+      unsigned idx;
+      for (idx = 0; idx < ivl_scope_recoveries(scope); idx += 1) {
+            ivl_recovery_t check = ivl_scope_recovery(scope, idx);
+            ivl_signal_t notifier = ivl_recovery_notifier(check);
+            fprintf(vlog_out, "%*c$recovery(", indent, ' ');
+            emit_simple_timing_event(ivl_recovery_reference(check),
+                                     ivl_recovery_reference_edge(check));
+            fprintf(vlog_out, ", ");
+            emit_simple_timing_event(ivl_recovery_data(check),
+                                     ivl_recovery_data_edge(check));
+            fprintf(vlog_out, ", %.17e", ivl_recovery_limit(check));
+            if (notifier) {
+                  fprintf(vlog_out, ", ");
+                  emit_id(ivl_signal_basename(notifier));
+            }
+            fprintf(vlog_out, ");\n");
+      }
+}
+
+static void emit_removal_checks(ivl_scope_t scope)
+{
+      unsigned idx;
+      for (idx = 0; idx < ivl_scope_removals(scope); idx += 1) {
+            ivl_removal_t check = ivl_scope_removal(scope, idx);
+            ivl_signal_t notifier = ivl_removal_notifier(check);
+            fprintf(vlog_out, "%*c$removal(", indent, ' ');
+            emit_simple_timing_event(ivl_removal_reference(check),
+                                     ivl_removal_reference_edge(check));
+            fprintf(vlog_out, ", ");
+            emit_simple_timing_event(ivl_removal_data(check),
+                                     ivl_removal_data_edge(check));
+            fprintf(vlog_out, ", %.17e", ivl_removal_limit(check));
+            if (notifier) {
+                  fprintf(vlog_out, ", ");
+                  emit_id(ivl_signal_basename(notifier));
+            }
+            fprintf(vlog_out, ");\n");
+      }
+}
+
 /*
  * The path delay information from the specify block is attached to the
  * output ports.
@@ -956,7 +998,8 @@ static void emit_specify(ivl_scope_t scope)
       unsigned word, idx, count = ivl_scope_ports(scope);
       unsigned need_specify = 0;
       if (ivl_scope_widths(scope) || ivl_scope_periods(scope) ||
-          ivl_scope_setups(scope) || ivl_scope_holds(scope)) {
+          ivl_scope_setups(scope) || ivl_scope_holds(scope) ||
+          ivl_scope_recoveries(scope) || ivl_scope_removals(scope)) {
             fprintf(vlog_out, "\n%*cspecify\n", indent, ' ');
             need_specify = 1;
             indent += indent_incr;
@@ -964,6 +1007,8 @@ static void emit_specify(ivl_scope_t scope)
             emit_period_checks(scope);
             emit_setup_checks(scope);
             emit_hold_checks(scope);
+            emit_recovery_checks(scope);
+            emit_removal_checks(scope);
       }
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_t nex = ivl_scope_mod_port(scope, idx);

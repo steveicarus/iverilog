@@ -1,0 +1,8 @@
+// Copyright (c) 2026 Stephen Williams (steve@icarus.com)
+// SPDX-License-Identifier: GPL-2.0-or-later
+`timescale 1ps/1ps
+module rr_nested(R,C);input R,C;endmodule
+module tb(R,C);
+ input R,C;wire n;
+ specify $removal(posedge R,posedge C,10,n);endspecify
+endmodule

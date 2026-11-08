@@ -69,18 +69,19 @@ class vvp_fun_tchk_period : public vvp_net_fun_t {
       friend class __vpiTchkPeriod;
 };
 
-/* Standalone SETUP and HOLD share signal/limit storage, but reverse the
- * timestamp and timecheck roles and use different lower endpoints. */
+/* Standalone SETUP/HOLD and RECOVERY/REMOVAL share terminal/limit storage.
+ * Each kind selects its timestamp role and lower endpoint explicitly. */
 class vvp_fun_tchk_two_event : public vvp_net_fun_t {
     public:
-      vvp_fun_tchk_two_event(bool setup, int reference_edge, int data_edge,
+      vvp_fun_tchk_two_event(int kind, int reference_edge, int data_edge,
                              vvp_time64_t limit);
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t& value,
                      vvp_context_t) override;
       __vpiTchkTwoEvent* vpi_tchk;
 
     private:
-      bool setup_;
+      int kind_;
+      const char* name() const;
       vvp_bit4_t previous_[2];
       int reference_edge_;
       int data_edge_;

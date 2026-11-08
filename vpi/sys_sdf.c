@@ -571,15 +571,24 @@ static int sdf_tchk_terminal_matches(vpiHandle check, int role,
       return signal && !strcmp(port.string_val, vpi_get_str(vpiName, signal));
 }
 
-/* SDF lists data before reference for both checks. HDL $hold lists them in
- * the opposite order; match the object's terminal roles, not positional names.
- * An unqualified SDF port matches either edge, as for WIDTH/PERIOD. */
-void sdf_setup_hold_limits(int check_type, struct port_with_edge_s data,
-                          struct port_with_edge_s reference,
+/* SETUP/HOLD SDF records list data before reference. RECOVERY/REMOVAL
+ * records list the asynchronous reference before the clock/data event.
+ * Match object roles explicitly; an unqualified SDF port matches either edge. */
+void sdf_two_event_limits(int check_type, struct port_with_edge_s first,
+                          struct port_with_edge_s second,
                           struct sdf_delay_s limit, int lineno)
 {
-      const char* name = check_type == vpiSetup ? "SETUP" : "HOLD";
-      assert(check_type == vpiSetup || check_type == vpiHold);
+      const char* name;
+      int reset_check;
+      switch (check_type) {
+          case vpiSetup: name = "SETUP"; reset_check = 0; break;
+          case vpiHold: name = "HOLD"; reset_check = 0; break;
+          case vpiRecovery: name = "RECOVERY"; reset_check = 1; break;
+          case vpiRemoval: name = "REMOVAL"; reset_check = 1; break;
+          default: assert(0); return;
+      }
+      struct port_with_edge_s reference = reset_check ? first : second;
+      struct port_with_edge_s data = reset_check ? second : first;
       if (!data.string_val || !reference.string_val) {
             vpi_printf("SDF WARNING: %s:%d: conditional or hierarchical %s event not supported.\n",
                        sdf_fname, lineno, name);
@@ -619,13 +628,13 @@ void sdf_setup_hold_limits(int check_type, struct port_with_edge_s data,
             vpi_put_delays(check, &delays);
             if (sdf_flag_inform)
                   vpi_printf("SDF INFO: %s:%d: %s %s -> %s limit %g\n",
-                             sdf_fname, lineno, name, data.string_val,
-                             reference.string_val, value.real);
+                             sdf_fname, lineno, name, first.string_val,
+                             second.string_val, value.real);
       }
       if (!matches)
             vpi_printf("SDF ERROR: %s:%d: Unable to match %s %s -> %s in %s\n",
-                       sdf_fname, lineno, name, data.string_val,
-                       reference.string_val, vpi_get_str(vpiFullName, sdf_cur_cell));
+                       sdf_fname, lineno, name, first.string_val,
+                       second.string_val, vpi_get_str(vpiFullName, sdf_cur_cell));
 }
 
 static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)

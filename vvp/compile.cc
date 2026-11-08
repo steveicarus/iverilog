@@ -2228,7 +2228,7 @@ static bool parse_tchk_event_edge(const char* text, int& result)
       return true;
 }
 
-void compile_tchk_two_event(bool setup, unsigned file_idx, unsigned lineno,
+void compile_tchk_two_event(int kind, unsigned file_idx, unsigned lineno,
                              char* reference_edge_text, struct symb_s reference,
                              char* data_edge_text, struct symb_s data,
                              double limit, char* notifier)
@@ -2241,8 +2241,13 @@ void compile_tchk_two_event(bool setup, unsigned file_idx, unsigned lineno,
       __vpiScope* scope = vpip_peek_current_scope();
       vvp_time64_t limit_ticks;
       if (!edges_valid || !vpip_tchk_delay_to_ticks(limit, scope, limit_ticks)) {
-            yyerror(setup ? "invalid SETUP edge or unrepresentable limit"
-                          : "invalid HOLD edge or unrepresentable limit");
+            switch (kind) {
+                case vpiSetup: yyerror("invalid SETUP edge or unrepresentable limit"); break;
+                case vpiHold: yyerror("invalid HOLD edge or unrepresentable limit"); break;
+                case vpiRecovery: yyerror("invalid RECOVERY edge or unrepresentable limit"); break;
+                case vpiRemoval: yyerror("invalid REMOVAL edge or unrepresentable limit"); break;
+                default: assert(0);
+            }
             free(reference.text);
             free(data.text);
             free(notifier);
@@ -2251,7 +2256,7 @@ void compile_tchk_two_event(bool setup, unsigned file_idx, unsigned lineno,
 
       vvp_net_t* net = new vvp_net_t;
       vvp_fun_tchk_two_event* fun = new vvp_fun_tchk_two_event(
-            setup, reference_edge, data_edge, limit_ticks);
+            kind, reference_edge, data_edge, limit_ticks);
       net->fun = fun;
       __vpiTchkTwoEvent* obj = new __vpiTchkTwoEvent(scope, file_idx, lineno, fun);
       fun->vpi_tchk = obj;

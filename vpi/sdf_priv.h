@@ -83,9 +83,9 @@ extern void sdf_width_limits(int edge, const char* reference,
                               struct sdf_delay_s limit, int lineno);
 extern void sdf_period_limits(int edge, const char* reference,
                                struct sdf_delay_s limit, int lineno);
-extern void sdf_setup_hold_limits(int check_type,
-                                  struct port_with_edge_s data,
-                                  struct port_with_edge_s reference,
+extern void sdf_two_event_limits(int check_type,
+                                  struct port_with_edge_s first,
+                                  struct port_with_edge_s second,
                                   struct sdf_delay_s limit, int lineno);
 
 #endif /* IVL_sdf_priv_h */

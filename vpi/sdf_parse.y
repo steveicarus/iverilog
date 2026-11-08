@@ -487,27 +487,31 @@ tchk_def_list
   /* Unconditional scalar timing-check annotation. */
 tchk_def
   : '(' K_SETUP scalar_port_tchk scalar_port_tchk rvalue ')'
-      { sdf_setup_hold_limits(vpiSetup, $3, $4, $5, @2.first_line);
+      { sdf_two_event_limits(vpiSetup, $3, $4, $5, @2.first_line);
         free($3.string_val);
         free($4.string_val);
       }
   | '(' K_HOLD scalar_port_tchk scalar_port_tchk rvalue ')'
-      { sdf_setup_hold_limits(vpiHold, $3, $4, $5, @2.first_line);
+      { sdf_two_event_limits(vpiHold, $3, $4, $5, @2.first_line);
         free($3.string_val);
         free($4.string_val);
       }
   | '(' K_SETUPHOLD port_tchk port_tchk rvalue rvalue ')'
       { vpi_printf("SDF WARNING: %s:%d: SETUPHOLD not supported.\n",
                    sdf_parse_path, @2.first_line); }
-  | '(' K_RECOVERY port_tchk port_tchk rvalue ')'
-      { vpi_printf("SDF WARNING: %s:%d: RECOVERY not supported.\n",
-                   sdf_parse_path, @2.first_line); }
+  | '(' K_RECOVERY scalar_port_tchk scalar_port_tchk rvalue ')'
+      { sdf_two_event_limits(vpiRecovery, $3, $4, $5, @2.first_line);
+        free($3.string_val);
+        free($4.string_val);
+      }
   | '(' K_RECREM port_tchk port_tchk rvalue rvalue ')'
       { vpi_printf("SDF WARNING: %s:%d: RECREM not supported.\n",
                    sdf_parse_path, @2.first_line); }
-  | '(' K_REMOVAL port_tchk port_tchk rvalue ')'
-      { vpi_printf("SDF WARNING: %s:%d: REMOVAL not supported.\n",
-                   sdf_parse_path, @2.first_line); }
+  | '(' K_REMOVAL scalar_port_tchk scalar_port_tchk rvalue ')'
+      { sdf_two_event_limits(vpiRemoval, $3, $4, $5, @2.first_line);
+        free($3.string_val);
+        free($4.string_val);
+      }
   | '(' K_WIDTH scalar_port_tchk rvalue ')'
       { if ($3.string_val)
               sdf_width_limits($3.vpi_edge, $3.string_val, $4, @2.first_line);

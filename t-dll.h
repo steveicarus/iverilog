@@ -90,6 +90,8 @@ struct dll_target  : public target_t, public expr_scan_t {
       void width_check(const NetWidth*) override;
       void setup_check(const NetSetup*) override;
       void hold_check(const NetHold*) override;
+      void recovery_check(const NetRecovery*) override;
+      void removal_check(const NetRemoval*) override;
       void period_check(const NetPeriod*) override;
       ivl_dll_t dll_;
 
@@ -99,6 +101,8 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool width_checks_supported_;
       bool setup_checks_supported_;
       bool hold_checks_supported_;
+      bool recovery_checks_supported_;
+      bool removal_checks_supported_;
       bool period_checks_supported_;
 
 
@@ -693,6 +697,8 @@ struct ivl_scope_s {
       std::vector<ivl_width_t> widths_;
       std::vector<ivl_setup_t> setups_;
       std::vector<ivl_hold_t> holds_;
+      std::vector<ivl_recovery_t> recoveries_;
+      std::vector<ivl_removal_t> removals_;
       std::vector<ivl_period_t> periods_;
 
       unsigned nlog_;
@@ -810,6 +816,26 @@ struct ivl_setup_s {
 
 /* Typed standalone HOLD check, normalized reference/data roles. */
 struct ivl_hold_s {
+      ivl_scope_t scope;
+      ivl_signal_t reference, data, notifier;
+      int reference_edge, data_edge;
+      double limit;
+      perm_string file;
+      unsigned lineno;
+};
+
+/* Typed standalone RECOVERY check, normalized reference/data roles. */
+struct ivl_recovery_s {
+      ivl_scope_t scope;
+      ivl_signal_t reference, data, notifier;
+      int reference_edge, data_edge;
+      double limit;
+      perm_string file;
+      unsigned lineno;
+};
+
+/* Typed standalone REMOVAL check, normalized reference/data roles. */
+struct ivl_removal_s {
       ivl_scope_t scope;
       ivl_signal_t reference, data, notifier;
       int reference_edge, data_edge;

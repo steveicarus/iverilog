@@ -100,6 +100,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_SUBSTITUTE
 %token K_TCHK_WIDTH K_TCHK_PERIOD K_TCHK_SETUP K_TCHK_HOLD
+%token K_TCHK_RECOVERY K_TCHK_REMOVAL
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC_REAL K_UFUNC_REAL_E K_UFUNC_VEC4 K_UFUNC_E K_UDP K_UDP_C K_UDP_S
 %token K_VAR K_VAR_COBJECT K_VAR_DARRAY
@@ -747,17 +748,31 @@ statement
                   compile_tchk_period($2, $3, $5, $7, $9, notifier); }
 
         | K_TCHK_SETUP T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_SYMBOL ';'
-                { compile_tchk_two_event(true, $2, $3, $5, $7, $9, $11, $13, $15); }
+                { compile_tchk_two_event(vpiSetup, $2, $3, $5, $7, $9, $11, $13, $15); }
         | K_TCHK_SETUP T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_STRING ';'
                 { char* notifier = strdup($15);
                   delete[] $15;
-                  compile_tchk_two_event(true, $2, $3, $5, $7, $9, $11, $13, notifier); }
+                  compile_tchk_two_event(vpiSetup, $2, $3, $5, $7, $9, $11, $13, notifier); }
         | K_TCHK_HOLD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_SYMBOL ';'
-                { compile_tchk_two_event(false, $2, $3, $5, $7, $9, $11, $13, $15); }
+                { compile_tchk_two_event(vpiHold, $2, $3, $5, $7, $9, $11, $13, $15); }
         | K_TCHK_HOLD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_STRING ';'
                 { char* notifier = strdup($15);
                   delete[] $15;
-                  compile_tchk_two_event(false, $2, $3, $5, $7, $9, $11, $13, notifier); }
+                  compile_tchk_two_event(vpiHold, $2, $3, $5, $7, $9, $11, $13, notifier); }
+
+        | K_TCHK_RECOVERY T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_SYMBOL ';'
+                { compile_tchk_two_event(vpiRecovery, $2, $3, $5, $7, $9, $11, $13, $15); }
+        | K_TCHK_RECOVERY T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_STRING ';'
+                { char* notifier = strdup($15);
+                  delete[] $15;
+                  compile_tchk_two_event(vpiRecovery, $2, $3, $5, $7, $9, $11, $13, notifier); }
+
+        | K_TCHK_REMOVAL T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_SYMBOL ';'
+                { compile_tchk_two_event(vpiRemoval, $2, $3, $5, $7, $9, $11, $13, $15); }
+        | K_TCHK_REMOVAL T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_STRING ';'
+                { char* notifier = strdup($15);
+                  delete[] $15;
+                  compile_tchk_two_event(vpiRemoval, $2, $3, $5, $7, $9, $11, $13, notifier); }
 
   /* Port information for scopes... currently this is just meta-data for VPI queries */
 

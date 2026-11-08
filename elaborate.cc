@@ -7283,6 +7283,58 @@ void PHold::elaborate(Design*des, NetScope*scope) const
       scope->add_hold(std::move(check));
 }
 
+void PRecovery::elaborate(Design*des, NetScope*scope) const
+{
+      if (!gn_specify_blocks_flag) return;
+      int reference_edge, data_edge;
+      if (!timing_check_event(des, *this, *reference_, "$recovery", "reference",
+                              reference_edge) ||
+          !timing_check_event(des, *this, *data_, "$recovery", "data", data_edge))
+            return;
+      NetNet*reference = timing_check_signal(des, scope, reference_->name,
+                                             *this, "$recovery", false);
+      NetNet*data = timing_check_signal(des, scope, data_->name,
+                                        *this, "$recovery", false, "data");
+      NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
+                                                       *this, "$recovery", true)
+                                  : nullptr;
+      if (!reference || !data || (notifier_ && !notifier)) return;
+      double limit = 0.0;
+      if (!timing_check_constant(des, scope, limit_.get(), *this,
+                                 "$recovery", "limit", limit)) return;
+      std::unique_ptr<NetRecovery> check(new NetRecovery(scope, reference, data,
+                                          notifier, reference_edge, data_edge,
+                                          limit));
+      check->set_line(*this);
+      scope->add_recovery(std::move(check));
+}
+
+void PRemoval::elaborate(Design*des, NetScope*scope) const
+{
+      if (!gn_specify_blocks_flag) return;
+      int reference_edge, data_edge;
+      if (!timing_check_event(des, *this, *reference_, "$removal", "reference",
+                              reference_edge) ||
+          !timing_check_event(des, *this, *data_, "$removal", "data", data_edge))
+            return;
+      NetNet*reference = timing_check_signal(des, scope, reference_->name,
+                                             *this, "$removal", false);
+      NetNet*data = timing_check_signal(des, scope, data_->name,
+                                        *this, "$removal", false, "data");
+      NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
+                                                       *this, "$removal", true)
+                                  : nullptr;
+      if (!reference || !data || (notifier_ && !notifier)) return;
+      double limit = 0.0;
+      if (!timing_check_constant(des, scope, limit_.get(), *this,
+                                 "$removal", "limit", limit)) return;
+      std::unique_ptr<NetRemoval> check(new NetRemoval(scope, reference, data,
+                                          notifier, reference_edge, data_edge,
+                                          limit));
+      check->set_line(*this);
+      scope->add_removal(std::move(check));
+}
+
 void PRecRem::elaborate(Design*des, NetScope*scope) const
 {
       // At present, no timing checks are supported.

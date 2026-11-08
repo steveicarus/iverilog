@@ -1475,6 +1475,28 @@ void PHold::dump(std::ostream&out, unsigned ind) const
       out << ");" << endl;
 }
 
+void PRecovery::dump(std::ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "$recovery(";
+      dump_simple_timing_event(out, *reference_);
+      out << ", ";
+      dump_simple_timing_event(out, *data_);
+      out << ", " << *limit_;
+      if (notifier_) out << ", " << *notifier_;
+      out << ");" << endl;
+}
+
+void PRemoval::dump(std::ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "$removal(";
+      dump_simple_timing_event(out, *reference_);
+      out << ", ";
+      dump_simple_timing_event(out, *data_);
+      out << ", " << *limit_;
+      if (notifier_) out << ", " << *notifier_;
+      out << ");" << endl;
+}
+
 void PRecRem::dump(std::ostream&out, unsigned ind) const
 {
 	    out << setw(ind) << "" << "recrem ";
