@@ -1,0 +1,8 @@
+{
+    "type" : "normal",
+    "source" : "br_gh1706.v",
+    "vlog95" : {
+        "__comment" : "vlog95 does not support the generated TRAN_VP switches.",
+        "type" : "TE"
+    }
+}

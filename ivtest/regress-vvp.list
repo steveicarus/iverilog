@@ -155,6 +155,7 @@ br_gh1588_fail			vvp_tests/br_gh1588_fail.json
 br_gh1591a			vvp_tests/br_gh1591a.json
 br_gh1591b			vvp_tests/br_gh1591b.json
 br_gh1591c			vvp_tests/br_gh1591c.json
+br_gh1706			vvp_tests/br_gh1706.json
 br_gh1617			vvp_tests/br_gh1617.json
 br_gh1618			vvp_tests/br_gh1618.json
 br_gh1639			vvp_tests/br_gh1639.json
