@@ -12,8 +12,8 @@ initial begin #1;
 $shc_population("tb.hs", 1);
 $shc_population("tb.ss", 1);
 $shc_population("tb.zz", 1);
-$shc_watch("tb.hs", "setuphold", "C", "posedge", "D", "posedge", 0, 0, 6, 6, "notifier", 2, 200, 405);
-$shc_watch("tb.ss", "setuphold", "C", "posedge", "D", "posedge", 10, 10, 0, 0, "notifier", 1, 309);
-$shc_watch("tb.zz", "setuphold", "C", "posedge", "D", "posedge", 0, 0, 0, 0, "notifier", 0);
+$shc_watch("tb.hs", "setuphold", "C", "posedge", "D", "posedge", 0, 0, 6, 6, "notifier", 1'b0, 2, 200, 405);
+$shc_watch("tb.ss", "setuphold", "C", "posedge", "D", "posedge", 10, 10, 0, 0, "notifier", 1'b0, 1, 309);
+$shc_watch("tb.zz", "setuphold", "C", "posedge", "D", "posedge", 0, 0, 0, 0, "notifier", 1'b0, 0);
 $shc_start; #449; $shc_finish; $finish; end
 endmodule

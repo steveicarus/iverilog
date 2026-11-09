@@ -12,8 +12,8 @@ initial begin #1;
 $shc_population("tb.data0", 1);
 $shc_population("tb.ref0", 1);
 $shc_population("tb.missing", 1);
-$shc_watch("tb.data0", "setuphold", "C", "posedge", "D", "posedge", 10, 10, 10, 10, "notifier", 1, 9);
-$shc_watch("tb.ref0", "setuphold", "C", "posedge", "D", "posedge", 10, 10, 10, 10, "notifier", 1, 9);
-$shc_watch("tb.missing", "setuphold", "C", "posedge", "D", "posedge", 10, 10, 10, 10, "notifier", 1, 109);
+$shc_watch("tb.data0", "setuphold", "C", "posedge", "D", "posedge", 10, 10, 10, 10, "notifier", 1'b0, 1, 9);
+$shc_watch("tb.ref0", "setuphold", "C", "posedge", "D", "posedge", 10, 10, 10, 10, "notifier", 1'b0, 1, 9);
+$shc_watch("tb.missing", "setuphold", "C", "posedge", "D", "posedge", 10, 10, 10, 10, "notifier", 1'b0, 1, 109);
 $shc_start; #139; $shc_finish; $finish; end
 endmodule

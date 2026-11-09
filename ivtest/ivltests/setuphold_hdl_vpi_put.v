@@ -14,10 +14,10 @@ $shc_population("tb.b", 1);
 $shc_population("tb.neg_setup", 1);
 $shc_population("tb.neg_hold", 1);
 $shc_population("tb.overflow", 1);
-$shc_watch("tb.a", "setuphold", "C", "posedge", "D", "any", 20, 20, 8, 8, "notifier", 2, 115, 120);
-$shc_watch("tb.b", "setuphold", "C", "posedge", "D", "any", 20, 20, 8, 8, "notifier", 2, 115, 120);
-$shc_watch("tb.neg_setup", "setuphold", "C", "posedge", "D", "any", 10, 10, 6, 6, "notifier", 1, 120);
-$shc_watch("tb.neg_hold", "setuphold", "C", "posedge", "D", "any", 10, 10, 6, 6, "notifier", 1, 120);
-$shc_watch("tb.overflow", "setuphold", "C", "posedge", "D", "any", 10, 10, 6, 6, "notifier", 1, 120);
+$shc_watch("tb.a", "setuphold", "C", "posedge", "D", "any", 20, 20, 8, 8, "notifier", 1'b0, 2, 115, 120);
+$shc_watch("tb.b", "setuphold", "C", "posedge", "D", "any", 20, 20, 8, 8, "notifier", 1'b0, 2, 115, 120);
+$shc_watch("tb.neg_setup", "setuphold", "C", "posedge", "D", "any", 10, 10, 6, 6, "notifier", 1'b0, 1, 120);
+$shc_watch("tb.neg_hold", "setuphold", "C", "posedge", "D", "any", 10, 10, 6, 6, "notifier", 1'b0, 1, 120);
+$shc_watch("tb.overflow", "setuphold", "C", "posedge", "D", "any", 10, 10, 6, 6, "notifier", 1'b0, 1, 120);
 $shc_start; #149; $shc_finish; $finish; end
 endmodule

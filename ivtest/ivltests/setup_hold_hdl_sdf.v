@@ -25,11 +25,11 @@ module tb;
   initial begin
     #1;
     $sdf_annotate("ivltests/setup_hold_hdl.sdf",tb);
-    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 20.0, 20, "ns", 1, 115);
-    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 8.0, 8, "nh", 1, 120);
-    $sh_watch("tb.u", "setup", "C", "posedge", "E", "any", 9.0, 9, "ne", 1, 195);
-    $sh_watch("tb.u", "setup", "K", "posedge", "D", "any", 9.0, 9, "nk", 1, 143);
-    $sh_watch("tb.u", "setup", "C", "negedge", "D", "any", 5.0, 5, "nn", 0);
+    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 20.0, 20, "ns", 1'b0, 1, 115);
+    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 8.0, 8, "nh", 1'b0, 1, 120);
+    $sh_watch("tb.u", "setup", "C", "posedge", "E", "any", 9.0, 9, "ne", 1'b0, 1, 195);
+    $sh_watch("tb.u", "setup", "K", "posedge", "D", "any", 9.0, 9, "nk", 1'b0, 1, 143);
+    $sh_watch("tb.u", "setup", "C", "negedge", "D", "any", 5.0, 5, "nn", 1'b0, 0);
     $sh_start;
     #229;
     $sh_finish; $finish;

@@ -10,6 +10,6 @@ module tb;reg C,D;shc_const u(C,D);
 initial begin #1;
 
 $shc_population("tb.u", 1);
-$shc_watch("tb.u", "setuphold", "C", "posedge", "D", "posedge", 10, 10, 6, 6, "notifier", 1, 109);
+$shc_watch("tb.u", "setuphold", "C", "posedge", "D", "posedge", 10, 10, 6, 6, "notifier", 1'b0, 1, 109);
 $shc_start; #139; $shc_finish; $finish; end
 endmodule

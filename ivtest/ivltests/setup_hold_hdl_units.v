@@ -62,12 +62,12 @@ module tb;
   initial begin
     #1;
 
-    $sh_watch("tb.setup_zero", "setup", "C", "posedge", "D", "any", 0.0, 0, "notifier", 0);
-    $sh_watch("tb.setup_roundzero", "setup", "C", "posedge", "D", "any", 0.0, 0, "notifier", 0);
-    $sh_watch("tb.setup_positive", "setup", "C", "posedge", "D", "any", 0.02, 20, "notifier", 1, 119);
-    $sh_watch("tb.hold_zero", "hold", "C", "posedge", "D", "any", 0.0, 0, "notifier", 0);
-    $sh_watch("tb.hold_roundzero", "hold", "C", "posedge", "D", "any", 0.0, 0, "notifier", 0);
-    $sh_watch("tb.hold_positive", "hold", "C", "posedge", "D", "any", 0.02, 20, "notifier", 1, 130);
+    $sh_watch("tb.setup_zero", "setup", "C", "posedge", "D", "any", 0.0, 0, "notifier", 1'b0, 0);
+    $sh_watch("tb.setup_roundzero", "setup", "C", "posedge", "D", "any", 0.0, 0, "notifier", 1'b0, 0);
+    $sh_watch("tb.setup_positive", "setup", "C", "posedge", "D", "any", 0.02, 20, "notifier", 1'b0, 1, 119);
+    $sh_watch("tb.hold_zero", "hold", "C", "posedge", "D", "any", 0.0, 0, "notifier", 1'b0, 0);
+    $sh_watch("tb.hold_roundzero", "hold", "C", "posedge", "D", "any", 0.0, 0, "notifier", 1'b0, 0);
+    $sh_watch("tb.hold_positive", "hold", "C", "posedge", "D", "any", 0.02, 20, "notifier", 1'b0, 1, 130);
     $sh_start;
     #149;
     $sh_finish; $finish;

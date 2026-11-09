@@ -10,7 +10,7 @@ initial begin #1;
 
 $shc_population("tb.u", 1);
 $shc_population("tb.n", 1);
-$shc_watch("tb.u", "setuphold", "C", "posedge", "D", "any", 10, 10, 6, 6, "notifier", 5, 100, 101, 102, 103, 104);
-$shc_watch("tb.n", "setuphold", "C", "negedge", "D", "posedge", 10, 10, 6, 6, "notifier", 1, 109);
+$shc_watch("tb.u", "setuphold", "C", "posedge", "D", "any", 10, 10, 6, 6, "notifier", 1'b0, 5, 100, 101, 102, 103, 104);
+$shc_watch("tb.n", "setuphold", "C", "negedge", "D", "posedge", 10, 10, 6, 6, "notifier", 1'b0, 1, 109);
 $shc_start; #249; $shc_finish; $finish; end
 endmodule

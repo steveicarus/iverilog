@@ -9,6 +9,6 @@ module tb;reg C,D;shc_sdf_units u(C,D);
 initial begin #1;
 $sdf_annotate("ivltests/setuphold_hdl_units.sdf",tb);
 $shc_population("tb.u", 1);
-$shc_watch("tb.u", "setuphold", "C", "posedge", "D", "any", 0.02, 20, 0.03, 30, "notifier", 2, 119, 148);
+$shc_watch("tb.u", "setuphold", "C", "posedge", "D", "any", 0.02, 20, 0.03, 30, "notifier", 1'b0, 2, 119, 148);
 $shc_start; #199; $shc_finish; $finish; end
 endmodule

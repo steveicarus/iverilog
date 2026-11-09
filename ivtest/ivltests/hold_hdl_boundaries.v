@@ -22,7 +22,7 @@ module tb;
   initial begin
     #1;
 
-    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 10.0, 10, "notifier", 4, 29, 90, 90, 119);
+    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1'b0, 4, 29, 90, 90, 119);
     $sh_start;
     #129;
     $sh_finish; $finish;

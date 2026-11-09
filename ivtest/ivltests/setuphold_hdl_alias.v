@@ -12,10 +12,10 @@ $shc_population("tb.p", 1);
 $shc_population("tb.h", 1);
 $shc_population("tb.s", 1);
 $shc_population("tb.z", 1);
-$shc_watch("tb.p", "setuphold", "A", "posedge", "A", "posedge", 10, 10, 6, 6, "notifier", 2, 100, 200);
-$shc_watch("tb.h", "setuphold", "A", "posedge", "A", "posedge", 0, 0, 6, 6, "notifier", 2, 100, 200);
-$shc_watch("tb.s", "setuphold", "A", "posedge", "A", "posedge", 10, 10, 0, 0, "notifier", 0);
-$shc_watch("tb.z", "setuphold", "A", "posedge", "A", "posedge", 0, 0, 0, 0, "notifier", 0);
-$shc_watch("tb.twoports", "setuphold", "C", "posedge", "D", "posedge", 10,10,6,6,"notifier",2,100,200);
+$shc_watch("tb.p", "setuphold", "A", "posedge", "A", "posedge", 10, 10, 6, 6, "notifier", 1'b0, 2, 100, 200);
+$shc_watch("tb.h", "setuphold", "A", "posedge", "A", "posedge", 0, 0, 6, 6, "notifier", 1'b0, 2, 100, 200);
+$shc_watch("tb.s", "setuphold", "A", "posedge", "A", "posedge", 10, 10, 0, 0, "notifier", 1'b0, 0);
+$shc_watch("tb.z", "setuphold", "A", "posedge", "A", "posedge", 0, 0, 0, 0, "notifier", 1'b0, 0);
+$shc_watch("tb.twoports", "setuphold", "C", "posedge", "D", "posedge", 10, 10, 6, 6, "notifier", 1'b0, 2, 100, 200);
 $shc_start; #249; $shc_finish; $finish; end
 endmodule

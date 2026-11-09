@@ -13,9 +13,9 @@ $shc_population("tb.negative_setup", 1);
 $shc_population("tb.negative_hold", 1);
 $shc_population("tb.overflow", 1);
 $shc_population("tb.valid", 1);
-$shc_watch("tb.negative_setup", "setuphold", "C", "posedge", "D", "any", 10, 10, 6, 6, "notifier", 1, 120);
-$shc_watch("tb.negative_hold", "setuphold", "C", "posedge", "D", "any", 10, 10, 6, 6, "notifier", 1, 120);
-$shc_watch("tb.overflow", "setuphold", "C", "posedge", "D", "any", 10, 10, 6, 6, "notifier", 1, 120);
-$shc_watch("tb.valid", "setuphold", "C", "posedge", "D", "any", 20, 20, 8, 8, "notifier", 2, 115, 120);
+$shc_watch("tb.negative_setup", "setuphold", "C", "posedge", "D", "any", 10, 10, 6, 6, "notifier", 1'b0, 1, 120);
+$shc_watch("tb.negative_hold", "setuphold", "C", "posedge", "D", "any", 10, 10, 6, 6, "notifier", 1'b0, 1, 120);
+$shc_watch("tb.overflow", "setuphold", "C", "posedge", "D", "any", 10, 10, 6, 6, "notifier", 1'b0, 1, 120);
+$shc_watch("tb.valid", "setuphold", "C", "posedge", "D", "any", 20, 20, 8, 8, "notifier", 1'b0, 2, 115, 120);
 $shc_start; #149; $shc_finish; $finish; end
 endmodule
