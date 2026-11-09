@@ -379,6 +379,7 @@ real_delay_assign		vvp_tests/real_delay_assign.json
 real_feedback			vvp_tests/real_feedback.json
 real_feedback_nan		vvp_tests/real_feedback_nan.json
 real_feedback_sfunc		vvp_tests/real_feedback_sfunc.json
+real_literal_roundtrip		vvp_tests/real_literal_roundtrip.json
 real_negative_zero		vvp_tests/real_negative_zero.json
 real_net_init			vvp_tests/real_net_init.json
 real_net_release		vvp_tests/real_net_release.json
