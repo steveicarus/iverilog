@@ -1066,3 +1066,7 @@ vlog95_hier_inputs	vvp_tests/vlog95_hier_inputs.json
 # Scope and non-scope CHECK cleanup dispatch.
 check_scope_cleanup	vvp_tests/check_scope_cleanup.json
 check_scope_cleanup_automatic	vvp_tests/check_scope_cleanup_automatic.json
+
+# Caller-specific input aliases must not specialize a reused module body.
+vlog95_port_alias_instance	vvp_tests/vlog95_port_alias_instance.json
+vlog95_port_alias_instance_nested	vvp_tests/vlog95_port_alias_instance_nested.json

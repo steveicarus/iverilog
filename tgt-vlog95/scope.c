@@ -273,6 +273,9 @@ static void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
       }
 }
 
+static ivl_signal_t get_port_from_nexus(const ivl_scope_t scope, ivl_nexus_t nex,
+                                      unsigned *word);
+
 static bool scope_is_unique(ivl_scope_t scope)
 {
       unsigned int count = ivl_scope_params(scope);
@@ -284,13 +287,35 @@ static bool scope_is_unique(ivl_scope_t scope)
 	    }
       }
 
+      /* A caller can tie independent input ports together. The emitted
+       * expressions then use this instance's shared nexus, so this body must
+       * not be reused for another instance with distinct inputs. */
+      count = ivl_scope_ports(scope);
+      for (unsigned idx = 0; idx < count; idx += 1) {
+            unsigned word;
+            ivl_signal_t port = get_port_from_nexus(scope,
+                                      ivl_scope_mod_port(scope, idx), &word);
+            if (!port || ivl_signal_port(port) != IVL_SIP_INPUT) continue;
+            for (unsigned other = 0; other < idx; other += 1) {
+                  unsigned other_word;
+                  ivl_signal_t previous = get_port_from_nexus(scope,
+                                ivl_scope_mod_port(scope, other), &other_word);
+                  if (!previous || ivl_signal_port(previous) != IVL_SIP_INPUT)
+                        continue;
+                  if (port != previous &&
+                      ivl_signal_nex(port, word) ==
+                      ivl_signal_nex(previous, other_word)) return false;
+            }
+      }
+
       return true;
 }
 
 static void emit_mangled_name(ivl_scope_t scope, unsigned root)
 {
-	/* If the module has non-local parameters and it's not a root module then it
-	 * may not be unique so we create a mangled name version instead. The
+	/* Parameter values or caller-specific input aliases may require a
+	 * specialized body. For non-root modules, use the existing instance
+	 * name mangling in both cases. The
 	 * mangled name is of the form:
 	 *   <module_name>[<full_instance_scope>]. */
       if (!root && !scope_is_unique(scope)) {
@@ -1053,8 +1078,8 @@ int emit_scope(ivl_scope_t scope, const ivl_scope_t parent)
 	      /* This is an instantiation. */
 	    if (parent) {
 		  assert(indent != 0);
-		    /* If the module has parameters then it may not be unique
-		     * so we create a mangled name version instead. */
+		    /* Parameters or caller-specific aliases can require
+		     * an instance-specific module definition. */
 		  fprintf(vlog_out, "\n%*c", indent, ' ');
 		  emit_mangled_name(scope, false);
 		  fprintf(vlog_out, " ");
@@ -1285,7 +1310,8 @@ int emit_scope(ivl_scope_t scope, const ivl_scope_t parent)
 		  emitting_scopes = 1;
 		  for (idx =0; idx < num_scopes_to_emit; idx += 1) {
 			ivl_scope_t scope_to_emit = scopes_to_emit[idx];
-			if (scope_has_been_emitted(scope_to_emit)) continue;
+			if (scope_is_unique(scope_to_emit) &&
+                            scope_has_been_emitted(scope_to_emit)) continue;
 			(void) emit_scope(scope_to_emit, 0);
 			  /* If we used a mangled name then the instance is
 			   * unique so don't add it to the list. */
