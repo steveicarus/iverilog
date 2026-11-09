@@ -6895,17 +6895,18 @@ static std::string ordinary_path_condition_key(Design*des, NetScope*scope,
             return key.str();
       }
 
-      if (binary->peek_opcode() == 'a') {
+      if (binary->peek_opcode() == 'a' || binary->peek_opcode() == 'o') {
             std::string left_text, right_text;
             std::string left = ordinary_path_condition_key(des, scope,
                                               binary->peek_left(), left_text);
             std::string right = ordinary_path_condition_key(des, scope,
                                               binary->peek_right(), right_text);
-            // AND leaves must be comparisons, not bare names or constants.
+            // Logical leaves must be comparisons, not bare names or constants.
             if (left.empty() || right.empty()
                 || left[0] != ' ' || right[0] != ' ') return {};
-            text = "(" + left_text + " && " + right_text + ")";
-            return " A" + left + right;
+            const bool is_or = binary->peek_opcode() == 'o';
+            text = "(" + left_text + (is_or ? " || " : " && ") + right_text + ")";
+            return (is_or ? " O" : " A") + left + right;
       }
 
       return {};
