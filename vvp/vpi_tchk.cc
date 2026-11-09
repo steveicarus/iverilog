@@ -23,7 +23,7 @@
 
 /* The supported case-equality qualifier has a small, standard expression
  * graph. It is descriptive metadata: timing evaluation still uses the
- * existing condition signal and wanted value in vvp_fun_tchk_two_event. */
+ * existing condition signal and wanted value in the timing-check functor. */
 class __vpiTchkCondition : public __vpiHandle {
     public:
       __vpiTchkCondition(vpiHandle signal, unsigned wanted)
@@ -102,8 +102,9 @@ __vpiTchkRefTerm::~__vpiTchkRefTerm()
 }
 
 __vpiTchkWidth::__vpiTchkWidth(__vpiScope* scope, unsigned file_idx,
-                               unsigned lineno, vvp_fun_tchk_width* fun)
-: reference_(nullptr), notifier_(nullptr), condition_(nullptr), scope_(scope),
+                               unsigned lineno, vvp_fun_tchk_width* fun, unsigned condition_form)
+: reference_(nullptr), notifier_(nullptr), condition_(nullptr),
+  condition_form_(condition_form), scope_(scope),
   file_idx_(file_idx),
   lineno_(lineno), fun_(fun), reference_term_(nullptr)
 {
@@ -133,7 +134,7 @@ vpiHandle __vpiTchkWidth::vpi_handle(int code)
             if (!reference_term_ && reference_)
                   reference_term_ = new __vpiTchkRefTerm(
                         fun_->start_edge_ == 1 ? vpiPosedge : vpiNegedge,
-                        reference_);
+                        reference_, condition_form_ == 3 ? nullptr : condition_, condition_form_);
             return reference_term_;
           case vpiTchkDataTerm: return nullptr;
           default: return nullptr;
@@ -169,8 +170,9 @@ void __vpiTchkWidth::vpi_put_delays(p_vpi_delay delays)
 }
 
 __vpiTchkPeriod::__vpiTchkPeriod(__vpiScope* scope, unsigned file_idx,
-                               unsigned lineno, vvp_fun_tchk_period* fun)
-: reference_(nullptr), notifier_(nullptr), condition_(nullptr), scope_(scope),
+                               unsigned lineno, vvp_fun_tchk_period* fun, unsigned condition_form)
+: reference_(nullptr), notifier_(nullptr), condition_(nullptr),
+  condition_form_(condition_form), scope_(scope),
   file_idx_(file_idx),
   lineno_(lineno), fun_(fun), reference_term_(nullptr)
 {
@@ -200,7 +202,7 @@ vpiHandle __vpiTchkPeriod::vpi_handle(int code)
             if (!reference_term_ && reference_)
                   reference_term_ = new __vpiTchkRefTerm(
                         fun_->reference_edge_ == 1 ? vpiPosedge : vpiNegedge,
-                        reference_);
+                        reference_, condition_form_ == 3 ? nullptr : condition_, condition_form_);
             return reference_term_;
           case vpiTchkDataTerm: return nullptr;
           default: return nullptr;

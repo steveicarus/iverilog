@@ -84,11 +84,10 @@ receives a ``specify`` block. The translated file must also be compiled with
 Scalar ``$period`` checks are emitted in the same way, with
 their selected edge, elaborated limit, and optional notifier.
 
-For either check, an admitted local scalar qualifier is preserved after ``&&&``:
-``signal``, ``signal === 1'b0`` or ``signal === 1'b1``. The translator retains the
-source form and escaped signal name, rather than synthesizing a gated reference
-or omitting the qualifier. Recompilation with VVP therefore uses the same
-qualified-history behavior as direct compilation.
+For either check the translator preserves the local scalar qualifier after
+``&&&``, including its identifier, comparison operator and constant. An SDF
+WIDTH or PERIOD event with an explicit bare or case-equality condition can
+therefore select the corresponding declaration after recompilation with VVP.
 
 Known Issues and Limitations
 ----------------------------

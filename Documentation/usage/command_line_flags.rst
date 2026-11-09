@@ -114,20 +114,26 @@ These flags affect the general behavior of the compiler.
     violates the check; equality is safe. Standard ``$sdf_annotate`` can update
     the matching PERIOD limit independently of WIDTH checks on the same signal.
 
-    The reference event may include ``&&&`` followed by an unselected local
-    scalar signal, ``signal === 1'b0`` or ``signal === 1'b1``. A bare signal
-    qualifies only when it is one; case equality requires the specified binary
-    value. X and Z do not qualify. The implementation samples this condition at
+    A WIDTH or PERIOD reference event can have a scalar HDL qualifier after
+    ``&&&``. Supported forms are a local signal, its bitwise complement, or a
+    comparison of that signal with ``1'b0`` or ``1'b1`` using ``==``, ``!=``,
+    ``===`` or ``!==``. With an X/Z signal, logical comparisons and case
+    inequality enable the check. Bare, complemented and case-equality
+    qualifiers require a definite matching bit. The condition is sampled at
     each physical reference transition without generating events from condition
     changes. Masked events do not change timing history. WIDTH applies the
     qualifier to both its declared opening edge and its implicit opposite closing
     edge, retaining the opening timestamp after a close. PERIOD compares and
     refreshes history only on qualified selected edges.
 
-    A bare SDF WIDTH/PERIOD entry updates every matching declaration regardless
-    of its condition's current value. Conditional SDF timing-event expressions
-    remain unsupported. Other HDL qualifier expressions, vector references and
-    hierarchical references are diagnosed as unsupported. WIDTH also accepts
+    A bare SDF WIDTH/PERIOD event matches every eligible declaration on the
+    selected reference and edge. An explicit ``COND`` matches the declared
+    local scalar signal or its case equality with ``1'b0`` or ``1'b1``,
+    independently of the signal value during annotation. Recompile HDL to
+    retain this source identity in VVP. Older records and the other admitted
+    HDL qualifier forms participate in wildcard annotation and have no
+    ``vpiCondition`` expression handle on the pulse reference terminal.
+    Vector and hierarchical HDL references are diagnosed as unsupported. WIDTH also accepts
     unconditional lists equivalent to ``posedge`` or ``negedge``. VVP runs
     these checks and vlog95 emits them. The stub target displays WIDTH for
     debugging. SDF annotation refusals are reported as

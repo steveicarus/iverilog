@@ -657,7 +657,7 @@ class __vpiTchkRefTerm : public __vpiHandle {
 class __vpiTchkWidth : public __vpiHandle {
     public:
       __vpiTchkWidth(__vpiScope* scope, unsigned file_idx, unsigned lineno,
-                     vvp_fun_tchk_width* fun);
+                     vvp_fun_tchk_width* fun, unsigned condition_form);
       ~__vpiTchkWidth();
       int get_type_code(void) const override { return vpiTchk; }
       int vpi_get(int code) override;
@@ -668,6 +668,8 @@ class __vpiTchkWidth : public __vpiHandle {
       vpiHandle notifier_;
       // Borrowed from the declaring scope, like reference_ and notifier_.
       vpiHandle condition_;
+      // 0/1 denote case equality, 2 a bare signal, 3 unavailable metadata.
+      unsigned condition_form_;
     private:
       __vpiScope* scope_;
       unsigned file_idx_;
@@ -680,7 +682,7 @@ class __vpiTchkWidth : public __vpiHandle {
 class __vpiTchkPeriod : public __vpiHandle {
     public:
       __vpiTchkPeriod(__vpiScope* scope, unsigned file_idx, unsigned lineno,
-                     vvp_fun_tchk_period* fun);
+                     vvp_fun_tchk_period* fun, unsigned condition_form);
       ~__vpiTchkPeriod();
       int get_type_code(void) const override { return vpiTchk; }
       int vpi_get(int code) override;
@@ -691,6 +693,8 @@ class __vpiTchkPeriod : public __vpiHandle {
       vpiHandle notifier_;
       // Borrowed from the declaring scope, like reference_ and notifier_.
       vpiHandle condition_;
+      // 0/1 denote case equality, 2 a bare signal, 3 unavailable metadata.
+      unsigned condition_form_;
     private:
       __vpiScope* scope_;
       unsigned file_idx_;

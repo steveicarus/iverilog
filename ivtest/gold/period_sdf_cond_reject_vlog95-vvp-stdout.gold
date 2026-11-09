@@ -1,0 +1,14 @@
+SDF WARNING: ivltests/period_sdf_cond_reject.sdf:3: conditional or hierarchical PERIOD event not supported.
+SDF WARNING: ivltests/period_sdf_cond_reject.sdf:4: PERIOD COND uses unsupported logical '!'. It cannot match a standard SystemVerilog specify timing-check condition.
+SDF WARNING: ivltests/period_sdf_cond_reject.sdf:5: conditional or hierarchical PERIOD event not supported.
+SDF WARNING: ivltests/period_sdf_cond_reject.sdf:6: conditional or hierarchical PERIOD event not supported.
+SDF WARNING: ivltests/period_sdf_cond_reject.sdf:7: conditional or hierarchical PERIOD event not supported.
+SDF ERROR: ivltests/period_sdf_cond_reject.sdf:8: Unable to match PERIOD posedge C in tb.u
+SDF ERROR: ivltests/period_sdf_cond_reject.sdf:9: Unable to match PERIOD posedge C in tb.u
+SDF ERROR: ivltests/period_sdf_cond_reject.sdf:10: Unable to match PERIOD posedge C in tb.u
+SDF ERROR: ivltests/period_sdf_cond_reject.sdf:11: Unable to match PERIOD negedge C in tb.u
+Timing violation: $period at 130 (module units), period=30 limit=40, work/vlog95.v:67, scope=tb.valid
+PULSE_CHANGE tb.valid.n 130 1
+PULSE_TCHK tb.valid.n 130
+PASSED
+work/vlog95.v:36: $finish called at 160 (1ps)
