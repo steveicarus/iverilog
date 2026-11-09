@@ -19,10 +19,10 @@ module tb;
  #12 CA=0;RA=1;#5 CA=1;#1 EA=0;#2 RA=0;#1 EA=1;#1 CA=0;#5 CA=1;end
  initial begin #1;
 $rrc_population("tb.n", 1);
-$rrc_watch("tb.n", "recrem", "R", "negedge", "C", "negedge", 10, 10, 6, 6, "notifier", 2, 105, 405);
+$rrc_watch("tb.n", "recrem", "R", "negedge", "C", "negedge", 10, 10, 6, 6, "notifier", 1'b0, 2, 105, 405);
 $rrc_population("tb.a", 1);
-$rrc_watch("tb.a", "recrem", "R", "any", "C", "posedge", 10, 10, 6, 6, "notifier", 3, 105, 108, 125);
+$rrc_watch("tb.a", "recrem", "R", "any", "C", "posedge", 10, 10, 6, 6, "notifier", 1'b0, 3, 105, 108, 125);
 $rrc_population("tb.nmask", 1);
-$rrc_watch("tb.nmask", "recrem", "R", "negedge", "C", "negedge", 10, 10, 6, 6, "notifier", 1, 125);
+$rrc_watch("tb.nmask", "recrem", "R", "negedge", "C", "negedge", 10, 10, 6, 6, "notifier", 1'b0, 1, 125);
  $rrc_start; #449; $rrc_finish; $finish; end
 endmodule

@@ -11,14 +11,14 @@ module tb;
  #70 RE=0;CE=1;#10 A=1;#20 A=0;#70 RE=1;#10 A=1;end
  initial begin #1;
 $rrc_population("tb.p", 1);
-$rrc_watch("tb.p", "recrem", "A", "posedge", "A", "posedge", 10, 10, 6, 6, "notifier", 2, 100, 400);
+$rrc_watch("tb.p", "recrem", "A", "posedge", "A", "posedge", 10, 10, 6, 6, "notifier", 1'b0, 2, 100, 400);
 $rrc_population("tb.rz", 1);
-$rrc_watch("tb.rz", "recrem", "A", "posedge", "A", "posedge", 10, 10, 0, 0, "notifier", 2, 100, 400);
+$rrc_watch("tb.rz", "recrem", "A", "posedge", "A", "posedge", 10, 10, 0, 0, "notifier", 1'b0, 2, 100, 400);
 $rrc_population("tb.mz", 1);
-$rrc_watch("tb.mz", "recrem", "A", "posedge", "A", "posedge", 0, 0, 6, 6, "notifier", 0);
+$rrc_watch("tb.mz", "recrem", "A", "posedge", "A", "posedge", 0, 0, 6, 6, "notifier", 1'b0, 0);
 $rrc_population("tb.zz", 1);
-$rrc_watch("tb.zz", "recrem", "A", "posedge", "A", "posedge", 0, 0, 0, 0, "notifier", 0);
+$rrc_watch("tb.zz", "recrem", "A", "posedge", "A", "posedge", 0, 0, 0, 0, "notifier", 1'b0, 0);
 $rrc_population("tb.nn", 1);
-$rrc_watch("tb.nn", "recrem", "A", "posedge", "A", "posedge", 10, 10, 6, 6, "notifier", 1, 100);
+$rrc_watch("tb.nn", "recrem", "A", "posedge", "A", "posedge", 10, 10, 6, 6, "notifier", 1'b0, 1, 100);
  $rrc_start; #449; $rrc_finish; $finish; end
 endmodule

@@ -21,9 +21,9 @@ module tb;
   initial begin
     #1;
 
-    $rr_watch("tb.u", "recovery", "R", "any", "C", "posedge", 10.0, 10, "ns", 2, 55, 70);
+    $rr_watch("tb.u", "recovery", "R", "any", "C", "posedge", 10.0, 10, "ns", 1'b0, 2, 55, 70);
 
-    $rr_watch("tb.u", "removal", "R", "any", "C", "posedge", 10.0, 10, "nh", 1, 61);
+    $rr_watch("tb.u", "removal", "R", "any", "C", "posedge", 10.0, 10, "nh", 1'b0, 1, 61);
 
     $rr_start;
     #199;

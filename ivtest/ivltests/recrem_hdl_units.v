@@ -10,7 +10,7 @@ initial begin #1;
 
 $rrc_population("tb.p", 1);
 $rrc_population("tb.z", 1);
-$rrc_watch("tb.p", "recrem", "D", "any", "C", "posedge", 0.02, 20, 0.03, 30, "notifier", 2, 119, 148);
-$rrc_watch("tb.z", "recrem", "D", "any", "C", "posedge", 0, 0, 0, 0, "notifier", 0);
+$rrc_watch("tb.p", "recrem", "D", "any", "C", "posedge", 0.02, 20, 0.03, 30, "notifier", 1'b0, 2, 119, 148);
+$rrc_watch("tb.z", "recrem", "D", "any", "C", "posedge", 0, 0, 0, 0, "notifier", 1'b0, 0);
 $rrc_start; #199; $rrc_finish; $finish; end
 endmodule

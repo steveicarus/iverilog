@@ -11,6 +11,6 @@ module tb;
  #5 C=0;#10 R=0;#80 R=1;#5 C=1;end
  initial begin #1;
 $rrc_population("tb.u", 1);
-$rrc_watch("tb.u", "recrem", "R", "posedge", "C", "posedge", 10, 10, 6, 6, "notifier", 2, 103, 205);
+$rrc_watch("tb.u", "recrem", "R", "posedge", "C", "posedge", 10, 10, 6, 6, "notifier", 1'b0, 2, 103, 205);
  $rrc_start; #249; $rrc_finish; $finish; end
 endmodule

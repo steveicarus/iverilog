@@ -23,7 +23,7 @@ module tb;
   end
   initial begin
     #1;
-    $rr_watch("tb.u", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 3, 29, 200, 240);
+    $rr_watch("tb.u", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'b0, 3, 29, 200, 240);
     $rr_start;#259;$rr_finish;$finish;
   end
 endmodule

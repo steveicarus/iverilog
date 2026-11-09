@@ -16,8 +16,8 @@ module tb;
   end
   initial begin
     #1;
-    $sh_watch("tb.renamed_instance", "setup", "ref.pin", "negedge", "data\\pin", "any", 10.0, 10, "notify.pin", 1, 105);
-    $sh_watch("tb.renamed_instance", "hold", "ref.pin", "negedge", "data\\pin", "any", 10.0, 10, "notify.pin", 1, 108);
+    $sh_watch("tb.renamed_instance", "setup", "ref.pin", "negedge", "data\\pin", "any", 10.0, 10, "notify.pin", 1'b0, 1, 105);
+    $sh_watch("tb.renamed_instance", "hold", "ref.pin", "negedge", "data\\pin", "any", 10.0, 10, "notify.pin", 1'b0, 1, 108);
     $sh_start;
     #199;
     $sh_finish; $finish;

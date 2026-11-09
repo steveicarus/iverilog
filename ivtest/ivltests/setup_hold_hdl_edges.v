@@ -44,10 +44,11 @@ module tb;
   initial begin
     #1;
 
-    $sh_watch("tb.sn", "setup", "C", "negedge", "D", "posedge", 10.0, 10, "notifier", 1, 29);
-    $sh_watch("tb.hn", "hold", "C", "negedge", "D", "negedge", 10.0, 10, "notifier", 1, 30);
-    $sh_watch("tb.sa", "setup", "C", "any", "D", "any", 10.0, 10, "notifier", 1, 29);
-    $sh_watch("tb.ha", "hold", "C", "any", "D", "any", 10.0, 10, "notifier", 3, 30, 45, 85);
+    $sh_watch("tb.sn", "setup", "C", "negedge", "D", "posedge", 10.0, 10, "notifier", 1'b0, 1, 29);
+    $sh_watch("tb.hn", "hold", "C", "negedge", "D", "negedge", 10.0, 10, "notifier", 1'b0, 1, 30);
+    $sh_watch("tb.sa", "setup", "C", "any", "D", "any", 10.0, 10, "notifier", 1'b0, 1, 29);
+    // C changes before D at t0: any-edge HOLD sees a zero-length interval.
+    $sh_watch("tb.ha", "hold", "C", "any", "D", "any", 10.0, 10, "notifier", 1'b0, 4, 0, 30, 45, 85);
     $sh_start;
     #99;
     $sh_finish; $finish;

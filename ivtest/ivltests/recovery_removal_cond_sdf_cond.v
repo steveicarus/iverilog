@@ -29,13 +29,13 @@ module tb;
     #1;
     $sdf_annotate("ivltests/recovery_removal_cond_reject.sdf",tb);
 
-    $rr_watch("tb.c", "recovery", "R", "any", "C", "posedge", 10.0, 10, "ns", 1, 205);
+    $rr_watch("tb.c", "recovery", "R", "any", "C", "posedge", 10.0, 10, "ns", 1'b0, 1, 205);
 
-    $rr_watch("tb.c", "removal", "R", "any", "C", "posedge", 10.0, 10, "nh", 1, 208);
+    $rr_watch("tb.c", "removal", "R", "any", "C", "posedge", 10.0, 10, "nh", 1'b0, 1, 208);
 
-    $rr_watch("tb.u", "recovery", "R", "any", "C", "posedge", 10.0, 10, "ns", 1, 205);
+    $rr_watch("tb.u", "recovery", "R", "any", "C", "posedge", 10.0, 10, "ns", 1'b0, 1, 205);
 
-    $rr_watch("tb.u", "removal", "R", "any", "C", "posedge", 10.0, 10, "nh", 1, 208);
+    $rr_watch("tb.u", "removal", "R", "any", "C", "posedge", 10.0, 10, "nh", 1'b0, 1, 208);
 
     $rr_start;
     #229;

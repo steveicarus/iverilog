@@ -13,8 +13,8 @@ initial begin #1;
 $rrc_population("tb.data0", 1);
 $rrc_population("tb.ref0", 1);
 $rrc_population("tb.missing", 1);
-$rrc_watch("tb.data0", "recrem", "D", "posedge", "C", "posedge", 10, 10, 10, 10, "notifier", 1, 9);
-$rrc_watch("tb.ref0", "recrem", "D", "posedge", "C", "posedge", 10, 10, 10, 10, "notifier", 1, 9);
-$rrc_watch("tb.missing", "recrem", "D", "posedge", "C", "posedge", 10, 10, 10, 10, "notifier", 1, 109);
+$rrc_watch("tb.data0", "recrem", "D", "posedge", "C", "posedge", 10, 10, 10, 10, "notifier", 1'b0, 1, 9);
+$rrc_watch("tb.ref0", "recrem", "D", "posedge", "C", "posedge", 10, 10, 10, 10, "notifier", 1'b0, 1, 9);
+$rrc_watch("tb.missing", "recrem", "D", "posedge", "C", "posedge", 10, 10, 10, 10, "notifier", 1'b0, 1, 109);
 $rrc_start; #139; $rrc_finish; $finish; end
 endmodule

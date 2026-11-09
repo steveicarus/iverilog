@@ -30,10 +30,10 @@ module tb;
   end
   initial begin
     #1;
-    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 10.0, 10, "ns", 1, 85);
-    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 10.0, 10, "nh", 3, 20, 60, 80);
-    $sh_watch("tb.z", "setup", "C", "posedge", "D", "any", 0.0, 0, "ns", 0);
-    $sh_watch("tb.z", "hold", "C", "posedge", "D", "any", 0.0, 0, "nh", 0);
+    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 10.0, 10, "ns", 1'b0, 1, 85);
+    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 10.0, 10, "nh", 1'b0, 3, 20, 60, 80);
+    $sh_watch("tb.z", "setup", "C", "posedge", "D", "any", 0.0, 0, "ns", 1'b0, 0);
+    $sh_watch("tb.z", "hold", "C", "posedge", "D", "any", 0.0, 0, "nh", 1'b0, 0);
     $sh_start;
     #199;
     $sh_finish; $finish;

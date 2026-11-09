@@ -40,17 +40,17 @@ module tb;
   initial begin
     #1;
 
-    $rr_watch("tb.b", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 1, 65);
+    $rr_watch("tb.b", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 1'b0, 1, 65);
 
-    $rr_watch("tb.b", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 1, 68);
+    $rr_watch("tb.b", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 1'b0, 1, 68);
 
-    $rr_watch("tb.z", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 1, 25);
+    $rr_watch("tb.z", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 1'b0, 1, 25);
 
-    $rr_watch("tb.z", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 1, 28);
+    $rr_watch("tb.z", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 1'b0, 1, 28);
 
-    $rr_watch("tb.o", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 1, 65);
+    $rr_watch("tb.o", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 1'b0, 1, 65);
 
-    $rr_watch("tb.o", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 1, 68);
+    $rr_watch("tb.o", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 1'b0, 1, 68);
 
     $rr_start;
     #199;

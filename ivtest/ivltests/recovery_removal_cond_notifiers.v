@@ -33,17 +33,17 @@ module tb;
   initial begin
     #1;
 
-    $rr_watch("tb.shared", "recovery", "R", "any", "C", "posedge", 10.0, 10, "n", 1, 105);
+    $rr_watch("tb.shared", "recovery", "R", "any", "C", "posedge", 10.0, 10, "n", 1'b0, 1, 105);
 
-    $rr_watch("tb.shared", "removal", "R", "any", "C", "posedge", 10.0, 10, "n", 1, 108);
+    $rr_watch("tb.shared", "removal", "R", "any", "C", "posedge", 10.0, 10, "n", 1'b0, 1, 108);
 
-    $rr_watch("tb.omitted", "recovery", "R", "any", "C", "posedge", 10.0, 10, "", 1, 105);
+    $rr_watch("tb.omitted", "recovery", "R", "any", "C", "posedge", 10.0, 10, "", 1'b0, 1, 105);
 
-    $rr_watch("tb.omitted", "removal", "R", "any", "C", "posedge", 10.0, 10, "", 1, 108);
+    $rr_watch("tb.omitted", "removal", "R", "any", "C", "posedge", 10.0, 10, "", 1'b0, 1, 108);
 
-    $rr_watch("tb.highz", "recovery", "R", "any", "C", "posedge", 10.0, 10, "n", 1, 105);
+    $rr_watch("tb.highz", "recovery", "R", "any", "C", "posedge", 10.0, 10, "n", 1'bz, 1, 105);
 
-    $rr_watch("tb.highz", "removal", "R", "any", "C", "posedge", 10.0, 10, "n", 1, 108);
+    $rr_watch("tb.highz", "removal", "R", "any", "C", "posedge", 10.0, 10, "n", 1'bz, 1, 108);
 
     $rr_start;
     #199;

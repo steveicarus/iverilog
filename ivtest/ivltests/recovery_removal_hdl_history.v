@@ -22,10 +22,10 @@ module tb;
   initial begin mrz=0;mcz=1;#3 mrz=1;#1 mrz=0;#1 mrz=1;#1 mrz=0;#14 mrz=1;end
   initial begin mrl=0;#20 mrl=1;#1 mrl=0;#79 mcl=1;#9 mrl=1;end
   initial begin #1;
-    $rr_watch("tb.rz_u", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 2, 3, 5);
-    $rr_watch("tb.rl_u", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1, 109);
-    $rr_watch("tb.mz_u", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 2, 3, 5);
-    $rr_watch("tb.ml_u", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1, 109);
+    $rr_watch("tb.rz_u", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'b0, 2, 3, 5);
+    $rr_watch("tb.rl_u", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'b0, 1, 109);
+    $rr_watch("tb.mz_u", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'b0, 2, 3, 5);
+    $rr_watch("tb.ml_u", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'b0, 1, 109);
     $rr_start;#139;$rr_finish;$finish;
   end
 endmodule

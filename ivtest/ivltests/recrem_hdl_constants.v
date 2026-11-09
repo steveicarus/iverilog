@@ -10,6 +10,6 @@ module tb;reg C,D;rrc_const u(C,D);
 initial begin #1;
 
 $rrc_population("tb.u", 1);
-$rrc_watch("tb.u", "recrem", "D", "posedge", "C", "posedge", 10, 10, 6, 6, "notifier", 1, 109);
+$rrc_watch("tb.u", "recrem", "D", "posedge", "C", "posedge", 10, 10, 6, 6, "notifier", 1'b0, 1, 109);
 $rrc_start; #139; $rrc_finish; $finish; end
 endmodule

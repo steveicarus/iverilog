@@ -46,19 +46,19 @@ module tb;
   initial begin
     #1;
 
-    $rr_watch("tb.joined", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 2, 40, 80);
+    $rr_watch("tb.joined", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 1'b0, 2, 40, 80);
 
-    $rr_watch("tb.joined", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 0);
+    $rr_watch("tb.joined", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 1'b0, 0);
 
-    $rr_watch("tb.roles", "recovery", "R", "any", "C", "posedge", 10.0, 10, "ns", 1, 56);
+    $rr_watch("tb.roles", "recovery", "R", "any", "C", "posedge", 10.0, 10, "ns", 1'b0, 1, 56);
 
-    $rr_watch("tb.roles", "removal", "R", "any", "C", "posedge", 10.0, 10, "nh", 3, 28, 48, 50);
+    $rr_watch("tb.roles", "removal", "R", "any", "C", "posedge", 10.0, 10, "nh", 1'b0, 3, 28, 48, 50);
 
-    $rr_watch("tb.split", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 2, 25, 40);
+    $rr_watch("tb.split", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 1'b0, 2, 25, 40);
 
-    $rr_watch("tb.split", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 1, 28);
+    $rr_watch("tb.split", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 1'b0, 1, 28);
 
-    $rr_watch("tb.feedback", "recovery", "C", "posedge", "C", "posedge", 10.0, 10, "n", 1, 20);
+    $rr_watch("tb.feedback", "recovery", "C", "posedge", "C", "posedge", 10.0, 10, "n", 1'b1, 1, 20);
 
     $rr_start;
     #199;

@@ -16,12 +16,12 @@ module tb;
   end
   initial begin
     #1;
-    $sh_watch("tb.s_any", "setup", "C", "posedge", "D", "any", 10.0, 10, "ns", 2, 25, 45);
-    $sh_watch("tb.h_any", "hold", "C", "any", "D", "posedge", 10.0, 10, "nh", 2, 25, 45);
-    $sh_watch("tb.s_pos", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 1, 45);
-    $sh_watch("tb.h_pos", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 1, 45);
-    $sh_watch("tb.s_neg", "setup", "C", "posedge", "D", "negedge", 10.0, 10, "ns", 1, 25);
-    $sh_watch("tb.h_neg", "hold", "C", "negedge", "D", "posedge", 10.0, 10, "nh", 1, 25);
+    $sh_watch("tb.s_any", "setup", "C", "posedge", "D", "any", 10.0, 10, "ns", 1'b0, 2, 25, 45);
+    $sh_watch("tb.h_any", "hold", "C", "any", "D", "posedge", 10.0, 10, "nh", 1'b0, 2, 25, 45);
+    $sh_watch("tb.s_pos", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 1'b0, 1, 45);
+    $sh_watch("tb.h_pos", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 1'b0, 1, 45);
+    $sh_watch("tb.s_neg", "setup", "C", "posedge", "D", "negedge", 10.0, 10, "ns", 1'b0, 1, 25);
+    $sh_watch("tb.h_neg", "hold", "C", "negedge", "D", "posedge", 10.0, 10, "nh", 1'b0, 1, 25);
     $sh_start;
     #199;
     $sh_finish; $finish;

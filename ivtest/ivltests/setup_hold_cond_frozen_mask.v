@@ -20,8 +20,8 @@ module tb;
   end
   initial begin
     #1;
-    $sh_watch("tb.u", "setup", "C", "posedge", "D", "posedge", 144.0, 144, "nr", 1, 3243);
-    $sh_watch("tb.u", "setup", "C", "posedge", "D", "negedge", 173.0, 173, "nf", 0);
+    $sh_watch("tb.u", "setup", "C", "posedge", "D", "posedge", 144.0, 144, "nr", 1'b0, 1, 3243);
+    $sh_watch("tb.u", "setup", "C", "posedge", "D", "negedge", 173.0, 173, "nf", 1'b0, 0);
     $sh_start;
     #6999;
     $sh_finish; $finish;
