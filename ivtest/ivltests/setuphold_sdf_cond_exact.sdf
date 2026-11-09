@@ -1,0 +1,10 @@
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
+ (CELL (CELLTYPE "setuphold_cond_exact") (INSTANCE first) (TIMINGCHECK
+  (SETUP (COND F === 1'b0 D) (COND E (posedge C)) (17:17:17))))
+ (CELL (CELLTYPE "setuphold_cond_exact") (INSTANCE second) (TIMINGCHECK
+  (HOLD (COND F === 1'b0 D) (COND E (posedge C)) (19:19:19))))
+ (CELL (CELLTYPE "setuphold_cond_exact") (INSTANCE omit_first) (TIMINGCHECK
+  (SETUPHOLD (COND F === 1'b0 D) (COND E (posedge C)) () (23:23:23))))
+ (CELL (CELLTYPE "setuphold_cond_exact") (INSTANCE omit_second) (TIMINGCHECK
+  (SETUPHOLD (COND F === 1'b0 D) (COND E (posedge C)) (29:29:29) ())))
+)
