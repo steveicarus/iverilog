@@ -1805,7 +1805,6 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 	// unconnected port.
 
       for (unsigned idx = 0 ;  idx < pins.size() ;  idx += 1) {
-	    bool unconnected_port = false;
 	    bool using_default = false;
 
 	    perm_string port_name = rmod->get_port_name(idx);
@@ -1828,47 +1827,13 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 		  }
 	    }
 
-	      // Skip unconnected module ports.
-	    if (pins[idx] == 0) {
-
-		  if (pins_fromwc[idx]) {
-			cerr << get_fileline() << ": error: Wildcard named "
-			        "port connection (.*) did not find a matching "
-			        "identifier for port " << (idx+1) << " ("
-			     << port_name << ")." << endl;
-			des->errors += 1;
-			return;
-		  }
-
-		    // We need this information to support the
-		    // unconnected_drive directive and for a
-		    // unconnected input warning when asked for.
-		  vector<PEIdent*> mport = rmod->get_port(idx);
-		  if (mport.empty()) continue;
-
-		  perm_string pname = peek_tail_name(mport[0]->path().name);
-
-		  NetNet*tmp = instance[0]->find_signal(pname);
-
-		    // Handle the error case where there is no internal
-		    // signal connected to the port.
-		  if (!tmp) continue;
-		  ivl_assert(*this, tmp);
-
-		  if (tmp->port_type() == NetNet::PINPUT) {
-			  // If we have an unconnected input convert it
-			  // as needed if an unconnected_drive directive
-			  // was given. This only works for tri or wire!
-			apply_unconnected_drive(des, *this, tmp,
-						rmod->uc_drive);
-
-			  // Print a warning for an unconnected input.
-			if (warn_portbinding) {
-			      warn_dangling_input_port(*this, rmod, idx,
-						       port_name);
-			}
-		  }
-		  unconnected_port = true;
+	    if (pins[idx] == nullptr && pins_fromwc[idx]) {
+		  cerr << get_fileline() << ": error: Wildcard named "
+		          "port connection (.*) did not find a matching "
+		          "identifier for port " << (idx+1) << " ("
+		       << port_name << ")." << endl;
+		  des->errors += 1;
+		  return;
 	    }
 
 	      // Inside the module, the port connects zero or more signals
@@ -1925,7 +1890,26 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 	      // If I find that the port is unconnected inside the
 	      // module, then there is nothing to connect. Skip the
 	      // argument.
-	    if ((prts_vector_width == 0) || unconnected_port) {
+	    if (prts_vector_width == 0) {
+		  continue;
+	    }
+
+	    if (pins[idx] == nullptr) {
+		  bool has_input = false;
+		  for (auto*port : prts) {
+			if (port == nullptr ||
+			    port->port_type() != NetNet::PINPUT) {
+			      continue;
+			}
+			has_input = true;
+			apply_unconnected_drive(des, *this, port,
+						rmod->uc_drive);
+		  }
+
+		  if (has_input && warn_portbinding) {
+			warn_dangling_input_port(*this, rmod, idx,
+						 port_name);
+		  }
 		  continue;
 	    }
 
@@ -1934,8 +1918,9 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 	      // even multiple of the instance count.
 	    ivl_assert(*this, prts_vector_width % instance.size() == 0);
 
-	    if (!prts.empty()) {
-		  coerce_port_direction(des, scope, prts[0], pins[idx]);
+	    for (auto*port : prts) {
+		  if (port == nullptr) continue;
+		  coerce_port_direction(des, scope, port, pins[idx]);
 	    }
 
 	      // Elaborate the expression that connects to the
