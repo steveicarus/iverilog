@@ -2,6 +2,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  * Reuse the callback/limit oracle; additionally inspect the standard
  * terminal-condition relationship without evaluating it to choose a check. */
+/* Preserve the Windows export before renaming the included startup table. */
+#include <vpi_user.h>
 #define vlog_startup_routines inherited_startup_routines
 #include "setup_hold_audit.c"
 #undef vlog_startup_routines
