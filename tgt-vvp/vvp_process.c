@@ -623,12 +623,92 @@ static int show_stmt_block_named(ivl_statement_t net, ivl_scope_t scope)
 }
 
 
+/* Handle a case statement whose selector is a string.
+   Evaluate the selector once into the string stack, then %dup/str
+   before each guard so %cmp/str (which consumes both operands) leaves
+   the original copy in place for the next comparison.  Discard the
+   surviving copy with %pop/str 1 before entering any arm. */
+static int show_stmt_case_str(ivl_statement_t net, ivl_scope_t sscope)
+{
+      int rc = 0;
+      ivl_expr_t expr = ivl_stmt_cond_expr(net);
+      unsigned count = ivl_stmt_case_count(net);
+
+      unsigned local_base = local_count;
+
+      unsigned idx, default_case;
+
+      show_stmt_file_line(net, "Case statement.");
+
+	/* Build the selector string once on the top of the string stack.
+	   All comparisons will dup this value rather than re-evaluate. */
+      draw_eval_string(expr);
+
+      local_count += count + 1;
+
+      default_case = count;
+
+      for (idx = 0 ;  idx < count ;  idx += 1) {
+	    ivl_expr_t cex = ivl_stmt_case_expr(net, idx);
+
+	    if (cex == 0) {
+		  default_case = idx;
+		  continue;
+	    }
+
+	      /* Duplicate the selector, push the guard, compare.
+		 %cmp/str pops both and sets flag 4 on equality, leaving
+		 the original selector copy ready for the next iteration. */
+	    fprintf(vvp_out, "    %%dup/str;\n");
+	    draw_eval_string(cex);
+	    fprintf(vvp_out, "    %%cmp/str;\n");
+	    fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n",
+		    thread_count, local_base+idx);
+      }
+
+	/* Discard the selector before executing the default arm.  A break
+	   or continue inside the arm may bypass the end of the case, so
+	   we must pop here rather than relying on fall-through. */
+      fprintf(vvp_out, "    %%pop/str 1;\n");
+
+      if (default_case < count) {
+	    ivl_statement_t cst = ivl_stmt_case_stmt(net, default_case);
+	    rc += show_statement(cst, sscope);
+      }
+
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count,
+	      local_base+count);
+
+      for (idx = 0 ;  idx < count ;  idx += 1) {
+	    ivl_statement_t cst = ivl_stmt_case_stmt(net, idx);
+
+	    if (idx == default_case)
+		  continue;
+
+	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_base+idx);
+	    fprintf(vvp_out, "    %%pop/str 1;\n");
+	    rc += show_statement(cst, sscope);
+
+	    fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count,
+		    local_base+count);
+      }
+
+      fprintf(vvp_out, "T_%u.%u ;\n",  thread_count, local_base+count);
+
+      return rc;
+}
+
+
 static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
       ivl_case_quality_t qual = ivl_stmt_case_quality(net);
       ivl_expr_t expr = ivl_stmt_cond_expr(net);
       unsigned count = ivl_stmt_case_count(net);
+
+	/* String case selector: use dedicated string comparison path. */
+      if (ivl_expr_value(expr) == IVL_VT_STRING)
+	    return show_stmt_case_str(net, sscope);
 
       unsigned local_base = local_count;
 
