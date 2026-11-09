@@ -88,5 +88,10 @@ extern void sdf_two_event_limits(int check_type,
                                   struct port_with_edge_s second,
                                   struct sdf_delay_s limit, int lineno);
 
+extern void sdf_recrem_limits(struct port_with_edge_s reference,
+                              struct port_with_edge_s data,
+                              struct sdf_delay_s recovery,
+                              struct sdf_delay_s removal, int lineno);
+
 #endif /* IVL_sdf_priv_h */
 

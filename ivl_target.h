@@ -175,6 +175,7 @@ typedef struct ivl_design_s   *ivl_design_t;
 typedef _CLASS ivl_discipline_s*ivl_discipline_t;
 typedef const _CLASS netenum_t*ivl_enumtype_t;
 typedef struct ivl_event_s    *ivl_event_t;
+typedef struct ivl_recrem_s *ivl_recrem_t;
 typedef struct ivl_width_s    *ivl_width_t;
 typedef struct ivl_setup_s    *ivl_setup_t;
 typedef struct ivl_hold_s    *ivl_hold_t;
@@ -1969,6 +1970,21 @@ extern int ivl_removal_data_edge(ivl_removal_t check);
 extern double ivl_removal_limit(ivl_removal_t check);
 extern const char*ivl_removal_file(ivl_removal_t check);
 extern unsigned ivl_removal_lineno(ivl_removal_t check);
+
+/* Combined RECREM: reference is control, data is clock. Limits use declaring
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+extern unsigned ivl_scope_recrems(ivl_scope_t net);
+extern ivl_recrem_t ivl_scope_recrem(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_recrem_scope(ivl_recrem_t check);
+extern ivl_signal_t ivl_recrem_reference(ivl_recrem_t check);
+extern ivl_signal_t ivl_recrem_data(ivl_recrem_t check);
+extern ivl_signal_t ivl_recrem_notifier(ivl_recrem_t check);
+extern int ivl_recrem_reference_edge(ivl_recrem_t check);
+extern int ivl_recrem_data_edge(ivl_recrem_t check);
+extern double ivl_recrem_recovery_limit(ivl_recrem_t check);
+extern double ivl_recrem_removal_limit(ivl_recrem_t check);
+extern const char*ivl_recrem_file(ivl_recrem_t check);
+extern unsigned ivl_recrem_lineno(ivl_recrem_t check);
 
 /* Unconditional scalar PERIOD checks. The limit is expressed in the units
  * of ivl_period_scope(); a null notifier means it was omitted. */

@@ -1,0 +1,12 @@
+{
+    "type": "CE",
+    "gold": "recrem_hdl_selected_fail",
+    "source": "recrem_hdl_selected_fail.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ]
+}

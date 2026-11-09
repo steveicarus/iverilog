@@ -632,6 +632,9 @@ bool dll_target::start_design(const Design*des)
       const char*removal_support = query ? query("supports-removal") : nullptr;
       removal_checks_supported_ = removal_support && strcmp(removal_support, "1") == 0;
 
+      const char*recrem_support = query ? query("supports-recrem") : nullptr;
+      recrem_checks_supported_ = recrem_support && strcmp(recrem_support, "1") == 0;
+
       stmt_cur_ = 0;
 
 	// Initialize the design object.
@@ -2865,6 +2868,29 @@ void dll_target::removal_check(const NetRemoval*check)
       obj->file = check->get_file();
       obj->lineno = check->get_lineno();
       obj->scope->removals_.push_back(obj);
+}
+
+void dll_target::recrem_check(const NetRecRem*check)
+{
+      if (!recrem_checks_supported_) {
+            cerr << check->get_fileline()
+                 << ": warning: target does not support $recrem; check ignored."
+                 << endl;
+            return;
+      }
+
+      ivl_recrem_t obj = new ivl_recrem_s;
+      obj->scope = find_scope(des_, check->scope());
+      obj->reference = find_signal(des_, check->reference());
+      obj->data = find_signal(des_, check->data());
+      obj->notifier = check->notifier() ? find_signal(des_, check->notifier()) : nullptr;
+      obj->reference_edge = check->reference_edge();
+      obj->data_edge = check->data_edge();
+      obj->recovery_limit = check->recovery_limit();
+      obj->removal_limit = check->removal_limit();
+      obj->file = check->get_file();
+      obj->lineno = check->get_lineno();
+      obj->scope->recrems_.push_back(obj);
 }
 
 bool dll_target::signal_paths(const NetNet*net)

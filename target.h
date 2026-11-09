@@ -80,6 +80,7 @@ struct target_t {
       virtual void hold_check(const NetHold*);
       virtual void recovery_check(const NetRecovery*);
       virtual void removal_check(const NetRemoval*);
+      virtual void recrem_check(const NetRecRem*);
       virtual void period_check(const NetPeriod*);
 
         /* Analog branches */

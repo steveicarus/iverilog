@@ -2314,6 +2314,42 @@ extern "C" const char*ivl_removal_file(ivl_removal_t check)
 extern "C" unsigned ivl_removal_lineno(ivl_removal_t check)
 { assert(check); return check->lineno; }
 
+extern "C" unsigned ivl_scope_recrems(ivl_scope_t net)
+{ assert(net); return net->recrems_.size(); }
+
+extern "C" ivl_recrem_t ivl_scope_recrem(ivl_scope_t net, unsigned idx)
+{ assert(net && idx < net->recrems_.size()); return net->recrems_[idx]; }
+
+extern "C" ivl_scope_t ivl_recrem_scope(ivl_recrem_t check)
+{ assert(check); return check->scope; }
+
+extern "C" ivl_signal_t ivl_recrem_reference(ivl_recrem_t check)
+{ assert(check); return check->reference; }
+
+extern "C" ivl_signal_t ivl_recrem_data(ivl_recrem_t check)
+{ assert(check); return check->data; }
+
+extern "C" ivl_signal_t ivl_recrem_notifier(ivl_recrem_t check)
+{ assert(check); return check->notifier; }
+
+extern "C" int ivl_recrem_reference_edge(ivl_recrem_t check)
+{ assert(check); return check->reference_edge; }
+
+extern "C" int ivl_recrem_data_edge(ivl_recrem_t check)
+{ assert(check); return check->data_edge; }
+
+extern "C" double ivl_recrem_recovery_limit(ivl_recrem_t check)
+{ assert(check); return check->recovery_limit; }
+
+extern "C" double ivl_recrem_removal_limit(ivl_recrem_t check)
+{ assert(check); return check->removal_limit; }
+
+extern "C" const char*ivl_recrem_file(ivl_recrem_t check)
+{ assert(check); return check->file.str(); }
+
+extern "C" unsigned ivl_recrem_lineno(ivl_recrem_t check)
+{ assert(check); return check->lineno; }
+
 extern "C" unsigned ivl_scope_periods(ivl_scope_t net)
 { assert(net); return net->periods_.size(); }
 

@@ -244,3 +244,85 @@ vpiHandle __vpiTchkRefTerm::vpi_handle(int code)
 {
       return code == vpiExpr ? expr_ : nullptr;
 }
+
+
+__vpiTchkRecRem::__vpiTchkRecRem(__vpiScope* scope, unsigned file_idx,
+                                       unsigned lineno,
+                                       vvp_fun_tchk_recrem* fun)
+: reference_(nullptr), data_(nullptr), notifier_(nullptr), scope_(scope),
+  file_idx_(file_idx), lineno_(lineno), fun_(fun),
+  reference_term_(nullptr), data_term_(nullptr)
+{
+}
+
+__vpiTchkRecRem::~__vpiTchkRecRem()
+{
+      delete reference_term_;
+      delete data_term_;
+}
+
+int __vpiTchkRecRem::vpi_get(int code)
+{
+      switch (code) {
+          case vpiTchkType: return vpiRecrem;
+          case vpiLineNo: return lineno_;
+          default: return vpiUndefined;
+      }
+}
+
+vpiHandle __vpiTchkRecRem::vpi_handle(int code)
+{
+      switch (code) {
+          case vpiScope: return scope_;
+          case vpiModule: return scope_;
+          case vpiTchkNotifier: return notifier_;
+          case vpiTchkRefTerm:
+            if (!reference_term_ && reference_)
+                  reference_term_ = new __vpiTchkRefTerm(
+                        tchk_vpi_edge(fun_->reference_edge_), reference_);
+            return reference_term_;
+          case vpiTchkDataTerm:
+            if (!data_term_ && data_)
+                  data_term_ = new __vpiTchkRefTerm(
+                        tchk_vpi_edge(fun_->data_edge_), data_);
+            return data_term_;
+          default: return nullptr;
+      }
+}
+
+void __vpiTchkRecRem::vpi_get_delays(p_vpi_delay delays)
+{
+      if (!delays || delays->no_of_delays != 2 || !delays->da) return;
+      vvp_time64_t values[2] = {fun_->recovery_limit_, fun_->removal_limit_};
+      for (unsigned idx = 0; idx < 2; idx += 1) {
+            delays->da[idx].type = delays->time_type;
+            if (delays->time_type == vpiScaledRealTime) {
+                  delays->da[idx].real = vpip_time_to_scaled_real(values[idx], scope_);
+            } else if (delays->time_type == vpiSimTime) {
+                  delays->da[idx].high = values[idx] >> 32;
+                  delays->da[idx].low = values[idx] & 0xffffffff;
+            }
+      }
+}
+
+void __vpiTchkRecRem::vpi_put_delays(p_vpi_delay delays)
+{
+      if (!delays || delays->no_of_delays != 2 || !delays->da ||
+          delays->mtm_flag || delays->append_flag || delays->pulsere_flag) return;
+      vvp_time64_t values[2];
+      for (unsigned idx = 0; idx < 2; idx += 1) {
+            if (delays->time_type == vpiScaledRealTime) {
+                  if (!vpip_tchk_delay_to_ticks(delays->da[idx].real, scope_, values[idx])) {
+                        vpi_printf("VPI ERROR: invalid RECREM %s limit\n",
+                                   idx == 0 ? "recovery" : "removal");
+                        return;
+                  }
+            } else if (delays->time_type == vpiSimTime) {
+                  values[idx] = ((vvp_time64_t) delays->da[idx].high << 32)
+                              | delays->da[idx].low;
+            } else return;
+      }
+      // Validate both slots before writing either one.
+      fun_->recovery_limit_ = values[0];
+      fun_->removal_limit_ = values[1];
+}

@@ -504,9 +504,11 @@ tchk_def
         free($3.string_val);
         free($4.string_val);
       }
-  | '(' K_RECREM port_tchk port_tchk rvalue rvalue ')'
-      { vpi_printf("SDF WARNING: %s:%d: RECREM not supported.\n",
-                   sdf_parse_path, @2.first_line); }
+  | '(' K_RECREM scalar_port_tchk scalar_port_tchk rvalue rvalue ')'
+      { sdf_recrem_limits($3, $4, $5, $6, @2.first_line);
+        free($3.string_val);
+        free($4.string_val);
+      }
   | '(' K_REMOVAL scalar_port_tchk scalar_port_tchk rvalue ')'
       { sdf_two_event_limits(vpiRemoval, $3, $4, $5, @2.first_line);
         free($3.string_val);

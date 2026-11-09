@@ -105,6 +105,12 @@ void target_t::removal_check(const NetRemoval*check)
       errors += 1;
 }
 
+void target_t::recrem_check(const NetRecRem*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $recrem." << endl;
+      errors += 1;
+}
+
 bool target_t::func_def(const NetScope*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "

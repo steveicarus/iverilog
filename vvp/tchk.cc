@@ -245,3 +245,95 @@ void vvp_fun_tchk_two_event::violation(vvp_time64_t now, vvp_time64_t interval)
                  vpi_get_str(vpiFullName, scope));
       notify_timing_violation(vpi_tchk, vpi_tchk->notifier_);
 }
+
+
+vvp_fun_tchk_recrem::vvp_fun_tchk_recrem(int reference_edge, int data_edge,
+                                               vvp_time64_t recovery_limit,
+                                               vvp_time64_t removal_limit)
+: vpi_tchk(nullptr), previous_{BIT4_X, BIT4_X},
+  reference_edge_(reference_edge), data_edge_(data_edge),
+  recovery_limit_(recovery_limit), removal_limit_(removal_limit),
+  reference_time_(0), data_time_(0), have_reference_(false), have_data_(false)
+{
+      assert(reference_edge >= -1 && reference_edge <= 1);
+      assert(data_edge >= -1 && data_edge <= 1);
+}
+
+void vvp_fun_tchk_recrem::recv_vec4(vvp_net_ptr_t port,
+                                       const vvp_vector4_t& value,
+                                       vvp_context_t)
+{
+      assert(port.port() < 2 && value.size() == 1 && vpi_tchk);
+      unsigned index = port.port();
+      vvp_bit4_t next = value.value(0);
+      __vpiSignal* reference = dynamic_cast<__vpiSignal*>(vpi_tchk->reference_);
+      __vpiSignal* data = dynamic_cast<__vpiSignal*>(vpi_tchk->data_);
+      assert(reference && data);
+
+      // As in the standalone checks, aliases name one physical delivery.
+      // Combine both roles before notifying, not two duplicate fanout visits.
+      if (reference->node == data->node) {
+            if (index != 0) return;
+            bool ref_event = tchk_event_matches(reference_edge_, previous_[0], next);
+            bool data_event = tchk_event_matches(data_edge_, previous_[0], next);
+            previous_[0] = previous_[1] = next;
+            process_events(ref_event, data_event);
+            return;
+      }
+
+      int selected_edge = index == 0 ? reference_edge_ : data_edge_;
+      bool matched = tchk_event_matches(selected_edge, previous_[index], next);
+      previous_[index] = next;
+      if (matched) process_events(index == 0, index == 1);
+}
+
+void vvp_fun_tchk_recrem::process_events(bool reference_event, bool data_event)
+{
+      vvp_time64_t now = schedule_simtime();
+      if (reference_event) {
+            reference_time_ = now;
+            have_reference_ = true;
+      }
+      if (data_event) {
+            data_time_ = now;
+            have_data_ = true;
+      }
+
+      // With two positive limits, simultaneous events violate in either
+      // order. With a zero limit, use the corresponding standalone window:
+      // recovery includes zero; removal excludes it. Both-zero never fails.
+      bool recovery_violation = false;
+      bool removal_violation = false;
+      vvp_time64_t recovery_interval = 0, removal_interval = 0;
+      if (data_event && have_reference_) {
+            recovery_interval = now - reference_time_;
+            recovery_violation = recovery_interval < recovery_limit_;
+      }
+      if (reference_event && have_data_) {
+            removal_interval = now - data_time_;
+            bool include_zero = recovery_limit_ != 0 && removal_limit_ != 0;
+            removal_violation = (include_zero || removal_interval != 0)
+                              && removal_interval < removal_limit_;
+      }
+      // A declaration produces one notification even when an aliased
+      // delivery supplies both roles and violates both positive windows.
+      if (recovery_violation || removal_violation)
+            violation(now, recovery_violation,
+                      recovery_violation ? recovery_interval : removal_interval);
+}
+
+void vvp_fun_tchk_recrem::violation(vvp_time64_t now, bool recovery,
+                                       vvp_time64_t interval)
+{
+      assert(vpi_tchk && vpi_tchk->file_idx_ < file_names.size());
+      __vpiScope* scope = vpi_tchk->scope_;
+      vpi_printf("Timing violation: $recrem %s at %g (module units), "
+                 "interval=%g limit=%g, %s:%u, scope=%s\n",
+                 recovery ? "recovery" : "removal",
+                 vpip_time_to_scaled_real(now, scope),
+                 vpip_time_to_scaled_real(interval, scope),
+                 vpip_time_to_scaled_real(recovery ? recovery_limit_ : removal_limit_, scope),
+                 file_names[vpi_tchk->file_idx_], vpi_tchk->lineno_,
+                 vpi_get_str(vpiFullName, scope));
+      notify_timing_violation(vpi_tchk, vpi_tchk->notifier_);
+}

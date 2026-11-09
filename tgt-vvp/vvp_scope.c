@@ -2421,6 +2421,19 @@ static void draw_removal_in_scope(ivl_removal_t check)
       else fprintf(vvp_out, "\"\";\n");
 }
 
+static void draw_recrem_in_scope(ivl_recrem_t check)
+{
+      ivl_signal_t notifier = ivl_recrem_notifier(check);
+      fprintf(vvp_out, "    .tchk_recrem %u %u, \"%s\", v%p_0, \"%s\", v%p_0, %.17e, %.17e, ",
+              ivl_file_table_index(ivl_recrem_file(check)), ivl_recrem_lineno(check),
+              two_event_edge(ivl_recrem_reference_edge(check)),
+              ivl_recrem_reference(check),
+              two_event_edge(ivl_recrem_data_edge(check)), ivl_recrem_data(check),
+              ivl_recrem_recovery_limit(check), ivl_recrem_removal_limit(check));
+      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
+      else fprintf(vvp_out, "\"\";\n");
+}
+
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
@@ -2631,7 +2644,8 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       }
 
       if (ivl_scope_setups(net) || ivl_scope_holds(net) ||
-          ivl_scope_recoveries(net) || ivl_scope_removals(net)) {
+          ivl_scope_recoveries(net) || ivl_scope_removals(net) ||
+          ivl_scope_recrems(net)) {
             fprintf(vvp_out, "    .scope S_%p;\n", net);
             for (idx = 0; idx < ivl_scope_setups(net); idx += 1)
                   draw_setup_in_scope(ivl_scope_setup(net, idx));
@@ -2641,6 +2655,8 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
                   draw_recovery_in_scope(ivl_scope_recovery(net, idx));
             for (idx = 0; idx < ivl_scope_removals(net); idx += 1)
                   draw_removal_in_scope(ivl_scope_removal(net, idx));
+            for (idx = 0; idx < ivl_scope_recrems(net); idx += 1)
+                  draw_recrem_in_scope(ivl_scope_recrem(net, idx));
       }
 
       for (idx = 0 ;  idx < ivl_scope_events(net) ;  idx += 1) {

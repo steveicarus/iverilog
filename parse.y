@@ -7038,15 +7038,6 @@ specify_item
   | K_Srecrem '(' spec_reference_event ',' spec_reference_event
     ',' expr_mintypmax ',' expr_mintypmax recrem_opt_args ')' ';'
       {
-	if (gn_specify_blocks_flag) {
-	      cerr << @3 << ": warning: Timing checks are not supported. ";
-	      if ($10->delayed_reference != nullptr || $10->delayed_data != nullptr) {
-		    cerr << "Delayed reference and data signals become copies of the"
-			 << " original reference and data signals.";
-	      }
-	      cerr << endl;
-	}
-
 	PRecRem*recrem = pform_make_recrem(@1, $3, $5, $7, $9, $10);
 	pform_module_timing_check(recrem);
 
