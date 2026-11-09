@@ -22,18 +22,18 @@ module tb;
  initial begin #1;
  $sdf_annotate("ivltests/recovery_removal_hdl.sdf",tb);
 `ifdef RR_MIN
-    $rr_watch("tb.u", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "nr", 0);
-    $rr_watch("tb.u", "removal", "R", "posedge", "C", "posedge", 3.0, 3, "nm", 0);
+    $rr_watch("tb.u", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "nr", 1'b0, 0);
+    $rr_watch("tb.u", "removal", "R", "posedge", "C", "posedge", 3.0, 3, "nm", 1'b0, 0);
 `elsif RR_MAX
-    $rr_watch("tb.u", "recovery", "R", "posedge", "C", "posedge", 30.0, 30, "nr", 3, 115, 160, 195);
-    $rr_watch("tb.u", "removal", "R", "posedge", "C", "posedge", 13.0, 13, "nm", 2, 120, 168);
+    $rr_watch("tb.u", "recovery", "R", "posedge", "C", "posedge", 30.0, 30, "nr", 1'b0, 3, 115, 160, 195);
+    $rr_watch("tb.u", "removal", "R", "posedge", "C", "posedge", 13.0, 13, "nm", 1'b0, 2, 120, 168);
 `else
-    $rr_watch("tb.u", "recovery", "R", "posedge", "C", "posedge", 20.0, 20, "nr", 1, 115);
-    $rr_watch("tb.u", "removal", "R", "posedge", "C", "posedge", 8.0, 8, "nm", 1, 120);
+    $rr_watch("tb.u", "recovery", "R", "posedge", "C", "posedge", 20.0, 20, "nr", 1'b0, 1, 115);
+    $rr_watch("tb.u", "removal", "R", "posedge", "C", "posedge", 8.0, 8, "nm", 1'b0, 1, 120);
 `endif
-    $rr_watch("tb.u", "recovery", "E", "posedge", "C", "posedge", 9.0, 9, "ne", 1, 195);
-    $rr_watch("tb.u", "recovery", "R", "posedge", "K", "posedge", 9.0, 9, "nk", 1, 143);
-    $rr_watch("tb.u", "recovery", "R", "posedge", "C", "negedge", 5.0, 5, "nn", 0);
+    $rr_watch("tb.u", "recovery", "E", "posedge", "C", "posedge", 9.0, 9, "ne", 1'b0, 1, 195);
+    $rr_watch("tb.u", "recovery", "R", "posedge", "K", "posedge", 9.0, 9, "nk", 1'b0, 1, 143);
+    $rr_watch("tb.u", "recovery", "R", "posedge", "C", "negedge", 5.0, 5, "nn", 1'b0, 0);
  $rr_start;#229;$rr_finish;$finish;
  end
 endmodule

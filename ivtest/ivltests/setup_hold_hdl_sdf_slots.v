@@ -19,14 +19,14 @@ module tb;
  initial begin
   #1;$sdf_annotate("ivltests/setup_hold_hdl_slots.sdf",tb);
 `ifdef SH_SLOT_MIN
-  $sh_watch("tb.u","setup","C","posedge","D","any",25.0,25,"ns",1,220);
-  $sh_watch("tb.u","hold","C","posedge","D","any",10.0,10,"nh",1,225);
+  $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 25.0, 25, "ns", 1'b0, 1, 220);
+  $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 10.0, 10, "nh", 1'b0, 1, 225);
 `elsif SH_SLOT_MAX
-  $sh_watch("tb.u","setup","C","posedge","D","any",45.0,45,"ns",3,130,220,300);
-  $sh_watch("tb.u","hold","C","posedge","D","any",30.0,30,"nh",3,149,225,325);
+  $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 45.0, 45, "ns", 1'b0, 3, 130, 220, 300);
+  $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 30.0, 30, "nh", 1'b0, 3, 149, 225, 325);
 `else
-  $sh_watch("tb.u","setup","C","posedge","D","any",35.0,35,"ns",2,130,220);
-  $sh_watch("tb.u","hold","C","posedge","D","any",20.0,20,"nh",2,149,225);
+  $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 35.0, 35, "ns", 1'b0, 2, 130, 220);
+  $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 20.0, 20, "nh", 1'b0, 2, 149, 225);
 `endif
   $sh_start;#499;$sh_finish;$finish;
  end

@@ -12,8 +12,8 @@ module tb;
  initial begin R=0;C=0;#100 R=1;#30 C=1;#1 R=0;#14 R=1;end
  initial begin #1;
  $sdf_annotate("ivltests/recovery_removal_hdl_units.sdf",tb);
-    $rr_watch("tb.u", "recovery", "R.dot", "posedge", "C\\tail", "posedge", 0.04, 40, "nr", 1, 130);
-    $rr_watch("tb.u", "removal", "R.dot", "posedge", "C\\tail", "posedge", 0.02, 20, "nm", 1, 145);
+    $rr_watch("tb.u", "recovery", "R.dot", "posedge", "C\\tail", "posedge", 0.04, 40, "nr", 1'b0, 1, 130);
+    $rr_watch("tb.u", "removal", "R.dot", "posedge", "C\\tail", "posedge", 0.02, 20, "nm", 1'b0, 1, 145);
  $rr_start;#169;$rr_finish;$finish;
  end
 endmodule

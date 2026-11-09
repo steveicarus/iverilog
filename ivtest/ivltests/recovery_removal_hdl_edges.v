@@ -32,10 +32,11 @@ module tb;
     #15 C=0;#5 R=1;#5 R=0;#10 C=1;#5 C=0;#5 R=1;#4 R=0;
   end
   initial begin #1;
-    $rr_watch("tb.rn", "recovery", "R", "negedge", "C", "negedge", 10.0, 10, "notifier", 1, 29);
-    $rr_watch("tb.mn", "removal", "R", "negedge", "C", "negedge", 10.0, 10, "notifier", 1, 94);
-    $rr_watch("tb.ra", "recovery", "R", "any", "C", "any", 10.0, 10, "notifier", 1, 29);
-    $rr_watch("tb.ma", "removal", "R", "any", "C", "any", 10.0, 10, "notifier", 5, 30, 45, 65, 90, 94);
+    $rr_watch("tb.rn", "recovery", "R", "negedge", "C", "negedge", 10.0, 10, "notifier", 1'b0, 1, 29);
+    $rr_watch("tb.mn", "removal", "R", "negedge", "C", "negedge", 10.0, 10, "notifier", 1'b0, 1, 94);
+    // R is assigned before C at t0: any-edge recovery sees interval zero.
+    $rr_watch("tb.ra", "recovery", "R", "any", "C", "any", 10.0, 10, "notifier", 1'b0, 2, 0, 29);
+    $rr_watch("tb.ma", "removal", "R", "any", "C", "any", 10.0, 10, "notifier", 1'b0, 5, 30, 45, 65, 90, 94);
     $rr_start;#109;$rr_finish;$finish;
   end
 endmodule
