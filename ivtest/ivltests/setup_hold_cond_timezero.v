@@ -16,10 +16,10 @@ module tb;
   end
   initial begin
     #1;
-    $sh_watch("tb.valid_s", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 2, 9, 25);
-    $sh_watch("tb.missing_s", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 1, 25);
-    $sh_watch("tb.valid_h", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 2, 9, 25);
-    $sh_watch("tb.missing_h", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 1, 25);
+    $sh_watch("tb.valid_s", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 1'b0, 2, 9, 25);
+    $sh_watch("tb.missing_s", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 1'b0, 1, 25);
+    $sh_watch("tb.valid_h", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 1'b0, 2, 9, 25);
+    $sh_watch("tb.missing_h", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 1'b0, 1, 25);
     $sh_start;
     #199;
     $sh_finish; $finish;
