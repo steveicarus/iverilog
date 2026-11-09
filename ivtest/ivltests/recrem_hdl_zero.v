@@ -12,8 +12,8 @@ initial begin #1;
 $rrc_population("tb.hs", 1);
 $rrc_population("tb.ss", 1);
 $rrc_population("tb.zz", 1);
-$rrc_watch("tb.hs", "recrem", "D", "posedge", "C", "posedge", 0, 0, 6, 6, "notifier", 1, 405);
-$rrc_watch("tb.ss", "recrem", "D", "posedge", "C", "posedge", 10, 10, 0, 0, "notifier", 2, 100, 309);
-$rrc_watch("tb.zz", "recrem", "D", "posedge", "C", "posedge", 0, 0, 0, 0, "notifier", 0);
+$rrc_watch("tb.hs", "recrem", "D", "posedge", "C", "posedge", 0, 0, 6, 6, "notifier", 1'b0, 1, 405);
+$rrc_watch("tb.ss", "recrem", "D", "posedge", "C", "posedge", 10, 10, 0, 0, "notifier", 1'b0, 2, 100, 309);
+$rrc_watch("tb.zz", "recrem", "D", "posedge", "C", "posedge", 0, 0, 0, 0, "notifier", 1'b0, 0);
 $rrc_start; #449; $rrc_finish; $finish; end
 endmodule

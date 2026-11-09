@@ -14,12 +14,12 @@ module tb;
  reg R,C;rr_limits #(0) zero(R,C);rr_limits #(0.004) rounded(R,C);rr_limits #(0.016) positive(R,C);
  initial begin R=0;C=0;#100 R=1;#19 C=1;#1 R=0;#10 R=1;end
  initial begin #1;
-    $rr_watch("tb.zero", "recovery", "R", "posedge", "C", "posedge", 0.0, 0, "nr", 0);
-    $rr_watch("tb.zero", "removal", "R", "posedge", "C", "posedge", 0.0, 0, "nm", 0);
-    $rr_watch("tb.rounded", "recovery", "R", "posedge", "C", "posedge", 0.0, 0, "nr", 0);
-    $rr_watch("tb.rounded", "removal", "R", "posedge", "C", "posedge", 0.0, 0, "nm", 0);
-    $rr_watch("tb.positive", "recovery", "R", "posedge", "C", "posedge", 0.02, 20, "nr", 1, 119);
-    $rr_watch("tb.positive", "removal", "R", "posedge", "C", "posedge", 0.02, 20, "nm", 1, 130);
+    $rr_watch("tb.zero", "recovery", "R", "posedge", "C", "posedge", 0.0, 0, "nr", 1'b0, 0);
+    $rr_watch("tb.zero", "removal", "R", "posedge", "C", "posedge", 0.0, 0, "nm", 1'b0, 0);
+    $rr_watch("tb.rounded", "recovery", "R", "posedge", "C", "posedge", 0.0, 0, "nr", 1'b0, 0);
+    $rr_watch("tb.rounded", "removal", "R", "posedge", "C", "posedge", 0.0, 0, "nm", 1'b0, 0);
+    $rr_watch("tb.positive", "recovery", "R", "posedge", "C", "posedge", 0.02, 20, "nr", 1'b0, 1, 119);
+    $rr_watch("tb.positive", "removal", "R", "posedge", "C", "posedge", 0.02, 20, "nm", 1'b0, 1, 130);
  $rr_start;#149;$rr_finish;$finish;
  end
 endmodule

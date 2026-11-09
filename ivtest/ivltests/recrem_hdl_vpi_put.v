@@ -14,10 +14,10 @@ $rrc_population("tb.b", 1);
 $rrc_population("tb.neg_recovery", 1);
 $rrc_population("tb.neg_removal", 1);
 $rrc_population("tb.overflow", 1);
-$rrc_watch("tb.a", "recrem", "D", "any", "C", "posedge", 20, 20, 8, 8, "notifier", 2, 115, 120);
-$rrc_watch("tb.b", "recrem", "D", "any", "C", "posedge", 20, 20, 8, 8, "notifier", 2, 115, 120);
-$rrc_watch("tb.neg_recovery", "recrem", "D", "any", "C", "posedge", 10, 10, 6, 6, "notifier", 1, 120);
-$rrc_watch("tb.neg_removal", "recrem", "D", "any", "C", "posedge", 10, 10, 6, 6, "notifier", 1, 120);
-$rrc_watch("tb.overflow", "recrem", "D", "any", "C", "posedge", 10, 10, 6, 6, "notifier", 1, 120);
+$rrc_watch("tb.a", "recrem", "D", "any", "C", "posedge", 20, 20, 8, 8, "notifier", 1'b0, 2, 115, 120);
+$rrc_watch("tb.b", "recrem", "D", "any", "C", "posedge", 20, 20, 8, 8, "notifier", 1'b0, 2, 115, 120);
+$rrc_watch("tb.neg_recovery", "recrem", "D", "any", "C", "posedge", 10, 10, 6, 6, "notifier", 1'b0, 1, 120);
+$rrc_watch("tb.neg_removal", "recrem", "D", "any", "C", "posedge", 10, 10, 6, 6, "notifier", 1'b0, 1, 120);
+$rrc_watch("tb.overflow", "recrem", "D", "any", "C", "posedge", 10, 10, 6, 6, "notifier", 1'b0, 1, 120);
 $rrc_start; #149; $rrc_finish; $finish; end
 endmodule

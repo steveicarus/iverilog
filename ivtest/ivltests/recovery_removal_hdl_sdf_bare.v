@@ -10,9 +10,10 @@ module tb;
  initial begin R=0;C=0;#100 R=1;#9 C=1;#1 R=0;#9 C=0;end
  initial begin #1;
  $sdf_annotate("ivltests/recovery_removal_hdl_bare.sdf",tb);
- $rr_watch("tb.u","recovery","R","posedge","C","posedge",10.0,10,"np",1,109);
- $rr_watch("tb.u","recovery","R","negedge","C","negedge",10.0,10,"nn",1,119);
- $rr_watch("tb.u","removal","R","posedge","C","posedge",7.0,7,"nm",0);
+ $rr_watch("tb.u", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "np", 1'b0, 1, 109);
+ // Initial X-to-0 R then C violates the HDL limit 5 before SDF is applied.
+ $rr_watch("tb.u", "recovery", "R", "negedge", "C", "negedge", 10.0, 10, "nn", 1'b0, 2, 0, 119);
+ $rr_watch("tb.u", "removal", "R", "posedge", "C", "posedge", 7.0, 7, "nm", 1'b0, 0);
  $rr_start;#139;$rr_finish;$finish;
  end
 endmodule

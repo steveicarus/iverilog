@@ -9,6 +9,6 @@ module tb;reg C,D;rrc_sdf_units u(C,D);
 initial begin #1;
 $sdf_annotate("ivltests/recrem_hdl_units.sdf",tb);
 $rrc_population("tb.u", 1);
-$rrc_watch("tb.u", "recrem", "D", "any", "C", "posedge", 0.02, 20, 0.03, 30, "notifier", 2, 119, 148);
+$rrc_watch("tb.u", "recrem", "D", "any", "C", "posedge", 0.02, 20, 0.03, 30, "notifier", 1'b0, 2, 119, 148);
 $rrc_start; #199; $rrc_finish; $finish; end
 endmodule

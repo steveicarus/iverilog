@@ -50,13 +50,13 @@ module tb;
     if (n0.notifier!==1'b0 || n1.notifier!==1'b1 || nx.notifier!==1'bx || nz.notifier!==1'bz || shared.notifier!==1'b0) begin
       $display("FAILED initial notifier values");$finish;
     end
-    $rrc_watch("tb.n0", "recrem", "D", "any", "C", "posedge", 10.0, 10, 6.0, 6, "notifier", 2, 15, 105);
-    $rrc_watch("tb.n1", "recrem", "D", "any", "C", "posedge", 10.0, 10, 6.0, 6, "notifier", 2, 15, 105);
-    $rrc_watch("tb.nx", "recrem", "D", "any", "C", "posedge", 10.0, 10, 6.0, 6, "notifier", 2, 15, 105);
-    $rrc_watch("tb.nz", "recrem", "D", "any", "C", "posedge", 10.0, 10, 6.0, 6, "notifier", 2, 15, 105);
-    $rrc_watch("tb.shared", "recrem", "D", "any", "C", "posedge", 10.0, 10, 6.0, 6, "notifier", 2, 15, 105);
-    $rrc_watch("tb.shared", "recrem", "D", "any", "C", "posedge", 12.0, 12, 6.0, 6, "notifier", 2, 15, 105);
-    $rrc_watch("tb.omitted", "recrem", "D", "any", "C", "posedge", 10.0, 10, 6.0, 6, "", 2, 15, 105);
+    $rrc_watch("tb.n0", "recrem", "D", "any", "C", "posedge", 10.0, 10, 6.0, 6, "notifier", 1'b0, 2, 15, 105);
+    $rrc_watch("tb.n1", "recrem", "D", "any", "C", "posedge", 10.0, 10, 6.0, 6, "notifier", 1'b1, 2, 15, 105);
+    $rrc_watch("tb.nx", "recrem", "D", "any", "C", "posedge", 10.0, 10, 6.0, 6, "notifier", 1'bx, 2, 15, 105);
+    $rrc_watch("tb.nz", "recrem", "D", "any", "C", "posedge", 10.0, 10, 6.0, 6, "notifier", 1'bz, 2, 15, 105);
+    $rrc_watch("tb.shared", "recrem", "D", "any", "C", "posedge", 10.0, 10, 6.0, 6, "notifier", 1'b0, 2, 15, 105);
+    $rrc_watch("tb.shared", "recrem", "D", "any", "C", "posedge", 12.0, 12, 6.0, 6, "notifier", 1'b0, 2, 15, 105);
+    $rrc_watch("tb.omitted", "recrem", "D", "any", "C", "posedge", 10.0, 10, 6.0, 6, "", 1'b0, 2, 15, 105);
     $rrc_population("tb.n0", 1);
     $rrc_population("tb.n1", 1);
     $rrc_population("tb.nx", 1);

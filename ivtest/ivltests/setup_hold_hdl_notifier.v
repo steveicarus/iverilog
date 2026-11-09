@@ -50,13 +50,13 @@ module tb;
     if (n0.notifier!==1'b0 || n1.notifier!==1'b1 || nx.notifier!==1'bx || nz.notifier!==1'bz || shared.notifier!==1'b0) begin
       $display("FAILED initial notifier values");$finish;
     end
-    $sh_watch("tb.n0", "setup", "C", "posedge", "D", "any", 10.0, 10, "notifier", 2, 15, 105);
-    $sh_watch("tb.n1", "setup", "C", "posedge", "D", "any", 10.0, 10, "notifier", 2, 15, 105);
-    $sh_watch("tb.nx", "setup", "C", "posedge", "D", "any", 10.0, 10, "notifier", 2, 15, 105);
-    $sh_watch("tb.nz", "setup", "C", "posedge", "D", "any", 10.0, 10, "notifier", 2, 15, 105);
-    $sh_watch("tb.shared", "setup", "C", "posedge", "D", "any", 10.0, 10, "notifier", 2, 15, 105);
-    $sh_watch("tb.shared", "setup", "C", "posedge", "D", "any", 12.0, 12, "notifier", 2, 15, 105);
-    $sh_watch("tb.omitted", "setup", "C", "posedge", "D", "any", 10.0, 10, "", 2, 15, 105);
+    $sh_watch("tb.n0", "setup", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1'b0, 2, 15, 105);
+    $sh_watch("tb.n1", "setup", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1'b1, 2, 15, 105);
+    $sh_watch("tb.nx", "setup", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1'bx, 2, 15, 105);
+    $sh_watch("tb.nz", "setup", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1'bz, 2, 15, 105);
+    $sh_watch("tb.shared", "setup", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1'b0, 2, 15, 105);
+    $sh_watch("tb.shared", "setup", "C", "posedge", "D", "any", 12.0, 12, "notifier", 1'b0, 2, 15, 105);
+    $sh_watch("tb.omitted", "setup", "C", "posedge", "D", "any", 10.0, 10, "", 1'b0, 2, 15, 105);
     $sh_start;
     #119;
     $sh_finish; $finish;
