@@ -250,7 +250,8 @@ vpiHandle __vpiTchkRefTerm::vpi_handle(int code)
 __vpiTchkRecRem::__vpiTchkRecRem(__vpiScope* scope, unsigned file_idx,
                                        unsigned lineno,
                                        vvp_fun_tchk_recrem* fun)
-: reference_(nullptr), data_(nullptr), notifier_(nullptr), scope_(scope),
+: reference_(nullptr), data_(nullptr), notifier_(nullptr),
+  reference_condition_(nullptr), data_condition_(nullptr), scope_(scope),
   file_idx_(file_idx), lineno_(lineno), fun_(fun),
   reference_term_(nullptr), data_term_(nullptr)
 {

@@ -293,6 +293,10 @@ ivl_recrem_scope
 ivl_recrem_reference
 ivl_recrem_data
 ivl_recrem_notifier
+ivl_recrem_reference_condition
+ivl_recrem_reference_condition_kind
+ivl_recrem_data_condition
+ivl_recrem_data_condition_kind
 ivl_recrem_reference_edge
 ivl_recrem_data_edge
 ivl_recrem_recovery_limit

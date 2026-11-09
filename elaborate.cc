@@ -7400,24 +7400,6 @@ void PRemoval::elaborate(Design*des, NetScope*scope) const
       scope->add_removal(std::move(check));
 }
 
-/* Retain the unconditional combined RECREM admission for this integration
- * parent. Per-event conditions are a separate increment. */
-static bool timing_check_unconditional_event(Design*des, const LineInfo&loc,
-                                const PTimingCheck::event_t&event,
-                                const char*kind, const char*role, int&edge)
-{
-      if (event.condition || !event.edges.empty() ||
-          (event.posedge && event.negedge)) {
-            cerr << loc.get_fileline() << ": error: " << kind << " " << role
-                 << " supports only unconditional scalar events with no edge,"
-                 << " posedge or negedge." << endl;
-            des->errors += 1;
-            return false;
-      }
-      edge = event.posedge ? 1 : event.negedge ? -1 : 0;
-      return true;
-}
-
 void PRecRem::elaborate(Design*des, NetScope*scope) const
 {
       if (gn_specify_blocks_flag) {
@@ -7428,10 +7410,14 @@ void PRecRem::elaborate(Design*des, NetScope*scope) const
                   return;
             }
             int reference_edge, data_edge;
-            if (!timing_check_unconditional_event(des, *this, *reference_event_, "$recrem",
-                                    "reference", reference_edge) ||
-                !timing_check_unconditional_event(des, *this, *data_event_, "$recrem",
-                                    "data", data_edge)) return;
+            NetNet*reference_condition, *data_condition;
+            ivl_tchk_cond_t reference_condition_kind, data_condition_kind;
+            if (!timing_check_event(des, scope, *this, *reference_event_, "$recrem",
+                                    "reference", reference_edge, reference_condition,
+                                    reference_condition_kind) ||
+                !timing_check_event(des, scope, *this, *data_event_, "$recrem",
+                                    "data", data_edge, data_condition,
+                                    data_condition_kind)) return;
             NetNet*reference = timing_check_signal(des, scope, reference_event_->name,
                                                    *this, "$recrem", false);
             NetNet*data = timing_check_signal(des, scope, data_event_->name,
@@ -7446,7 +7432,9 @@ void PRecRem::elaborate(Design*des, NetScope*scope) const
                 !timing_check_constant(des, scope, hold_limit_.get(), *this,
                                        "$recrem", "removal limit", removal_limit)) return;
             std::unique_ptr<NetRecRem> check(new NetRecRem(scope, reference,
-                  data, notifier, reference_edge, data_edge, recovery_limit, removal_limit));
+                  data, notifier, reference_edge, data_edge, recovery_limit, removal_limit,
+                  reference_condition, reference_condition_kind,
+                  data_condition, data_condition_kind));
             check->set_line(*this);
             scope->add_recrem(std::move(check));
             return;

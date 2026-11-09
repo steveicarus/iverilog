@@ -274,14 +274,18 @@ void vvp_fun_tchk_two_event::violation(vvp_time64_t now, vvp_time64_t interval)
 
 vvp_fun_tchk_recrem::vvp_fun_tchk_recrem(int reference_edge, int data_edge,
                                                vvp_time64_t recovery_limit,
-                                               vvp_time64_t removal_limit)
+                                               vvp_time64_t removal_limit,
+                                               unsigned reference_condition_value,
+                                               unsigned data_condition_value)
 : vpi_tchk(nullptr), previous_{BIT4_X, BIT4_X},
   reference_edge_(reference_edge), data_edge_(data_edge),
+  condition_values_{reference_condition_value, data_condition_value},
   recovery_limit_(recovery_limit), removal_limit_(removal_limit),
   reference_time_(0), data_time_(0), have_reference_(false), have_data_(false)
 {
       assert(reference_edge >= -1 && reference_edge <= 1);
       assert(data_edge >= -1 && data_edge <= 1);
+      assert(reference_condition_value <= 1 && data_condition_value <= 1);
 }
 
 void vvp_fun_tchk_recrem::recv_vec4(vvp_net_ptr_t port,
@@ -302,6 +306,11 @@ void vvp_fun_tchk_recrem::recv_vec4(vvp_net_ptr_t port,
             bool ref_event = tchk_event_matches(reference_edge_, previous_[0], next);
             bool data_event = tchk_event_matches(data_edge_, previous_[0], next);
             previous_[0] = previous_[1] = next;
+            // Sample both roles before a comparison can change a notifier.
+            ref_event = ref_event && two_event_condition_satisfied(
+                  vpi_tchk->reference_condition_, condition_values_[0]);
+            data_event = data_event && two_event_condition_satisfied(
+                  vpi_tchk->data_condition_, condition_values_[1]);
             process_events(ref_event, data_event);
             return;
       }
@@ -309,6 +318,10 @@ void vvp_fun_tchk_recrem::recv_vec4(vvp_net_ptr_t port,
       int selected_edge = index == 0 ? reference_edge_ : data_edge_;
       bool matched = tchk_event_matches(selected_edge, previous_[index], next);
       previous_[index] = next;
+      vpiHandle condition = index == 0 ? vpi_tchk->reference_condition_
+                                      : vpi_tchk->data_condition_;
+      matched = matched && two_event_condition_satisfied(condition,
+                                                         condition_values_[index]);
       if (matched) process_events(index == 0, index == 1);
 }
 

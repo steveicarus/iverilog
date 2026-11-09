@@ -723,6 +723,7 @@ class __vpiTchkRecRem : public __vpiHandle {
       void vpi_get_delays(p_vpi_delay delays) override;
       void vpi_put_delays(p_vpi_delay delays) override;
       vpiHandle reference_, data_, notifier_;
+      vpiHandle reference_condition_, data_condition_;
     private:
       __vpiScope* scope_;
       unsigned file_idx_, lineno_;

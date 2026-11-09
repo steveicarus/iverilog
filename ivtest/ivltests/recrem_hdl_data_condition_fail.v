@@ -4,5 +4,5 @@
 module rrc_nested(D);input D;endmodule
 module tb(C,D);
  input C,D;reg n;wire EN=1;
- specify $recrem(posedge C,D &&& EN,10,6,n);endspecify
+ specify $recrem(posedge C,D &&& (EN && EN),10,6,n);endspecify
 endmodule

@@ -753,6 +753,14 @@ statement
                 { char* notifier = strdup($17);
                   delete[] $17;
                   compile_tchk_recrem($2, $3, $5, $7, $9, $11, $13, $15, notifier); }
+        | K_TCHK_RECREM T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_SYMBOL ',' T_STRING ',' T_NUMBER ',' T_STRING ',' T_NUMBER ';'
+                { compile_tchk_recrem($2, $3, $5, $7, $9, $11, $13, $15, $17,
+                                         $19, $21, $23, $25); }
+        | K_TCHK_RECREM T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_STRING ',' T_STRING ',' T_NUMBER ',' T_STRING ',' T_NUMBER ';'
+                { char* notifier = strdup($17);
+                  delete[] $17;
+                  compile_tchk_recrem($2, $3, $5, $7, $9, $11, $13, $15, notifier,
+                                         $19, $21, $23, $25); }
         | K_TCHK_SETUP T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_SYMBOL ';'
                 { compile_tchk_two_event(vpiSetup, $2, $3, $5, $7, $9, $11, $13, $15); }
         | K_TCHK_SETUP T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_STRING ';'

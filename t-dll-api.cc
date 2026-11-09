@@ -2380,6 +2380,18 @@ extern "C" ivl_signal_t ivl_recrem_data(ivl_recrem_t check)
 extern "C" ivl_signal_t ivl_recrem_notifier(ivl_recrem_t check)
 { assert(check); return check->notifier; }
 
+extern "C" ivl_signal_t ivl_recrem_reference_condition(ivl_recrem_t check)
+{ assert(check); return check->reference_condition; }
+
+extern "C" ivl_tchk_cond_t ivl_recrem_reference_condition_kind(ivl_recrem_t check)
+{ assert(check); return check->reference_condition_kind; }
+
+extern "C" ivl_signal_t ivl_recrem_data_condition(ivl_recrem_t check)
+{ assert(check); return check->data_condition; }
+
+extern "C" ivl_tchk_cond_t ivl_recrem_data_condition_kind(ivl_recrem_t check)
+{ assert(check); return check->data_condition_kind; }
+
 extern "C" int ivl_recrem_reference_edge(ivl_recrem_t check)
 { assert(check); return check->reference_edge; }
 

@@ -1,0 +1,18 @@
+{
+    "type": "normal",
+    "source": "recrem_cond_sdf_cond.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/recrem_audit.c"
+    ],
+    "gold": "recrem_cond_sdf_cond",
+    "vlog95": {
+        "gold": "recrem_cond_sdf_cond-vlog95"
+    }
+}

@@ -101,7 +101,9 @@ class vvp_fun_tchk_two_event : public vvp_net_fun_t {
 class vvp_fun_tchk_recrem : public vvp_net_fun_t {
     public:
       vvp_fun_tchk_recrem(int reference_edge, int data_edge,
-                             vvp_time64_t recovery_limit, vvp_time64_t removal_limit);
+                             vvp_time64_t recovery_limit, vvp_time64_t removal_limit,
+                             unsigned reference_condition_value,
+                             unsigned data_condition_value);
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t& value,
                      vvp_context_t) override;
       __vpiTchkRecRem* vpi_tchk;
@@ -109,6 +111,7 @@ class vvp_fun_tchk_recrem : public vvp_net_fun_t {
     private:
       vvp_bit4_t previous_[2];
       int reference_edge_, data_edge_;
+      unsigned condition_values_[2];
       vvp_time64_t recovery_limit_, removal_limit_;
       vvp_time64_t reference_time_, data_time_;
       bool have_reference_, have_data_;

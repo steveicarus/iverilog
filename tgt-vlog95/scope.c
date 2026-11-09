@@ -1026,9 +1026,13 @@ static void emit_recrem_checks(ivl_scope_t scope)
             fprintf(vlog_out, "%*c$recrem(", indent, ' ');
             emit_simple_timing_event(ivl_recrem_reference(check),
                                      ivl_recrem_reference_edge(check));
+            emit_tchk_condition(ivl_recrem_reference_condition(check),
+                                ivl_recrem_reference_condition_kind(check));
             fprintf(vlog_out, ", ");
             emit_simple_timing_event(ivl_recrem_data(check),
                                      ivl_recrem_data_edge(check));
+            emit_tchk_condition(ivl_recrem_data_condition(check),
+                                ivl_recrem_data_condition_kind(check));
             fprintf(vlog_out, ", %.17e, %.17e", ivl_recrem_recovery_limit(check),
                     ivl_recrem_removal_limit(check));
             if (notifier) {
