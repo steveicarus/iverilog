@@ -231,11 +231,62 @@ static vpiHandle get_port_handle(char* port_name, const int sdf_lineno)
 }
 
 
+/* Expand the increment, not the sum with the existing delays. In particular,
+ * min(old_a + inc_a, old_b + inc_b) is not old_x + min(inc_a, inc_b).
+ * A derived increment needs both operands; a null operand supplies no data,
+ * so leave that transition unchanged rather than treating null as zero.
+ */
+static void expand_interconnect_increment(const struct sdf_delval_list_s*in,
+                                         struct sdf_delval_list_s*out)
+{
+      static const unsigned map1[6] = {0, 0, 0, 0, 0, 0};
+      static const unsigned map2[6] = {0, 1, 0, 0, 1, 1};
+      static const unsigned map3[6] = {0, 1, 2, 0, 2, 1};
+      static const unsigned map6[6] = {0, 1, 2, 3, 4, 5};
+      /* 0X, X1, 1X, X0, XZ, ZX from the six non-X transitions. */
+      static const unsigned left[6] = {0, 0, 1, 1, 2, 3};
+      static const unsigned right[6] = {2, 3, 4, 5, 4, 5};
+      static const bool use_max[6] = {false, true, false, true, true, false};
+      const unsigned*map = 0;
+
+      switch (in->count) {
+          case 1: map = map1; break;
+          case 2: map = map2; break;
+          case 3: map = map3; break;
+          case 6: map = map6; break;
+          case 12: *out = *in; return;
+          default: assert(0); return;
+      }
+      out->count = 12;
+      for (unsigned idx = 0; idx < 6; idx += 1)
+            out->val[idx] = in->val[map[idx]];
+      for (unsigned idx = 0; idx < 6; idx += 1) {
+            struct sdf_delay_s a = out->val[left[idx]];
+            struct sdf_delay_s b = out->val[right[idx]];
+            struct sdf_delay_s*value = &out->val[6 + idx];
+            value->defined = a.defined && b.defined;
+            value->value = 0.0;
+            if (value->defined)
+                  value->value = use_max[idx] ? fmax(a.value, b.value)
+                                             : fmin(a.value, b.value);
+      }
+}
+
 void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconnect_port_s port2,
                              const struct sdf_delval_list_s*delval_list,
                              bool increment,
                              const int sdf_lineno)
 {
+      struct sdf_delval_list_s expanded;
+      bool any_defined = true;
+      if (increment) {
+            any_defined = false;
+            expand_interconnect_increment(delval_list, &expanded);
+            for (int idx = 0; idx < expanded.count; idx += 1)
+                  any_defined |= expanded.val[idx].defined;
+            delval_list = &expanded;
+      }
+
 
 	// Get handles for both ports
 	// After calling get_port_handle, the name is invalid
@@ -291,6 +342,10 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 		  }
 	    }
       }
+
+      /* Keep endpoint/index validation even when there is nothing to update.
+       * Do not create or rewrite a delay object for an all-null increment. */
+      if (!any_defined) return;
 
       if (port1_handle && port2_handle) {
 	      // Get interModPath for the two ports
