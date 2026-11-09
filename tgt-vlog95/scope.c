@@ -1017,6 +1017,28 @@ static void emit_removal_checks(ivl_scope_t scope)
       }
 }
 
+static void emit_recrem_checks(ivl_scope_t scope)
+{
+      unsigned idx;
+      for (idx = 0; idx < ivl_scope_recrems(scope); idx += 1) {
+            ivl_recrem_t check = ivl_scope_recrem(scope, idx);
+            ivl_signal_t notifier = ivl_recrem_notifier(check);
+            fprintf(vlog_out, "%*c$recrem(", indent, ' ');
+            emit_simple_timing_event(ivl_recrem_reference(check),
+                                     ivl_recrem_reference_edge(check));
+            fprintf(vlog_out, ", ");
+            emit_simple_timing_event(ivl_recrem_data(check),
+                                     ivl_recrem_data_edge(check));
+            fprintf(vlog_out, ", %.17e, %.17e", ivl_recrem_recovery_limit(check),
+                    ivl_recrem_removal_limit(check));
+            if (notifier) {
+                  fprintf(vlog_out, ", ");
+                  emit_id(ivl_signal_basename(notifier));
+            }
+            fprintf(vlog_out, ");\n");
+      }
+}
+
 /*
  * The path delay information from the specify block is attached to the
  * output ports.
@@ -1027,7 +1049,8 @@ static void emit_specify(ivl_scope_t scope)
       unsigned need_specify = 0;
       if (ivl_scope_widths(scope) || ivl_scope_periods(scope) ||
           ivl_scope_setups(scope) || ivl_scope_holds(scope) ||
-          ivl_scope_recoveries(scope) || ivl_scope_removals(scope)) {
+          ivl_scope_recoveries(scope) || ivl_scope_removals(scope) ||
+          ivl_scope_recrems(scope)) {
             fprintf(vlog_out, "\n%*cspecify\n", indent, ' ');
             need_specify = 1;
             indent += indent_incr;
@@ -1037,6 +1060,7 @@ static void emit_specify(ivl_scope_t scope)
             emit_hold_checks(scope);
             emit_recovery_checks(scope);
             emit_removal_checks(scope);
+            emit_recrem_checks(scope);
       }
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_t nex = ivl_scope_mod_port(scope, idx);

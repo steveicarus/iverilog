@@ -92,6 +92,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void hold_check(const NetHold*) override;
       void recovery_check(const NetRecovery*) override;
       void removal_check(const NetRemoval*) override;
+      void recrem_check(const NetRecRem*) override;
       void period_check(const NetPeriod*) override;
       ivl_dll_t dll_;
 
@@ -103,6 +104,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool hold_checks_supported_;
       bool recovery_checks_supported_;
       bool removal_checks_supported_;
+      bool recrem_checks_supported_;
       bool period_checks_supported_;
 
 
@@ -699,6 +701,7 @@ struct ivl_scope_s {
       std::vector<ivl_hold_t> holds_;
       std::vector<ivl_recovery_t> recoveries_;
       std::vector<ivl_removal_t> removals_;
+      std::vector<ivl_recrem_t> recrems_;
       std::vector<ivl_period_t> periods_;
 
       unsigned nlog_;
@@ -848,6 +851,16 @@ struct ivl_removal_s {
       ivl_tchk_cond_t reference_condition_kind, data_condition_kind;
       int reference_edge, data_edge;
       double limit;
+      perm_string file;
+      unsigned lineno;
+};
+
+/* Typed combined RECREM check, normalized reference/data roles. */
+struct ivl_recrem_s {
+      ivl_scope_t scope;
+      ivl_signal_t reference, data, notifier;
+      int reference_edge, data_edge;
+      double recovery_limit, removal_limit;
       perm_string file;
       unsigned lineno;
 };

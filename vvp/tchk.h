@@ -26,6 +26,7 @@ class __vpiScope;
 class __vpiTchkWidth;
 class __vpiTchkPeriod;
 class __vpiTchkTwoEvent;
+class __vpiTchkRecRem;
 
 // The record values use the declaring module's units. Reject values that
 // cannot be rounded to its precision and represented in simulator ticks.
@@ -93,6 +94,27 @@ class vvp_fun_tchk_two_event : public vvp_net_fun_t {
       void process_events(bool reference_event, bool data_event);
       void violation(vvp_time64_t now, vvp_time64_t interval);
       friend class __vpiTchkTwoEvent;
+};
+
+/* A combined declaration is one observable timing check, with independent
+ * reference/data histories and recovery/removal limits. */
+class vvp_fun_tchk_recrem : public vvp_net_fun_t {
+    public:
+      vvp_fun_tchk_recrem(int reference_edge, int data_edge,
+                             vvp_time64_t recovery_limit, vvp_time64_t removal_limit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t& value,
+                     vvp_context_t) override;
+      __vpiTchkRecRem* vpi_tchk;
+
+    private:
+      vvp_bit4_t previous_[2];
+      int reference_edge_, data_edge_;
+      vvp_time64_t recovery_limit_, removal_limit_;
+      vvp_time64_t reference_time_, data_time_;
+      bool have_reference_, have_data_;
+      void process_events(bool reference_event, bool data_event);
+      void violation(vvp_time64_t now, bool recovery, vvp_time64_t interval);
+      friend class __vpiTchkRecRem;
 };
 
 #endif

@@ -38,8 +38,8 @@ module tb;
  $rr_watch("tb.hierarchy","removal","R","posedge","C","posedge",10.0,10,"nm",0);
  $rr_watch("tb.valid","recovery","R","posedge","C","posedge",30.0,30,"nr",0);
  $rr_watch("tb.valid","removal","R","posedge","C","posedge",30.0,30,"nm",0);
- $rr_watch("tb.combined","recovery","R","posedge","C","posedge",10.0,10,"nr",0);
- $rr_watch("tb.combined","removal","R","posedge","C","posedge",10.0,10,"nm",0);
+ $rr_watch("tb.combined","recovery","R","posedge","C","posedge",30.0,30,"nr",0);
+ $rr_watch("tb.combined","removal","R","posedge","C","posedge",30.0,30,"nm",0);
  $rr_start;#9;$rr_finish;
  end
 endmodule

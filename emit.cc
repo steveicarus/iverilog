@@ -541,6 +541,8 @@ void NetScope::emit_scope(struct target_t*tgt) const
             tgt->recovery_check(check.get());
       for (const auto& check : removals_)
             tgt->removal_check(check.get());
+      for (const auto& check : recrems_)
+            tgt->recrem_check(check.get());
 
       if (type_ == MODULE) tgt->convert_module_ports(this);
 }

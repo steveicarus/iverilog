@@ -15,7 +15,6 @@ SDF WARNING: ivltests/recovery_removal_hdl_reject.sdf:9: conditional or hierarch
 SDF WARNING: ivltests/recovery_removal_hdl_reject.sdf:9: conditional or hierarchical REMOVAL event not supported.
 SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:11: Cannot find absent_instance in scope tb.
 SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:11: Unable to find absent_instance in scope tb.
-SDF WARNING: ivltests/recovery_removal_hdl_reject.sdf:12: RECREM not supported.
 RR_OBJECT tb.wrong_control recovery R/posedge C/posedge limit=10 ticks=10 events=0
 RR_OBJECT tb.wrong_control removal R/posedge C/posedge limit=10 ticks=10 events=0
 RR_OBJECT tb.wrong_clock recovery R/posedge C/posedge limit=10 ticks=10 events=0
@@ -34,7 +33,7 @@ RR_OBJECT tb.hierarchy recovery R/posedge C/posedge limit=10 ticks=10 events=0
 RR_OBJECT tb.hierarchy removal R/posedge C/posedge limit=10 ticks=10 events=0
 RR_OBJECT tb.valid recovery R/posedge C/posedge limit=30 ticks=30 events=0
 RR_OBJECT tb.valid removal R/posedge C/posedge limit=30 ticks=30 events=0
-RR_OBJECT tb.combined recovery R/posedge C/posedge limit=10 ticks=10 events=0
-RR_OBJECT tb.combined removal R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.combined recovery R/posedge C/posedge limit=30 ticks=30 events=0
+RR_OBJECT tb.combined removal R/posedge C/posedge limit=30 ticks=30 events=0
 RR_COMPLETE objects=20 callbacks=0
 PASSED

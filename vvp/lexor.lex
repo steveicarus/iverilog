@@ -242,6 +242,7 @@ width_real ([0-9]+[.][0-9]*|[0-9]*[.][0-9]+)([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0
 ".tchk_hold"    { return K_TCHK_HOLD; }
 ".tchk_recovery"    { return K_TCHK_RECOVERY; }
 ".tchk_removal"    { return K_TCHK_REMOVAL; }
+".tchk_recrem"     { return K_TCHK_RECREM; }
 ".tran"         { return K_TRAN; }
 ".tranif0"      { return K_TRANIF0; }
 ".tranif1"      { return K_TRANIF1; }

@@ -77,7 +77,7 @@ check-installed-rr-conditional-vlog95:
 
 # Exercise the emitted checks as well as their native VVP counterparts.
 check-installed-tchk-vlog95:
-	cd $(abs_srcdir); python3 vvp_reg.py $(opts) --vlog95 regress-tchk-notifier.list regress-tchk-target-corners.list regress-setup-hold-hdl.list regress-recovery-removal-hdl.list $(TCHK_CONDITIONAL_LIST) $(RR_CONDITIONAL_LIST)
+	cd $(abs_srcdir); python3 vvp_reg.py $(opts) --vlog95 regress-tchk-notifier.list regress-tchk-target-corners.list regress-setup-hold-hdl.list regress-recovery-removal-hdl.list $(TCHK_CONDITIONAL_LIST) $(RR_CONDITIONAL_LIST) regress-recrem-hdl.list
 
 ifeq (@HAVE_LIBZ@,yes)
 fst_enum_reader@EXEEXT@: $(srcdir)/fst_enum_reader.c ../vpi/fstapi.o ../vpi/fastlz.o ../vpi/lz4.o

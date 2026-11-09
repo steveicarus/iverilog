@@ -1,0 +1,2 @@
+ivltests/recrem_hdl_data_condition_fail.v:7: error: $recrem data supports only unconditional scalar events with no edge, posedge or negedge.
+1 error(s) during elaboration.

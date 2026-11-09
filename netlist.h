@@ -1066,6 +1066,21 @@ class NetRemoval : public NetTwoEventCheck {
       using NetTwoEventCheck::NetTwoEventCheck;
 };
 
+/* A combined check owns one notifier and two ordered limits. */
+class NetRecRem : public NetTwoEventCheck {
+    public:
+      NetRecRem(NetScope*scope, NetNet*reference, NetNet*data,
+                   NetNet*notifier, int reference_edge, int data_edge,
+                   double recovery_limit, double removal_limit)
+      : NetTwoEventCheck(scope, reference, data, notifier, reference_edge,
+                         data_edge, recovery_limit, nullptr, IVL_TCHK_COND_NONE,
+                         nullptr, IVL_TCHK_COND_NONE), removal_limit_(removal_limit) { }
+      double recovery_limit() const { return limit(); }
+      double removal_limit() const { return removal_limit_; }
+    private:
+      double removal_limit_;
+};
+
 /*
  * This object type is used for holding local variable values when
  * evaluating constant user functions.
@@ -1245,6 +1260,8 @@ class NetScope : public Definitions, public Attrib {
       { recoveries_.push_back(std::move(check)); }
       void add_removal(std::unique_ptr<NetRemoval> check)
       { removals_.push_back(std::move(check)); }
+      void add_recrem(std::unique_ptr<NetRecRem> check)
+      { recrems_.push_back(std::move(check)); }
 
       void add_event(NetEvent*);
       void rem_event(NetEvent*);
@@ -1600,6 +1617,7 @@ class NetScope : public Definitions, public Attrib {
       std::vector<std::unique_ptr<NetHold> > holds_;
       std::vector<std::unique_ptr<NetRecovery> > recoveries_;
       std::vector<std::unique_ptr<NetRemoval> > removals_;
+      std::vector<std::unique_ptr<NetRecRem> > recrems_;
 
       std::map<perm_string,LineInfo*> genvars_;
 
