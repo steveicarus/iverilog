@@ -54,6 +54,27 @@ static double sdf_delay_scale(vpiHandle scope)
       int unit = vpi_get(vpiTimeUnit, scope);
       return sdf_timescale / pow(10.0, (double)unit);
 }
+
+/* Check the same local rounding and global scaling used by the runtime
+   before handing it an accumulated INTERCONNECT value. The runtime's
+   real-to-tick conversion does not itself detect overflow. */
+static bool interconnect_increment_fits(double value, vpiHandle scope)
+{
+      if (!isfinite(value)) return false;
+      if (value < 0.0) return true; /* The delay setter clamps the final value. */
+      int precision = vpi_get(vpiTimePrecision, scope);
+      int shift = vpi_get(vpiTimeUnit, scope) - precision;
+      double rounded = value * pow(10.0, shift) + 0.5;
+      if (!isfinite(rounded) || rounded >= 18446744073709551616.0)
+            return false;
+      PLI_UINT64 ticks = (PLI_UINT64)rounded;
+      shift = precision - vpi_get(vpiTimePrecision, 0);
+      for (int idx = 0; idx < shift; idx += 1) {
+            if (ticks > (~(PLI_UINT64)0) / 10) return false;
+            ticks *= 10;
+      }
+      return true;
+}
 static char* sdf_fname = NULL;
 
 /* Hierarchy separators have been normalized to dots by the parser. Split
@@ -212,6 +233,7 @@ static vpiHandle get_port_handle(char* port_name, const int sdf_lineno)
 
 void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconnect_port_s port2,
                              const struct sdf_delval_list_s*delval_list,
+                             bool increment,
                              const int sdf_lineno)
 {
 
@@ -297,12 +319,24 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 			delay_vals[idx].type = vpiScaledRealTime;
 			if (delval_list->val[idx].defined) {
 			      double val = delval_list->val[idx].value * sdf_delay_scale(delay_scope);
+			      if (increment) val += delay_vals[idx].real;
 			      if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Putting delay: %f for index %d\n",
 			                                      sdf_fname, sdf_lineno, val, idx);
 			      delay_vals[idx].real = val;
 			}
 		  }
 
+		    // Validate the entire incremental update before modifying the object.
+		  if (increment) {
+			for (int idx = 0; idx < delval_list->count; idx += 1) {
+			      if (!interconnect_increment_fits(delay_vals[idx].real, delay_scope)) {
+				    vpi_printf("SDF WARNING: %s:%d: INTERCONNECT increment "
+				               "is outside the simulation time range; delays unchanged.\n",
+				               sdf_fname, sdf_lineno);
+				    return;
+			      }
+			}
+		  }
 		    // Put the new delays
 		  vpi_put_delays(intermodpath, &delays);
 	    } else {

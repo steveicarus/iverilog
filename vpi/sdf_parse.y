@@ -29,6 +29,10 @@ static void yyerror(const char*msg);
 # include  <stdlib.h>
 # include  "ivl_alloc.h"
 
+/* Each delay block selects its INTERCONNECT update mode before its entries
+   are reduced. A following ABSOLUTE block restores replacement semantics. */
+static bool interconnect_increment;
+
 /* Decode a local name in place. Hierarchical names retain their escapes
    until sys_sdf.c splits them into individual components. */
 static char* unescape_identifier(char*text)
@@ -412,8 +416,8 @@ deltype_list
 deltype
   : '(' K_PATHPULSE input_output_path_opt rvalue rvalue_opt ')'
   | '(' K_PATHPULSEPERCENT input_output_path_opt rvalue rvalue_opt ')'
-  | '(' K_ABSOLUTE del_def_list ')'
-  | '(' K_INCREMENT del_def_list ')'
+  | '(' K_ABSOLUTE { interconnect_increment = false; } del_def_list ')'
+  | '(' K_INCREMENT { interconnect_increment = true; } del_def_list ')'
   | '(' error ')'
     { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed delay type\n",
 	         sdf_parse_path, @1.first_line); }
@@ -471,7 +475,7 @@ del_def
 	                 "port1 = %s index = %d, port2 = %s index = %d\n",
 	                 sdf_parse_path, @2.first_line, $3.name, $3.index, $4.name, $4.index);
 	}
-	sdf_interconnect_delays($3, $4, &$5, @2.first_line);
+	sdf_interconnect_delays($3, $4, &$5, interconnect_increment, @2.first_line);
 	free($3.name);
 	free($4.name);
       }
