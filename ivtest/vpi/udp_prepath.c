@@ -95,8 +95,32 @@ static PLI_INT32 changed(p_cb_data data)
 {
     struct stream *stream = (struct stream *)data->user_data;
     struct owner *owner = &owners[stream->owner];
-    unsigned time = now(), idx = stream->count;
-    char actual = value(stream->signal);
+    vpiHandle reported_object = data->obj;
+    s_vpi_time reported_time = {0};
+    int valid_time = data->time != NULL;
+    int scalar_value = data->value && data->value->format == vpiBinStrVal &&
+                       data->value->value.str && data->value->value.str[0] &&
+                       data->value->value.str[1] == '\0';
+    char reported_value = scalar_value ? data->value->value.str[0] : '\0';
+    unsigned time, idx = stream->count, payload_time;
+    char actual, payload_value;
+    /* Copy the payload before VPI reads can reuse its scratch storage. */
+    if (valid_time) reported_time = *data->time;
+    time = now();
+    actual = value(stream->signal);
+    payload_time = time;
+    payload_value = actual;
+    /* Initialization retains its snapshot/history checks. Subsequent callback
+     * payloads must independently match the authored event schedule. */
+    if (time >= 80 && idx < owner->events) {
+        payload_time = stream->is_pre ? owner->source_times[idx] : delivery(owner, idx);
+        payload_value = owner->source_values[idx];
+    }
+    check(reported_object == stream->signal, "callback payload object");
+    check(valid_time && reported_time.type == vpiSimTime &&
+          reported_time.high == 0 && reported_time.low == payload_time,
+          "callback payload time");
+    check(scalar_value && reported_value == payload_value, "callback payload value");
     if (stream->history_count < HISTORY) {
         stream->actual_times[stream->history_count] = time;
         stream->actual_values[stream->history_count] = actual;
