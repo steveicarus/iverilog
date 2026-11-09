@@ -19,8 +19,8 @@ module tb;
   initial begin
     #1;
     $sdf_annotate("ivltests/recovery_removal_sdf_cond_escaped.sdf",tb);
-    $rr_watch("tb.u", "recovery", "event.pin", "any", "clock\\pin", "posedge", 0.04, 40, "ns", 1, 130);
-    $rr_watch("tb.u", "removal", "event.pin", "any", "clock\\pin", "posedge", 0.02, 20, "nh", 1, 145);
+    $rr_watch("tb.u", "recovery", "event.pin", "any", "clock\\pin", "posedge", 0.04, 40, "ns", 1'b0, 1, 130);
+    $rr_watch("tb.u", "removal", "event.pin", "any", "clock\\pin", "posedge", 0.02, 20, "nh", 1'b0, 1, 145);
     $tchk_condition("tb.u", "ns", "reference", "case", "gate.pin", 0);
     $tchk_condition("tb.u", "ns", "data", "bare", "enable\\pin", 0);
     $tchk_condition("tb.u", "nh", "reference", "case", "gate.pin", 0);

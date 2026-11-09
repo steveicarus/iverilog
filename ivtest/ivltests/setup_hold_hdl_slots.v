@@ -45,11 +45,11 @@ module tb;
   initial begin
     #1;
 
-    $sh_watch("tb.s", "setup", "C", "posedge", "D", "any", 10.0, 10, "notifier", 0);
-    $sh_watch("tb.h", "hold", "C", "posedge", "D", "any", 10.0, 10, "notifier", 2, 100, 101);
-    $sh_watch("tb.reverse", "hold", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1, 101);
-    $sh_watch("tb.aset", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "notifier", 0);
-    $sh_watch("tb.ahold", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "notifier", 2, 100, 200);
+    $sh_watch("tb.s", "setup", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1'b0, 0);
+    $sh_watch("tb.h", "hold", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1'b0, 2, 100, 101);
+    $sh_watch("tb.reverse", "hold", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1'b0, 1, 101);
+    $sh_watch("tb.aset", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "notifier", 1'b0, 0);
+    $sh_watch("tb.ahold", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "notifier", 1'b0, 2, 100, 200);
     $sh_start;
     #219;
     $sh_finish; $finish;

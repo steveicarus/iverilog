@@ -18,8 +18,8 @@ module tb;
   initial begin
     #1;
     $sdf_annotate("ivltests/setup_hold_hdl_units.sdf",tb);
-    $sh_watch("tb.u", "setup", "C.dot", "posedge", "D\\tail", "any", 0.04, 40, "ns", 1, 130);
-    $sh_watch("tb.u", "hold", "C.dot", "posedge", "D\\tail", "any", 0.02, 20, "nh", 1, 145);
+    $sh_watch("tb.u", "setup", "C.dot", "posedge", "D\\tail", "any", 0.04, 40, "ns", 1'b0, 1, 130);
+    $sh_watch("tb.u", "hold", "C.dot", "posedge", "D\\tail", "any", 0.02, 20, "nh", 1'b0, 1, 145);
     $sh_start;
     #169;
     $sh_finish; $finish;

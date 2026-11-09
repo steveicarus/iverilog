@@ -31,12 +31,12 @@ module tb;
   initial begin
     #1;
     $sdf_annotate("ivltests/setup_hold_sdf_cond_both.sdf",tb);
-    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 20, 20, "ns0", 1, 115);
-    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 20, 20, "nh0", 1, 130);
-    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 12, 12, "ns1", 1, 205);
-    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 12, 12, "nh1", 1, 208);
-    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 10, 10, "ns2", 1, 205);
-    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 10, 10, "nh2", 1, 208);
+    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 20, 20, "ns0", 1'b0, 1, 115);
+    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 20, 20, "nh0", 1'b0, 1, 130);
+    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 12, 12, "ns1", 1'b0, 1, 205);
+    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 12, 12, "nh1", 1'b0, 1, 208);
+    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 10, 10, "ns2", 1'b0, 1, 205);
+    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 10, 10, "nh2", 1'b0, 1, 208);
     $tchk_condition("tb.u", "ns0", "data", "bare", "E", 0);
     $tchk_condition("tb.u", "ns0", "reference", "case", "F", 0);
     $tchk_condition("tb.u", "nh0", "data", "bare", "E", 0);

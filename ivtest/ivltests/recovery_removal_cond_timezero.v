@@ -17,13 +17,13 @@ module tb;
   initial begin
     #1;
 
-    $rr_watch("tb.valid_s", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 2, 9, 25);
+    $rr_watch("tb.valid_s", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 1'b0, 2, 9, 25);
 
-    $rr_watch("tb.missing_s", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 1, 25);
+    $rr_watch("tb.missing_s", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 1'b0, 1, 25);
 
-    $rr_watch("tb.valid_h", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 2, 9, 25);
+    $rr_watch("tb.valid_h", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 1'b0, 2, 9, 25);
 
-    $rr_watch("tb.missing_h", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 1, 25);
+    $rr_watch("tb.missing_h", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 1'b0, 1, 25);
 
     $rr_start;
     #199;

@@ -26,14 +26,14 @@ module tb;
  initial begin reverseR=0;reverseC=0;#100 reverseC=1;#0 reverseR=1;end
  initial begin S=0;#100 S=1;#1 S=0;#99 S=1;end
  initial begin #1;
-    $rr_watch("tb.ordered_r", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1, 100);
-    $rr_watch("tb.ordered_m", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 0);
-    $rr_watch("tb.reverse_r", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 0);
-    $rr_watch("tb.reverse_m", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 0);
-    $rr_watch("tb.alias_r", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 2, 100, 200);
-    $rr_watch("tb.alias_m", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 0);
-    $rr_watch("tb.same", "recovery", "S", "posedge", "S", "posedge", 10.0, 10, "nr", 2, 100, 200);
-    $rr_watch("tb.same", "removal", "S", "posedge", "S", "posedge", 10.0, 10, "nm", 0);
+    $rr_watch("tb.ordered_r", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'b0, 1, 100);
+    $rr_watch("tb.ordered_m", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'b0, 0);
+    $rr_watch("tb.reverse_r", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'b0, 0);
+    $rr_watch("tb.reverse_m", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'b0, 0);
+    $rr_watch("tb.alias_r", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'b0, 2, 100, 200);
+    $rr_watch("tb.alias_m", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'b0, 0);
+    $rr_watch("tb.same", "recovery", "S", "posedge", "S", "posedge", 10.0, 10, "nr", 1'b0, 2, 100, 200);
+    $rr_watch("tb.same", "removal", "S", "posedge", "S", "posedge", 10.0, 10, "nm", 1'b0, 0);
   $rr_start;#219;$rr_finish;$finish;
  end
 endmodule

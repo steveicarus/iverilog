@@ -34,13 +34,13 @@ module tb;
  initial begin #1;
   if(n0.notifier!==1'b0 || n1.notifier!==1'b1 || nx.notifier!==1'bx || nz.notifier!==1'bz || shared.notifier!==1'b0) begin
    $display("FAILED initial notifier values");$finish;end
-    $rr_watch("tb.n0", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 2, 15, 105);
-    $rr_watch("tb.n1", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 2, 15, 105);
-    $rr_watch("tb.nx", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 2, 15, 105);
-    $rr_watch("tb.nz", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 2, 15, 105);
-    $rr_watch("tb.shared", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 2, 15, 105);
-    $rr_watch("tb.shared", "removal", "R", "posedge", "C", "posedge", 12.0, 12, "notifier", 2, 15, 105);
-    $rr_watch("tb.omitted", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "", 2, 15, 105);
+    $rr_watch("tb.n0", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'b0, 2, 15, 105);
+    $rr_watch("tb.n1", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'b1, 2, 15, 105);
+    $rr_watch("tb.nx", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'bx, 2, 15, 105);
+    $rr_watch("tb.nz", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'bz, 2, 15, 105);
+    $rr_watch("tb.shared", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "notifier", 1'b0, 2, 15, 105);
+    $rr_watch("tb.shared", "removal", "R", "posedge", "C", "posedge", 12.0, 12, "notifier", 1'b0, 2, 15, 105);
+    $rr_watch("tb.omitted", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "", 1'b0, 2, 15, 105);
   $rr_start;#119;$rr_finish;$finish;
  end
 endmodule

@@ -24,8 +24,8 @@ module tb;
   initial begin
     #1;
 
-    $sh_watch("tb.s", "setup", "C", "posedge", "D", "any", 10.0, 10, "", 1, 15);
-    $sh_watch("tb.h", "hold", "C", "posedge", "D", "any", 10.0, 10, "", 1, 19);
+    $sh_watch("tb.s", "setup", "C", "posedge", "D", "any", 10.0, 10, "", 1'b0, 1, 15);
+    $sh_watch("tb.h", "hold", "C", "posedge", "D", "any", 10.0, 10, "", 1'b0, 1, 19);
     $sh_start;
     #29;
     $sh_finish; $finish;

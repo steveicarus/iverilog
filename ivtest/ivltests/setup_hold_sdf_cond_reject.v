@@ -21,10 +21,10 @@ module tb;
   initial begin
     #1;
     $sdf_annotate("ivltests/setup_hold_sdf_cond_reject.sdf",tb);
-    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 10, 10, "ns", 1, 205);
-    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 10, 10, "nh", 1, 208);
-    $sh_watch("tb.valid", "setup", "C", "posedge", "D", "any", 20, 20, "ns", 2, 115, 205);
-    $sh_watch("tb.valid", "hold", "C", "posedge", "D", "any", 20, 20, "nh", 2, 130, 208);
+    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 10, 10, "ns", 1'b0, 1, 205);
+    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 10, 10, "nh", 1'b0, 1, 208);
+    $sh_watch("tb.valid", "setup", "C", "posedge", "D", "any", 20, 20, "ns", 1'b0, 2, 115, 205);
+    $sh_watch("tb.valid", "hold", "C", "posedge", "D", "any", 20, 20, "nh", 1'b0, 2, 130, 208);
     $tchk_condition("tb.u", "ns", "data", "bare", "E", 0);
     $tchk_condition("tb.u", "ns", "reference", "case", "F", 0);
     $tchk_condition("tb.u", "nh", "data", "bare", "E", 0);

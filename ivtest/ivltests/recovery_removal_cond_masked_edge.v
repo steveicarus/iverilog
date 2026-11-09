@@ -17,17 +17,17 @@ module tb;
   initial begin
     #1;
 
-    $rr_watch("tb.s_any", "recovery", "R", "any", "C", "posedge", 10.0, 10, "ns", 2, 25, 45);
+    $rr_watch("tb.s_any", "recovery", "R", "any", "C", "posedge", 10.0, 10, "ns", 1'b0, 2, 25, 45);
 
-    $rr_watch("tb.h_any", "removal", "R", "posedge", "C", "any", 10.0, 10, "nh", 2, 25, 45);
+    $rr_watch("tb.h_any", "removal", "R", "posedge", "C", "any", 10.0, 10, "nh", 1'b0, 2, 25, 45);
 
-    $rr_watch("tb.s_pos", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 1, 45);
+    $rr_watch("tb.s_pos", "recovery", "R", "posedge", "C", "posedge", 10.0, 10, "ns", 1'b0, 1, 45);
 
-    $rr_watch("tb.h_pos", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 1, 45);
+    $rr_watch("tb.h_pos", "removal", "R", "posedge", "C", "posedge", 10.0, 10, "nh", 1'b0, 1, 45);
 
-    $rr_watch("tb.s_neg", "recovery", "R", "negedge", "C", "posedge", 10.0, 10, "ns", 1, 25);
+    $rr_watch("tb.s_neg", "recovery", "R", "negedge", "C", "posedge", 10.0, 10, "ns", 1'b0, 1, 25);
 
-    $rr_watch("tb.h_neg", "removal", "R", "posedge", "C", "negedge", 10.0, 10, "nh", 1, 25);
+    $rr_watch("tb.h_neg", "removal", "R", "posedge", "C", "negedge", 10.0, 10, "nh", 1'b0, 1, 25);
 
     $rr_start;
     #199;

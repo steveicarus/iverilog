@@ -30,10 +30,10 @@ module tb;
   initial begin
     #1;
     $sdf_annotate("ivltests/setup_hold_cond_partial.sdf",tb);
-    $sh_watch("tb.c", "setup", "C", "posedge", "D", "any", 30.0, 30, "ns", 2, 115, 205);
-    $sh_watch("tb.c", "hold", "C", "posedge", "D", "any", 30.0, 30, "nh", 2, 130, 208);
-    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 10.0, 10, "ns", 1, 205);
-    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 10.0, 10, "nh", 1, 208);
+    $sh_watch("tb.c", "setup", "C", "posedge", "D", "any", 30.0, 30, "ns", 1'b0, 2, 115, 205);
+    $sh_watch("tb.c", "hold", "C", "posedge", "D", "any", 30.0, 30, "nh", 1'b0, 2, 130, 208);
+    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 10.0, 10, "ns", 1'b0, 1, 205);
+    $sh_watch("tb.u", "hold", "C", "posedge", "D", "any", 10.0, 10, "nh", 1'b0, 1, 208);
     $sh_start;
     #229;
     $sh_finish; $finish;

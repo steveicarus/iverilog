@@ -21,10 +21,10 @@ module tb;
   initial begin
     #1;
     $sdf_annotate("ivltests/recovery_removal_sdf_cond_reject.sdf",tb);
-    $rr_watch("tb.u", "recovery", "R", "any", "C", "posedge", 10, 10, "ns", 1, 205);
-    $rr_watch("tb.u", "removal", "R", "any", "C", "posedge", 10, 10, "nh", 1, 208);
-    $rr_watch("tb.valid", "recovery", "R", "any", "C", "posedge", 20, 20, "ns", 2, 115, 205);
-    $rr_watch("tb.valid", "removal", "R", "any", "C", "posedge", 20, 20, "nh", 2, 130, 208);
+    $rr_watch("tb.u", "recovery", "R", "any", "C", "posedge", 10, 10, "ns", 1'b0, 1, 205);
+    $rr_watch("tb.u", "removal", "R", "any", "C", "posedge", 10, 10, "nh", 1'b0, 1, 208);
+    $rr_watch("tb.valid", "recovery", "R", "any", "C", "posedge", 20, 20, "ns", 1'b0, 2, 115, 205);
+    $rr_watch("tb.valid", "removal", "R", "any", "C", "posedge", 20, 20, "nh", 1'b0, 2, 130, 208);
     $tchk_condition("tb.u", "ns", "reference", "bare", "E", 0);
     $tchk_condition("tb.u", "ns", "data", "case", "F", 0);
     $tchk_condition("tb.u", "nh", "reference", "bare", "E", 0);

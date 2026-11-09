@@ -17,9 +17,9 @@ module tb;
   initial begin
     #1;
 
-    $rr_watch("tb.renamed_instance", "recovery", "data\\pin", "any", "ref.pin", "negedge", 10.0, 10, "notify.pin", 1, 105);
+    $rr_watch("tb.renamed_instance", "recovery", "data\\pin", "any", "ref.pin", "negedge", 10.0, 10, "notify.pin", 1'b0, 1, 105);
 
-    $rr_watch("tb.renamed_instance", "removal", "data\\pin", "any", "ref.pin", "negedge", 10.0, 10, "notify.pin", 1, 108);
+    $rr_watch("tb.renamed_instance", "removal", "data\\pin", "any", "ref.pin", "negedge", 10.0, 10, "notify.pin", 1'b0, 1, 108);
 
     $rr_start;
     #199;

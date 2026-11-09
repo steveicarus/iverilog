@@ -39,12 +39,12 @@ module tb;
   end
   initial begin
     #1;
-    $sh_watch("tb.b", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 1, 65);
-    $sh_watch("tb.b", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 1, 68);
-    $sh_watch("tb.z", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 1, 25);
-    $sh_watch("tb.z", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 1, 28);
-    $sh_watch("tb.o", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 1, 65);
-    $sh_watch("tb.o", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 1, 68);
+    $sh_watch("tb.b", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 1'b0, 1, 65);
+    $sh_watch("tb.b", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 1'b0, 1, 68);
+    $sh_watch("tb.z", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 1'b0, 1, 25);
+    $sh_watch("tb.z", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 1'b0, 1, 28);
+    $sh_watch("tb.o", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 1'b0, 1, 65);
+    $sh_watch("tb.o", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 1'b0, 1, 68);
     $sh_start;
     #199;
     $sh_finish; $finish;

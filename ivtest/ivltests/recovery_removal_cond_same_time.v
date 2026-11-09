@@ -31,13 +31,13 @@ module tb;
   initial begin
     #1;
 
-    $rr_watch("tb.u", "recovery", "R", "any", "C", "posedge", 10.0, 10, "ns", 3, 20, 60, 85);
+    $rr_watch("tb.u", "recovery", "R", "any", "C", "posedge", 10.0, 10, "ns", 1'b0, 3, 20, 60, 85);
 
-    $rr_watch("tb.u", "removal", "R", "any", "C", "posedge", 10.0, 10, "nh", 1, 88);
+    $rr_watch("tb.u", "removal", "R", "any", "C", "posedge", 10.0, 10, "nh", 1'b0, 1, 88);
 
-    $rr_watch("tb.z", "recovery", "R", "any", "C", "posedge", 0.0, 0, "ns", 0);
+    $rr_watch("tb.z", "recovery", "R", "any", "C", "posedge", 0.0, 0, "ns", 1'b0, 0);
 
-    $rr_watch("tb.z", "removal", "R", "any", "C", "posedge", 0.0, 0, "nh", 0);
+    $rr_watch("tb.z", "removal", "R", "any", "C", "posedge", 0.0, 0, "nh", 1'b0, 0);
 
     $rr_start;
     #199;

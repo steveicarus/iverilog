@@ -19,8 +19,8 @@ module tb;
   initial begin
     #1;
     $sdf_annotate("ivltests/setup_hold_sdf_cond_escaped.sdf",tb);
-    $sh_watch("tb.u", "setup", "clock\\pin", "posedge", "event.pin", "any", 0.04, 40, "ns", 1, 130);
-    $sh_watch("tb.u", "hold", "clock\\pin", "posedge", "event.pin", "any", 0.02, 20, "nh", 1, 145);
+    $sh_watch("tb.u", "setup", "clock\\pin", "posedge", "event.pin", "any", 0.04, 40, "ns", 1'b0, 1, 130);
+    $sh_watch("tb.u", "hold", "clock\\pin", "posedge", "event.pin", "any", 0.02, 20, "nh", 1'b0, 1, 145);
     $tchk_condition("tb.u", "ns", "data", "case", "gate.pin", 0);
     $tchk_condition("tb.u", "ns", "reference", "bare", "enable\\pin", 0);
     $tchk_condition("tb.u", "nh", "data", "case", "gate.pin", 0);

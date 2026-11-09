@@ -29,10 +29,10 @@ module tb;
   initial begin
     #1;
 
-    $sh_watch("tb.sz", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "notifier", 1, 9);
-    $sh_watch("tb.sl", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "notifier", 1, 109);
-    $sh_watch("tb.hz", "hold", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1, 9);
-    $sh_watch("tb.hl", "hold", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1, 109);
+    $sh_watch("tb.sz", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "notifier", 1'b0, 1, 9);
+    $sh_watch("tb.sl", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "notifier", 1'b0, 1, 109);
+    $sh_watch("tb.hz", "hold", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1'b0, 1, 9);
+    $sh_watch("tb.hl", "hold", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1'b0, 1, 109);
     $sh_start;
     #139;
     $sh_finish; $finish;

@@ -32,12 +32,12 @@ module tb;
   end
   initial begin
     #1;
-    $sh_watch("tb.shared", "setup", "C", "posedge", "D", "any", 10.0, 10, "n", 1, 105);
-    $sh_watch("tb.shared", "hold", "C", "posedge", "D", "any", 10.0, 10, "n", 1, 108);
-    $sh_watch("tb.omitted", "setup", "C", "posedge", "D", "any", 10.0, 10, "", 1, 105);
-    $sh_watch("tb.omitted", "hold", "C", "posedge", "D", "any", 10.0, 10, "", 1, 108);
-    $sh_watch("tb.highz", "setup", "C", "posedge", "D", "any", 10.0, 10, "n", 1, 105);
-    $sh_watch("tb.highz", "hold", "C", "posedge", "D", "any", 10.0, 10, "n", 1, 108);
+    $sh_watch("tb.shared", "setup", "C", "posedge", "D", "any", 10.0, 10, "n", 1'b0, 1, 105);
+    $sh_watch("tb.shared", "hold", "C", "posedge", "D", "any", 10.0, 10, "n", 1'b0, 1, 108);
+    $sh_watch("tb.omitted", "setup", "C", "posedge", "D", "any", 10.0, 10, "", 1'b0, 1, 105);
+    $sh_watch("tb.omitted", "hold", "C", "posedge", "D", "any", 10.0, 10, "", 1'b0, 1, 108);
+    $sh_watch("tb.highz", "setup", "C", "posedge", "D", "any", 10.0, 10, "n", 1'bz, 1, 105);
+    $sh_watch("tb.highz", "hold", "C", "posedge", "D", "any", 10.0, 10, "n", 1'bz, 1, 108);
     $sh_start;
     #199;
     $sh_finish; $finish;
