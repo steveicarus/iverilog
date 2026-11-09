@@ -571,6 +571,21 @@ static int sdf_tchk_terminal_matches(vpiHandle check, int role,
       return signal && !strcmp(port.string_val, vpi_get_str(vpiName, signal));
 }
 
+/* Convert an already validated limit using the same local rounding and
+ * integer global scaling as vpi_put_delays. Keeping omitted slots in simulation
+ * ticks avoids a lossy round trip through double precision. */
+static void sdf_tchk_limit_time(double value, vpiHandle scope, p_vpi_time time)
+{
+      int precision = vpi_get(vpiTimePrecision, scope);
+      int local_shift = vpi_get(vpiTimeUnit, scope) - precision;
+      int global_shift = precision - vpi_get(vpiTimePrecision, 0);
+      PLI_UINT64 ticks = (PLI_UINT64)(value * pow(10.0, local_shift) + 0.5);
+      for (int idx = 0; idx < global_shift; idx += 1) ticks *= 10;
+      time->type = vpiSimTime;
+      time->high = ticks >> 32;
+      time->low = ticks & 0xffffffff;
+}
+
 /* SDF lists data before reference for SETUP, HOLD and SETUPHOLD.
  * Standard cross-mapping updates standalone checks and the corresponding
  * combined limit slots. An omitted slot retains the existing object value. */
@@ -631,10 +646,12 @@ static void sdf_setup_hold_values(int check_type, struct port_with_edge_s data,
             delays.no_of_delays = target == vpiSetupHold ? 2 : 1;
             delays.time_type = vpiScaledRealTime;
             if (target == vpiSetupHold) {
+                  delays.time_type = vpiSimTime;
                   vpi_get_delays(check, &delays);
-                  if (setup.defined) values[0].real = scaled_setup;
-                  if (hold.defined) values[1].real = scaled_hold;
-                  values[0].type = values[1].type = vpiScaledRealTime;
+                  if (setup.defined)
+                        sdf_tchk_limit_time(scaled_setup, scope, &values[0]);
+                  if (hold.defined)
+                        sdf_tchk_limit_time(scaled_hold, scope, &values[1]);
             } else {
                   values[0].type = vpiScaledRealTime;
                   values[0].real = target == vpiSetup ? scaled_setup : scaled_hold;
