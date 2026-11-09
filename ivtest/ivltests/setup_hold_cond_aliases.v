@@ -45,13 +45,13 @@ module tb;
   end
   initial begin
     #1;
-    $sh_watch("tb.joined", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 0);
-    $sh_watch("tb.joined", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 2, 40, 80);
-    $sh_watch("tb.roles", "setup", "C", "posedge", "D", "any", 10.0, 10, "ns", 1, 56);
-    $sh_watch("tb.roles", "hold", "C", "posedge", "D", "any", 10.0, 10, "nh", 3, 28, 48, 50);
-    $sh_watch("tb.split", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 1, 25);
-    $sh_watch("tb.split", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 2, 28, 40);
-    $sh_watch("tb.feedback", "hold", "C", "posedge", "C", "posedge", 10.0, 10, "n", 1, 20);
+    $sh_watch("tb.joined", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 1'b0, 0);
+    $sh_watch("tb.joined", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 1'b0, 2, 40, 80);
+    $sh_watch("tb.roles", "setup", "C", "posedge", "D", "any", 10.0, 10, "ns", 1'b0, 1, 56);
+    $sh_watch("tb.roles", "hold", "C", "posedge", "D", "any", 10.0, 10, "nh", 1'b0, 3, 28, 48, 50);
+    $sh_watch("tb.split", "setup", "C", "posedge", "D", "posedge", 10.0, 10, "ns", 1'b0, 1, 25);
+    $sh_watch("tb.split", "hold", "C", "posedge", "D", "posedge", 10.0, 10, "nh", 1'b0, 2, 28, 40);
+    $sh_watch("tb.feedback", "hold", "C", "posedge", "C", "posedge", 10.0, 10, "n", 1'b1, 1, 20);
     $sh_start;
     #199;
     $sh_finish; $finish;

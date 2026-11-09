@@ -24,7 +24,7 @@ module tb;
   initial begin
     #1;
 
-    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 10.0, 10, "notifier", 2, 49, 129);
+    $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 10.0, 10, "notifier", 1'b0, 2, 49, 129);
     $sh_start;
     #159;
     $sh_finish; $finish;
