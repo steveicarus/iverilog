@@ -340,7 +340,8 @@ __vpiTchkRecRem::__vpiTchkRecRem(__vpiScope* scope, unsigned file_idx,
                                        unsigned lineno,
                                        vvp_fun_tchk_recrem* fun)
 : reference_(nullptr), data_(nullptr), notifier_(nullptr),
-  reference_condition_(nullptr), data_condition_(nullptr), scope_(scope),
+  reference_condition_(nullptr), data_condition_(nullptr),
+  reference_condition_mode_(1), data_condition_mode_(1), scope_(scope),
   file_idx_(file_idx), lineno_(lineno), fun_(fun),
   reference_term_(nullptr), data_term_(nullptr)
 {
@@ -370,12 +371,14 @@ vpiHandle __vpiTchkRecRem::vpi_handle(int code)
           case vpiTchkRefTerm:
             if (!reference_term_ && reference_)
                   reference_term_ = new __vpiTchkRefTerm(
-                        tchk_vpi_edge(fun_->reference_edge_), reference_);
+                        tchk_vpi_edge(fun_->reference_edge_), reference_,
+                        reference_condition_, reference_condition_mode_);
             return reference_term_;
           case vpiTchkDataTerm:
             if (!data_term_ && data_)
                   data_term_ = new __vpiTchkRefTerm(
-                        tchk_vpi_edge(fun_->data_edge_), data_);
+                        tchk_vpi_edge(fun_->data_edge_), data_,
+                        data_condition_, data_condition_mode_);
             return data_term_;
           default: return nullptr;
       }

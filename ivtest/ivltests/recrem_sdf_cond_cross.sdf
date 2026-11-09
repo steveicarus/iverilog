@@ -1,0 +1,11 @@
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
+ (CELL (CELLTYPE "recrem_cond_cross") (INSTANCE combined) (TIMINGCHECK
+  (RECREM (COND E (posedge R)) (COND F === 1'b0 (posedge C)) (20:20:20) (8:8:8))))
+ (CELL (CELLTYPE "recrem_cond_cross") (INSTANCE separate) (TIMINGCHECK
+  (RECOVERY (COND E (posedge R)) (COND F === 1'b0 (posedge C)) (20:20:20))
+  (REMOVAL (COND E (posedge R)) (COND F === 1'b0 (posedge C)) (8:8:8))))
+ (CELL (CELLTYPE "recrem_cond_cross") (INSTANCE first) (TIMINGCHECK
+  (RECOVERY (COND E (posedge R)) (COND F === 1'b0 (posedge C)) (20:20:20))))
+ (CELL (CELLTYPE "recrem_cond_cross") (INSTANCE second) (TIMINGCHECK
+  (REMOVAL (COND E (posedge R)) (COND F === 1'b0 (posedge C)) (8:8:8))))
+)

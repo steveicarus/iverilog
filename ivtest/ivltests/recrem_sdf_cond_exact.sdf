@@ -1,0 +1,10 @@
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
+ (CELL (CELLTYPE "recrem_cond_exact") (INSTANCE first) (TIMINGCHECK
+  (RECOVERY (COND E (posedge R)) (COND F === 1'b0 (posedge C)) (17:17:17))))
+ (CELL (CELLTYPE "recrem_cond_exact") (INSTANCE second) (TIMINGCHECK
+  (REMOVAL (COND E (posedge R)) (COND F === 1'b0 (posedge C)) (19:19:19))))
+ (CELL (CELLTYPE "recrem_cond_exact") (INSTANCE omit_first) (TIMINGCHECK
+  (RECREM (COND E (posedge R)) (COND F === 1'b0 (posedge C)) () (23:23:23))))
+ (CELL (CELLTYPE "recrem_cond_exact") (INSTANCE omit_second) (TIMINGCHECK
+  (RECREM (COND E (posedge R)) (COND F === 1'b0 (posedge C)) (29:29:29) ())))
+)

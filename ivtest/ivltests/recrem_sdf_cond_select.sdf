@@ -1,0 +1,10 @@
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
+ (CELL (CELLTYPE "recrem_cond_select") (INSTANCE u) (TIMINGCHECK
+  (RECREM (COND E (posedge R)) (posedge C) (20:20:20) (8:8:8))
+  (RECREM (COND E === 1'b1 (posedge R)) (posedge C) (12:12:12) (4:4:4))
+  (RECREM (COND E === 1'b0 (posedge R)) (posedge C) (30:30:30) (9:9:9))
+  (RECREM (posedge R2) (COND E (posedge C)) (20:20:20) (8:8:8))
+  (RECREM (posedge R2) (COND E === 1'b1 (posedge C)) (12:12:12) (4:4:4))
+  (RECREM (posedge R2) (COND E === 1'b0 (posedge C)) (30:30:30) (9:9:9))
+  (RECREM (COND E (posedge R3)) (COND F (posedge C2)) (20:20:20) (8:8:8))))
+)

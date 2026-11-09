@@ -1,0 +1,4 @@
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
+ (CELL (CELLTYPE "recrem_cond_escaped") (INSTANCE u) (TIMINGCHECK
+  (RECREM (COND "reference label" E\/0 === 1'b0 (posedge R\/0)) (COND "data label" F\\0 (posedge C\.0)) (20:20:20) (8:8:8))))
+)

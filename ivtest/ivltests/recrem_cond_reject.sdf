@@ -1,5 +1,5 @@
 (DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
 (CELL (CELLTYPE "leaf") (INSTANCE) (TIMINGCHECK
- (RECOVERY (COND RE (posedge R)) (posedge C) (99))
- (REMOVAL (posedge R) (COND CE (posedge C)) (99))
- (RECREM (COND RE (posedge R)) (COND CE (posedge C)) (99) (99)))))
+ (RECOVERY (COND RE == 1'b1 (posedge R)) (posedge C) (99))
+ (REMOVAL (posedge R) (COND CE != 1'b0 (posedge C)) (99))
+ (RECREM (COND RE == 1'b1 (posedge R)) (COND CE != 1'b0 (posedge C)) (99) (99)))))

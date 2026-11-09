@@ -2425,6 +2425,8 @@ void compile_tchk_recrem(unsigned file_idx, unsigned lineno,
             data_condition_value == 0 ? 0 : 1);
       net->fun = fun;
       __vpiTchkRecRem* obj = new __vpiTchkRecRem(scope, file_idx, lineno, fun);
+      obj->reference_condition_mode_ = reference_condition_value;
+      obj->data_condition_mode_ = data_condition_value;
       fun->vpi_tchk = obj;
       input_connect(net, 0, strdup(reference.text));
       input_connect(net, 1, strdup(data.text));
