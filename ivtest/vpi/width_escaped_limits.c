@@ -46,4 +46,5 @@ static void register_all(void)
     tf.type=vpiSysTask;tf.tfname="$width_escaped_limits";tf.calltf=audit;
     vpi_register_systf(&tf);
 }
-void (*vlog_startup_routines[])(void)={register_all,0};
+void pulse_history_register(void);
+void (*vlog_startup_routines[])(void)={register_all,pulse_history_register,0};

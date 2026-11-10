@@ -81,6 +81,9 @@ static void register_all(void)
 {
     s_vpi_systf_data tf={0};
     (void)base_register_all;
+#ifdef vpiTchk
+    register_observation();
+#endif
     tf.type=vpiSysTask; tf.tfname="$width_audit"; tf.calltf=audit;
     vpi_register_systf(&tf);
     tf.tfname="$width_audit_finish"; tf.calltf=finish;
