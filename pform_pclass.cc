@@ -163,6 +163,127 @@ void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net)
       net->set_this(pform_cur_class->type, this_wire);
 }
 
+/*
+ * An "extern" method prototype in a class body promises a definition
+ * outside the class: "function type class::name(...)".
+ */
+void pform_class_extern_method(const struct vlltype&loc, const char*name,
+			       bool is_task, bool is_virtual)
+{
+      ivl_assert(loc, pform_cur_class);
+      method_virtual_flag = false;
+
+      PClass::extern_method_t info;
+      FILE_NAME(&info, loc);
+      info.is_task = is_task;
+      info.is_virtual = is_virtual;
+      info.defined = false;
+
+      perm_string use_name = lex_strings.make(name);
+      if (!pform_cur_class->externs.emplace(use_name, info).second) {
+	    cerr << loc << ": error: Extern method '" << use_name
+		 << "' is already declared in class '"
+		 << pform_cur_class->pscope_name() << "'." << endl;
+	    error_count += 1;
+      }
+}
+
+/*
+ * While the body of an out-of-block method definition is parsed, the
+ * lexical scope is the class scope, so the method is stored exactly
+ * like a method written inside the class. The scope is restored when
+ * the method scope is popped.
+ */
+static PClass*extern_class = 0;
+static LexicalScope*extern_saved_scope = 0;
+
+bool pform_start_extern_method(const struct vlltype&loc, const char*class_name,
+			       const char*name, bool is_task)
+{
+      perm_string use_class = lex_strings.make(class_name);
+      perm_string use_name = lex_strings.make(name);
+
+      if (pform_cur_class) {
+	    cerr << loc << ": error: Out-of-block definition of '"
+		 << use_class << "::" << use_name
+		 << "' is not allowed inside a class." << endl;
+	    error_count += 1;
+	    return false;
+      }
+
+      PClass*pclass = 0;
+      for (LexicalScope*cur = pform_peek_scope() ; cur && !pclass
+		 ; cur = cur->parent_scope()) {
+	    auto scopex = dynamic_cast<PScopeExtra*> (cur);
+	    if (!scopex)
+		  continue;
+	    auto found = scopex->classes.find(use_class);
+	    if (found != scopex->classes.end())
+		  pclass = found->second;
+      }
+
+      if (!pclass) {
+	    cerr << loc << ": error: Unknown class '" << use_class
+		 << "' in definition of '" << use_class << "::" << use_name
+		 << "'." << endl;
+	    error_count += 1;
+	    return false;
+      }
+
+      auto proto = pclass->externs.find(use_name);
+      if (proto == pclass->externs.end()) {
+	    cerr << loc << ": error: Class '" << use_class
+		 << "' has no extern method '" << use_name
+		 << "' to define." << endl;
+	    error_count += 1;
+	    return false;
+      }
+
+      if (proto->second.is_task != is_task) {
+	    cerr << loc << ": error: '" << use_class << "::" << use_name
+		 << "' is defined as a " << (is_task? "task" : "function")
+		 << " but was declared extern as a "
+		 << (is_task? "function" : "task") << " at "
+		 << proto->second.get_fileline() << "." << endl;
+	    error_count += 1;
+	    return false;
+      }
+
+      if (proto->second.defined) {
+	    cerr << loc << ": error: Extern method '" << use_class << "::"
+		 << use_name << "' is already defined." << endl;
+	    error_count += 1;
+	    return false;
+      }
+      proto->second.defined = true;
+
+      extern_class = pclass;
+      extern_saved_scope = pform_set_scope(pclass);
+      pform_cur_class = pclass;
+      method_virtual_flag = proto->second.is_virtual;
+      return true;
+}
+
+PFunction*pform_push_extern_constructor_scope(const struct vlltype&loc,
+					      const char*class_name)
+{
+      if (pform_start_extern_method(loc, class_name, "new", false))
+	    return pform_push_constructor_scope(loc);
+
+      return pform_push_function_scope(loc, "new", LexicalScope::AUTOMATIC);
+}
+
+void pform_end_extern_method()
+{
+      if (extern_class == 0 || pform_peek_scope() != extern_class)
+	    return;
+
+      pform_set_scope(extern_saved_scope);
+      extern_class = 0;
+      extern_saved_scope = 0;
+      pform_cur_class = 0;
+}
+
 void pform_set_constructor_return(PFunction*net)
 {
       ivl_assert(*net, pform_cur_class);

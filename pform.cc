@@ -428,6 +428,15 @@ void pform_pop_scope()
 
       lexical_scope = scope->parent_scope();
       assert(lexical_scope);
+
+      pform_end_extern_method();
+}
+
+LexicalScope* pform_set_scope(LexicalScope*scope)
+{
+      LexicalScope*old = lexical_scope;
+      lexical_scope = scope;
+      return old;
 }
 
 static LexicalScope::lifetime_t find_lifetime(LexicalScope::lifetime_t lifetime)

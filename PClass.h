@@ -1,7 +1,7 @@
 #ifndef IVL_PClass_H
 #define IVL_PClass_H
 /*
- * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -44,6 +44,15 @@ class PClass : public PScopeExtra, public PNamedItem {
 
     public:
       class_type_t*type;
+
+	// Methods declared "extern" in the class body. The definition
+	// is given outside the class (IEEE1800-2017 8.24).
+      struct extern_method_t : public LineInfo {
+	    bool is_task;
+	    bool is_virtual;
+	    bool defined;
+      };
+      std::map<perm_string,extern_method_t> externs;
 };
 
 #endif /* IVL_PClass_H */
