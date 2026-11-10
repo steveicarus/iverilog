@@ -155,6 +155,7 @@ br_gh1588_fail			vvp_tests/br_gh1588_fail.json
 br_gh1591a			vvp_tests/br_gh1591a.json
 br_gh1591b			vvp_tests/br_gh1591b.json
 br_gh1591c			vvp_tests/br_gh1591c.json
+br_gh1730			vvp_tests/br_gh1730.json
 br_gh1617			vvp_tests/br_gh1617.json
 br_gh1618			vvp_tests/br_gh1618.json
 br_gh1639			vvp_tests/br_gh1639.json
@@ -277,6 +278,7 @@ line_directive			vvp_tests/line_directive.json
 line_directive_long		vvp_tests/line_directive_long.json
 localparam_type			vvp_tests/localparam_type.json
 loop_condition_real		vvp_tests/loop_condition_real.json
+lval_concat_expr_fail		vvp_tests/lval_concat_expr_fail.json
 macro_str_esc			vvp_tests/macro_str_esc.json
 memsynth1			vvp_tests/memsynth1.json
 memsynth2			vvp_tests/memsynth2.json
@@ -714,6 +716,14 @@ sv_module_port1			vvp_tests/sv_module_port1.json
 sv_module_port2			vvp_tests/sv_module_port2.json
 sv_module_port3			vvp_tests/sv_module_port3.json
 sv_module_port4			vvp_tests/sv_module_port4.json
+sv_named_arg_base_fail4		vvp_tests/sv_named_arg_base_fail4.json
+sv_named_arg_chained_fail4	vvp_tests/sv_named_arg_chained_fail4.json
+sv_named_arg_func4		vvp_tests/sv_named_arg_func4.json
+sv_named_arg_func_fail4		vvp_tests/sv_named_arg_func_fail4.json
+sv_named_arg_new_fail4		vvp_tests/sv_named_arg_new_fail4.json
+sv_named_arg_task_fail4		vvp_tests/sv_named_arg_task_fail4.json
+sv_named_arg_task_fail6		vvp_tests/sv_named_arg_task_fail6.json
+sv_named_arg_task_fail7		vvp_tests/sv_named_arg_task_fail7.json
 sv_named_type_class_property_fail	vvp_tests/sv_named_type_class_property_fail.json
 sv_named_type_enum_base_fail	vvp_tests/sv_named_type_enum_base_fail.json
 sv_named_type_packed_decl_fail	vvp_tests/sv_named_type_packed_decl_fail.json
@@ -963,6 +973,7 @@ task_escaped_name		vvp_tests/task_escaped_name.json
 task_no_ports_argument_fail	vvp_tests/task_no_ports_argument_fail.json
 task_no_ports_empty_arguments_fail	vvp_tests/task_no_ports_empty_arguments_fail.json
 task_no_ports_named_argument_fail	vvp_tests/task_no_ports_named_argument_fail.json
+task_output_expr_fail		vvp_tests/task_output_expr_fail.json
 task_return1			vvp_tests/task_return1.json
 task_return2			vvp_tests/task_return2.json
 task_return_fail1		vvp_tests/task_return_fail1.json
@@ -1009,6 +1020,7 @@ vpi_net_array_word_select_signedness	vvp_tests/vpi_net_array_word_select_signedn
 vpi_part_select_range		vvp_tests/vpi_part_select_range.json
 vpi_queue_pattern_prefix		vvp_tests/vpi_queue_pattern_prefix.json
 vpi_short_package_fullname	vvp_tests/vpi_short_package_fullname.json
+vpi_vector4_integer		vvp_tests/vpi_vector4_integer.json
 vvp_quiet_mode			vvp_tests/vvp_quiet_mode.json
 wait_condition_real		vvp_tests/wait_condition_real.json
 wait_condition_real_constant	vvp_tests/wait_condition_real_constant.json
@@ -1054,3 +1066,6 @@ sdf_cond_or_identity	vvp_tests/sdf_cond_or_identity.json
 sdf_cond_or_reject	vvp_tests/sdf_cond_or_reject.json
 
 sdf_cond_or_grouping	vvp_tests/sdf_cond_or_grouping.json
+# Scope and non-scope CHECK cleanup dispatch.
+check_scope_cleanup	vvp_tests/check_scope_cleanup.json
+check_scope_cleanup_automatic	vvp_tests/check_scope_cleanup_automatic.json

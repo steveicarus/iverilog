@@ -1,0 +1,8 @@
+{
+    "type": "normal",
+    "source": "vpi_vector4_integer.v",
+    "vpi-sources": ["vpi/vector4_integer.c"],
+    "vlog95": {
+        "iverilog-args": ["-pallowsigned=1"]
+    }
+}
