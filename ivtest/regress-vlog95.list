@@ -480,9 +480,7 @@ vvp_recv_vec4_pv	TE,-g2009,-pallowsigned=1	ivltests
 # Verilog is selected, Icarus ensures that combinatorial always blocks
 # are started before initial blocks, so these tests will fail.
 sv_var_init1		EF,-g2009		ivltests
-# This test should fail the same way, but there is an unresolved bug in
-# translation.
-sv_var_init2		TE,-g2009		ivltests
+sv_var_init2		EF,-g2009		ivltests
 
 # No support for these SystemVerilog features
 br936			CE,-g2009,-pallowsigned=1	ivltests  # join_any
