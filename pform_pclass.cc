@@ -199,6 +199,7 @@ void pform_class_extern_method(const struct vlltype&loc, const char*name,
  */
 static PClass*extern_class = 0;
 static LexicalScope*extern_saved_scope = 0;
+static PClass*extern_saved_class = 0;
 static PClass::extern_method_t*extern_proto = 0;
 
 /*
@@ -209,6 +210,7 @@ static bool extern_method_error(LexicalScope*scope)
 {
       extern_class = new PClass(lex_strings.make("$extern_error"), scope);
       extern_saved_scope = pform_set_scope(extern_class);
+      extern_saved_class = pform_cur_class;
       extern_proto = 0;
       return false;
 }
@@ -279,6 +281,7 @@ bool pform_start_extern_method(const struct vlltype&loc, const char*class_name,
 
       extern_class = pclass;
       extern_saved_scope = pform_set_scope(pclass);
+      extern_saved_class = pform_cur_class;
       pform_cur_class = pclass;
       method_virtual_flag = proto->second.is_virtual;
       return true;
@@ -348,7 +351,8 @@ void pform_end_extern_method()
       pform_set_scope(extern_saved_scope);
       extern_class = 0;
       extern_saved_scope = 0;
-      pform_cur_class = 0;
+      pform_cur_class = extern_saved_class;
+      extern_saved_class = 0;
 }
 
 void pform_set_constructor_return(PFunction*net)
