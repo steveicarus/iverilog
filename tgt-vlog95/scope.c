@@ -273,6 +273,26 @@ static void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
       }
 }
 
+static ivl_signal_t get_port_from_nexus(const ivl_scope_t scope, ivl_nexus_t nex,
+                                      unsigned *word)
+{
+      assert(nex);
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+      ivl_signal_t sig = 0;
+      *word = 0;
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
+	    if (t_sig) {
+		  if (ivl_signal_scope(t_sig) != scope) continue;
+		  assert(! sig);
+		  sig = t_sig;
+		  *word = ivl_nexus_ptr_pin(nex_ptr);
+	    }
+      }
+      return sig;
+}
+
 static bool scope_is_unique(ivl_scope_t scope)
 {
       unsigned int count = ivl_scope_params(scope);
@@ -436,26 +456,6 @@ static void emit_module_ports(ivl_scope_t scope)
 	    emit_nexus_as_ca(scope, ivl_scope_mod_port(scope, idx), 0, 0);
       }
       fprintf(vlog_out, ")");
-}
-
-ivl_signal_t get_port_from_nexus(const ivl_scope_t scope, ivl_nexus_t nex,
-                                 unsigned *word)
-{
-      assert(nex);
-      unsigned idx, count = ivl_nexus_ptrs(nex);
-      ivl_signal_t sig = 0;
-      *word = 0;
-      for (idx = 0; idx < count; idx += 1) {
-	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
-	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
-	    if (t_sig) {
-		  if (ivl_signal_scope(t_sig) != scope) continue;
-		  assert(! sig);
-		  sig = t_sig;
-		  *word = ivl_nexus_ptr_pin(nex_ptr);
-	    }
-      }
-      return sig;
 }
 
 static void emit_sig_type(ivl_signal_t sig)

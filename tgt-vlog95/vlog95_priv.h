@@ -144,12 +144,6 @@ extern uint64_t get_uint64_from_number(ivl_expr_t expr, int *return_type);
 extern char * get_package_name(ivl_scope_t scope);
 
 /*
- * Find the signal for a module port nexus.
- */
-extern ivl_signal_t get_port_from_nexus(const ivl_scope_t scope,
-                                      ivl_nexus_t nex, unsigned *word);
-
-/*
  * Get the appropriate MSB and LSB for a signal.
  */
 extern void get_sig_msb_lsb(ivl_signal_t sig, int *msb, int *lsb);
