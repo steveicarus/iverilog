@@ -273,9 +273,6 @@ static void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
       }
 }
 
-static ivl_signal_t get_port_from_nexus(const ivl_scope_t scope, ivl_nexus_t nex,
-                                      unsigned *word);
-
 static bool scope_is_unique(ivl_scope_t scope)
 {
       unsigned int count = ivl_scope_params(scope);
@@ -315,8 +312,7 @@ static void emit_mangled_name(ivl_scope_t scope, unsigned root)
 {
 	/* Parameter values or caller-specific input aliases may require a
 	 * specialized body. For non-root modules, use the existing instance
-	 * name mangling in both cases. The
-	 * mangled name is of the form:
+	 * name mangling in both cases. The mangled name is of the form:
 	 *   <module_name>[<full_instance_scope>]. */
       if (!root && !scope_is_unique(scope)) {
 	    char *name;
@@ -442,8 +438,8 @@ static void emit_module_ports(ivl_scope_t scope)
       fprintf(vlog_out, ")");
 }
 
-static ivl_signal_t get_port_from_nexus(const ivl_scope_t scope, ivl_nexus_t nex,
-	                                unsigned *word)
+ivl_signal_t get_port_from_nexus(const ivl_scope_t scope, ivl_nexus_t nex,
+                                 unsigned *word)
 {
       assert(nex);
       unsigned idx, count = ivl_nexus_ptrs(nex);

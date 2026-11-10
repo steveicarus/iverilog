@@ -1,7 +1,7 @@
 #ifndef IVL_vlog95_priv_H
 #define IVL_vlog95_priv_H
 /*
- * Copyright (C) 2010-2024 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2026 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -142,6 +142,12 @@ extern uint64_t get_uint64_from_number(ivl_expr_t expr, int *return_type);
  * use free() to cleanup the string returned.
  */
 extern char * get_package_name(ivl_scope_t scope);
+
+/*
+ * Find the signal for a module port nexus.
+ */
+extern ivl_signal_t get_port_from_nexus(const ivl_scope_t scope,
+                                      ivl_nexus_t nex, unsigned *word);
 
 /*
  * Get the appropriate MSB and LSB for a signal.
