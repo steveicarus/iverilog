@@ -9,7 +9,5 @@
         "-s",
         "tb"
     ],
-    "vpi-sources": [
-        "vpi/period_objects.c"
-    ]
+    "vpi-sources": ["vpi/period_objects.c", "vpi/pulse_history.c"]
 }
