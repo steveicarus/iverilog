@@ -1974,6 +1974,12 @@ static int show_system_task_call(ivl_statement_t net)
       if (strcmp(stmt_name,"$ivl_queue_method$push_back") == 0)
 	    return show_push_frontback_method(net, false);
 
+      if (strcmp(stmt_name,"$cast") == 0) {
+	    show_stmt_file_line(net, "Class $cast.");
+	    return draw_class_cast(ivl_stmt_parm(net, 0),
+				   ivl_stmt_parm(net, 1), 1, 0);
+      }
+
       show_stmt_file_line(net, "System task call.");
 
       draw_vpi_task_call(net);

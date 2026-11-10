@@ -3942,6 +3942,20 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 	    return noop;
       }
 
+      if (name == "$cast") {
+	    bool ok = parm_count == 2 && eparms[0] && eparms[1];
+	    if (parm_count != 2) {
+		  cerr << get_fileline() << ": error: The $cast task takes "
+		       << "exactly two(2) arguments." << endl;
+		  des->errors += 1;
+	    }
+	    if (!ok || !check_class_cast_args(des, this, eparms[0], eparms[1])) {
+		  NetBlock*noop = new NetBlock(NetBlock::SEQU, scope);
+		  noop->set_line(*this);
+		  return noop;
+	    }
+      }
+
       scope->calls_sys_task(true);
 
       NetSTask*cur = new NetSTask(name, def_sfunc_as_task, eparms);

@@ -2128,6 +2128,14 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	    return expr_width_;
       }
 
+      if (name=="$cast") {
+	    expr_type_   = IVL_VT_LOGIC;
+	    expr_width_  = integer_width;
+	    min_width_   = integer_width;
+	    signed_flag_ = true;
+	    return expr_width_;
+      }
+
       if (name=="$is_signed") {
 	    PExpr *expr = parms_[0].parm;
 	    if (expr == 0)
@@ -2934,6 +2942,17 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 
       if (missing_parms || parm_errors)
             return 0;
+
+      if (name=="$cast") {
+	    if (nparms != 2) {
+		  cerr << get_fileline() << ": error: The $cast function "
+		       << "takes exactly two(2) arguments." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    if (!check_class_cast_args(des, this, fun->parm(0), fun->parm(1)))
+		  return 0;
+      }
 
       return pad_to_width(fun, expr_wid, signed_flag_, *this);
 }

@@ -540,4 +540,13 @@ extern NetPartSelect* detect_partselect_lval(Link&pin);
  */
 extern void check_for_inconsistent_delays(const NetScope*scope);
 
+/*
+ * Check the arguments of a $cast(dest, src) call for class handles:
+ * the dest must be a class variable or property, and the classes must
+ * be the same or related by inheritance. Print an error and return
+ * false if not.
+ */
+extern bool check_class_cast_args(Design*des, const LineInfo*li,
+				  const NetExpr*dest, const NetExpr*src);
+
 #endif /* IVL_netmisc_H */
