@@ -164,6 +164,7 @@ br_gh1692			vvp_tests/br_gh1692.json
 br_gh1692b			vvp_tests/br_gh1692b.json
 br_gh1692c			vvp_tests/br_gh1692c.json
 br_gh1692d			vvp_tests/br_gh1692d.json
+br_gh1751			vvp_tests/br_gh1751.json
 ca_time_real			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
 case2				vvp_tests/case2.json
@@ -1059,6 +1060,7 @@ sdf_cond_expr_escaped	vvp_tests/sdf_cond_expr_escaped.json
 sdf_cond_expr_update	vvp_tests/sdf_cond_expr_update.json
 sdf_cond_expr_reject	vvp_tests/sdf_cond_expr_reject.json
 sdf_cond_vlog95	vvp_tests/sdf_cond_vlog95.json
+sdf_multidriver_readback	vvp_tests/sdf_multidriver_readback.json
 
 # Ordered logical-OR source identities for SDF COND path binding.
 sdf_cond_or_tree	vvp_tests/sdf_cond_or_tree.json
@@ -1066,6 +1068,9 @@ sdf_cond_or_identity	vvp_tests/sdf_cond_or_identity.json
 sdf_cond_or_reject	vvp_tests/sdf_cond_or_reject.json
 
 sdf_cond_or_grouping	vvp_tests/sdf_cond_or_grouping.json
+# Preserve hierarchical signal references through vlog95 translation.
+vlog95_hier_events	vvp_tests/vlog95_hier_events.json
+vlog95_hier_inputs	vvp_tests/vlog95_hier_inputs.json
 # Scope and non-scope CHECK cleanup dispatch.
 check_scope_cleanup	vvp_tests/check_scope_cleanup.json
 check_scope_cleanup_automatic	vvp_tests/check_scope_cleanup_automatic.json
