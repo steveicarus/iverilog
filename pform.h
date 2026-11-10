@@ -193,7 +193,10 @@ extern void pform_set_method_virtual(bool flag);
 extern void pform_set_constructor_return(PFunction*net);
 extern void pform_class_extern_method(const struct vlltype&loc,
 				      const char*name, bool is_task,
-				      bool is_virtual);
+				      bool is_virtual,
+				      std::vector<pform_tf_port_t>*ports);
+extern void pform_check_extern_ports(const struct vlltype&loc,
+				     std::vector<pform_tf_port_t>*ports);
 extern bool pform_start_extern_method(const struct vlltype&loc,
 				      const char*class_name, const char*name,
 				      bool is_task);
@@ -276,6 +279,9 @@ extern PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name
 
   // Make scope the current lexical scope. Returns the previous one.
 extern LexicalScope* pform_set_scope(LexicalScope*scope);
+
+  // Push an unnamed scope that holds the ports of an extern prototype.
+extern void pform_push_proto_scope(const struct vlltype&loc);
 
 extern PFunction*pform_push_constructor_scope(const struct vlltype&loc);
 

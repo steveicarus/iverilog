@@ -1326,6 +1326,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <tf_ports> tf_item_declaration
 %type <tf_ports> tf_port_declaration tf_port_item tf_port_item_list
 %type <tf_ports> tf_port_list tf_port_list_opt tf_port_list_parens_opt
+%type <tf_ports> extern_proto_ports
 
 %type <named_pexpr> named_expression named_expression_opt port_name
 %type <named_pexprs> port_name_list parameter_value_byname_list
@@ -1707,24 +1708,15 @@ class_item /* IEEE1800-2005: A.1.8 */
 
     /* External class method definitions... */
 
-  | K_extern method_qualifier_opt K_function K_new
-      { pform_push_block_scope(@3, nullptr, PBlock::BL_SEQ); }
-    tf_port_list_parens_opt ';'
-      { pform_pop_scope();
-	pform_class_extern_method(@3, "new", false, $2);
-      }
+  | K_extern method_qualifier_opt K_function K_new extern_proto_ports ';'
+      { pform_class_extern_method(@3, "new", false, $2, $5); }
   | K_extern method_qualifier_opt K_function data_type_or_implicit_or_void_plus_id
-      { pform_push_block_scope(@3, nullptr, PBlock::BL_SEQ); }
-    tf_port_list_parens_opt ';'
-      { pform_pop_scope();
-	pform_class_extern_method(@3, $4.id, false, $2);
+    extern_proto_ports ';'
+      { pform_class_extern_method(@3, $4.id, false, $2, $5);
 	delete_type_id_range($4);
       }
-  | K_extern method_qualifier_opt K_task IDENTIFIER
-      { pform_push_block_scope(@3, nullptr, PBlock::BL_SEQ); }
-    tf_port_list_parens_opt ';'
-      { pform_pop_scope();
-	pform_class_extern_method(@3, $4, true, $2);
+  | K_extern method_qualifier_opt K_task IDENTIFIER extern_proto_ports ';'
+      { pform_class_extern_method(@3, $4, true, $2, $5);
 	delete[] $4;
       }
 
@@ -2322,6 +2314,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
     tf_item_or_statement_list_opt
     K_endfunction
       { std::unique_ptr<procedural_item_list_t> items($6);
+	pform_check_extern_ports(@3, items->ports.get());
 	current_function->set_ports(items->ports.release());
 	current_function->set_return($3.type);
 	current_function_set_statement(items->statements ? items->statements_loc : @3,
@@ -2345,6 +2338,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
     block_item_or_statement_list_opt
     K_endfunction
       { std::unique_ptr<procedural_item_list_t> items($9);
+	pform_check_extern_ports(@3, $6);
 	current_function->set_ports($6);
 	current_function->set_return($3.type);
 	current_function_set_statement(items->statements ? items->statements_loc : @3,
@@ -2371,6 +2365,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
     block_item_or_statement_list_opt
     K_endfunction endnew_opt
       { std::unique_ptr<procedural_item_list_t> items($9);
+	pform_check_extern_ports(@5, $7);
 	current_function->set_ports($7);
 	if (pform_in_class())
 	      pform_set_constructor_return(current_function);
@@ -3208,6 +3203,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
     tf_item_or_statement_list_opt
     K_endtask
       { std::unique_ptr<procedural_item_list_t> items($6);
+	pform_check_extern_ports(@3, items->ports.get());
 	current_task->set_ports(items->ports.release());
 	current_task_set_statement(@3, items->statements.get());
 	pform_set_this_class(@3, current_task);
@@ -3237,6 +3233,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
     block_item_or_statement_list_opt
     K_endtask
       { std::unique_ptr<procedural_item_list_t> items($9);
+	pform_check_extern_ports(@3, $6);
 	current_task->set_ports($6);
 	current_task_set_statement(@3, items->statements.get());
 	pform_set_this_class(@3, current_task);
@@ -8268,6 +8265,25 @@ tf_port_list_opt
 tf_port_list_parens_opt
   : '(' tf_port_list_opt ')' { $$ = $2; }
   |                          { $$ = 0; }
+
+  /* The ports of an extern prototype are kept for checking the later
+     definition. They are made in a scope of their own so the wires do
+     not end up in the class. */
+extern_proto_ports
+  : extern_proto_scope tf_port_list_parens_opt
+      { pform_pop_scope();
+	$$ = $2;
+      }
+  | extern_proto_scope error
+      { pform_pop_scope();
+	yyerrok;
+	$$ = 0;
+      }
+  ;
+
+extern_proto_scope
+  : { pform_push_proto_scope(@$); }
+  ;
 
   /* Note that the lexor notices the "table" keyword and starts
      the UDPTABLE state. It needs to happen there so that all the

@@ -753,6 +753,18 @@ PBlock* pform_push_block_scope(const struct vlltype&loc, const char*name,
 }
 
 /*
+ * Unlike an unnamed block, this does not use up a $unm_blk number.
+ */
+void pform_push_proto_scope(const struct vlltype&loc)
+{
+      PBlock*block = new PBlock(lex_strings.make("$extern_proto"),
+				lexical_scope, PBlock::BL_SEQ);
+      FILE_NAME(block, loc);
+      block->default_lifetime = find_lifetime(LexicalScope::INHERITED);
+      lexical_scope = block;
+}
+
+/*
  * Create a new identifier.
  */
 PEIdent *pform_new_ident(const struct vlltype&loc, const pform_name_t&name,
