@@ -94,6 +94,10 @@ void draw_class_in_scope(ivl_type_t classtype)
 
       fprintf(vvp_out, " ;\n");
 
+      if (ivl_type_super(classtype))
+	    fprintf(vvp_out, "    .super C%p, C%p;\n", classtype,
+		    ivl_type_super(classtype));
+
       for (idx = 0 ; idx < ivl_type_virtuals(classtype) ; idx += 1) {
 	    ivl_scope_t impl = ivl_type_virtual(classtype, idx);
 	    ivl_scope_t root = ivl_scope_virtual_root(impl);

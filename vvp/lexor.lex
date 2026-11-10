@@ -243,6 +243,7 @@ inline uint64_t strtouint64(const char*str, char**endptr, int base)
 ".ufunc/vec4"   { return K_UFUNC_VEC4; }
 ".ufunc/e"      { return K_UFUNC_E; }
 ".var"          { return K_VAR; }
+".super"        { return K_SUPER; }
 ".virt"         { return K_VIRT; }
 ".var/cobj"     { return K_VAR_COBJECT; }
 ".var/darray"   { return K_VAR_DARRAY; }

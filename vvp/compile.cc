@@ -123,6 +123,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%cassign/vec4",    of_CASSIGN_VEC4,    1,{OA_FUNC_PTR,OA_NONE,     OA_NONE} },
       { "%cassign/vec4/off",of_CASSIGN_VEC4_OFF,2,{OA_FUNC_PTR,OA_BIT1,     OA_NONE} },
       { "%cassign/wr",  of_CASSIGN_WR,  1,{OA_FUNC_PTR,OA_NONE,     OA_NONE} },
+      { "%cast/class", of_CAST_CLASS, 2, {OA_VPI_PTR,OA_BIT1,OA_NONE} },
       { "%cast/vec2/dar", of_CAST_VEC2_DAR, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%cast/vec4/dar", of_CAST_VEC4_DAR, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%cast/vec4/str", of_CAST_VEC4_STR, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
@@ -865,6 +866,41 @@ bool virt_resolv_list_s::resolve(bool mes)
 void compile_virt(char*cls, char*scope, char*code)
 {
       resolv_submit(new virt_resolv_list_s(cls, scope, code));
+}
+
+/*
+ * Set the base class of a class. The labels may both be defined later
+ * in the source file.
+ */
+struct super_resolv_list_s: public resolv_list_s {
+      super_resolv_list_s(char*cls, char*super)
+      : resolv_list_s(cls), super_(super) { }
+      ~super_resolv_list_s() override { free(super_); }
+      virtual bool resolve(bool mes) override;
+      char*super_;
+};
+
+bool super_resolv_list_s::resolve(bool mes)
+{
+      symbol_value_t cls = sym_get_value(sym_vpi, label());
+      symbol_value_t super = sym_get_value(sym_vpi, super_);
+      if (cls.ptr && super.ptr) {
+	    class_type*defn = dynamic_cast<class_type*>(static_cast<vpiHandle>(cls.ptr));
+	    class_type*base = dynamic_cast<class_type*>(static_cast<vpiHandle>(super.ptr));
+	    assert(defn && base);
+	    defn->set_super(base);
+	    return true;
+      }
+
+      if (mes)
+	    fprintf(stderr, "unresolved base class of class: %s\n", label());
+
+      return false;
+}
+
+void compile_super(char*cls, char*super)
+{
+      resolv_submit(new super_resolv_list_s(cls, super));
 }
 
 static std::list<struct __vpiSysTaskCall*> scheduled_compiletf;

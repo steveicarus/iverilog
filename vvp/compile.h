@@ -574,6 +574,12 @@ extern void compile_class_property(unsigned idx, char*nam, char*typ, uint64_t ar
 extern void compile_class_done(void);
 
 /*
+ * The .super statement sets the base class of a class. The first label
+ * is the class and the second is its base class.
+ */
+extern void compile_super(char*cls, char*super);
+
+/*
  * The .virt statement adds an entry to the virtual function table of a
  * class. The first label is the class, the second is the scope of the
  * virtual function and the third is the code that a call of the virtual
