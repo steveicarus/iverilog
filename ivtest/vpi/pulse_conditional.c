@@ -27,6 +27,20 @@ struct watch {
 };
 static struct watch owners[MAX_OWNERS];
 static unsigned owner_count, callback_registered;
+struct startup_notifier {
+    vpiHandle signal;
+    PLI_INT32 before, values[MAX_EVENTS + 1];
+    unsigned count;
+    unsigned long long times[MAX_EVENTS + 1];
+    struct watch *watch;
+};
+static struct startup_notifier startup[MAX_OWNERS];
+static unsigned startup_count, early_count;
+static struct {
+    vpiHandle object;
+    unsigned long long time;
+    unsigned consumed;
+} early[MAX_OWNERS * MAX_EVENTS];
 
 static unsigned long long now(void)
 {
@@ -52,48 +66,95 @@ static PLI_INT32 scalar(vpiHandle h)
     return v.value.scalar;
 }
 
-static PLI_INT32 changed(p_cb_data cb)
+static void notifier_event(struct watch *w, vpiHandle object,
+                           unsigned long long time, PLI_INT32 value)
 {
-    struct watch *w = (struct watch *)cb->user_data;
-    PLI_INT32 value = scalar(cb->obj);
-    if (cb->obj != w->notifier || w->changes >= w->count ||
-        now() != w->times[w->changes] ||
+    if (object != w->notifier || w->changes >= w->count ||
+        time != w->times[w->changes] ||
         value != ((w->changes & 1) ? vpi0 : vpi1)) {
-        fail("notifier identity/time/value"); return 0;
+        fail("notifier identity/time/value"); return;
     }
     ++w->changes;
-    vpi_printf("PULSE_CHANGE %s %llu %d\n", w->name, now(), value == vpi1);
+    vpi_printf("PULSE_CHANGE %s %llu %d\n", w->name, time, value == vpi1);
+}
+
+static void timing_event(struct watch *w, vpiHandle object,
+                         unsigned long long time)
+{
+    if (w->violations >= w->count || time != w->times[w->violations] ||
+        vpi_get(vpiTchkType, object) != w->kind ||
+        vpi_handle(vpiTchkNotifier, object) != w->notifier) {
+        fail("timing callback identity/time/type"); return;
+    }
+    ++w->violations;
+    vpi_printf("PULSE_TCHK %s %llu\n", w->name, time);
+}
+
+static PLI_INT32 changed(p_cb_data cb)
+{
+    vpiHandle object = cb->obj;
+    struct startup_notifier *n = (struct startup_notifier *)cb->user_data;
+    unsigned long long time = now();
+    PLI_INT32 value = scalar(object);
+    if (object != n->signal) { fail("startup notifier identity"); return 0; }
+    if (n->watch) notifier_event(n->watch, object, time, value);
+    else {
+        if (n->count == MAX_EVENTS + 1) { fail("startup notifier capacity"); return 0; }
+        n->times[n->count] = time; n->values[n->count++] = value;
+    }
     return 0;
 }
 
 static PLI_INT32 violation(p_cb_data cb)
 {
+    vpiHandle object = cb->obj;
     unsigned i;
-    for (i = 0; i < owner_count; ++i) {
-        struct watch *w = &owners[i];
-        if (w->object != cb->obj) continue;
-        if (w->violations >= w->count ||
-            now() != w->times[w->violations] ||
-            vpi_get(vpiTchkType, cb->obj) != w->kind ||
-            vpi_handle(vpiTchkNotifier, cb->obj) != w->notifier) {
-            fail("timing callback identity/time/type"); return 0;
+    unsigned long long time = now();
+    for (i = 0; i < owner_count; ++i)
+        if (owners[i].object == object) {
+            timing_event(&owners[i], object, time); return 0;
         }
-        ++w->violations;
-        vpi_printf("PULSE_TCHK %s %llu\n", w->name, now());
-        return 0;
+    if (early_count == MAX_OWNERS * MAX_EVENTS) {
+        fail("early callback capacity"); return 0;
     }
-    fail("callback from unregistered timing object");
+    early[early_count].object = object;
+    early[early_count++].time = time;
     return 0;
+}
+
+static void observe_scope(vpiHandle scope)
+{
+    vpiHandle iter = vpi_iterate(vpiTchk, scope), object, child;
+    while (iter && (object = vpi_scan(iter))) {
+        vpiHandle signal = vpi_handle(vpiTchkNotifier, object);
+        struct startup_notifier *n;
+        s_cb_data cb = {0}; s_vpi_time time = {0};
+        unsigned i;
+        if (!signal) continue;
+        for (i = 0; i < startup_count; ++i) if (startup[i].signal == signal) break;
+        if (i != startup_count) continue;
+        if (startup_count == MAX_OWNERS) { fail("startup notifier population"); return; }
+        n = &startup[startup_count++]; n->signal = signal; n->before = scalar(signal);
+        time.type = vpiSimTime;
+        cb.reason = cbValueChange; cb.cb_rtn = changed; cb.obj = signal;
+        cb.time = &time; cb.user_data = (PLI_BYTE8 *)n;
+        if (!vpi_register_cb(&cb)) { fail("startup notifier registration"); return; }
+    }
+    iter = vpi_iterate(vpiModule, scope);
+    while (iter && (child = vpi_scan(iter))) observe_scope(child);
 }
 
 static PLI_INT32 start(p_cb_data unused)
 {
     s_cb_data cb = {0};
+    vpiHandle iter, scope;
     (void)unused;
     cb.reason = cbTchkViolation;
     cb.cb_rtn = violation;
     callback_registered = vpi_register_cb(&cb) != NULL;
     if (!callback_registered) fail("timing callback registration");
+    iter = vpi_iterate(vpiModule, NULL);
+    while (iter && (scope = vpi_scan(iter))) observe_scope(scope);
     return 0;
 }
 
@@ -106,8 +167,7 @@ static PLI_INT32 watch_call(PLI_BYTE8 *unused)
     PLI_INT32 count;
     double expected_limit;
     s_vpi_value value = {0};
-    s_cb_data cb = {0};
-    s_vpi_time callback_time = {0};
+    struct startup_notifier *n = NULL;
     const char *name;
     (void)unused;
     if (!args || owner_count >= MAX_OWNERS) { fail("watch arguments/capacity"); return 0; }
@@ -128,7 +188,6 @@ static PLI_INT32 watch_call(PLI_BYTE8 *unused)
         w->times[i] = (unsigned long long)integer(arg);
     }
     if (vpi_scan(args)) { fail("extra watch argument"); return 0; }
-    if (scalar(w->notifier) != vpi0) { fail("initial notifier is not zero"); return 0; }
     for (i = 0; i < owner_count; ++i)
         if (owners[i].notifier == w->notifier) { fail("duplicate notifier watch"); return 0; }
     name = vpi_get_str(vpiFullName, w->notifier);
@@ -150,10 +209,27 @@ static PLI_INT32 watch_call(PLI_BYTE8 *unused)
         w->object = obj;
     }
     if (matches != 1) { fail("timing object cardinality"); return 0; }
-    cb.reason = cbValueChange; cb.cb_rtn = changed; cb.obj = w->notifier;
-    callback_time.type = vpiSimTime; cb.time = &callback_time;
-    cb.user_data = (PLI_BYTE8 *)w;
-    if (!vpi_register_cb(&cb)) { fail("notifier callback registration"); return 0; }
+    for (i = 0; i < startup_count; ++i)
+        if (startup[i].signal == w->notifier) { n = &startup[i]; break; }
+    if (!n) { fail("notifier not observed from startup"); return 0; }
+    i = 0;
+    /* Existing fixtures declare zero independently. Ignore only its actual
+     * initialization delivery, never an arbitrary value sampled at #1. */
+    if (n->before != vpi0) {
+        if (!n->count || n->times[0] != 0 || n->values[0] != vpi0) {
+            fail("declared zero initialization missing"); return 0;
+        }
+        i = 1;
+    }
+    for (; i < n->count; ++i)
+        notifier_event(w, n->signal, n->times[i], n->values[i]);
+    n->watch = w;
+    for (i = 0; i < early_count; ++i) if (early[i].object == w->object) {
+        timing_event(w, early[i].object, early[i].time); early[i].consumed = 1;
+    }
+    if (scalar(w->notifier) != ((w->changes & 1) ? vpi1 : vpi0)) {
+        fail("startup notifier final value"); return 0;
+    }
     ++owner_count;
     return 0;
 }
@@ -169,6 +245,9 @@ static PLI_INT32 complete_call(PLI_BYTE8 *unused)
     expected = integer(arg);
     if (vpi_scan(args) || expected <= 0 || owner_count != (unsigned)expected || !callback_registered) {
         fail("completion population"); return 0;
+    }
+    for (i = 0; i < early_count; ++i) if (!early[i].consumed) {
+        fail("callback from unregistered timing object"); return 0;
     }
     for (i = 0; i < owner_count; ++i) {
         struct watch *w = &owners[i];
