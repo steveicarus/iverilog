@@ -1060,6 +1060,7 @@ sdf_cond_expr_escaped	vvp_tests/sdf_cond_expr_escaped.json
 sdf_cond_expr_update	vvp_tests/sdf_cond_expr_update.json
 sdf_cond_expr_reject	vvp_tests/sdf_cond_expr_reject.json
 sdf_cond_vlog95	vvp_tests/sdf_cond_vlog95.json
+sdf_multidriver_readback	vvp_tests/sdf_multidriver_readback.json
 
 # Preserve hierarchical signal references through vlog95 translation.
 vlog95_hier_events	vvp_tests/vlog95_hier_events.json
