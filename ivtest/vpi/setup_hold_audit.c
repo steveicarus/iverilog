@@ -64,6 +64,33 @@ static PLI_INT32 scalar(vpiHandle h)
     vpi_get_value(h, &v); return v.value.scalar;
 }
 #ifdef vpiTchk
+/* Copy requested payloads before any VPI call can reuse their backing storage.
+ * Simulation time is checked independently; expected schedules are checked by
+ * timing_event/notifier_event, including buffered startup events. */
+static int callback_payload(p_cb_data cb, PLI_INT32 reason,
+                            unsigned long long *time, PLI_INT32 *value)
+{
+    s_vpi_time supplied = {0};
+    s_vpi_value supplied_value = {0};
+    PLI_INT32 supplied_reason = cb->reason;
+    vpiHandle object = cb->obj;
+    int has_time = cb->time != NULL, has_value = cb->value != NULL;
+    if (has_time) supplied = *cb->time;
+    if (has_value) supplied_value = *cb->value;
+    if (supplied_reason != reason || !has_time || supplied.type != vpiSimTime) {
+        fail("callback reason/time payload"); return 0;
+    }
+    *time = ((unsigned long long)supplied.high << 32) | supplied.low;
+    if (*time != now()) { fail("callback time payload mismatch"); return 0; }
+    if (value) {
+        if (!has_value || supplied_value.format != vpiScalarVal) {
+            fail("callback value payload format"); return 0;
+        }
+        *value = supplied_value.value.scalar;
+        if (*value != scalar(object)) { fail("callback value payload mismatch"); return 0; }
+    }
+    return 1;
+}
 static char *string_arg(vpiHandle iter)
 {
     vpiHandle a = vpi_scan(iter); s_vpi_value v = {0};
@@ -104,11 +131,14 @@ static int terminal(vpiHandle obj, int role, vpiHandle scope,
 }
 static PLI_INT32 initial_changed(p_cb_data cb)
 {
+    vpiHandle object = cb->obj;
     struct initial_notifier *n = &initial_notifiers[*(unsigned *)cb->user_data];
+    unsigned long long time; PLI_INT32 value;
+    if (!callback_payload(cb, cbValueChange, &time, &value)) return 0;
     if (started) return 0;
-    if (cb->obj != n->signal) { fail("initial notifier callback identity"); return 0; }
+    if (object != n->signal) { fail("initial notifier callback identity"); return 0; }
     if (n->changes == MAX_EVENTS) { fail("too many initial notifier changes"); return 0; }
-    n->values[n->changes] = scalar(cb->obj); n->times[n->changes++] = now();
+    n->values[n->changes] = value; n->times[n->changes++] = time;
     return 0;
 }
 static void observe_initial_scope(vpiHandle scope)
@@ -117,6 +147,7 @@ static void observe_initial_scope(vpiHandle scope)
     while (iter && (obj = vpi_scan(iter))) {
         vpiHandle signal = vpi_handle(vpiTchkNotifier, obj);
         unsigned i; s_cb_data cb = {0}; s_vpi_time time = {0};
+        s_vpi_value value = {0};
         struct initial_notifier *n;
         if (!signal) continue;
         for (i = 0; i < initial_notifier_count; ++i)
@@ -127,6 +158,7 @@ static void observe_initial_scope(vpiHandle scope)
         n->signal = signal; n->before = scalar(signal); n->index = i;
         time.type = vpiSimTime;
         cb.reason = cbValueChange; cb.cb_rtn = initial_changed; cb.obj = signal;
+        value.format = vpiScalarVal; cb.value = &value;
         cb.time = &time; cb.user_data = (PLI_BYTE8 *)&n->index;
         if (!vpi_register_cb(&cb)) { fail("initial notifier registration"); return; }
     }
@@ -218,13 +250,16 @@ static void timing_event(vpiHandle object, unsigned long long time)
 }
 static PLI_INT32 violation(p_cb_data cb)
 {
+    vpiHandle object = cb->obj;
+    unsigned long long time;
+    if (!callback_payload(cb, cbTchkViolation, &time, NULL)) return 0;
     if (!started) {
         if (initial_violation_count == MAX_CHECKS * MAX_EVENTS) {
             fail("too many initial timing callbacks"); return 0;
         }
-        initial_violations[initial_violation_count].object = cb->obj;
-        initial_violations[initial_violation_count++].time = now();
-    } else timing_event(cb->obj, now());
+        initial_violations[initial_violation_count].object = object;
+        initial_violations[initial_violation_count++].time = time;
+    } else timing_event(object, time);
     return 0;
 }
 static void notifier_event(unsigned i, vpiHandle object,
@@ -241,7 +276,10 @@ static void notifier_event(unsigned i, vpiHandle object,
 }
 static PLI_INT32 changed(p_cb_data cb)
 {
-    notifier_event(*(unsigned *)cb->user_data, cb->obj, now(), scalar(cb->obj));
+    vpiHandle object = cb->obj; unsigned index = *(unsigned *)cb->user_data;
+    unsigned long long time; PLI_INT32 value;
+    if (!callback_payload(cb, cbValueChange, &time, &value)) return 0;
+    notifier_event(index, object, time, value);
     return 0;
 }
 static int cmp_time(const void *a,const void *b)
@@ -304,7 +342,7 @@ static int replay_initial_notifier(unsigned index)
 }
 static PLI_INT32 start(PLI_BYTE8 *unused)
 {
-    s_cb_data cb={0}; s_vpi_time time={0}; unsigned i;
+    s_cb_data cb={0}; s_vpi_time time={0}; s_vpi_value value={0}; unsigned i;
     (void)unused;
     if (started || !check_count) { fail("empty/repeated start");return 0; }
     if (!complete_population()) { fail("timing object set mismatch in watched scope"); return 0; }
@@ -314,6 +352,7 @@ static PLI_INT32 start(PLI_BYTE8 *unused)
         if (!replay_initial_notifier(i)) { fail("initial notifier value/history"); return 0; }
         notifier_indices[i]=i; memset(&cb,0,sizeof(cb));cb.reason=cbValueChange;
         cb.obj=notifiers[i].signal;cb.cb_rtn=changed;cb.time=&time;
+        value.format=vpiScalarVal;cb.value=&value;
         cb.user_data=(PLI_BYTE8 *)&notifier_indices[i];
         if (!vpi_register_cb(&cb)) { fail("notifier callback registration");return 0; }
     }
