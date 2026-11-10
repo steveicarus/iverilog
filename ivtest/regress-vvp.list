@@ -1014,6 +1014,7 @@ width_hdl_sdf_negative_magnitude	vvp_tests/width_hdl_sdf_negative_magnitude.json
 period_hdl	vvp_tests/period_hdl.json
 period_hdl_negedge	vvp_tests/period_hdl_negedge.json
 period_hdl_history	vvp_tests/period_hdl_history.json
+period_hdl_startup	vvp_tests/period_hdl_startup.json
 period_hdl_units	vvp_tests/period_hdl_units.json
 period_hdl_objects	vvp_tests/period_hdl_objects.json
 period_hdl_sdf	vvp_tests/period_hdl_sdf.json
