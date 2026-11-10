@@ -3420,6 +3420,12 @@ bool of_DUP_REAL(vthread_t thr, vvp_code_t)
       return true;
 }
 
+bool of_DUP_STR(vthread_t thr, vvp_code_t)
+{
+      thr->push_str(thr->peek_str(0));
+      return true;
+}
+
 bool of_DUP_VEC4(vthread_t thr, vvp_code_t)
 {
       thr->push_vec4(thr->peek_vec4(0));
