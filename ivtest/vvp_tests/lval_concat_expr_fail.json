@@ -1,0 +1,4 @@
+{
+    "type"   : "CE",
+    "source" : "lval_concat_expr_fail.v"
+}
