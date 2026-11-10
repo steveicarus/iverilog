@@ -2304,7 +2304,7 @@ void compile_tchk_recrem(unsigned file_idx, unsigned lineno,
       delete[] reference_condition;
       delete[] data_condition;
       vvp_time64_t recovery_ticks, removal_ticks;
-      if (!edges_valid || reference_condition_value > 1 || data_condition_value > 1
+      if (!edges_valid || reference_condition_value > 2 || data_condition_value > 2
           || !vpip_tchk_delay_to_ticks(recovery_limit, scope, recovery_ticks) ||
           !vpip_tchk_delay_to_ticks(removal_limit, scope, removal_ticks)) {
             yyerror("invalid RECREM edge or unrepresentable limits");
@@ -2319,7 +2319,8 @@ void compile_tchk_recrem(unsigned file_idx, unsigned lineno,
       vvp_net_t* net = new vvp_net_t;
       vvp_fun_tchk_recrem* fun = new vvp_fun_tchk_recrem(
             reference_edge, data_edge, recovery_ticks, removal_ticks,
-            reference_condition_value, data_condition_value);
+            reference_condition_value == 0 ? 0 : 1,
+            data_condition_value == 0 ? 0 : 1);
       net->fun = fun;
       __vpiTchkRecRem* obj = new __vpiTchkRecRem(scope, file_idx, lineno, fun);
       fun->vpi_tchk = obj;
