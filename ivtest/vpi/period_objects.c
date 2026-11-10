@@ -20,16 +20,24 @@ static unsigned long long now(void)
 }
 static PLI_INT32 violation(p_cb_data cb)
 {
-    unsigned i;
-    for(i=0;i<5;++i)if(objects[i]==cb->obj)break;
-    if(i==5 || seen[i]>=counts[i] || now()!=times[i][seen[i]]) {
+    unsigned i; vpiHandle object=cb->obj; s_vpi_time supplied={0};
+    PLI_INT32 reason=cb->reason; int has_time=cb->time!=NULL;
+    unsigned long long time;
+    if(has_time)supplied=*cb->time;
+    if(reason!=cbTchkViolation || !has_time || supplied.type!=vpiSimTime) {
+        fail("timing callback payload");return 0;
+    }
+    time=((unsigned long long)supplied.high<<32)|supplied.low;
+    if(time!=now()){fail("timing callback payload time");return 0;}
+    for(i=0;i<5;++i)if(objects[i]==object)break;
+    if(i==5 || seen[i]>=counts[i] || time!=times[i][seen[i]]) {
         fail("wrong/extra timing callback");return 0;
     }
-    if(vpi_get(vpiTchkType,cb->obj)!=(i==2?vpiWidth:vpiPeriod)) {
+    if(vpi_get(vpiTchkType,object)!=(i==2?vpiWidth:vpiPeriod)) {
         fail("wrong callback type");return 0;
     }
     ++seen[i];
-    vpi_printf("PERIOD_TCHK %u %llu\n",i,now());
+    vpi_printf("PERIOD_TCHK %u %llu\n",i,time);
     return 0;
 }
 static PLI_INT32 filtered(p_cb_data cb)
@@ -48,6 +56,15 @@ static PLI_INT32 self_removing(p_cb_data cb)
     if(self_seen || cb->obj!=objects[2] || now()!=102) {fail("self-removing callback");return 0;}
     ++self_seen;
     if(!vpi_remove_cb(self_handle))fail("self-removal failed");
+    return 0;
+}
+/* This fixture declares no startup violations; capture from simulation start. */
+static PLI_INT32 observe_start(p_cb_data unused)
+{
+    s_cb_data cb={0};s_vpi_time time={0};(void)unused;
+    time.type=vpiSimTime;cb.time=&time;
+    cb.reason=cbTchkViolation;cb.cb_rtn=violation;
+    if(!vpi_register_cb(&cb))fail("timing callback registration");
     return 0;
 }
 static PLI_INT32 audit(PLI_BYTE8 *unused)
@@ -96,9 +113,7 @@ static PLI_INT32 audit(PLI_BYTE8 *unused)
         }
         if(count!=expected[s]) {fail("object cardinality");return 0;}
     }
-    cb.reason=cbTchkViolation;cb.cb_rtn=violation;
-    if(!vpi_register_cb(&cb)) {fail("callback registration");return 0;}
-    cb.obj=objects[1];cb.cb_rtn=filtered;
+    cb.reason=cbTchkViolation;cb.obj=objects[1];cb.cb_rtn=filtered;
     if(!vpi_register_cb(&cb)) {fail("filtered registration");return 0;}
     cb.obj=NULL;cb.cb_rtn=removed;removed_handle=vpi_register_cb(&cb);
     if(!removed_handle || !vpi_remove_cb(removed_handle)) {fail("pre-event removal");return 0;}
@@ -115,7 +130,12 @@ static PLI_INT32 finish(PLI_BYTE8 *unused)
 }
 static void register_all(void)
 {
-    s_vpi_systf_data tf={0};tf.type=vpiSysTask;tf.tfname="$period_objects";tf.calltf=audit;
+    s_cb_data cb={0};
+    s_vpi_systf_data tf={0};
+    cb.reason=cbStartOfSimulation;cb.cb_rtn=observe_start;
+    if(!vpi_register_cb(&cb))fail("startup registration");
+    tf.type=vpiSysTask;tf.tfname="$period_objects";tf.calltf=audit;
     vpi_register_systf(&tf);tf.tfname="$period_objects_finish";tf.calltf=finish;vpi_register_systf(&tf);
 }
-void (*vlog_startup_routines[])(void)={register_all,0};
+void pulse_history_register(void);
+void (*vlog_startup_routines[])(void)={register_all,pulse_history_register,0};
