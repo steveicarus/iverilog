@@ -9,8 +9,6 @@
         "-s",
         "tb"
     ],
-    "vpi-sources": [
-        "vpi/width_rejected_limits.c"
-    ],
+    "vpi-sources": ["vpi/width_rejected_limits.c", "vpi/pulse_history.c"],
     "gold": "width_hdl_sdf_negative"
 }
