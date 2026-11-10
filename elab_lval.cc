@@ -82,9 +82,10 @@ void PEIdent::report_mixed_assignment_conflict_(const char*category) const
  * is to try to make a net elaboration, and see if the result is
  * suitable for assignment.
  */
-NetAssign_* PExpr::elaborate_lval(Design*, NetScope*, bool, bool, bool) const
+NetAssign_* PExpr::elaborate_lval(Design*des, NetScope*, bool, bool, bool) const
 {
-      cerr << get_fileline() << ": Assignment l-value too complex." << endl;
+      cerr << get_fileline() << ": error: Assignment l-value too complex." << endl;
+      des->errors++;
       return 0;
 }
 

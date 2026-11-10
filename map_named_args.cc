@@ -17,14 +17,12 @@ std::vector<PExpr*> map_named_args(Design *des,
       bool has_named = false;
       for (size_t i = 0; i < parms.size(); i++) {
 	    if (parms[i].name.nil()) {
-		  if (!parms[i].parm)
-			continue;
-
 		  if (has_named) {
-		      std::cerr << parms[i].get_fileline() << ": error: "
-		           << "Positional argument must preceded "
-			   << "named arguments."
-			   << std::endl;
+			std::cerr << parms[i].get_fileline() << ": error: "
+				  << "Positional arguments must precede "
+				  << "named arguments."
+				  << std::endl;
+			des->errors++;
 		  } else if (i < args.size()) {
 			args[i] = parms[i].parm;
 		  }

@@ -108,6 +108,7 @@ extern bool of_DIV_S(vthread_t thr, vvp_code_t code);
 extern bool of_DIV_WR(vthread_t thr, vvp_code_t code);
 extern bool of_DUP_OBJ(vthread_t thr, vvp_code_t code);
 extern bool of_DUP_REAL(vthread_t thr, vvp_code_t code);
+extern bool of_DUP_STR(vthread_t thr, vvp_code_t code);
 extern bool of_DUP_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
 extern bool of_EVENT(vthread_t thr, vvp_code_t code);

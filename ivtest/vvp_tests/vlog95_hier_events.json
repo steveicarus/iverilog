@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "vlog95_hier_events.v",
+    "iverilog-args" : [ "-g2012", "-s", "tb" ]
+}
