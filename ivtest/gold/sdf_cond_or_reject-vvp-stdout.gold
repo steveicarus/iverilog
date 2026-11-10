@@ -1,0 +1,10 @@
+SDF ERROR: ivltests/sdf_cond_or_reject.sdf:5: Unable to match ModPath A -> Z in top.untouched
+SDF ERROR: ivltests/sdf_cond_or_reject.sdf:6: Unable to match ModPath A -> Z in top.untouched
+SDF ERROR: ivltests/sdf_cond_or_reject.sdf:7: Unable to match ModPath A -> ZL in top.untouched
+SDF ERROR: ivltests/sdf_cond_or_reject.sdf:8: Unable to match ModPath A -> Z in top.untouched
+SDF ERROR: ivltests/sdf_cond_or_reject.sdf:9: Unable to match ModPath A -> Z in top.untouched
+SDF WARNING: ivltests/sdf_cond_or_reject.sdf:10: COND not supported.
+SDF WARNING: ivltests/sdf_cond_or_reject.sdf:11: COND not supported.
+SDF WARNING: ivltests/sdf_cond_or_reject.sdf:12: COND not supported.
+SDF WARNING: ivltests/sdf_cond_or_reject.sdf:13: COND not supported.
+PASSED

@@ -1062,6 +1062,12 @@ sdf_cond_expr_reject	vvp_tests/sdf_cond_expr_reject.json
 sdf_cond_vlog95	vvp_tests/sdf_cond_vlog95.json
 sdf_multidriver_readback	vvp_tests/sdf_multidriver_readback.json
 
+# Ordered logical-OR source identities for SDF COND path binding.
+sdf_cond_or_tree	vvp_tests/sdf_cond_or_tree.json
+sdf_cond_or_identity	vvp_tests/sdf_cond_or_identity.json
+sdf_cond_or_reject	vvp_tests/sdf_cond_or_reject.json
+
+sdf_cond_or_grouping	vvp_tests/sdf_cond_or_grouping.json
 # Preserve hierarchical signal references through vlog95 translation.
 vlog95_hier_events	vvp_tests/vlog95_hier_events.json
 vlog95_hier_inputs	vvp_tests/vlog95_hier_inputs.json

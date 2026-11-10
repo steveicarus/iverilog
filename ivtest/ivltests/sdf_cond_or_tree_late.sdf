@@ -1,0 +1,7 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "or_tree_cell") (INSTANCE u)
+  (DELAY (ABSOLUTE
+   (COND "late rise only" ((E == 1'b1) || (F == 1'b1)) (IOPATH A Z0 (13) ()))
+  )))
+)
