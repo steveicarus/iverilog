@@ -2,7 +2,7 @@ SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:5: Unable to match ModPath A -> Z i
 SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:6: Unable to match ModPath A -> Z in top.u
 SDF WARNING: ivltests/sdf_cond_expr_reject.sdf:7: COND not supported.
 SDF WARNING: ivltests/sdf_cond_expr_reject.sdf:8: COND not supported.
-SDF WARNING: ivltests/sdf_cond_expr_reject.sdf:9: COND not supported.
+SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:9: Unable to match ModPath A -> Z in top.u
 SDF WARNING: ivltests/sdf_cond_expr_reject.sdf:10: COND not supported.
 SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:11: Unable to match ModPath A -> Z in top.u
 SDF ERROR: ivltests/sdf_cond_expr_reject.sdf:12: Unable to match ModPath A -> ZCASE in top.u

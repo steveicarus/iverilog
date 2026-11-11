@@ -1,0 +1,6 @@
+{
+    "type": "normal",
+    "source": "check_scope_cleanup.v",
+    "iverilog-args": ["-g2012", "-s", "tb"],
+    "vpi-sources": ["vpi/check_scope_cleanup.c"]
+}

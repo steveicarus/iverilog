@@ -61,21 +61,22 @@ static void delete_sub_scopes(__vpiScope *scope)
 {
       for (unsigned idx = 0; idx < scope->intern.size(); idx += 1) {
 	    vpiHandle item = (scope->intern)[idx];
-	    __vpiScope*lscope = static_cast<__vpiScope*>(item);
 	    switch(item->get_type_code()) {
 		case vpiFunction:
 		case vpiTask:
-		  contexts_delete(lscope);
+		  contexts_delete(static_cast<__vpiScope*>(item));
 		  // fallthrough
 		case vpiModule:
 		case vpiGenScope:
 		case vpiNamedBegin:
 		case vpiNamedFork:
-		case vpiClassTypespec:
+		case vpiClassTypespec: {
+		  __vpiScope*lscope = static_cast<__vpiScope*>(item);
 		  delete_sub_scopes(lscope);
 		  vthreads_delete(lscope);
 		  delete item;
 		  break;
+		}
 		case vpiMemory:
 		case vpiNetArray:
 		  memory_delete(item);

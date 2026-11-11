@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2024 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2026 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -557,7 +557,7 @@ void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 	    else emit_logic_as_ca(scope, nlogic);
 	/* A signal is driving the nexus. */
       } else if (sig) {
-	    emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0, 0);
+	    emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 1, 0);
 	/* If there is no driver then look for a single signal that is
 	 * driven by this nexus that has the correct scope. This is needed
 	 * to translate top level ports. */
@@ -654,7 +654,7 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD,
 			emit_nexus_as_ca(ivl_signal_scope(sig),
 					 ivl_signal_nex(sig, word),
 			                 0, 0);
-		  } else emit_name_of_nexus(scope, nex, 0);
+		  } else emit_name_of_nexus(scope, nex, allow_UD);
 // HERE: The assert causes pr1703959 to fail.
 //	    } else assert(0);
 	    } else {

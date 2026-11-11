@@ -249,6 +249,7 @@ width_real ([0-9]+[.][0-9]*|[0-9]*[.][0-9]+)([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0
 ".ufunc/vec4"   { return K_UFUNC_VEC4; }
 ".ufunc/e"      { return K_UFUNC_E; }
 ".var"          { return K_VAR; }
+".virt"         { return K_VIRT; }
 ".var/cobj"     { return K_VAR_COBJECT; }
 ".var/darray"   { return K_VAR_DARRAY; }
 ".var/queue"    { return K_VAR_QUEUE; }

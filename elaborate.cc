@@ -1899,6 +1899,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 	    ivl_assert(*this, prts_vector_width % instance.size() == 0);
 
 	    if (!prts.empty() && (prts[0]->port_type() == NetNet::PINPUT)
+	        && (prts[0]->type() != NetNet::REG)
 	        && prts[0]->pin(0).nexus()->drivers_present()
 	        && pins[idx]->is_collapsible_net(des, scope,
 	                                         prts[0]->port_type())) {
@@ -4051,7 +4052,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
 	/* Handle non-automatic tasks with no parameters specially. There is
            no need to make a sequential block to hold the generated code. */
-      if ((parm_count == 0) && !task->is_auto()) {
+      if (parm_count == 0 && parms_.empty() && !task->is_auto()) {
 	      // Check if a task call is allowed in this context.
 	    test_task_calls_ok_(des, scope);
 
@@ -4476,6 +4477,23 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 									       parm_names);
 			      }
 			}
+
+			  /* Property is a class handle (not queue/darray).
+			     Find the method in that class and build the call
+			     using a property-access expression as "this". */
+			if (const netclass_t*prop_class = dynamic_cast<const netclass_t*>(ptype)) {
+			      NetScope*task = prop_class->method_from_name(method_name);
+			      if (task == 0) {
+				    cerr << get_fileline() << ": error: "
+					 << "Can't find task " << method_name
+					 << " in class " << prop_class->get_name() << endl;
+				    des->errors += 1;
+				    return 0;
+			      }
+			      NetEProperty*use_this = new NetEProperty(net, pidx);
+			      use_this->set_line(*this);
+			      return elaborate_build_call_(des, scope, task, use_this, false);
+			}
 		  }
 	    }
       }
@@ -4630,7 +4648,9 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	    NetESignal*use_this = new NetESignal(net);
 	    use_this->set_line(*this);
 
-	    return elaborate_build_call_(des, scope, task, use_this);
+	    // A call through super is not virtual.
+	    bool nonvirtual = use_path.back().name == "#";
+	    return elaborate_build_call_(des, scope, task, use_this, nonvirtual);
       }
 
       return 0;
@@ -4726,7 +4746,8 @@ NetProc* PCallTask::elaborate_void_function_(Design*des, NetScope*scope,
 }
 
 NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
-					  NetScope*task, NetExpr*use_this) const
+					  NetScope*task, NetExpr*use_this,
+					  bool nonvirtual) const
 {
       const NetBaseDef*def = 0;
       if (task->type() == NetScope::TASK) {
@@ -4768,6 +4789,23 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
       unsigned parm_count = def->port_count();
 
+	/* A call to a virtual method is bound to the virtual
+	   declaration, which dispatches to the override that matches
+	   the class of the object. The arguments are passed to the
+	   ports of the declaration, which are the same as the ports of
+	   the method found above. */
+      NetScope*callee = task;
+      const NetBaseDef*pdef = def;
+      if (!nonvirtual) {
+	    if (NetScope*root = netclass_t::virtual_root(task)) {
+		  callee = root;
+		  if (root->type() == NetScope::TASK)
+			pdef = root->task_def();
+		  else
+			pdef = root->func_def();
+	    }
+      }
+
       if (parms_.size() > parm_count) {
 	    cerr << get_fileline() << ": error: "
 		 << "Too many arguments (" << parms_.size()
@@ -4775,6 +4813,9 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 		 << " in call to task." << endl;
 	    des->errors += 1;
       }
+
+      unsigned int off = use_this ? 1 : 0;
+      auto args = map_named_args(des, def, parms_, off);
 
       NetBlock*block = new NetBlock(NetBlock::SEQU, 0);
       block->set_line(*this);
@@ -4784,7 +4825,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	   task, all the assignments, etc. Just return a no-op. */
 
       if (const NetBlock*tp = dynamic_cast<const NetBlock*>(def->proc())) {
-	    if (tp->proc_first() == 0) {
+	    if (tp->proc_first() == 0 && callee == task) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PCallTask::elaborate_build_call_: "
 			     << "Eliding call to empty task " << task->basename() << endl;
@@ -4797,7 +4838,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
            allocate the local storage. */
 
       if (task->is_auto()) {
-	    NetAlloc*ap = new NetAlloc(task);
+	    NetAlloc*ap = new NetAlloc(callee);
 	    ap->set_line(*this);
 	    block->append(ap);
       }
@@ -4809,7 +4850,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
       if (use_this) {
 	    ivl_assert(*this, def->port_count() >= 1);
-	    NetNet*port = def->port(0);
+	    NetNet*port = pdef->port(0);
 	    ivl_assert(*this, port->port_type()==NetNet::PINPUT);
 
 	    NetAssign_*lv = new NetAssign_(port);
@@ -4824,13 +4865,10 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	   expression the r-value. We know by definition that the port
 	   is a reg type, so this elaboration is pretty obvious. */
 
-      unsigned int off = use_this ? 1 : 0;
-
-      auto args = map_named_args(des, def, parms_, off);
       for (unsigned int idx = off; idx < parm_count; idx++) {
 	    size_t parms_idx = idx - off;
 
-	    NetNet*port = def->port(idx);
+	    NetNet*port = pdef->port(idx);
 	    ivl_assert(*this, port->port_type() != NetNet::NOT_A_PORT);
 	    if (port->port_type() == NetNet::POUTPUT)
 		  continue;
@@ -4884,7 +4922,8 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
       }
 
 	/* Generate the task call proper... */
-      NetUTask*cur = new NetUTask(task);
+      NetUTask*cur = new NetUTask(callee);
+      cur->set_nonvirtual(nonvirtual);
       cur->set_line(*this);
       block->append(cur);
 
@@ -4902,7 +4941,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
 	    size_t parms_idx = idx - off;
 
-	    NetNet*port = def->port(idx);
+	    NetNet*port = pdef->port(idx);
 
 	      /* Skip input ports. */
 	    ivl_assert(*this, port->port_type() != NetNet::NOT_A_PORT);
@@ -4978,7 +5017,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
         /* If this is an automatic task, generate a statement to free
            the local storage. */
       if (task->is_auto()) {
-	    NetFree*fp = new NetFree(task);
+	    NetFree*fp = new NetFree(callee);
 	    fp->set_line(*this);
 	    block->append(fp);
       }
@@ -5386,6 +5425,17 @@ NetProc* PDoWhile::elaborate(Design*des, NetScope*scope) const
       return loop;
 }
 
+static bool check_event_select(Design*des, const name_component_t&name)
+{
+      if (name.index.empty()) return true;
+
+      cerr << name.index.front().get_fileline()
+	   << ": error: Cannot select from scalar event '" << name.name
+	   << "'." << endl;
+      des->errors += 1;
+      return false;
+}
+
 /*
  * An event statement is an event delay of some sort, attached to a
  * statement. Some Verilog examples are:
@@ -5596,6 +5646,7 @@ cerr << endl;
 		  symbol_search(this, des, scope, id->path(), id->lexical_pos(), &sr);
 
 		  if (sr.scope && sr.eve) {
+			if (!check_event_select(des, id->path().back())) continue;
 			wa->add_event(sr.eve);
 			  /* You can not look for the posedge or negedge of
 			   * an event. */
@@ -6682,6 +6733,8 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
+      if (!check_event_select(des, event_.back())) return nullptr;
+
       NetEvTrig*trig = new NetEvTrig(sr.eve);
       trig->set_line(*this);
       return trig;
@@ -6712,6 +6765,8 @@ NetProc* PNBTrigger::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return 0;
       }
+
+      if (!check_event_select(des, event_.back())) return nullptr;
 
       NetExpr*dly = 0;
       if (dly_) dly = elab_and_eval(des, scope, dly_, -1);
@@ -6859,17 +6914,18 @@ static std::string ordinary_path_condition_key(Design*des, NetScope*scope,
             return key.str();
       }
 
-      if (binary->peek_opcode() == 'a') {
+      if (binary->peek_opcode() == 'a' || binary->peek_opcode() == 'o') {
             std::string left_text, right_text;
             std::string left = ordinary_path_condition_key(des, scope,
                                               binary->peek_left(), left_text);
             std::string right = ordinary_path_condition_key(des, scope,
                                               binary->peek_right(), right_text);
-            // AND leaves must be comparisons, not bare names or constants.
+            // Logical leaves must be comparisons, not bare names or constants.
             if (left.empty() || right.empty()
                 || left[0] != ' ' || right[0] != ' ') return {};
-            text = "(" + left_text + " && " + right_text + ")";
-            return " A" + left + right;
+            const bool is_or = binary->peek_opcode() == 'o';
+            text = "(" + left_text + (is_or ? " || " : " && ") + right_text + ")";
+            return (is_or ? " O" : " A") + left + right;
       }
 
       return {};
@@ -7543,6 +7599,71 @@ bool Module::elaborate(Design*des, NetScope*scope) const
  * child scope for each definition and use that for the context of the
  * function.
  */
+/*
+ * Compare the type of an argument or return value of a virtual method
+ * with the one in the method that it overrides. Class return values may
+ * be covariant, in which case the override returns a derived class.
+ */
+static bool virtual_types_match(ivl_type_t base, ivl_type_t over, bool covariant)
+{
+      if (base == 0 || over == 0)
+	    return base == over;
+      if (base->base_type() != over->base_type())
+	    return false;
+      switch (base->base_type()) {
+	  case IVL_VT_CLASS:
+	    return covariant ? base->type_compatible(over) : base == over;
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    return base->type_equivalent(over);
+	  default:
+	    return true;
+      }
+}
+
+static const NetBaseDef*method_def(const NetScope*method)
+{
+      if (method->type() == NetScope::FUNC)
+	    return method->func_def();
+      return method->task_def();
+}
+
+static const char*virtual_mismatch(NetScope*over, NetScope*root)
+{
+      if (over->type() != root->type())
+	    return "a function and a task";
+
+      const NetBaseDef*odef = method_def(over);
+      const NetBaseDef*rdef = method_def(root);
+      if (odef == 0 || rdef == 0)
+	    return 0;
+
+      if (odef->port_count() != rdef->port_count())
+	    return "a different number of arguments";
+
+	// Port 0 is the implicit "this" argument.
+      for (unsigned idx = 1 ; idx < odef->port_count() ; idx += 1) {
+	    const NetNet*op = odef->port(idx);
+	    const NetNet*rp = rdef->port(idx);
+	    if (op->port_type() != rp->port_type())
+		  return "a different argument direction";
+	    if (op->unpacked_dimensions() != rp->unpacked_dimensions()
+		|| !virtual_types_match(rp->net_type(), op->net_type(), false))
+		  return "a different argument type";
+      }
+
+      if (over->type() == NetScope::FUNC) {
+	    const NetNet*ores = over->find_signal(over->basename());
+	    const NetNet*rres = root->find_signal(root->basename());
+	    if ((ores == 0) != (rres == 0))
+		  return "a different return type";
+	    if (ores && !virtual_types_match(rres->net_type(), ores->net_type(), true))
+		  return "a different return type";
+      }
+
+      return 0;
+}
+
 void netclass_t::elaborate(Design*des, PClass*pclass)
 {
       if (! pclass->type->initialize_static.empty()) {
@@ -7582,6 +7703,46 @@ void netclass_t::elaborate(Design*des, PClass*pclass)
 	    NetScope*scope = class_scope_->child( hname_t(cur->first) );
 	    ivl_assert(*cur->second, scope);
 	    cur->second->elaborate(des, scope);
+      }
+
+	// Check that each override of a virtual method has the same
+	// signature as the virtual method that it overrides.
+      std::vector<perm_string> names;
+      for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
+		 ; cur != pclass->funcs.end() ; ++ cur)
+	    names.push_back(cur->first);
+      for (map<perm_string,PTask*>::iterator cur = pclass->tasks.begin()
+		 ; cur != pclass->tasks.end() ; ++ cur)
+	    names.push_back(cur->first);
+
+      for (perm_string name : names) {
+	    NetScope*method = class_scope_->child( hname_t(name) );
+	    NetScope*root = virtual_root(method);
+	    if (root == 0 || root == method)
+		  continue;
+
+	    // The code that passes the arguments of a virtual method on
+	    // to an override does not copy unpacked arrays.
+	    const NetBaseDef*def = method_def(method);
+	    for (unsigned idx = 0 ; def && idx < def->port_count() ; idx += 1) {
+		  if (def->port(idx)->unpacked_dimensions() == 0)
+			continue;
+		  cerr << method->get_fileline() << ": sorry: Method `"
+		       << method->basename() << "` of class " << name_
+		       << " is virtual and has an unpacked array argument." << endl;
+		  des->errors += 1;
+		  break;
+	    }
+
+	    if (const char*what = virtual_mismatch(method, root)) {
+		  cerr << method->get_fileline() << ": error: Method `"
+		       << method->basename() << "` of class " << name_
+		       << " overrides a virtual method but has " << what
+		       << "." << endl;
+		  cerr << root->get_fileline() << ":      : "
+		       << "The virtual method is declared here." << endl;
+		  des->errors += 1;
+	    }
       }
 }
 

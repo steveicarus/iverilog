@@ -493,6 +493,7 @@ right operand is 0, then the result is NaN.
 
 
 * %dup/real
+* %dup/str
 * %dup/vec4
 * %dup/obj
 
