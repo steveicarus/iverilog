@@ -1091,6 +1091,8 @@ static void draw_unary_vec4(ivl_expr_t expr)
 		case IVL_VT_REAL:
 		  draw_eval_real(sub);
 		  fprintf(vvp_out, "    %%cvt/vr %u;\n", ivl_expr_width(expr));
+		    /* Convert X from NaN/Inf to zero for the two-state result. */
+		  fprintf(vvp_out, "    %%cast2;\n");
 		  break;
 		case IVL_VT_STRING:
 		  draw_eval_string(sub);
