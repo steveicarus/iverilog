@@ -3066,6 +3066,9 @@ class NetAssign_ {
 	// The part select has a specific type and the width of the select will
 	// be that of the type.
       void set_part(NetExpr *loff, ivl_type_t data_type);
+	// Set an unsigned part select with the supplied base type and width.
+	// The offset expression calculates a canonical bit address.
+      void set_part(NetExpr*loff, ivl_type_t data_type, unsigned wid);
 	// Set the member or property name if the signal type is a
 	// class.
       void set_property(const perm_string&name, unsigned int idx);
