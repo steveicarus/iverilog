@@ -620,7 +620,7 @@ struct __vpiInterModPath : public __vpiHandle {
  */
 
 extern struct __vpiInterModPath* vpip_find_intermodpath(
-      vpiPortInfo* port1, vpiPortInfo* port2,
+      vpiPortInfo* port1, const vpiPortInfo* port2,
       bool port1_has_index, int port1_bit_index,
       bool port2_has_index, int port2_bit_index);
 extern struct __vpiInterModPath* vpip_make_intermodpath(

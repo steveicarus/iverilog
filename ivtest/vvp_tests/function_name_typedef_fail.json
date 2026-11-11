@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "function_name_typedef_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

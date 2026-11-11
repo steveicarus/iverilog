@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "struct_member_name_scopes.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

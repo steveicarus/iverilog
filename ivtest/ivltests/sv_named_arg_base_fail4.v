@@ -4,7 +4,7 @@
 module test;
 
   class B;
-    function new(integer a, integer b);
+    function new(integer a, integer b = 0);
       $display("FAILED");
     endfunction
   endclass

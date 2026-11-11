@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "task_no_ports_named_argument_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
