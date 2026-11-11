@@ -91,14 +91,15 @@ sub get_regress_fn {
 #
 sub get_ivl_version {
     my $sfx = shift(@_);
-    if (`iverilog$sfx -V` =~ /^Icarus Verilog version (\d+)\.(\d+)/) {
+    my $cmd = "iverilog$sfx -V";
+    if (`$cmd` =~ /^Icarus Verilog version (\d+)\.(\d+)/) {
         if ($1 == 0) {
             return $1.".".$2;
         } else {
             return $1;
         }
     } else {
-        die "Failed to get version from iverilog$sfx -V output";
+        die "Failed to get version from '$cmd' output";
     }
 }
 
@@ -107,7 +108,7 @@ sub get_ivl_version {
 # is redirected to a log file.
 #
 sub run_program {
-    my ($cmd, $log_mode, $log_file) = @_;
+    my ($cmd, $log_mode, $log_file, $verbose) = @_;
 
     my $ret;
     if ($log_mode) {
@@ -120,6 +121,9 @@ sub run_program {
         open(STDERR, '>&OLDERR');
     } else {
         $ret = system($cmd);
+    }
+    if ($verbose) {
+        print "running: '$cmd' -> $ret\n";
     }
     $ret;
 }
