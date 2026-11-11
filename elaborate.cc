@@ -7504,11 +7504,9 @@ void PRecRem::elaborate(Design*des, NetScope*scope) const
 
 void PSetupHold::elaborate(Design*des, NetScope*scope) const
 {
-      // At present, no timing checks are supported.
-      // Still, in order to get some models working
-      // assign the original reference and data signals to
-      // the delayed reference and data signals as per
-      // 15.5.4 Option behavior
+      // This fallback does not create a $setuphold timing check.
+      // It only connects the original reference and data signals to
+      // the optional delayed signals per 15.5.4 Option behavior.
 
       if (delayed_reference_ != nullptr)
       {
