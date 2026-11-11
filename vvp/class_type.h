@@ -1,7 +1,7 @@
 #ifndef IVL_class_type_H
 #define IVL_class_type_H
 /*
- * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,9 +19,11 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+# include  <map>
 # include  <string>
 # include  <vector>
 # include  "vpi_priv.h"
+# include  "vthread.h"
 
 class class_property_t;
 class vvp_vector4_t;
@@ -55,6 +57,14 @@ class class_type : public __vpiHandle {
 	// defined. This calculates information about the definition.
       void finish_setup(void);
 
+	// Set the code that a call of the virtual function whose scope
+	// is given runs for objects of this class. This is used during
+	// parse of the .vvp file.
+      void set_virtual(vpiHandle scope, vvp_code_t code);
+	// Return that code, or nil if the virtual function is not
+	// overridden in this class.
+      vvp_code_t get_virtual(vpiHandle scope) const;
+
     public:
 	// Constructors and destructors for making instances.
       inst_t instance_new() const;
@@ -83,6 +93,8 @@ class class_type : public __vpiHandle {
       };
       std::vector<prop_t> properties_;
       size_t instance_size_;
+
+      std::map<vpiHandle,vvp_code_t> virtual_;
 };
 
 #endif /* IVL_class_type_H */

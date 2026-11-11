@@ -1,0 +1,4 @@
+{
+    "type"   : "CE",
+    "source" : "event_trigger_bit_select_fail.v"
+}

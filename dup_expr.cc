@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -303,6 +303,7 @@ NetEUFunc* NetEUFunc::dup_expr() const
 
       tmp = new NetEUFunc(scope_, func_, result_sig_->dup_expr(), tmp_parms,
                           need_const_);
+      tmp->nonvirtual_ = nonvirtual_;
 
       ivl_assert(*this, tmp);
       tmp->set_line(*this);

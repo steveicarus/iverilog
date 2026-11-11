@@ -956,6 +956,9 @@ extern const char* ivl_expr_bits(ivl_expr_t net);
 extern ivl_branch_t ivl_expr_branch(ivl_expr_t net);
   /* IVL_EX_UFUNC */
 extern ivl_scope_t ivl_expr_def(ivl_expr_t net);
+  /* IVL_EX_UFUNC: true if the call is not dispatched on the class of
+     the object (a super.method() call). */
+extern unsigned ivl_expr_nonvirtual(ivl_expr_t net);
   /* IVL_EX_DELAY */
 extern uint64_t ivl_expr_delay_val(ivl_expr_t net);
   /* IVL_EX_REALNUM */
@@ -1815,6 +1818,12 @@ extern unsigned    ivl_parameter_lineno(ivl_parameter_t net);
  * ivl_scope_is_auto
  *    Is the task or function declared to be automatic?
  *
+ * ivl_scope_virtual_root
+ *    If the scope is a virtual class method, this is the scope of the
+ *    virtual declaration that the method implements. That is the scope
+ *    itself if the method is the first virtual declaration. Otherwise
+ *    this is nil.
+ *
  * ivl_scope_is_cell
  *    Is the module defined to be a cell?
  *
@@ -1939,6 +1948,7 @@ extern unsigned     ivl_scope_events(ivl_scope_t net);
 extern ivl_event_t  ivl_scope_event(ivl_scope_t net, unsigned idx);
 extern const char* ivl_scope_file(ivl_scope_t net);
 extern unsigned ivl_scope_is_auto(ivl_scope_t net);
+extern ivl_scope_t ivl_scope_virtual_root(ivl_scope_t net);
 extern unsigned ivl_scope_is_cell(ivl_scope_t net);
 extern unsigned ivl_scope_lineno(ivl_scope_t net);
 extern unsigned     ivl_scope_logs(ivl_scope_t net);
@@ -2319,6 +2329,8 @@ extern ivl_scope_t ivl_stmt_block_scope(ivl_statement_t net);
 extern ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net, unsigned i);
   /* IVL_ST_UTASK IVL_ST_DISABLE */
 extern ivl_scope_t ivl_stmt_call(ivl_statement_t net);
+  /* IVL_ST_UTASK: see ivl_expr_nonvirtual */
+extern unsigned ivl_stmt_nonvirtual(ivl_statement_t net);
   /* IVL_ST_CASE,IVL_ST_CASER,IVL_ST_CASEX,IVL_ST_CASEZ */
 extern unsigned ivl_stmt_case_count(ivl_statement_t net);
   /* IVL_ST_CASE,IVL_ST_CASER,IVL_ST_CASEX,IVL_ST_CASEZ */
@@ -2458,6 +2470,13 @@ extern const char* ivl_type_name(ivl_type_t net);
 extern int         ivl_type_properties(ivl_type_t net);
 extern const char* ivl_type_prop_name(ivl_type_t net, int idx);
 extern ivl_type_t  ivl_type_prop_type(ivl_type_t net, int idx);
+
+/* A class type has a table of the virtual methods that the class or a
+   base class overrides. Each entry is the override that a call of the
+   virtual declaration (its ivl_scope_virtual_root) runs for an object
+   of this class. */
+extern unsigned    ivl_type_virtuals(ivl_type_t net);
+extern ivl_scope_t ivl_type_virtual(ivl_type_t net, unsigned idx);
 
 /* Maximum element count for a queue type (0 = unbounded). Only valid
  * when ivl_type_base(net) == IVL_VT_QUEUE. */

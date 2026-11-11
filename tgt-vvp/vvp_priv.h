@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_priv_H
 #define IVL_vvp_priv_H
 /*
- * Copyright (c) 2001-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -80,6 +80,7 @@ extern int draw_process(ivl_process_t net, void*x);
 
 extern int draw_task_definition(ivl_scope_t scope);
 extern int draw_func_definition(ivl_scope_t scope);
+extern int draw_virtual_adapter(ivl_scope_t root, ivl_scope_t impl);
 
 extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 

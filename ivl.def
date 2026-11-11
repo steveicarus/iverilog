@@ -66,6 +66,7 @@ ivl_expr_lineno
 ivl_expr_name
 ivl_expr_nature
 ivl_expr_net_type
+ivl_expr_nonvirtual
 ivl_expr_opcode
 ivl_expr_oper1
 ivl_expr_oper2
@@ -271,6 +272,7 @@ ivl_scope_time_precision
 ivl_scope_time_units
 ivl_scope_type
 ivl_scope_tname
+ivl_scope_virtual_root
 
 ivl_signal_array_addr_swapped
 ivl_signal_array_base
@@ -330,6 +332,7 @@ ivl_stmt_lwidth
 ivl_stmt_name
 ivl_stmt_needs_t0_trigger
 ivl_stmt_nevent
+ivl_stmt_nonvirtual
 ivl_stmt_opcode
 ivl_stmt_parm
 ivl_stmt_parm_count
@@ -365,6 +368,8 @@ ivl_type_prop_type
 ivl_type_properties
 ivl_type_queue_max
 ivl_type_signed
+ivl_type_virtual
+ivl_type_virtuals
 
 ivl_udp_init
 ivl_udp_file
