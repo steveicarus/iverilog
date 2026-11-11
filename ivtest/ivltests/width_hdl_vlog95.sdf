@@ -1,0 +1,6 @@
+(DELAYFILE
+  (SDFVERSION "3.0") (DIVIDER /) (TIMESCALE 1ps)
+  (CELL (CELLTYPE "target_annotated") (INSTANCE)
+    (DELAY (ABSOLUTE (IOPATH clock\.name Q (1:1:1) (1:1:1))))
+    (TIMINGCHECK (WIDTH (posedge clock\.name) (20:20:20))))
+)

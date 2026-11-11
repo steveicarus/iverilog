@@ -1,0 +1,4 @@
+SDF ERROR: ivltests/width_hdl_sdf_negative.sdf:5: invalid WIDTH limit
+WIDTH_REJECTED_LIMITS 4 unchanged
+PASSED
+ivltests/width_hdl_sdf_negative.v:31: $finish called at 125 (1ps)

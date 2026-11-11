@@ -175,6 +175,8 @@ typedef struct ivl_design_s   *ivl_design_t;
 typedef _CLASS ivl_discipline_s*ivl_discipline_t;
 typedef const _CLASS netenum_t*ivl_enumtype_t;
 typedef struct ivl_event_s    *ivl_event_t;
+typedef struct ivl_width_s    *ivl_width_t;
+typedef struct ivl_period_s   *ivl_period_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
 typedef struct ivl_island_s   *ivl_island_t;
 typedef struct ivl_lpm_s      *ivl_lpm_t;
@@ -1904,6 +1906,31 @@ extern unsigned   ivl_scope_classes(ivl_scope_t net);
 extern ivl_type_t ivl_scope_class(ivl_scope_t net, unsigned idx);
 extern unsigned       ivl_scope_enumerates(ivl_scope_t net);
 extern ivl_enumtype_t ivl_scope_enumerate(ivl_scope_t net, unsigned idx);
+/* Unconditional scalar WIDTH checks. Limit and threshold are expressed in
+ * the units of ivl_width_scope(); a null notifier means it was omitted. */
+extern unsigned ivl_scope_widths(ivl_scope_t net);
+extern ivl_width_t ivl_scope_width(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_width_scope(ivl_width_t check);
+extern ivl_signal_t ivl_width_reference(ivl_width_t check);
+extern ivl_signal_t ivl_width_notifier(ivl_width_t check);
+extern int ivl_width_posedge(ivl_width_t check);
+extern double ivl_width_limit(ivl_width_t check);
+extern double ivl_width_threshold(ivl_width_t check);
+extern const char*ivl_width_file(ivl_width_t check);
+extern unsigned ivl_width_lineno(ivl_width_t check);
+
+/* Unconditional scalar PERIOD checks. The limit is expressed in the units
+ * of ivl_period_scope(); a null notifier means it was omitted. */
+extern unsigned ivl_scope_periods(ivl_scope_t net);
+extern ivl_period_t ivl_scope_period(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_period_scope(ivl_period_t check);
+extern ivl_signal_t ivl_period_reference(ivl_period_t check);
+extern ivl_signal_t ivl_period_notifier(ivl_period_t check);
+extern int ivl_period_posedge(ivl_period_t check);
+extern double ivl_period_limit(ivl_period_t check);
+extern const char*ivl_period_file(ivl_period_t check);
+extern unsigned ivl_period_lineno(ivl_period_t check);
+
 extern unsigned     ivl_scope_events(ivl_scope_t net);
 extern ivl_event_t  ivl_scope_event(ivl_scope_t net, unsigned idx);
 extern const char* ivl_scope_file(ivl_scope_t net);
@@ -2468,6 +2495,10 @@ extern DLLEXPORT const char* target_query(const char*key);
    ivl core. This function is how the target module is invoked. */
 
 typedef int  (*target_design_f)(ivl_design_t des);
+/* target_query("supports-width") or target_query("supports-period") returns
+ * "1" when the target consumes the corresponding ivl_scope_width/period checks.
+ * Other targets receive a warning for each ignored declaration; a missing query
+ * or any other response means unsupported. */
 typedef const char* (*target_query_f) (const char*key);
 
 

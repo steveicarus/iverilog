@@ -1425,6 +1425,25 @@ void PSpecPath::dump(std::ostream&out, unsigned ind) const
       out << ");" << endl;
 }
 
+void PWidth::dump(std::ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "$width("
+          << (reference_->posedge ? "posedge " : "negedge ")
+          << reference_->name << ", " << *limit_;
+      if (threshold_) out << ", " << *threshold_;
+      if (notifier_) out << ", " << *notifier_;
+      out << ");" << endl;
+}
+
+void PPeriod::dump(std::ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "$period("
+          << (reference_->posedge ? "posedge " : "negedge ")
+          << reference_->name << ", " << *limit_;
+      if (notifier_) out << ", " << *notifier_;
+      out << ");" << endl;
+}
+
 void PRecRem::dump(std::ostream&out, unsigned ind) const
 {
 	    out << setw(ind) << "" << "recrem ";
