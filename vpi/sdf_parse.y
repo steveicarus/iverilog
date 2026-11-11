@@ -29,6 +29,10 @@ static void yyerror(const char*msg);
 # include  <stdlib.h>
 # include  "ivl_alloc.h"
 
+/* Each delay block selects its INTERCONNECT update mode before its entries
+   are reduced. A following ABSOLUTE block restores replacement semantics. */
+static bool interconnect_increment;
+
 /* Decode a local name in place. Hierarchical names retain their escapes
    until sys_sdf.c splits them into individual components. */
 static char* unescape_identifier(char*text)
@@ -107,7 +111,7 @@ static struct sdf_cond_expr_s condition_binary(char op,
                         result.kind = SDF_COND_EXPRESSION;
                   }
             }
-      } else if (op == 'a' && left.kind == SDF_COND_EXPRESSION
+      } else if ((op == 'a' || op == 'o') && left.kind == SDF_COND_EXPRESSION
                  && right.kind == SDF_COND_EXPRESSION) {
             size_t left_len = strlen(left.key);
             size_t right_len = strlen(right.key);
@@ -115,7 +119,7 @@ static struct sdf_cond_expr_s condition_binary(char op,
                 && left_len <= (size_t)-1 - right_len - 3) {
                   result.key = malloc(left_len + right_len + 3);
                   if (result.key) {
-                        memcpy(result.key, " A", 2);
+                        memcpy(result.key, op == 'o' ? " O" : " A", 2);
                         memcpy(result.key + 2, left.key, left_len);
                         memcpy(result.key + 2 + left_len, right.key, right_len + 1);
                         result.kind = SDF_COND_EXPRESSION;
@@ -410,8 +414,8 @@ deltype_list
 deltype
   : '(' K_PATHPULSE input_output_path_opt rvalue rvalue_opt ')'
   | '(' K_PATHPULSEPERCENT input_output_path_opt rvalue rvalue_opt ')'
-  | '(' K_ABSOLUTE del_def_list ')'
-  | '(' K_INCREMENT del_def_list ')'
+  | '(' K_ABSOLUTE { interconnect_increment = false; } del_def_list ')'
+  | '(' K_INCREMENT { interconnect_increment = true; } del_def_list ')'
   | '(' error ')'
     { vpi_printf("SDF ERROR: %s:%d: Invalid/malformed delay type\n",
 	         sdf_parse_path, @1.first_line); }
@@ -469,7 +473,7 @@ del_def
 	                 "port1 = %s index = %d, port2 = %s index = %d\n",
 	                 sdf_parse_path, @2.first_line, $3.name, $3.index, $4.name, $4.index);
 	}
-	sdf_interconnect_delays($3, $4, &$5, @2.first_line);
+	sdf_interconnect_delays($3, $4, &$5, interconnect_increment, @2.first_line);
 	free($3.name);
 	free($4.name);
       }
@@ -601,7 +605,7 @@ conditional_port_expr
       { $$.kind = SDF_COND_CONSTANT; $$.key = 0; $$.value = $1; }
   | '(' conditional_port_expr ')' { $$ = $2; }
   | conditional_port_expr K_LAND conditional_port_expr { $$ = condition_binary('a', $1, $3); }
-  | conditional_port_expr K_LOR conditional_port_expr { $$ = condition_binary(0, $1, $3); }
+  | conditional_port_expr K_LOR conditional_port_expr { $$ = condition_binary('o', $1, $3); }
   | conditional_port_expr K_EQ conditional_port_expr { $$ = condition_binary('e', $1, $3); }
   | conditional_port_expr K_NE conditional_port_expr { $$ = condition_binary(0, $1, $3); }
   | conditional_port_expr K_CEQ conditional_port_expr { $$ = condition_binary(0, $1, $3); }

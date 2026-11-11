@@ -1279,6 +1279,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <flag>    signing unsigned_signed_opt signed_unsigned_opt
 %type <flag>    import_export union_soft_opt
 %type <flag>    K_genvar_opt K_static_opt K_virtual_opt K_const_opt
+%type <flag>    method_qualifier method_qualifier_opt
 %type <flag>    udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
@@ -1648,6 +1649,8 @@ class_item /* IEEE1800-2005: A.1.8 */
     /* IEEE1800 A.1.8: class_constructor_declaration */
   : method_qualifier_opt K_function K_new
       { assert(current_function==0);
+	if ($1)
+	      yyerror(@1, "error: A constructor cannot be virtual.");
 	current_function = pform_push_constructor_scope(@3);
       }
     tf_port_list_parens_opt ';'
@@ -2730,13 +2733,13 @@ loop_variables /* IEEE1800-2005: A.6.8 */
   ;
 
 method_qualifier /* IEEE1800-2005: A.1.8 */
-  : K_virtual
-  | class_item_qualifier
+  : K_virtual { $$ = true; }
+  | class_item_qualifier { $$ = false; }
   ;
 
 method_qualifier_opt
-  : method_qualifier
-  |
+  : method_qualifier { $$ = $1; pform_set_method_virtual($1); }
+  |                  { $$ = false; pform_set_method_virtual(false); }
   ;
 
 modport_declaration /* IEEE1800-2012: A.2.9 */
@@ -6723,6 +6726,7 @@ port
   | '.' IDENTIFIER '(' port_reference ')'
       { Module::port_t*tmp = $4;
 	tmp->name = lex_strings.make($2);
+	tmp->explicit_name = true;
 	delete[]$2;
 	$$ = tmp;
       }
@@ -6743,6 +6747,7 @@ port
   | '.' IDENTIFIER '(' '{' port_reference_list '}' ')'
       { Module::port_t*tmp = $5;
 	tmp->name = lex_strings.make($2);
+	tmp->explicit_name = true;
 	delete[]$2;
 	$$ = tmp;
       }

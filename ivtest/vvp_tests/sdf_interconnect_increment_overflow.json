@@ -1,0 +1,7 @@
+{
+    "type": "normal",
+    "source": "sdf_interconnect_increment_overflow.v",
+    "iverilog-args": ["-g2005", "-gspecify", "-ginterconnect"],
+    "vpi-sources": ["vpi/interconnect_increment_overflow.c"],
+    "gold": "sdf_interconnect_increment_overflow"
+}

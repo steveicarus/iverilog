@@ -1,0 +1,4 @@
+(DELAYFILE (SDFVERSION "3.0") (DESIGN "test") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "test") (INSTANCE) (DELAY
+  (ABSOLUTE (INTERCONNECT src/Y sink/A (-1.4) (2.6) (-3.4) (4.6) (-5.4) (6.6)))
+ )))

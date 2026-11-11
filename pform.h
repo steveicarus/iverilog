@@ -189,6 +189,7 @@ extern void pform_class_property(const struct vlltype&loc,
 				 data_type_t*data_type,
 				 std::list<decl_assignment_t*>*decls);
 extern void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net);
+extern void pform_set_method_virtual(bool flag);
 extern void pform_set_constructor_return(PFunction*net);
 
 extern void pform_end_class_declaration(const struct vlltype&loc);

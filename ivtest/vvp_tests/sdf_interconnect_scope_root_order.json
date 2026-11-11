@@ -1,0 +1,16 @@
+{
+    "__comment": "Reverse explicit root selection order relative to tail_us.",
+    "type": "normal",
+    "source": "sdf_interconnect_scope.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-ginterconnect",
+        "-Ttyp",
+        "-s",
+        "zz_unrelated",
+        "-s",
+        "top",
+        "-DTAIL_UNIT=1us"
+    ]
+}

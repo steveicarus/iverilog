@@ -1389,8 +1389,10 @@ void vvp_fun_intermodpath::scalar_request_(vvp_bit4_t value, vvp_time64_t delay)
 vvp_fun_intermodpath::vvp_fun_intermodpath(vvp_net_t*net, unsigned width)
 : net_(net), scalar_(0), width_known_(false)
 {
-      for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < 12 ;  idx += 1) {
 	    delay_[idx] = 0;
+	    delay_real_[idx] = 0.0;
+      }
 
       cur_vec4_ = vvp_vector4_t(width, BIT4_X);
       schedule_init_propagate(net_, cur_vec4_);
@@ -1410,10 +1412,19 @@ void vvp_fun_intermodpath::get_delay12(vvp_time64_t val[12]) const
 	    val[idx] = delay_[idx];
 }
 
-void vvp_fun_intermodpath::put_delay12(const vvp_time64_t val[12])
+void vvp_fun_intermodpath::get_delay_real12(double val[12]) const
 {
       for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
+	    val[idx] = delay_real_[idx];
+}
+
+void vvp_fun_intermodpath::put_delay12(const vvp_time64_t val[12],
+                                      const double real[12])
+{
+      for (unsigned idx = 0 ;  idx < 12 ;  idx += 1) {
 	    delay_[idx] = val[idx];
+	    delay_real_[idx] = real[idx];
+      }
 }
 
 /*
@@ -1535,15 +1546,43 @@ static vpiHandle intermodpath_iterate(int code, vpiHandle ref)
       return 0;
 }
 
-/*
- * This routine will put specific dimension of delay[] values
- * into a vpiHandle. In this case, we will put
- * specific delays values in a vpiInterModPath object
- *
+/* Match the receiving scope's rounding and global scaling without casting
+ * an out-of-range real to an unsigned integer. Negative annotation values
+ * remain available for later updates, but their effective event delay is zero.
  */
+static bool intermodpath_real_to_ticks(double value, const __vpiScope*scope,
+                                      vvp_time64_t&ticks)
+{
+      if (!isfinite(value)) return false;
+      if (value <= 0.0) {
+	    ticks = 0;
+	    return true;
+      }
+
+      int shift = scope->time_units - scope->time_precision;
+      assert(shift >= 0);
+      double scale = pow(10.0L, shift);
+      double rounded = value * scale;
+      rounded += 0.5;
+      if (!isfinite(rounded) || rounded >= 18446744073709551616.0)
+	    return false;
+      vvp_time64_t delay = static_cast<vvp_time64_t>(rounded);
+
+      shift = scope->time_precision - vpip_get_time_precision();
+      assert(shift >= 0);
+      for (int idx = 0; idx < shift; idx += 1) {
+	    if (delay > (~vvp_time64_t(0)) / 10) return false;
+	    delay *= 10;
+      }
+      ticks = delay;
+      return true;
+}
+
+/* Update retained annotation values and effective delays together. */
 static void intermodpath_put_delays (vpiHandle ref, p_vpi_delay delays)
 {
       vvp_time64_t tmp[12];
+      double real[12];
       int idx;
       struct __vpiInterModPath * src = dynamic_cast<__vpiInterModPath*>(ref) ;
       assert(src) ;
@@ -1584,16 +1623,22 @@ static void intermodpath_put_delays (vpiHandle ref, p_vpi_delay delays)
       if (delays->time_type == vpiSimTime) {
 	    for (idx = 0 ; idx < 12 ; idx += 1) {
 		  tmp[idx] = vpip_timestruct_to_time(delays->da+use_map[0][idx]);
+		  real[idx] = vpip_time_to_scaled_real(tmp[idx], src->scope);
 	    }
       } else {
-	      // You cannot create a modpath with a negative delay so set it
-	      // to zero per 1364-2005 section 14.3.1.
+	    vvp_time64_t supplied[12];
+	      // Validate every supplied value before changing either array.
 	    for (idx = 0 ; idx < delays->no_of_delays ; idx += 1) {
-		  if (delays->da[idx].real < 0.0) delays->da[idx].real = 0.0;
+		  if (!intermodpath_real_to_ticks(delays->da[idx].real, src->scope,
+		                                 supplied[idx])) {
+			vpi_printf("VPI WARNING: INTERCONNECT delay is not finite or "
+			           "is outside the simulation time range; delays unchanged.\n");
+			return;
+		  }
 	    }
 	    for (idx = 0 ; idx < 12 ; idx += 1) {
-		  tmp[idx] = vpip_scaled_real_to_time64(delays->da[use_map[0][idx]].real,
-							src->scope);
+		  tmp[idx] = supplied[use_map[0][idx]];
+		  real[idx] = delays->da[use_map[0][idx]].real;
 	    }
       }
 
@@ -1617,9 +1662,15 @@ static void intermodpath_put_delays (vpiHandle ref, p_vpi_delay delays)
 	      /* z->x is the minimum of z->1 and z->0. */
 	    tmp[DELAY_EDGE_zx] = tmp[DELAY_EDGE_z1] < tmp[DELAY_EDGE_z0] ?
 	                           tmp[DELAY_EDGE_z1] : tmp[DELAY_EDGE_z0];
+	    real[DELAY_EDGE_0x] = fmin(real[DELAY_EDGE_0z], real[DELAY_EDGE_01]);
+	    real[DELAY_EDGE_x1] = fmax(real[DELAY_EDGE_z1], real[DELAY_EDGE_01]);
+	    real[DELAY_EDGE_1x] = fmin(real[DELAY_EDGE_1z], real[DELAY_EDGE_10]);
+	    real[DELAY_EDGE_x0] = fmax(real[DELAY_EDGE_z0], real[DELAY_EDGE_10]);
+	    real[DELAY_EDGE_xz] = fmax(real[DELAY_EDGE_1z], real[DELAY_EDGE_0z]);
+	    real[DELAY_EDGE_zx] = fmin(real[DELAY_EDGE_z1], real[DELAY_EDGE_z0]);
       }
 
-      fun->put_delay12(tmp);
+      fun->put_delay12(tmp, real);
 }
 
 /*
@@ -1639,8 +1690,6 @@ static void intermodpath_get_delays ( vpiHandle ref, p_vpi_delay delays )
       assert(fun);
 
       int idx;
-      vvp_time64_t tmp[12];
-      fun->get_delay12(tmp);
 
       switch (delays->no_of_delays) {
 	  case 1:
@@ -1656,12 +1705,16 @@ static void intermodpath_get_delays ( vpiHandle ref, p_vpi_delay delays )
       }
 
       if (delays->time_type == vpiSimTime) {
+	    vvp_time64_t tmp[12];
+	    fun->get_delay12(tmp);
 	    for (idx = 0; idx < delays->no_of_delays; idx += 1) {
 		  vpip_time_to_timestruct(delays->da+idx, tmp[idx]);
 	    }
       } else {
+	    double real[12];
+	    fun->get_delay_real12(real);
 	    for (idx = 0; idx < delays->no_of_delays; idx += 1) {
-		  delays->da[idx].real = vpip_time_to_scaled_real(tmp[idx], src->scope);
+		  delays->da[idx].real = real[idx];
 	    }
       }
 }
@@ -1706,7 +1759,7 @@ void __vpiInterModPath::vpi_put_delays(p_vpi_delay del)
 static multimap<vpiPortInfo*, __vpiInterModPath*> intermodpaths;
 
 __vpiInterModPath* vpip_find_intermodpath(
-      vpiPortInfo* port1, vpiPortInfo* port2,
+      vpiPortInfo* port1, const vpiPortInfo* port2,
       bool port1_has_index, int port1_bit_index,
       bool port2_has_index, int port2_bit_index)
 {
@@ -1746,7 +1799,10 @@ struct __vpiInterModPath* vpip_make_intermodpath(
       bool port2_has_index, int port2_bit_index)
 {
       struct __vpiInterModPath*obj = new __vpiInterModPath;
-      obj->scope = vpip_peek_current_scope ( );
+        // The delay is inserted before port2. Use that load's module for
+        // scaled-real units and precision, not the last compiled scope.
+      obj->scope = dynamic_cast<__vpiScope*>(port2->vpi_handle(vpiScope));
+      assert(obj->scope);
 
       obj->net = net;
       obj->port1 = port1;

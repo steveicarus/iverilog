@@ -1,0 +1,14 @@
+{
+    "__comment": "Only the top module unit changes to 1us.",
+    "type": "normal",
+    "source": "sdf_interconnect_scope.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-ginterconnect",
+        "-Ttyp",
+        "-s",
+        "top",
+        "-DTOP_UNIT=1us"
+    ]
+}
