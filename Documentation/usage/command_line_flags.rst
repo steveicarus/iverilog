@@ -96,6 +96,44 @@ These flags affect the general behavior of the compiler.
     disabled, specify blocks are parsed but ignored. When enabled, specify
     blocks cause timing path and timing checks to be active.
 
+    The VVP target implements ``$width`` checks on local scalar
+    ``posedge`` or ``negedge`` references. Limits and optional thresholds must
+    be finite nonnegative constants; parameters and specparams are allowed.
+    Values use the declaring module's time unit and precision. A notifier, if
+    supplied, must be a local scalar variable. A violation occurs when the
+    measured pulse width is strictly above the threshold and below the limit.
+    Standard ``$sdf_annotate`` can update the matching WIDTH limit.
+    A WIDTH CELLTYPE mismatch is diagnosed but does not itself prevent an
+    update; reference/edge matching and limit validation still apply.
+
+    ``$period`` checks accept the same local scalar reference,
+    constant limit and optional notifier forms, without a threshold argument.
+    They measure successive selected edges of the reference signal. The first
+    edge establishes history; each later selected edge compares the previous
+    reference time before refreshing it. An interval strictly below the limit
+    violates the check; equality is safe. Standard ``$sdf_annotate`` can update
+    the matching PERIOD limit independently of WIDTH checks on the same signal.
+
+    The reference event may include ``&&&`` followed by an unselected local
+    scalar signal, ``signal === 1'b0`` or ``signal === 1'b1``. A bare signal
+    qualifies only when it is one; case equality requires the specified binary
+    value. X and Z do not qualify. The implementation samples this condition at
+    each physical reference transition without generating events from condition
+    changes. Masked events do not change timing history. WIDTH applies the
+    qualifier to both its declared opening edge and its implicit opposite closing
+    edge, retaining the opening timestamp after a close. PERIOD compares and
+    refreshes history only on qualified selected edges.
+
+    A bare SDF WIDTH/PERIOD entry updates every matching declaration regardless
+    of its condition's current value. Conditional SDF timing-event expressions
+    remain unsupported. Other HDL qualifier expressions, vector references and
+    hierarchical references are diagnosed as unsupported. Targets other than
+    VVP and vlog95 warn that these checks are ignored. This does not enable
+    other timing-check kinds. SDF annotation refusals are reported as
+    diagnostics and do not necessarily change the process exit code. Hot
+    reannotation and general four-state timing-check behavior are not qualified
+    by these finite implementations.
+
   * std-include/no-std-include
 
     Enable or disable the search of a standard installation include directory

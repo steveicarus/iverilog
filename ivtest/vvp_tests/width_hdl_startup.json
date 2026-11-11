@@ -1,0 +1,16 @@
+{
+    "type": "normal",
+    "source": "width_hdl_startup.v",
+    "iverilog-args": [
+        "-g1995",
+        "-gspecify",
+        "-Ttyp",
+        "-Iivltests",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/pulse_history.c",
+        "vpi/pulse_history_entry.c"
+    ]
+}

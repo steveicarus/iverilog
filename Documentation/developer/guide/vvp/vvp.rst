@@ -471,6 +471,32 @@ Bare-name identities from older compiled files remain compatible. SDF scalar
 constants use the parser's existing normalized 0/1 syntax; no Boolean
 simplification or interchange of logical and case equality is performed.
 
+Scalar Timing-Check Statements
+------------------------------
+
+The compiler emits WIDTH and PERIOD declarations in the declaring module's
+recalled scope::
+
+        .tchk_width <file> <line>, "<edge>", <reference>, <limit>, <threshold>, <notifier>;
+        .tchk_period <file> <line>, "<edge>", <reference>, <limit>, <notifier>;
+
+``<edge>`` is ``posedge`` or ``negedge``. The reference and optional notifier
+are scalar signal labels; an omitted notifier is ``""``. File and line operands
+identify the HDL declaration. Limit and threshold are real constants in the
+module's time units, rounded to its precision and converted to simulator ticks.
+
+A conditional declaration appends a raw local scalar condition label and a
+required binary value before the semicolon::
+
+        .tchk_width <file> <line>, "<edge>", <reference>, <limit>, <threshold>, <notifier>, <condition>, <value>;
+        .tchk_period <file> <line>, "<edge>", <reference>, <limit>, <notifier>, <condition>, <value>;
+
+``<value>`` must be zero or one. Bare HDL qualifiers and case equality to one
+use one; case equality to zero uses zero. The condition is read at a physical
+reference delivery, after updating the previous physical reference value. It
+has no event input of its own. An unmatched condition leaves timing history
+unchanged. Omitting the suffix preserves the unconditional record behavior.
+
 Array Index Statements
 ----------------------
 

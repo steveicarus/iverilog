@@ -553,6 +553,7 @@ __vpiScope*vpip_timescale_scope_from_handle(vpiHandle obj)
 	    event = dynamic_cast<__vpiNamedEvent*>(obj);
 	    return event->get_scope();
 
+	  case vpiTchk:
 	  case vpiMemory:
 	  case vpiMemoryWord:
 	  case vpiPartSelect:

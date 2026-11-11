@@ -2159,6 +2159,75 @@ extern "C" ivl_enumtype_t ivl_scope_enumerate(ivl_scope_t net, unsigned idx)
       return net->enumerations_[idx];
 }
 
+extern "C" unsigned ivl_scope_widths(ivl_scope_t net)
+{ assert(net); return net->widths_.size(); }
+
+extern "C" ivl_width_t ivl_scope_width(ivl_scope_t net, unsigned idx)
+{ assert(net && idx < net->widths_.size()); return net->widths_[idx]; }
+
+extern "C" ivl_scope_t ivl_width_scope(ivl_width_t check)
+{ assert(check); return check->scope; }
+
+extern "C" ivl_signal_t ivl_width_reference(ivl_width_t check)
+{ assert(check); return check->reference; }
+
+extern "C" ivl_signal_t ivl_width_notifier(ivl_width_t check)
+{ assert(check); return check->notifier; }
+
+extern "C" ivl_signal_t ivl_width_condition(ivl_width_t check)
+{ assert(check); return check->condition; }
+
+extern "C" ivl_tchk_cond_t ivl_width_condition_kind(ivl_width_t check)
+{ assert(check); return check->condition_kind; }
+
+extern "C" int ivl_width_posedge(ivl_width_t check)
+{ assert(check); return check->posedge; }
+
+extern "C" double ivl_width_limit(ivl_width_t check)
+{ assert(check); return check->limit; }
+
+extern "C" double ivl_width_threshold(ivl_width_t check)
+{ assert(check); return check->threshold; }
+
+extern "C" const char*ivl_width_file(ivl_width_t check)
+{ assert(check); return check->file.str(); }
+
+extern "C" unsigned ivl_width_lineno(ivl_width_t check)
+{ assert(check); return check->lineno; }
+
+extern "C" unsigned ivl_scope_periods(ivl_scope_t net)
+{ assert(net); return net->periods_.size(); }
+
+extern "C" ivl_period_t ivl_scope_period(ivl_scope_t net, unsigned idx)
+{ assert(net && idx < net->periods_.size()); return net->periods_[idx]; }
+
+extern "C" ivl_scope_t ivl_period_scope(ivl_period_t check)
+{ assert(check); return check->scope; }
+
+extern "C" ivl_signal_t ivl_period_reference(ivl_period_t check)
+{ assert(check); return check->reference; }
+
+extern "C" ivl_signal_t ivl_period_notifier(ivl_period_t check)
+{ assert(check); return check->notifier; }
+
+extern "C" ivl_signal_t ivl_period_condition(ivl_period_t check)
+{ assert(check); return check->condition; }
+
+extern "C" ivl_tchk_cond_t ivl_period_condition_kind(ivl_period_t check)
+{ assert(check); return check->condition_kind; }
+
+extern "C" int ivl_period_posedge(ivl_period_t check)
+{ assert(check); return check->posedge; }
+
+extern "C" double ivl_period_limit(ivl_period_t check)
+{ assert(check); return check->limit; }
+
+extern "C" const char*ivl_period_file(ivl_period_t check)
+{ assert(check); return check->file.str(); }
+
+extern "C" unsigned ivl_period_lineno(ivl_period_t check)
+{ assert(check); return check->lineno; }
+
 extern "C" unsigned ivl_scope_events(ivl_scope_t net)
 {
       assert(net);
