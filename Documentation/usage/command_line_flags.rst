@@ -103,6 +103,8 @@ These flags affect the general behavior of the compiler.
     supplied, must be a local scalar variable. A violation occurs when the
     measured pulse width is strictly above the threshold and below the limit.
     Standard ``$sdf_annotate`` can update the matching WIDTH limit.
+    A WIDTH CELLTYPE mismatch is diagnosed but does not itself prevent an
+    update; reference/edge matching and limit validation still apply.
 
     Unconditional ``$period`` checks accept the same local scalar reference,
     constant limit and optional notifier forms, without a threshold argument.
@@ -113,11 +115,16 @@ These flags affect the general behavior of the compiler.
     the matching PERIOD limit independently of WIDTH checks on the same signal.
 
     Conditional, vector and hierarchical WIDTH/PERIOD declarations are diagnosed
-    as unsupported. Other targets warn that these checks are ignored. This does
-    not enable other timing-check kinds. SDF annotation refusals are reported as
+    as unsupported. Other targets warn that these checks are ignored.
+    SDF annotation refusals are reported as
     diagnostics and do not necessarily change the process exit code. Hot
     reannotation and general four-state timing-check behavior are not qualified
     by these finite implementations.
+
+    VVP also implements local scalar ``$setup``, ``$hold``, ``$recovery``,
+    ``$removal``, ``$recrem`` checks with finite nonnegative limits and
+    optional scalar notifiers.
+    Event qualifiers are not supported for these checks.
 
   * std-include/no-std-include
 
