@@ -1,0 +1,11 @@
+{
+    "type"          : "normal",
+    "source"        : "br_gh1751.v",
+    "gold"          : "br_gh1751",
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "__comment"     : "String variables are not supported by vlog95.",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}

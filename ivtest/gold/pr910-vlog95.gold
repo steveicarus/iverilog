@@ -1,5 +1,7 @@
 ./ivltests/pr910.v:27: vlog95 warning: Duplicate name (cin) found for nexus (b)
 ./ivltests/pr910.v:27: vlog95 warning: Duplicate name (cin) found for nexus (b)
+./ivltests/pr910.v:27: vlog95 warning: Duplicate name (y) found for nexus (x)
+./ivltests/pr910.v:27: vlog95 warning: Duplicate name (y) found for nexus (x)
 0000  00
 1000  00
 0000  00

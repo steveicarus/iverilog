@@ -575,6 +575,17 @@ void class_type::copy_property(class_type::inst_t dst, size_t pid, class_type::i
       properties_[pid].type->copy(dst_buf, src_buf);
 }
 
+void class_type::set_virtual(vpiHandle scope, vvp_code_t code)
+{
+      virtual_[scope] = code;
+}
+
+vvp_code_t class_type::get_virtual(vpiHandle scope) const
+{
+      auto cur = virtual_.find(scope);
+      return cur == virtual_.end() ? nullptr : cur->second;
+}
+
 int class_type::get_type_code(void) const
 {
       return vpiClassDefn;

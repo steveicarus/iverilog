@@ -206,7 +206,7 @@ void emit_real_number(double value)
 	    else fprintf(vlog_out, "0.0");
       } else {
 	    char buffer[32];
-	    char *cptr;
+	    char *cptr, *eptr;
 	    unsigned len;
 	      /* Print the double to a temporary string using an extra digit. */
 	    buffer[sizeof(buffer)-1] = 0;
@@ -221,10 +221,12 @@ void emit_real_number(double value)
 		  len += 1;
 		  buffer[len] = 0;
 	    }
-	      /* Now trim any extra trailing zero digits. */
-	    cptr = buffer + len - 1;
+	      /* Trim trailing zeros from the mantissa, not the exponent. */
+	    eptr = strchr(buffer, 'e');
+	    cptr = eptr ? eptr - 1 : buffer + len - 1;
 	    while ((*cptr == '0') && (*(cptr-1) != '.')) cptr -= 1;
-	    *(cptr+1) = 0;
+	    if (eptr) memmove(cptr+1, eptr, strlen(eptr)+1);
+	    else *(cptr+1) = 0;
 
 	      /* Now print the processed output. */
 	    fprintf(vlog_out, "%s", buffer);

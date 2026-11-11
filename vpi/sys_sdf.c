@@ -48,14 +48,36 @@ double sdf_timescale = 1.0e-9;
 /* SDF delay values are expressed in the SDF file's own timescale, but
    vpi_put_delays() with vpiScaledRealTime interprets them in the time units
    of the module that contains the annotated object, so convert between the
-   two. That module is the cell currently being processed, which is not
-   necessarily the scope passed to $sdf_annotate: a cell library routinely
-   declares a different `timescale from the design that instantiates it. */
+   two. IOPATH uses the CELL being processed; INTERCONNECT uses the module
+   containing its destination port. Neither need have the same `timescale
+   as the scope passed to $sdf_annotate. */
 static double sdf_delay_scale(vpiHandle scope)
 {
       if (scope == 0) scope = sdf_scope;
       int unit = vpi_get(vpiTimeUnit, scope);
       return sdf_timescale / pow(10.0, (double)unit);
+}
+
+/* Check accumulated INTERCONNECT values using the receiver's rounding and
+   global scaling. The runtime also validates real writes; this preflight
+   preserves the SDF filename and line in its out-of-range diagnostic. */
+static bool interconnect_increment_fits(double value, vpiHandle scope)
+{
+      if (!isfinite(value)) return false;
+      /* Retain negative totals; only their effective scheduling ticks clamp. */
+      if (value < 0.0) return true;
+      int precision = vpi_get(vpiTimePrecision, scope);
+      int shift = vpi_get(vpiTimeUnit, scope) - precision;
+      double rounded = value * pow(10.0, shift) + 0.5;
+      if (!isfinite(rounded) || rounded >= 18446744073709551616.0)
+            return false;
+      PLI_UINT64 ticks = (PLI_UINT64)rounded;
+      shift = precision - vpi_get(vpiTimePrecision, 0);
+      for (int idx = 0; idx < shift; idx += 1) {
+            if (ticks > (~(PLI_UINT64)0) / 10) return false;
+            ticks *= 10;
+      }
+      return true;
 }
 static char* sdf_fname = NULL;
 
@@ -217,10 +239,62 @@ static vpiHandle get_port_handle(char* port_name, const int sdf_lineno)
 }
 
 
+/* Expand the increment, not the sum with the existing delays. In particular,
+ * min(old_a + inc_a, old_b + inc_b) is not old_x + min(inc_a, inc_b).
+ * A derived increment needs both operands; a null operand supplies no data,
+ * so leave that transition unchanged rather than treating null as zero.
+ */
+static void expand_interconnect_increment(const struct sdf_delval_list_s*in,
+                                         struct sdf_delval_list_s*out)
+{
+      static const unsigned map1[6] = {0, 0, 0, 0, 0, 0};
+      static const unsigned map2[6] = {0, 1, 0, 0, 1, 1};
+      static const unsigned map3[6] = {0, 1, 2, 0, 2, 1};
+      static const unsigned map6[6] = {0, 1, 2, 3, 4, 5};
+      /* 0X, X1, 1X, X0, XZ, ZX from the six non-X transitions. */
+      static const unsigned left[6] = {0, 0, 1, 1, 2, 3};
+      static const unsigned right[6] = {2, 3, 4, 5, 4, 5};
+      static const bool use_max[6] = {false, true, false, true, true, false};
+      const unsigned*map = 0;
+
+      switch (in->count) {
+          case 1: map = map1; break;
+          case 2: map = map2; break;
+          case 3: map = map3; break;
+          case 6: map = map6; break;
+          case 12: *out = *in; return;
+          default: assert(0); return;
+      }
+      out->count = 12;
+      for (unsigned idx = 0; idx < 6; idx += 1)
+            out->val[idx] = in->val[map[idx]];
+      for (unsigned idx = 0; idx < 6; idx += 1) {
+            struct sdf_delay_s a = out->val[left[idx]];
+            struct sdf_delay_s b = out->val[right[idx]];
+            struct sdf_delay_s*value = &out->val[6 + idx];
+            value->defined = a.defined && b.defined;
+            value->value = 0.0;
+            if (value->defined)
+                  value->value = use_max[idx] ? fmax(a.value, b.value)
+                                             : fmin(a.value, b.value);
+      }
+}
+
 void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconnect_port_s port2,
                              const struct sdf_delval_list_s*delval_list,
+                             bool increment,
                              const int sdf_lineno)
 {
+      struct sdf_delval_list_s expanded;
+      bool any_defined = true;
+      if (increment) {
+            any_defined = false;
+            expand_interconnect_increment(delval_list, &expanded);
+            for (int idx = 0; idx < expanded.count; idx += 1)
+                  any_defined |= expanded.val[idx].defined;
+            delval_list = &expanded;
+      }
+
 
 	// Get handles for both ports
 	// After calling get_port_handle, the name is invalid
@@ -277,12 +351,20 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 	    }
       }
 
+      /* Keep endpoint/index validation even when there is nothing to update.
+       * Do not create or rewrite a delay object for an all-null increment. */
+      if (!any_defined) return;
+
       if (port1_handle && port2_handle) {
 	      // Get interModPath for the two ports
 	    vpiHandle intermodpath = vpi_handle_multi(vpiInterModPath, port1_handle, port2_handle);
 
 	    if (intermodpath) {
 		  if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Created a vpiInterModPath\n", sdf_fname, sdf_lineno);
+
+		    // INTERCONNECT is applied at the receiving port. Its module
+		    // can have different units from the CELL naming the path.
+		  vpiHandle delay_scope = vpi_handle(vpiScope, intermodpath);
 
 		  s_vpi_delay delays;
 		  struct t_vpi_time delay_vals[12];
@@ -299,14 +381,27 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 		  for (int idx = 0 ; idx < delval_list->count ; idx += 1) {
 			delay_vals[idx].type = vpiScaledRealTime;
 			if (delval_list->val[idx].defined) {
-			      double val = delval_list->val[idx].value * sdf_delay_scale(sdf_cur_cell);
+			      double val = delval_list->val[idx].value * sdf_delay_scale(delay_scope);
+			      // Accumulate before validation: SDF performs read/modify/write.
+			      if (increment) val += delay_vals[idx].real;
 			      if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Putting delay: %f for index %d\n",
 			                                      sdf_fname, sdf_lineno, val, idx);
 			      delay_vals[idx].real = val;
 			}
 		  }
 
-		    // Put the new delays
+		    // Validate accumulated totals, not the individual increments.
+		  if (increment) {
+			for (int idx = 0; idx < delval_list->count; idx += 1) {
+			      if (!interconnect_increment_fits(delay_vals[idx].real, delay_scope)) {
+				    vpi_printf("SDF WARNING: %s:%d: INTERCONNECT increment "
+				               "is outside the simulation time range; delays unchanged.\n",
+				               sdf_fname, sdf_lineno);
+				    return;
+			      }
+			}
+		  }
+		    // Replace with the computed totals; append_flag remains zero.
 		  vpi_put_delays(intermodpath, &delays);
 	    } else {
 		  vpi_printf("SDF ERROR: %s:%d: Could not find intermodpath!\n", sdf_fname, sdf_lineno);

@@ -21,6 +21,9 @@ duplInheritedMember:libmisc/StringHeap.cc:182
 // Skip the use STL messages
 useStlAlgorithm
 
+// This looks to be a cppcheck issue since the idx looks correct.
+objectIndex:expression_emit.cc:251
+
 // Errors/limitations in the generated yacc and lex files
 cstyleCast:lexor.cc
 constVariablePointer:lexor.cc

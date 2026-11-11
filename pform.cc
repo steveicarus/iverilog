@@ -715,6 +715,9 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 	    scopex->funcs[func_name] = func;
       }
 
+        // The function name is also visible in its own scope.
+      add_local_symbol(func, func_name, func);
+
       lexical_scope = func;
 
       return func;

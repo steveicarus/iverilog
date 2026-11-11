@@ -72,6 +72,7 @@ class Module : public PScopeExtra, public PNamedItem {
 
 	    port_kind_t port_kind;
 	    perm_string name;
+	    bool explicit_name = false;
 	    std::vector<PEIdent*> expr;
 	    PExpr*default_value;
 
