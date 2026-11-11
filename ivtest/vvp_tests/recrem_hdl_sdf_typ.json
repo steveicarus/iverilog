@@ -1,0 +1,15 @@
+{
+    "type": "normal",
+    "source": "recrem_hdl_sdf_slots.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-s",
+        "tb",
+        "-DRRC_TYP",
+        "-Ttyp"
+    ],
+    "vpi-sources": [
+        "vpi/recrem_audit.c"
+    ]
+}

@@ -1,0 +1,2 @@
+ivltests/recrem_hdl_data_condition_fail.v:7: error: $recrem data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+1 error(s) during elaboration.

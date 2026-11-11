@@ -1,0 +1,2 @@
+ivltests/hold_hdl_vector_fail.v:7: error: $hold data must be a local scalar logic or bit signal.
+1 error(s) during elaboration.

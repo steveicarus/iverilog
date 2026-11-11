@@ -1,0 +1,9 @@
+SDF WARNING: ivltests/recrem_cond_reject.sdf:3: conditional or hierarchical RECOVERY event not supported.
+SDF WARNING: ivltests/recrem_cond_reject.sdf:4: conditional or hierarchical REMOVAL event not supported.
+SDF WARNING: ivltests/recrem_cond_reject.sdf:5: conditional or hierarchical RECREM event not supported.
+RRC_OBJECT tb.u recrem R/posedge C/posedge limit=10 ticks=10 limit=6 ticks=6 events=1
+Timing violation: $recrem removal at 120 (module units), interval=5 limit=6, ivltests/recrem_cond_sdf_cond.v:5, scope=tb.u
+RRC_VIOLATION 0 120
+RRC_COMPLETE objects=1 callbacks=1
+PASSED
+ivltests/recrem_cond_sdf_cond.v:14: $finish called at 160 (1ps)

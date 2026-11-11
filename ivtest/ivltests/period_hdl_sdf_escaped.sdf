@@ -1,0 +1,8 @@
+(DELAYFILE (SDFVERSION "3.0") (DIVIDER /) (TIMESCALE 1ps)
+  (CELL (CELLTYPE "period_dot") (INSTANCE dotted)
+    (TIMINGCHECK (PERIOD (posedge CLK\.dot) (20:20:20))))
+  (CELL (CELLTYPE "period_backslash") (INSTANCE slashed)
+    (TIMINGCHECK (PERIOD (posedge CLK\\tail) (20:20:20))))
+  (CELL (CELLTYPE "period_hierarchy") (INSTANCE hierarchy)
+    (TIMINGCHECK (PERIOD (posedge nested/CLK) (20:20:20))))
+)

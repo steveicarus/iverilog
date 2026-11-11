@@ -96,6 +96,38 @@ These flags affect the general behavior of the compiler.
     disabled, specify blocks are parsed but ignored. When enabled, specify
     blocks cause timing path and timing checks to be active.
 
+    The VVP target implements unconditional ``$width`` checks on local scalar
+    ``posedge`` or ``negedge`` references. Limits and optional thresholds must
+    be finite nonnegative constants; parameters and specparams are allowed.
+    Values use the declaring module's time unit and precision. A notifier, if
+    supplied, must be a local scalar variable. A violation occurs when the
+    measured pulse width is strictly above the threshold and below the limit.
+    Standard ``$sdf_annotate`` can update the matching WIDTH limit.
+    A WIDTH CELLTYPE mismatch is diagnosed but does not itself prevent an
+    update; reference/edge matching and limit validation still apply.
+
+    Unconditional ``$period`` checks accept the same local scalar reference,
+    constant limit and optional notifier forms, without a threshold argument.
+    They measure successive selected edges of the reference signal. The first
+    edge establishes history; each later selected edge compares the previous
+    reference time before refreshing it. An interval strictly below the limit
+    violates the check; equality is safe. Standard ``$sdf_annotate`` can update
+    the matching PERIOD limit independently of WIDTH checks on the same signal.
+
+    Conditional, vector and hierarchical WIDTH/PERIOD declarations are
+    diagnosed as unsupported. Targets other than VVP and vlog95 warn that
+    these checks are ignored. SDF annotation refusals are reported as
+    diagnostics and do not necessarily change the process exit code. Hot
+    reannotation and general four-state timing-check behavior are not
+    qualified by these finite implementations.
+
+    VVP also implements local scalar ``$setup``, ``$hold``, ``$recovery``,
+    ``$removal`` and ``$recrem`` checks with finite nonnegative limits and
+    optional scalar notifiers.
+    Each event in these checks can independently use a local scalar
+    ``&&&`` qualifier: a bare signal, ``signal === 1'b0``, or
+    ``signal === 1'b1``.
+
   * std-include/no-std-include
 
     Enable or disable the search of a standard installation include directory

@@ -1,0 +1,2 @@
+ivltests/recrem_hdl_notifier_fail.v:7: error: $recrem notifier must be a local scalar variable.
+1 error(s) during elaboration.

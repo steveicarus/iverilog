@@ -1,0 +1,6 @@
+{
+    "type": "normal",
+    "source": "recrem_hdl_sdf_precision.v",
+    "iverilog-args": ["-g2012", "-gspecify", "-Ttyp", "-s", "tb"],
+    "vpi-sources": ["vpi/recrem_precision_audit.c"]
+}

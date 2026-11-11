@@ -252,5 +252,11 @@ const char* target_query(const char*key)
       if (strcmp(key,"version") == 0)
 	    return version_string;
 
+      if (strcmp(key,"supports-width") == 0 || strcmp(key,"supports-period") == 0
+          || strcmp(key,"supports-setup") == 0 || strcmp(key,"supports-hold") == 0
+          || strcmp(key,"supports-recovery") == 0 || strcmp(key,"supports-removal") == 0
+          || strcmp(key,"supports-recrem") == 0)
+	    return "1";
+
       return 0;
 }

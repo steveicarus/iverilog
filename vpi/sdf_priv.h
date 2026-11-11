@@ -80,5 +80,19 @@ extern void sdf_interconnect_delays(struct interconnect_port_s port1,
                                     bool increment,
                                     const int sdf_lineno);
 
+extern void sdf_width_limits(int edge, const char* reference,
+                              struct sdf_delay_s limit, int lineno);
+extern void sdf_period_limits(int edge, const char* reference,
+                               struct sdf_delay_s limit, int lineno);
+extern void sdf_two_event_limits(int check_type,
+                                  struct port_with_edge_s first,
+                                  struct port_with_edge_s second,
+                                  struct sdf_delay_s limit, int lineno);
+
+extern void sdf_recrem_limits(struct port_with_edge_s reference,
+                              struct port_with_edge_s data,
+                              struct sdf_delay_s recovery,
+                              struct sdf_delay_s removal, int lineno);
+
 #endif /* IVL_sdf_priv_h */
 
