@@ -20,6 +20,7 @@
 
 # include  "config.h"
 # include  "delay.h"
+# include  "tchk.h"
 # include  "arith.h"
 # include  "compile.h"
 # include  "logic.h"
@@ -2193,4 +2194,129 @@ void compile_island(char*label, char*type)
 	    assert(0);
 
       free(type);
+}
+
+/* Adapted from the unconditional WIDTH runtime hookup in Leo Moser's
+ * timingcheck-width work. The compiler now supplies real declarations. */
+void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
+                        struct symb_s reference, double limit,
+                        double threshold, char* notifier)
+{
+      int start_edge = 0;
+      if (strcmp(edge, "posedge") == 0) start_edge = 1;
+      else if (strcmp(edge, "negedge") == 0) start_edge = -1;
+      delete[] edge;
+      __vpiScope* scope = vpip_peek_current_scope();
+      vvp_time64_t limit_ticks, threshold_ticks;
+      if (!start_edge || !vpip_tchk_delay_to_ticks(limit, scope, limit_ticks) ||
+          !vpip_tchk_delay_to_ticks(threshold, scope, threshold_ticks)) {
+            yyerror("invalid WIDTH edge or unrepresentable limit/threshold");
+            free(reference.text);
+            free(notifier);
+            return;
+      }
+
+      vvp_net_t* net = new vvp_net_t;
+      vvp_fun_tchk_width* fun = new vvp_fun_tchk_width(start_edge,
+                                                     limit_ticks, threshold_ticks);
+      net->fun = fun;
+      __vpiTchkWidth* obj = new __vpiTchkWidth(scope, file_idx, lineno, fun);
+      fun->vpi_tchk = obj;
+      input_connect(net, 0, strdup(reference.text));
+      compile_vpi_lookup(&obj->reference_, reference.text);
+      if (*notifier) compile_vpi_lookup(&obj->notifier_, notifier);
+      else free(notifier);
+      vpip_attach_to_current_scope(obj);
+}
+
+void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
+                        struct symb_s reference, double limit, char* notifier)
+{
+      int reference_edge = 0;
+      if (strcmp(edge, "posedge") == 0) reference_edge = 1;
+      else if (strcmp(edge, "negedge") == 0) reference_edge = -1;
+      delete[] edge;
+      __vpiScope* scope = vpip_peek_current_scope();
+      vvp_time64_t limit_ticks;
+      if (!reference_edge || !vpip_tchk_delay_to_ticks(limit, scope, limit_ticks)) {
+            yyerror("invalid PERIOD edge or unrepresentable limit");
+            free(reference.text);
+            free(notifier);
+            return;
+      }
+
+      vvp_net_t* net = new vvp_net_t;
+      vvp_fun_tchk_period* fun = new vvp_fun_tchk_period(reference_edge,
+                                                     limit_ticks);
+      net->fun = fun;
+      __vpiTchkPeriod* obj = new __vpiTchkPeriod(scope, file_idx, lineno, fun);
+      fun->vpi_tchk = obj;
+      input_connect(net, 0, strdup(reference.text));
+      compile_vpi_lookup(&obj->reference_, reference.text);
+      if (*notifier) compile_vpi_lookup(&obj->notifier_, notifier);
+      else free(notifier);
+      vpip_attach_to_current_scope(obj);
+}
+
+
+static bool parse_tchk_event_edge(const char* text, int& result)
+{
+      if (strcmp(text, "posedge") == 0) result = 1;
+      else if (strcmp(text, "negedge") == 0) result = -1;
+      else if (strcmp(text, "any") == 0) result = 0;
+      else return false;
+      return true;
+}
+
+void compile_tchk_two_event(int kind, unsigned file_idx, unsigned lineno,
+                             char* reference_edge_text, struct symb_s reference,
+                             char* data_edge_text, struct symb_s data,
+                             double limit, char* notifier,
+                             char* reference_condition, uint64_t reference_condition_value,
+                             char* data_condition, uint64_t data_condition_value)
+{
+      int reference_edge = 0, data_edge = 0;
+      bool edges_valid = parse_tchk_event_edge(reference_edge_text, reference_edge)
+                      && parse_tchk_event_edge(data_edge_text, data_edge);
+      delete[] reference_edge_text;
+      delete[] data_edge_text;
+      __vpiScope* scope = vpip_peek_current_scope();
+      // Condition labels are quoted VVP strings (new[]); deferred VPI lookups
+      // take malloc-owned labels. An empty label denotes an unqualified role.
+      char* reference_condition_label = reference_condition && *reference_condition
+            ? strdup(reference_condition) : nullptr;
+      char* data_condition_label = data_condition && *data_condition
+            ? strdup(data_condition) : nullptr;
+      delete[] reference_condition;
+      delete[] data_condition;
+      vvp_time64_t limit_ticks;
+      if (!edges_valid || reference_condition_value > 1 || data_condition_value > 1
+          || !vpip_tchk_delay_to_ticks(limit, scope, limit_ticks)) {
+            yyerror("invalid two-event timing-check edge or unrepresentable limit");
+            free(reference.text);
+            free(data.text);
+            free(notifier);
+            free(reference_condition_label);
+            free(data_condition_label);
+            return;
+      }
+
+      vvp_net_t* net = new vvp_net_t;
+      vvp_fun_tchk_two_event* fun = new vvp_fun_tchk_two_event(
+            kind, reference_edge, data_edge, limit_ticks,
+            reference_condition_value, data_condition_value);
+      net->fun = fun;
+      __vpiTchkTwoEvent* obj = new __vpiTchkTwoEvent(scope, file_idx, lineno, fun);
+      fun->vpi_tchk = obj;
+      input_connect(net, 0, strdup(reference.text));
+      input_connect(net, 1, strdup(data.text));
+      compile_vpi_lookup(&obj->reference_, reference.text);
+      compile_vpi_lookup(&obj->data_, data.text);
+      if (*notifier) compile_vpi_lookup(&obj->notifier_, notifier);
+      else free(notifier);
+      if (reference_condition_label)
+            compile_vpi_lookup(&obj->reference_condition_, reference_condition_label);
+      if (data_condition_label)
+            compile_vpi_lookup(&obj->data_condition_, data_condition_label);
+      vpip_attach_to_current_scope(obj);
 }

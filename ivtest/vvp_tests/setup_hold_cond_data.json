@@ -1,0 +1,14 @@
+{
+    "type": "normal",
+    "source": "setup_hold_cond_data.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/setup_hold_audit.c"
+    ]
+}

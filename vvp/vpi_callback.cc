@@ -576,7 +576,8 @@ class simulator_callback : public __vpiCallback {
 inline simulator_callback::simulator_callback(const struct t_cb_data*data)
 {
       cb_data = *data;
-      if ((data->reason == cbNextSimTime) && data->time) {
+      if ((data->reason == cbNextSimTime || data->reason == cbTchkViolation)
+          && data->time) {
 	    cb_time = *(data->time);
       } else if (data->reason == cbEndOfSimulation) {
 	    cb_time.type = vpiSimTime;
@@ -591,11 +592,63 @@ static simulator_callback*EndOfCompile = 0;
 static simulator_callback*StartOfSimulation = 0;
 static simulator_callback*EndOfSimulation = 0;
 
+// Persistent timing callbacks use the timing-check object that caused the
+// violation. Preserve a separately requested object filter across callbacks.
+class timing_callback : public simulator_callback {
+    public:
+      explicit timing_callback(p_cb_data data)
+      : simulator_callback(data), filter(data->obj) { }
+      vpiHandle filter;
+};
+static timing_callback* TchkViolation = nullptr;
+
+static void delete_tchk_callbacks()
+{
+      while (TchkViolation) {
+            timing_callback* cur = TchkViolation;
+            TchkViolation = static_cast<timing_callback*>(cur->next);
+            delete cur;
+      }
+}
+
+void vpip_tchk_violation(vpiHandle tchk)
+{
+      vpi_mode_t saved_mode = vpi_mode_flag;
+      vpi_mode_flag = VPI_MODE_RWSYNC;
+      // A callback may unregister itself or another callback. Removal marks
+      // the callback inactive; retain the nodes until simulation teardown.
+      for (timing_callback* cur = TchkViolation; cur; ) {
+            timing_callback* next = static_cast<timing_callback*>(cur->next);
+            if (cur->cb_data.cb_rtn && (!cur->filter || cur->filter == tchk)) {
+                  cur->cb_data.obj = tchk;
+                  set_callback_time(&cur->cb_data);
+                  (cur->cb_data.cb_rtn)(&cur->cb_data);
+            }
+            cur = next;
+      }
+      vpi_mode_flag = saved_mode;
+}
+
+static timing_callback* make_tchk_violation(p_cb_data data)
+{
+      if (!check_callback_time(data, true)) return nullptr;
+      if (data->obj && vpi_get(vpiType, data->obj) != vpiTchk) {
+            fprintf(stderr, "VPI error: cbTchkViolation requires a timing-check object or NULL\n");
+            return nullptr;
+      }
+      timing_callback* obj = new timing_callback(data);
+      obj->next = TchkViolation;
+      TchkViolation = obj;
+      return obj;
+}
+
+
 #ifdef CHECK_WITH_VALGRIND
 /* This is really only needed if the simulator aborts before starting the
  * main event loop. For that reason we can skip the next sim time queue. */
 void simulator_cb_delete(void)
 {
+      delete_tchk_callbacks();
       simulator_callback* cur;
 
 	/* Delete all the end of compile callbacks. */
@@ -684,6 +737,7 @@ void vpiPostsim(void) {
 	    delete cur;
       }
 
+      delete_tchk_callbacks();
       vpi_mode_flag = VPI_MODE_NONE;
 }
 
@@ -749,6 +803,10 @@ vpiHandle vpi_register_cb(p_cb_data data)
 
       assert(data);
       switch (data->reason) {
+
+	  case cbTchkViolation:
+	    obj = make_tchk_violation(data);
+	    break;
 
 	  case cbValueChange:
 	    obj = make_value_change(data);
