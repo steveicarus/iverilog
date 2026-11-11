@@ -102,7 +102,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_TCHK_WIDTH K_TCHK_PERIOD K_TCHK_SETUP K_TCHK_HOLD
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC_REAL K_UFUNC_REAL_E K_UFUNC_VEC4 K_UFUNC_E K_UDP K_UDP_C K_UDP_S
-%token K_VAR K_VAR_COBJECT K_VAR_DARRAY
+%token K_VAR K_VAR_COBJECT K_VAR_DARRAY K_VIRT
 %token K_VAR_QUEUE
 %token K_VAR_S K_VAR_STR K_VAR_I K_VAR_R K_VAR_2S K_VAR_2U
 %token K_vpi_call K_vpi_call_w K_vpi_call_i
@@ -963,6 +963,9 @@ statement
       { compile_class_start($1, $3, $5); }
     class_properties_opt ';'
       { compile_class_done(); }
+
+  | K_VIRT T_SYMBOL ',' T_SYMBOL ',' T_SYMBOL ';'
+      { compile_virt($2, $4, $6); }
 
   | enum_type
       { ; }

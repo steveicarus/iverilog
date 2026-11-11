@@ -126,13 +126,15 @@ static char* format_darray_pretty(vvp_darray* aobj)
 
       for (size_t i = 0; i < aobj->get_size(); i += 1) {
 	    if (i > 0) out += ", ";
-	    if (dynamic_cast<vvp_darray_real*>(aobj)) {
+	    if (dynamic_cast<vvp_darray_real*>(aobj) ||
+	        dynamic_cast<vvp_queue_real*>(aobj)) {
 		  double d;
 		  aobj->get_word((unsigned) i, d);
 		  char buf[256];
 		  snprintf(buf, sizeof buf, "%g", d);
 		  out += buf;
-	    } else if (dynamic_cast<vvp_darray_string*>(aobj)) {
+	    } else if (dynamic_cast<vvp_darray_string*>(aobj) ||
+	               dynamic_cast<vvp_queue_string*>(aobj)) {
 		  std::string s;
 		  aobj->get_word((unsigned) i, s);
 		  out += "\"";

@@ -1,0 +1,4 @@
+{
+    "type"   : "CE",
+    "source" : "port_header_duplicate_explicit_first_fail.v"
+}

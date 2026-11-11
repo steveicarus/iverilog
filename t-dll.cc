@@ -39,7 +39,7 @@ using namespace std;
 struct dll_target dll_target_obj;
 
 ivl_scope_s::ivl_scope_s()
-: func_type(IVL_VT_NO_TYPE)
+: virtual_root(0), func_type(IVL_VT_NO_TYPE)
 {
       func_signed = false;
       func_width = 0;
@@ -671,10 +671,37 @@ bool dll_target::start_design(const Design*des)
  * Here ivl is telling us that the design is scanned completely, and
  * here is where we call the API to process the constructed design.
  */
+/*
+ * Translate the virtual method table of each class declared in the
+ * scope, and the scopes within it. This is done once all the scopes
+ * exist, so that the functions can be looked up.
+ */
+void dll_target::fill_virtual_tables_(ivl_scope_t scop)
+{
+      for (ivl_type_t type : scop->classes) {
+	    const netclass_t*cls = dynamic_cast<const netclass_t*>(type);
+	    vector<pair<NetScope*,NetScope*> > table;
+	    cls->virtual_table(table);
+	    for (const auto&cur : table) {
+		  ivl_scope_t impl = lookup_scope_(cur.second);
+		  ivl_assert(*cls->class_scope(), impl);
+		  cls->virtual_scopes().push_back(impl);
+	    }
+      }
+
+      for (ivl_scope_t child : scop->child)
+	    fill_virtual_tables_(child);
+}
+
 int dll_target::end_design(const Design*)
 {
       int rc;
       if (errors == 0) {
+	    for (ivl_scope_t root : des_.roots)
+		  fill_virtual_tables_(root);
+	    for (ivl_scope_t pkg : des_.packages)
+		  fill_virtual_tables_(pkg);
+
 	    if (verbose_flag) {
 		  cout << " ... invoking target_design" << endl;
 	    }

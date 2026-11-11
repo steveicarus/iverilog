@@ -8,7 +8,7 @@ memleakOnRealloc
 nullPointer:sys_display.c:961
 
 // Skip asctime() obsolete for now.
-asctimeCalled:sys_fst.c:381
+asctimeCalled:sys_fst.c:394
 asctimeCalled:sys_vcd.c:443
 
 // This is not an integer overflow
@@ -18,7 +18,7 @@ integerOverflow:sys_random.c:593
 
 // cppcheck is missing this is passed/used as part of the delay structure
 unreadVariable:sys_sdf.c:269
-unreadVariable:sys_sdf.c:287
+unreadVariable:sys_sdf.c:297
 unreadVariable:sys_sdf.c:343
 unreadVariable:sys_sdf.c:345
 
@@ -41,10 +41,10 @@ constParameterCallback:sys_convert.c:150
 constParameterCallback:sys_display.c:1313
 constParameterCallback:sys_display.c:1411
 constParameterCallback:sys_display.c:1585
-constParameterCallback:sys_display.c:2206
+constParameterCallback:sys_display.c:2212
 constParameterCallback:sys_fileio.c:261
 constParameterCallback:sys_random.c:497
-constParameterCallback:sys_sdf.c:457
+constParameterCallback:sys_sdf.c:481
 constParameterCallback:sys_time.c:25
 constParameterCallback:sys_time.c:81
 constParameterCallback:table_mod.c:663
@@ -61,7 +61,8 @@ constParameterCallback:vhdl_table.c:155
 constParameterCallback:vhdl_table.c:200
 
 // Unused functions.
-unusedFunction:sys_sdf.c:78
+// sdf_warn_file_line()
+unusedFunction:sys_sdf.c:95
 
 // This is not constant false/true.
 knownConditionTrueFalse:vhdl_textio.c:219
