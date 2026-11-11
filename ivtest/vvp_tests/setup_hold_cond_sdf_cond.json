@@ -10,5 +10,10 @@
     ],
     "vpi-sources": [
         "vpi/setup_hold_audit.c"
-    ]
+    ],
+    "vlog95": {
+        "iverilog-args": [
+            "-DVLOG95_SDF"
+        ]
+    }
 }
