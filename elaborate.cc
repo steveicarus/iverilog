@@ -4476,6 +4476,23 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 									       parm_names);
 			      }
 			}
+
+			  /* Property is a class handle (not queue/darray).
+			     Find the method in that class and build the call
+			     using a property-access expression as "this". */
+			if (const netclass_t*prop_class = dynamic_cast<const netclass_t*>(ptype)) {
+			      NetScope*task = prop_class->method_from_name(method_name);
+			      if (task == 0) {
+				    cerr << get_fileline() << ": error: "
+					 << "Can't find task " << method_name
+					 << " in class " << prop_class->get_name() << endl;
+				    des->errors += 1;
+				    return 0;
+			      }
+			      NetEProperty*use_this = new NetEProperty(net, pidx);
+			      use_this->set_line(*this);
+			      return elaborate_build_call_(des, scope, task, use_this, false);
+			}
 		  }
 	    }
       }
