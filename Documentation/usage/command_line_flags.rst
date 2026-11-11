@@ -114,12 +114,12 @@ These flags affect the general behavior of the compiler.
     violates the check; equality is safe. Standard ``$sdf_annotate`` can update
     the matching PERIOD limit independently of WIDTH checks on the same signal.
 
-    Conditional, vector and hierarchical WIDTH/PERIOD declarations are diagnosed
-    as unsupported. Other targets warn that these checks are ignored. This does
-    not enable other timing-check kinds. SDF annotation refusals are reported as
-    diagnostics and do not necessarily change the process exit code. Hot
-    reannotation and general four-state timing-check behavior are not qualified
-    by these finite implementations.
+    Conditional, vector and hierarchical WIDTH/PERIOD declarations are
+    diagnosed as unsupported. Targets other than VVP and vlog95 warn that
+    these checks are ignored. This does not enable other timing-check kinds.
+    SDF annotation refusals are reported as diagnostics and do not necessarily
+    change the process exit code. Hot reannotation and general four-state
+    timing-check behavior are not qualified by these finite implementations.
 
   * std-include/no-std-include
 
