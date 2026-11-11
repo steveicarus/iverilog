@@ -27,6 +27,9 @@ assign_op_signed4		vvp_tests/assign_op_signed4.json
 assign_op_signed5		vvp_tests/assign_op_signed5.json
 assign_op_signed6		vvp_tests/assign_op_signed6.json
 assign_op_signed7		vvp_tests/assign_op_signed7.json
+assign_op_two_state1		vvp_tests/assign_op_two_state1.json
+assign_op_two_state2		vvp_tests/assign_op_two_state2.json
+assign_op_two_state3		vvp_tests/assign_op_two_state3.json
 automatic_error11		vvp_tests/automatic_error11.json
 automatic_error12		vvp_tests/automatic_error12.json
 automatic_error13		vvp_tests/automatic_error13.json
@@ -289,6 +292,8 @@ implicit_cast16			vvp_tests/implicit_cast16.json
 implicit_cast17			vvp_tests/implicit_cast17.json
 implicit_cast18			vvp_tests/implicit_cast18.json
 implicit_cast19			vvp_tests/implicit_cast19.json
+implicit_cast20			vvp_tests/implicit_cast20.json
+implicit_cast21			vvp_tests/implicit_cast21.json
 initial_null			vvp_tests/initial_null.json
 initial_null_verilog_fail	vvp_tests/initial_null_verilog_fail.json
 line_directive			vvp_tests/line_directive.json
