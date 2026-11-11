@@ -27,7 +27,12 @@ module tb;
   end
   initial begin
     #1;
+`ifdef VLOG95_SDF
+    // Tied input ports specialize the translated module types per instance.
+    $sdf_annotate("ivltests/setup_hold_cond_reject_vlog95.sdf",tb);
+`else
     $sdf_annotate("ivltests/setup_hold_cond_reject.sdf",tb);
+`endif
     $sh_watch("tb.c", "setup", "C", "posedge", "D", "any", 10.0, 10, "ns", 1'b0, 1, 205);
     $sh_watch("tb.c", "hold", "C", "posedge", "D", "any", 10.0, 10, "nh", 1'b0, 1, 208);
     $sh_watch("tb.u", "setup", "C", "posedge", "D", "any", 10.0, 10, "ns", 1'b0, 1, 205);
