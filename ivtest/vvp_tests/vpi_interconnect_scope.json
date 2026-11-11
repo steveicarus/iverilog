@@ -1,0 +1,22 @@
+{
+    "__comment": "Direct VPI creation, destination ownership, delay conversions and output callbacks.",
+    "type": "normal",
+    "source": "sdf_interconnect_scope.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-ginterconnect",
+        "-Ttyp",
+        "-s",
+        "top",
+        "-DDIRECT_VPI",
+        "-DTOP_UNIT=1us",
+        "-s",
+        "zz_unrelated",
+        "-DTAIL_UNIT=100ps",
+        "-DTAIL_PREC=10ps"
+    ],
+    "vpi-sources": [
+        "vpi/interconnect_scope.c"
+    ]
+}

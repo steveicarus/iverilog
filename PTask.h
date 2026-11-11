@@ -1,7 +1,7 @@
 #ifndef IVL_PTask_H
 #define IVL_PTask_H
 /*
- * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,6 +51,10 @@ class PTaskFunc : public PScope, public PNamedItem {
 	// to the class type.
       inline class_type_t* method_of() const { return this_type_; }
 
+	// True if the method was declared with the "virtual" qualifier.
+      inline bool is_virtual() const { return virtual_; }
+      inline void set_virtual(bool flag) { virtual_ = flag; }
+
 
       virtual void elaborate_sig(Design*des, NetScope*scope) const =0;
       virtual void elaborate(Design*des, NetScope*scope) const =0;
@@ -70,6 +74,7 @@ class PTaskFunc : public PScope, public PNamedItem {
 
     private:
       class_type_t*this_type_;
+      bool virtual_;
       std::vector<pform_tf_port_t>*ports_;
 };
 
