@@ -1,0 +1,16 @@
+{
+    "type": "normal",
+    "source": "check_scope_cleanup_automatic.v",
+    "iverilog-args": [
+        "-g2012",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/check_scope_cleanup_automatic.c"
+    ],
+    "vlog95": {
+        "type": "NI",
+        "__comment": "Automatic functions/tasks and generate scopes are explicitly unsupported by the vlog95 emitter; check_scope_cleanup covers the portable static scopes."
+    }
+}

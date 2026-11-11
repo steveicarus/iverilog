@@ -10,7 +10,7 @@ nullPointerOutOfMemory
 //constVariablePointer:main.cc:400
 
 // Only for conditional debugging
-knownConditionTrueFalse:lib_main.cc:282
+knownConditionTrueFalse:lib_main.cc:283
 
 // For now these casts have to be used
 dangerousTypeCast:array_common.cc:188
@@ -22,7 +22,7 @@ invalidPointerCast:class_type.cc:338
 invalidPointerCast:class_type.cc:339
 cstyleCast:ufunc.cc:80
 cstyleCast:vpi_priv.cc:229
-cstyleCast:vpi_scope.cc:603
+cstyleCast:vpi_scope.cc:608
 
 // Skip the sscanf() field width limit warning
 invalidscanf:compile.cc:597
@@ -33,7 +33,7 @@ variableScope:vpi_priv.cc:647
 
 // Changing this breaks the compile
 constParameterPointer:vthread.cc:423
-useInitializationList:delay.cc:513
+useInitializationList:delay.cc:633
 constParameterPointer:vpi_priv.cc:1458
 
 // Operator new/delete are static so cannot override
@@ -90,20 +90,20 @@ constParameterPointer:vpi_tasks.cc:259
 knownConditionTrueFalse:vthread.cc:3571
 
 // For some cases this expression can be different
-duplicateExpression:vpi_signal.cc:1207
+duplicateExpression:vpi_signal.cc:1210
 
 // cppcheck does not relize this is deleted[] in the called routine
-leakNoVarFunctionCall:compile.cc:529
+leakNoVarFunctionCall:compile.cc:531
 
 // Yes, these are not currently initialized in the constructor
 // All are added after __vpiSysTaskCall is built
-uninitMemberVar:vpi_priv.h:967
+uninitMemberVar:vpi_priv.h:984
 // All are added after __vpiSignal is built
-uninitMemberVar:vpi_priv.h:394
+uninitMemberVar:vpi_priv.h:398
 // run_run_ptr is added after the event is built
 uninitMemberVar:delay.h:79
 // The array values are added after it is allocated
-noConstructor:vpi_priv.h:780
+noConstructor:vpi_priv.h:797
 // The enum values are added after this is built
 uninitMemberVar:enum_type.cc:55
 // The names for the enum values are added after allocation
@@ -111,10 +111,10 @@ uninitMemberVar:enum_type.cc:101
 // The thread values get assigned after being created
 uninitMemberVar:vthread.cc:316
 // The mod path has the values added after creation
-uninitMemberVar:delay.cc:1001
-uninitMemberVar:delay.cc:1041
+uninitMemberVar:delay.cc:1192
+uninitMemberVar:delay.cc:1145
 // The intermod path has the values added after creation
-uninitMemberVar:delay.cc:1386
+uninitMemberVar:delay.cc:1673
 // The island values are set after creation
 uninitDerivedMemberVar:island_tran.cc:60
 // The cb_data is set after creation
@@ -128,23 +128,23 @@ uninitMemberVar:vpi_scope.cc:341
 // The real var values are set after creation
 uninitMemberVar:vpi_real.cc:158
 // The PV values are set after creation
-uninitMemberVar:vpi_signal.cc:1598
+uninitMemberVar:vpi_signal.cc:1601
 // The info/is_user_defn are added ater creation
 uninitMemberVar:vpi_tasks.cc:41
 // All the values are set after creation using the default constructor
 noConstructor:vpi_tasks.cc:158
 
 // We check memory usage using valgrind.
-unsafeClassCanLeak:vpi_priv.h:752
+unsafeClassCanLeak:vpi_priv.h:769
 unsafeClassCanLeak:permaheap.h:47
 
 // Index calculation
-thisSubtraction:vpi_priv.h:432
+thisSubtraction:vpi_priv.h:436
 thisSubtraction:array_common.h:91
 
 // The interface is from the standard.
-constParameterCallback:vpi_priv.cc:1134
-constParameterPointer:vpi_priv.cc:1134
+constParameterCallback:vpi_priv.cc:1143
+constParameterPointer:vpi_priv.cc:1143
 constParameterPointer:vpi_mcd.cc:158
 
 // cppcheck is missing the code adds a \0 at the previous location.
@@ -152,13 +152,13 @@ knownConditionTrueFalse:vpi_modules.cc:118
 redundantAssignment:vpi_modules.cc:117
 
 // cppcheck does not undestand the format types match
-invalidScanfArgType_int:compile.cc:674
-invalidScanfArgType_int:compile.cc:680
-invalidScanfArgType_int:compile.cc:686
-invalidScanfArgType_int:vthread.cc:4886
-invalidScanfArgType_int:vthread.cc:4889
-invalidScanfArgType_int:vthread.cc:4892
-invalidScanfArgType_int:vthread.cc:4895
+invalidScanfArgType_int:compile.cc:676
+invalidScanfArgType_int:compile.cc:682
+invalidScanfArgType_int:compile.cc:688
+invalidScanfArgType_int:vthread.cc:4985
+invalidScanfArgType_int:vthread.cc:4988
+invalidScanfArgType_int:vthread.cc:4991
+invalidScanfArgType_int:vthread.cc:4994
 
 // The new() operator is always used to allocate space for this class and
 // pool is defined there.
@@ -216,7 +216,7 @@ unusedFunction:schedule.cc:404
 // call_scope()
 unusedFunction:ufunc.h:62
 // get_bit()
-unusedFunction:vpi_priv.h:479
+unusedFunction:vpi_priv.h:483
 // copy_bits()
 unusedFunction:vvp_net.cc:615
 // mov()

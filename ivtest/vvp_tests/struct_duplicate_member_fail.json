@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "struct_duplicate_member_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
