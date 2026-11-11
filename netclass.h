@@ -95,6 +95,25 @@ class netclass_t : public ivl_type_s {
 	// The task method scopes from the method name.
       NetScope*method_from_name(perm_string mname) const;
 
+	// If the method is virtual, either because it was declared
+	// "virtual" or because it overrides a virtual method of a base
+	// class (IEEE1800-2017 8.20), return the base-most virtual
+	// declaration that it implements. Otherwise return nil.
+      static NetScope* virtual_root(NetScope*method);
+
+	// The methods of the class, not including inherited methods.
+      void add_method(NetScope*method) { methods_.push_back(method); }
+
+	// Collect the virtual methods that are overridden in this
+	// class or one of its base classes. Each entry is a virtual
+	// declaration and the method that a call of it runs for an
+	// object of this class.
+      void virtual_table(std::vector<std::pair<NetScope*,NetScope*> >&table) const;
+
+	// The methods of virtual_table() as seen by the code generator
+	// (the overrides, the declaration is their ivl_scope_virtual_root).
+      std::vector<ivl_scope_t>& virtual_scopes() const { return virtual_scopes_; }
+
 	// Returns the constructor task method of the class. Might be nullptr if
 	// there is nothing to do in the constructor.
       NetScope* get_constructor() const;
@@ -145,6 +164,8 @@ class netclass_t : public ivl_type_s {
 
 	// This holds task/function definitions for methods.
       NetScope*class_scope_;
+      std::vector<NetScope*> methods_;
+      mutable std::vector<ivl_scope_t> virtual_scopes_;
 
 	// This holds the context for the class type definition.
       NetScope*definition_scope_;

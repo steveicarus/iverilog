@@ -259,7 +259,8 @@ class vvp_fun_intermodpath  : public vvp_net_fun_t, private vvp_gen_event_s {
                      vvp_context_t) override;
 
       void get_delay12(vvp_time64_t out[12]) const;
-      void put_delay12(const vvp_time64_t in[12]);
+      void get_delay_real12(double out[12]) const;
+      void put_delay12(const vvp_time64_t in[12], const double real[12]);
 
     private:
       void run_run() override;
@@ -274,6 +275,8 @@ class vvp_fun_intermodpath  : public vvp_net_fun_t, private vvp_gen_event_s {
       bool width_known_;
 
       vvp_time64_t delay_[12];
+      // Retain annotation values independently of the effective event delays.
+      double delay_real_[12];
 
     private: // not implemented
       vvp_fun_intermodpath(const vvp_fun_intermodpath&);

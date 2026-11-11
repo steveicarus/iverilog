@@ -3071,6 +3071,27 @@ bool of_DISABLE_FORK(vthread_t thr, vvp_code_t)
 }
 
 /*
+ * %dispatch/virt <scope>
+ *
+ * This is the first instruction of a virtual function. Pop the handle
+ * of the object that the function is called on and, if the class of the
+ * object overrides the function, continue with the code of the
+ * override. Otherwise continue with the next instruction.
+ */
+bool of_DISPATCH_VIRT(vthread_t thr, vvp_code_t cp)
+{
+      vvp_object_t obj;
+      thr->pop_object(obj);
+
+      if (const vvp_cobject*cobj = obj.peek<vvp_cobject>()) {
+	    if (vvp_code_t code = cobj->get_virtual(cp->handle))
+		  thr->pc = code;
+      }
+
+      return true;
+}
+
+/*
  * This function divides a 2-word number {high, a} by a 1-word
  * number. Assume that high < b.
  */
@@ -3396,6 +3417,12 @@ bool of_DUP_OBJ(vthread_t thr, vvp_code_t)
 bool of_DUP_REAL(vthread_t thr, vvp_code_t)
 {
       thr->push_real(thr->peek_real(0));
+      return true;
+}
+
+bool of_DUP_STR(vthread_t thr, vvp_code_t)
+{
+      thr->push_str(thr->peek_str(0));
       return true;
 }
 

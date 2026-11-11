@@ -1,0 +1,8 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "grouping_cell") (INSTANCE u)
+  (DELAY (ABSOLUTE
+   (COND E == 1'b1 || F == 1'b1 && G == 1'b1 (IOPATH A L (3) (5)))
+   (COND ((E == 1'b1) || (F == 1'b1)) && (G == 1'b1) (IOPATH A R (7) (9)))
+  )))
+)

@@ -2134,7 +2134,8 @@ template <class INT>bool vector4_to_value(const vvp_vector4_t&vec, INT&val,
 					  bool is_signed, bool is_arithmetic)
 {
       INT res = 0;
-      INT msk = 1;
+        // The mask must remain unsigned when shifting past the sign bit.
+      uint64_t msk = 1;
       bool rc_flag = true;
 
       unsigned size = vec.size();

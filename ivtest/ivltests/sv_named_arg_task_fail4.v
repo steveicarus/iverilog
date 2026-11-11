@@ -3,7 +3,7 @@
 
 module test;
 
-  task t(integer a, integer b);
+  task t(integer a, integer b = 0);
     $display("FAILED");
   endtask
 
