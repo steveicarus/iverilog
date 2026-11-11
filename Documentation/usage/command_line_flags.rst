@@ -103,6 +103,8 @@ These flags affect the general behavior of the compiler.
     supplied, must be a local scalar variable. A violation occurs when the
     measured pulse width is strictly above the threshold and below the limit.
     Standard ``$sdf_annotate`` can update the matching WIDTH limit.
+    A WIDTH CELLTYPE mismatch is diagnosed but does not itself prevent an
+    update; reference/edge matching and limit validation still apply.
 
     Unconditional ``$period`` checks accept the same local scalar reference,
     constant limit and optional notifier forms, without a threshold argument.
