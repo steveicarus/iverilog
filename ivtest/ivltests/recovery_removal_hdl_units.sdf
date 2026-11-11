@@ -1,0 +1,5 @@
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 10ps)
+ (CELL (CELLTYPE "rr_escaped") (INSTANCE u)
+  (TIMINGCHECK
+   (RECOVERY (posedge R\.dot) (posedge C\\tail) (3.6))
+   (REMOVAL (posedge R\.dot) (posedge C\\tail) (1.6)))))

@@ -2340,6 +2340,87 @@ static const char *vvp_port_info_type_str(ivl_signal_port_t ptype)
       }
 }
 
+/* Emit exactly one record for each elaborated declaration, after its signals. */
+static void draw_width_in_scope(ivl_width_t check)
+{
+      ivl_signal_t notifier = ivl_width_notifier(check);
+      fprintf(vvp_out, "    .tchk_width %u %u, \"%s\", v%p_0, %.17e, %.17e, ",
+              ivl_file_table_index(ivl_width_file(check)), ivl_width_lineno(check),
+              ivl_width_posedge(check) ? "posedge" : "negedge",
+              ivl_width_reference(check), ivl_width_limit(check),
+              ivl_width_threshold(check));
+      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
+      else fprintf(vvp_out, "\"\";\n");
+}
+
+static const char*two_event_edge(int edge)
+{
+      return edge == 1 ? "posedge" : edge == -1 ? "negedge" : "any";
+}
+
+static void draw_period_in_scope(ivl_period_t check)
+{
+      ivl_signal_t notifier = ivl_period_notifier(check);
+      fprintf(vvp_out, "    .tchk_period %u %u, \"%s\", v%p_0, %.17e, ",
+              ivl_file_table_index(ivl_period_file(check)), ivl_period_lineno(check),
+              ivl_period_posedge(check) ? "posedge" : "negedge",
+              ivl_period_reference(check), ivl_period_limit(check));
+      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
+      else fprintf(vvp_out, "\"\";\n");
+}
+
+static void draw_setup_in_scope(ivl_setup_t check)
+{
+      ivl_signal_t notifier = ivl_setup_notifier(check);
+      fprintf(vvp_out, "    .tchk_setup %u %u, \"%s\", v%p_0, \"%s\", v%p_0, %.17e, ",
+              ivl_file_table_index(ivl_setup_file(check)), ivl_setup_lineno(check),
+              two_event_edge(ivl_setup_reference_edge(check)),
+              ivl_setup_reference(check),
+              two_event_edge(ivl_setup_data_edge(check)), ivl_setup_data(check),
+              ivl_setup_limit(check));
+      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
+      else fprintf(vvp_out, "\"\";\n");
+}
+
+static void draw_hold_in_scope(ivl_hold_t check)
+{
+      ivl_signal_t notifier = ivl_hold_notifier(check);
+      fprintf(vvp_out, "    .tchk_hold %u %u, \"%s\", v%p_0, \"%s\", v%p_0, %.17e, ",
+              ivl_file_table_index(ivl_hold_file(check)), ivl_hold_lineno(check),
+              two_event_edge(ivl_hold_reference_edge(check)),
+              ivl_hold_reference(check),
+              two_event_edge(ivl_hold_data_edge(check)), ivl_hold_data(check),
+              ivl_hold_limit(check));
+      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
+      else fprintf(vvp_out, "\"\";\n");
+}
+
+static void draw_recovery_in_scope(ivl_recovery_t check)
+{
+      ivl_signal_t notifier = ivl_recovery_notifier(check);
+      fprintf(vvp_out, "    .tchk_recovery %u %u, \"%s\", v%p_0, \"%s\", v%p_0, %.17e, ",
+              ivl_file_table_index(ivl_recovery_file(check)), ivl_recovery_lineno(check),
+              two_event_edge(ivl_recovery_reference_edge(check)),
+              ivl_recovery_reference(check),
+              two_event_edge(ivl_recovery_data_edge(check)), ivl_recovery_data(check),
+              ivl_recovery_limit(check));
+      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
+      else fprintf(vvp_out, "\"\";\n");
+}
+
+static void draw_removal_in_scope(ivl_removal_t check)
+{
+      ivl_signal_t notifier = ivl_removal_notifier(check);
+      fprintf(vvp_out, "    .tchk_removal %u %u, \"%s\", v%p_0, \"%s\", v%p_0, %.17e, ",
+              ivl_file_table_index(ivl_removal_file(check)), ivl_removal_lineno(check),
+              two_event_edge(ivl_removal_reference_edge(check)),
+              ivl_removal_reference(check),
+              two_event_edge(ivl_removal_data_edge(check)), ivl_removal_data(check),
+              ivl_removal_limit(check));
+      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
+      else fprintf(vvp_out, "\"\";\n");
+}
+
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
@@ -2535,6 +2616,31 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 		  draw_net_in_scope(sig);
 		  break;
 	    }
+      }
+
+      if (ivl_scope_widths(net)) {
+	    fprintf(vvp_out, "    .scope S_%p;\n", net);
+	    for (idx = 0; idx < ivl_scope_widths(net); idx += 1)
+		  draw_width_in_scope(ivl_scope_width(net, idx));
+      }
+
+      if (ivl_scope_periods(net)) {
+            fprintf(vvp_out, "    .scope S_%p;\n", net);
+            for (idx = 0; idx < ivl_scope_periods(net); idx += 1)
+                  draw_period_in_scope(ivl_scope_period(net, idx));
+      }
+
+      if (ivl_scope_setups(net) || ivl_scope_holds(net) ||
+          ivl_scope_recoveries(net) || ivl_scope_removals(net)) {
+            fprintf(vvp_out, "    .scope S_%p;\n", net);
+            for (idx = 0; idx < ivl_scope_setups(net); idx += 1)
+                  draw_setup_in_scope(ivl_scope_setup(net, idx));
+            for (idx = 0; idx < ivl_scope_holds(net); idx += 1)
+                  draw_hold_in_scope(ivl_scope_hold(net, idx));
+            for (idx = 0; idx < ivl_scope_recoveries(net); idx += 1)
+                  draw_recovery_in_scope(ivl_scope_recovery(net, idx));
+            for (idx = 0; idx < ivl_scope_removals(net); idx += 1)
+                  draw_removal_in_scope(ivl_scope_removal(net, idx));
       }
 
       for (idx = 0 ;  idx < ivl_scope_events(net) ;  idx += 1) {
