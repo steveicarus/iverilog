@@ -29,7 +29,12 @@ module tb;
   end
   initial begin
     #1;
+`ifdef VLOG95_SDF
+    // Tied input ports specialize the translated module types per instance.
+    $sdf_annotate("ivltests/recovery_removal_cond_partial_vlog95.sdf",tb);
+`else
     $sdf_annotate("ivltests/recovery_removal_cond_partial.sdf",tb);
+`endif
 
     $rr_watch("tb.c", "recovery", "R", "any", "C", "posedge", 30.0, 30, "ns", 1'b0, 2, 115, 205);
 
