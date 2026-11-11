@@ -529,29 +529,13 @@ void vvp_arith_sum::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 {
       dispatch_operand_(ptr, bit);
 
-      vvp_net_t*net = ptr.ptr();
+      assert(op_a_.size() == wid_);
+      assert(op_b_.size() == wid_);
 
-      vvp_vector4_t value (wid_);
+      vvp_vector4_t value(op_a_);
+      value.add(op_b_);
 
-	/* Pad input vectors with this value to widen to the desired
-	   output width. */
-      const vvp_bit4_t pad = BIT4_0;
-
-      vvp_bit4_t carry = BIT4_0;
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_bit4_t a = (idx >= op_a_.size())? pad : op_a_.value(idx);
-	    vvp_bit4_t b = (idx >= op_b_.size())? pad : op_b_.value(idx);
-	    vvp_bit4_t cur = add_with_carry(a, b, carry);
-
-	    if (cur == BIT4_X) {
-		  net->send_vec4(x_val_, 0);
-		  return;
-	    }
-
-	    value.set_bit(idx, cur);
-      }
-
-      net->send_vec4(value, 0);
+      ptr.ptr()->send_vec4(value, 0);
 }
 
 vvp_arith_sub::vvp_arith_sub(unsigned wid)
@@ -574,29 +558,13 @@ void vvp_arith_sub::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 {
       dispatch_operand_(ptr, bit);
 
-      vvp_net_t*net = ptr.ptr();
+      assert(op_a_.size() == wid_);
+      assert(op_b_.size() == wid_);
 
-      vvp_vector4_t value (wid_);
+      vvp_vector4_t value(op_a_);
+      value.sub(op_b_);
 
-	/* Pad input vectors with this value to widen to the desired
-	   output width. */
-      const vvp_bit4_t pad = BIT4_1;
-
-      vvp_bit4_t carry = BIT4_1;
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_bit4_t a = (idx >= op_a_.size())? pad : op_a_.value(idx);
-	    vvp_bit4_t b = (idx >= op_b_.size())? pad : ~op_b_.value(idx);
-	    vvp_bit4_t cur = add_with_carry(a, b, carry);
-
-	    if (cur == BIT4_X) {
-		  net->send_vec4(x_val_, 0);
-		  return;
-	    }
-
-	    value.set_bit(idx, cur);
-      }
-
-      net->send_vec4(value, 0);
+      ptr.ptr()->send_vec4(value, 0);
 }
 
 vvp_cmp_eeq::vvp_cmp_eeq(unsigned wid)

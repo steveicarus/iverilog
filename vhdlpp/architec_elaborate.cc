@@ -254,7 +254,7 @@ int CondSignalAssignment::elaborate(Entity*ent, Architecture*arc)
       struct name_extractor_t : public ExprVisitor {
           explicit name_extractor_t(list<const ExpName*>& name_list)
               : name_list_(name_list) {}
-          void operator() (Expression*s) {
+          void operator() (Expression*s) override {
               if(const ExpName*name = dynamic_cast<const ExpName*>(s))
                   name_list_.push_back(name);
           }

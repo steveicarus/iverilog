@@ -260,7 +260,8 @@ class PCallTask  : public Statement {
 					    const pform_name_t &path) const;
 
       NetProc*elaborate_build_call_(Design*des, NetScope*scope,
-				    NetScope*task, NetExpr*use_this) const;
+				    NetScope*task, NetExpr*use_this,
+				    bool nonvirtual = false) const;
       NetProc*elaborate_sys_task_method_(Design*des, NetScope*scope,
 					 NetNet*net,
 					 perm_string method_name,

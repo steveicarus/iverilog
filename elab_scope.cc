@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -530,6 +530,8 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 		  des->errors += 1;
 	    }
 	    method_scope->is_auto(true);
+	    method_scope->is_virtual(cur->second->is_virtual());
+	    use_class->add_method(method_scope);
 	    method_scope->set_line(cur->second);
 	    method_scope->add_imports(&cur->second->explicit_imports);
 
@@ -556,6 +558,8 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 		  des->errors += 1;
 	    }
 	    method_scope->is_auto(true);
+	    method_scope->is_virtual(cur->second->is_virtual());
+	    use_class->add_method(method_scope);
 	    method_scope->set_line(cur->second);
 	    method_scope->add_imports(&cur->second->explicit_imports);
 
@@ -794,6 +798,20 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       if (debug_scopes) {
 	    cerr << get_fileline() << ": Module::elaborate_scope: "
 		 << "Elaborate " << scope_path(scope) << "." << endl;
+      }
+
+      map<perm_string, bool> port_names;
+      for (const auto*port : ports) {
+	    if (!port || port->name.nil()) continue;
+
+	      // Repeated implicit references to the same port are legal.
+	    auto cur = port_names.emplace(port->name, port->explicit_name);
+	    if (!cur.second && (cur.first->second || port->explicit_name)) {
+		  cerr << get_fileline() << ": error: Duplicate port name '"
+		       << port->name << "'." << endl;
+		  des->errors++;
+	    }
+	    cur.first->second |= port->explicit_name;
       }
 
       scope->add_typedefs(&typedefs);
