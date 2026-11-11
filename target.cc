@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2021 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2026 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -69,6 +69,12 @@ bool target_t::signal_paths(const NetNet*)
 {
       return true;
 }
+void target_t::width_check(const NetWidth*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $width." << endl;
+      errors += 1;
+}
+
 bool target_t::func_def(const NetScope*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2023 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2006-2026 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,6 +18,12 @@
  */
 
 # include  "PTimingCheck.h"
+
+PWidth::PWidth(event_t*reference, PExpr*limit, PExpr*threshold,
+               pform_name_t*notifier)
+: reference_(reference), limit_(limit), threshold_(threshold), notifier_(notifier)
+{
+}
 
 PRecRem::PRecRem(event_t* reference_event,
       event_t* data_event,

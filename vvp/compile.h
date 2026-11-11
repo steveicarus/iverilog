@@ -555,6 +555,11 @@ extern void compile_netw_real(char*label, char*array_symbol,
 			      unsigned argc, struct symb_s*argv);
 
 
+// Standard HDL WIDTH declarations emit this explicit record.
+extern void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
+                                struct symb_s reference, double limit,
+                                double threshold, char* notifier);
+
 extern void compile_island(char*label, char*type);
 extern void compile_island_port(char*label, char*island, char*src);
 extern void compile_island_import(char*label, char*island, char*src);

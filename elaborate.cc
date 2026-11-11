@@ -30,6 +30,7 @@
 # include  <algorithm>
 # include  <typeinfo>
 # include  <climits>
+# include  <cmath>
 # include  <cstdlib>
 # include  <cstring>
 # include  <iostream>
@@ -7157,13 +7158,90 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       }
 }
 
+/* WIDTH arguments are constant physical times in this module's units.
+ * Keep them real until the runtime applies the module precision. */
+static bool width_constant(Design*des, NetScope*scope, PExpr*expr,
+                           const LineInfo&loc, const char*which, double&value)
+{
+      // Timing-check limits may use specparams. Require a constant without
+      // treating this timing context as a non-annotatable parameter use.
+      std::unique_ptr<NetExpr> elaborated(elab_and_eval(des, scope, expr, -1,
+                                                      true, true));
+      bool valid = false;
+      if (const auto*real = dynamic_cast<const NetECReal*>(elaborated.get())) {
+	    value = real->value().as_double();
+	    valid = true;
+      } else if (const auto*bits = dynamic_cast<const NetEConst*>(elaborated.get())) {
+	    if (bits->value().is_defined() && !bits->value().is_string()) {
+		  value = bits->value().as_double();
+		  valid = true;
+	    }
+      }
+      if (!valid || !std::isfinite(value) || value < 0.0) {
+	    cerr << loc.get_fileline() << ": error: $width " << which
+		 << " must be a finite nonnegative constant." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+      // The nonnegative VVP real grammar has no sign. IEEE negative zero
+      // is the same timing value as zero, so emit its canonical form.
+      if (value == 0.0) value = 0.0;
+      return true;
+}
+
+static NetNet*width_signal(Design*des, NetScope*scope, const pform_name_t&name,
+                           const LineInfo&loc, bool notifier)
+{
+      const char*role = notifier ? "notifier" : "reference";
+      if (name.size() != 1 || !name.front().index.empty()) {
+	    cerr << loc.get_fileline() << ": error: $width " << role
+		 << " must be an unselected local scalar signal." << endl;
+	    des->errors += 1;
+	    return nullptr;
+      }
+      NetNet*sig = scope->find_signal(name.front().name);
+      if (!sig || sig->vector_width() != 1 || sig->packed_dimensions() != 0
+	  || sig->unpacked_dimensions() != 0
+	  || (sig->data_type() != IVL_VT_LOGIC && sig->data_type() != IVL_VT_BOOL)
+	  || (notifier && sig->type() != NetNet::REG)) {
+	    cerr << loc.get_fileline() << ": error: $width " << role
+		 << (notifier ? " must be a local scalar variable."
+		              : " must be a local scalar logic or bit signal.") << endl;
+	    des->errors += 1;
+	    return nullptr;
+      }
+      return sig;
+}
+
+void PWidth::elaborate(Design*des, NetScope*scope) const
+{
+      if (!gn_specify_blocks_flag) return;
+      if (reference_->condition || reference_->posedge == reference_->negedge
+	  || !reference_->edges.empty()) {
+	    cerr << get_fileline() << ": error: $width supports only unconditional"
+		 << " posedge or negedge scalar reference events." << endl;
+	    des->errors += 1;
+	    return;
+      }
+      NetNet*reference = width_signal(des, scope, reference_->name, *this, false);
+      NetNet*notifier = notifier_ ? width_signal(des, scope, *notifier_, *this, true)
+				: nullptr;
+      if (!reference || (notifier_ && !notifier)) return;
+      double limit = 0.0, threshold = 0.0;
+      if (!width_constant(des, scope, limit_.get(), *this, "limit", limit)) return;
+      if (threshold_ && !width_constant(des, scope, threshold_.get(), *this,
+				       "threshold", threshold)) return;
+      std::unique_ptr<NetWidth> check(new NetWidth(scope, reference, notifier,
+					 reference_->posedge, limit, threshold));
+      check->set_line(*this);
+      scope->add_width(std::move(check));
+}
+
 void PRecRem::elaborate(Design*des, NetScope*scope) const
 {
-      // At present, no timing checks are supported.
-      // Still, in order to get some models working
-      // assign the original reference and data signals to
-      // the delayed reference and data signals as per
-      // 15.5.4 Option behavior
+      // This fallback does not create a $recrem timing check.
+      // It only connects the original reference and data signals to
+      // the optional delayed signals per 15.5.4 Option behavior.
 
       if (delayed_reference_ != nullptr)
       {
@@ -7226,11 +7304,9 @@ void PRecRem::elaborate(Design*des, NetScope*scope) const
 
 void PSetupHold::elaborate(Design*des, NetScope*scope) const
 {
-      // At present, no timing checks are supported.
-      // Still, in order to get some models working
-      // assign the original reference and data signals to
-      // the delayed reference and data signals as per
-      // 15.5.4 Option behavior
+      // This fallback does not create a $setuphold timing check.
+      // It only connects the original reference and data signals to
+      // the optional delayed signals per 15.5.4 Option behavior.
 
       if (delayed_reference_ != nullptr)
       {

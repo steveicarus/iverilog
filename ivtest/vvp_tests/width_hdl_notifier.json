@@ -1,0 +1,6 @@
+{
+    "type": "normal",
+    "source": "width_hdl_notifier.v",
+    "iverilog-args": ["-g1995", "-gspecify", "-Ttyp", "-s", "tb"],
+    "vpi-sources": ["vpi/tchk_notifier.c"]
+}
