@@ -1,0 +1,14 @@
+{
+    "type": "normal",
+    "source": "recovery_removal_cond_ref.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/recovery_removal_audit.c"
+    ]
+}

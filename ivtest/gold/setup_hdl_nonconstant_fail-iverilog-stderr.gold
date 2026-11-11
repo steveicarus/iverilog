@@ -1,0 +1,3 @@
+ivltests/setup_hdl_nonconstant_fail.v:7: error: A reference to a net or variable (`D') is not allowed in a constant expression.
+ivltests/setup_hdl_nonconstant_fail.v:7: error: $setup limit must be a finite nonnegative constant.
+2 error(s) during elaboration.

@@ -1,0 +1,40 @@
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:2: Unable to match RECOVERY OTHER -> C in tb.wrong_control
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:2: Unable to match REMOVAL OTHER -> C in tb.wrong_control
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:3: Unable to match RECOVERY R -> OTHER in tb.wrong_clock
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:3: Unable to match REMOVAL R -> OTHER in tb.wrong_clock
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:4: Unable to match RECOVERY R -> C in tb.wrong_edge
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:4: Unable to match REMOVAL R -> C in tb.wrong_edge
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:5: invalid RECOVERY limit
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:5: invalid REMOVAL limit
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:6: unrepresentable RECOVERY limit
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:6: unrepresentable REMOVAL limit
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:7: Module wrong_cell in tb.wrong_cell is not a different_cell; it is a rr_reject
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:8: Unable to match RECOVERY R -> C in tb.conditional
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:8: Unable to match REMOVAL R -> C in tb.conditional
+SDF WARNING: ivltests/recovery_removal_hdl_reject.sdf:9: conditional or hierarchical RECOVERY event not supported.
+SDF WARNING: ivltests/recovery_removal_hdl_reject.sdf:9: conditional or hierarchical REMOVAL event not supported.
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:11: Cannot find absent_instance in scope tb.
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:11: Unable to find absent_instance in scope tb.
+SDF WARNING: ivltests/recovery_removal_hdl_reject.sdf:12: RECREM not supported.
+RR_OBJECT tb.wrong_control recovery R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.wrong_control removal R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.wrong_clock recovery R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.wrong_clock removal R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.wrong_edge recovery R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.wrong_edge removal R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.negative recovery R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.negative removal R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.overflow recovery R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.overflow removal R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.wrong_cell recovery R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.wrong_cell removal R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.conditional recovery R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.conditional removal R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.hierarchy recovery R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.hierarchy removal R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.valid recovery R/posedge C/posedge limit=30 ticks=30 events=0
+RR_OBJECT tb.valid removal R/posedge C/posedge limit=30 ticks=30 events=0
+RR_OBJECT tb.combined recovery R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.combined removal R/posedge C/posedge limit=10 ticks=10 events=0
+RR_COMPLETE objects=20 callbacks=0
+PASSED

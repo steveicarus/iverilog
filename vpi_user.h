@@ -288,6 +288,7 @@ typedef struct t_vpi_delay  {
 #define vpiNamedFork   35
 #define vpiNet         36
 #define vpiNetBit      37
+#define vpiOperation   39
 #define vpiParameter   41
 #define vpiPartSelect  42
 #define vpiPathTerm    43
@@ -299,21 +300,28 @@ typedef struct t_vpi_delay  {
 #define vpiSysFuncCall 56
 #define vpiSysTaskCall 57
 #define vpiTask        59
+#define vpiTchk        61
+#define vpiTchkTerm    62
 #define vpiTimeVar     63
 #define vpiUdpDefn     66
 #define vpiUserSystf   67
 #define vpiNetArray   114
+#define vpiCondition   71
 #define vpiIndex       78
 #define vpiLeftRange   79
 #define vpiParent      81
 #define vpiRightRange  83
 #define vpiScope       84
 #define vpiSysTfCall   85
+#define vpiTchkDataTerm 86
+#define vpiTchkNotifier 87
+#define vpiTchkRefTerm  88
 #define vpiArgument    89
 #define vpiBit         90
 #define vpiInternalScope 92
 #define vpiModPathIn     95
 #define vpiModPathOut    96
+#define vpiOperand      97
 #define vpiVariables   100
 #define vpiExpr        102
 
@@ -376,6 +384,21 @@ typedef struct t_vpi_delay  {
 #   define vpiPosedge      (vpiEdgex1|vpiEdge01|vpiEdge0x)
 #   define vpiNegedge      (vpiEdgex0|vpiEdge10|vpiEdge1x)
 #   define vpiAnyEdge      (vpiPosedge|vpiNegedge)
+#define vpiTchkType      38
+#   define vpiSetup       1
+#   define vpiHold        2
+#   define vpiPeriod      3
+#   define vpiWidth       4
+#   define vpiSkew        5
+#   define vpiRecovery    6
+#   define vpiNoChange    7
+#   define vpiSetupHold   8
+#   define vpiFullskew    9
+#   define vpiRecrem      10
+#   define vpiRemoval     11
+#   define vpiTimeskew    12
+#define vpiOpType         39
+#   define vpiCaseEqOp    16
 #define vpiConstType 40
 #   define vpiDecConst    1
 #   define vpiRealConst   2
@@ -397,6 +420,7 @@ typedef struct t_vpi_delay  {
 #define vpiUserDefn       45
 #define vpiAutomatic      50
 #define vpiConstantSelect 53
+#define vpiDecompile      54
 #define vpiSigned         65
 #define vpiLocalParam     70
 /* IVL private properties, also see vvp/vpi_priv.h for other properties */

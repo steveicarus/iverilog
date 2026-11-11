@@ -629,6 +629,96 @@ extern struct __vpiInterModPath* vpip_make_intermodpath(
       bool port2_has_index, int port2_bit_index);
 extern vpiHandle vpip_make_intermodpath_iterator(void);
 
+/* Unconditional timing checks and their borrowed signal terminals. */
+class vvp_fun_tchk_width;
+class vvp_fun_tchk_period;
+class vvp_fun_tchk_two_event;
+class __vpiTchkRefTerm : public __vpiHandle {
+    public:
+      __vpiTchkRefTerm(int edge, vpiHandle expr, vpiHandle condition = nullptr,
+                      unsigned condition_mode = 2);
+      ~__vpiTchkRefTerm() override;
+      int get_type_code(void) const override { return vpiTchkTerm; }
+      int vpi_get(int code) override;
+      vpiHandle vpi_handle(int code) override;
+    private:
+      int edge_;
+      vpiHandle expr_;
+      vpiHandle condition_;
+      bool owns_condition_;
+};
+
+class __vpiTchkWidth : public __vpiHandle {
+    public:
+      __vpiTchkWidth(__vpiScope* scope, unsigned file_idx, unsigned lineno,
+                     vvp_fun_tchk_width* fun);
+      ~__vpiTchkWidth();
+      int get_type_code(void) const override { return vpiTchk; }
+      int vpi_get(int code) override;
+      vpiHandle vpi_handle(int code) override;
+      void vpi_get_delays(p_vpi_delay delays) override;
+      void vpi_put_delays(p_vpi_delay delays) override;
+      vpiHandle reference_;
+      vpiHandle notifier_;
+    private:
+      __vpiScope* scope_;
+      unsigned file_idx_;
+      unsigned lineno_;
+      vvp_fun_tchk_width* fun_;
+      __vpiTchkRefTerm* reference_term_;
+      friend class vvp_fun_tchk_width;
+};
+
+class __vpiTchkPeriod : public __vpiHandle {
+    public:
+      __vpiTchkPeriod(__vpiScope* scope, unsigned file_idx, unsigned lineno,
+                     vvp_fun_tchk_period* fun);
+      ~__vpiTchkPeriod();
+      int get_type_code(void) const override { return vpiTchk; }
+      int vpi_get(int code) override;
+      vpiHandle vpi_handle(int code) override;
+      void vpi_get_delays(p_vpi_delay delays) override;
+      void vpi_put_delays(p_vpi_delay delays) override;
+      vpiHandle reference_;
+      vpiHandle notifier_;
+    private:
+      __vpiScope* scope_;
+      unsigned file_idx_;
+      unsigned lineno_;
+      vvp_fun_tchk_period* fun_;
+      __vpiTchkRefTerm* reference_term_;
+      friend class vvp_fun_tchk_period;
+};
+
+class __vpiTchkTwoEvent : public __vpiHandle {
+    public:
+      __vpiTchkTwoEvent(__vpiScope* scope, unsigned file_idx, unsigned lineno,
+                        vvp_fun_tchk_two_event* fun);
+      ~__vpiTchkTwoEvent();
+      int get_type_code(void) const override { return vpiTchk; }
+      int vpi_get(int code) override;
+      vpiHandle vpi_handle(int code) override;
+      void vpi_get_delays(p_vpi_delay delays) override;
+      void vpi_put_delays(p_vpi_delay delays) override;
+      vpiHandle reference_;
+      vpiHandle data_;
+      vpiHandle notifier_;
+      vpiHandle reference_condition_;
+      vpiHandle data_condition_;
+      unsigned reference_condition_mode_;
+      unsigned data_condition_mode_;
+    private:
+      __vpiScope* scope_;
+      unsigned file_idx_;
+      unsigned lineno_;
+      vvp_fun_tchk_two_event* fun_;
+      __vpiTchkRefTerm* reference_term_;
+      __vpiTchkRefTerm* data_term_;
+      friend class vvp_fun_tchk_two_event;
+};
+
+extern void vpip_tchk_violation(vpiHandle tchk);
+
 /*
  * These methods support the vpi creation of events. The name string
  * passed in will be saved, so the caller must allocate it (or not

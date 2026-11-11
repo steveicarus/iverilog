@@ -37,6 +37,9 @@ static vpiHandle sdf_scope;
 static vpiHandle sdf_callh = 0;
   /* The cell in process. */
 static vpiHandle sdf_cur_cell;
+/* New timing checks require the selected instance to match the SDF CELLTYPE. Keep
+   existing annotation kinds' historical mismatch behavior unchanged. */
+static int sdf_cur_cell_type_matches;
 
 /* Timescale from the SDF file header, in seconds. IEEE 1497 makes 1ns the
    default when the header carries no (TIMESCALE ...) entry. */
@@ -129,6 +132,7 @@ void sdf_warn_file_line(const int sdf_lineno)
 
 void sdf_select_instance(const char*celltype, const char*cellinst, const int sdf_lineno)
 {
+      sdf_cur_cell_type_matches = 0;
 	/* Test for wildcard character */
       if (cellinst == NULL) {
 	    if (sdf_flag_warning) {
@@ -178,6 +182,9 @@ void sdf_select_instance(const char*celltype, const char*cellinst, const int sdf
 	    vpi_printf("SDF ERROR: %s:%d: Module %s in %s is not a %s; it is a ",
 	               sdf_fname, sdf_lineno, src, vpi_get_str(vpiFullName, scope), celltype);
 	    vpi_printf("%s\n", vpi_get_str(vpiDefName, sdf_cur_cell));
+      } else {
+            sdf_cur_cell_type_matches =
+                  vpi_get(vpiType, sdf_cur_cell) == vpiModule;
       }
       free(buffer);
 }
@@ -569,12 +576,213 @@ static PLI_INT32 sys_sdf_annotate_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
+/* Check the same scope-precision rounding and global tick range used by
+ * the single-limit timing object's vpi_put_delays implementation. The VPI setter returns
+ * void, so reject an unrepresentable SDF value before reporting annotation. */
+static int sdf_tchk_limit_valid(double value, vpiHandle scope)
+{
+      if (!scope || !isfinite(value) || value < 0) return 0;
+      int precision = vpi_get(vpiTimePrecision, scope);
+      int local_shift = vpi_get(vpiTimeUnit, scope) - precision;
+      int global_shift = precision - vpi_get(vpiTimePrecision, 0);
+      if (local_shift < 0 || global_shift < 0) return 0;
+      double scaled = value * pow(10.0, local_shift);
+      if (!isfinite(scaled)) return 0;
+      double rounded = floor(scaled + 0.5);
+      long double total = (long double)rounded * powl(10.0L, global_shift);
+      return isfinite(total) && total < ldexpl(1.0L, 64);
+}
+
+/* Single-limit matching follows the timing-check object/terminal scheme
+ * introduced by Leo Moser's timingcheck-width work. Values use the SDF header
+ * timescale; object type prevents WIDTH/PERIOD cross-binding. */
+static void sdf_single_limit(int check_type, const char* check_name,
+                             int edge, const char* reference,
+                             struct sdf_delay_s limit, int lineno)
+{
+      if (!sdf_cur_cell || !limit.defined) return;
+      if (!isfinite(limit.value) || limit.value < 0) {
+            vpi_printf("SDF ERROR: %s:%d: invalid %s limit\n", sdf_fname, lineno, check_name);
+            return;
+      }
+      vpiHandle checks = vpi_iterate(vpiTchk, sdf_cur_cell);
+      vpiHandle check;
+      unsigned matches = 0;
+      while (checks && (check = vpi_scan(checks))) {
+            if (vpi_get(vpiTchkType, check) != check_type) continue;
+            vpiHandle term = vpi_handle(vpiTchkRefTerm, check);
+            if (!term || (edge != vpiNoEdge && vpi_get(vpiEdge, term) != edge)) continue;
+            vpiHandle signal = vpi_handle(vpiExpr, term);
+            if (!signal || strcmp(reference, vpi_get_str(vpiName, signal))) continue;
+            /* Count object bindings, not successful value updates. */
+            matches += 1;
+            vpiHandle scope = vpi_handle(vpiScope, check);
+            double scaled_limit = limit.value * sdf_delay_scale(scope);
+            if (!sdf_tchk_limit_valid(scaled_limit, scope)) {
+                  vpi_printf("SDF ERROR: %s:%d: unrepresentable %s limit for %s\n",
+                             sdf_fname, lineno, check_name, reference);
+                  continue;
+            }
+            s_vpi_time value;
+            s_vpi_delay delays;
+            memset(&value, 0, sizeof value);
+            memset(&delays, 0, sizeof delays);
+            value.type = vpiScaledRealTime;
+            value.real = scaled_limit;
+            delays.da = &value;
+            delays.no_of_delays = 1;
+            delays.time_type = vpiScaledRealTime;
+            vpi_put_delays(check, &delays);
+            if (sdf_flag_inform)
+                  vpi_printf("SDF INFO: %s:%d: %s %s limit %g\n",
+                             sdf_fname, lineno, check_name, reference, value.real);
+      }
+      if (!matches)
+            vpi_printf("SDF ERROR: %s:%d: Unable to match %s %s%s in %s\n",
+                       sdf_fname, lineno, check_name, edge_str(edge), reference,
+                       vpi_get_str(vpiFullName, sdf_cur_cell));
+}
+
+void sdf_width_limits(int edge, const char* reference,
+                      struct sdf_delay_s limit, int lineno)
+{
+      sdf_single_limit(vpiWidth, "WIDTH", edge, reference, limit, lineno);
+}
+
+void sdf_period_limits(int edge, const char* reference,
+                       struct sdf_delay_s limit, int lineno)
+{
+      if (!sdf_cur_cell_type_matches) return;
+      sdf_single_limit(vpiPeriod, "PERIOD", edge, reference, limit, lineno);
+}
+
+/* Match the supported source expression, not its value at annotation time.
+ * An absent SDF condition is a wildcard; an explicit one requires the same
+ * local scalar signal and expression form on that timing-check terminal. */
+static int sdf_tchk_condition_matches(vpiHandle term,
+                                     struct sdf_tchk_condition_s condition)
+{
+      if (condition.kind == SDF_TCHK_COND_NONE) return 1;
+      vpiHandle expression = vpi_handle(vpiCondition, term);
+      if (!expression) return 0;
+      vpiHandle signal = expression;
+      if (condition.kind == SDF_TCHK_COND_EQ0 ||
+          condition.kind == SDF_TCHK_COND_EQ1) {
+            if (vpi_get(vpiType, expression) != vpiOperation ||
+                vpi_get(vpiOpType, expression) != vpiCaseEqOp) return 0;
+            vpiHandle operands = vpi_iterate(vpiOperand, expression);
+            vpiHandle operand, pair[2];
+            unsigned count = 0;
+            while (operands && (operand = vpi_scan(operands))) {
+                  if (count == 2) {
+                        vpi_free_object(operands);
+                        return 0;
+                  }
+                  pair[count++] = operand;
+            }
+            if (count != 2 || vpi_get(vpiType, pair[1]) != vpiConstant ||
+                vpi_get(vpiSize, pair[1]) != 1) return 0;
+            s_vpi_value value;
+            value.format = vpiScalarVal;
+            vpi_get_value(pair[1], &value);
+            int wanted = condition.kind == SDF_TCHK_COND_EQ0 ? vpi0 : vpi1;
+            if (value.value.scalar != wanted) return 0;
+            signal = pair[0];
+      } else if (condition.kind != SDF_TCHK_COND_BARE) return 0;
+      int type = vpi_get(vpiType, signal);
+      if ((type != vpiNet && type != vpiReg) || vpi_get(vpiSize, signal) != 1)
+            return 0;
+      const char* name = vpi_get_str(vpiName, signal);
+      return name && !strcmp(condition.name, name);
+}
+
+static int sdf_tchk_terminal_matches(vpiHandle check, int role,
+                                    struct sdf_tchk_port_s event)
+{
+      struct port_with_edge_s port = event.port;
+      vpiHandle term = vpi_handle(role, check);
+      if (!term || (port.vpi_edge != vpiNoEdge &&
+                    vpi_get(vpiEdge, term) != port.vpi_edge)) return 0;
+      vpiHandle signal = vpi_handle(vpiExpr, term);
+      return signal && !strcmp(port.string_val, vpi_get_str(vpiName, signal)) &&
+            sdf_tchk_condition_matches(term, event.condition);
+}
+
+/* SETUP/HOLD SDF records list data before reference. RECOVERY/REMOVAL
+ * records list the asynchronous reference before the clock/data event.
+ * Match object roles explicitly; an unqualified SDF port matches either edge. */
+void sdf_two_event_limits(int check_type, struct sdf_tchk_port_s first,
+                          struct sdf_tchk_port_s second,
+                          struct sdf_delay_s limit, int lineno)
+{
+      const char* name;
+      int reset_check;
+      switch (check_type) {
+          case vpiSetup: name = "SETUP"; reset_check = 0; break;
+          case vpiHold: name = "HOLD"; reset_check = 0; break;
+          case vpiRecovery: name = "RECOVERY"; reset_check = 1; break;
+          case vpiRemoval: name = "REMOVAL"; reset_check = 1; break;
+          default: assert(0); return;
+      }
+      struct sdf_tchk_port_s reference = reset_check ? first : second;
+      struct sdf_tchk_port_s data = reset_check ? second : first;
+      if (!data.port.string_val || !reference.port.string_val ||
+          data.condition.kind == SDF_TCHK_COND_UNSUPPORTED ||
+          reference.condition.kind == SDF_TCHK_COND_UNSUPPORTED) {
+            vpi_printf("SDF WARNING: %s:%d: conditional or hierarchical %s event not supported.\n",
+                       sdf_fname, lineno, name);
+            return;
+      }
+      if (!sdf_cur_cell || !sdf_cur_cell_type_matches || !limit.defined) return;
+      if (!isfinite(limit.value) || limit.value < 0) {
+            vpi_printf("SDF ERROR: %s:%d: invalid %s limit\n",
+                       sdf_fname, lineno, name);
+            return;
+      }
+      vpiHandle checks = vpi_iterate(vpiTchk, sdf_cur_cell);
+      vpiHandle check;
+      unsigned matches = 0;
+      while (checks && (check = vpi_scan(checks))) {
+            if (vpi_get(vpiTchkType, check) != check_type ||
+                !sdf_tchk_terminal_matches(check, vpiTchkDataTerm, data) ||
+                !sdf_tchk_terminal_matches(check, vpiTchkRefTerm, reference))
+                  continue;
+            matches += 1;
+            vpiHandle scope = vpi_handle(vpiScope, check);
+            double scaled_limit = limit.value * sdf_delay_scale(scope);
+            if (!sdf_tchk_limit_valid(scaled_limit, scope)) {
+                  vpi_printf("SDF ERROR: %s:%d: unrepresentable %s limit\n",
+                             sdf_fname, lineno, name);
+                  continue;
+            }
+            s_vpi_time value;
+            s_vpi_delay delays;
+            memset(&value, 0, sizeof value);
+            memset(&delays, 0, sizeof delays);
+            value.type = vpiScaledRealTime;
+            value.real = scaled_limit;
+            delays.da = &value;
+            delays.no_of_delays = 1;
+            delays.time_type = vpiScaledRealTime;
+            vpi_put_delays(check, &delays);
+            if (sdf_flag_inform)
+                  vpi_printf("SDF INFO: %s:%d: %s %s -> %s limit %g\n",
+                             sdf_fname, lineno, name, first.port.string_val,
+                             second.port.string_val, value.real);
+      }
+      if (!matches)
+            vpi_printf("SDF ERROR: %s:%d: Unable to match %s %s -> %s in %s\n",
+                       sdf_fname, lineno, name, first.port.string_val,
+                       second.port.string_val, vpi_get_str(vpiFullName, sdf_cur_cell));
+}
+
 static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
 	/* IEEE 1497: a file with no (TIMESCALE ...) entry defaults to 1ns. Reset
 	   here so a second $sdf_annotate cannot inherit the previous file's
 	   timescale. */
       sdf_timescale = 1.0e-9;
+      sdf_cur_cell_type_matches = 0;
 
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);

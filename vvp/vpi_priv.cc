@@ -382,6 +382,8 @@ const char* vpi_type_as_string(PLI_INT32 code)
 	    return "vpiNamedEvent";
 	  case vpiNamedFork:
 	    return "vpiNamedFork";
+	  case vpiOperation:
+	    return "vpiOperation";
 	  case vpiPackage:
 	    return "vpiPackage";
 	  case vpiPathTerm:
@@ -553,6 +555,7 @@ __vpiScope*vpip_timescale_scope_from_handle(vpiHandle obj)
 	    event = dynamic_cast<__vpiNamedEvent*>(obj);
 	    return event->get_scope();
 
+	  case vpiTchk:
 	  case vpiMemory:
 	  case vpiMemoryWord:
 	  case vpiPartSelect:
