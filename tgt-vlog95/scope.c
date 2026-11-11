@@ -881,6 +881,115 @@ static void emit_specify_paths(ivl_scope_t scope, ivl_signal_t sig)
       }
 }
 
+static void emit_width_checks(ivl_scope_t scope)
+{
+      unsigned idx;
+      for (idx = 0; idx < ivl_scope_widths(scope); idx += 1) {
+            ivl_width_t check = ivl_scope_width(scope, idx);
+            ivl_signal_t notifier = ivl_width_notifier(check);
+            fprintf(vlog_out, "%*c$width(%s ", indent, ' ',
+                    ivl_width_posedge(check) ? "posedge" : "negedge");
+            emit_id(ivl_signal_basename(ivl_width_reference(check)));
+              /* The elaborated values are in this module's time units. */
+            fprintf(vlog_out, ", %.17e, %.17e", ivl_width_limit(check),
+                    ivl_width_threshold(check));
+            if (notifier) {
+                  fprintf(vlog_out, ", ");
+                  emit_id(ivl_signal_basename(notifier));
+            }
+            fprintf(vlog_out, ");\n");
+      }
+}
+
+static void emit_period_checks(ivl_scope_t scope)
+{
+      unsigned idx;
+      for (idx = 0; idx < ivl_scope_periods(scope); idx += 1) {
+            ivl_period_t check = ivl_scope_period(scope, idx);
+            ivl_signal_t notifier = ivl_period_notifier(check);
+            fprintf(vlog_out, "%*c$period(%s ", indent, ' ',
+                    ivl_period_posedge(check) ? "posedge" : "negedge");
+            emit_id(ivl_signal_basename(ivl_period_reference(check)));
+            fprintf(vlog_out, ", %.17e", ivl_period_limit(check));
+            if (notifier) {
+                  fprintf(vlog_out, ", ");
+                  emit_id(ivl_signal_basename(notifier));
+            }
+            fprintf(vlog_out, ");\n");
+      }
+}
+
+static void emit_simple_timing_event(ivl_signal_t signal, int edge)
+{
+      if (edge == 1) fprintf(vlog_out, "posedge ");
+      else if (edge == -1) fprintf(vlog_out, "negedge ");
+      emit_id(ivl_signal_basename(signal));
+}
+
+static void emit_setup_checks(ivl_scope_t scope)
+{
+      unsigned idx;
+      for (idx = 0; idx < ivl_scope_setups(scope); idx += 1) {
+            ivl_setup_t check = ivl_scope_setup(scope, idx);
+            ivl_signal_t notifier = ivl_setup_notifier(check);
+            fprintf(vlog_out, "%*c$setup(", indent, ' ');
+            emit_simple_timing_event(ivl_setup_data(check),
+                                     ivl_setup_data_edge(check));
+            fprintf(vlog_out, ", ");
+            emit_simple_timing_event(ivl_setup_reference(check),
+                                     ivl_setup_reference_edge(check));
+            fprintf(vlog_out, ", %.17e", ivl_setup_limit(check));
+            if (notifier) {
+                  fprintf(vlog_out, ", ");
+                  emit_id(ivl_signal_basename(notifier));
+            }
+            fprintf(vlog_out, ");\n");
+      }
+}
+
+static void emit_hold_checks(ivl_scope_t scope)
+{
+      unsigned idx;
+      for (idx = 0; idx < ivl_scope_holds(scope); idx += 1) {
+            ivl_hold_t check = ivl_scope_hold(scope, idx);
+            ivl_signal_t notifier = ivl_hold_notifier(check);
+            fprintf(vlog_out, "%*c$hold(", indent, ' ');
+            emit_simple_timing_event(ivl_hold_reference(check),
+                                     ivl_hold_reference_edge(check));
+            fprintf(vlog_out, ", ");
+            emit_simple_timing_event(ivl_hold_data(check),
+                                     ivl_hold_data_edge(check));
+            fprintf(vlog_out, ", %.17e", ivl_hold_limit(check));
+            if (notifier) {
+                  fprintf(vlog_out, ", ");
+                  emit_id(ivl_signal_basename(notifier));
+            }
+            fprintf(vlog_out, ");\n");
+      }
+}
+
+static void emit_setuphold_checks(ivl_scope_t scope)
+{
+      unsigned idx;
+      for (idx = 0; idx < ivl_scope_setupholds(scope); idx += 1) {
+            ivl_setuphold_t check = ivl_scope_setuphold(scope, idx);
+            ivl_signal_t notifier = ivl_setuphold_notifier(check);
+            fprintf(vlog_out, "%*c$setuphold(", indent, ' ');
+            emit_simple_timing_event(ivl_setuphold_reference(check),
+                                     ivl_setuphold_reference_edge(check));
+            fprintf(vlog_out, ", ");
+            emit_simple_timing_event(ivl_setuphold_data(check),
+                                     ivl_setuphold_data_edge(check));
+            fprintf(vlog_out, ", %.17e, %.17e", ivl_setuphold_setup_limit(check),
+                    ivl_setuphold_hold_limit(check));
+            if (notifier) {
+                  fprintf(vlog_out, ", ");
+                  emit_id(ivl_signal_basename(notifier));
+            }
+            fprintf(vlog_out, ");\n");
+      }
+}
+
 /*
  * The path delay information from the specify block is attached to the
  * output ports.
@@ -889,6 +998,18 @@ static void emit_specify(ivl_scope_t scope)
 {
       unsigned word, idx, count = ivl_scope_ports(scope);
       unsigned need_specify = 0;
+      if (ivl_scope_widths(scope) || ivl_scope_periods(scope) ||
+          ivl_scope_setups(scope) || ivl_scope_holds(scope) ||
+          ivl_scope_setupholds(scope)) {
+            fprintf(vlog_out, "\n%*cspecify\n", indent, ' ');
+            need_specify = 1;
+            indent += indent_incr;
+            emit_width_checks(scope);
+            emit_period_checks(scope);
+            emit_setup_checks(scope);
+            emit_hold_checks(scope);
+            emit_setuphold_checks(scope);
+      }
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_t nex = ivl_scope_mod_port(scope, idx);
 	    ivl_signal_t port = get_port_from_nexus(scope, nex, &word);

@@ -1,0 +1,48 @@
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:2: Unable to match SETUP OTHER -> C in tb.wrong_data
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:2: Unable to match HOLD OTHER -> C in tb.wrong_data
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:3: Unable to match SETUP D -> OTHER in tb.wrong_ref
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:3: Unable to match HOLD D -> OTHER in tb.wrong_ref
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:4: Unable to match SETUP D -> C in tb.wrong_edge
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:4: Unable to match HOLD D -> C in tb.wrong_edge
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:5: invalid SETUP limit
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:5: invalid HOLD limit
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:6: unrepresentable SETUP limit
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:6: unrepresentable HOLD limit
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:7: Module wrong_cell in tb.wrong_cell is not a different_cell; it is a sh_reject
+SDF WARNING: ivltests/setup_hold_hdl_reject.sdf:8: conditional or hierarchical SETUP event not supported.
+SDF WARNING: ivltests/setup_hold_hdl_reject.sdf:8: conditional or hierarchical HOLD event not supported.
+SDF WARNING: ivltests/setup_hold_hdl_reject.sdf:9: conditional or hierarchical SETUP event not supported.
+SDF WARNING: ivltests/setup_hold_hdl_reject.sdf:9: conditional or hierarchical HOLD event not supported.
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:11: Cannot find absent_instance in scope tb.
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:11: Unable to find absent_instance in scope tb.
+SH_OBJECT tb.wrong_data setup C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.wrong_data hold C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.wrong_ref setup C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.wrong_ref hold C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.wrong_edge setup C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.wrong_edge hold C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.negative setup C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.negative hold C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.overflow setup C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.overflow hold C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.wrong_cell setup C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.wrong_cell hold C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.conditional setup C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.conditional hold C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.hierarchy setup C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.hierarchy hold C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.valid setup C/posedge D/any limit=30 ticks=30 events=1
+SH_OBJECT tb.valid hold C/posedge D/any limit=30 ticks=30 events=1
+SH_OBJECT tb.combined setup C/posedge D/any limit=30 ticks=30 events=1
+SH_OBJECT tb.combined hold C/posedge D/any limit=30 ticks=30 events=1
+Timing violation: $setup at 115 (module units), interval=15 limit=30, ivltests/setup_hold_hdl_sdf_reject.v:8, scope=tb.valid
+SH_VIOLATION 16 115
+Timing violation: $setup at 115 (module units), interval=15 limit=30, ivltests/setup_hold_hdl_sdf_reject.v:8, scope=tb.combined
+SH_VIOLATION 18 115
+Timing violation: $hold at 130 (module units), interval=15 limit=30, ivltests/setup_hold_hdl_sdf_reject.v:8, scope=tb.valid
+SH_VIOLATION 17 130
+Timing violation: $hold at 130 (module units), interval=15 limit=30, ivltests/setup_hold_hdl_sdf_reject.v:8, scope=tb.combined
+SH_VIOLATION 19 130
+SH_COMPLETE objects=20 callbacks=4
+PASSED
+ivltests/setup_hold_hdl_sdf_reject.v:50: $finish called at 150 (1ps)

@@ -175,6 +175,11 @@ typedef struct ivl_design_s   *ivl_design_t;
 typedef _CLASS ivl_discipline_s*ivl_discipline_t;
 typedef const _CLASS netenum_t*ivl_enumtype_t;
 typedef struct ivl_event_s    *ivl_event_t;
+typedef struct ivl_width_s    *ivl_width_t;
+typedef struct ivl_setup_s    *ivl_setup_t;
+typedef struct ivl_setuphold_s *ivl_setuphold_t;
+typedef struct ivl_hold_s    *ivl_hold_t;
+typedef struct ivl_period_s   *ivl_period_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
 typedef struct ivl_island_s   *ivl_island_t;
 typedef struct ivl_lpm_s      *ivl_lpm_t;
@@ -1904,6 +1909,74 @@ extern unsigned   ivl_scope_classes(ivl_scope_t net);
 extern ivl_type_t ivl_scope_class(ivl_scope_t net, unsigned idx);
 extern unsigned       ivl_scope_enumerates(ivl_scope_t net);
 extern ivl_enumtype_t ivl_scope_enumerate(ivl_scope_t net, unsigned idx);
+/* Unconditional scalar WIDTH checks. Limit and threshold are expressed in
+ * the units of ivl_width_scope(); a null notifier means it was omitted. */
+extern unsigned ivl_scope_widths(ivl_scope_t net);
+extern ivl_width_t ivl_scope_width(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_width_scope(ivl_width_t check);
+extern ivl_signal_t ivl_width_reference(ivl_width_t check);
+extern ivl_signal_t ivl_width_notifier(ivl_width_t check);
+extern int ivl_width_posedge(ivl_width_t check);
+extern double ivl_width_limit(ivl_width_t check);
+extern double ivl_width_threshold(ivl_width_t check);
+extern const char*ivl_width_file(ivl_width_t check);
+extern unsigned ivl_width_lineno(ivl_width_t check);
+
+/* Standalone SETUP: normalized reference/data roles; limits use declaring
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+extern unsigned ivl_scope_setups(ivl_scope_t net);
+extern ivl_setup_t ivl_scope_setup(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_setup_scope(ivl_setup_t check);
+extern ivl_signal_t ivl_setup_reference(ivl_setup_t check);
+extern ivl_signal_t ivl_setup_data(ivl_setup_t check);
+extern ivl_signal_t ivl_setup_notifier(ivl_setup_t check);
+extern int ivl_setup_reference_edge(ivl_setup_t check);
+extern int ivl_setup_data_edge(ivl_setup_t check);
+extern double ivl_setup_limit(ivl_setup_t check);
+extern const char*ivl_setup_file(ivl_setup_t check);
+extern unsigned ivl_setup_lineno(ivl_setup_t check);
+
+/* Standalone HOLD: normalized reference/data roles; limits use declaring
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+extern unsigned ivl_scope_holds(ivl_scope_t net);
+extern ivl_hold_t ivl_scope_hold(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_hold_scope(ivl_hold_t check);
+extern ivl_signal_t ivl_hold_reference(ivl_hold_t check);
+extern ivl_signal_t ivl_hold_data(ivl_hold_t check);
+extern ivl_signal_t ivl_hold_notifier(ivl_hold_t check);
+extern int ivl_hold_reference_edge(ivl_hold_t check);
+extern int ivl_hold_data_edge(ivl_hold_t check);
+extern double ivl_hold_limit(ivl_hold_t check);
+extern const char*ivl_hold_file(ivl_hold_t check);
+extern unsigned ivl_hold_lineno(ivl_hold_t check);
+
+/* Combined SETUPHOLD: normalized reference/data roles; limits use declaring
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+extern unsigned ivl_scope_setupholds(ivl_scope_t net);
+extern ivl_setuphold_t ivl_scope_setuphold(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_setuphold_scope(ivl_setuphold_t check);
+extern ivl_signal_t ivl_setuphold_reference(ivl_setuphold_t check);
+extern ivl_signal_t ivl_setuphold_data(ivl_setuphold_t check);
+extern ivl_signal_t ivl_setuphold_notifier(ivl_setuphold_t check);
+extern int ivl_setuphold_reference_edge(ivl_setuphold_t check);
+extern int ivl_setuphold_data_edge(ivl_setuphold_t check);
+extern double ivl_setuphold_setup_limit(ivl_setuphold_t check);
+extern double ivl_setuphold_hold_limit(ivl_setuphold_t check);
+extern const char*ivl_setuphold_file(ivl_setuphold_t check);
+extern unsigned ivl_setuphold_lineno(ivl_setuphold_t check);
+
+/* Unconditional scalar PERIOD checks. The limit is expressed in the units
+ * of ivl_period_scope(); a null notifier means it was omitted. */
+extern unsigned ivl_scope_periods(ivl_scope_t net);
+extern ivl_period_t ivl_scope_period(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_period_scope(ivl_period_t check);
+extern ivl_signal_t ivl_period_reference(ivl_period_t check);
+extern ivl_signal_t ivl_period_notifier(ivl_period_t check);
+extern int ivl_period_posedge(ivl_period_t check);
+extern double ivl_period_limit(ivl_period_t check);
+extern const char*ivl_period_file(ivl_period_t check);
+extern unsigned ivl_period_lineno(ivl_period_t check);
+
 extern unsigned     ivl_scope_events(ivl_scope_t net);
 extern ivl_event_t  ivl_scope_event(ivl_scope_t net, unsigned idx);
 extern const char* ivl_scope_file(ivl_scope_t net);
@@ -2468,6 +2541,10 @@ extern DLLEXPORT const char* target_query(const char*key);
    ivl core. This function is how the target module is invoked. */
 
 typedef int  (*target_design_f)(ivl_design_t des);
+/* target_query("supports-width") or target_query("supports-period") returns
+ * "1" when the target consumes the corresponding ivl_scope_width/period checks.
+ * Other targets receive a warning for each ignored declaration; a missing query
+ * or any other response means unsupported. */
 typedef const char* (*target_query_f) (const char*key);
 
 

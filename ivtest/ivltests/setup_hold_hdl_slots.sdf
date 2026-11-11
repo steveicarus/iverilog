@@ -1,0 +1,4 @@
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
+ (CELL (CELLTYPE "sh_slot_leaf") (INSTANCE u)
+  (TIMINGCHECK (SETUP D (posedge C) (25:35:45))
+               (HOLD D (posedge C) (10:20:30)))))

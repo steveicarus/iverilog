@@ -963,6 +963,101 @@ using NetERef = NetNetRef<&NetNet::incr_eref, &NetNet::decr_eref>;
  */
 using NetLRef = NetNetRef<&NetNet::incr_lref, &NetNet::decr_lref>;
 
+/* One elaborated WIDTH declaration, with signal references kept alive. */
+class NetWidth : public LineInfo {
+    public:
+      NetWidth(NetScope*scope, NetNet*reference, NetNet*notifier,
+               bool posedge, double limit, double threshold)
+      : scope_(scope), reference_(reference), notifier_(notifier),
+        posedge_(posedge), limit_(limit), threshold_(threshold) { }
+
+      NetScope*scope() const { return scope_; }
+      NetNet*reference() const { return reference_.get(); }
+      NetNet*notifier() const { return notifier_.get(); }
+      bool posedge() const { return posedge_; }
+      double limit() const { return limit_; }
+      double threshold() const { return threshold_; }
+
+    private:
+      NetScope*scope_;
+      NetERef reference_;
+      NetLRef notifier_;
+      bool posedge_;
+      double limit_, threshold_;
+};
+
+/* One elaborated PERIOD declaration, with signal references kept alive. */
+class NetPeriod : public LineInfo {
+    public:
+      NetPeriod(NetScope*scope, NetNet*reference, NetNet*notifier,
+                bool posedge, double limit)
+      : scope_(scope), reference_(reference), notifier_(notifier),
+        posedge_(posedge), limit_(limit) { }
+
+      NetScope*scope() const { return scope_; }
+      NetNet*reference() const { return reference_.get(); }
+      NetNet*notifier() const { return notifier_.get(); }
+      bool posedge() const { return posedge_; }
+      double limit() const { return limit_; }
+
+    private:
+      NetScope*scope_;
+      NetERef reference_;
+      NetLRef notifier_;
+      bool posedge_;
+      double limit_;
+};
+
+/* Standalone two-event checks keep both terminals and the notifier alive.
+ * Edge values are -1 (negedge), 0 (any change), or 1 (posedge). */
+class NetTwoEventCheck : public LineInfo {
+    public:
+      NetTwoEventCheck(NetScope*scope, NetNet*reference, NetNet*data,
+                       NetNet*notifier, int reference_edge, int data_edge,
+                       double limit)
+      : scope_(scope), reference_(reference), data_(data), notifier_(notifier),
+        reference_edge_(reference_edge), data_edge_(data_edge), limit_(limit) { }
+
+      NetScope*scope() const { return scope_; }
+      NetNet*reference() const { return reference_.get(); }
+      NetNet*data() const { return data_.get(); }
+      NetNet*notifier() const { return notifier_.get(); }
+      int reference_edge() const { return reference_edge_; }
+      int data_edge() const { return data_edge_; }
+      double limit() const { return limit_; }
+
+    private:
+      NetScope*scope_;
+      NetERef reference_, data_;
+      NetLRef notifier_;
+      int reference_edge_, data_edge_;
+      double limit_;
+};
+
+class NetSetup : public NetTwoEventCheck {
+    public:
+      using NetTwoEventCheck::NetTwoEventCheck;
+};
+
+class NetHold : public NetTwoEventCheck {
+    public:
+      using NetTwoEventCheck::NetTwoEventCheck;
+};
+
+/* A combined check owns one notifier and two ordered limits. */
+class NetSetupHold : public NetTwoEventCheck {
+    public:
+      NetSetupHold(NetScope*scope, NetNet*reference, NetNet*data,
+                   NetNet*notifier, int reference_edge, int data_edge,
+                   double setup_limit, double hold_limit)
+      : NetTwoEventCheck(scope, reference, data, notifier, reference_edge,
+                         data_edge, setup_limit), hold_limit_(hold_limit) { }
+      double setup_limit() const { return limit(); }
+      double hold_limit() const { return hold_limit_; }
+    private:
+      double hold_limit_;
+};
+
 /*
  * This object type is used for holding local variable values when
  * evaluating constant user functions.
@@ -1129,6 +1224,17 @@ class NetScope : public Definitions, public Attrib {
 
 	/* These methods set or access events that live in this
 	   scope. */
+
+      void add_width(std::unique_ptr<NetWidth> check)
+      { widths_.push_back(std::move(check)); }
+      void add_period(std::unique_ptr<NetPeriod> check)
+      { periods_.push_back(std::move(check)); }
+      void add_setup(std::unique_ptr<NetSetup> check)
+      { setups_.push_back(std::move(check)); }
+      void add_hold(std::unique_ptr<NetHold> check)
+      { holds_.push_back(std::move(check)); }
+      void add_setuphold(std::unique_ptr<NetSetupHold> check)
+      { setupholds_.push_back(std::move(check)); }
 
       void add_event(NetEvent*);
       void rem_event(NetEvent*);
@@ -1483,6 +1589,11 @@ class NetScope : public Definitions, public Attrib {
       std::map<perm_string,unsigned int> gate_names_;
 
       NetEvent *events_;
+      std::vector<std::unique_ptr<NetWidth> > widths_;
+      std::vector<std::unique_ptr<NetPeriod> > periods_;
+      std::vector<std::unique_ptr<NetSetup> > setups_;
+      std::vector<std::unique_ptr<NetHold> > holds_;
+      std::vector<std::unique_ptr<NetSetupHold> > setupholds_;
 
       std::map<perm_string,LineInfo*> genvars_;
 

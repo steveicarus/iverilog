@@ -1,0 +1,12 @@
+{
+    "type": "CE",
+    "gold": "setup_hdl_conditional_fail",
+    "source": "setup_hdl_conditional_fail.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ]
+}
