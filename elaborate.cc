@@ -3108,7 +3108,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	   netlist. The compound statement is exactly equivalent. */
 
       if (delay || event_) {
-	    unsigned wid = count_lval_width(lv);
+	    unsigned wid = rv->expr_width();
 
 	    const netvector_t*tmp2_vec = new netvector_t(rv->expr_type(),wid-1,0);
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
