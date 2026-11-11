@@ -1,4 +1,4 @@
-// Check two-state conversion of packed members in nonblocking assignments.
+// Check two-state conversion of packed members and their selects in nonblocking assignments.
 
 module test;
 
@@ -20,6 +20,26 @@ module test;
   } value;
 
   initial begin
+    value = 12'ha5f;
+    value.inner.two[1:0] <= 2'bxz;
+    #1;
+    `check(value, 12'ha5c);
+
+    value = 12'ha5f;
+    value.inner.two[0] <= 1'bz;
+    #1;
+    `check(value, 12'ha5e);
+
+    value = 12'ha5f;
+    value.inner.four[1:0] <= 2'bxz;
+    #1;
+    `check(value, 12'b101001xz1111);
+
+    value = 12'ha5f;
+    {value.inner.two[1:0], {value.inner.four[1:0]}} <= 4'bxzzx;
+    #1;
+    `check(value, 12'b101001zx1100);
+
     value = 12'ha5f;
     {value.inner.four, value.inner.two} <= 8'bz01x_x1z0;
     #1;
