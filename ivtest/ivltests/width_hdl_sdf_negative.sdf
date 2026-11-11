@@ -1,0 +1,6 @@
+(DELAYFILE
+  (SDFVERSION "3.0")
+  (TIMESCALE 1ps)
+  (CELL (CELLTYPE "width_reject_leaf") (INSTANCE overflow)
+    (TIMINGCHECK (WIDTH (posedge CLK) (-1:-1:-1))))
+)

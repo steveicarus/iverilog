@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -528,6 +528,15 @@ void NetScope::emit_scope(struct target_t*tgt) const
 
 	    tgt->signal_paths(cur->second);
       }
+
+      for (const auto& check : widths_)
+	    tgt->width_check(check.get());
+      for (const auto& check : periods_)
+	    tgt->period_check(check.get());
+      for (const auto& check : setups_)
+            tgt->setup_check(check.get());
+      for (const auto& check : holds_)
+            tgt->hold_check(check.get());
 
       if (type_ == MODULE) tgt->convert_module_ports(this);
 }

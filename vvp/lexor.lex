@@ -72,6 +72,8 @@ inline uint64_t strtouint64(const char*str, char**endptr, int base)
 
 %}
 
+width_real ([0-9]+[.][0-9]*|[0-9]*[.][0-9]+)([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+
+
 %%
 
   /* These are some special header/footer keywords. */
@@ -234,6 +236,10 @@ inline uint64_t strtouint64(const char*str, char**endptr, int base)
 ".substitute"   { return K_SUBSTITUTE; }
 ".thread"       { return K_THREAD; }
 ".timescale"    { return K_TIMESCALE; }
+".tchk_width"   { return K_TCHK_WIDTH; }
+".tchk_period"  { return K_TCHK_PERIOD; }
+".tchk_setup"   { return K_TCHK_SETUP; }
+".tchk_hold"    { return K_TCHK_HOLD; }
 ".tran"         { return K_TRAN; }
 ".tranif0"      { return K_TRANIF0; }
 ".tranif1"      { return K_TRANIF1; }
@@ -289,6 +295,8 @@ inline uint64_t strtouint64(const char*str, char**endptr, int base)
 "0x"[0-9a-fA-F]+ {
       yylval.numb = strtouint64(yytext, 0, 0);
       return T_NUMBER; }
+
+{width_real} { yylval.real = atof(yytext); return T_REAL; }
 
   /* Handle some specialized constant/literals as symbols. */
 

@@ -1,0 +1,5 @@
+(DELAYFILE (SDFVERSION "3.0") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "sh_escaped") (INSTANCE u)
+  (TIMINGCHECK
+   (SETUP D\\tail (posedge C\.dot) (35:35:35))
+   (HOLD D\\tail (posedge C\.dot) (15:15:15)))))
