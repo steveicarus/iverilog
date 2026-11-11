@@ -55,13 +55,14 @@ static double sdf_delay_scale(vpiHandle scope)
       return sdf_timescale / pow(10.0, (double)unit);
 }
 
-/* Check the same local rounding and global scaling used by the runtime
-   before handing it an accumulated INTERCONNECT value. The runtime's
-   real-to-tick conversion does not itself detect overflow. */
+/* Check accumulated INTERCONNECT values using the receiver's rounding and
+   global scaling. The runtime also validates real writes; this preflight
+   preserves the SDF filename and line in its out-of-range diagnostic. */
 static bool interconnect_increment_fits(double value, vpiHandle scope)
 {
       if (!isfinite(value)) return false;
-      if (value < 0.0) return true; /* The delay setter clamps the final value. */
+      /* Retain negative totals; only their effective scheduling ticks clamp. */
+      if (value < 0.0) return true;
       int precision = vpi_get(vpiTimePrecision, scope);
       int shift = vpi_get(vpiTimeUnit, scope) - precision;
       double rounded = value * pow(10.0, shift) + 0.5;
@@ -374,6 +375,7 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 			delay_vals[idx].type = vpiScaledRealTime;
 			if (delval_list->val[idx].defined) {
 			      double val = delval_list->val[idx].value * sdf_delay_scale(delay_scope);
+			      // Accumulate before validation: SDF performs read/modify/write.
 			      if (increment) val += delay_vals[idx].real;
 			      if (sdf_flag_inform) vpi_printf("SDF INFO: %s:%d: Putting delay: %f for index %d\n",
 			                                      sdf_fname, sdf_lineno, val, idx);
@@ -381,7 +383,7 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 			}
 		  }
 
-		    // Validate the entire incremental update before modifying the object.
+		    // Validate accumulated totals, not the individual increments.
 		  if (increment) {
 			for (int idx = 0; idx < delval_list->count; idx += 1) {
 			      if (!interconnect_increment_fits(delay_vals[idx].real, delay_scope)) {
@@ -392,7 +394,7 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
 			      }
 			}
 		  }
-		    // Put the new delays
+		    // Replace with the computed totals; append_flag remains zero.
 		  vpi_put_delays(intermodpath, &delays);
 	    } else {
 		  vpi_printf("SDF ERROR: %s:%d: Could not find intermodpath!\n", sdf_fname, sdf_lineno);
