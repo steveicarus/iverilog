@@ -3083,7 +3083,7 @@ bool of_DISPATCH_VIRT(vthread_t thr, vvp_code_t cp)
       vvp_object_t obj;
       thr->pop_object(obj);
 
-      if (vvp_cobject*cobj = obj.peek<vvp_cobject>()) {
+      if (const vvp_cobject*cobj = obj.peek<vvp_cobject>()) {
 	    if (vvp_code_t code = cobj->get_virtual(cp->handle))
 		  thr->pc = code;
       }
@@ -3417,6 +3417,12 @@ bool of_DUP_OBJ(vthread_t thr, vvp_code_t)
 bool of_DUP_REAL(vthread_t thr, vvp_code_t)
 {
       thr->push_real(thr->peek_real(0));
+      return true;
+}
+
+bool of_DUP_STR(vthread_t thr, vvp_code_t)
+{
+      thr->push_str(thr->peek_str(0));
       return true;
 }
 

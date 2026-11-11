@@ -1898,6 +1898,7 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 	    ivl_assert(*this, prts_vector_width % instance.size() == 0);
 
 	    if (!prts.empty() && (prts[0]->port_type() == NetNet::PINPUT)
+	        && (prts[0]->type() != NetNet::REG)
 	        && prts[0]->pin(0).nexus()->drivers_present()
 	        && pins[idx]->is_collapsible_net(des, scope,
 	                                         prts[0]->port_type())) {
@@ -4630,7 +4631,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	    use_this->set_line(*this);
 
 	    // A call through super is not virtual.
-	    bool nonvirtual = !use_path.empty() && use_path.back().name == "#";
+	    bool nonvirtual = use_path.back().name == "#";
 	    return elaborate_build_call_(des, scope, task, use_this, nonvirtual);
       }
 
@@ -4795,6 +4796,9 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	    des->errors += 1;
       }
 
+      unsigned int off = use_this ? 1 : 0;
+      auto args = map_named_args(des, def, parms_, off);
+
       NetBlock*block = new NetBlock(NetBlock::SEQU, 0);
       block->set_line(*this);
 
@@ -4843,9 +4847,6 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	   expression the r-value. We know by definition that the port
 	   is a reg type, so this elaboration is pretty obvious. */
 
-      unsigned int off = use_this ? 1 : 0;
-
-      auto args = map_named_args(des, def, parms_, off);
       for (unsigned int idx = off; idx < parm_count; idx++) {
 	    size_t parms_idx = idx - off;
 
@@ -6895,17 +6896,18 @@ static std::string ordinary_path_condition_key(Design*des, NetScope*scope,
             return key.str();
       }
 
-      if (binary->peek_opcode() == 'a') {
+      if (binary->peek_opcode() == 'a' || binary->peek_opcode() == 'o') {
             std::string left_text, right_text;
             std::string left = ordinary_path_condition_key(des, scope,
                                               binary->peek_left(), left_text);
             std::string right = ordinary_path_condition_key(des, scope,
                                               binary->peek_right(), right_text);
-            // AND leaves must be comparisons, not bare names or constants.
+            // Logical leaves must be comparisons, not bare names or constants.
             if (left.empty() || right.empty()
                 || left[0] != ' ' || right[0] != ' ') return {};
-            text = "(" + left_text + " && " + right_text + ")";
-            return " A" + left + right;
+            const bool is_or = binary->peek_opcode() == 'o';
+            text = "(" + left_text + (is_or ? " || " : " && ") + right_text + ")";
+            return (is_or ? " O" : " A") + left + right;
       }
 
       return {};

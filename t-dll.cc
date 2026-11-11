@@ -663,20 +663,20 @@ bool dll_target::start_design(const Design*des)
  * scope, and the scopes within it. This is done once all the scopes
  * exist, so that the functions can be looked up.
  */
-void dll_target::fill_virtual_tables_(ivl_scope_t scope)
+void dll_target::fill_virtual_tables_(ivl_scope_t scop)
 {
-      for (ivl_type_t type : scope->classes) {
+      for (ivl_type_t type : scop->classes) {
 	    const netclass_t*cls = dynamic_cast<const netclass_t*>(type);
 	    vector<pair<NetScope*,NetScope*> > table;
 	    cls->virtual_table(table);
-	    for (auto&cur : table) {
+	    for (const auto&cur : table) {
 		  ivl_scope_t impl = lookup_scope_(cur.second);
 		  ivl_assert(*cls->class_scope(), impl);
 		  cls->virtual_scopes().push_back(impl);
 	    }
       }
 
-      for (ivl_scope_t child : scope->child)
+      for (ivl_scope_t child : scop->child)
 	    fill_virtual_tables_(child);
 }
 
