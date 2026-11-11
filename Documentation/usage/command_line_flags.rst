@@ -107,9 +107,10 @@ These flags affect the general behavior of the compiler.
     update; reference/edge matching and limit validation still apply.
 
     Conditional, vector and hierarchical WIDTH declarations are diagnosed as
-    unsupported. Other targets warn that WIDTH is ignored. This does not enable
-    other timing-check kinds such as ``$period``. SDF annotation refusals are
-    reported as diagnostics and do not necessarily change the process exit code.
+    unsupported. Targets other than VVP and vlog95 warn that WIDTH is ignored.
+    This does not enable other timing-check kinds such as ``$period``. SDF
+    annotation refusals are reported as diagnostics and do not necessarily
+    change the process exit code.
 
   * std-include/no-std-include
 
