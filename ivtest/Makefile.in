@@ -38,6 +38,7 @@ check-installed:
 	@status=0; \
 	$(MAKE) check-installed-vvp || status=1; \
 	$(MAKE) check-installed-vvp-py || status=1; \
+	$(MAKE) check-installed-tchk-vlog95 || status=1; \
 	$(MAKE) check-installed-vpi || status=1; \
 	$(MAKE) check-installed-fst || status=1; \
 	exit $$status
@@ -57,6 +58,10 @@ check-installed-vvp:
 check-installed-vvp-py:
 	@echo "Running vvp_reg.py"
 	cd $(abs_srcdir); python3 vvp_reg.py $(opts)
+
+# Exercise the emitted checks as well as their native VVP counterparts.
+check-installed-tchk-vlog95:
+	cd $(abs_srcdir); python3 vvp_reg.py $(opts) --vlog95 regress-tchk-notifier.list regress-tchk-target-corners.list regress-setup-hold-hdl.list regress-recovery-removal-hdl.list regress-recrem-hdl.list
 
 ifeq (@HAVE_LIBZ@,yes)
 fst_enum_reader@EXEEXT@: $(srcdir)/fst_enum_reader.c ../vpi/fstapi.o ../vpi/fastlz.o ../vpi/lz4.o
@@ -84,3 +89,5 @@ Makefile: $(srcdir)/Makefile.in ../config.status
 	cd ..; ./config.status --file=ivtest/$@
 
 .PHONY: check-installed-fst check-installed check-installed-vpi check-installed-vvp check-installed-vvp-py
+
+.PHONY: check-installed-tchk-vlog95
