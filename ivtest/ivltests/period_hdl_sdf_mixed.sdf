@@ -1,0 +1,3 @@
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
+  (CELL (CELLTYPE "period_mixed_sdf_leaf") (INSTANCE)
+    (TIMINGCHECK (PERIOD (posedge CLK) (20:20:20)))))

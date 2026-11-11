@@ -1,0 +1,12 @@
+(DELAYFILE (SDFVERSION "3.0") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "conditional[tb.c]") (INSTANCE c) (TIMINGCHECK
+  (SETUP (COND E D) (posedge C) (30:30:30))
+  (HOLD (COND E D) (posedge C) (30:30:30))
+  (SETUP D (COND R (posedge C)) (30:30:30))
+  (HOLD D (COND R (posedge C)) (30:30:30))))
+ (CELL (CELLTYPE "unconditional[tb.u]") (INSTANCE u) (TIMINGCHECK
+  (SETUP (COND E D) (posedge C) (30:30:30))
+  (HOLD (COND E D) (posedge C) (30:30:30))
+  (SETUP D (COND R (posedge C)) (30:30:30))
+  (HOLD D (COND R (posedge C)) (30:30:30))))
+)

@@ -85,6 +85,7 @@ static void delete_sub_scopes(__vpiScope *scope)
 		    /* The destination ModPath is cleaned up later. */
 		  delete item;
 		  break;
+		case vpiTchk:
 		case vpiInterModPath:
 		  delete item;
 		  break;
