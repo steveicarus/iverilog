@@ -3,7 +3,7 @@
 
 module test;
 
-  function f(integer a, integer b);
+  function f(integer a, integer b = 0);
     $display("FAILED");
   endfunction
 

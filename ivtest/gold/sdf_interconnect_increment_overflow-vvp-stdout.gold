@@ -1,0 +1,3 @@
+SDF WARNING: ivltests/sdf_interconnect_increment_overflow_add.sdf:7: INTERCONNECT increment is outside the simulation time range; delays unchanged.
+SDF WARNING: ivltests/sdf_interconnect_increment_overflow_add.sdf:8: INTERCONNECT increment is outside the simulation time range; delays unchanged.
+PASSED

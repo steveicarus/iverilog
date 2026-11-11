@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -659,6 +659,7 @@ void dll_target::expr_ufunc(const NetEUFunc*net)
       expr->sized_= 1;
       FILE_NAME(expr, net);
 
+      expr->u_.ufunc_.nonvirtual = net->nonvirtual();
       expr->u_.ufunc_.def = lookup_scope_(net->func());
       if (expr->u_.ufunc_.def == 0) {
 	    cerr << net->get_fileline() << ": internal error: "

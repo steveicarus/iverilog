@@ -414,6 +414,14 @@ void NetScope::run_defparams(Design*des)
 	    pform_name_t path = pp.first;
 	    PExpr*val = pp.second;
 
+	    if (!path.back().index.empty()) {
+		  cerr << path.back().index.front().get_fileline()
+		       << ": error: Defparam target cannot have a bit-select or part-select."
+		       << endl;
+		  des->errors++;
+		  continue;
+	    }
+
 	    perm_string perm_name = peek_tail_name(path);
 	    path.pop_back();
 

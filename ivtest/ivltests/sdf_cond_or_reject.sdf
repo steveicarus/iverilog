@@ -1,0 +1,19 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "or_reject_cell") (INSTANCE untouched)
+  (DELAY (ABSOLUTE
+   (COND ((F == 1'b1) || (E == 1'b1)) (IOPATH A Z (91) (93)))
+   (COND ((E == 1'b1) && (F == 1'b1)) (IOPATH A Z (91) (93)))
+   (COND ((E == 1'b1) || ((F == 1'b1) || (G == 1'b1))) (IOPATH A ZL (91) (93)))
+   (COND ((H == 1'b1) || (F == 1'b1)) (IOPATH A Z (91) (93)))
+   (COND ((E == 1'b0) || (F == 1'b1)) (IOPATH A Z (91) (93)))
+   (COND (E || F) (IOPATH A Z (91) (93)))
+   (COND ((other/E == 1'b1) || (F == 1'b1)) (IOPATH A Z (91) (93)))
+   (COND ((E === 1'b1) || (F == 1'b1)) (IOPATH A Z (91) (93)))
+   (COND ((1'b1 == E) || (F == 1'b1)) (IOPATH A Z (91) (93)))
+  )))
+ (CELL (CELLTYPE "or_reject_cell") (INSTANCE updated)
+  (DELAY (ABSOLUTE
+   (COND ((E == 1'b1) || (F == 1'b1)) (IOPATH A Z (7) (9)))
+  )))
+)

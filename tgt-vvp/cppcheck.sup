@@ -28,31 +28,33 @@ nullPointerOutOfMemory:modpath.c:143         // calloc @  138
 nullPointerOutOfMemory:modpath.c:144         // calloc @  138
 nullPointerOutOfMemory:modpath.c:145         // calloc @  138
 nullPointerOutOfMemory:modpath.c:146         // calloc @  138
-nullPointerOutOfMemory:vvp_process.c:2296    // malloc @ 2288
-nullPointerOutOfMemory:vvp_process.c:2297    // malloc @ 2288
-nullPointerOutOfMemory:vvp_scope.c:876       // calloc @  865
-nullPointerOutOfMemory:vvp_scope.c:900       // calloc @  865
-nullPointerOutOfMemory:vvp_scope.c:1094      // calloc @ 1092
-nullPointerOutOfMemory:vvp_scope.c:1117      // calloc @ 1092
-nullPointerOutOfMemory:vvp_scope.c:1702      // malloc @ 1684
-nullPointerOutOfMemory:vvp_scope.c:1703      // malloc @ 1684
-nullPointerOutOfMemory:vvp_scope.c:1732      // malloc @ 1684
-nullPointerOutOfMemory:vvp_scope.c:1733      // malloc @ 1684
-nullPointerOutOfMemory:vvp_scope.c:1743      // malloc @ 1684
-nullPointerOutOfMemory:vvp_scope.c:1747      // malloc @ 1684
-nullPointerOutOfMemory:vvp_scope.c:1748      // malloc @ 1684
-nullPointerOutOfMemory:vvp_scope.c:1759      // malloc @ 1684
-nullPointerOutOfMemory:vvp_scope.c:1766      // malloc @ 1684
-nullPointerOutOfMemory:vvp_scope.c:1993      // calloc @ 1989
-nullPointerOutOfMemory:vvp_scope.c:2030      // calloc @ 1989
-nullPointerOutOfMemory:vvp_scope.c:2064      // calloc @ 2060
-nullPointerOutOfMemory:vvp_scope.c:2079      // calloc @ 2060
+nullPointerOutOfMemory:modpath.c:147         // calloc @  138
+nullPointerOutOfMemory:modpath.c:148         // calloc @  138
+nullPointerOutOfMemory:vvp_process.c:2302    // malloc @ 2288
+nullPointerOutOfMemory:vvp_process.c:2303    // malloc @ 2288
+nullPointerOutOfMemory:vvp_scope.c:878       // calloc @  865
+nullPointerOutOfMemory:vvp_scope.c:902       // calloc @  865
+nullPointerOutOfMemory:vvp_scope.c:1096      // calloc @ 1092
+nullPointerOutOfMemory:vvp_scope.c:1119      // calloc @ 1092
+nullPointerOutOfMemory:vvp_scope.c:1704      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1705      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1734      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1735      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1745      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1749      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1750      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1761      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1768      // malloc @ 1684
+nullPointerOutOfMemory:vvp_scope.c:1995      // calloc @ 1989
+nullPointerOutOfMemory:vvp_scope.c:2032      // calloc @ 1989
+nullPointerOutOfMemory:vvp_scope.c:2066      // calloc @ 2060
+nullPointerOutOfMemory:vvp_scope.c:2081      // calloc @ 2060
 nullPointerArithmeticOutOfMemory:stmt_assign.c:219  // calloc @ 619
 nullPointerArithmeticOutOfMemory:stmt_assign.c:367  // calloc @ 619
 memleakOnRealloc:draw_net_input.c:657
 memleakOnRealloc:vvp_scope.c:57
 memleakOnRealloc:vvp_scope.c:106
-memleakOnRealloc:vvp_scope.c:853
+memleakOnRealloc:vvp_scope.c:855
 
 // These are the global access functions called from the compiler so they
 // are not used here.

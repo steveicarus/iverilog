@@ -1,0 +1,13 @@
+{
+    "type": "normal",
+    "source": "sdf_interconnect_accumulated_coarse.v",
+    "iverilog-args": [
+        "-g2005",
+        "-gspecify",
+        "-ginterconnect"
+    ],
+    "vpi-sources": [
+        "vpi/interconnect_accumulated.c"
+    ],
+    "gold": "sdf_interconnect_accumulated_coarse"
+}

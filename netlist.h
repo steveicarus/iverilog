@@ -1376,6 +1376,11 @@ class NetScope : public Definitions, public Attrib {
       void is_auto(bool is_auto__) { is_auto_ = is_auto__; };
       bool is_auto() const { return is_auto_; };
 
+	/* Was the method declared with the "virtual" qualifier. Use
+	   netclass_t::virtual_root() to also account for inheritance. */
+      void is_virtual(bool is_virtual__) { is_virtual_ = is_virtual__; };
+      bool is_virtual() const { return is_virtual_; };
+
 	/* Is the module a cell (is in a `celldefine) */
       void is_cell(bool is_cell__) { is_cell_ = is_cell__; };
       bool is_cell() const { return is_cell_; };
@@ -1618,7 +1623,7 @@ class NetScope : public Definitions, public Attrib {
       std::map<perm_string,std::map<long,interface_port_alias_t> > interface_port_alias_arrays_;
 
       unsigned lcounter_;
-      bool need_const_func_, is_const_func_, is_auto_, is_cell_, calls_stask_;
+      bool need_const_func_, is_const_func_, is_auto_, is_virtual_, is_cell_, calls_stask_;
 
       /* Final procedures sets this to notify statements that
 	 they are part of a final procedure. */
@@ -4256,6 +4261,12 @@ class NetEUFunc  : public NetExpr {
 
       const NetScope* func() const;
 
+	// A call to a virtual method is normally dispatched on the
+	// class of the object. A non-virtual call (super.method())
+	// runs the selected method directly.
+      void set_nonvirtual(bool flag) { nonvirtual_ = flag; }
+      bool nonvirtual() const { return nonvirtual_; }
+
       virtual void dump(std::ostream&) const override;
 
       virtual void expr_scan(struct expr_scan_t*) const override;
@@ -4274,6 +4285,7 @@ class NetEUFunc  : public NetExpr {
       NetESignal*result_sig_;
       std::vector<NetExpr*> parms_;
       bool need_const_;
+      bool nonvirtual_;
 
     private: // not implemented
       NetEUFunc(const NetEUFunc&);
@@ -4320,6 +4332,10 @@ class NetUTask  : public NetProc {
 
       const NetScope* task() const;
 
+	// See NetEUFunc::set_nonvirtual().
+      void set_nonvirtual(bool flag) { nonvirtual_ = flag; }
+      bool nonvirtual() const { return nonvirtual_; }
+
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                                   bool nested_func = false) const override;
       virtual void nex_output(NexusSet&) override;
@@ -4330,6 +4346,7 @@ class NetUTask  : public NetProc {
 
     private:
       NetScope*task_;
+      bool nonvirtual_;
 };
 
 /*

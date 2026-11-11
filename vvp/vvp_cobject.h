@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_cobject_H
 #define IVL_vvp_cobject_H
 /*
- * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -45,6 +45,10 @@ class vvp_cobject : public vvp_object {
       void get_object(size_t pid, vvp_object_t&val, size_t idx);
 
       void shallow_copy(const vvp_object*that) override;
+
+	// See class_type::get_virtual().
+      vvp_code_t get_virtual(vpiHandle scope) const
+      { return defn_->get_virtual(scope); }
 
     private:
       const class_type* defn_;
