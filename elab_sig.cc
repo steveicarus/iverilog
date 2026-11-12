@@ -182,9 +182,12 @@ static void sig_check_ref_port(Design*des, const NetScope*scope,
 
       if (!supported) {
 	    cerr << wire->get_fileline() << ": sorry: "
-		 << "Reference argument `" << wire->basename()
-		 << "` of type `" << sig->data_type()
-		 << "` is not supported." << endl;
+		 << "Reference argument `" << wire->basename() << "` ";
+	    if (sig->unpacked_dimensions() > 0)
+		  cerr << "that is an unpacked array";
+	    else
+		  cerr << "of type `" << sig->data_type() << "`";
+	    cerr << " is not supported." << endl;
 	    des->errors += 1;
       }
 }
