@@ -7472,9 +7472,14 @@ static const char*virtual_mismatch(NetScope*over, NetScope*root)
  * prototype in the class (IEEE1800-2017 8.24). Pform has already
  * checked the number, names and directions of the ports. Types are
  * compared after elaboration so that typedefs and spelled-out types
- * match. This only compares what virtual_types_match() does, so for
- * example the element types of dynamic arrays are not compared.
+ * match. A queue and a dynamic array are equivalent types, so the base
+ * types are compared as well.
  */
+static bool extern_types_match(ivl_type_t a, ivl_type_t b)
+{
+      return a->base_type() == b->base_type() && a->type_equivalent(b);
+}
+
 static void check_extern_types(Design*des, NetScope*class_scope,
 			       const perm_string&cname, perm_string name,
 			       const PClass::extern_method_t&proto)
@@ -7500,7 +7505,7 @@ static void check_extern_types(Design*des, NetScope*class_scope,
 		  if (ptype == 0)
 			continue;
 		  if (unpacked == sig->unpacked_dims()
-		      && virtual_types_match(ptype, sig->net_type(), false))
+		      && extern_types_match(ptype, sig->net_type()))
 			continue;
 		  cerr << proto.def.get_fileline() << ": error: Port '"
 		       << port.port->basename() << "' of extern " << what
@@ -7524,7 +7529,7 @@ static void check_extern_types(Design*des, NetScope*class_scope,
 
       const NetNet*ret = method->find_signal(name);
       if ((rtype == 0) != (ret == 0)
-	  || (ret && !virtual_types_match(rtype, ret->net_type(), false))) {
+	  || (ret && !extern_types_match(rtype, ret->net_type()))) {
 	    cerr << proto.def.get_fileline() << ": error: Return type of "
 		 << "extern function '" << cname << "::" << name
 		 << "' differs from the prototype at " << where << "."
