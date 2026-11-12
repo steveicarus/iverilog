@@ -96,7 +96,7 @@ static struct sdf_cond_expr_s condition_binary(char op,
                                               struct sdf_cond_expr_s right)
 {
       struct sdf_cond_expr_s result = {SDF_COND_UNSUPPORTED, 0, 0};
-      if (op == 'e' && left.kind == SDF_COND_NAME
+      if ((op == 'e' || op == 'c') && left.kind == SDF_COND_NAME
           && right.kind == SDF_COND_CONSTANT) {
             char length[3*sizeof(size_t)+1];
             size_t name_len = strlen(left.key);
@@ -106,7 +106,7 @@ static struct sdf_cond_expr_s condition_binary(char op,
             if (name_len <= (size_t)-1 - length_len - 5) {
                   result.key = malloc(name_len + length_len + 5);
                   if (result.key) {
-                        sprintf(result.key, " E%s:%s%c", length, left.key,
+                        sprintf(result.key, " %c%s:%s%c", op == 'c' ? 'C' : 'E', length, left.key,
                                 right.value ? '1' : '0');
                         result.kind = SDF_COND_EXPRESSION;
                   }
@@ -558,7 +558,7 @@ conditional_port_expr
   | conditional_port_expr K_LOR conditional_port_expr { $$ = condition_binary('o', $1, $3); }
   | conditional_port_expr K_EQ conditional_port_expr { $$ = condition_binary('e', $1, $3); }
   | conditional_port_expr K_NE conditional_port_expr { $$ = condition_binary(0, $1, $3); }
-  | conditional_port_expr K_CEQ conditional_port_expr { $$ = condition_binary(0, $1, $3); }
+  | conditional_port_expr K_CEQ conditional_port_expr { $$ = condition_binary('c', $1, $3); }
   | conditional_port_expr K_CNE conditional_port_expr { $$ = condition_binary(0, $1, $3); }
   ;
 
