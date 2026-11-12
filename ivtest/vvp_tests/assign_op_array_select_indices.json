@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "assign_op_array_select_indices.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Translated compound assignments reevaluate indices",
+        "type"      : "EF"
+    }
+}
