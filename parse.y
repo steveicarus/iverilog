@@ -57,7 +57,9 @@ static struct {
       NetNet::Type port_net_type;
       NetNet::PortType port_type;
       data_type_t* data_type;
-} port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT, 0};
+	// True if the ports are const ref arguments of a task or function.
+      bool is_const;
+} port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT, 0, false};
 
 /* Modport port declaration lists use this structure for context. */
 enum modport_port_type_t { MP_NONE, MP_SIMPLE, MP_TF, MP_CLOCKING };
@@ -1387,7 +1389,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 
 %type <nettype>  net_type net_type_opt net_type_or_var net_type_or_var_opt
 %type <gatetype> gatetype switchtype
-%type <porttype> port_direction port_direction_opt
+%type <porttype> port_direction port_direction_opt tf_port_direction_opt
 %type <vartype> integer_vector_type integer_vector_type_no_reg
 %type <parmvalue> parameter_value_assignment
 
@@ -3366,7 +3368,7 @@ partial_port_identifier_dim
 
 tf_port_item /* IEEE1800-2005: A.2.7 */
 
-  : port_direction_opt K_var_opt data_type_or_implicit_plus_id_dim initializer_opt
+  : tf_port_direction_opt K_var_opt data_type_or_implicit_plus_id_dim initializer_opt
       { std::vector<pform_tf_port_t>*tmp;
 	NetNet::PortType use_port_type = $1;
         if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || !$3.type))
@@ -3402,6 +3404,10 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	}
 
 	$$ = tmp;
+	if (port_declaration_context.is_const) {
+	      for (size_t idx = 0 ; idx < tmp->size() ; idx += 1)
+		    tmp->at(idx).port->set_const(true);
+	}
 	if ($4) {
 	      pform_requires_sv(@4, "Task/function default argument");
 	      assert(tmp->size()==1);
@@ -3411,7 +3417,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 
   /* Rules to match error cases... */
 
-  | port_direction_opt K_var_opt data_type_or_implicit_plus_id_dim error
+  | tf_port_direction_opt K_var_opt data_type_or_implicit_plus_id_dim error
       { yyerror(@3, "error: Error in task/function port item after port name %s.", $3.id);
 	delete_type_id_range($3);
 	yyerrok;
@@ -3419,9 +3425,30 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
       }
   ;
 
+  /* The direction of a task/function port. A "const ref" port is a ref
+     port that the task or function can not write. A port without a
+     direction keeps the direction and const of the previous port. */
+
+tf_port_direction_opt
+  : port_direction_opt
+      { $$ = $1;
+	if ($1 != NetNet::PIMPLICIT)
+	      port_declaration_context.is_const = false;
+      }
+  | K_const K_ref
+      { $$ = NetNet::PREF;
+	port_declaration_context.is_const = true;
+	if (!pform_requires_sv(@2, "Reference port (ref)")) {
+	      $$ = NetNet::PINPUT;
+	      port_declaration_context.is_const = false;
+	}
+      }
+  ;
+
 tf_port_list /* IEEE1800-2005: A.2.7 */
   :   { port_declaration_context.port_type = gn_system_verilog() ? NetNet::PINPUT : NetNet::PIMPLICIT;
 	port_declaration_context.data_type = nullptr;
+	port_declaration_context.is_const = false;
       }
     tf_port_item_list
       { $$ = $2; }
