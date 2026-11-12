@@ -545,6 +545,24 @@ NetExpr* elaborate_ref_argument(Design*des, NetScope*scope,
       if (res == 0)
 	    return 0;
 
+	/* An element of an unpacked array and a bit or part select of a
+	 * variable are legal actuals, but the formal can not be bound to
+	 * them yet. A select of a net is still reported as a net below. */
+      const NetESignal*sel_sig = dynamic_cast<const NetESignal*>(res);
+      if (const NetESelect*esel = dynamic_cast<NetESelect*>(res))
+	    sel_sig = dynamic_cast<const NetESignal*>(esel->sub_expr());
+      if (sel_sig && sel_sig->sig()->type() == NetNet::REG &&
+          (sel_sig != res || sel_sig->word_index() ||
+	   sel_sig->sig()->unpacked_dimensions() > 0)) {
+	    cerr << expr->get_fileline() << ": sorry: The actual argument "
+		 << *expr << " for the ref argument `" << formal->name()
+		 << "` is an unpacked array or an element, bit select "
+		    "or part select of a variable, which is not supported yet." << endl;
+	    des->errors += 1;
+	    delete res;
+	    return 0;
+      }
+
       const NetNet*sig = 0;
       if (const NetESignal*esig = dynamic_cast<NetESignal*>(res)) {
 	    if (!esig->word_index())
