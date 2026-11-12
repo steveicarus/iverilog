@@ -373,6 +373,9 @@ port_header_duplicate_concat_fail	vvp_tests/port_header_duplicate_concat_fail.js
 port_header_duplicate_explicit_first_fail	vvp_tests/port_header_duplicate_explicit_first_fail.json
 port_header_duplicate_fail	vvp_tests/port_header_duplicate_fail.json
 port_header_duplicate_implicit_first_fail	vvp_tests/port_header_duplicate_implicit_first_fail.json
+pow_const_unknown		vvp_tests/pow_const_unknown.json
+pow_property			vvp_tests/pow_property.json
+pow_two_state			vvp_tests/pow_two_state.json
 pr1388974			vvp_tests/pr1388974.json
 pr1701890			vvp_tests/pr1701890.json
 pr1864110a			vvp_tests/pr1864110a.json

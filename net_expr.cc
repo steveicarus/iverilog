@@ -112,7 +112,8 @@ NetEBAdd::~NetEBAdd()
 }
 
 
-static ivl_variable_type_t arith_expr_type(const NetExpr *l, const NetExpr *r)
+static ivl_variable_type_t arith_expr_type(const NetExpr*l, const NetExpr*r,
+					   bool can_generate_x = false)
 {
       auto l_expr_type = l->expr_type();
       auto r_expr_type = r->expr_type();
@@ -121,9 +122,10 @@ static ivl_variable_type_t arith_expr_type(const NetExpr *l, const NetExpr *r)
           r_expr_type == IVL_VT_REAL)
 	    return IVL_VT_REAL;
 
-      if (l_expr_type == IVL_VT_LOGIC ||
-          r_expr_type == IVL_VT_LOGIC)
+      if (can_generate_x || l_expr_type == IVL_VT_LOGIC ||
+          r_expr_type == IVL_VT_LOGIC) {
 	    return IVL_VT_LOGIC;
+      }
 
       return IVL_VT_BOOL;
 }
@@ -176,15 +178,8 @@ NetEBDiv::~NetEBDiv()
 
 ivl_variable_type_t NetEBDiv::expr_type() const
 {
-      if (left_->expr_type() == IVL_VT_REAL)
-	    return IVL_VT_REAL;
-
-      if (right_->expr_type() == IVL_VT_REAL)
-	    return IVL_VT_REAL;
-
-      // div is always 4-state, even if both inputs are 2-state because division
-      // by 0 can yield 'x
-      return IVL_VT_LOGIC;
+	// Division and modulo by zero can produce X from two-state operands.
+      return arith_expr_type(left_, right_, true);
 }
 
 NetEBMinMax::NetEBMinMax(char op__, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag)
@@ -226,7 +221,8 @@ NetEBPow::~NetEBPow()
 
 ivl_variable_type_t NetEBPow::expr_type() const
 {
-      return arith_expr_type(left_, right_);
+	// Zero raised to a negative exponent can produce X.
+      return arith_expr_type(left_, right_, true);
 }
 
 NetEBShift::NetEBShift(char op__, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag)
