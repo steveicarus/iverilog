@@ -1841,6 +1841,33 @@ bool of_CASSIGN_WR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %cast/class <class>, <report>
+ *
+ * Test the object on the top of the object stack, which stays there,
+ * against the class. If the object is nil, or an instance of the class
+ * or of a class derived from it, write "1" into flags[4], otherwise
+ * write "0". When the test fails and <report> is 1, print an error.
+ */
+bool of_CAST_CLASS(vthread_t thr, vvp_code_t cp)
+{
+      const class_type*defn = dynamic_cast<const class_type*>(cp->handle);
+      assert(defn);
+
+      vvp_object_t&obj = thr->peek_object();
+      const vvp_cobject*cobj = obj.peek<vvp_cobject>();
+      bool ok = obj.test_nil() || (cobj && cobj->is_a(defn));
+
+      thr->flags[4] = ok ? BIT4_1 : BIT4_0;
+
+      if (!ok && cp->bit_idx[0])
+	    cerr << thr->get_fileline() << "Error: $cast to class "
+	         << defn->class_name() << " failed, the object is not an"
+		 << " instance of that class." << endl;
+
+      return true;
+}
+
+/*
  * %cast2
  */
 bool of_CAST2(vthread_t thr, vvp_code_t)

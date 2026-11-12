@@ -3349,6 +3349,13 @@ extern "C" ivl_type_t ivl_type_prop_type(ivl_type_t net, int idx)
       return class_type->get_prop_type(idx);
 }
 
+extern "C" ivl_type_t ivl_type_super(ivl_type_t net)
+{
+      const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
+      assert(class_type);
+      return class_type->get_super();
+}
+
 extern "C" unsigned ivl_type_virtuals(ivl_type_t net)
 {
       const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);

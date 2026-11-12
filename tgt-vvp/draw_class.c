@@ -94,10 +94,54 @@ void draw_class_in_scope(ivl_type_t classtype)
 
       fprintf(vvp_out, " ;\n");
 
+      if (ivl_type_super(classtype))
+	    fprintf(vvp_out, "    .super C%p, C%p;\n", classtype,
+		    ivl_type_super(classtype));
+
       for (idx = 0 ; idx < ivl_type_virtuals(classtype) ; idx += 1) {
 	    ivl_scope_t impl = ivl_type_virtual(classtype, idx);
 	    ivl_scope_t root = ivl_scope_virtual_root(impl);
 	    fprintf(vvp_out, "    .virt C%p, S_%p, TA_%p_%p;\n",
 		    classtype, root, root, impl);
       }
+}
+
+int draw_class_cast(ivl_expr_t dest, ivl_expr_t src,
+		    int report, int want_result)
+{
+      int is_prop = ivl_expr_type(dest) == IVL_EX_PROPERTY;
+      unsigned lab_fail = local_count++;
+      unsigned lab_end = local_count++;
+      int errors;
+
+	/* A property is stored through the object that holds it, so
+	   that object goes on the stack below the new value. */
+      if (is_prop)
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", ivl_expr_signal(dest));
+
+      errors = draw_eval_object(src);
+
+      fprintf(vvp_out, "    %%cast/class C%p, %d;\n",
+	      is_prop ? ivl_expr_net_type(dest)
+		      : ivl_signal_net_type(ivl_expr_signal(dest)), report);
+      fprintf(vvp_out, "    %%jmp/0 T_%u.%u, 4;\n", thread_count, lab_fail);
+
+      if (is_prop) {
+	    fprintf(vvp_out, "    %%store/prop/obj %d, 0;\n",
+		    ivl_expr_property_idx(dest));
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+      } else {
+	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", ivl_expr_signal(dest));
+      }
+      if (want_result)
+	    fprintf(vvp_out, "    %%pushi/vec4 1, 0, 32;\n");
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_end);
+
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_fail);
+      fprintf(vvp_out, "    %%pop/obj %d, 0;\n", is_prop ? 2 : 1);
+      if (want_result)
+	    fprintf(vvp_out, "    %%pushi/vec4 0, 0, 32;\n");
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_end);
+
+      return errors;
 }

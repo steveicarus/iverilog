@@ -855,6 +855,12 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 	    return;
       }
 
+      if (strcmp(ivl_expr_name(expr), "$cast") == 0) {
+	    vvp_errors += draw_class_cast(ivl_expr_parm(expr, 0),
+					  ivl_expr_parm(expr, 1), 0, 1);
+	    return;
+      }
+
       draw_vpi_func_call(expr);
 }
 

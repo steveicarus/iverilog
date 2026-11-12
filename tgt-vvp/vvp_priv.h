@@ -125,6 +125,14 @@ extern void draw_vpi_sfunc_call(ivl_expr_t expr);
 extern void draw_class_in_scope(ivl_type_t classtype);
 
 /*
+ * Draw $cast(dest, src) of class handles. The dest is a signal or a
+ * property expression. If want_result is true, a 32 bit 1 or 0 is left
+ * on the vec4 stack. If report is true, a failed cast prints an error.
+ */
+extern int draw_class_cast(ivl_expr_t dest, ivl_expr_t src,
+			   int report, int want_result);
+
+/*
  * Enumeration draw routine.
  */
 void draw_enumeration_in_scope(ivl_enumtype_t enumtype);

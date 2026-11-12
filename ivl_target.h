@@ -2431,6 +2431,9 @@ extern int         ivl_type_properties(ivl_type_t net);
 extern const char* ivl_type_prop_name(ivl_type_t net, int idx);
 extern ivl_type_t  ivl_type_prop_type(ivl_type_t net, int idx);
 
+/* The base class of a class type, or nil if it has none. */
+extern ivl_type_t  ivl_type_super(ivl_type_t net);
+
 /* A class type has a table of the virtual methods that the class or a
    base class overrides. Each entry is the override that a call of the
    virtual declaration (its ivl_scope_virtual_root) runs for an object
