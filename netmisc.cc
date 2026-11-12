@@ -1995,6 +1995,12 @@ bool check_class_cast_args(Design*des, const LineInfo*li,
       bool dest_ok = (dest_sig && !dest_sig->word_index()
 		      && dest_sig->sig()->type() == NetNet::REG)
 	          || (dest_prop && !dest_prop->get_index());
+      if (dest_sig && dest_sig->sig()->name() == perm_string::literal(THIS_TOKEN)) {
+	    cerr << li->get_fileline() << ": error: The first argument of "
+	            "$cast cannot be \"this\", it is not assignable." << endl;
+	    des->errors += 1;
+	    return false;
+      }
       if (!dest_ok) {
 	    cerr << li->get_fileline() << ": error: The first argument of "
 	            "$cast must be a class variable or a class property." << endl;

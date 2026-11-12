@@ -541,6 +541,7 @@ sv_class_cast_null		vvp_tests/sv_class_cast_null.json
 sv_class_cast_prop		vvp_tests/sv_class_cast_prop.json
 sv_class_cast_task		vvp_tests/sv_class_cast_task.json
 sv_class_cast_task_fail	vvp_tests/sv_class_cast_task_fail.json
+sv_class_cast_this_fail	vvp_tests/sv_class_cast_this_fail.json
 sv_class_cast_unrelated_fail	vvp_tests/sv_class_cast_unrelated_fail.json
 sv_class_cast_virtual		vvp_tests/sv_class_cast_virtual.json
 sv_class_const_derived		vvp_tests/sv_class_const_derived.json
