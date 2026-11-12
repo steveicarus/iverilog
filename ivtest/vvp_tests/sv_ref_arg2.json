@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_ref_arg2.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95"       : {
+        "type"      : "CE",
+        "__comment" : "Ref arguments are not translated."
+    }
+}
