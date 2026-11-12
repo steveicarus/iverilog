@@ -140,6 +140,7 @@ br_gh1711b			vvp_tests/br_gh1711b.json
 br_gh1730			vvp_tests/br_gh1730.json
 br_gh1751			vvp_tests/br_gh1751.json
 br_gh1758			vvp_tests/br_gh1758.json
+br_gh1765			vvp_tests/br_gh1765.json
 ca_func2			vvp_tests/ca_func2.json
 ca_time_real			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
