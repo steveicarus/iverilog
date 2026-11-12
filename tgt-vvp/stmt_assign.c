@@ -153,9 +153,12 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    }
 	    draw_eval_vec4(part_off_ex);
 	    fprintf(vvp_out, "    %%dup/vec4;\n");
-	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", slice->u_.part_select_dynamic.word_idx_reg);
+	    fprintf(vvp_out, "    %%ix/vec4%s %d;\n",
+		    ivl_expr_signed(part_off_ex) ? "/s" : "",
+		    slice->u_.part_select_dynamic.word_idx_reg);
 	    fprintf(vvp_out, "    %%flag_mov %u, 4;\n", slice->u_.part_select_dynamic.x_flag);
-	    fprintf(vvp_out, "    %%part/u %u;\n", wid);
+	    fprintf(vvp_out, "    %%part/%c %u;\n",
+		    ivl_expr_signed(part_off_ex) ? 's' : 'u', wid);
 
       } else if (ivl_signal_dimensions(sig) > 0 && word_ix == 0) {
 
