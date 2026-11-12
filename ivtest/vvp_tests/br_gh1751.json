@@ -6,6 +6,7 @@
     "vlog95" : {
         "__comment"     : "String variables are not supported by vlog95.",
         "type"          : "CE",
+        "gold"          : "",
         "iverilog-args" : [ "-pallowsigned=1" ]
     }
 }
