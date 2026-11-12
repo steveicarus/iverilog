@@ -1503,6 +1503,17 @@ static void emit_stmt_nb_trigger(ivl_scope_t scope, ivl_statement_t stmt)
 static void emit_stmt_utask(ivl_scope_t scope, ivl_statement_t stmt)
 {
       ivl_scope_t task_scope = ivl_stmt_call(stmt);
+      unsigned idx;
+      for (idx = 0; idx < ivl_scope_ports(task_scope); idx += 1) {
+	    ivl_signal_t port = ivl_scope_port(task_scope, idx);
+	    if (port && ivl_signal_port(port) == IVL_SIP_REF) {
+		  fprintf(stderr, "%s:%u: vlog95 sorry: ref arguments are not "
+				  "currently translated.\n",
+				  ivl_stmt_file(stmt), ivl_stmt_lineno(stmt));
+		  vlog_errors += 1;
+		  return;
+	    }
+      }
       assert((ivl_scope_type(task_scope) == IVL_SCT_TASK
 		&& ivl_scope_ports(task_scope) == 0)
 	  || (is_void_function(task_scope)
