@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "string_delay_assign.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "SystemVerilog strings are not supported",
+        "type"      : "CE"
+    }
+}
