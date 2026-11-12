@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "assign_op_negative_select_const.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}
