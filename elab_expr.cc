@@ -533,6 +533,68 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 }
 
 /*
+ * The actual argument for a ref formal is not copied into the formal,
+ * so it must be a variable that the task or function can read and
+ * write: a plain variable, or a property of a class object. The call
+ * binds the formal to that variable (see tgt-vvp for how).
+ */
+NetExpr* elaborate_ref_argument(Design*des, NetScope*scope,
+				const NetNet*formal, PExpr*expr)
+{
+      NetExpr*res = elab_sys_task_arg(des, scope, formal->name(), 0, expr);
+      if (res == 0)
+	    return 0;
+
+      const NetNet*sig = 0;
+      if (const NetESignal*esig = dynamic_cast<NetESignal*>(res)) {
+	    if (!esig->word_index())
+		  sig = esig->sig();
+      } else if (const NetEProperty*eprop = dynamic_cast<NetEProperty*>(res)) {
+	    if (!eprop->get_index())
+		  sig = eprop->get_sig();
+      }
+
+      if (sig == 0 || sig->unpacked_dimensions() > 0) {
+	    cerr << expr->get_fileline() << ": error: The actual argument for "
+		    "the ref argument `" << formal->name()
+		 << "` must be a variable, not " << *expr << "." << endl;
+	    des->errors += 1;
+	    delete res;
+	    return 0;
+      }
+
+      if (dynamic_cast<NetESignal*>(res) && sig->type() != NetNet::REG) {
+	    cerr << expr->get_fileline() << ": error: The actual argument for "
+		    "the ref argument `" << formal->name()
+		 << "` must be a variable, but `" << sig->name()
+		 << "` is a net." << endl;
+	    des->errors += 1;
+	    delete res;
+	    return 0;
+      }
+
+      if (!formal->net_type()->type_equivalent(res->net_type())) {
+	    cerr << expr->get_fileline() << ": error: The actual argument "
+		 << *expr << " does not have the same type as the ref argument `"
+		 << formal->name() << "`." << endl;
+	    des->errors += 1;
+	    delete res;
+	    return 0;
+      }
+
+      if (sig->get_const() && !formal->get_const()) {
+	    cerr << expr->get_fileline() << ": error: The const variable `"
+		 << sig->name() << "` can only be passed to a const ref argument."
+		 << endl;
+	    des->errors += 1;
+	    delete res;
+	    return 0;
+      }
+
+      return res;
+}
+
+/*
  * If the mode is UPSIZE, make sure the final expression width is at
  * least integer_width, but return the calculated lossless width to
  * the caller.
@@ -4183,8 +4245,12 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
 			if (const netarray_t*at = formal->array_type())
 			      ctype = at;
 		  }
-		  parms[pidx] = elaborate_rval_expr(des, scope, ctype,
-						    tmp, need_const);
+		  if (formal->port_type() == NetNet::PREF)
+			parms[pidx] = elaborate_ref_argument(des, scope,
+							     formal, tmp);
+		  else
+			parms[pidx] = elaborate_rval_expr(des, scope, ctype,
+							  tmp, need_const);
 		  if (parms[pidx] == 0) {
 			parm_errors += 1;
 			continue;
@@ -8869,6 +8935,12 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
       for (size_t idx = 1 ; idx < parms.size() ; idx += 1) {
 	      // While there are default arguments, check them.
 	    if (args[idx - 1]) {
+		  if (def->port(idx)->port_type() == NetNet::PREF) {
+			parms[idx] = elaborate_ref_argument(des, scope,
+							    def->port(idx),
+							    args[idx - 1]);
+			continue;
+		  }
 		  parms[idx] = elaborate_rval_expr(des, scope,
 						   def->port(idx)->net_type(),
 						   args[idx - 1], false);

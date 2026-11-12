@@ -142,13 +142,58 @@ static void sig_check_data_type(Design*des, const NetScope*scope,
       }
 }
 
+/*
+ * A ref argument is bound to the variable of the caller when the task
+ * or function is called, so it needs the storage of an automatic
+ * subroutine. Only some types of variables can be bound.
+ */
+static void sig_check_ref_port(Design*des, const NetScope*scope,
+			       const PWire *wire, const NetNet *sig)
+{
+      if (scope->type() != NetScope::TASK && scope->type() != NetScope::FUNC) {
+	    cerr << wire->get_fileline() << ": sorry: "
+		 << "Reference ports not supported yet." << endl;
+	    des->errors += 1;
+	    return;
+      }
+
+      if (!scope->is_auto()) {
+	    cerr << wire->get_fileline() << ": error: "
+		 << "Reference argument `" << wire->basename()
+		 << "` requires an automatic task or function." << endl;
+	    des->errors += 1;
+	    return;
+      }
+
+      bool supported = sig->unpacked_dimensions() == 0;
+      switch (sig->data_type()) {
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	  case IVL_VT_REAL:
+	  case IVL_VT_STRING:
+	  case IVL_VT_CLASS:
+	  case IVL_VT_DARRAY:
+	  case IVL_VT_QUEUE:
+	    break;
+	  default:
+	    supported = false;
+	    break;
+      }
+
+      if (!supported) {
+	    cerr << wire->get_fileline() << ": sorry: "
+		 << "Reference argument `" << wire->basename()
+		 << "` of type `" << sig->data_type()
+		 << "` is not supported." << endl;
+	    des->errors += 1;
+      }
+}
+
 static void sig_check_port_type(Design*des, const NetScope*scope,
 			        const PWire *wire, const NetNet *sig)
 {
       if (sig->port_type() == NetNet::PREF) {
-	    cerr << wire->get_fileline() << ": sorry: "
-		 << "Reference ports not supported yet." << endl;
-	    des->errors += 1;
+	    sig_check_ref_port(des, scope, wire, sig);
       }
 
       // Some extra checks for module ports
@@ -856,7 +901,8 @@ void PTaskFunc::elaborate_sig_ports_(Design*des, NetScope*scope,
 	    ports[idx] = tmp;
 	    port_names[idx] = port_name;
 	    pdefs[idx] = tmp_def;
-	    if (scope->type()==NetScope::FUNC && tmp->port_type()!=NetNet::PINPUT) {
+	    if (scope->type()==NetScope::FUNC && tmp->port_type()!=NetNet::PINPUT &&
+	        tmp->port_type()!=NetNet::PREF) {
 		  cerr << tmp->get_fileline() << ": error: "
 		       << "Function " << scope_path(scope)
 		       << " port " << port_name
