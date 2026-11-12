@@ -92,6 +92,12 @@ extern void draw_lpm_substitute(ivl_lpm_t net);
 extern int draw_array_copy(ivl_signal_t dst, ivl_expr_t rval);
 
 extern void draw_ufunc(ivl_expr_t expr);
+
+/*
+ * Push a reference to the variable or class property that is the actual
+ * argument for a ref formal onto the object stack.
+ */
+extern int draw_eval_ref(ivl_expr_t expr);
 extern void draw_ufunc_object(ivl_expr_t expr);
 
 extern char* process_octal_codes(const char*txt, unsigned wid);

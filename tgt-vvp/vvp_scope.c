@@ -566,6 +566,9 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	    fprintf(vvp_out, ";%s\n",
 		    ivl_signal_local(sig)? " Local signal" : "" );
       }
+
+      if (ivl_signal_port(sig) == IVL_SIP_REF)
+	    fprintf(vvp_out, "    .refvar v%p_0;\n", sig);
 }
 
 
