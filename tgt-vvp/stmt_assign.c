@@ -54,7 +54,7 @@ struct vec_slice_info {
 	    } simple_vector;
 
 	    struct {
-		  unsigned long part_off;
+		  long part_off;
 	    } part_select_static;
 
 	    struct {
@@ -82,7 +82,7 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
       ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
-      unsigned long part_off = 0;
+      long part_off = 0;
 
 	/* Although Verilog doesn't support it, we'll handle
 	   here the case of an l-value part select of an array
@@ -92,7 +92,7 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
       if (part_off_ex == 0) {
 	    part_off = 0;
-      } else if (number_is_immediate(part_off_ex, IMM_WID, 0) &&
+      } else if (number_is_immediate(part_off_ex, IMM_WID, 1) &&
                  !number_is_unknown(part_off_ex)) {
 	    part_off = get_number_immediate(part_off_ex);
 	    part_off_ex = 0;
@@ -134,7 +134,8 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    } else {
 		  fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
 	    }
-	    fprintf(vvp_out, "    %%parti/u %u, %lu, 32;\n", wid, part_off);
+	    fprintf(vvp_out, "    %%parti/u %u, %lu, 32;\n",
+		    wid, (unsigned long)part_off);
 
       } else if (ivl_signal_dimensions(sig)==0 && part_off_ex!=0 && word_ix==0) {
 
@@ -251,14 +252,17 @@ static void put_vec_to_ret_slice(ivl_signal_t sig, struct vec_slice_info*slice,
 	    fprintf(vvp_out, "    %%ret/vec4 0, 0, %u;\n", wid);
 	    break;
 
-	  case SLICE_PART_SELECT_STATIC:
+	  case SLICE_PART_SELECT_STATIC: {
+	    uint64_t part_off = slice->u_.part_select_static.part_off;
+	    unsigned long low = part_off % UINT64_C(0x100000000);
+	    unsigned long high = part_off / UINT64_C(0x100000000);
 	    part_off_idx = allocate_word();
-	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n",
-		    part_off_idx, slice->u_.part_select_static.part_off);
+	    fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n", part_off_idx, low, high);
 	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 	    fprintf(vvp_out, "    %%ret/vec4 0, %d, %u;\n", part_off_idx, wid);
 	    clr_word(part_off_idx);
 	    break;
+	  }
 
 	  case SLICE_PART_SELECT_DYNAMIC:
 	    fprintf(vvp_out, "    %%flag_mov 4, %u;\n",
@@ -305,15 +309,18 @@ static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
 		    sig, slice->u_.simple_vector.use_word, wid);
 	    break;
 
-	  case SLICE_PART_SELECT_STATIC:
+	  case SLICE_PART_SELECT_STATIC: {
+	    uint64_t part_off = slice->u_.part_select_static.part_off;
+	    unsigned long low = part_off % UINT64_C(0x100000000);
+	    unsigned long high = part_off / UINT64_C(0x100000000);
 	    part_off_idx = allocate_word();
-	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n",
-		    part_off_idx, slice->u_.part_select_static.part_off);
+	    fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n", part_off_idx, low, high);
 	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 	    fprintf(vvp_out, "    %%store/vec4 v%p_0, %d, %u;\n",
 		    sig, part_off_idx, wid);
 	    clr_word(part_off_idx);
 	    break;
+	  }
 
 	  case SLICE_PART_SELECT_DYNAMIC:
 	    fprintf(vvp_out, "    %%flag_mov 4, %u;\n",
