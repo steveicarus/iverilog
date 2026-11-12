@@ -143,6 +143,15 @@ void compile_var_queue(char*label, char*name, unsigned size)
       delete[] name;
 }
 
+void compile_ref_var(char*label)
+{
+      vvp_net_t*net = vvp_net_lookup(label);
+      automatic_signal_base*sig = net? dynamic_cast<automatic_signal_base*>(net->fil) : 0;
+      assert(sig);
+      sig->enable_ref();
+      free(label);
+}
+
 void compile_var_cobject(char*label, char*name)
 {
       vvp_net_t*net = new vvp_net_t;

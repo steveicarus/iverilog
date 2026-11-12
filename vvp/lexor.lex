@@ -233,6 +233,7 @@ inline uint64_t strtouint64(const char*str, char**endptr, int base)
 ".shift/rs"     { return K_SHIFTRS; }
 ".substitute"   { return K_SUBSTITUTE; }
 ".thread"       { return K_THREAD; }
+".refvar"       { return K_REFVAR; }
 ".timescale"    { return K_TIMESCALE; }
 ".tran"         { return K_TRAN; }
 ".tranif0"      { return K_TRANIF0; }

@@ -499,6 +499,12 @@ extern void compile_scope_recall(char*sym);
 extern void compile_thread(char*start_sym, char*flag);
 
 /*
+ * The .refvar statement makes the automatic variable with the given
+ * label a ref formal of a task or function.
+ */
+extern void compile_ref_var(char*label);
+
+/*
  * This function is called to create a var vector with the given name.
  *
  * The vpi_type_code argument of compile_variable() is one of the vpi

@@ -1023,6 +1023,14 @@ vvp_context_item_t vthread_get_rd_context_item(unsigned context_idx)
       return vvp_get_context_item(running_thread->rd_context, context_idx);
 }
 
+vvp_context_t vthread_swap_rd_context(vvp_context_t ctx)
+{
+      assert(running_thread);
+      vvp_context_t old = running_thread->rd_context;
+      running_thread->rd_context = ctx;
+      return old;
+}
+
 /*
  * %abs/wr
  */
@@ -5727,6 +5735,79 @@ bool of_RELEASE_NET(vthread_t, vvp_code_t cp)
 bool of_RELEASE_REG(vthread_t, vvp_code_t cp)
 {
       return do_release_vec(cp, false);
+}
+
+/*
+ * %ref/bind <var-label>
+ *
+ * Pop a reference from the object stack and bind the ref formal
+ * <var-label> to it. The formal is in the context that %alloc pushed
+ * onto the write context stack, and the reference was made by the
+ * caller.
+ */
+bool of_REF_BIND(vthread_t thr, vvp_code_t cp)
+{
+      automatic_signal_base*sig = dynamic_cast<automatic_signal_base*> (cp->net->fil);
+      assert(sig);
+
+      vvp_object_t ref;
+      thr->pop_object(ref);
+      sig->bind_ref(thr->wt_context, ref);
+
+      return true;
+}
+
+/*
+ * %ref/get <var-label>
+ *
+ * Push the reference that the ref formal <var-label> is bound to, to
+ * pass it on to another ref formal.
+ */
+bool of_REF_GET(vthread_t thr, vvp_code_t cp)
+{
+      automatic_signal_base*sig = dynamic_cast<automatic_signal_base*> (cp->net->fil);
+      assert(sig);
+
+      thr->push_object(sig->bound_ref());
+
+      return true;
+}
+
+/*
+ * %ref/net <var-label>
+ *
+ * Push a reference to the variable <var-label>. An automatic variable
+ * is in the read context of the thread.
+ */
+bool of_REF_NET(vthread_t thr, vvp_code_t cp)
+{
+      thr->push_object(vvp_object_t(new vvp_var_ref(cp->net, thr->rd_context)));
+
+      return true;
+}
+
+/*
+ * %ref/prop <pid>
+ *
+ * Pop a class object from the object stack and push a reference to its
+ * property <pid>.
+ */
+bool of_REF_PROP(vthread_t thr, vvp_code_t cp)
+{
+      vvp_object_t obj;
+      thr->pop_object(obj);
+
+      if (obj.peek<vvp_cobject>() == 0) {
+	    cerr << thr->get_fileline()
+	         << "Error: null object passed as a ref argument." << endl;
+	    schedule_stop(0);
+	    thr->push_object(vvp_object_t());
+	    return true;
+      }
+
+      thr->push_object(vvp_object_t(new vvp_var_ref(obj, cp->number)));
+
+      return true;
 }
 
 /* The type is 1 for registers and 0 for everything else. */
