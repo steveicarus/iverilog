@@ -194,7 +194,8 @@ extern void pform_set_constructor_return(PFunction*net);
 extern void pform_class_extern_method(const struct vlltype&loc,
 				      const char*name, bool is_task,
 				      bool is_virtual,
-				      std::vector<pform_tf_port_t>*ports);
+				      std::vector<pform_tf_port_t>*ports,
+				      data_type_t*ret_type =0);
 extern void pform_check_extern_ports(const struct vlltype&loc,
 				     std::vector<pform_tf_port_t>*ports);
 extern bool pform_start_extern_method(const struct vlltype&loc,

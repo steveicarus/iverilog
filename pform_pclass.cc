@@ -170,7 +170,8 @@ void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net)
  */
 void pform_class_extern_method(const struct vlltype&loc, const char*name,
 			       bool is_task, bool is_virtual,
-			       vector<pform_tf_port_t>*ports)
+			       vector<pform_tf_port_t>*ports,
+			       data_type_t*ret_type)
 {
       ivl_assert(loc, pform_cur_class);
       method_virtual_flag = false;
@@ -181,6 +182,7 @@ void pform_class_extern_method(const struct vlltype&loc, const char*name,
       info.is_virtual = is_virtual;
       info.defined = false;
       info.ports = ports;
+      info.ret_type = ret_type;
 
       perm_string use_name = lex_strings.make(name);
       if (!pform_cur_class->externs.emplace(use_name, info).second) {
@@ -303,6 +305,7 @@ void pform_check_extern_ports(const struct vlltype&loc,
       const vector<pform_tf_port_t>&dp = ports? *ports : none;
       const char*what = extern_proto->is_task? "task" : "function";
       const string where = extern_proto->get_fileline();
+      FILE_NAME(&extern_proto->def, loc);
 
       if (pp.size() != dp.size()) {
 	    cerr << loc << ": error: Definition of extern " << what

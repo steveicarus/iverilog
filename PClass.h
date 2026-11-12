@@ -52,6 +52,8 @@ class PClass : public PScopeExtra, public PNamedItem {
 	    bool is_virtual;
 	    bool defined;
 	    std::vector<pform_tf_port_t>*ports;
+	    data_type_t*ret_type;
+	    LineInfo def; // Where the definition is, once there is one.
       };
       std::map<perm_string,extern_method_t> externs;
 };

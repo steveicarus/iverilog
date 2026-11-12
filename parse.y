@@ -1712,7 +1712,8 @@ class_item /* IEEE1800-2005: A.1.8 */
       { pform_class_extern_method(@3, "new", false, $2, $5); }
   | K_extern method_qualifier_opt K_function data_type_or_implicit_or_void_plus_id
     extern_proto_ports ';'
-      { pform_class_extern_method(@3, $4.id, false, $2, $5);
+      { pform_class_extern_method(@3, $4.id, false, $2, $5, $4.type);
+	$4.type = nullptr; // Kept by the prototype.
 	delete_type_id_range($4);
       }
   | K_extern method_qualifier_opt K_task IDENTIFIER extern_proto_ports ';'

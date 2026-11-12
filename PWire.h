@@ -91,6 +91,12 @@ class PWire : public PNamedItem {
 
       NetNet* elaborate_sig(Design*, NetScope*scope);
 
+	// Elaborate the type that a port declaration gives, as
+	// elaborate_sig() would, without making a signal. The unpacked
+	// dimensions are returned separately. Returns 0 on error.
+      ivl_type_t elaborate_port_type(Design*, NetScope*scope,
+				     netranges_t&unpacked_dimensions);
+
       SymbolType symbol_type() const override;
 
       bool is_net() const { return net_set_; };
