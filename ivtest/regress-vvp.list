@@ -426,6 +426,7 @@ repeat_signed_one_bit		vvp_tests/repeat_signed_one_bit.json
 scaled_real			vvp_tests/scaled_real.json
 scan-invalid			vvp_tests/scan-invalid.json
 scope_fullname_long		vvp_tests/scope_fullname_long.json
+sdf_cond_case_equality		vvp_tests/sdf_cond_case_equality.json
 sdf_cond_edges			vvp_tests/sdf_cond_edges.json
 sdf_cond_escaped		vvp_tests/sdf_cond_escaped.json
 sdf_cond_escaped_slash		vvp_tests/sdf_cond_escaped_slash.json

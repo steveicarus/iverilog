@@ -6911,7 +6911,8 @@ static std::string ordinary_path_condition_key(Design*des, NetScope*scope,
             return name;
       }
 
-      if (binary->peek_opcode() == 'e') { // Logical equality, not case equality.
+      if (binary->peek_opcode() == 'e' || binary->peek_opcode() == 'E') {
+            const bool case_equal = binary->peek_opcode() == 'E';
             std::string name = ordinary_path_condition_name(des, scope,
                                                    binary->peek_left(), true);
             const PENumber*number = dynamic_cast<const PENumber*>(binary->peek_right());
@@ -6920,9 +6921,9 @@ static std::string ordinary_path_condition_key(Design*des, NetScope*scope,
             if (!value.has_len() || value.len() != 1 || value.has_sign()
                 || value.is_single() || !value.is_defined()) return {};
             std::ostringstream key;
-            key << " E" << name.size() << ':' << name
+            key << (case_equal ? " C" : " E") << name.size() << ':' << name
                 << (value.is_zero() ? '0' : '1');
-            text = "(\\" + name + "  == 1'b" +
+            text = "(\\" + name + (case_equal ? "  === 1'b" : "  == 1'b") +
                   (value.is_zero() ? "0)" : "1)");
             return key.str();
       }
