@@ -346,13 +346,19 @@ static ivl_type_t elaborate_static_array_type(Design *des, const LineInfo &li,
       if (dims.empty())
 	    return base_type;
 
-      if (dynamic_cast<const netqueue_t*>(base_type)) {
-	    cerr << li.get_fileline() << ": sorry: "
-		 << "array of queue type is not yet supported."
-		 << endl;
-	    des->errors++;
-	    // Recover
-	    base_type = new netvector_t(IVL_VT_LOGIC);
+	// A netqueue_t is also a netdarray_t, but arrays of queues of vectors
+	// are supported.
+      if (const netqueue_t*queue = dynamic_cast<const netqueue_t*>(base_type)) {
+	    ivl_type_t elem = queue->element_type();
+	    if (dynamic_cast<const netreal_t*>(elem) ||
+		dynamic_cast<const netstring_t*>(elem)) {
+		  cerr << li.get_fileline() << ": sorry: "
+		       << "array of queues of real or string is not yet supported."
+		       << endl;
+		  des->errors++;
+		  // Recover
+		  base_type = new netvector_t(IVL_VT_LOGIC);
+	    }
       } else if (dynamic_cast<const netdarray_t*>(base_type)) {
 	    cerr << li.get_fileline() << ": sorry: "
 		 << "array of dynamic array type is not yet supported."
@@ -373,28 +379,31 @@ ivl_type_t elaborate_array_type(Design *des, NetScope *scope,
 			        const list<pform_range_t> &dims)
 {
       const long warn_dimension_size = 1 << 30;
-      netranges_t dimensions;
-      dimensions.reserve(dims.size());
 
-      ivl_type_t type = base_type;
+      enum dim_kind_t { DIM_STATIC, DIM_DARRAY, DIM_QUEUE };
+      vector<dim_kind_t> kinds;
+      vector<netrange_t> ranges;
+      vector<PExpr*> bounds;
+      kinds.reserve(dims.size());
+      ranges.reserve(dims.size());
+      bounds.reserve(dims.size());
 
+	// First evaluate all the dimensions left to right.
       for (list<pform_range_t>::const_iterator cur = dims.begin();
 	   cur != dims.end() ; ++cur) {
 	    PExpr *lidx = cur->first;
 	    PExpr *ridx = cur->second;
 
 	    if (lidx == 0 && ridx == 0) {
-		    // Special case: If we encounter an undefined dimensions,
-		    // then turn this into a dynamic array and put all the
-		    // packed dimensions there.
-		  type = elaborate_static_array_type(des, li, type, dimensions);
-		  type = elaborate_darray_check_type(des, li, type, "Dynamic array");
-		  type = new netdarray_t(type);
+		  kinds.push_back(DIM_DARRAY);
+		  ranges.push_back(netrange_t());
+		  bounds.push_back(0);
 		  continue;
 	    } else if (dynamic_cast<PEQueueDimension*>(lidx)) {
 		    // Special case: Detect the mark for a QUEUE declaration.
-		  type = elaborate_static_array_type(des, li, type, dimensions);
-		  type = elaborate_queue_type(des, scope, li, type, ridx);
+		  kinds.push_back(DIM_QUEUE);
+		  ranges.push_back(netrange_t());
+		  bounds.push_back(ridx);
 		  continue;
 	    }
 
@@ -408,7 +417,34 @@ ivl_type_t elaborate_array_type(Design *des, NetScope *scope,
 		       << endl;
 	    }
 
-	    dimensions.push_back(netrange_t(index_l, index_r));
+	    kinds.push_back(DIM_STATIC);
+	    ranges.push_back(netrange_t(index_l, index_r));
+	    bounds.push_back(0);
+      }
+
+	// The leftmost dimension is the outermost one, so build the type from
+	// the rightmost (innermost) dimension outwards. Consecutive static
+	// dimensions are collected into a single unpacked array type.
+      ivl_type_t type = base_type;
+      netranges_t dimensions;
+
+      for (size_t idx = kinds.size() ; idx > 0 ; idx -= 1) {
+	    size_t cur = idx - 1;
+
+	    switch (kinds[cur]) {
+		case DIM_STATIC:
+		  dimensions.insert(dimensions.begin(), ranges[cur]);
+		  break;
+		case DIM_DARRAY:
+		  type = elaborate_static_array_type(des, li, type, dimensions);
+		  type = elaborate_darray_check_type(des, li, type, "Dynamic array");
+		  type = new netdarray_t(type);
+		  break;
+		case DIM_QUEUE:
+		  type = elaborate_static_array_type(des, li, type, dimensions);
+		  type = elaborate_queue_type(des, scope, li, type, bounds[cur]);
+		  break;
+	    }
       }
 
       return elaborate_static_array_type(des, li, type, dimensions);

@@ -2204,6 +2204,72 @@ static NetFuncDef* find_function_definition(Design*des, NetScope*,
       return 0;
 }
 
+/*
+ * For a signal that is an unpacked array of queues, the first
+ * net->unpacked_dimensions() indices select the array word and any further
+ * indices apply to the queue stored in that word. This returns the number of
+ * such trailing (queue) indices.
+ */
+static inline size_t object_index_count(const NetNet*net,
+					const std::list<index_component_t>&index)
+{
+      size_t word_count = net->unpacked_dimensions();
+      return index.size() > word_count ? index.size() - word_count : 0;
+}
+
+/*
+ * Build a NetESignal that selects the array word of an unpacked array of
+ * queues, using the leading net->unpacked_dimensions() entries of the index
+ * list. Returns 0 (after reporting an error) if the word cannot be selected.
+ */
+NetESignal* elaborate_unpacked_word_signal(Design*des, NetScope*scope,
+					   const LineInfo*loc, NetNet*net,
+					   const std::list<index_component_t>&index)
+{
+      if (index.size() < net->unpacked_dimensions()) {
+	    cerr << loc->get_fileline() << ": error: Array "
+		 << net->name() << " needs " << net->unpacked_dimensions()
+		 << " indices, but got only " << index.size() << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      list<NetExpr*> unpacked_indices;
+      list<long> unpacked_indices_const;
+      indices_flags idx_flags;
+      indices_to_expressions(des, scope, loc, index, net->unpacked_dimensions(),
+			     false, idx_flags,
+			     unpacked_indices, unpacked_indices_const);
+
+      if (idx_flags.invalid)
+	    return 0;
+
+      NetExpr*canon_index = 0;
+      if (idx_flags.undefined) {
+	    cerr << loc->get_fileline() << ": error: "
+		 << "undefined index for array " << net->name()
+		 << as_indices(unpacked_indices) << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      } else if (idx_flags.variable) {
+	    canon_index = normalize_variable_unpacked(net, unpacked_indices);
+      } else {
+	    canon_index = normalize_variable_unpacked(net, unpacked_indices_const);
+      }
+
+      if (canon_index == 0) {
+	    cerr << loc->get_fileline() << ": error: "
+		 << "array index out of bounds for " << net->name() << "."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetESignal*res = new NetESignal(net, canon_index);
+      res->set_line(*loc);
+      return res;
+}
+
 unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 					    const symbol_search_results&search_results,
 					    width_mode_t&)
@@ -2339,7 +2405,7 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
       if (search_results.net &&
 	  (search_results.net->data_type()==IVL_VT_DARRAY ||
 	   search_results.net->data_type()==IVL_VT_QUEUE) &&
-	  search_results.path_head.back().index.empty()) {
+	  object_index_count(search_results.net, search_results.path_head.back().index)==0) {
 
 	    const NetNet*net = search_results.net;
 	    const netdarray_t*darray = net->darray_type();
@@ -2409,7 +2475,7 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
       // x[e].len() is the length of the string.
       if (search_results.net
 	  && (search_results.net->data_type()==IVL_VT_QUEUE || search_results.net->data_type()==IVL_VT_DARRAY)
-	  && search_results.path_head.back().index.size()) {
+	  && object_index_count(search_results.net, search_results.path_head.back().index)) {
 
 	    const NetNet*net = search_results.net;
 	    const netdarray_t*darray = net->darray_type();
@@ -4607,8 +4673,19 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 
       NetExpr* sub_expr = 0;
       if (search_results.net) {
-	    NetESignal*tmp = new NetESignal(search_results.net);
-	    tmp->set_line(*this);
+	    NetESignal*tmp = 0;
+	      // An array of queues: select the array word that holds the
+	      // queue that will interpret the method.
+	    if (search_results.net->data_type()==IVL_VT_QUEUE &&
+		search_results.net->unpacked_dimensions() > 0) {
+		  tmp = elaborate_unpacked_word_signal(des, scope, this,
+						       search_results.net,
+						       search_results.path_head.back().index);
+		  if (!tmp) return 0;
+	    } else {
+		  tmp = new NetESignal(search_results.net);
+		  tmp->set_line(*this);
+	    }
 	    sub_expr = tmp;
       }
 
@@ -4619,7 +4696,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
       // If x is a queue of strings, then x[e] is a string. Elaborate the x[e]
       // expression and pass that to the len() method.
       if (search_results.net && search_results.net->data_type()==IVL_VT_QUEUE &&
-          search_results.path_head.back().index.size()==1) {
+          object_index_count(search_results.net, search_results.path_head.back().index)==1) {
 
 	    const NetNet*net = search_results.net;
 	    const netdarray_t*darray = net->darray_type();
@@ -4649,7 +4726,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
       if (search_results.net &&
 	  (search_results.net->data_type()==IVL_VT_DARRAY ||
 	   search_results.net->data_type()==IVL_VT_QUEUE) &&
-	  search_results.path_head.back().index.size()==0) {
+	  object_index_count(search_results.net, search_results.path_head.back().index)==0) {
 
 	    perm_string method_name = search_results.path_tail.back().name;
 

@@ -1844,6 +1844,27 @@ static int show_array_order_method(ivl_statement_t net, const char*descr,
       return 0;
 }
 
+int is_queue_array_word(ivl_expr_t expr)
+{
+      if (ivl_expr_type(expr) != IVL_EX_SIGNAL)
+	    return 0;
+
+      ivl_signal_t sig = ivl_expr_signal(expr);
+      return ivl_signal_dimensions(sig) > 0 &&
+	     ivl_signal_data_type(sig) == IVL_VT_QUEUE &&
+	     ivl_expr_oper1(expr) != 0;
+}
+
+void draw_queue_array_word(ivl_expr_t expr)
+{
+      ivl_signal_t sig = ivl_expr_signal(expr);
+
+      int word_ix = allocate_word();
+      draw_eval_expr_into_integer(ivl_expr_oper1(expr), word_ix);
+      fprintf(vvp_out, "    %%load/obja/q v%p, %d;\n", sig, word_ix);
+      clr_word(word_ix);
+}
+
 static int show_insert_method(ivl_statement_t net)
 {
       show_stmt_file_line(net, "queue: insert");
@@ -1889,6 +1910,28 @@ static int show_insert_method(ivl_statement_t net)
 		            ivl_type_packed_width(element_type));
 		    break;
 	    }
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    clr_word(idx);
+	    return 0;
+      }
+
+      if (is_queue_array_word(parm0)) {
+	    ivl_signal_t var = ivl_expr_signal(parm0);
+	    ivl_type_t var_type = ivl_signal_net_type(var);
+	    ivl_type_t element_type = ivl_type_element(var_type);
+
+	    int idx = allocate_word();
+	    assert(idx >= 0);
+	    draw_queue_array_word(parm0);
+	    fprintf(vvp_out, "    %%ix/load %d, %u, 0;\n", idx,
+	            ivl_type_queue_max(var_type));
+
+	    ivl_expr_t parm1 = ivl_stmt_parm(net,1);
+	    draw_eval_expr_into_integer(parm1, 3);
+	    ivl_expr_t parm2 = ivl_stmt_parm(net,2);
+	    draw_eval_vec4(parm2);
+	    fprintf(vvp_out, "    %%qinsert/qo/v %d, %u;\n", idx,
+	            ivl_type_packed_width(element_type));
 	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 	    clr_word(idx);
 	    return 0;
@@ -1982,6 +2025,27 @@ static int show_push_frontback_method(ivl_statement_t net, bool is_front)
 		            ivl_type_packed_width(element_type));
 		    break;
 	    }
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    clr_word(idx);
+	    return 0;
+      }
+
+      if (is_queue_array_word(parm0)) {
+	    ivl_signal_t var = ivl_expr_signal(parm0);
+	    ivl_type_t var_type = ivl_signal_net_type(var);
+	    ivl_type_t element_type = ivl_type_element(var_type);
+
+	    int idx = allocate_word();
+	    assert(idx >= 0);
+	    draw_queue_array_word(parm0);
+	    fprintf(vvp_out, "    %%ix/load %d, %u, 0;\n", idx,
+	            ivl_type_queue_max(var_type));
+
+	    ivl_expr_t parm1 = ivl_stmt_parm(net,1);
+	    draw_eval_vec4(parm1);
+	    fprintf(vvp_out, "    %%store/qo/%s/v %d, %u;\n",
+	            type_code, idx,
+	            ivl_type_packed_width(element_type));
 	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 	    clr_word(idx);
 	    return 0;

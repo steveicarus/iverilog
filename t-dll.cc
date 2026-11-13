@@ -2689,7 +2689,10 @@ void dll_target::signal(const NetNet*net)
 	      // unpacked arrays, so just report the canonical dimensions.
 	    obj->array_base = 0;
 	      // For a queue we pass the maximum queue size as the array words.
-	    if (obj->net_type->base_type() == IVL_VT_QUEUE) {
+	      // An unpacked array of queues is a real array, so it keeps the
+	      // array word count.
+	    if (obj->net_type->base_type() == IVL_VT_QUEUE &&
+		obj->array_dimensions_ == 0) {
 		  long max_size = net->queue_type()->max_idx()+1;
 		  ivl_assert(*net, max_size >= 0);
 		  obj->array_words = max_size;
