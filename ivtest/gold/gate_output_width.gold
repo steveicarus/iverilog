@@ -1,0 +1,7 @@
+./ivltests/gate_output_width.v:5: error: Expression width 4 does not match width 1 of logic gate array port 2.
+./ivltests/gate_output_width.v:6: error: Expression width 4 does not match width 1 of logic gate array port 1.
+./ivltests/gate_output_width.v:7: error: Expression width 4 does not match width 1 of logic gate array port 2.
+./ivltests/gate_output_width.v:8: error: Expression width 4 does not match width 1 of logic gate array port 1.
+./ivltests/gate_output_width.v:9: error: Expression width 4 does not match width 1 of logic gate array port 2.
+./ivltests/gate_output_width.v:10: error: Expression width 4 does not match width 1 of logic gate array port 1.
+6 error(s) during elaboration.
