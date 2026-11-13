@@ -609,6 +609,16 @@ NetExpr* elaborate_ref_argument(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      if (dynamic_cast<NetESignal*>(res) && !formal->get_const() &&
+	  sig->name() == perm_string::literal(THIS_TOKEN)) {
+	    cerr << expr->get_fileline() << ": error: \"this\" can only be "
+		 << "passed to a const ref argument, it is not assignable."
+		 << endl;
+	    des->errors += 1;
+	    delete res;
+	    return 0;
+      }
+
       return res;
 }
 

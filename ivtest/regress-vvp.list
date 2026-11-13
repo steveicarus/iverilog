@@ -888,6 +888,7 @@ sv_ref_arg_fail7		vvp_tests/sv_ref_arg_fail7.json
 sv_ref_arg_fail8		vvp_tests/sv_ref_arg_fail8.json
 sv_ref_arg_fail9		vvp_tests/sv_ref_arg_fail9.json
 sv_ref_arg_fail10		vvp_tests/sv_ref_arg_fail10.json
+sv_ref_arg_fail11		vvp_tests/sv_ref_arg_fail11.json
 sv_soft_packed_union		vvp_tests/sv_soft_packed_union.json
 sv_soft_packed_union_fail1	vvp_tests/sv_soft_packed_union_fail1.json
 sv_statement_label		vvp_tests/sv_statement_label.json
