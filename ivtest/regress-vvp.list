@@ -509,6 +509,7 @@ strength_net_release		vvp_tests/strength_net_release.json
 strength_notif			vvp_tests/strength_notif.json
 strength_resistive_mos		vvp_tests/strength_resistive_mos.json
 string_cast_delay_assign	vvp_tests/string_cast_delay_assign.json
+string_const_vec_val		vvp_tests/string_const_vec_val.json
 string_delay_assign		vvp_tests/string_delay_assign.json
 struct_duplicate_member_fail	vvp_tests/struct_duplicate_member_fail.json
 struct_enum_partsel		vvp_tests/struct_enum_partsel.json
