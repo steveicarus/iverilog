@@ -5235,6 +5235,22 @@ NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      // The name() method of an enumeration parameter. The value is a
+      // constant, so find the matching enumeration name at compile time. If
+      // the value does not match any name, the result is the empty string,
+      // which is what name() returns for a variable.
+      if (dynamic_cast<const netenum_t*>(par_type) && method_name == "name") {
+	    const NetEConst*par_const = dynamic_cast<const NetEConst*>(par_val);
+	    if (par_const) {
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
+		  const netenum_t*netenum = dynamic_cast<const netenum_t*>(par_type);
+		  perm_string item = netenum->find_value(par_const->value());
+		  NetEConst*use_val = new NetECString(item.nil() ? "" : item.str());
+		  use_val->set_line(*this);
+		  return use_val;
+	    }
+      }
+
       // If we haven't figured out what to do with this method by now,
       // something went wrong.
       cerr << get_fileline() << ": sorry: Don't know how to handle method '"
