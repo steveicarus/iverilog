@@ -562,10 +562,14 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
       NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1);
       long lsb = 0;
 
-      if (mux && mux->expr_type() == IVL_VT_REAL) {
+      if (mux && ((mux->expr_type() == IVL_VT_REAL) ||
+                  (mux->expr_type() == IVL_VT_STRING))) {
            cerr << get_fileline() << ": error: Index expression for "
                 << reg->name() << "[" << *mux
-                << "] cannot be a real value." << endl;
+                << "] cannot be a ";
+	   if (mux->expr_type() == IVL_VT_REAL) cerr << "real";
+	   else cerr << "string";
+	   cerr << " value." << endl;
            des->errors += 1;
            return false;
       }
@@ -908,7 +912,8 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       if (!base)
 	    return false;
 
-      if (base->expr_type() == IVL_VT_REAL) {
+      if ((base->expr_type() == IVL_VT_REAL) ||
+          (base->expr_type() == IVL_VT_STRING)) {
 	    cerr << get_fileline() << ": error: Indexed part select base "
 	            "expression for ";
 	    cerr << lv->sig()->name() << "[" << *base;
@@ -917,7 +922,10 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 	    } else {
 		  cerr << "-:";
 	    }
-	    cerr << wid << "] cannot be a real value." << endl;
+	    cerr << wid << "] cannot be a ";
+	    if (base->expr_type() == IVL_VT_REAL) cerr << "real";
+	    else cerr << "string";
+	    cerr << " value." << endl;
 	    des->errors += 1;
 	    return 0;
       }

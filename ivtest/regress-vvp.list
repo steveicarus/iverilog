@@ -887,6 +887,9 @@ sv_string_getc			vvp_tests/sv_string_getc.json
 sv_string_getc_err		vvp_tests/sv_string_getc_err.json
 sv_string_i_compare		vvp_tests/sv_string_i_compare.json
 sv_string_i_compare_err		vvp_tests/sv_string_i_compare_err.json
+sv_string_idx			vvp_tests/sv_string_idx.json
+sv_string_idx_err1		vvp_tests/sv_string_idx_err1.json
+sv_string_idx_err2		vvp_tests/sv_string_idx_err2.json
 sv_string_len_err		vvp_tests/sv_string_len_err.json
 sv_string_method_substr_too_few_arg_fail	vvp_tests/sv_string_method_substr_too_few_arg_fail.json
 sv_string_tolower_err		vvp_tests/sv_string_tolower_err.json

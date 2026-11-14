@@ -5477,8 +5477,9 @@ bool of_PUTC_STR_VEC4(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t val = thr->pop_vec4();
       assert(val.size() == 8);
 
-      if (mux < 0)
-	    return true;
+      if (thr->flags[4] == BIT4_1) return true;
+
+      if (mux < 0) return true;
 
 	/* Get the existing value of the string. If we find that the
 	   index is too big for the string, then give up. */
@@ -5487,19 +5488,16 @@ bool of_PUTC_STR_VEC4(vthread_t thr, vvp_code_t cp)
       assert(fun);
 
       string tmp = fun->get_string();
-      if (tmp.size() <= (size_t)mux)
-	    return true;
+      if (tmp.size() <= (size_t)mux) return true;
 
       char val_str = 0;
       for (size_t idx = 0 ; idx < 8 ; idx += 1) {
-	    if (val.value(idx)==BIT4_1)
-		  val_str |= 1<<idx;
+	    if (val.value(idx)==BIT4_1) val_str |= 1<<idx;
       }
 
 	// It is a quirk of the Verilog standard that putc(..., 'h00)
 	// has no effect. Test for that case here.
-      if (val_str == 0)
-	    return true;
+      if (val_str == 0) return true;
 
       tmp[mux] = val_str;
 
@@ -7866,7 +7864,8 @@ bool of_SUBSTR_VEC4(vthread_t thr, vvp_code_t cp)
 
       assert(wid%8 == 0);
 
-      if (sel < 0 || sel >= (int32_t)val.size()) {
+      if ((sel < 0) || (sel >= (int32_t)val.size()) ||
+          (thr->flags[4] == BIT4_1)) {
 	    vvp_vector4_t res (wid, BIT4_0);
 	    thr->push_vec4(res);
 	    return true;
@@ -7877,8 +7876,7 @@ bool of_SUBSTR_VEC4(vthread_t thr, vvp_code_t cp)
       assert(wid==8);
       unsigned char tmp = val[sel];
       for (int idx = 0 ; idx < 8 ; idx += 1) {
-	    if (tmp & (1<<idx))
-		  res.set_bit(idx, BIT4_1);
+	    if (tmp & (1<<idx)) res.set_bit(idx, BIT4_1);
       }
 
       thr->push_vec4(res);

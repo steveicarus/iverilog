@@ -7531,10 +7531,14 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
       if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
 				 par_ex->value().len())) return 0;
 
-      if (sel->expr_type() == IVL_VT_REAL) {
+      if ((sel->expr_type() == IVL_VT_REAL) ||
+          (sel->expr_type() == IVL_VT_STRING)) {
 	    cerr << get_fileline() << ": error: Index expression for "
 	         << name << "[" << *sel
-	         << "] cannot be a real value." << endl;
+	         << "] cannot be a ";
+	    if (sel->expr_type() == IVL_VT_REAL) cerr << "real";
+	    else cerr << "string";
+	    cerr << " value." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -7773,11 +7777,15 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_do_(Design*des, NetScope*scope,
 		 << "] from range "
 		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
 
-      if (base->expr_type() == IVL_VT_REAL) {
+      if ((base->expr_type() == IVL_VT_REAL) ||
+          (base->expr_type() == IVL_VT_STRING)) {
 	    cerr << get_fileline() << ": error: Indexed part select base "
 	            "expression for " << name << "[" << *base
 	         << (up ? "+:" : "-:") << wid
-	         << "] cannot be a real value." << endl;
+	         << "] cannot be a ";
+	    if (base->expr_type() == IVL_VT_REAL) cerr << "real";
+	    else cerr << "string";
+	    cerr << " value." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -8283,10 +8291,14 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_do_(Design*des, NetScope*scope,
       unsigned long wid = min_width_;
       const char *op = up ? "+" : "-";
 
-      if (base->expr_type() == IVL_VT_REAL) {
+      if ((base->expr_type() == IVL_VT_REAL) ||
+          (base->expr_type() == IVL_VT_STRING)) {
 	    cerr << get_fileline() << ": error: Indexed part select base "
 	            "expression for " << net->sig()->name() << "[" << *base
-	         << op << ":" << wid << "] cannot be a real value." << endl;
+	         << op << ":" << wid << "] cannot be a ";
+	    if (base->expr_type() == IVL_VT_REAL) cerr << "real";
+	    else cerr << "string";
+	    cerr << " value." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -8448,10 +8460,14 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
       if (!mux)
 	    return 0;
 
-      if (mux->expr_type() == IVL_VT_REAL) {
+      if ((mux->expr_type() == IVL_VT_REAL) ||
+          (mux->expr_type() == IVL_VT_STRING)) {
 	    cerr << get_fileline() << ": error: Index expression for "
 	         << net->sig()->name() << "[" << *mux
-	         << "] cannot be a real value." << endl;
+	         << "] cannot be a ";
+	    if (mux->expr_type() == IVL_VT_REAL) cerr << "real";
+	    else cerr << "string";
+	    cerr << " value." << endl;
 	    des->errors += 1;
 	    return 0;
       }
