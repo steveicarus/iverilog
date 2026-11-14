@@ -266,7 +266,7 @@ bool pform_start_extern_method(const struct vlltype&loc, const char*class_name,
 	    cerr << loc << ": error: '" << use_class << "::" << use_name
 		 << "' is defined as a " << (is_task? "task" : "function")
 		 << " but was declared extern as a "
-		 << (is_task? "function" : "task") << " at "
+		 << (proto->second.is_task? "task" : "function") << " at "
 		 << proto->second.get_fileline() << "." << endl;
 	    error_count += 1;
 	    return extern_method_error(pform_peek_scope());
@@ -274,11 +274,13 @@ bool pform_start_extern_method(const struct vlltype&loc, const char*class_name,
 
       if (proto->second.defined) {
 	    cerr << loc << ": error: Extern method '" << use_class << "::"
-		 << use_name << "' is already defined." << endl;
+		 << use_name << "' is already defined at "
+		 << proto->second.def.get_fileline() << "." << endl;
 	    error_count += 1;
 	    return extern_method_error(pform_peek_scope());
       }
       proto->second.defined = true;
+      FILE_NAME(&proto->second.def, loc);
       extern_proto = &proto->second;
 
       extern_class = pclass;
