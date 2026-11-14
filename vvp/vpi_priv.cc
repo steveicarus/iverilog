@@ -665,7 +665,7 @@ static void vec4_get_value_string(const vvp_vector4_t&word_val, unsigned width,
       unsigned nchar = width / 8;
       unsigned tail = width % 8;
 
-      char*rbuf = static_cast<char *>(need_result_buf(nchar + 1, RBUF_VAL));
+      char*rbuf = static_cast<char *>(need_result_buf(nchar + (tail > 0) + 1, RBUF_VAL));
       char*cp = rbuf;
 
       if (tail > 0) {
@@ -673,7 +673,7 @@ static void vec4_get_value_string(const vvp_vector4_t&word_val, unsigned width,
 	    for (unsigned idx = width-tail; idx < width ;  idx += 1) {
 		  vvp_bit4_t val = word_val.value(idx);
 		  if (val == BIT4_1)
-			char_val |= 1 << idx;
+			char_val |= 1 << (idx - (width-tail));
 	    }
 
 	    if (char_val != 0)

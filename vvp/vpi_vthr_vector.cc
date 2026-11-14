@@ -508,7 +508,7 @@ void __vpiVThrVec4Stack::vpi_get_value_real_(p_vpi_value vp, const vvp_vector4_t
 
 void __vpiVThrVec4Stack::vpi_get_value_string_(p_vpi_value vp, const vvp_vector4_t&val)
 {
-      char*rbuf = static_cast<char*>(need_result_buf((val.size() / 8) + 1, RBUF_VAL));
+      char*rbuf = static_cast<char*>(need_result_buf((val.size() + 7) / 8 + 1, RBUF_VAL));
       char*cp = rbuf;
 
       char tmp = 0;
