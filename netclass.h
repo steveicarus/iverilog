@@ -204,6 +204,9 @@ class netclass_t : public ivl_type_s {
       bool template_ = false;
 	// The specializations of this class, other than the default.
       mutable std::vector<netclass_t*> specializations_;
+	// Set while the signals of the methods of the specializations of
+	// this class are elaborated.
+      mutable unsigned methods_in_sig_ = 0;
 
       bool virtual_class_;
 };
