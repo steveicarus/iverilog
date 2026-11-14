@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_extern_method_port_type_width_fail.v",
+    "iverilog-args" : [ "-g2012" ]
+}

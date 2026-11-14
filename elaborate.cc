@@ -7501,6 +7501,77 @@ static const char*virtual_mismatch(NetScope*over, NetScope*root)
       return 0;
 }
 
+/*
+ * The definition of an extern method must use the same types as the
+ * prototype in the class (IEEE1800-2017 8.24). Pform has already
+ * checked the number, names and directions of the ports. Types are
+ * compared after elaboration so that typedefs and spelled-out types
+ * match. A queue and a dynamic array are equivalent types, so the base
+ * types are compared as well.
+ */
+static bool extern_types_match(ivl_type_t a, ivl_type_t b)
+{
+      return a->base_type() == b->base_type() && a->type_equivalent(b);
+}
+
+static void check_extern_types(Design*des, NetScope*class_scope,
+			       const perm_string&cname, perm_string name,
+			       const PClass::extern_method_t&proto)
+{
+      if (!proto.defined || name == "new")
+	    return;
+
+      NetScope*method = class_scope->child(hname_t(name));
+      if (method == 0)
+	    return;
+
+      const string where = proto.get_fileline();
+      const char*what = proto.is_task? "task" : "function";
+
+      if (proto.ports) {
+	    for (const auto&port : *proto.ports) {
+		  NetNet*sig = method->find_signal(port.port->basename());
+		  if (sig == 0)
+			continue;
+		  netranges_t unpacked;
+		  ivl_type_t ptype = port.port->elaborate_port_type(des, class_scope,
+								    unpacked);
+		  if (ptype == 0)
+			continue;
+		  if (unpacked == sig->unpacked_dims()
+		      && extern_types_match(ptype, sig->net_type()))
+			continue;
+		  cerr << proto.def.get_fileline() << ": error: Port '"
+		       << port.port->basename() << "' of extern " << what
+		       << " '" << cname << "::" << name
+		       << "' has a different type than in the prototype at "
+		       << where << "." << endl;
+		  des->errors += 1;
+	    }
+      }
+
+      if (proto.is_task)
+	    return;
+
+      ivl_type_t rtype;
+      if (proto.ret_type == 0)
+	    rtype = new netvector_t(IVL_VT_LOGIC);
+      else if (dynamic_cast<const struct void_type_t*> (proto.ret_type))
+	    rtype = 0;
+      else
+	    rtype = proto.ret_type->elaborate_type(des, class_scope);
+
+      const NetNet*ret = method->find_signal(name);
+      if ((rtype == 0) != (ret == 0)
+	  || (ret && !extern_types_match(rtype, ret->net_type()))) {
+	    cerr << proto.def.get_fileline() << ": error: Return type of "
+		 << "extern function '" << cname << "::" << name
+		 << "' differs from the prototype at " << where << "."
+		 << endl;
+	    des->errors += 1;
+      }
+}
+
 void netclass_t::elaborate(Design*des, PClass*pclass)
 {
       if (! pclass->type->initialize_static.empty()) {
@@ -7541,6 +7612,10 @@ void netclass_t::elaborate(Design*des, PClass*pclass)
 	    ivl_assert(*cur->second, scope);
 	    cur->second->elaborate(des, scope);
       }
+
+      for (const auto&cur : pclass->externs)
+	    check_extern_types(des, class_scope_, pclass->pscope_name(),
+			       cur.first, cur.second);
 
 	// Check that each override of a virtual method has the same
 	// signature as the virtual method that it overrides.

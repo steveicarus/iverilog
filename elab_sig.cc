@@ -1021,6 +1021,25 @@ ivl_type_t PWire::elaborate_type(Design*des, NetScope*scope,
       return vec;
 }
 
+ivl_type_t PWire::elaborate_port_type(Design*des, NetScope*scope,
+				      netranges_t&unpacked_dimensions)
+{
+      netranges_t packed_dimensions;
+      if (!port_.empty() &&
+	  !evaluate_ranges(des, scope, this, packed_dimensions, port_))
+	    return 0;
+
+      ivl_type_t type = elaborate_type(des, scope, packed_dimensions);
+      type = elaborate_array_type(des, scope, *this, type, unpacked_);
+      while (const netuarray_t *atype = dynamic_cast<const netuarray_t*>(type)) {
+	    unpacked_dimensions.insert(unpacked_dimensions.begin(),
+				       atype->static_dimensions().begin(),
+				       atype->static_dimensions().end());
+	    type = atype->element_type();
+      }
+      return type;
+}
+
 /*
  * Elaborate a source wire. The "wire" is the declaration of wires,
  * registers, ports and memories. The parser has already merged the

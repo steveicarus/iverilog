@@ -20,6 +20,7 @@
 # include  <cstdarg>
 # include  <utility>
 # include  "pform.h"
+# include  "PGenerate.h"
 # include  "PClass.h"
 # include  "parse_misc.h"
 # include  "ivl_assert.h"
@@ -161,6 +162,202 @@ void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net)
       delete this_port;
 
       net->set_this(pform_cur_class->type, this_wire);
+}
+
+/*
+ * An "extern" method prototype in a class body promises a definition
+ * outside the class: "function type class::name(...)".
+ */
+void pform_class_extern_method(const struct vlltype&loc, const char*name,
+			       bool is_task, bool is_virtual,
+			       vector<pform_tf_port_t>*ports,
+			       data_type_t*ret_type)
+{
+      ivl_assert(loc, pform_cur_class);
+      method_virtual_flag = false;
+
+      PClass::extern_method_t info;
+      FILE_NAME(&info, loc);
+      info.is_task = is_task;
+      info.is_virtual = is_virtual;
+      info.defined = false;
+      info.ports = ports;
+      info.ret_type = ret_type;
+
+      perm_string use_name = lex_strings.make(name);
+      if (!pform_cur_class->externs.emplace(use_name, info).second) {
+	    cerr << loc << ": error: Extern method '" << use_name
+		 << "' is already declared in class '"
+		 << pform_cur_class->pscope_name() << "'." << endl;
+	    error_count += 1;
+      }
+}
+
+/*
+ * While the body of an out-of-block method definition is parsed, the
+ * lexical scope is the class scope, so the method is stored exactly
+ * like a method written inside the class. The scope is restored when
+ * the method scope is popped.
+ */
+static PClass*extern_class = 0;
+static LexicalScope*extern_saved_scope = 0;
+static PClass*extern_saved_class = 0;
+static PClass::extern_method_t*extern_proto = 0;
+
+/*
+ * On an error, parse the method into a throw-away class so that it does
+ * not end up in the enclosing scope and cause follow-on errors.
+ */
+static bool extern_method_error(LexicalScope*scope)
+{
+      extern_class = new PClass(lex_strings.make("$extern_error"), scope);
+      extern_saved_scope = pform_set_scope(extern_class);
+      extern_saved_class = pform_cur_class;
+      extern_proto = 0;
+      return false;
+}
+
+bool pform_start_extern_method(const struct vlltype&loc, const char*class_name,
+			       const char*name, bool is_task)
+{
+      perm_string use_class = lex_strings.make(class_name);
+      perm_string use_name = lex_strings.make(name);
+
+      if (pform_cur_class) {
+	    cerr << loc << ": error: Out-of-block definition of '"
+		 << use_class << "::" << use_name
+		 << "' is not allowed inside a class." << endl;
+	    error_count += 1;
+	    return extern_method_error(pform_peek_scope());
+      }
+
+	// The definition must be in the scope that declares the class.
+      LexicalScope*scope = pform_peek_scope();
+      PClass*pclass = 0;
+      if (auto scopex = dynamic_cast<PScopeExtra*> (scope)) {
+	    auto found = scopex->classes.find(use_class);
+	    if (found != scopex->classes.end())
+		  pclass = found->second;
+      } else if (auto gen = dynamic_cast<PGenerate*> (scope)) {
+	    auto found = gen->classes.find(use_class);
+	    if (found != gen->classes.end())
+		  pclass = found->second;
+      }
+
+      if (!pclass) {
+	    cerr << loc << ": error: Unknown class '" << use_class
+		 << "' in definition of '" << use_class << "::" << use_name
+		 << "'. The class must be declared in the same scope."
+		 << endl;
+	    error_count += 1;
+	    return extern_method_error(scope);
+      }
+
+      auto proto = pclass->externs.find(use_name);
+      if (proto == pclass->externs.end()) {
+	    cerr << loc << ": error: Class '" << use_class
+		 << "' has no extern method '" << use_name
+		 << "' to define." << endl;
+	    error_count += 1;
+	    return extern_method_error(pform_peek_scope());
+      }
+
+      if (proto->second.is_task != is_task) {
+	    cerr << loc << ": error: '" << use_class << "::" << use_name
+		 << "' is defined as a " << (is_task? "task" : "function")
+		 << " but was declared extern as a "
+		 << (proto->second.is_task? "task" : "function") << " at "
+		 << proto->second.get_fileline() << "." << endl;
+	    error_count += 1;
+	    return extern_method_error(pform_peek_scope());
+      }
+
+      if (proto->second.defined) {
+	    cerr << loc << ": error: Extern method '" << use_class << "::"
+		 << use_name << "' is already defined at "
+		 << proto->second.def.get_fileline() << "." << endl;
+	    error_count += 1;
+	    return extern_method_error(pform_peek_scope());
+      }
+      proto->second.defined = true;
+      FILE_NAME(&proto->second.def, loc);
+      extern_proto = &proto->second;
+
+      extern_class = pclass;
+      extern_saved_scope = pform_set_scope(pclass);
+      extern_saved_class = pform_cur_class;
+      pform_cur_class = pclass;
+      method_virtual_flag = proto->second.is_virtual;
+      return true;
+}
+
+/*
+ * Check the ports of an out-of-block definition against the extern
+ * prototype. A default value that only the prototype gives is taken
+ * over by the definition.
+ */
+void pform_check_extern_ports(const struct vlltype&loc,
+			      vector<pform_tf_port_t>*ports)
+{
+      if (extern_proto == 0)
+	    return;
+
+      static const vector<pform_tf_port_t> none;
+      const vector<pform_tf_port_t>&pp = extern_proto->ports? *extern_proto->ports : none;
+      const vector<pform_tf_port_t>&dp = ports? *ports : none;
+      const char*what = extern_proto->is_task? "task" : "function";
+      const string where = extern_proto->get_fileline();
+      FILE_NAME(&extern_proto->def, loc);
+
+      if (pp.size() != dp.size()) {
+	    cerr << loc << ": error: Definition of extern " << what
+		 << " has " << dp.size() << " port(s) but the prototype at "
+		 << where << " has " << pp.size() << "." << endl;
+	    error_count += 1;
+	    return;
+      }
+
+      for (size_t idx = 0 ; idx < pp.size() ; idx += 1) {
+	    PWire*pw = pp[idx].port;
+	    PWire*dw = dp[idx].port;
+	    if (pw->basename() != dw->basename()) {
+		  cerr << loc << ": error: Port " << idx+1 << " of extern "
+		       << what << " is named '" << dw->basename()
+		       << "' but the prototype at " << where << " names it '"
+		       << pw->basename() << "'." << endl;
+		  error_count += 1;
+	    } else if (pw->get_port_type() != dw->get_port_type()) {
+		  cerr << loc << ": error: Port '" << dw->basename()
+		       << "' of extern " << what << " has a different "
+		       << "direction than in the prototype at " << where
+		       << "." << endl;
+		  error_count += 1;
+	    }
+	    if (!dp[idx].defe)
+		  (*ports)[idx].defe = pp[idx].defe;
+      }
+}
+
+PFunction*pform_push_extern_constructor_scope(const struct vlltype&loc,
+					      const char*class_name)
+{
+      if (pform_start_extern_method(loc, class_name, "new", false))
+	    return pform_push_constructor_scope(loc);
+
+      return pform_push_function_scope(loc, "new", LexicalScope::AUTOMATIC);
+}
+
+void pform_end_extern_method()
+{
+      if (extern_class == 0 || pform_peek_scope() != extern_class)
+	    return;
+      extern_proto = 0;
+
+      pform_set_scope(extern_saved_scope);
+      extern_class = 0;
+      extern_saved_scope = 0;
+      pform_cur_class = extern_saved_class;
+      extern_saved_class = 0;
 }
 
 void pform_set_constructor_return(PFunction*net)

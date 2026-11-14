@@ -198,6 +198,21 @@ static void set_type_id_range(T&value, data_type_t *type, char *id,
       value.id = id;
       value.id_loc = loc;
       value.ranges = ranges;
+      value.scope_id = nullptr;
+}
+
+/*
+ * If the name is class::name, enter the scope of that class so that the
+ * method is defined as if it was written inside the class.
+ */
+template <class T>
+static void start_method_scope(const YYLTYPE&loc, T&value, bool is_task)
+{
+      if (!value.scope_id)
+	    return;
+      pform_start_extern_method(loc, value.scope_id, value.id, is_task);
+      delete[] value.scope_id;
+      value.scope_id = nullptr;
 }
 
 template <class T>
@@ -205,6 +220,7 @@ static void delete_type_id_range(T&value)
 {
       delete value.type;
       delete[] value.id;
+      delete[] value.scope_id;
       delete value.ranges;
       value.type = nullptr;
       value.id = nullptr;
@@ -1143,6 +1159,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 	    char *id;
 	    struct vlltype id_loc;
 	    std::list<pform_range_t>*ranges;
+	    char *scope_id;  // class name of an out-of-block method definition
       } type_id_range;
 
       struct {
@@ -1309,6 +1326,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <tf_ports> tf_item_declaration
 %type <tf_ports> tf_port_declaration tf_port_item tf_port_item_list
 %type <tf_ports> tf_port_list tf_port_list_opt tf_port_list_parens_opt
+%type <tf_ports> extern_proto_ports
 
 %type <named_pexpr> named_expression named_expression_opt port_name
 %type <named_pexprs> port_name_list parameter_value_byname_list
@@ -1443,6 +1461,8 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <type_id_range> data_type_or_implicit_plus_id
 %type <type_id_range> data_type_or_implicit_plus_id_dim
 %type <type_id_range> data_type_or_implicit_or_void_plus_id
+%type <type_id_range> method_data_type_or_implicit_or_void_plus_id
+%type <type_id_range> method_task_id
 %type <type_id_range> data_type_or_parameter_id_dim
 %type <type_id_range> partial_port_identifier_dim
 %type <type_id_range> partial_port_type_plus_id_dim
@@ -1688,15 +1708,16 @@ class_item /* IEEE1800-2005: A.1.8 */
 
     /* External class method definitions... */
 
-  | K_extern method_qualifier_opt K_function K_new tf_port_list_parens_opt ';'
-      { yyerror(@1, "sorry: External constructors are not yet supported."); }
+  | K_extern method_qualifier_opt K_function K_new extern_proto_ports ';'
+      { pform_class_extern_method(@3, "new", false, $2, $5); }
   | K_extern method_qualifier_opt K_function data_type_or_implicit_or_void_plus_id
-    tf_port_list_parens_opt ';'
-      { yyerror(@1, "sorry: External methods are not yet supported.");
+    extern_proto_ports ';'
+      { pform_class_extern_method(@3, $4.id, false, $2, $5, $4.type);
+	$4.type = nullptr; // Kept by the prototype.
 	delete_type_id_range($4);
       }
-  | K_extern method_qualifier_opt K_task IDENTIFIER tf_port_list_parens_opt ';'
-      { yyerror(@1, "sorry: External methods are not yet supported.");
+  | K_extern method_qualifier_opt K_task IDENTIFIER extern_proto_ports ';'
+      { pform_class_extern_method(@3, $4, true, $2, $5);
 	delete[] $4;
       }
 
@@ -2286,13 +2307,15 @@ for_step_opt
      definitions in the func_body to take on the scope of the function
      instead of the module. */
 function_declaration /* IEEE1800-2005: A.2.6 */
-  : K_function lifetime_opt data_type_or_implicit_or_void_plus_id ';'
+  : K_function lifetime_opt method_data_type_or_implicit_or_void_plus_id ';'
       { assert(current_function == 0);
+	start_method_scope(@3, $3, false);
 	current_function = pform_push_function_scope(@1, $3.id, $2);
       }
     tf_item_or_statement_list_opt
     K_endfunction
       { std::unique_ptr<procedural_item_list_t> items($6);
+	pform_check_extern_ports(@3, items->ports.get());
 	current_function->set_ports(items->ports.release());
 	current_function->set_return($3.type);
 	current_function_set_statement(items->statements ? items->statements_loc : @3,
@@ -2307,14 +2330,16 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	delete[]$3.id;
       }
 
-  | K_function lifetime_opt data_type_or_implicit_or_void_plus_id
+  | K_function lifetime_opt method_data_type_or_implicit_or_void_plus_id
       { assert(current_function == 0);
+	start_method_scope(@3, $3, false);
 	current_function = pform_push_function_scope(@1, $3.id, $2);
       }
     '(' tf_port_list_opt ')' ';'
     block_item_or_statement_list_opt
     K_endfunction
       { std::unique_ptr<procedural_item_list_t> items($9);
+	pform_check_extern_ports(@3, $6);
 	current_function->set_ports($6);
 	current_function->set_return($3.type);
 	current_function_set_statement(items->statements ? items->statements_loc : @3,
@@ -2332,14 +2357,34 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	delete[]$3.id;
       }
 
+  | K_function lifetime_opt IDENTIFIER K_SCOPE_RES K_new
+      { assert(current_function == 0);
+	current_function = pform_push_extern_constructor_scope(@5, $3);
+	delete[] $3;
+      }
+    tf_port_list_parens_opt ';'
+    block_item_or_statement_list_opt
+    K_endfunction endnew_opt
+      { std::unique_ptr<procedural_item_list_t> items($9);
+	pform_check_extern_ports(@5, $7);
+	current_function->set_ports($7);
+	if (pform_in_class())
+	      pform_set_constructor_return(current_function);
+	pform_set_this_class(@5, current_function);
+	current_function_set_statement(@5, items->statements.get());
+	pform_pop_scope();
+	current_function = 0;
+      }
+
   /* Detect and recover from some errors. */
 
-  | K_function lifetime_opt data_type_or_implicit_or_void_plus_id error K_endfunction
+  | K_function lifetime_opt method_data_type_or_implicit_or_void_plus_id error K_endfunction
       { /* */
 	if (current_function) {
 	      pform_pop_scope();
 	      current_function = 0;
 	}
+	pform_end_extern_method();
 	assert(current_function == 0);
 	yyerror(@1, "error: Syntax error defining function.");
 	yyerrok;
@@ -3151,13 +3196,15 @@ task_declaration /* IEEE1800-2005: A.2.7 */
   /* Tasks do not have a return type, so the leading identifier is always the
      task name. */
 
-  : K_task lifetime_opt IDENTIFIER ';'
+  : K_task lifetime_opt method_task_id ';'
       { assert(current_task == 0);
-	current_task = pform_push_task_scope(@1, $3, $2);
+	start_method_scope(@3, $3, true);
+	current_task = pform_push_task_scope(@1, $3.id, $2);
       }
     tf_item_or_statement_list_opt
     K_endtask
       { std::unique_ptr<procedural_item_list_t> items($6);
+	pform_check_extern_ports(@3, items->ports.get());
 	current_task->set_ports(items->ports.release());
 	current_task_set_statement(@3, items->statements.get());
 	pform_set_this_class(@3, current_task);
@@ -3174,24 +3221,26 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	// label_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	check_end_label(@9, "task", $3, $9);
-	delete[]$3;
+	check_end_label(@9, "task", $3.id, $9);
+	delete[]$3.id;
       }
 
-  | K_task lifetime_opt IDENTIFIER '('
+  | K_task lifetime_opt method_task_id '('
       { assert(current_task == 0);
-	current_task = pform_push_task_scope(@1, $3, $2);
+	start_method_scope(@3, $3, true);
+	current_task = pform_push_task_scope(@1, $3.id, $2);
       }
     tf_port_list_opt ')' ';'
     block_item_or_statement_list_opt
     K_endtask
       { std::unique_ptr<procedural_item_list_t> items($9);
+	pform_check_extern_ports(@3, $6);
 	current_task->set_ports($6);
 	current_task_set_statement(@3, items->statements.get());
 	pform_set_this_class(@3, current_task);
 	pform_pop_scope();
 	if (generation_flag < GN_VER2005 && $6 == 0) {
-	      cerr << @3 << ": warning: task definition for \"" << $3
+	      cerr << @3 << ": warning: task definition for \"" << $3.id
 		   << "\" has an empty port declaration list!" << endl;
 	}
 	current_task = 0;
@@ -3202,16 +3251,17 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	// label_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	check_end_label(@12, "task", $3, $12);
-	delete[]$3;
+	check_end_label(@12, "task", $3.id, $12);
+	delete[]$3.id;
       }
 
-  | K_task lifetime_opt IDENTIFIER error K_endtask
+  | K_task lifetime_opt method_task_id error K_endtask
       {
 	if (current_task) {
 	      pform_pop_scope();
 	      current_task = 0;
 	}
+	pform_end_extern_method();
       }
     label_opt
       { // Last step: check any closing name. This is done late so
@@ -3219,8 +3269,8 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	// label_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	check_end_label(@7, "task", $3, $7);
-	delete[]$3;
+	check_end_label(@7, "task", $3.id, $7);
+	delete[]$3.id;
       }
 
   ;
@@ -3315,6 +3365,50 @@ data_type_or_parameter_id_dim
 	auto tmp = pform_new_type_identifier(@2, $1, $2);
 	tmp = pform_make_parray_type(@3, tmp, $3);
 	set_type_id_range($$, tmp, $4, @4, $5);
+      }
+  ;
+
+  // Function name in a function_declaration. Besides the plain form this also
+  // accepts class_scope::name for the out-of-block definition of an extern
+  // class method (IEEE1800-2017 8.24).
+method_data_type_or_implicit_or_void_plus_id
+  : data_type_or_implicit_or_void_plus_id
+      { $$ = $1;
+      }
+  | IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { set_type_id_range($$, nullptr, $3, @3, nullptr);
+	$$.scope_id = $1;
+      }
+  | IDENTIFIER dimensions_opt IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1);
+	tmp = pform_make_parray_type(@2, tmp, $2);
+	set_type_id_range($$, tmp, $5, @5, nullptr);
+	$$.scope_id = $3;
+      }
+  | atomic_type IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { set_type_id_range($$, $1, $4, @4, nullptr);
+	$$.scope_id = $2;
+      }
+  | implicit_type IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { set_type_id_range($$, $1, $4, @4, nullptr);
+	$$.scope_id = $2;
+      }
+  | K_void IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { void_type_t*tmp = new void_type_t;
+	FILE_NAME(tmp, @1);
+	set_type_id_range($$, tmp, $4, @4, nullptr);
+	$$.scope_id = $2;
+      }
+  ;
+
+  // Task name in a task_declaration, optionally class_scope::name.
+method_task_id
+  : IDENTIFIER
+      { set_type_id_range($$, nullptr, $1, @1, nullptr);
+      }
+  | IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { set_type_id_range($$, nullptr, $3, @3, nullptr);
+	$$.scope_id = $1;
       }
   ;
 
@@ -8172,6 +8266,25 @@ tf_port_list_opt
 tf_port_list_parens_opt
   : '(' tf_port_list_opt ')' { $$ = $2; }
   |                          { $$ = 0; }
+
+  /* The ports of an extern prototype are kept for checking the later
+     definition. They are made in a scope of their own so the wires do
+     not end up in the class. */
+extern_proto_ports
+  : extern_proto_scope tf_port_list_parens_opt
+      { pform_pop_scope();
+	$$ = $2;
+      }
+  | extern_proto_scope error
+      { pform_pop_scope();
+	yyerrok;
+	$$ = 0;
+      }
+  ;
+
+extern_proto_scope
+  : { pform_push_proto_scope(@$); }
+  ;
 
   /* Note that the lexor notices the "table" keyword and starts
      the UDPTABLE state. It needs to happen there so that all the

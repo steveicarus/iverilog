@@ -487,6 +487,15 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       }
 
 
+      for (const auto &cur : pclass->externs) {
+	    if (cur.second.defined)
+		  continue;
+	    cerr << cur.second.get_fileline() << ": error: Extern method '"
+		 << pclass->pscope_name() << "::" << cur.first
+		 << "' is declared but never defined." << endl;
+	    des->errors += 1;
+      }
+
       netclass_t*use_class = new netclass_t(use_type->name);
 
       NetScope*class_scope = new NetScope(scope, hname_t(pclass->pscope_name()),

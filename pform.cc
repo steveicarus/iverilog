@@ -428,6 +428,15 @@ void pform_pop_scope()
 
       lexical_scope = scope->parent_scope();
       assert(lexical_scope);
+
+      pform_end_extern_method();
+}
+
+LexicalScope* pform_set_scope(LexicalScope*scope)
+{
+      LexicalScope*old = lexical_scope;
+      lexical_scope = scope;
+      return old;
 }
 
 static LexicalScope::lifetime_t find_lifetime(LexicalScope::lifetime_t lifetime)
@@ -744,6 +753,18 @@ PBlock* pform_push_block_scope(const struct vlltype&loc, const char*name,
       lexical_scope = block;
 
       return block;
+}
+
+/*
+ * Unlike an unnamed block, this does not use up a $unm_blk number.
+ */
+void pform_push_proto_scope(const struct vlltype&loc)
+{
+      PBlock*block = new PBlock(lex_strings.make("$extern_proto"),
+				lexical_scope, PBlock::BL_SEQ);
+      FILE_NAME(block, loc);
+      block->default_lifetime = find_lifetime(LexicalScope::INHERITED);
+      lexical_scope = block;
 }
 
 /*
