@@ -4057,6 +4057,16 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 		 use_search_results.path_head.push_back(name_component_t(perm_string::literal(THIS_TOKEN)));
 		 NetScope *method_scope = find_method_containing_scope(*this, scope);
 		 ivl_assert(*this, method_scope);
+		   // A static method has no object to call a method of.
+		 if (method_scope->is_static_method()) {
+		       NetExpr*this_expr = class_scope_method_this(*this, des,
+								   dscope, path_);
+		       if (!this_expr)
+			     return 0;
+		       return elaborate_class_method_net_this_(
+			     des, scope, this_expr, c_scope->class_def(),
+			     dscope->basename(), nullptr, true);
+		 }
 		 use_search_results.net = method_scope->find_signal(
 		       perm_string::literal(THIS_TOKEN));
 		 ivl_assert(*this, use_search_results.net);

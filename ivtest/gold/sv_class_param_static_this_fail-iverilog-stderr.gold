@@ -1,0 +1,15 @@
+ivltests/sv_class_param_static_this_fail.v:18: error: `this' can not be used in a static method.
+ivltests/sv_class_param_static_this_fail.v:18: error: `this' can not be used in a static method.
+ivltests/sv_class_param_static_this_fail.v:18: error: Unable to bind wire/reg/memory `this.x' in `$unit.C.b1'
+ivltests/sv_class_param_static_this_fail.v:22: error: `this' can not be used in a static method.
+ivltests/sv_class_param_static_this_fail.v:22: error: Could not find variable ``this.x'' in ``$unit.C.b2''
+ivltests/sv_class_param_static_this_fail.v:27: error: `this' can not be used in a static method.
+ivltests/sv_class_param_static_this_fail.v:27: error: Both arguments (<no_type>, class) must be class/null for '==' operator.
+ivltests/sv_class_param_static_this_fail.v:27: error: `this' can not be used in a static method.
+ivltests/sv_class_param_static_this_fail.v:27: error: Unable to bind wire/reg/memory `this' in `$unit.C.b3'
+ivltests/sv_class_param_static_this_fail.v:31: error: `get' is not a static method, so it needs an object to be called.
+ivltests/sv_class_param_static_this_fail.v:35: error: `put' is not a static method, so it needs an object to be called.
+ivltests/sv_class_param_static_this_fail.v:46: error: `get' is not a static method, so it needs an object to be called.
+ivltests/sv_class_param_static_this_fail.v:40: error: `run' is not a static method, so it needs an object to be called.
+ivltests/sv_class_param_static_this_fail.v:40: Unable to elaborate statement in task $unit.C.b6 at ivltests/sv_class_param_static_this_fail.v:39.
+13 error(s) during elaboration.

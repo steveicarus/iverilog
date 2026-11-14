@@ -92,6 +92,14 @@ static scope_object_search_result_t symbol_search_scope_objects(
 	    return scope_object_search_result_t::failed;
       }
 
+      if (path_tail.name == perm_string::literal(THIS_TOKEN)
+	  && scope->is_static_method()) {
+	    cerr << li->get_fileline() << ": error: `this' can not be used in "
+		 << "a static method." << endl;
+	    des->errors += 1;
+	    return scope_object_search_result_t::failed;
+      }
+
       if (NetNet *net = scope->find_signal(path_tail.name)) {
 	    bool decl_after_use = !(net->lexical_pos() <= visibility_pos);
 	    if (!enforce_net_var_declaration_order || !decl_after_use) {

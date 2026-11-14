@@ -34,6 +34,15 @@ class C #(int N = 4, type T = int);
     count += by;
   endtask
 
+  static function void bump1();
+    count += 1;
+  endfunction
+
+  static task bump_twice();
+    bump1();
+    incr();
+  endtask
+
   function int inst_width();
     return width() + M;
   endfunction
@@ -80,6 +89,10 @@ module test;
     C#(8)::incr(3);
     C::incr(.by(2));
     if (C#(8)::count != 9 || C::count != 9) failed = 1;
+
+    // A static method calls another one without a scope.
+    C#(8)::bump_twice();
+    if (C#(8)::count != 11) failed = 1;
 
     // An object still reaches a static method.
     if (h.width() != 8 || h.inst_width() != 24) failed = 1;

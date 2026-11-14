@@ -4027,6 +4027,22 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 		    // variable. Its containing scope is the function being called.
 		  func_scope = search_results.scope;
 	    }
+
+	      // A static method has no object to call a method of.
+	    NetScope*callee = task ? task : func_scope;
+	    const NetScope*c_scope = scope->get_class_scope();
+	    const NetScope*caller = c_scope
+		  ? find_method_containing_scope(*this, scope) : nullptr;
+	    if (gn_system_verilog() && path_.size() == 1 && callee && caller
+		&& c_scope == callee->get_class_scope()
+		&& caller->is_static_method()) {
+		  NetExpr*this_expr = class_scope_method_this(*this, des, callee,
+							      path_);
+		  if (!this_expr)
+			return nullptr;
+		  return elaborate_build_call_(des, scope, callee, this_expr,
+					       true);
+	    }
       }
 
       if (!task) {
