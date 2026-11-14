@@ -1524,6 +1524,11 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  *    for the local part selecting I might to in the lval object, as
  *    well as the target object width.
  *
+ * ivl_lval_data_type
+ *    The data type of this l-value component, accounting for selected
+ *    members and array elements. This can differ from the containing
+ *    signal's type, such as a two-state member of a four-state struct.
+ *
  * ivl_lval_mux (* obsolete *)
  *
  * ivl_lval_nest
@@ -1576,6 +1581,7 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  */
 
 extern unsigned    ivl_lval_width(ivl_lval_t net);
+extern ivl_variable_type_t ivl_lval_data_type(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net) __attribute__((deprecated)); /* XXXX Obsolete? */
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_part_off(ivl_lval_t net);
