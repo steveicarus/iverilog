@@ -1022,6 +1022,22 @@ basically an implementation of <string>.putc(<muxr>, <val>) where
 
 Pop values from a dynamic queue object.
 
+* %ref/bind <var-label>
+* %ref/get <var-label>
+* %ref/net <var-label>
+* %ref/prop <pid>
+
+These instructions implement ref arguments of automatic tasks and
+functions. The %ref/net instruction pushes a reference to the variable
+<var-label> onto the object stack, and %ref/prop pops a class object and
+pushes a reference to its property <pid>. The %ref/bind instruction pops
+a reference and binds the ref formal <var-label> to it, in the context
+that was allocated for the call. After that, the reads and writes of the
+formal are done on the variable that the reference is to. The %ref/get
+instruction pushes the reference that a formal is bound to, to pass it on
+to another call. The formal is declared with a .refvar statement after
+its .var statement.
+
 * %release/net <functor-label>, <base>, <width>
 * %release/reg <functor-label>, <base>, <width>
 

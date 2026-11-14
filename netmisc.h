@@ -430,6 +430,14 @@ extern NetExpr* elaborate_rval_expr(Design *des, NetScope *scope,
 				    bool need_const = false,
 				    bool force_unsigned = false);
 
+/*
+ * Elaborate the actual argument <expr> of a call for the ref formal
+ * <formal>. The result is a NetESignal or NetEProperty for the
+ * variable, or nil after reporting an error. (See elab_expr.cc)
+ */
+extern NetExpr* elaborate_ref_argument(Design*des, NetScope*scope,
+				       const NetNet*formal, PExpr*expr);
+
 extern bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
                            const pform_range_t&range,
                            long&index_l, long&index_r);

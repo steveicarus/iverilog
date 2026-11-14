@@ -384,7 +384,8 @@ typedef enum OUT {
       IVL_SIP_NONE  = 0,
       IVL_SIP_INPUT = 1,
       IVL_SIP_OUTPUT= 2,
-      IVL_SIP_INOUT = 3
+      IVL_SIP_INOUT = 3,
+      IVL_SIP_REF   = 4
 } ivl_signal_port_t;
 
 /* This is the type code for an ivl_signal_t object. Implicit types
@@ -1998,9 +1999,9 @@ extern unsigned ivl_scope_func_width(ivl_scope_t net);
  *    dimensions. They will return msb==lsb==0 for scalars.
  *
  * ivl_signal_port
- *    If the signal is a port to a module, this function returns the
- *    port direction. If the signal is not a port, it returns
- *    IVL_SIP_NONE.
+ *    If the signal is a port to a module, task or function, this function
+ *    returns the port direction. A ref argument of a task or function is
+ *    IVL_SIP_REF. If the signal is not a port, it returns IVL_SIP_NONE.
  *
  * ivl_signal_signed
  *    A signal, which is a vector, may be signed. In Verilog 2000, any

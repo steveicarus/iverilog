@@ -4886,6 +4886,32 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	    if (port->port_type() == NetNet::POUTPUT)
 		  continue;
 
+	      /* A ref port is not assigned. It is bound to the variable
+		 that is passed. */
+	    if (port->port_type() == NetNet::PREF) {
+		  if (!args[parms_idx]) {
+			cerr << get_fileline() << ": error: "
+			     << "Missing argument " << (idx+1)
+			     << " of call to task." << endl;
+			des->errors += 1;
+			continue;
+		  }
+		  NetExpr*actual = elaborate_ref_argument(des, scope, port,
+							  args[parms_idx]);
+		  if (actual == 0)
+			continue;
+
+		  vector<NetExpr*> bind_args (2);
+		  bind_args[0] = new NetESignal(port);
+		  bind_args[1] = actual;
+		  NetSTask*bind = new NetSTask("$ivl_ref_bind",
+					       IVL_SFUNC_AS_TASK_IGNORE,
+					       bind_args);
+		  bind->set_line(*this);
+		  block->append(bind);
+		  continue;
+	    }
+
 	    NetAssign_*lv = new NetAssign_(port);
 	    unsigned wid = count_lval_width(lv);
 	    ivl_variable_type_t lv_type = lv->expr_type();
@@ -4958,7 +4984,8 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
 	      /* Skip input ports. */
 	    ivl_assert(*this, port->port_type() != NetNet::NOT_A_PORT);
-	    if (port->port_type() == NetNet::PINPUT)
+	    if (port->port_type() == NetNet::PINPUT ||
+		port->port_type() == NetNet::PREF)
 		  continue;
 
 
@@ -5529,6 +5556,34 @@ static bool check_event_select(Design*des, const name_component_t&name)
  * NetEvWait object can refer to.
  */
 
+/*
+ * A ref argument is the variable of the caller. Other processes write
+ * that variable and not the argument, so an event of the argument would
+ * never trigger. Report this for the cases that can be detected.
+ */
+static bool ref_port_in_nexus_set(const NexusSet*set)
+{
+      for (size_t idx = 0 ; idx < set->size() ; idx += 1) {
+	    const Nexus*nex = const_cast<NexusSet*>(set)->at(idx).lnk.nexus();
+	    for (const Link*cur = nex->first_nlink() ; cur ; cur = cur->next_nlink()) {
+		  const NetPins*net;
+		  unsigned pin;
+		  cur->cur_link(net, pin);
+		  const NetNet*sig = dynamic_cast<const NetNet*>(net);
+		  if (sig && sig->port_type() == NetNet::PREF)
+			return true;
+	    }
+      }
+      return false;
+}
+
+static void sorry_ref_port_event(Design*des, const LineInfo&loc)
+{
+      cerr << loc.get_fileline() << ": sorry: "
+	   << "Events on a ref argument are not supported yet." << endl;
+      des->errors += 1;
+}
+
 NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 				       NetProc*enet) const
 {
@@ -5585,6 +5640,8 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 		  des->errors += 1;
 		  return enet;
 	    }
+	    if (ref_port_in_nexus_set(nset))
+		  sorry_ref_port_event(des, *this);
 
 	    if (nset->size() == 0) {
                   if (always_sens_) return wa;
@@ -5742,6 +5799,9 @@ cerr << endl;
 		  continue;
 	    }
 	    ivl_assert(*this, expr);
+
+	    if (expr->port_type() == NetNet::PREF)
+		  sorry_ref_port_event(des, *this);
 
 	    delete tmp;
 
@@ -5925,6 +5985,9 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return 0;
       }
+
+      if (ref_port_in_nexus_set(wait_set))
+	    sorry_ref_port_event(des, *this);
 
       NetEvProbe*wait_pr = new NetEvProbe(scope, scope->local_symbol(),
 					  wait_event, NetEvProbe::ANYEDGE,

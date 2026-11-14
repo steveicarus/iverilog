@@ -2023,9 +2023,27 @@ static int show_push_frontback_method(ivl_statement_t net, bool is_front)
       return 0;
 }
 
+/*
+ * The call of a task with a ref argument binds the formal to the actual
+ * variable in place of the assignment that passes other arguments.
+ */
+static int show_ref_bind(ivl_statement_t net)
+{
+      ivl_signal_t formal = ivl_expr_signal(ivl_stmt_parm(net, 0));
+
+      show_stmt_file_line(net, "Bind a ref argument.");
+      int rc = draw_eval_ref(ivl_stmt_parm(net, 1));
+      fprintf(vvp_out, "    %%ref/bind v%p_0;\n", formal);
+
+      return rc;
+}
+
 static int show_system_task_call(ivl_statement_t net)
 {
       const char*stmt_name = ivl_stmt_name(net);
+
+      if (strcmp(stmt_name,"$ivl_ref_bind") == 0)
+	    return show_ref_bind(net);
 
       if (strcmp(stmt_name,"$ivl_darray_method$delete") == 0)
 	    return show_delete_method(net);

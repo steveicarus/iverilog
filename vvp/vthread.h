@@ -115,6 +115,13 @@ extern vvp_context_item_t vthread_get_wt_context_item(unsigned context_idx);
 extern vvp_context_item_t vthread_get_rd_context_item(unsigned context_idx);
 
 /*
+ * Make <ctx> the read context of the running thread and return the
+ * context that was replaced. This is for reading an automatic variable
+ * through a reference to it, see vvp_var_ref.
+ */
+extern vvp_context_t vthread_swap_rd_context(vvp_context_t ctx);
+
+/*
  * Access value stacks from thread space.
  */
 extern void vthread_push(struct vthread_s*thr, const vvp_vector4_t&val);

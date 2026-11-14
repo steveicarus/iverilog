@@ -220,6 +220,7 @@ inline uint64_t strtouint64(const char*str, char**endptr, int base)
 ".reduce/nand"  { return K_REDUCE_NAND; }
 ".reduce/nor"   { return K_REDUCE_NOR; }
 ".reduce/xnor"  { return K_REDUCE_XNOR; }
+".refvar"       { return K_REFVAR; }
 ".repeat"       { return K_REPEAT; }
 ".resolv"       { return K_RESOLV; }
 ".rtran"        { return K_RTRAN; }

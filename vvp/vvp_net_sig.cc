@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,6 +22,8 @@
 # include  "vvp_net_sig.h"
 # include  "statistics.h"
 # include  "vpi_priv.h"
+# include  "vthread.h"
+# include  "vvp_cobject.h"
 # include  <vector>
 # include  <cassert>
 #ifdef CHECK_WITH_VALGRIND
@@ -331,6 +333,181 @@ const vvp_vector4_t& vvp_fun_signal4_sa::vec4_unfiltered_value() const
       return bits4_;
 }
 
+/*
+ * The slot in the context of a ref formal that holds the vvp_var_ref
+ * that the formal is bound to.
+ */
+namespace {
+class ref_slot_hooks : public automatic_hooks_s {
+
+    public:
+      ref_slot_hooks() : idx_(0) { }
+
+      void alloc_instance(vvp_context_t context) override
+      { vvp_set_context_item(context, idx_, new vvp_object_t); }
+
+      void reset_instance(vvp_context_t context) override
+      { static_cast<vvp_object_t*>(vvp_get_context_item(context, idx_))->reset(); }
+
+#ifdef CHECK_WITH_VALGRIND
+      void free_instance(vvp_context_t context) override
+      { delete static_cast<vvp_object_t*>(vvp_get_context_item(context, idx_)); }
+#endif
+
+      unsigned idx_;
+};
+}
+
+void automatic_signal_base::enable_ref()
+{
+      ref_slot_hooks*slot = new ref_slot_hooks;
+      slot->idx_ = vpip_add_item_to_context(slot, vpip_peek_context_scope());
+      ref_idx_ = slot->idx_;
+}
+
+void automatic_signal_base::bind_ref(vvp_context_t context,
+				    const vvp_object_t&ref) const
+{
+      assert(ref_idx_);
+      *static_cast<vvp_object_t*>(vvp_get_context_item(context, ref_idx_)) = ref;
+}
+
+vvp_object_t automatic_signal_base::bound_ref() const
+{
+      assert(ref_idx_);
+      return *static_cast<vvp_object_t*>(vthread_get_rd_context_item(ref_idx_));
+}
+
+const vvp_var_ref* automatic_signal_base::ref_wt(vvp_context_t context) const
+{
+      if (ref_idx_ == 0)
+	    return 0;
+      return static_cast<vvp_object_t*>
+	    (vvp_get_context_item(context, ref_idx_))->peek<vvp_var_ref>();
+}
+
+const vvp_var_ref* automatic_signal_base::ref_rd() const
+{
+      if (ref_idx_ == 0)
+	    return 0;
+      return static_cast<vvp_object_t*>
+	    (vthread_get_rd_context_item(ref_idx_))->peek<vvp_var_ref>();
+}
+
+vvp_var_ref::vvp_var_ref(vvp_net_t*net, vvp_context_t ctx)
+: net_(net), ctx_(ctx), pid_(0)
+{
+}
+
+vvp_var_ref::vvp_var_ref(const vvp_object_t&obj, unsigned pid)
+: net_(0), ctx_(0), obj_(obj), pid_(pid)
+{
+}
+
+vvp_var_ref::~vvp_var_ref()
+{
+}
+
+/*
+ * Reading an automatic variable uses the read context of the running
+ * thread, so make that the context of the variable while reading it.
+ */
+namespace {
+class read_in_context {
+    public:
+      explicit read_in_context(vvp_context_t ctx)
+      : saved_(vthread_swap_rd_context(ctx)) { }
+      ~read_in_context() { vthread_swap_rd_context(saved_); }
+    private:
+      vvp_context_t saved_;
+};
+}
+
+void vvp_var_ref::get_vec4(vvp_vector4_t&val) const
+{
+      if (net_ == 0) {
+	    obj_.peek<vvp_cobject>()->get_vec4(pid_, val);
+	    return;
+      }
+      read_in_context rc (ctx_);
+      dynamic_cast<vvp_signal_value*>(net_->fil)->vec4_value(val);
+}
+
+double vvp_var_ref::get_real() const
+{
+      if (net_ == 0)
+	    return obj_.peek<vvp_cobject>()->get_real(pid_);
+      read_in_context rc (ctx_);
+      return dynamic_cast<vvp_fun_signal_real*>(net_->fun)->real_unfiltered_value();
+}
+
+std::string vvp_var_ref::get_string() const
+{
+      if (net_ == 0)
+	    return obj_.peek<vvp_cobject>()->get_string(pid_);
+      read_in_context rc (ctx_);
+      return dynamic_cast<vvp_fun_signal_string*>(net_->fun)->get_string();
+}
+
+vvp_object_t vvp_var_ref::get_object() const
+{
+      vvp_object_t val;
+      if (net_ == 0) {
+	    obj_.peek<vvp_cobject>()->get_object(pid_, val, 0);
+	    return val;
+      }
+      read_in_context rc (ctx_);
+      return dynamic_cast<vvp_fun_signal_object*>(net_->fun)->get_object();
+}
+
+void vvp_var_ref::put_vec4(const vvp_vector4_t&val) const
+{
+      if (net_ == 0)
+	    obj_.peek<vvp_cobject>()->set_vec4(pid_, val);
+      else
+	    vvp_send_vec4(vvp_net_ptr_t(net_, 0), val, ctx_);
+}
+
+void vvp_var_ref::put_vec4_pv(const vvp_vector4_t&val, unsigned base,
+			      unsigned vwid) const
+{
+      if (net_) {
+	    vvp_send_vec4_pv(vvp_net_ptr_t(net_, 0), val, base, vwid, ctx_);
+	    return;
+      }
+
+      vvp_cobject*cobj = obj_.peek<vvp_cobject>();
+      vvp_vector4_t tmp;
+      cobj->get_vec4(pid_, tmp);
+      for (unsigned idx = 0 ; idx < val.size() && base+idx < tmp.size() ; idx += 1)
+	    tmp.set_bit(base+idx, val.value(idx));
+      cobj->set_vec4(pid_, tmp);
+}
+
+void vvp_var_ref::put_real(double val) const
+{
+      if (net_ == 0)
+	    obj_.peek<vvp_cobject>()->set_real(pid_, val);
+      else
+	    vvp_send_real(vvp_net_ptr_t(net_, 0), val, ctx_);
+}
+
+void vvp_var_ref::put_string(const std::string&val) const
+{
+      if (net_ == 0)
+	    obj_.peek<vvp_cobject>()->set_string(pid_, val);
+      else
+	    vvp_send_string(vvp_net_ptr_t(net_, 0), val, ctx_);
+}
+
+void vvp_var_ref::put_object(const vvp_object_t&val) const
+{
+      if (net_ == 0)
+	    obj_.peek<vvp_cobject>()->set_object(pid_, val, 0);
+      else
+	    vvp_send_object(vvp_net_ptr_t(net_, 0), val, ctx_);
+}
+
 vvp_fun_signal4_aa::vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init)
 {
       context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
@@ -375,6 +552,11 @@ void vvp_fun_signal4_aa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       assert(ptr.port() == 0);
       assert(context);
 
+      if (const vvp_var_ref*ref = ref_wt(context)) {
+            ref->put_vec4(bit);
+            return;
+      }
+
       vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
             (vvp_get_context_item(context, context_idx_));
 
@@ -390,6 +572,11 @@ void vvp_fun_signal4_aa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit
       assert(ptr.port() == 0);
       assert(size_ == vwid);
       assert(context);
+
+      if (const vvp_var_ref*ref = ref_wt(context)) {
+            ref->put_vec4_pv(bit, base, vwid);
+            return;
+      }
 
       vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
             (vvp_get_context_item(context, context_idx_));
@@ -409,32 +596,40 @@ unsigned vvp_fun_signal4_aa::value_size() const
 
 vvp_bit4_t vvp_fun_signal4_aa::value(unsigned idx) const
 {
-      const vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
             (vthread_get_rd_context_item(context_idx_));
+      if (const vvp_var_ref*ref = ref_rd())
+            ref->get_vec4(*bits4);
 
       return bits4->value(idx);
 }
 
 vvp_scalar_t vvp_fun_signal4_aa::scalar_value(unsigned idx) const
 {
-      const vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
             (vthread_get_rd_context_item(context_idx_));
+      if (const vvp_var_ref*ref = ref_rd())
+            ref->get_vec4(*bits4);
 
       return vvp_scalar_t(bits4->value(idx), 6, 6);
 }
 
 void vvp_fun_signal4_aa::vec4_value(vvp_vector4_t&val) const
 {
-      const vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
             (vthread_get_rd_context_item(context_idx_));
+      if (const vvp_var_ref*ref = ref_rd())
+            ref->get_vec4(*bits4);
 
       val = *bits4;
 }
 
 const vvp_vector4_t&vvp_fun_signal4_aa::vec4_unfiltered_value() const
 {
-      const vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
             (vthread_get_rd_context_item(context_idx_));
+      if (const vvp_var_ref*ref = ref_rd())
+            ref->get_vec4(*bits4);
 
       return *bits4;
 }
@@ -528,6 +723,9 @@ void vvp_fun_signal_real_aa::free_instance(vvp_context_t context)
 
 double vvp_fun_signal_real_aa::real_unfiltered_value() const
 {
+      if (const vvp_var_ref*ref = ref_rd())
+            return ref->get_real();
+
       const double*bits = static_cast<double*>
             (vthread_get_rd_context_item(context_idx_));
 
@@ -544,6 +742,11 @@ void vvp_fun_signal_real_aa::recv_real(vvp_net_ptr_t ptr, double bit,
 {
       assert(ptr.port() == 0);
       assert(context);
+
+      if (const vvp_var_ref*ref = ref_wt(context)) {
+            ref->put_real(bit);
+            return;
+      }
 
       double*bits = static_cast<double*>
             (vvp_get_context_item(context, context_idx_));
@@ -648,6 +851,11 @@ void vvp_fun_signal_string_aa::recv_string(vvp_net_ptr_t ptr, const std::string&
       assert(ptr.port() == 0);
       assert(context);
 
+      if (const vvp_var_ref*ref = ref_wt(context)) {
+	    ref->put_string(bit);
+	    return;
+      }
+
       string*bits = static_cast<std::string*>
 	    (vvp_get_context_item(context, context_idx_));
 
@@ -688,8 +896,10 @@ double vvp_fun_signal_string_aa::real_value() const
 
 const std::string& vvp_fun_signal_string_aa::get_string() const
 {
-      const string*bits = static_cast<std::string*>
+      string*bits = static_cast<std::string*>
             (vthread_get_rd_context_item(context_idx_));
+      if (const vvp_var_ref*ref = ref_rd())
+            *bits = ref->get_string();
 
       return *bits;
 }
@@ -765,6 +975,9 @@ void vvp_fun_signal_object_aa::reset_instance(vvp_context_t context)
 
 vvp_object_t vvp_fun_signal_object_aa::get_object() const
 {
+      if (const vvp_var_ref*ref = ref_rd())
+	    return ref->get_object();
+
       const vvp_object_t*bits = static_cast<vvp_object_t*>
 	    (vthread_get_rd_context_item(context_idx_));
       return *bits;
@@ -775,6 +988,11 @@ void vvp_fun_signal_object_aa::recv_object(vvp_net_ptr_t ptr, vvp_object_t bit,
 {
       assert(ptr.port() == 0);
       assert(context);
+
+      if (const vvp_var_ref*ref = ref_wt(context)) {
+	    ref->put_object(bit);
+	    return;
+      }
 
       vvp_object_t*bits = static_cast<vvp_object_t*>
 	    (vvp_get_context_item(context, context_idx_));

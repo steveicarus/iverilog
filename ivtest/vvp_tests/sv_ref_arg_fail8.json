@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_ref_arg_fail8.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

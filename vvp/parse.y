@@ -98,7 +98,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_RESOLV K_RTRAN K_RTRANIF0 K_RTRANIF1
 %token K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_SUBSTITUTE
-%token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
+%token K_REFVAR K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC_REAL K_UFUNC_REAL_E K_UFUNC_VEC4 K_UFUNC_E K_UDP K_UDP_C K_UDP_S
 %token K_VAR K_VAR_COBJECT K_VAR_DARRAY K_VIRT
 %token K_SUPER
@@ -744,6 +744,11 @@ statement
 		{ compile_timescale($2, -$4); }
 	|         K_TIMESCALE '-' T_NUMBER '-' T_NUMBER';'
 		{ compile_timescale(-$3, -$5); }
+
+  /* A .refvar statement makes a variable a ref formal. */
+
+	|         K_REFVAR T_SYMBOL ';'
+		{ compile_ref_var($2); }
 
   /* Thread statements declare a thread with its starting address. The
      starting address must already be defined. The .thread statement
