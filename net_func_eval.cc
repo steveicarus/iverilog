@@ -317,6 +317,7 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 			      lpart.set(idx, lval_v[ldx]);
 		  }
 		  eval_func_lval_op_(loc, lpart, rval_v);
+		  if (lval->expr_type() == IVL_VT_BOOL) lpart.cast_to_int2();
 	    } else {
 		  lpart = cast_to_width(rval_v, lval->lwidth());
 	    }
@@ -353,6 +354,7 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 		  verinum rval_v = rval_const->value();
 
 		  eval_func_lval_op_(loc, lval_v, rval_v);
+		  if (lval->expr_type() == IVL_VT_BOOL) lval_v.cast_to_int2();
 
 		  delete rval_result;
 		  rval_result = new NetEConst(lval_v);
@@ -414,6 +416,8 @@ bool NetAssign::evaluate_function(const LineInfo&loc,
 	    verinum rval_part(verinum::Vx, lval->lwidth());
 	    for (unsigned idx = 0 ; idx < rval_part.len() ; idx += 1)
 		  rval_part.set(idx, rval_full[base+idx]);
+
+	    if (lval->expr_type() == IVL_VT_BOOL) rval_part.cast_to_int2();
 
 	    bool flag = eval_func_lval_(loc, context_map, lval,
 					new NetEConst(rval_part));
