@@ -29,6 +29,7 @@
 # include  <cstdio>
 # include  <sstream>
 # include  <algorithm>
+# include  <set>
 
 /*
  * Elaboration happens in two passes, generally. The first scans the
@@ -875,6 +876,24 @@ const netclass_t* netclass_t::specialize(Design*des, NetScope*scope,
       if (match) {
 	    class_scope->detach();
 	    return match;
+      }
+
+	// A class that specializes itself with changing values, such as
+	// C#(N+1) inside C#(N), would make specializations forever. The
+	// names of the variables in the methods are shared by all the
+	// specializations, so a method can not have a variable of another
+	// specialization of its own class.
+      if (base->methods_in_sig_ || base->specializations_.size() >= 100) {
+	    static std::set<const netclass_t*> reported;
+	    if (reported.insert(base).second) {
+		  cerr << loc.get_fileline() << ": error: Recursive "
+		       << "specialization of class `" << base->get_name()
+		       << "`, there are too many specializations of it."
+		       << endl;
+		  des->errors += 1;
+	    }
+	    class_scope->detach();
+	    return base;
       }
 
       string spec_name = class_specialization_name(des, class_scope,
