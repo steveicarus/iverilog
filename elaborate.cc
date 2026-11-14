@@ -1925,10 +1925,14 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 
 	    NetNet*sig = 0;
 	    NetNet::PortType ptype;
-	    if (prts.empty())
-		   ptype = NetNet::NOT_A_PORT;
-	    else
-		   ptype = prts[0]->port_type();
+	    if (prts.empty()) {
+		  ptype = NetNet::NOT_A_PORT;
+	    } else {
+		  ptype = NetNet::PIMPLICIT;
+		  for (const auto*port : prts) {
+			ptype = PortType::merged(ptype, port->port_type());
+		  }
+	    }
 	    if (prts.empty() || (ptype == NetNet::PINPUT)) {
 
 		    // Special case: If the input port is an unpacked

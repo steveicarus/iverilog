@@ -309,6 +309,8 @@ def do_run_normal(options: dict, cfg: dict, expected_fail: bool,
 
         log_results(it_key, "iverilog", ivl_tres)
         if ivl_tres.returncode != 0:
+            if translation_fail:
+                return build_ivl_return(True, ivl_tres)
             return [1, "Failed - vlog95 translation failed."]
 
         saved_options = options_to_pass(options)
