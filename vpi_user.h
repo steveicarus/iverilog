@@ -412,6 +412,11 @@ typedef struct t_vpi_delay  {
    Bare local scalar names are unescaped; expression keys start with a space.
    Returns NULL for an unconditional path or an unsupported expression. */
 #define _vpiModPathCondition 0x1000005
+/* vpi_handle on vpiModPath: the actual scalar combinational UDP output
+   before module-path delay, enabled by -pudp_prepath_vpi=1. Returns a borrowed
+   vpiNet handle, or NULL when disabled/inapplicable. This is an Icarus extension;
+   the generated net name is not a stable interface. */
+#define _vpiModPathData 0x1000006
 
 /* DELAY MODES */
 #define vpiNoDelay            1

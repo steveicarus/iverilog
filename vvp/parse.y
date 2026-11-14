@@ -521,6 +521,11 @@ statement
    modpath_src_list ';'
     { modpath_dst = 0; }
 
+ | T_LABEL K_MODPATH T_NUMBER symbol symbol symbol ','
+    { modpath_dst = compile_modpath($1, $3, $4, $5, $6.text); }
+   modpath_src_list ';'
+    { modpath_dst = 0; }
+
   /* DFF nodes have an output and take up to 4 inputs. */
 
   | T_LABEL K_DFF_N T_NUMBER symbol ',' symbol ',' symbol ';'

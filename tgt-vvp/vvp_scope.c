@@ -832,6 +832,43 @@ static int udp_has_modpath_output(ivl_net_logic_t lptr)
       return 0;
 }
 
+/* The observation handle represents one existing UDP output, not a resolved
+ * or delayed driver. Use the same eligibility test for handle emission and
+ * the module-path association. */
+int udp_prepath_vpi_eligible(ivl_net_logic_t lptr)
+{
+      unsigned idx, ndrivers = 0;
+      int has_scalar_output = 0;
+      ivl_nexus_t nex;
+
+      if (!udp_prepath_vpi || !lptr || ivl_logic_type(lptr) != IVL_LO_UDP)
+	    return 0;
+      if (ivl_logic_width(lptr) != 1 || ivl_udp_sequ(ivl_logic_udp(lptr)) ||
+	  need_delay(lptr)) return 0;
+
+      nex = ivl_logic_pin(lptr, 0);
+      for (idx = 0 ; idx < ivl_nexus_ptrs(nex) ; idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+	    if (ivl_nexus_ptr_switch(ptr)) return 0;
+	    if (sig) {
+		  ivl_signal_type_t type = ivl_signal_type(sig);
+		  if (type != IVL_SIT_TRI && type != IVL_SIT_UWIRE &&
+		      type != IVL_SIT_NONE) return 0;
+		  if (ivl_signal_width(sig) == 1 &&
+		      ivl_signal_scope(sig) == ivl_logic_scope(lptr) &&
+		      ivl_signal_port(sig) == IVL_SIP_OUTPUT &&
+		      ivl_signal_npath(sig)) has_scalar_output = 1;
+	    }
+	    if (ivl_nexus_ptr_drive0(ptr) == IVL_DR_HiZ &&
+		ivl_nexus_ptr_drive1(ptr) == IVL_DR_HiZ) continue;
+	    if (ivl_nexus_ptr_log(ptr) != lptr || ivl_nexus_ptr_pin(ptr) != 0)
+		  return 0;
+	    ndrivers += 1;
+      }
+      return ndrivers == 1 && has_scalar_output;
+}
+
 static void draw_udp_in_scope(ivl_net_logic_t lptr)
 {
       unsigned pdx;
@@ -890,8 +927,8 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
 	 * output to the true output signal. For this case the modpath is
 	 * the only thing connected to the UDP output. */
       if (udp_has_modpath_output(lptr)) {
-	    fprintf(vvp_out, "v%p_0 .net *\"_m%p\", 0 0, L_%p;\n", lptr,
-	            lptr, lptr);
+	    fprintf(vvp_out, "v%p_0 .net %s\"_m%p\", 0 0, L_%p;\n", lptr,
+	            udp_prepath_vpi_eligible(lptr) ? "" : "*", lptr, lptr);
       }
 
 	/* Generate the UDP call. */

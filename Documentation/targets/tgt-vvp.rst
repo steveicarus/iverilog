@@ -61,3 +61,13 @@ Opcodes
 -------
 
 The various available opcodes can be seen in :doc:`Opcodes <../developer/guide/vvp/opcodes>`
+
+UDP output observation
+----------------------
+
+``-pudp_prepath_vpi=1`` enables an Icarus-specific VPI relationship for
+observing eligible scalar combinational UDP outputs before module-path
+delay. It is disabled by default and requires module paths compiled with
+``-gspecify``. See :doc:`Observing UDP Data Before a Module Path
+<../developer/guide/vvp/vpi_modpath_data>` for discovery, applicability and
+passive-use requirements.

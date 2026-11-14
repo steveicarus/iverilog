@@ -240,7 +240,8 @@ struct __vpiModPath;
 extern __vpiModPath* compile_modpath(char*label,
                                      unsigned width,
 				     struct symb_s drv,
-				     struct symb_s dest);
+				     struct symb_s dest,
+				     char*data = 0);
 extern void compile_modpath_src(__vpiModPath*dst,
 				char edge_c,
 				const struct symb_s&src,

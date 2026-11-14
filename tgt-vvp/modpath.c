@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -56,7 +56,7 @@ static ivl_signal_t find_path_source_port(ivl_delaypath_t path)
 * modpath record.
 */
 static void draw_modpath_record(const char*label, const char*driver,
-				ivl_signal_t path_sig)
+			       ivl_signal_t path_sig, ivl_net_logic_t data_driver)
 {
       unsigned idx;
       typedef const char*ccharp;
@@ -81,6 +81,7 @@ static void draw_modpath_record(const char*label, const char*driver,
 
       fprintf(vvp_out, "  .scope S_%p;\n", ivl_path_scope(ivl_signal_path(path_sig,0)));
       fprintf(vvp_out, "%s .modpath %u %s v%p_0", label, width, driver, path_sig);
+      if (data_driver) fprintf(vvp_out, " v%p_0", data_driver);
 
       for (idx = 0 ;  idx < ivl_signal_npath(path_sig); idx += 1) {
 	    ivl_delaypath_t path = ivl_signal_path(path_sig, idx);
@@ -134,17 +135,25 @@ struct modpath_item {
       ivl_signal_t path_sig;
       char*drive_label;
       unsigned drive_index;
+      ivl_net_logic_t data_driver;
       struct modpath_item*next;
 };
 
 static struct modpath_item*modpath_list = 0;
 
-void draw_modpath(ivl_signal_t path_sig, char*drive_label, unsigned drive_index)
+void draw_modpath(ivl_signal_t path_sig, char*drive_label, unsigned drive_index,
+		  ivl_net_logic_t driver)
 {
       struct modpath_item*cur = calloc(1, sizeof(struct modpath_item));
       cur->path_sig = path_sig;
       cur->drive_label = drive_label;
       cur->drive_index = drive_index;
+      if (udp_prepath_vpi_eligible(driver) &&
+	  ivl_signal_width(path_sig) == 1 &&
+	  ivl_signal_scope(path_sig) == ivl_logic_scope(driver) &&
+	  ivl_signal_port(path_sig) == IVL_SIP_OUTPUT &&
+	  ivl_signal_nex(path_sig, 0) == ivl_logic_pin(driver, 0))
+	    cur->data_driver = driver;
       cur->next = modpath_list;
       modpath_list = cur;
 }
@@ -158,7 +167,8 @@ void cleanup_modpath(void)
 	    modpath_list = cur->next;
 
 	    snprintf(modpath_label, sizeof modpath_label, "V_%p_%u/m", cur->path_sig, cur->drive_index);
-	    draw_modpath_record(modpath_label, cur->drive_label, cur->path_sig);
+	    draw_modpath_record(modpath_label, cur->drive_label, cur->path_sig,
+				cur->data_driver);
 	    free(cur->drive_label);
 	    free(cur);
       }
