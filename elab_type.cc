@@ -429,6 +429,19 @@ ivl_type_t type_identifier_t::elaborate_type_raw(Design *des,
 
       ivl_type_t type = identifier_->elaborate_type(
 	    des, scope, PExpr::type_elaboration_context_t::REQUIRED_TYPE);
+      if (type && has_params) {
+	    const netclass_t*class_type = dynamic_cast<const netclass_t*>(type);
+	    if (!class_type) {
+		  cerr << get_fileline() << ": error: "
+		       << "Type `" << *identifier_ << "` is not a class, "
+		       << "so it can not have a parameter value assignment."
+		       << endl;
+		  des->errors += 1;
+		  return type;
+	    }
+	    return class_type->specialize(des, scope, *this,
+					  params_by_order, params_by_name);
+      }
       if (type)
 	    return type;
 

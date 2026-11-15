@@ -1,0 +1,3 @@
+ivltests/sv_class_param_name_fail.v:10: error: Parameter `M` is not in the parameter port list of class `C`.
+ivltests/sv_class_param_name_fail.v:11: error: Parameter `L` is not in the parameter port list of class `C`.
+2 error(s) during elaboration.

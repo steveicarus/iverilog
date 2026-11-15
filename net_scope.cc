@@ -357,6 +357,23 @@ void NetScope::set_parameter(perm_string key, NetExpr*val,
       ref.set_line(file_line);
 }
 
+void NetScope::rename(const hname_t&name)
+{
+      ivl_assert(*this, up_);
+      ivl_assert(*this, up_->children_[name_] == this);
+      up_->children_.erase(name_);
+      name_ = name;
+      ivl_assert(*this, up_->children_.find(name_) == up_->children_.end());
+      up_->children_[name_] = this;
+}
+
+void NetScope::detach()
+{
+      ivl_assert(*this, up_);
+      ivl_assert(*this, up_->children_[name_] == this);
+      up_->children_.erase(name_);
+}
+
 bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
 {
 	// Find the current reference to myself in the parent scope.
@@ -842,8 +859,10 @@ netclass_t*NetScope::find_class(const Design*des, perm_string name)
 {
 	// Special case: The scope itself is the class that we are
 	// looking for. This may happen for example when elaborating
-	// methods within the class.
-      if (type_==CLASS && name_==hname_t(name))
+	// methods within the class. Within a specialization of a
+	// parameterized class, the class name refers to the
+	// specialization.
+      if (type_==CLASS && class_def_ && class_def_->generic()->get_name() == name)
 	    return class_def_;
 
 	// Look for the class directly within this scope.

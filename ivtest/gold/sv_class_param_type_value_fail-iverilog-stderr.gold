@@ -1,0 +1,3 @@
+ivltests/sv_class_param_type_value_fail.v:9: error: Parameter `N` of class `C` is not a type parameter.
+ivltests/sv_class_param_type_value_fail.v:10: error: Parameter `N` of class `C` is not a type parameter.
+2 error(s) during elaboration.

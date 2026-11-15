@@ -1,0 +1,4 @@
+ivltests/sv_class_param_assign_fail.v:14: error: the type of the variable 'a' doesn't match the context type.
+ivltests/sv_class_param_assign_fail.v:14:      : variable type=class C#(8){}
+ivltests/sv_class_param_assign_fail.v:14:      : context type=class C#(16){}
+1 error(s) during elaboration.
