@@ -1101,7 +1101,7 @@ void NetAssign_::dump_lval(ostream&o) const
 	    o << "[word=" << *word_ << "]";
       }
       if (base_) {
-	    o << "[" << *base_ << " +: " << lwid_ << "]";
+	    o << "[" << *base_ << " +: " << part_width_ << "]";
       }
 }
 
