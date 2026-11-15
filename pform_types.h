@@ -233,6 +233,13 @@ struct type_identifier_t : public data_type_t {
 
       std::ostream& debug_dump(std::ostream&out) const override;
 
+	// The parameter value assignment of a class specialization,
+	// for example C#(8) or C#(.T(int)). Only one of the lists is
+	// used, and has_params is set even if the list is empty.
+      bool has_params = false;
+      std::list<PExpr*> params_by_order;
+      std::list<named_pexpr_t> params_by_name;
+
 private:
       std::unique_ptr<PEIdent> identifier_;
 };

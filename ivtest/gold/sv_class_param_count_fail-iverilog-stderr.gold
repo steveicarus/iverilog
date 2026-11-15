@@ -1,0 +1,2 @@
+ivltests/sv_class_param_count_fail.v:8: error: Too many parameter values for class `C`, which has 2 parameter(s).
+1 error(s) during elaboration.

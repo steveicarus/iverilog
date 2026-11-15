@@ -32,6 +32,18 @@ using namespace std;
  */
 static PClass*pform_cur_class = 0;
 
+void pform_start_class_declaration(const struct vlltype&loc,
+				   class_type_t*type,
+				   bool virtual_class)
+{
+      PClass*class_scope = pform_push_class_scope(loc, type->name);
+      class_scope->type = type;
+      ivl_assert(loc, pform_cur_class == 0);
+      pform_cur_class = class_scope;
+
+      type->virtual_class = virtual_class;
+}
+
 /*
  * The base_type is set to the base class if this declaration is
  * starting a derived class. For example, for the syntax:
@@ -42,21 +54,15 @@ static PClass*pform_cur_class = 0;
  * if present, are the "exprs" that would be passed to a chained
  * constructor.
  */
-void pform_start_class_declaration(const struct vlltype&loc,
-				   class_type_t*type,
-				   data_type_t*base_type,
-				   list<named_pexpr_t> *base_args,
-				   bool virtual_class)
+void pform_set_class_extends(const struct vlltype&loc,
+			     data_type_t*base_type,
+			     list<named_pexpr_t> *base_args)
 {
-      PClass*class_scope = pform_push_class_scope(loc, type->name);
-      class_scope->type = type;
-      ivl_assert(loc, pform_cur_class == 0);
-      pform_cur_class = class_scope;
+      ivl_assert(loc, pform_cur_class);
+      class_type_t*type = pform_cur_class->type;
 
       ivl_assert(loc, type->base_type == 0);
       type->base_type.reset(base_type);
-      type->virtual_class = virtual_class;
-
 
       ivl_assert(loc, type->base_args.empty());
       if (base_args) {

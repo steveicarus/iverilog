@@ -486,6 +486,7 @@ void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 	    }
       }
 
+      generic()->methods_in_sig_ += 1;
       for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
 		 ; cur != pclass->funcs.end() ; ++ cur) {
 	    if (debug_elaborate) {
@@ -509,7 +510,7 @@ void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 	    ivl_assert(*cur->second, scope);
 	    cur->second->elaborate_sig(des, scope);
       }
-
+      generic()->methods_in_sig_ -= 1;
 }
 
 bool PGate::elaborate_sig(Design*, NetScope*) const

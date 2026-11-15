@@ -23,6 +23,7 @@
 # include  "PNamedItem.h"
 # include  "StringHeap.h"
 # include  <iostream>
+# include  <list>
 
 class PChainConstructor;
 
@@ -44,6 +45,11 @@ class PClass : public PScopeExtra, public PNamedItem {
 
     public:
       class_type_t*type;
+
+	// The names of the parameters in the parameter port list, in
+	// the order they are declared. Positional overrides in a
+	// specialization C#(...) are matched against this list.
+      std::list<perm_string> param_names;
 
 	// Methods declared "extern" in the class body. The definition
 	// is given outside the class (IEEE1800-2017 8.24).

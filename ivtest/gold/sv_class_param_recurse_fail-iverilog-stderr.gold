@@ -1,0 +1,2 @@
+ivltests/sv_class_param_recurse_fail.v:6: error: Recursive specialization of class `C`, there are too many specializations of it.
+1 error(s) during elaboration.

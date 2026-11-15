@@ -7407,20 +7407,25 @@ static void elaborate_tasks(Design*des, NetScope*scope,
       }
 }
 
+static void elaborate_class(Design*des, netclass_t*use_class, PClass*pclass)
+{
+      use_class->elaborate(des, pclass);
+
+      if (use_class->test_for_missing_initializers()) {
+	    cerr << pclass->get_fileline() << ": error: "
+		 << "Const properties of class " << use_class->get_name()
+		 << " are missing initialization." << endl;
+	    des->errors += 1;
+      }
+}
+
 static void elaborate_classes(Design*des, NetScope*scope,
 			      const map<perm_string,PClass*>&classes)
 {
       for (map<perm_string,PClass*>::const_iterator cur = classes.begin()
 		 ; cur != classes.end() ; ++ cur) {
 	    netclass_t*use_class = scope->find_class(des, cur->second->pscope_name());
-	    use_class->elaborate(des, cur->second);
-
-	    if (use_class->test_for_missing_initializers()) {
-		  cerr << cur->second->get_fileline() << ": error: "
-		       << "Const properties of class " << use_class->get_name()
-		       << " are missing initialization." << endl;
-		  des->errors += 1;
-	    }
+	    elaborate_class(des, use_class, cur->second);
       }
 }
 
@@ -7657,7 +7662,13 @@ void netclass_t::elaborate(Design*des, PClass*pclass)
 	    }
 	    NetProcTop*top = new NetProcTop(class_scope_, IVL_PR_INITIAL, stmt);
 	    top->set_line(*pclass);
-	    des->add_process(top);
+	      // A specialization of a parameterized class is elaborated
+	      // after the rest of the design. Still initialize its static
+	      // properties before the other processes run.
+	    if (generic_)
+		  des->add_process_first(top);
+	    else
+		  des->add_process(top);
       }
 
       for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
@@ -8695,6 +8706,16 @@ Design* elaborate(list<perm_string>roots)
 	    }
       }
 
+	// Elaborate the signals of the class specializations made so
+	// far. The signals of specializations made after this point
+	// are elaborated when the specialization is made.
+      des->class_specializations_sig_done = true;
+      while (! des->class_specializations_sig.empty()) {
+	    netclass_t*use_class = des->class_specializations_sig.front();
+	    des->class_specializations_sig.pop_front();
+	    use_class->elaborate_sig(des, use_class->pclass());
+      }
+
 	// Now that the structure and parameters are taken care of,
 	// run through the pform again and generate the full netlist.
 
@@ -8708,6 +8729,13 @@ Design* elaborate(list<perm_string>roots)
 	    const Module *rmod = root_elems[i].mod;
 	    NetScope *scope = root_elems[i].scope;
 	    rc &= rmod->elaborate(des, scope);
+      }
+
+	// Elaborating a class specialization may make more of them.
+      while (! des->class_specializations_elab.empty()) {
+	    netclass_t*use_class = des->class_specializations_elab.front();
+	    des->class_specializations_elab.pop_front();
+	    elaborate_class(des, use_class, use_class->pclass());
       }
 
       if (rc == false) {

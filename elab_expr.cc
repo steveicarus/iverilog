@@ -31,6 +31,7 @@
 # include  "pform.h"
 # include  "netlist.h"
 # include  "netclass.h"
+# include  "PClass.h"
 # include  "netenum.h"
 # include  "netparray.h"
 # include  "netvector.h"
@@ -6290,7 +6291,21 @@ ivl_type_t PEIdent::elaborate_type(
 	    return nullptr;
       }
 
-      ivl_type_t base_type = type_def->elaborate_type(des, declaration_scope);
+	// Within a class, the name of the class refers to the class
+	// itself. For a specialization of a parameterized class, that
+	// is the specialization and not the class as declared.
+      ivl_type_t base_type = nullptr;
+      auto class_type = dynamic_cast<const class_type_t*>(type_def->get_data_type());
+      if (class_type) {
+	    for (NetScope*cur = scope ; cur && !base_type ; cur = cur->parent()) {
+		  const netclass_t*cur_class = cur->class_def();
+		  if (cur_class && cur_class->pclass()
+		      && cur_class->pclass()->type == class_type)
+			base_type = cur_class;
+	    }
+      }
+      if (!base_type)
+	    base_type = type_def->elaborate_type(des, declaration_scope);
       if (!base_type)
 	    return nullptr;
 
