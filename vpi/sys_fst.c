@@ -635,7 +635,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	    emit_enum_table(item);
 
-	    if (size > 1 || vpi_get(vpiLeftRange, item) != 0) {
+	    if (vpi_get(vpiVector, item)) {
 		  char *buf = malloc(strlen(escname) + 65);
 		  sprintf(buf, "%s [%i:%i]", escname,
                             (int)vpi_get(vpiLeftRange, item),
