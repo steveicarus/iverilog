@@ -1,0 +1,11 @@
+{
+    "type"          : "normal",
+    "source"        : "vcd_scalar_vector.v",
+    "gold"          : "vcd_scalar_vector",
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "__comment" : "Uses SystemVerilog types.",
+        "type"      : "CE",
+        "gold"      : ""
+    }
+}

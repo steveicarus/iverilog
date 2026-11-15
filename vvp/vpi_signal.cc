@@ -581,9 +581,9 @@ static int signal_get(int code, vpiHandle ref)
             return rfp->lsb.get_value();
 
 	  case vpiScalar:
-	    return (rfp->msb.get_value() == 0 && rfp->lsb.get_value() == 0);
+	    return !rfp->vec_flag;
 	  case vpiVector:
-	    return (rfp->msb.get_value() != rfp->lsb.get_value());
+	    return rfp->vec_flag;
 
           case vpiAutomatic:
             return vpip_scope(rfp)->is_automatic() ? 1  : 0;
@@ -1299,6 +1299,7 @@ static vpiHandle fill_in_net4(struct __vpiSignal*obj, __vpiScope*scope,
       obj->lsb = __vpiDecConst(lsb);
       obj->signed_flag = signed_flag? 1 : 0;
       obj->is_netarray = 0;
+      obj->vec_flag = 0;
       obj->node = node;
 
 	// Place this object within a scope. If this object is

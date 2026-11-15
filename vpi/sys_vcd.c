@@ -665,7 +665,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		    type, size, ident, prefix, name);
 
 	      /* Add a range for vectored values. */
-	    if (size > 1 || vpi_get(vpiLeftRange, item) != 0) {
+	    if (vpi_get(vpiVector, item)) {
 		  fprintf(dump_file, " [%i:%i]",
 			  (int)vpi_get(vpiLeftRange, item),
 			  (int)vpi_get(vpiRightRange, item));

@@ -1177,6 +1177,7 @@ vams_abs2			vvp_tests/vams_abs2.json
 vams_abs3			vvp_tests/vams_abs3.json
 vams_min_max_default_argument	vvp_tests/vams_min_max_default_argument.json
 vardly_undefined_vec		vvp_tests/vardly_undefined_vec.json
+vcd_scalar_vector		vvp_tests/vcd_scalar_vector.json
 vlog95_hier_events		vvp_tests/vlog95_hier_events.json
 vlog95_hier_inputs		vvp_tests/vlog95_hier_inputs.json
 vlog95_port_alias_instance_nested	vvp_tests/vlog95_port_alias_instance_nested.json
@@ -1198,7 +1199,9 @@ vpi_interconnect_scope		vvp_tests/vpi_interconnect_scope.json
 vpi_net_array_word_select_signedness	vvp_tests/vpi_net_array_word_select_signedness.json
 vpi_part_select_range		vvp_tests/vpi_part_select_range.json
 vpi_queue_pattern_prefix	vvp_tests/vpi_queue_pattern_prefix.json
+vpi_scalar_vector		vvp_tests/vpi_scalar_vector.json
 vpi_short_package_fullname	vvp_tests/vpi_short_package_fullname.json
+vpi_var_array_vector		vvp_tests/vpi_var_array_vector.json
 vpi_vector4_integer		vvp_tests/vpi_vector4_integer.json
 vvp_quiet_mode			vvp_tests/vvp_quiet_mode.json
 wait_condition_real		vvp_tests/wait_condition_real.json

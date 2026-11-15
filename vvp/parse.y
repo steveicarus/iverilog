@@ -62,6 +62,8 @@ static struct __vpiModPath*modpath_dst = 0;
 
       struct numbv_s numbv;
 
+      struct vardim_s vardim;
+
       struct enum_name_s enum_name;
       std::list<struct enum_name_s>*enum_namev;
 
@@ -80,7 +82,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_ARITH_MOD_R K_ARITH_MOD_S
 %token K_ARITH_MULT K_ARITH_MULT_R K_ARITH_SUB K_ARITH_SUB_R
 %token K_ARITH_SUM K_ARITH_SUM_R K_ARITH_POW K_ARITH_POW_R K_ARITH_POW_S
-%token K_ARRAY K_ARRAY_2U K_ARRAY_2S K_ARRAY_I K_ARRAY_OBJ K_ARRAY_R K_ARRAY_S K_ARRAY_STR K_ARRAY_PORT
+%token K_ARRAY K_ARRAY_2U K_ARRAY_4U K_ARRAY_2S K_ARRAY_I K_ARRAY_OBJ K_ARRAY_R K_ARRAY_S K_ARRAY_STR K_ARRAY_PORT
 %token K_CAST_INT K_CAST_REAL K_CAST_REAL_S K_CAST_2
 %token K_CLASS
 %token K_CMP_EEQ K_CMP_EQ K_CMP_EQX K_CMP_EQZ K_CMP_WEQ K_CMP_WNE
@@ -125,6 +127,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %type <symbv> symbols symbols_net
 %type <numbv> numbers
 %type <text> enum_ref_opt
+%type <vardim> var_dims net_range word_dims
 %type <text> label_opt
 %type <opa>  operand operands operands_opt
 %type <table> udp_table
@@ -221,22 +224,29 @@ statement
 
   /* Memory.  Definition, port, initialization */
 
-        | T_LABEL K_ARRAY T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
-                { compile_var_array($1, $3, $5, $6, $8, $9, 0); }
+  /* A plain .array with a word range cannot say that its words are
+     scalars, since without the range it is the net array below. That
+     is what .array/4u is for. */
 
-        | T_LABEL K_ARRAY_2U T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
-                { compile_var2_array($1, $3, $5, $6, $8, $9, false); }
-        | T_LABEL K_ARRAY_2S T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
-                { compile_var2_array($1, $3, $5, $6, $8, $9, true); }
+        | T_LABEL K_ARRAY T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
+                { compile_var_array($1, $3, $5, $6, $8, $9, ($8 != $9)? 1 : -1, 0); }
+
+        | T_LABEL K_ARRAY_4U T_STRING ',' signed_t_number signed_t_number word_dims ';'
+                { compile_var_array($1, $3, $5, $6, $7.msb, $7.lsb, $7.vec, 0); }
+
+        | T_LABEL K_ARRAY_2U T_STRING ',' signed_t_number signed_t_number word_dims ';'
+                { compile_var2_array($1, $3, $5, $6, $7.msb, $7.lsb, $7.vec, false); }
+        | T_LABEL K_ARRAY_2S T_STRING ',' signed_t_number signed_t_number word_dims ';'
+                { compile_var2_array($1, $3, $5, $6, $7.msb, $7.lsb, $7.vec, true); }
 
         | T_LABEL K_ARRAY_I T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
-                { compile_var_array($1, $3, $5, $6, $8, $9, 2); }
+                { compile_var_array($1, $3, $5, $6, $8, $9, 1, 2); }
 
         | T_LABEL K_ARRAY_R T_STRING ',' signed_t_number signed_t_number ';'
                 { compile_real_array($1, $3, $5, $6); }
 
-        | T_LABEL K_ARRAY_S T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
-                { compile_var_array($1, $3, $5, $6, $8, $9, 1); }
+        | T_LABEL K_ARRAY_S T_STRING ',' signed_t_number signed_t_number word_dims ';'
+                { compile_var_array($1, $3, $5, $6, $7.msb, $7.lsb, $7.vec, 1); }
 
         | T_LABEL K_ARRAY_STR T_STRING ',' signed_t_number signed_t_number ';'
                 { compile_string_array($1, $3, $5, $6); }
@@ -764,22 +774,22 @@ statement
      creates a functor with the same name that acts as the output of
      the variable in the netlist. */
 
-  | T_LABEL K_VAR local_flag T_STRING ',' signed_t_number signed_t_number enum_ref_opt ';'
-      { compile_variable($1, $4, $6, $7, vpiLogicVar, false, $3, $8); }
+  | T_LABEL K_VAR local_flag T_STRING var_dims ';'
+      { compile_variable($1, $4, $5.msb, $5.lsb, $5.vec, vpiLogicVar, false, $3, $5.enum_label); }
 
-  | T_LABEL K_VAR_S local_flag T_STRING ',' signed_t_number signed_t_number enum_ref_opt ';'
-      { compile_variable($1, $4, $6, $7, vpiLogicVar, true, $3, $8); }
+  | T_LABEL K_VAR_S local_flag T_STRING var_dims ';'
+      { compile_variable($1, $4, $5.msb, $5.lsb, $5.vec, vpiLogicVar, true, $3, $5.enum_label); }
 
-  | T_LABEL K_VAR_I local_flag T_STRING ',' T_NUMBER T_NUMBER enum_ref_opt ';'
-      { compile_variable($1, $4, $6, $7, vpiIntegerVar, true, $3, $8); }
+  | T_LABEL K_VAR_I local_flag T_STRING var_dims ';'
+      { compile_variable($1, $4, $5.msb, $5.lsb, $5.vec, vpiIntegerVar, true, $3, $5.enum_label); }
 
-  | T_LABEL K_VAR_2S local_flag T_STRING ',' signed_t_number signed_t_number enum_ref_opt ';'
-      { compile_variable($1, $4, $6, $7, vpiIntVar, true, $3, $8); }
+  | T_LABEL K_VAR_2S local_flag T_STRING var_dims ';'
+      { compile_variable($1, $4, $5.msb, $5.lsb, $5.vec, vpiIntVar, true, $3, $5.enum_label); }
 
-  | T_LABEL K_VAR_2U local_flag T_STRING ',' signed_t_number signed_t_number enum_ref_opt ';'
-      { compile_variable($1, $4, $6, $7, vpiIntVar, false, $3, $8); }
+  | T_LABEL K_VAR_2U local_flag T_STRING var_dims ';'
+      { compile_variable($1, $4, $5.msb, $5.lsb, $5.vec, vpiIntVar, false, $3, $5.enum_label); }
 
-  | T_LABEL K_VAR_R local_flag T_STRING ',' signed_t_number signed_t_number ';'
+  | T_LABEL K_VAR_R local_flag T_STRING ';'
       { compile_var_real($1, $4, $3); }
 
   | T_LABEL K_VAR_STR T_STRING ';'
@@ -797,71 +807,55 @@ statement
   /* Net statements are similar to .var statements, except that they
      declare nets, and they have an input list. */
 
-  | T_LABEL K_NET local_flag T_STRING ',' signed_t_number signed_t_number
-    ',' symbols_net ';'
-      { compile_net($1, $4, $6, $7, vpiLogicVar, false, $3, $9.cnt, $9.vect); }
+  | T_LABEL K_NET local_flag T_STRING ',' net_range symbols_net ';'
+      { compile_net($1, $4, $6.msb, $6.lsb, $6.vec, vpiLogicVar, false, $3, $7.cnt, $7.vect); }
 
-  | T_LABEL K_NET_S local_flag T_STRING ',' signed_t_number signed_t_number
-    ',' symbols_net ';'
-      { compile_net($1, $4, $6, $7, vpiLogicVar, true, $3, $9.cnt, $9.vect); }
+  | T_LABEL K_NET_S local_flag T_STRING ',' net_range symbols_net ';'
+      { compile_net($1, $4, $6.msb, $6.lsb, $6.vec, vpiLogicVar, true, $3, $7.cnt, $7.vect); }
 
-  | T_LABEL K_NET_2U local_flag T_STRING ',' signed_t_number signed_t_number
-    ',' symbols_net ';'
-      { compile_net($1, $4, $6, $7, vpiIntVar, false, $3, $9.cnt, $9.vect); }
+  | T_LABEL K_NET_2U local_flag T_STRING ',' net_range symbols_net ';'
+      { compile_net($1, $4, $6.msb, $6.lsb, $6.vec, vpiIntVar, false, $3, $7.cnt, $7.vect); }
 
-  | T_LABEL K_NET_2S local_flag T_STRING ',' signed_t_number signed_t_number
-    ',' symbols_net ';'
-      { compile_net($1, $4, $6, $7, vpiIntVar, true, $3, $9.cnt, $9.vect); }
+  | T_LABEL K_NET_2S local_flag T_STRING ',' net_range symbols_net ';'
+      { compile_net($1, $4, $6.msb, $6.lsb, $6.vec, vpiIntVar, true, $3, $7.cnt, $7.vect); }
 
-  | T_LABEL K_NET8 local_flag T_STRING ',' signed_t_number signed_t_number
-    ',' symbols_net ';'
-      { compile_net($1, $4, $6, $7, -vpiLogicVar, false, $3, $9.cnt, $9.vect); }
+  | T_LABEL K_NET8 local_flag T_STRING ',' net_range symbols_net ';'
+      { compile_net($1, $4, $6.msb, $6.lsb, $6.vec, -vpiLogicVar, false, $3, $7.cnt, $7.vect); }
 
-  | T_LABEL K_NET8_2U local_flag T_STRING ',' signed_t_number signed_t_number
-    ',' symbols_net ';'
-      { compile_net($1, $4, $6, $7, -vpiLogicVar, false, $3, $9.cnt, $9.vect); }
+  | T_LABEL K_NET8_2U local_flag T_STRING ',' net_range symbols_net ';'
+      { compile_net($1, $4, $6.msb, $6.lsb, $6.vec, -vpiLogicVar, false, $3, $7.cnt, $7.vect); }
 
-  | T_LABEL K_NET8_S local_flag T_STRING ',' signed_t_number signed_t_number
-    ',' symbols_net ';'
-      { compile_net($1, $4, $6, $7, -vpiLogicVar, true, $3, $9.cnt, $9.vect); }
+  | T_LABEL K_NET8_S local_flag T_STRING ',' net_range symbols_net ';'
+      { compile_net($1, $4, $6.msb, $6.lsb, $6.vec, -vpiLogicVar, true, $3, $7.cnt, $7.vect); }
 
-  | T_LABEL K_NET8_2S local_flag T_STRING ',' signed_t_number signed_t_number
-    ',' symbols_net ';'
-      { compile_net($1, $4, $6, $7, -vpiLogicVar, true, $3, $9.cnt, $9.vect); }
+  | T_LABEL K_NET8_2S local_flag T_STRING ',' net_range symbols_net ';'
+      { compile_net($1, $4, $6.msb, $6.lsb, $6.vec, -vpiLogicVar, true, $3, $7.cnt, $7.vect); }
 
-  | T_LABEL K_NET_R local_flag T_STRING ',' signed_t_number signed_t_number
-    ',' symbols_net ';'
-      { compile_net_real($1, $4, $6, $7, $3, $9.cnt, $9.vect); }
+  | T_LABEL K_NET_R local_flag T_STRING ',' symbols_net ';'
+      { compile_net_real($1, $4, $3, $6.cnt, $6.vect); }
 
   /* Arrayed versions of net directives. */
 
-  | T_LABEL K_NET T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
-    symbols_net ';'
-      { compile_netw($1, $3, $4, $6, $7, vpiLogicVar, false, $9.cnt, $9.vect); }
+  | T_LABEL K_NET T_SYMBOL T_NUMBER ',' net_range symbols_net ';'
+      { compile_netw($1, $3, $4, $6.msb, $6.lsb, $6.vec, vpiLogicVar, false, $7.cnt, $7.vect); }
 
-  | T_LABEL K_NET_S T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
-    symbols_net ';'
-      { compile_netw($1, $3, $4, $6, $7, vpiLogicVar, true, $9.cnt, $9.vect); }
+  | T_LABEL K_NET_S T_SYMBOL T_NUMBER ',' net_range symbols_net ';'
+      { compile_netw($1, $3, $4, $6.msb, $6.lsb, $6.vec, vpiLogicVar, true, $7.cnt, $7.vect); }
 
-  | T_LABEL K_NET_2U T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
-    symbols_net ';'
-      { compile_netw($1, $3, $4, $6, $7, vpiIntVar, false, $9.cnt, $9.vect); }
+  | T_LABEL K_NET_2U T_SYMBOL T_NUMBER ',' net_range symbols_net ';'
+      { compile_netw($1, $3, $4, $6.msb, $6.lsb, $6.vec, vpiIntVar, false, $7.cnt, $7.vect); }
 
-  | T_LABEL K_NET_2S T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
-    symbols_net ';'
-      { compile_netw($1, $3, $4, $6, $7, vpiIntVar, true, $9.cnt, $9.vect); }
+  | T_LABEL K_NET_2S T_SYMBOL T_NUMBER ',' net_range symbols_net ';'
+      { compile_netw($1, $3, $4, $6.msb, $6.lsb, $6.vec, vpiIntVar, true, $7.cnt, $7.vect); }
 
-  | T_LABEL K_NET8 T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
-    symbols_net ';'
-      { compile_netw($1, $3, $4, $6, $7, -vpiLogicVar, false, $9.cnt, $9.vect); }
+  | T_LABEL K_NET8 T_SYMBOL T_NUMBER ',' net_range symbols_net ';'
+      { compile_netw($1, $3, $4, $6.msb, $6.lsb, $6.vec, -vpiLogicVar, false, $7.cnt, $7.vect); }
 
-  | T_LABEL K_NET8_S T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
-    symbols_net ';'
-      { compile_netw($1, $3, $4, $6, $7, -vpiLogicVar, true, $9.cnt, $9.vect); }
+  | T_LABEL K_NET8_S T_SYMBOL T_NUMBER ',' net_range symbols_net ';'
+      { compile_netw($1, $3, $4, $6.msb, $6.lsb, $6.vec, -vpiLogicVar, true, $7.cnt, $7.vect); }
 
-  | T_LABEL K_NET_R T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
-    symbols_net ';'
-      { compile_netw_real($1, $3, $4, $6, $7, $9.cnt, $9.vect); }
+  | T_LABEL K_NET_R T_SYMBOL T_NUMBER ',' symbols_net ';'
+      { compile_netw_real($1, $3, $4, $6.cnt, $6.vect); }
 
   /* Parameter statements come in a few simple forms. The most basic
      is the string parameter. */
@@ -1008,6 +1002,35 @@ enum_type_name
 enum_ref_opt
   : ',' T_SYMBOL { $$ = $2; }
   | { $$ = 0; }
+  ;
+
+  /* A vector declaration has a range, a scalar does not. The optional
+     enum reference follows the range, if any. */
+
+var_dims
+  : { $$.vec = false; $$.msb = 0; $$.lsb = 0; $$.enum_label = 0; }
+  | ',' T_SYMBOL
+      { $$.vec = false; $$.msb = 0; $$.lsb = 0; $$.enum_label = $2; }
+  | ',' signed_t_number signed_t_number enum_ref_opt
+      { $$.vec = true; $$.msb = $2; $$.lsb = $3; $$.enum_label = $4; }
+  ;
+
+  /* The words of a variable array are vectors if the .array statement
+     has a word range, and scalars if it does not. */
+
+word_dims
+  : { $$.vec = false; $$.msb = 0; $$.lsb = 0; $$.enum_label = 0; }
+  | ',' signed_t_number signed_t_number
+      { $$.vec = true; $$.msb = $2; $$.lsb = $3; $$.enum_label = 0; }
+  ;
+
+  /* The range of a net includes the comma that follows it, since the
+     input symbol list comes next. */
+
+net_range
+  : { $$.vec = false; $$.msb = 0; $$.lsb = 0; $$.enum_label = 0; }
+  | signed_t_number signed_t_number ','
+      { $$.vec = true; $$.msb = $1; $$.lsb = $2; $$.enum_label = 0; }
   ;
 
 local_flag
