@@ -1328,6 +1328,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
       unsigned long off = 0;
       unsigned long use_width = struct_type->packed_width();
       ivl_type_t member_type;
+      bool is_part_select = false;
 
       pform_name_t completed_path;
       do {
@@ -1478,7 +1479,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 
 			off += loff;
 			use_width = lwid * tail_wid;
-			member_type = nullptr;
+			is_part_select = true;
 		  }
 
 		    // The netvector_t only has atom elements, to
@@ -1654,10 +1655,11 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 
       if (packed_base == 0) {
 	    NetExpr *base = new NetEConst(verinum(off));
-	    if (member_type)
+	    if (is_part_select) {
+		  lv->set_part(base, member_type, use_width);
+	    } else {
 		  lv->set_part(base, member_type);
-	    else
-		  lv->set_part(base, use_width);
+	    }
 	    return true;
       }
 

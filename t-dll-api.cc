@@ -1731,6 +1731,12 @@ extern "C" ivl_select_type_t ivl_lval_sel_type(ivl_lval_t net)
       return net->sel_type;
 }
 
+extern "C" ivl_variable_type_t ivl_lval_data_type(ivl_lval_t net)
+{
+      assert(net);
+      return net->data_type;
+}
+
 extern "C" unsigned ivl_lval_width(ivl_lval_t net)
 {
       assert(net);

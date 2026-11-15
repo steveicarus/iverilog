@@ -154,7 +154,8 @@ static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
       int word_idx = slice->word_idx_reg;
       int part_idx = slice->part_idx_reg;
 
-      if (ivl_signal_data_type(sig) == IVL_VT_BOOL) {
+	/* The selected member can be two-state even when its signal is not. */
+      if (ivl_lval_data_type(lval) == IVL_VT_BOOL) {
 	    fprintf(vvp_out, "    %%cast2;\n");
       }
 
@@ -276,7 +277,7 @@ static void store_vec4_to_lval(ivl_statement_t net)
 	    if (lidx+1 < ivl_stmt_lvals(net))
 		  fprintf(vvp_out, "    %%split/vec4 %u;\n", lwid);
 
-	    if (ivl_signal_data_type(lsig) == IVL_VT_BOOL &&
+	    if (ivl_lval_data_type(lval) == IVL_VT_BOOL &&
 		ivl_expr_value(ivl_stmt_rval(net)) != IVL_VT_BOOL) {
 		  fprintf(vvp_out, "    %%cast2;\n");
 	    }

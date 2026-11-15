@@ -213,7 +213,14 @@ void NetAssign_::set_part(NetExpr*base, unsigned wid,
 void NetAssign_::set_part(NetExpr*base, ivl_type_t data_type)
 {
       part_data_type_ = data_type;
-      set_part(base, part_data_type_->packed_width());
+      set_part(base, data_type->packed_width());
+}
+
+void NetAssign_::set_part(NetExpr*base, ivl_type_t data_type, unsigned wid)
+{
+      part_data_type_ = data_type;
+      set_part(base, wid);
+      set_untyped();
 }
 
 void NetAssign_::set_property(const perm_string&mname, unsigned idx)
