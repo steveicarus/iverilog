@@ -3082,6 +3082,8 @@ class NetAssign_ {
 	// method accounts for the presence of the mux, so it is not
 	// necessarily the same as the pin_count().
       unsigned lwidth() const;
+	// Get the base type of this component, ignoring the rest of a
+	// concatenation.
       ivl_variable_type_t expr_type() const;
 
 	// Get the expression type of the l-value. This may be
@@ -3117,9 +3119,7 @@ class NetAssign_ {
       void dump_lval(std::ostream&o) const;
 
     private:
-	// Return the type of this l-value component, if any. Return nullptr
-	// if more components follow. Unlike net_type(), this retains the type
-	// when the component is marked untyped.
+	// Get the declared component type, including for untyped l-values.
       ivl_type_t component_type() const;
 
 	// Nested l-value. If this is set, sig_ must NOT be set!
@@ -3135,7 +3135,7 @@ class NetAssign_ {
       bool turn_sig_to_wire_on_release_;
 	// indexed part select base
       NetExpr*base_;
-      unsigned lwid_;
+      unsigned part_width_ = 0;
       ivl_select_type_t sel_type_;
       ivl_type_t part_data_type_ = nullptr;
 };
