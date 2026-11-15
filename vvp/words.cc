@@ -329,10 +329,12 @@ class __compile_net_resolv : public base_net_resolv {
 /*
  * Here we handle .net records from the vvp source:
  *
- *    .net   <name>, <msb>, <lsb>, <input> ;
- *    .net/s <name>, <msb>, <lsb>, <input> ;
- *    .net8   <name>, <msb>, <lsb>, <input> ;
- *    .net8/s <name>, <msb>, <lsb>, <input> ;
+ *    .net   <name>, [<msb> <lsb>,] <input> ;
+ *    .net/s <name>, [<msb> <lsb>,] <input> ;
+ *    .net8   <name>, [<msb> <lsb>,] <input> ;
+ *    .net8/s <name>, [<msb> <lsb>,] <input> ;
+ *
+ * The range is only there for a vector.
  *
  * Create a VPI handle to represent it, and fill that handle in with
  * references into the net.

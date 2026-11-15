@@ -15,18 +15,17 @@ module test;
   wire w = 1'b1;
   wire [0:0] wv = 1'b1;
   wire [3:3] wv3 = 1'b1;
-  event ev;
 
   integer fd;
   string line;
 
   initial begin
     a = 0; b = 0; c = 0; d = 0; e = 0; f = 0; g = 0; h = 0; r = 0.0;
-    $dumpfile("vcd_scalar_vector.vcd");
+    $dumpfile("work/vcd_scalar_vector.vcd");
     $dumpvars(0, test);
     #1 a = 1;
     $dumpflush;
-    fd = $fopen("vcd_scalar_vector.vcd", "r");
+    fd = $fopen("work/vcd_scalar_vector.vcd", "r");
     while ($fgets(line, fd) != 0)
       if (line.substr(0, 3) == "$var")
         $write("%s", line);

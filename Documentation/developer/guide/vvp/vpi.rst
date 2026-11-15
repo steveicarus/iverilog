@@ -135,10 +135,9 @@ directive cannot have a label.
 Variables
 ---------
 
-Reg vectors (scalars are vectors of length 1) are created by .var
-statements in the source. The .var statement includes the declared
-name of the variable, and the indices of the MSB and LSB of the
-vector. The vpiHandle is then created with this information, and the
+Reg vectors and scalars are created by .var statements in the source.
+The .var statement includes the declared name of the variable, and for
+a vector the indices of its MSB and LSB. A scalar has no indices. The vpiHandle is then created with this information, and the
 vpi_ipoint_t pointer to the LSB functor of the variable. VPI programs
 access the vector through the vpiHandle and related functions. The VPI
 code gets access to the declared indices.

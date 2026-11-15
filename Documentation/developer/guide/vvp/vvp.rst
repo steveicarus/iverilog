@@ -343,9 +343,33 @@ This optional reference is also accepted by the ``/s``, ``/2u``, ``/2s``
 and ``/i`` forms. It identifies the enum typespec exposed through
 ``vpi_handle(vpiTypespec, variable)``; it does not change the stored value.
 Declarations without this reference retain their existing behavior.
-
 Older VVP runtimes do not accept declarations containing this reference.
 
+The "name" is the declared base name of the original variable, for the
+sake of VPI code that might access it. The variable is placed in the
+current scope. The variable also has a width, defined by the indices
+for the most significant and lest significant bits. If the indices are
+equal (normally 0) the vector has width of one. If the width is greater
+then one, a contiguous array of functors is created and the value of
+the label is the address of the least significant bit.
+
+A variable does not take inputs, since its value is set behaviorally
+by assignment events. It does have output, though, and its output is
+propagated into the net of functors in the usual way.
+
+A variable gets its value by assignments from procedural code: %set
+and %assign. These instructions write values to the port-0 input. From
+there, the value is held.
+
+Behavioral code can also invoke %cassign/v statements that work like
+%set/v, but instead write to port-1 of the variable node. Writes to
+port-1 of a variable activate continuous assign mode, where the values
+written to port-0 are ignored. The continuous assign mode remains
+active until a long(1) is written to port-3 (a command port).
+
+Behavioral code may also invoke %force/v statements that write to port-2
+to invoke force mode. This overrides continuous assign mode until a
+long(2) is written to port-3 to disable force mode.
 
 Net Statements
 --------------
@@ -1202,7 +1226,7 @@ Each bit of a variable is created by a `.var` statement. For example::
 
 becomes::
 
-	a	.var "a", 0, 0;
+	a	.var "a";
 
 
 * named events
