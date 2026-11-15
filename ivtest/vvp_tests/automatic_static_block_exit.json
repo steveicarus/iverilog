@@ -1,0 +1,6 @@
+{
+    "type" : "normal",
+    "source" : "automatic_static_block_exit.v",
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : { "type" : "CE" }
+}

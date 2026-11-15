@@ -674,6 +674,13 @@ the index register <src>.
 The %jmp instruction performs an unconditional branch to a given
 location. The parameter is the label of the destination instruction.
 
+* %jmp/flow <code-label>, <scope-label>
+
+Resume the nearest ancestor thread in the given scope at the destination
+instruction. Disable intervening block threads and release their automatic
+storage. This implements break and continue across scoped blocks, preserving
+the loop owner's expression stacks.
+
 * %jmp/[01xz] <code-label>, <flag>
 
 This is a conditional version of the %jmp instruction. In this case,

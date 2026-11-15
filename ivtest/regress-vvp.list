@@ -34,8 +34,10 @@ automatic_static_block		vvp_tests/automatic_static_block.json
 automatic_static_block_array	vvp_tests/automatic_static_block_array.json
 automatic_static_block_detached	vvp_tests/automatic_static_block_detached.json
 automatic_static_block_event	vvp_tests/automatic_static_block_event.json
+automatic_static_block_exit	vvp_tests/automatic_static_block_exit.json
 automatic_static_block_function	vvp_tests/automatic_static_block_function.json
 automatic_static_block_hierarchy	vvp_tests/automatic_static_block_hierarchy.json
+automatic_static_block_loop_exit	vvp_tests/automatic_static_block_loop_exit.json
 automatic_static_block_mixed	vvp_tests/automatic_static_block_mixed.json
 automatic_static_block_nba	vvp_tests/automatic_static_block_nba.json
 automatic_static_block_nested	vvp_tests/automatic_static_block_nested.json
@@ -303,6 +305,7 @@ line_directive			vvp_tests/line_directive.json
 line_directive_long		vvp_tests/line_directive_long.json
 localparam_type			vvp_tests/localparam_type.json
 loop_condition_real		vvp_tests/loop_condition_real.json
+loop_named_block_exit		vvp_tests/loop_named_block_exit.json
 lval_concat_expr_fail		vvp_tests/lval_concat_expr_fail.json
 macro_str_esc			vvp_tests/macro_str_esc.json
 memsynth1			vvp_tests/memsynth1.json
