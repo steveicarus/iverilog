@@ -736,10 +736,16 @@ class PENull : public PExpr {
                                      unsigned flags) const override;
 };
 
-// Internal marker for the '$' in a queue dimension.
+// The '$' in a queue dimension or in a queue index (the last element).
 class PEQueueDimension : public PExpr {
     public:
       void dump(std::ostream&) const override;
+      unsigned test_width(Design*des, NetScope*scope,
+			  width_mode_t&mode) override;
+      NetExpr*elaborate_expr(Design*des, NetScope*scope,
+			     ivl_type_t type, unsigned flags) const override;
+      NetExpr*elaborate_expr(Design*des, NetScope*scope,
+			     unsigned expr_wid, unsigned flags) const override;
 };
 
 class PENumber : public PExpr {

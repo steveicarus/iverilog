@@ -756,6 +756,7 @@ bool PEIdent::elaborate_lval_darray_bit_(Design*des,
 	    mux->set_line(*this);
       } else {
 	    ivl_assert(*this, index_tail.msb != 0);
+	    dollar_queue_scope queue_scope(lv->sig());
 	    mux = elab_and_eval(des, scope, index_tail.msb, -1);
       }
 

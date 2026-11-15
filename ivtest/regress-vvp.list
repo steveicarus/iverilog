@@ -904,6 +904,8 @@ sv_pure_virtual_fail		vvp_tests/sv_pure_virtual_fail.json
 sv_pure_virtual_task_fail	vvp_tests/sv_pure_virtual_task_fail.json
 sv_queue_ap_method		vvp_tests/sv_queue_ap_method.json
 sv_queue_assign_op		vvp_tests/sv_queue_assign_op.json
+sv_queue_dollar			vvp_tests/sv_queue_dollar.json
+sv_queue_dollar_fail		vvp_tests/sv_queue_dollar_fail.json
 sv_queue_find			vvp_tests/sv_queue_find.json
 sv_queue_find_locators_ext	vvp_tests/sv_queue_find_locators_ext.json
 sv_queue_find_with		vvp_tests/sv_queue_find_with.json

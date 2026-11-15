@@ -6550,6 +6550,22 @@ static NetExpr* build_unpacked_reduction(Design *des,
       return fun;
 }
 
+static NetExpr* elaborate_last_index_(Design*des, const LineInfo*loc)
+{
+      if (!dollar_queue_scope::current()) {
+	    cerr << loc->get_fileline() << ": error: "
+		 << "'$' is only allowed in a queue index." << endl;
+	    des->errors += 1;
+	      // Keep the callers going with a placeholder value.
+	    NetEConst*bad = new NetEConst(verinum(verinum::Vx, 32, true));
+	    bad->set_line(*loc);
+	    return bad;
+      }
+      NetELast*tmp = new NetELast(const_cast<NetNet*>(dollar_queue_scope::current()));
+      tmp->set_line(*loc);
+      return tmp;
+}
+
 static NetExpr* build_queue_method(const LineInfo &loc,
                                    symbol_search_results&sr,
                                    ivl_type_t element_type,
@@ -6616,6 +6632,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       }
 
       NetNet *net = sr.net;
+      dollar_queue_scope queue_scope(net);
 
       if (!sr.path_tail.empty()) {
 	    if (net->struct_type()) {
@@ -8850,6 +8867,8 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
 		 << endl;
       }
 
+      dollar_queue_scope queue_scope(net);
+
       if (net->unpacked_dimensions() > 0)
 	    return elaborate_expr_net_word_(des, scope, net, found_in,
                                             expr_wid, flags);
@@ -9164,6 +9183,27 @@ NetExpr* PENull::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
       NetENull*tmp = new NetENull;
       tmp->set_line(*this);
       return tmp;
+}
+
+unsigned PEQueueDimension::test_width(Design*, NetScope*, width_mode_t&)
+{
+      expr_type_   = IVL_VT_BOOL;
+      expr_width_  = 32;
+      min_width_   = 32;
+      signed_flag_ = true;
+      return expr_width_;
+}
+
+NetExpr* PEQueueDimension::elaborate_expr(Design*des, NetScope*, ivl_type_t,
+					  unsigned) const
+{
+      return elaborate_last_index_(des, this);
+}
+
+NetExpr* PEQueueDimension::elaborate_expr(Design*des, NetScope*, unsigned,
+					  unsigned) const
+{
+      return elaborate_last_index_(des, this);
 }
 
 unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)

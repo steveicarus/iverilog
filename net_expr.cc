@@ -339,8 +339,9 @@ ivl_variable_type_t NetECString::expr_type() const
 }
 
 NetELast::NetELast(NetNet*s)
-: sig_(s)
+: NetExpr(32), sig_(s)
 {
+      cast_signed(true);
 }
 
 NetELast::~NetELast() = default;

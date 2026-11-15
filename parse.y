@@ -3690,21 +3690,25 @@ value_range /* IEEE1800-2005: A.8.3 */
 
 index_component
   : '[' expression ']'
-      { $$ = make_index_component(@$, index_component_t::SEL_BIT, $2);
-      }
-  | '[' '$' ']'
-      { $$ = make_index_component(@$, index_component_t::SEL_BIT_LAST);
+      { if (dynamic_cast<PEQueueDimension*>($2)) {
+	      delete $2;
+	      $$ = make_index_component(@$, index_component_t::SEL_BIT_LAST);
+	} else {
+	      $$ = make_index_component(@$, index_component_t::SEL_BIT, $2);
+	}
       }
   | '[' expression ':' expression ']'
-      { $$ = make_index_component(@$, index_component_t::SEL_PART, $2, $4);
+      { if (dynamic_cast<PEQueueDimension*>($2)) {
+	      delete $2;
+	      $$ = make_index_component(@$,
+				       index_component_t::SEL_QUEUE_BOUND,
+				       nullptr, $4);
+	} else {
+	      $$ = make_index_component(@$, index_component_t::SEL_PART, $2, $4);
+	}
       }
   | '[' ']'
       { $$ = make_index_component(@$, index_component_t::SEL_NONE);
-      }
-  | '[' '$' ':' expression ']'
-      { $$ = make_index_component(@$,
-				 index_component_t::SEL_QUEUE_BOUND,
-				 nullptr, $4);
       }
   | '[' expression K_PO_POS expression ']'
       { $$ = make_index_component(@$, index_component_t::SEL_IDX_UP, $2, $4);
@@ -5379,6 +5383,13 @@ expr_primary
 
   | K_null
       { PENull*tmp = new PENull;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+
+  /* The "$" in a queue index is the index of the last element. */
+  | '$'
+      { PEQueueDimension*tmp = new PEQueueDimension;
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
