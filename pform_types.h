@@ -502,7 +502,12 @@ struct pform_scoped_name_t {
       const name_component_t& back() const { return name.back(); }
       size_t size() const { return name.size(); }
 
+      bool is_scoped() const { return package || class_scope; }
+
       PPackage *package = nullptr;
+	// A class type that is the scope of the name, as in C#(8)::N. The
+	// type is resolved when the name is looked up.
+      std::shared_ptr<data_type_t> class_scope;
       pform_name_t name;
 };
 

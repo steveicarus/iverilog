@@ -1,0 +1,4 @@
+ivltests/sv_class_param_scope_name_fail.v:11: error: Unable to bind parameter `C::MISSING' in `test'
+ivltests/sv_class_param_scope_name_fail.v:12: error: `myint` is not a class, so it can not be used as a scope.
+ivltests/sv_class_param_scope_name_fail.v:12: error: Unable to bind parameter `myint::N' in `test'
+3 error(s) during elaboration.

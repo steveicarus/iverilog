@@ -27,6 +27,7 @@
 # include  "PWire.h"
 # include  "PModport.h"
 # include  "ivl_assert.h"
+# include  <set>
 
 using namespace std;
 
@@ -634,6 +635,25 @@ bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 	    search_scope = des->find_package(path.package->pscope_name());
 	    if (!search_scope)
 		  return false;
+	    scope_is_bound = true;
+      } else if (path.class_scope) {
+	      // The scope is looked up each time the name is, so report
+	      // a bad scope only once.
+	    static std::set<const data_type_t*> bad_scopes;
+	    if (bad_scopes.count(path.class_scope.get()))
+		  return false;
+	    ivl_type_t type = path.class_scope->elaborate_type(des, scope);
+	    auto class_type = dynamic_cast<const netclass_t*>(type);
+	    if (!class_type) {
+		  bad_scopes.insert(path.class_scope.get());
+		  if (type)
+			cerr << li->get_fileline() << ": error: `"
+			     << *path.class_scope << "` is not a class, so "
+			     << "it can not be used as a scope." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+	    search_scope = const_cast<NetScope*>(class_type->class_scope());
 	    scope_is_bound = true;
       }
 

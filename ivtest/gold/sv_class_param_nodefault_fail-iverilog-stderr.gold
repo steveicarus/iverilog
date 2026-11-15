@@ -1,1 +1,6 @@
-ivltests/sv_class_param_nodefault_fail.v:4: sorry: Class parameters without a default value are not yet supported.
+ivltests/sv_class_param_nodefault_fail.v:10: error: Class `C` has parameters without a default value, so it needs a parameter value assignment.
+ivltests/sv_class_param_nodefault_fail.v:11: error: Parameter `N` of class `C` has no default value, so it needs a value here.
+ivltests/sv_class_param_nodefault_fail.v:12: error: Parameter `T` of class `C` has no default value, so it needs a value here.
+ivltests/sv_class_param_nodefault_fail.v:12: error: Parameter `N` of class `C` has no default value, so it needs a value here.
+ivltests/sv_class_param_nodefault_fail.v:13: error: Parameter `T` of class `C` has no default value, so it needs a value here.
+5 error(s) during elaboration.

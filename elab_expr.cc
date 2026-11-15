@@ -412,7 +412,7 @@ static const netclass_t* resolve_call_chain_prefix_class(Design*des, NetScope*sc
 
 static ivl_nature_t find_access_function(const pform_scoped_name_t &path)
 {
-      if (path.package || path.name.size() != 1) return nullptr;
+      if (path.is_scoped() || path.name.size() != 1) return nullptr;
       return access_function_nature[peek_tail_name(path)];
 }
 
@@ -957,7 +957,7 @@ bool PEAssignPattern::expand_keyed_struct_(Design *des,
 
       for (const auto &item : keyed_) {
 	    const PEIdent *id = dynamic_cast<const PEIdent*>(item.key);
-	    if (!id || id->path().package || id->path().size() != 1 ||
+	    if (!id || id->path().is_scoped() || id->path().size() != 1 ||
 	        !id->path().back().index.empty()) {
 		  cerr << item.key->get_fileline() << ": error: The key of a"
 		       << " struct assignment pattern item must be a member"
@@ -3969,6 +3969,15 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
       if (!search_results.require_non_type(this, des, "in a function call"))
 	    return 0;
 
+      if (path_.class_scope && search_results.is_scope()
+	  && search_results.scope->get_class_scope()) {
+	    cerr << get_fileline() << ": sorry: Calling the class method `"
+		 << path_ << "' through a class scope is not yet supported."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       // If the symbol is found, but is not a scope...
       if (! search_results.is_scope() && !test_function_return_value(search_results)) {
 
@@ -6183,6 +6192,15 @@ bool PEIdent::find_type_(Design *des, NetScope *scope,
       return symbol_search(this, des, scope, path_, lexical_pos(),
 			   &search_results, flags)
 	    && search_results.type_def;
+}
+
+bool PEIdent::names_class_declaration(Design *des, NetScope *scope) const
+{
+      symbol_search_results search_results;
+      if (!find_type_(des, scope, search_results, true))
+	    return false;
+      return dynamic_cast<const class_type_t*>(
+		  search_results.type_def->get_data_type()) != nullptr;
 }
 
 bool PEIdent::test_type(Design *des, NetScope *scope)

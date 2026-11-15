@@ -82,8 +82,8 @@ static void collect_parm_item(Design*des, NetScope*scope, perm_string name,
 		  cerr << *cur.data_type;
 	    else
 		  cerr << "(nil type)";
-	    ivl_assert(cur, cur.expr);
-	    cerr << " = " << *cur.expr << "; ";
+	    if (cur.expr)
+		  cerr << " = " << *cur.expr << "; ";
 	    if (cur.range)
 		  cerr << "with ranges ";
 	    else
@@ -604,6 +604,15 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
       netclass_t*use_class = elaborate_scope_class_start(des, scope, pclass,
 						 hname_t(pclass->pscope_name()));
+      if (pclass->has_required_params()) {
+	      // There are no values for the parameters, so the class can
+	      // not be elaborated until it is specialized. Keep it out of
+	      // the scope tree.
+	    use_class->set_template();
+	    use_class->class_scope()->detach();
+	    scope->add_class(use_class);
+	    return;
+      }
       elaborate_scope_class_finish(des, use_class, pclass);
 
       scope->add_class(use_class);
@@ -665,6 +674,8 @@ static void elaborate_scope_classes(Design*des, NetScope*scope,
       for (auto pclass : classes) {
 	    netclass_t*derived_class = scope->find_class(des, pclass->pscope_name());
 	    ivl_assert(*pclass, derived_class);
+	    if (derived_class->is_template())
+		  continue;
 	    elaborate_scope_class_bind_super(des, derived_class, pclass);
       }
 }
@@ -810,6 +821,21 @@ const netclass_t* netclass_t::specialize(Design*des, NetScope*scope,
 	    }
       }
 
+      if (base->is_template()) {
+	    bool missing = false;
+	    for (perm_string name : pclass->param_names) {
+		  if (pclass->parameters[name]->expr || replace.count(name))
+			continue;
+		  cerr << loc.get_fileline() << ": error: Parameter `" << name
+		       << "` of class `" << base->get_name() << "` has no "
+		       << "default value, so it needs a value here." << endl;
+		  des->errors += 1;
+		  missing = true;
+	    }
+	    if (missing)
+		  return base;
+      }
+
       if (replace.empty())
 	    return base;
 
@@ -831,8 +857,9 @@ const netclass_t* netclass_t::specialize(Design*des, NetScope*scope,
 	    class_scope->replace_parameter(des, cur.first, cur.second, scope);
 
       const netclass_t*match = nullptr;
-      if (class_parameters_equal(des, class_scope, base->class_scope_,
-				 pclass->param_names))
+      if (!base->is_template()
+	  && class_parameters_equal(des, class_scope, base->class_scope_,
+				    pclass->param_names))
 	    match = base;
 
       for (size_t idx = 0 ; !match && idx < base->specializations_.size()

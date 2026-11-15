@@ -258,14 +258,10 @@ static data_type_t *pform_new_type_identifier(const struct vlltype &loc,
       return pform_new_type_identifier(loc, package, name);
 }
 
-  /* A class type with a parameter value assignment, e.g. C#(8). */
-static data_type_t *pform_new_type_identifier(const struct vlltype &loc,
-					     PPackage *package,
-					     char *text,
-					     parmvalue_t *params)
+static type_identifier_t *pform_set_type_params(data_type_t *type,
+					       parmvalue_t *params)
 {
-      auto tmp = static_cast<type_identifier_t*>(
-	    pform_new_type_identifier(loc, package, text));
+      auto tmp = static_cast<type_identifier_t*>(type);
       tmp->has_params = true;
       if (params && params->by_order) {
 	    tmp->params_by_order.splice(tmp->params_by_order.end(),
@@ -278,6 +274,50 @@ static data_type_t *pform_new_type_identifier(const struct vlltype &loc,
 	    delete params->by_name;
       }
       delete params;
+      return tmp;
+}
+
+  /* A class type with a parameter value assignment, e.g. C#(8). */
+static data_type_t *pform_new_type_identifier(const struct vlltype &loc,
+					     PPackage *package,
+					     char *text,
+					     parmvalue_t *params)
+{
+      return pform_set_type_params(
+	    pform_new_type_identifier(loc, package, text), params);
+}
+
+  /* A name in a class scope, e.g. the type T in C#(8)::T. */
+static data_type_t *pform_new_scoped_type_identifier(const struct vlltype &loc,
+						    data_type_t *scope,
+						    char *text,
+						    parmvalue_t *params = nullptr)
+{
+      std::unique_ptr<char[]> owned_text(text);
+      pform_scoped_name_t path;
+      path.class_scope.reset(scope);
+      path.name.emplace_back(lex_strings.make(text));
+
+      auto identifier = new PEIdent(path);
+      FILE_NAME(identifier, loc);
+      auto tmp = new type_identifier_t(identifier);
+      FILE_NAME(tmp, loc);
+      if (params)
+	    return pform_set_type_params(tmp, params);
+      return tmp;
+}
+
+  /* A name in a class scope used as an expression, e.g. C#(8)::N. */
+static PExpr *pform_class_scope_ident(const struct vlltype &loc,
+				      data_type_t *scope,
+				      pform_name_t *name)
+{
+      pform_scoped_name_t path;
+      path.class_scope.reset(scope);
+      path.name = *name;
+      delete name;
+      auto tmp = new PEIdent(path);
+      FILE_NAME(tmp, loc);
       return tmp;
 }
 
@@ -2041,6 +2081,10 @@ ps_type_identifier /* IEEE1800-2017: A.9.3 */
       { lex_in_package_scope(0);
 	$$ = pform_new_type_identifier(@2, $1, $2, $3);
       }
+  | class_scope IDENTIFIER
+      { $$ = pform_new_scoped_type_identifier(@2, $1, $2); }
+  | class_scope IDENTIFIER parameter_value_assignment
+      { $$ = pform_new_scoped_type_identifier(@2, $1, $2, $3); }
   ;
 
 ps_type_identifier_dim /* IEEE1800-2017: A.9.3 */
@@ -2060,6 +2104,14 @@ ps_type_identifier_dim /* IEEE1800-2017: A.9.3 */
   | package_scope IDENTIFIER parameter_value_assignment dimensions_opt
       { lex_in_package_scope(nullptr);
 	auto tmp = pform_new_type_identifier(@2, $1, $2, $3);
+	$$ = pform_make_parray_type(@4, tmp, $4);
+      }
+  | class_scope IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2);
+	$$ = pform_make_parray_type(@3, tmp, $3);
+      }
+  | class_scope IDENTIFIER parameter_value_assignment dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2, $3);
 	$$ = pform_make_parray_type(@4, tmp, $4);
       }
   ;
@@ -2793,6 +2845,17 @@ package_variable_decl_assignments_with_type
 	$$.decl_assignments = $5;
 	$$.type = pform_make_parray_type(@4, tmp, $4);
       }
+  | class_scope IDENTIFIER dimensions_opt list_of_variable_decl_assignments
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2);
+	$$.decl_assignments = $4;
+	$$.type = pform_make_parray_type(@3, tmp, $3);
+      }
+  | class_scope IDENTIFIER parameter_value_assignment dimensions_opt
+    list_of_variable_decl_assignments
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2, $3);
+	$$.decl_assignments = $5;
+	$$.type = pform_make_parray_type(@4, tmp, $4);
+      }
   ;
 
 initializer_opt
@@ -3425,6 +3488,17 @@ data_type_or_implicit_plus_id_dim
 	tmp = pform_make_parray_type(@4, tmp, $4);
 	set_type_id_range($$, tmp, $5, @5, $6);
       }
+  | class_scope IDENTIFIER dimensions_opt IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2);
+	tmp = pform_make_parray_type(@3, tmp, $3);
+	set_type_id_range($$, tmp, $4, @4, $5);
+      }
+  | class_scope IDENTIFIER parameter_value_assignment dimensions_opt
+    IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2, $3);
+	tmp = pform_make_parray_type(@4, tmp, $4);
+	set_type_id_range($$, tmp, $5, @5, $6);
+      }
   ;
 
   // Parameter port lists can omit the `parameter` keyword, but the optional
@@ -3449,6 +3523,17 @@ data_type_or_parameter_id_dim
 	auto tmp = pform_new_type_identifier(@2, $1, $2);
 	tmp = pform_make_parray_type(@3, tmp, $3);
 	set_type_id_range($$, tmp, $4, @4, $5);
+      }
+  | class_scope IDENTIFIER dimensions_opt IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2);
+	tmp = pform_make_parray_type(@3, tmp, $3);
+	set_type_id_range($$, tmp, $4, @4, $5);
+      }
+  | class_scope IDENTIFIER parameter_value_assignment dimensions_opt
+    IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2, $3);
+	tmp = pform_make_parray_type(@4, tmp, $4);
+	set_type_id_range($$, tmp, $5, @5, $6);
       }
   ;
 
@@ -5095,6 +5180,8 @@ expr_primary
 	$$ = pform_package_ident(@2, $1, $2);
 	delete $2;
       }
+  | class_scope hierarchy_identifier
+      { $$ = pform_class_scope_ident(@2, $1, $2); }
 
   /* An identifier followed by an expression list in parentheses is a
      function call. If a system identifier, then a system function
@@ -5122,6 +5209,15 @@ expr_primary
 	FILE_NAME(tmp, @2);
 	delete $2;
 	delete $4;
+	$$ = tmp;
+      }
+  | class_scope hierarchy_identifier argument_list_parens
+      { pform_scoped_name_t call_path(nullptr, *$2);
+	call_path.class_scope.reset($1);
+	auto tmp = new PECallFunction(call_path, *$3);
+	FILE_NAME(tmp, @2);
+	delete $2;
+	delete $3;
 	$$ = tmp;
       }
   | K_this
@@ -5846,6 +5942,13 @@ lpvalue
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete $1;
+      }
+
+  | class_scope hierarchy_identifier
+      { yyerror(@1, "sorry: A class scope member is not supported as an l-value.");
+	delete $1;
+	delete $2;
+	$$ = 0;
       }
 
   | '{' expression_list_proper '}'
@@ -7935,6 +8038,15 @@ subroutine_call
 	FILE_NAME(tmp, @2);
 	delete $2;
 	delete $4;
+	$$ = tmp;
+      }
+  | class_scope hierarchy_identifier argument_list_parens_opt
+      { pform_scoped_name_t call_path(nullptr, *$2);
+	call_path.class_scope.reset($1);
+	auto tmp = new PCallTask(call_path, *$3);
+	FILE_NAME(tmp, @2);
+	delete $2;
+	delete $3;
 	$$ = tmp;
       }
   | class_hierarchy_identifier argument_list_parens_opt

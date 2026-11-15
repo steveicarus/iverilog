@@ -128,6 +128,9 @@ ostream& operator<< (ostream &o, const pform_scoped_name_t &that)
       if (that.package) {
 	    o << that.package->pscope_name() << "::";
       }
+      if (that.class_scope) {
+	    that.class_scope->debug_dump(o) << "::";
+      }
 
       o << that.name;
       return o;

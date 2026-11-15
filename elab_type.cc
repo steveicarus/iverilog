@@ -439,11 +439,31 @@ ivl_type_t type_identifier_t::elaborate_type_raw(Design *des,
 		  des->errors += 1;
 		  return type;
 	    }
+
+	      // A typedef name is not a class name, so it does not take
+	      // a parameter value assignment: typedef C#(8) c8; c8#(4).
+	    if (!identifier_->names_class_declaration(des, scope)) {
+		  cerr << get_fileline() << ": error: "
+		       << "`" << identifier_->path().back().name << "` is a "
+		       << "type name, not a class, so it can not have a "
+		       << "parameter value assignment." << endl;
+		  des->errors += 1;
+		  return type;
+	    }
 	    return class_type->specialize(des, scope, *this,
 					  params_by_order, params_by_name);
       }
-      if (type)
+      if (type) {
+	    auto class_type = dynamic_cast<const netclass_t*>(type);
+	    if (class_type && class_type->is_template()) {
+		  cerr << get_fileline() << ": error: Class `"
+		       << *identifier_ << "` has parameters without a default "
+		       << "value, so it needs a parameter value assignment."
+		       << endl;
+		  des->errors += 1;
+	    }
 	    return type;
+      }
 
       return new netvector_t(IVL_VT_LOGIC);
 }
