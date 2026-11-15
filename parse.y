@@ -496,6 +496,10 @@ static decl_assignment_t *pform_make_var_decl(const YYLTYPE&loc, char *id,
       decl->lexical_pos(lexical_pos);
       FILE_NAME(decl, loc);
       decl->name = { lex_strings.make(id), lexical_pos };
+      if (var_lifetime == LexicalScope::AUTOMATIC) {
+	    if (auto block = dynamic_cast<PBlock*>(pform_peek_scope()))
+		  block->automatic_variables.insert(decl->name.first);
+      }
       if (udims) {
 	    decl->index = *udims;
 	    delete udims;
@@ -924,8 +928,10 @@ static PBlock *pform_finish_block(const YYLTYPE&block_loc,
 	    if (block_type != PBlock::BL_SEQ)
 		  block->set_join_type(block_type);
       } else {
+	    auto lifetime = block->default_lifetime;
 	    delete block;
 	    block = new PBlock(block_type);
+	    block->default_lifetime = lifetime;
 	    FILE_NAME(block, block_loc);
       }
 
@@ -3648,8 +3654,11 @@ variable_lifetime
 	      }
 	} else if (pform_requires_sv(@1, "Overriding default variable lifetime") &&
 		   $1 != scope->default_lifetime) {
-	      yyerror(@1, "sorry: Overriding the default variable "
-			  "lifetime is not yet supported.");
+	      auto block = dynamic_cast<PBlock*>(scope);
+	      if ($1 != LexicalScope::AUTOMATIC || !block || current_function ||
+		  block->bl_type() != PBlock::BL_SEQ)
+		    yyerror(@1, "sorry: Overriding the default variable "
+				"lifetime is not yet supported.");
 	}
 	var_lifetime = $1;
       }
