@@ -127,7 +127,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %type <symbv> symbols symbols_net
 %type <numbv> numbers
 %type <text> enum_ref_opt
-%type <vardim> var_dims net_range
+%type <vardim> var_dims net_range word_dims
 %type <text> label_opt
 %type <opa>  operand operands operands_opt
 %type <table> udp_table
@@ -224,22 +224,25 @@ statement
 
   /* Memory.  Definition, port, initialization */
 
-        | T_LABEL K_ARRAY T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
-                { compile_var_array($1, $3, $5, $6, $8, $9, 0); }
+  /* A plain .array with a word range cannot say that its words are
+     scalars, since without the range it is the net array below. */
 
-        | T_LABEL K_ARRAY_2U T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
-                { compile_var2_array($1, $3, $5, $6, $8, $9, false); }
-        | T_LABEL K_ARRAY_2S T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
-                { compile_var2_array($1, $3, $5, $6, $8, $9, true); }
+        | T_LABEL K_ARRAY T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
+                { compile_var_array($1, $3, $5, $6, $8, $9, ($8 != $9)? 1 : -1, 0); }
+
+        | T_LABEL K_ARRAY_2U T_STRING ',' signed_t_number signed_t_number word_dims ';'
+                { compile_var2_array($1, $3, $5, $6, $7.msb, $7.lsb, $7.vec, false); }
+        | T_LABEL K_ARRAY_2S T_STRING ',' signed_t_number signed_t_number word_dims ';'
+                { compile_var2_array($1, $3, $5, $6, $7.msb, $7.lsb, $7.vec, true); }
 
         | T_LABEL K_ARRAY_I T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
-                { compile_var_array($1, $3, $5, $6, $8, $9, 2); }
+                { compile_var_array($1, $3, $5, $6, $8, $9, 1, 2); }
 
         | T_LABEL K_ARRAY_R T_STRING ',' signed_t_number signed_t_number ';'
                 { compile_real_array($1, $3, $5, $6); }
 
-        | T_LABEL K_ARRAY_S T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
-                { compile_var_array($1, $3, $5, $6, $8, $9, 1); }
+        | T_LABEL K_ARRAY_S T_STRING ',' signed_t_number signed_t_number word_dims ';'
+                { compile_var_array($1, $3, $5, $6, $7.msb, $7.lsb, $7.vec, 1); }
 
         | T_LABEL K_ARRAY_STR T_STRING ',' signed_t_number signed_t_number ';'
                 { compile_string_array($1, $3, $5, $6); }
@@ -1008,8 +1011,17 @@ var_dims
       { $$.vec = true; $$.msb = $2; $$.lsb = $3; $$.enum_label = $4; }
   ;
 
-  /* The leading comma is part of the statement, since a net has an
-     input symbol list after the optional range. */
+  /* The words of a variable array are vectors if the .array statement
+     has a word range, and scalars if it does not. */
+
+word_dims
+  : { $$.vec = false; $$.msb = 0; $$.lsb = 0; $$.enum_label = 0; }
+  | ',' signed_t_number signed_t_number
+      { $$.vec = true; $$.msb = $2; $$.lsb = $3; $$.enum_label = 0; }
+  ;
+
+  /* The range of a net includes the comma that follows it, since the
+     input symbol list comes next. */
 
 net_range
   : { $$.vec = false; $$.msb = 0; $$.lsb = 0; $$.enum_label = 0; }

@@ -539,10 +539,17 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	    unsigned swapped = ivl_signal_array_addr_swapped(sig);
 	    int last = ivl_signal_array_base(sig)+word_count-1;
 	    int first = ivl_signal_array_base(sig);
-	    fprintf(vvp_out, "v%p .array%s \"%s\", %d %d, %d %d;\n",
+	      /* The words of a variable array are vectors if there is a
+		 word range. A plain .array always has one, because
+		 without it the statement is a net array. */
+	    char range[32];
+	    range_str(sig, msb, lsb, range, sizeof(range));
+	    if (datatype_flag[0] == 0)
+		  snprintf(range, sizeof(range), ", %d %d", msb, lsb);
+	    fprintf(vvp_out, "v%p .array%s \"%s\", %d %d%s;\n",
 		    sig, datatype_flag,
 		    vvp_mangle_name(ivl_signal_basename(sig)),
-		    swapped ? first: last, swapped ? last : first, msb, lsb);
+		    swapped ? first: last, swapped ? last : first, range);
 
       } else if (ivl_signal_data_type(sig) == IVL_VT_DARRAY) {
 	    ivl_type_t var_type = ivl_signal_net_type(sig);

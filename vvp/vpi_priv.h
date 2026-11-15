@@ -845,6 +845,9 @@ struct __vpiArray : public __vpiArrayBase, public __vpiHandle {
       struct __vpiCallback *vpi_callbacks;
       bool signed_flag;
       bool swap_addr;
+	// Words of a variable array: 1 for vectors, 0 for scalars, -1 if
+	// the .array statement does not say.
+      signed char word_vec;
 
 private:
       unsigned array_count;

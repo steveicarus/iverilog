@@ -483,6 +483,21 @@ declared separately, this statement collects them together::
 the .var or .net statements after this array statement, that have the
 same "name" are collected, in order, as words.
 
+An array of variables holds its words inside the .array statement, so the
+statement also carries their type and range. The ``.array/s``, ``.array/2u``
+and ``.array/2s`` forms follow the same rule as ``.var``: the words are
+vectors if there is a word range, and scalars if there is none::
+
+	<label> .array/2u "name", <last> <first>, <msb> <lsb>;	Vector words
+	<label> .array/2u "name", <last> <first>;		Scalar words
+
+The ``.array/i`` form always has a word range, and the real, string and
+object forms have none. The plain ``.array`` also has a word range, but
+cannot give scalar words a form without one: that would be the net array
+statement above. A word of a plain ``.array`` is a vector (``vpiVector``) if
+it is more than one bit wide, and a one-bit word does not report either
+``vpiVector`` or ``vpiScalar``.
+
 The syntax below is different, in that it creates an alias for an
 existing array. The dimensions and storage are taken from the .array
 at <src>.
