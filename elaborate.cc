@@ -4844,10 +4844,13 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
 	/* Detect the case where the definition of the task is known
 	   empty. In this case, we need not bother with calls to the
-	   task, all the assignments, etc. Just return a no-op. */
+	   task, all the assignments, etc. Just return a no-op. A virtual
+	   method must keep its call even if its body is empty, as the call
+	   dispatches to the override that matches the class of the object. */
 
       if (const NetBlock*tp = dynamic_cast<const NetBlock*>(def->proc())) {
-	    if (tp->proc_first() == 0 && callee == task) {
+	    if (tp->proc_first() == 0 && callee == task
+		&& (nonvirtual || !netclass_t::virtual_root(task))) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PCallTask::elaborate_build_call_: "
 			     << "Eliding call to empty task " << task->basename() << endl;
