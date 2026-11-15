@@ -43,13 +43,13 @@ char *as_escaped(const char *arg)
       cur = 0;
       cnt = len - 1;
       for (idx = 0; idx < cnt; idx++) {
-	    if (isprint((int)arg[idx])) {
+	    if (isprint((unsigned char)arg[idx])) {
 		  res[cur] = arg[idx];
 		  cur += 1;
 	    } else {
 		  len += 3;
 		  res = (char *) realloc(res, sizeof(char) * len);
-		  sprintf(&(res[cur]), "\\%03o", arg[idx]);
+		  sprintf(&(res[cur]), "\\%03o", (unsigned char)arg[idx]);
 		  cur += 4;
 	    }
       }
