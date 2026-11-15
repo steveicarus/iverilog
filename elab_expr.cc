@@ -7640,6 +7640,18 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
       NetExpr*sel = elab_and_eval(des, scope, index_tail.msb, -1, need_const);
       if (sel == 0) return 0;
 
+      if ((sel->expr_type() == IVL_VT_REAL) ||
+          (sel->expr_type() == IVL_VT_STRING)) {
+	    cerr << get_fileline() << ": error: Index expression for "
+	         << name << "[" << *sel
+	         << "] cannot be a ";
+	    if (sel->expr_type() == IVL_VT_REAL) cerr << "real";
+	    else cerr << "string";
+	    cerr << " value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
 	// An index select of an array parameter selects a whole element, not
 	// a single bit. This applies to a multi-dimension packed array,
 	// e.g. localparam logic [0:63][3:0] MEM = '{...}, and to an
@@ -7674,22 +7686,10 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
       if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
 				 par_ex->value().len())) return 0;
 
-      if ((sel->expr_type() == IVL_VT_REAL) ||
-          (sel->expr_type() == IVL_VT_STRING)) {
-	    cerr << get_fileline() << ": error: Index expression for "
-	         << name << "[" << *sel
-	         << "] cannot be a ";
-	    if (sel->expr_type() == IVL_VT_REAL) cerr << "real";
-	    else cerr << "string";
-	    cerr << " value." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: Calculate bit select "
-		 << name << "[" << *sel << "] from range "
-		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
+		 << name << "[" << *sel << "] from range ["
+		 << par_msv << ":" << par_lsv << "]." << endl;
 
 	// Handle the special case that the selection is constant. In this
 	// case, just precalculate the entire constant result.
