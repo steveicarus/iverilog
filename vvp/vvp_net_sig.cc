@@ -333,65 +333,55 @@ const vvp_vector4_t& vvp_fun_signal4_sa::vec4_unfiltered_value() const
       return bits4_;
 }
 
-/*
- * The slot in the context of a ref formal that holds the vvp_var_ref
- * that the formal is bound to.
- */
-namespace {
-class ref_slot_hooks : public automatic_hooks_s {
+void automatic_signal_base::ref_slot_t::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, idx_, new vvp_object_t);
+}
 
-    public:
-      ref_slot_hooks() : idx_(0) { }
-
-      void alloc_instance(vvp_context_t context) override
-      { vvp_set_context_item(context, idx_, new vvp_object_t); }
-
-      void reset_instance(vvp_context_t context) override
-      { static_cast<vvp_object_t*>(vvp_get_context_item(context, idx_))->reset(); }
+void automatic_signal_base::ref_slot_t::reset_instance(vvp_context_t context)
+{
+      static_cast<vvp_object_t*>(vvp_get_context_item(context, idx_))->reset();
+}
 
 #ifdef CHECK_WITH_VALGRIND
-      void free_instance(vvp_context_t context) override
-      { delete static_cast<vvp_object_t*>(vvp_get_context_item(context, idx_)); }
-#endif
-
-      unsigned idx_;
-};
+void automatic_signal_base::ref_slot_t::free_instance(vvp_context_t context)
+{
+      delete static_cast<vvp_object_t*>(vvp_get_context_item(context, idx_));
 }
+#endif
 
 void automatic_signal_base::enable_ref()
 {
-      ref_slot_hooks*slot = new ref_slot_hooks;
-      slot->idx_ = vpip_add_item_to_context(slot, vpip_peek_context_scope());
-      ref_idx_ = slot->idx_;
+      ref_slot_.idx_ = vpip_add_item_to_context(&ref_slot_, vpip_peek_context_scope());
 }
 
 void automatic_signal_base::bind_ref(vvp_context_t context,
 				    const vvp_object_t&ref) const
 {
-      assert(ref_idx_);
-      *static_cast<vvp_object_t*>(vvp_get_context_item(context, ref_idx_)) = ref;
+      assert(ref_slot_.idx_);
+      *static_cast<vvp_object_t*>(vvp_get_context_item(context, ref_slot_.idx_)) = ref;
 }
 
 vvp_object_t automatic_signal_base::bound_ref() const
 {
-      assert(ref_idx_);
-      return *static_cast<vvp_object_t*>(vthread_get_rd_context_item(ref_idx_));
+      assert(ref_slot_.idx_);
+      return *static_cast<vvp_object_t*>(vthread_get_rd_context_item(ref_slot_.idx_));
 }
 
 const vvp_var_ref* automatic_signal_base::ref_wt(vvp_context_t context) const
 {
-      if (ref_idx_ == 0)
+      if (ref_slot_.idx_ == 0)
 	    return 0;
       return static_cast<vvp_object_t*>
-	    (vvp_get_context_item(context, ref_idx_))->peek<vvp_var_ref>();
+	    (vvp_get_context_item(context, ref_slot_.idx_))->peek<vvp_var_ref>();
 }
 
 const vvp_var_ref* automatic_signal_base::ref_rd() const
 {
-      if (ref_idx_ == 0)
+      if (ref_slot_.idx_ == 0)
 	    return 0;
       return static_cast<vvp_object_t*>
-	    (vthread_get_rd_context_item(ref_idx_))->peek<vvp_var_ref>();
+	    (vthread_get_rd_context_item(ref_slot_.idx_))->peek<vvp_var_ref>();
 }
 
 vvp_var_ref::vvp_var_ref(vvp_net_t*net, vvp_context_t ctx)

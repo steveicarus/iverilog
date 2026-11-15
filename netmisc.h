@@ -356,11 +356,15 @@ extern NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid);
 extern NetNet* make_const_z(Design*des, NetScope*scope, unsigned long wid);
 
 /*
- * In some cases the lval is accessible as a pointer to the head of
- * a list of NetAssign_ objects. This function returns the width of
- * the l-value represented by this list.
+ * Get the total width and RHS type context of an l-value list. Use a
+ * four-state context if any concatenation component is four-state.
  */
-extern unsigned count_lval_width(const class NetAssign_*first);
+struct lval_info_t {
+      unsigned width = 0;
+      ivl_variable_type_t type = IVL_VT_NO_TYPE;
+};
+
+extern lval_info_t get_lval_info(const class NetAssign_*first);
 
 /*
  * This function elaborates an expression, and tries to evaluate it

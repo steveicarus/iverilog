@@ -139,12 +139,15 @@ br_gh1692b			vvp_tests/br_gh1692b.json
 br_gh1692c			vvp_tests/br_gh1692c.json
 br_gh1692d			vvp_tests/br_gh1692d.json
 br_gh1699			vvp_tests/br_gh1699.json
+br_gh1706			vvp_tests/br_gh1706.json
 br_gh1711a			vvp_tests/br_gh1711a.json
 br_gh1711b			vvp_tests/br_gh1711b.json
 br_gh1730			vvp_tests/br_gh1730.json
 br_gh1751			vvp_tests/br_gh1751.json
 br_gh1758			vvp_tests/br_gh1758.json
 br_gh1765			vvp_tests/br_gh1765.json
+br_gh1782			vvp_tests/br_gh1782.json
+br_gh1786			vvp_tests/br_gh1786.json
 ca_func2			vvp_tests/ca_func2.json
 ca_time_real			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
@@ -281,6 +284,11 @@ hier_index_module_name_fail	vvp_tests/hier_index_module_name_fail.json
 hier_index_queue_fail		vvp_tests/hier_index_queue_fail.json
 hier_index_root_name_fail	vvp_tests/hier_index_root_name_fail.json
 implicit_cast14			vvp_tests/implicit_cast14.json
+implicit_cast15			vvp_tests/implicit_cast15.json
+implicit_cast16			vvp_tests/implicit_cast16.json
+implicit_cast17			vvp_tests/implicit_cast17.json
+implicit_cast18			vvp_tests/implicit_cast18.json
+implicit_cast19			vvp_tests/implicit_cast19.json
 initial_null			vvp_tests/initial_null.json
 initial_null_verilog_fail	vvp_tests/initial_null_verilog_fail.json
 line_directive			vvp_tests/line_directive.json
@@ -649,6 +657,7 @@ sv_class_param_scope_name_fail	vvp_tests/sv_class_param_scope_name_fail.json
 sv_class_param_scope_res		vvp_tests/sv_class_param_scope_res.json
 sv_class_param_self		vvp_tests/sv_class_param_self.json
 sv_class_param_static		vvp_tests/sv_class_param_static.json
+sv_class_param_string		vvp_tests/sv_class_param_string.json
 sv_class_param_type		vvp_tests/sv_class_param_type.json
 sv_class_param_type_kinds	vvp_tests/sv_class_param_type_kinds.json
 sv_class_param_type_value_fail vvp_tests/sv_class_param_type_value_fail.json
@@ -821,6 +830,7 @@ sv_lval_concat_class_fail1	vvp_tests/sv_lval_concat_class_fail1.json
 sv_lval_concat_class_fail2	vvp_tests/sv_lval_concat_class_fail2.json
 sv_lval_concat_class_fail3	vvp_tests/sv_lval_concat_class_fail3.json
 sv_lval_concat_class_fail4	vvp_tests/sv_lval_concat_class_fail4.json
+sv_lval_concat_class_property	vvp_tests/sv_lval_concat_class_property.json
 sv_lval_concat_darray_fail1	vvp_tests/sv_lval_concat_darray_fail1.json
 sv_lval_concat_darray_fail2	vvp_tests/sv_lval_concat_darray_fail2.json
 sv_lval_concat_darray_fail3	vvp_tests/sv_lval_concat_darray_fail3.json
