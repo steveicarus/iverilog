@@ -581,11 +581,9 @@ static int signal_get(int code, vpiHandle ref)
             return rfp->lsb.get_value();
 
 	  case vpiScalar:
-	    return (!rfp->vec_flag && rfp->msb.get_value() == 0 &&
-		    rfp->lsb.get_value() == 0);
+	    return !rfp->vec_flag;
 	  case vpiVector:
-	    return (rfp->vec_flag ||
-		    rfp->msb.get_value() != rfp->lsb.get_value());
+	    return rfp->vec_flag;
 
           case vpiAutomatic:
             return vpip_scope(rfp)->is_automatic() ? 1  : 0;

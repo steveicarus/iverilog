@@ -319,14 +319,25 @@ general syntax of a variable is::
 	<label> .var/s "name", <msb> <lsb>; Signed logic variable
 	<label> .var/2u "name", <msb> <lsb>; Unsigned bool/bit variable
 	<label> .var/2s "name", <msb> <lsb>; Signed bool/bit variable
-	<label> .var/real "name", <msb>, <lsb>; real variable
-	<label> .var/i "name", <msb>, <lsb>; vpiIntegerVar variable
+	<label> .var/real "name"; real variable
+	<label> .var/i "name", <msb> <lsb>; vpiIntegerVar variable
 	<label> .var/str "name"; vpiStringVar variable
+
+The ``, <msb> <lsb>`` range is what makes a variable a vector. A vector
+always has a range, even when it has a single element (``logic [0:0]`` is
+``0 0``). A scalar has no range, and its width is one::
+
+	<label> .var "name", 0 0;	A one-element vector (vpiVector)
+	<label> .var "name";		A scalar (vpiScalar)
+
+This applies to every ``.var`` form above, and to the ``.net`` forms. A real
+has neither a range nor a vector/scalar distinction.
 
 Enum variables may append a reference to an enumeration definition before
 the terminating semicolon::
 
         <label> .var "name", <msb> <lsb>, <enum-label>;
+        <label> .var "name", <enum-label>;
 
 This optional reference is also accepted by the ``/s``, ``/2u``, ``/2s``
 and ``/i`` forms. It identifies the enum typespec exposed through
@@ -335,44 +346,6 @@ Declarations without this reference retain their existing behavior.
 
 Older VVP runtimes do not accept declarations containing this reference.
 
-A signal declared with a packed range, such as ``logic [0:0]``, is a vector
-for VPI purposes (``vpiVector``), but when the range has one element its
-<msb> <lsb> are the same as for a scalar. In that case, and only when
-<msb> equals <lsb> and the signal was declared with a packed range, the
-code generator adds a ``[`` after the range in the ``.var`` and ``.net``
-forms::
-
-        <label> .var "name", 0 0 [;
-        <label> .net "name", 0 0 [, <symbol>;
-
-Without the marker a one-bit signal is a scalar (``vpiScalar``). Older VVP
-runtimes do not accept the marker.
-
-The "name" is the declared base name of the original variable, for the
-sake of VPI code that might access it. The variable is placed in the
-current scope. The variable also has a width, defined by the indices
-for the most significant and lest significant bits. If the indices are
-equal (normally 0) the vector has width of one. If the width is greater
-then one, a contiguous array of functors is created and the value of
-the label is the address of the least significant bit.
-
-A variable does not take inputs, since its value is set behaviorally
-by assignment events. It does have output, though, and its output is
-propagated into the net of functors in the usual way.
-
-A variable gets its value by assignments from procedural code: %set
-and %assign. These instructions write values to the port-0 input. From
-there, the value is held.
-
-Behavioral code can also invoke %cassign/v statements that work like
-%set/v, but instead write to port-1 of the variable node. Writes to
-port-1 of a variable activate continuous assign mode, where the values
-written to port-0 are ignored. The continuous assign mode remains
-active until a long(1) is written to port-3 (a command port).
-
-Behavioral code may also invoke %force/v statements that write to port-2
-to invoke force mode. This overrides continuous assign mode until a
-long(2) is written to port-3 to disable force mode.
 
 Net Statements
 --------------
@@ -382,11 +355,20 @@ it (unless it uses a force) and it is given a different VPI type
 code. The syntax of a .net statement is also similar to but not
 exactly the same as the .var statement::
 
-	<label> .net      "name", <msb>, <lsb>, <symbol>;
-	<label> .net/s    "name", <msb>, <lsb>, <symbol>;
-	<label> .net8     "name", <msb>, <lsb>, <symbol>;
-	<label> .net8/s   "name", <msb>, <lsb>, <symbol>;
-	<label> .net/real "name", <msb>, <lsb>, <symbol>;
+	<label> .net      "name", <msb> <lsb>, <symbol>;
+	<label> .net/s    "name", <msb> <lsb>, <symbol>;
+	<label> .net/2u   "name", <msb> <lsb>, <symbol>;
+	<label> .net/2s   "name", <msb> <lsb>, <symbol>;
+	<label> .net8     "name", <msb> <lsb>, <symbol>;
+	<label> .net8/s   "name", <msb> <lsb>, <symbol>;
+	<label> .net8/2u  "name", <msb> <lsb>, <symbol>;
+	<label> .net8/2s  "name", <msb> <lsb>, <symbol>;
+	<label> .net/real "name", <symbol>;
+
+As for a variable, the range is what makes a net a vector. A scalar net has
+no range::
+
+	<label> .net "name", <symbol>;
 
 
 Like a .var statement, the .net statement creates a VPI object with
@@ -394,8 +376,10 @@ the basename and dimensions given as parameters. The symbol is a
 functor that feeds into the vector of the net, and the vpiHandle
 holds references to that functor.
 
-A ``.net`` of one bit declared with a packed range carries the same ``[``
-marker after its range as a ``.var``, described above.
+Words of a net array are declared with the array label and index in place
+of the name, with the same optional range::
+
+	<label> .net v<array> <index>, <msb> <lsb>, <symbol>;
 
 The input of a .net is replicated to its output. In this sense, it
 acts like a diode. The purpose of this node is to hold various VPI

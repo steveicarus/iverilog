@@ -388,7 +388,7 @@ struct __vpiSignal : public __vpiHandle {
 	/* Flags */
       unsigned signed_flag  : 1;
       unsigned is_netarray  : 1; // This is word of a net array
-      unsigned vec_flag     : 1; // Declared with a packed range, so a vector
+      unsigned vec_flag     : 1; // A vector (has a range), not a scalar
 	/* The represented value is here. */
       vvp_net_t*node;
 

@@ -65,6 +65,17 @@ struct symbv_s {
 extern void symbv_init(struct symbv_s*obj);
 extern void symbv_add(struct symbv_s*obj, struct symb_s item);
 
+/*
+ * The optional range and enum reference of a .var or .net statement.
+ * A vector has a range, a scalar does not.
+ */
+struct vardim_s {
+      bool vec;
+      int msb;
+      int lsb;
+      char*enum_label;
+};
+
 struct numbv_s {
       unsigned cnt;
       long*nvec;

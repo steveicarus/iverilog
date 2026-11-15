@@ -524,10 +524,9 @@ static void __compile_real_net2(vvp_net_t*node, vvp_array_t array,
 
 static void __compile_real(char*label, char*name,
                            char*array_label, unsigned long array_addr,
-                           int msb, int lsb, bool local_flag,
+                           bool local_flag,
                            unsigned argc, struct symb_s*argv)
 {
-      assert(msb == 0 && lsb == 0);
       vvp_array_t array = array_label ? array_find(array_label) : NULL;
       assert(array_label ? array!=0 : true);
 
@@ -572,17 +571,14 @@ bool __compile_real_net_resolv::resolve(bool msg_flag)
       return true;
 }
 
-void compile_net_real(char*label, char*name, int msb, int lsb, bool local_flag,
+void compile_net_real(char*label, char*name, bool local_flag,
 		      unsigned argc, struct symb_s*argv)
 {
-      __compile_real(label, name, 0, 0,
-                     msb, lsb, local_flag, argc, argv);
+      __compile_real(label, name, 0, 0, local_flag, argc, argv);
 }
 
 void compile_netw_real(char*label, char*array_label, unsigned long array_addr,
-                       int msb, int lsb,
                        unsigned argc, struct symb_s*argv)
 {
-      __compile_real(label, 0, array_label, array_addr,
-                     msb, lsb, false, argc, argv);
+      __compile_real(label, 0, array_label, array_addr, false, argc, argv);
 }

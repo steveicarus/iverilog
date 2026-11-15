@@ -35,7 +35,7 @@
 
 main	.scope module, "main" "main" 0 0;
 
-V_main.a	.var "a", 0 0;
+V_main.a	.var "a";
 V_main.b	.event posedge, V_main.a;
 
 code	%pushi/vec4 0, 0, 1;

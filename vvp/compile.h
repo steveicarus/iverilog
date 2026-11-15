@@ -547,8 +547,7 @@ extern void compile_net(char*label, char*name, int msb, int lsb, bool vec_flag,
 			int vpi_type_code, bool signed_flag, bool local_flag,
 			unsigned argc, struct symb_s*argv);
 
-extern void compile_net_real(char*label, char*name,
-			     int msb, int lsb, bool local_flag,
+extern void compile_net_real(char*label, char*name, bool local_flag,
 			     unsigned argc, struct symb_s*argv);
 
 extern void compile_netw(char*label, char*array_label, unsigned long array_addr,
@@ -557,7 +556,6 @@ extern void compile_netw(char*label, char*array_label, unsigned long array_addr,
 
 extern void compile_netw_real(char*label, char*array_symbol,
 			      unsigned long array_addr,
-			      int msb, int lsb,
 			      unsigned argc, struct symb_s*argv);
 
 
