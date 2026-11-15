@@ -3871,8 +3871,15 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
 	    } else {
 		  const index_component_t&use_index = idx_list->back();
 		  ivl_assert(*this, use_index.msb != 0);
-		  ivl_assert(*this, use_index.lsb == 0);
-		  canon_index = elab_and_eval(des, scope, use_index.msb, -1, false);
+		  if (use_index.lsb) {
+			cerr << get_fileline() << ": sorry: "
+			     << "a slice of the queue/dynamic-array property "
+			     << class_type->get_prop_name(pidx)
+			     << " is not supported." << endl;
+			des->errors++;
+		  } else {
+			canon_index = elab_and_eval(des, scope, use_index.msb, -1, false);
+		  }
 	    }
       } else if (!comp.index.empty()) {
 	    /* IEEE 1800-2023 §11.5.1: bit-select on a scalar packed property,
@@ -6566,6 +6573,61 @@ static NetExpr* elaborate_last_index_(Design*des, const LineInfo*loc)
       return tmp;
 }
 
+/*
+ * Q[a:b] is a new queue holding elements a through b of Q. The bounds
+ * are clamped to the queue at run time ($ in a bound is Q.size()-1).
+ */
+static NetExpr* elaborate_queue_slice(Design*des, NetScope*scope,
+				      const PEIdent*pe, NetNet*net,
+				      const index_component_t&index,
+				      ivl_type_t ntype, bool need_const)
+{
+      if (!dynamic_cast<const netdarray_t*>(ntype)) {
+	    cerr << pe->get_fileline() << ": sorry: "
+		 << "a slice of queue " << net->name()
+		 << " is only supported where a queue is expected." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetExpr*bound[2] = { 0, 0 };
+      PExpr*bound_pe[2] = { index.msb, index.lsb };
+      for (int idx = 0 ; idx < 2 ; idx += 1) {
+	    bound[idx] = elab_and_eval(des, scope, bound_pe[idx], -1, need_const);
+	    if (!bound[idx]) {
+		  delete bound[0];
+		  return 0;
+	    }
+	    if (bound[idx]->expr_type() == IVL_VT_REAL ||
+		bound[idx]->expr_type() == IVL_VT_STRING) {
+		  cerr << pe->get_fileline() << ": error: A queue slice "
+		       << "bound cannot be a "
+		       << (bound[idx]->expr_type() == IVL_VT_REAL ? "real"
+								  : "string")
+		       << " value." << endl;
+		  des->errors += 1;
+		  delete bound[0];
+		  delete bound[1];
+		  return 0;
+	    }
+	      // The runtime reads each bound as a signed value, and
+	      // saturates it to 64 bits if it is wider.
+	    bound[idx] = pad_to_width(bound[idx],
+				      std::max(66u, bound[idx]->expr_width() + 1),
+				      bound[idx]->has_sign(), *pe);
+      }
+
+      NetESFunc*fun = new NetESFunc("$ivl_queue_method$slice",
+				    net->queue_type(), 3);
+      fun->set_line(*pe);
+      NetESignal*arg = new NetESignal(net);
+      arg->set_line(*net);
+      fun->parm(0, arg);
+      fun->parm(1, bound[0]);
+      fun->parm(2, bound[1]);
+      return fun;
+}
+
 static NetExpr* build_queue_method(const LineInfo &loc,
                                    symbol_search_results&sr,
                                    ivl_type_t element_type,
@@ -6699,6 +6761,24 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       }
 
       const name_component_t&use_comp = path_.back();
+
+      if (net->darray_type() && !use_comp.index.empty() &&
+	  (use_comp.index.back().sel == index_component_t::SEL_PART ||
+	   use_comp.index.back().sel == index_component_t::SEL_IDX_UP ||
+	   use_comp.index.back().sel == index_component_t::SEL_IDX_DO)) {
+	    if (use_comp.index.back().sel == index_component_t::SEL_PART &&
+		net->queue_type() && net->unpacked_dimensions() == 0 &&
+		use_comp.index.size() == 1)
+		  return elaborate_queue_slice(des, scope, this, net,
+					       use_comp.index.back(), ntype,
+					       need_const);
+	    cerr << get_fileline() << ": sorry: "
+		 << "this part select of " << net->name()
+		 << " is not supported (only a [a:b] slice of a queue is)."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
 	// When the whole net is referenced (no unpacked index), the type to
 	// compare against the context is the net's type as seen by the caller.
@@ -8276,6 +8356,14 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      if (net->sig()->darray_type()) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "a slice of " << net->name()
+		 << " is only supported where a queue is expected." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       list<long> prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
       if (!rc)
@@ -8412,6 +8500,14 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_do_(Design*des, NetScope*scope,
 					     bool up,
                                              bool need_const) const
 {
+      if (net->sig()->darray_type()) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "an indexed part select of " << net->name()
+		 << " is not supported." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       if (net->sig()->data_type() == IVL_VT_STRING) {
 	    cerr << get_fileline() << ": error: Cannot take the index part "
 	            "select of a string ('" << net->name() << "')." << endl;

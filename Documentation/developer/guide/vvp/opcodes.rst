@@ -1022,6 +1022,14 @@ basically an implementation of <string>.putc(<muxr>, <val>) where
 
 Pop values from a dynamic queue object.
 
+* %qslice
+
+Pop the high bound and then the low bound from the vec4 stack, pop a
+queue object from the object stack, and push a new queue with the
+elements from the low to the high bound, inclusive. The bounds are
+signed and are clamped to the queue. If either bound is X/Z, or the
+low bound is above the high bound, the new queue is empty.
+
 * %ref/bind <var-label>
 * %ref/get <var-label>
 * %ref/net <var-label>

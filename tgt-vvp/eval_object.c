@@ -753,6 +753,19 @@ int draw_queue_method_find_sfunc(ivl_expr_t expr)
       return eval_queue_method_find(expr);
 }
 
+/*
+ * Q[a:b]: push the queue, then the (64 bit) bounds, and let %qslice
+ * build the sliced copy.
+ */
+static int eval_queue_slice(ivl_expr_t expr)
+{
+      int errors = draw_eval_object(ivl_expr_parm(expr, 0));
+      draw_eval_vec4(ivl_expr_parm(expr, 1));
+      draw_eval_vec4(ivl_expr_parm(expr, 2));
+      fprintf(vvp_out, "    %%qslice;\n");
+      return errors;
+}
+
 int draw_eval_object(ivl_expr_t ex)
 {
       switch (ivl_expr_type(ex)) {
@@ -795,6 +808,8 @@ int draw_eval_object(ivl_expr_t ex)
 		strstr(ivl_expr_name(ex), "_with") != 0) {
 		  if (draw_queue_method_find_sfunc(ex) == 0) return 0;
 	    }
+	    if (strcmp(ivl_expr_name(ex), "$ivl_queue_method$slice") == 0)
+		  return eval_queue_slice(ex);
 	    if (ivl_expr_value(ex) == IVL_VT_QUEUE ||
 		ivl_expr_value(ex) == IVL_VT_DARRAY) {
 		  if (eval_queue_method_unique(ex) == 0) return 0;
