@@ -666,36 +666,33 @@ static void put_real_to_lval(ivl_lval_t lval, struct real_lval_info*slice)
       }
 }
 
-static void store_real_to_lval(ivl_lval_t lval)
+/*
+ * Store a real or string value for a simple assignment.
+ */
+static void store_real_string_to_lval(ivl_lval_t lval, bool is_real)
 {
-      ivl_signal_t var;
-
-      var = ivl_lval_sig(lval);
-      assert(var != 0);
-
-	/* Special Case: If the l-value signal is named after its scope,
-	   and the scope is a function, then this is an assign to a return
-	   value and should be handled differently. */
-      ivl_scope_t sig_scope = ivl_signal_scope(var);
-      if ((ivl_scope_type(sig_scope) == IVL_SCT_FUNCTION)
-	  && (strcmp(ivl_signal_basename(var), ivl_scope_basename(sig_scope)) == 0)) {
-	    assert(ivl_signal_dimensions(var) == 0);
-	    fprintf(vvp_out, "    %%ret/real 0; Assign to %s\n",
-		    ivl_signal_basename(var));
-	    return;
-      }
-
-      if (ivl_signal_dimensions(var) == 0) {
-	    fprintf(vvp_out, "    %%store/real v%p_0;\n", var);
-	    return;
-      }
-
+      ivl_signal_t sig = ivl_lval_sig(lval);
       ivl_expr_t word_ex = ivl_lval_idx(lval);
+      assert(sig);
+
+      const char*value_suffix = is_real ? "real" : "str";
+
+      if (signal_is_return_value(sig)) {
+	    assert(ivl_signal_dimensions(sig) == 0 && !word_ex);
+	    fprintf(vvp_out, "    %%ret/%s 0; Assign to %s\n",
+		    value_suffix, ivl_signal_basename(sig));
+	    return;
+      }
+
+      if (!word_ex) {
+	    fprintf(vvp_out, "    %%store/%s v%p_0;\n", value_suffix, sig);
+	    return;
+      }
+
       int word_ix = allocate_word();
-
       draw_eval_expr_into_integer(word_ex, word_ix);
-      fprintf(vvp_out, "    %%store/reala v%p, %d;\n", var, word_ix);
-
+      fprintf(vvp_out, "    %%store/%sa v%p, %d;\n",
+	      value_suffix, sig, word_ix);
       clr_word(word_ix);
 }
 
@@ -769,7 +766,7 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
 	    put_real_to_lval(lval, &slice);
       } else {
 	    draw_eval_real(rval);
-	    store_real_to_lval(lval);
+	    store_real_string_to_lval(lval, true);
       }
 
       return 0;
@@ -791,39 +788,15 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
 	    return 0;
       }
 
-	/* Special case: If the l-value signal (string) is named after
-	   its scope, and the scope is a function, then this is an
-	   assign to a return value and should be handled
-	   differently. */
-      if (signal_is_return_value(var)) {
-	    assert(ivl_signal_dimensions(var) == 0);
-	    assert(part == 0 && aidx == 0);
+      if (part == NULL) {
 	    draw_eval_string(rval);
-	    fprintf(vvp_out, "    %%ret/str 0; Assign to %s\n",
-		    ivl_signal_basename(var));
+	    store_real_string_to_lval(lval, false);
 	    return 0;
       }
 
-	/* Simplest case: no mux. Evaluate the r-value as a string and
-	   store the result into the variable. Note that the
-	   %store/str opcode pops the string result. */
-      if (part == 0 && aidx == 0) {
-	    draw_eval_string(rval);
-	    fprintf(vvp_out, "    %%store/str v%p_0;\n", var);
-	    return 0;
-      }
-
-	/* Assign to array. The l-value has an index expression
-	   expression so we are assigning to an array word. */
-      if (aidx != 0) {
-	    unsigned ix;
-	    assert(part == 0);
-	    draw_eval_string(rval);
-	    draw_eval_expr_into_integer(aidx, (ix = allocate_word()));
-	    fprintf(vvp_out, "    %%store/stra v%p, %u;\n", var, ix);
-	    clr_word(ix);
-	    return 0;
-      }
+	/* TODO: Support character assignments to string function return values. */
+      assert(!signal_is_return_value(var));
+      assert(aidx == NULL);
 
       draw_eval_vec4(rval);
       resize_vec4_wid(rval, 8);
