@@ -41,6 +41,7 @@ struct vec_slice_info {
       long part_off;
       int word_idx_reg;
       int part_idx_reg;
+	/* Zero when unused, 4 for a live flag, or an allocated flag. */
       unsigned int x_flag;
 };
 
@@ -154,11 +155,6 @@ static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
       int word_idx = slice->word_idx_reg;
       int part_idx = slice->part_idx_reg;
 
-	/* The selected member can be two-state even when its signal is not. */
-      if (ivl_lval_data_type(lval) == IVL_VT_BOOL) {
-	    fprintf(vvp_out, "    %%cast2;\n");
-      }
-
       if (is_array && word_idx == 0 &&
 	  slice->use_word >= ivl_signal_array_count(sig)) {
 	    fprintf(vvp_out, "    %%pop/vec4 1;\n");
@@ -179,16 +175,21 @@ static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
 	    fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n", part_idx, low, high);
 	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
       }
-      if (slice->x_flag) {
+      if (slice->x_flag == 0) {
+	    if (is_array && part_idx == 0) {
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+	    }
+      } else if (slice->x_flag != 4) {
 	    fprintf(vvp_out, "    %%flag_mov 4, %u;\n", slice->x_flag);
-      } else if (is_array && part_idx == 0) {
-	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
       }
 
       if (is_array) {
 	    fprintf(vvp_out, "    %%store/vec4a v%p, %d, %d;\n", sig, word_idx, part_idx);
       } else if (signal_is_return_value(sig)) {
 	    fprintf(vvp_out, "    %%ret/vec4 0, %d, %u;\n", part_idx, wid);
+      } else if (ivl_signal_type(sig) == IVL_SIT_UWIRE) {
+	    assert(ivl_lval_part_off(lval) != NULL);
+	    fprintf(vvp_out, "    %%force/vec4/off v%p_0, %d;\n", sig, part_idx);
       } else {
 	    fprintf(vvp_out, "    %%store/vec4 v%p_0, %d, %u;\n", sig, part_idx, wid);
       }
@@ -218,6 +219,9 @@ static void put_vec_to_lval(ivl_statement_t net, struct vec_slice_info*slices)
 	    if (lidx+1 < ivl_stmt_lvals(net))
 		  fprintf(vvp_out, "    %%split/vec4 %u;\n", bit_limit);
 
+	    if (ivl_lval_data_type(lval) == IVL_VT_BOOL) {
+		  fprintf(vvp_out, "    %%cast2;\n");
+	    }
 	    put_vec_to_lval_slice(lval, slices+lidx, bit_limit);
 
 	    cur_bit += bit_limit;
@@ -264,15 +268,13 @@ static ivl_type_t draw_lval_expr(ivl_lval_t lval)
 static void store_vec4_to_lval(ivl_statement_t net)
 {
       for (unsigned lidx = 0 ; lidx < ivl_stmt_lvals(net) ; lidx += 1) {
-	    ivl_lval_t lval = ivl_stmt_lval(net,lidx);
-	    ivl_signal_t lsig = ivl_lval_sig(lval);
+	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
 	    unsigned lwid = ivl_lval_width(lval);
-
-
-	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
-	      /* This is non-nil if the l-val is the word of a memory,
-		 and nil otherwise. */
+	    struct vec_slice_info local_slice = {0};
+	    struct vec_slice_info*slice = &local_slice;
 	    ivl_expr_t word_ex = ivl_lval_idx(lval);
+	    ivl_expr_t part_ex = ivl_lval_part_off(lval);
+	    if (word_ex || part_ex) slice->x_flag = 4;
 
 	    if (lidx+1 < ivl_stmt_lvals(net))
 		  fprintf(vvp_out, "    %%split/vec4 %u;\n", lwid);
@@ -281,61 +283,24 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		ivl_expr_value(ivl_stmt_rval(net)) != IVL_VT_BOOL) {
 		  fprintf(vvp_out, "    %%cast2;\n");
 	    }
-
 	    if (word_ex) {
-		    /* Handle index into an array */
-		  int word_index = allocate_word();
-		  int part_index = 0;
-		    /* Calculate the word address into word_index */
-		  draw_eval_expr_into_integer(word_ex, word_index);
-		    /* If there is a part_offset, calculate it into part_index. */
-		  if (part_off_ex) {
-			int flag_index = allocate_flag();
-			part_index = allocate_word();
-			fprintf(vvp_out, "    %%flag_mov %d, 4;\n", flag_index);
-			draw_eval_expr_into_integer(part_off_ex, part_index);
-			fprintf(vvp_out, "    %%flag_or 4, %d;\n", flag_index);
-			clr_flag(flag_index);
+		  slice->word_idx_reg = allocate_word();
+		  draw_eval_expr_into_integer(word_ex, slice->word_idx_reg);
+	    }
+	    if (part_ex) {
+		  unsigned flag = 0;
+		  if (word_ex) {
+			flag = allocate_flag();
+			fprintf(vvp_out, "    %%flag_mov %u, 4;\n", flag);
 		  }
-
-		  assert(lsig);
-		  fprintf(vvp_out, "    %%store/vec4a v%p, %d, %d;\n",
-			  lsig, word_index, part_index);
-
-		  clr_word(word_index);
-		  if (part_index)
-			clr_word(part_index);
-
-	    } else if (part_off_ex) {
-		    /* Dynamically calculated part offset */
-		  int offset_index = allocate_word();
-		  draw_eval_expr_into_integer(part_off_ex, offset_index);
-		    /* Note that flag4 is set by the eval above. */
-		  assert(lsig);
-		  if (signal_is_return_value(lsig)) {
-			fprintf(vvp_out, "    %%ret/vec4 0, %d, %u; Assign to %s (store_vec4_to_lval)\n",
-				offset_index, lwid, ivl_signal_basename(lsig));
-		  } else if (ivl_signal_type(lsig)==IVL_SIT_UWIRE) {
-			fprintf(vvp_out, "    %%force/vec4/off v%p_0, %d;\n",
-				lsig, offset_index);
-		  } else {
-			fprintf(vvp_out, "    %%store/vec4 v%p_0, %d, %u;\n",
-				lsig, offset_index, lwid);
-		  }
-		  clr_word(offset_index);
-
-	    } else {
-		    /* No offset expression, so use simpler store function. */
-		  assert(lsig);
-		  assert(lwid == ivl_signal_width(lsig));
-		  if (signal_is_return_value(lsig)) {
-			fprintf(vvp_out, "    %%ret/vec4 0, 0, %u;  Assign to %s (store_vec4_to_lval)\n",
-				lwid, ivl_signal_basename(lsig));
-		  } else {
-			fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n",
-				lsig, lwid);
+		  slice->part_idx_reg = allocate_word();
+		  draw_eval_expr_into_integer(part_ex, slice->part_idx_reg);
+		  if (word_ex) {
+			fprintf(vvp_out, "    %%flag_or 4, %u;\n", flag);
+			clr_flag(flag);
 		  }
 	    }
+	    put_vec_to_lval_slice(lval, slice, lwid);
       }
 }
 

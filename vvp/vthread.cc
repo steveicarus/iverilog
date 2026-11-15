@@ -3738,14 +3738,15 @@ bool of_FORCE_VEC4_OFF(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
       unsigned base_idx = cp->bit_idx[0];
-      long base = thr->words[base_idx].w_int;
+      long base = base_idx ? thr->words[base_idx].w_int : 0;
       vvp_vector4_t value = thr->pop_vec4();
       unsigned wid = value.size();
 
       assert(net->fil);
 
-      if (thr->flags[4] == BIT4_1)
+      if (base_idx != 0 && thr->flags[4] == BIT4_1) {
 	    return true;
+      }
 
 	// This is the width of the target vector.
       unsigned use_size = net->fil->filter_size();
@@ -3787,7 +3788,7 @@ bool of_FORCE_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
       vvp_net_t*net = cp->net;
 
       unsigned base_idx = cp->bit_idx[0];
-      long base = thr->words[base_idx].w_int;
+      long base = base_idx ? thr->words[base_idx].w_int : 0;
 
       unsigned delay_idx = cp->bit_idx[1];
       vvp_time64_t delay = thr->words[delay_idx].w_uint;
@@ -3796,8 +3797,9 @@ bool of_FORCE_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
 
       assert(net->fil);
 
-      if (thr->flags[4] == BIT4_1)
+      if (base_idx != 0 && thr->flags[4] == BIT4_1) {
 	    return true;
+      }
 
 	// This is the width of the target vector.
       unsigned use_size = net->fil->filter_size();
