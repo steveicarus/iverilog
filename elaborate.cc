@@ -3479,6 +3479,18 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	    scope->calls_sys_task(true);
 
       cur->set_line(*this);
+      if (nscope->is_auto() && !scope->is_auto()) {
+	    NetBlock*block = new NetBlock(NetBlock::SEQU, 0);
+	    NetAlloc*alloc = new NetAlloc(nscope);
+	    NetFree*free = new NetFree(nscope);
+	    alloc->set_line(*this);
+	    free->set_line(*this);
+	    block->set_line(*this);
+	    block->append(alloc);
+	    block->append(cur);
+	    block->append(free);
+	    return block;
+      }
       return cur;
 }
 
