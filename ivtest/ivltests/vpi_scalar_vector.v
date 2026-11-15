@@ -1,5 +1,6 @@
 // Check that objects declared with a packed range report vpiVector even
 // when the range has a single element, and that plain scalars stay scalar.
+// A real is neither.
 
 module sub(input s_in, input [0:0] v_in, output s_out, output [0:0] v_out);
   assign s_out = s_in;
@@ -24,6 +25,15 @@ module test;
   logic [0:0][0:0] v_packed2;
   typedef struct packed {logic a;} ps_t;
   ps_t ps;
+  logic signed       s_signed;
+  logic signed [0:0] v00_signed;
+  bit signed         s_bit_signed;
+  bit signed [0:0]   v00_bit_signed;
+  wire signed        s_wire_signed = 1'b0;
+  wire signed [0:0]  v00_wire_signed = 1'b0;
+  int       s_int;
+  integer   s_integer;
+  real      s_real;
   wire      s_arr [1:0];
   wire [0:0] v_arr [1:0];
   assign s_arr[0] = 1'b0;
@@ -50,6 +60,17 @@ module test;
     failed |= $check_sv(v00_wire, 1, 1);
     failed |= $check_sv(v33_wire, 1, 1);
     failed |= $check_sv(v30_wire, 1, 4);
+    s_signed = 0; v00_signed = 0; s_bit_signed = 0; v00_bit_signed = 0;
+    s_int = 0; s_integer = 0; s_real = 0.0;
+    failed |= $check_sv(s_signed, 0, 1);
+    failed |= $check_sv(v00_signed, 1, 1);
+    failed |= $check_sv(s_bit_signed, 0, 1);
+    failed |= $check_sv(v00_bit_signed, 1, 1);
+    failed |= $check_sv(s_wire_signed, 0, 1);
+    failed |= $check_sv(v00_wire_signed, 1, 1);
+    failed |= $check_sv(s_int, 1, 32);
+    failed |= $check_sv(s_integer, 1, 32);
+    failed |= $check_sv(s_real, 2, 1);
     failed |= $check_sv(v_packed2, 1, 1);
     failed |= $check_sv(ps, 1, 1);
     failed |= $check_sv(dut.s_in, 0, 1);
