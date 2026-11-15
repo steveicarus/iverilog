@@ -23,6 +23,7 @@
 # include  <vector>
 # include  <list>
 # include  <memory>
+# include  <set>
 # include  "ivl_target.h"
 # include  "StringHeap.h"
 # include  "PDelays.h"
@@ -194,6 +195,8 @@ class PBlock  : public PScope, public Statement, public PNamedItem {
       BL_TYPE bl_type() const { return bl_type_; }
 
       bool var_init_needs_explicit_lifetime() const override;
+
+      std::set<perm_string> automatic_variables;
 
 	// This is only used if this block is the statement list for a
 	// constructor. We look for a PChainConstructor as the first

@@ -1422,7 +1422,7 @@ static bool resolve_interface_actual_scope(const PExpr*actual,
       res = interface_actual_scope_t();
 
       const PEIdent*actual_ident = dynamic_cast<const PEIdent*>(actual);
-      if (!actual_ident || actual_ident->path().package ||
+      if (!actual_ident || actual_ident->path().is_scoped() ||
 	  actual_ident->path().name.size() != 1 ||
 	  actual_ident->path().name.front().index.size() > 1) {
 	    return false;
@@ -1496,7 +1496,7 @@ static bool resolve_interface_actual_array(const PExpr*actual,
       res = interface_actual_array_t();
 
       const PEIdent*actual_ident = dynamic_cast<const PEIdent*>(actual);
-      if (!actual_ident || actual_ident->path().package ||
+      if (!actual_ident || actual_ident->path().is_scoped() ||
 	  actual_ident->path().name.size() != 1 ||
 	  !actual_ident->path().name.front().index.empty())
 	    return false;
@@ -1925,10 +1925,14 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 
 	    NetNet*sig = 0;
 	    NetNet::PortType ptype;
-	    if (prts.empty())
-		   ptype = NetNet::NOT_A_PORT;
-	    else
-		   ptype = prts[0]->port_type();
+	    if (prts.empty()) {
+		  ptype = NetNet::NOT_A_PORT;
+	    } else {
+		  ptype = NetNet::PIMPLICIT;
+		  for (const auto*port : prts) {
+			ptype = PortType::merged(ptype, port->port_type());
+		  }
+	    }
 	    if (prts.empty() || (ptype == NetNet::PINPUT)) {
 
 		    // Special case: If the input port is an unpacked
@@ -2968,8 +2972,9 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
 	    force_unsigned = !lv->get_signed();
 	    break;
       }
-      NetExpr*rv = elaborate_rval_(des, scope, 0, lv->expr_type(),
-				   count_lval_width(lv), force_unsigned);
+      const auto lval_info = get_lval_info(lv);
+      NetExpr*rv = elaborate_rval_(des, scope, 0, lval_info.type,
+				   lval_info.width, force_unsigned);
       if (rv == 0) return 0;
 
 	// The ivl_target API doesn't support signalling the type
@@ -3014,6 +3019,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	   expressions that might exist. */
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
+      const auto lval_info = get_lval_info(lv);
 
       if (scope->program_block() && lval_not_program_variable(lv)) {
 	    cerr << get_fileline() << ": warning: Program blocking "
@@ -3080,7 +3086,8 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 
       } else {
 	      /* Elaborate the r-value expression, then try to evaluate it. */
-	    rv = elaborate_rval_(des, scope, lv_net_type, lv->expr_type(), count_lval_width(lv));
+	    rv = elaborate_rval_(des, scope, lv_net_type, lval_info.type,
+				 lval_info.width);
       }
 
       if (rv == 0) {
@@ -3272,7 +3279,9 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	         << endl;
       }
 
-      NetExpr*rv = elaborate_rval_(des, scope, lv->net_type(), lv->expr_type(), count_lval_width(lv));
+      const auto lval_info = get_lval_info(lv);
+      NetExpr*rv = elaborate_rval_(des, scope, lv->net_type(),
+				   lval_info.type, lval_info.width);
       if (rv == 0) return 0;
 
       NetExpr*delay = 0;
@@ -3470,6 +3479,18 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	    scope->calls_sys_task(true);
 
       cur->set_line(*this);
+      if (nscope->is_auto() && !scope->is_auto()) {
+	    NetBlock*block = new NetBlock(NetBlock::SEQU, 0);
+	    NetAlloc*alloc = new NetAlloc(nscope);
+	    NetFree*free = new NetFree(nscope);
+	    alloc->set_line(*this);
+	    free->set_line(*this);
+	    block->set_line(*this);
+	    block->append(alloc);
+	    block->append(cur);
+	    block->append(free);
+	    return block;
+      }
       return cur;
 }
 
@@ -4005,6 +4026,15 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    if (!search_results.require_non_type(
 			this, des, "in a task or function call"))
 		  return nullptr;
+
+	    if (path_.class_scope && search_results.is_scope()
+		&& search_results.scope->get_class_scope()) {
+		  cerr << get_fileline() << ": sorry: Calling the class method `"
+		       << path_ << "' through a class scope is not yet "
+		       << "supported." << endl;
+		  des->errors += 1;
+		  return nullptr;
+	    }
 
 	    if (search_results.is_scope()) {
 		  if (search_results.scope->type() == NetScope::TASK)
@@ -4835,10 +4865,13 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
 	/* Detect the case where the definition of the task is known
 	   empty. In this case, we need not bother with calls to the
-	   task, all the assignments, etc. Just return a no-op. */
+	   task, all the assignments, etc. Just return a no-op. A virtual
+	   method must keep its call even if its body is empty, as the call
+	   dispatches to the override that matches the class of the object. */
 
       if (const NetBlock*tp = dynamic_cast<const NetBlock*>(def->proc())) {
-	    if (tp->proc_first() == 0 && callee == task) {
+	    if (tp->proc_first() == 0 && callee == task
+		&& (nonvirtual || !netclass_t::virtual_root(task))) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PCallTask::elaborate_build_call_: "
 			     << "Eliding call to empty task " << task->basename() << endl;
@@ -4913,8 +4946,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	    }
 
 	    NetAssign_*lv = new NetAssign_(port);
-	    unsigned wid = count_lval_width(lv);
-	    ivl_variable_type_t lv_type = lv->expr_type();
+	    const auto lval_info = get_lval_info(lv);
 
 	    NetExpr*rv = 0;
 
@@ -4944,8 +4976,10 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 			des->errors += 1;
 		  }
 		  rv = def->port_defe(idx)->dup_expr();
-		  if (lv_type==IVL_VT_BOOL||lv_type==IVL_VT_LOGIC)
-			rv = pad_to_width(rv, wid, *this);
+		  if (lval_info.type == IVL_VT_BOOL ||
+		      lval_info.type == IVL_VT_LOGIC) {
+			rv = pad_to_width(rv, lval_info.width, *this);
+		  }
 
 	    } else {
 		  cerr << get_fileline() << ": error: "
@@ -5017,17 +5051,17 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	    NetExpr*rv = new NetESignal(port);
 
 	      /* Handle any implicit cast. */
-	    unsigned lv_width = count_lval_width(lv);
-	    if (lv->expr_type() != rv->expr_type()) {
-		  switch (lv->expr_type()) {
+	    const auto lval_info = get_lval_info(lv);
+	    if (lval_info.type != rv->expr_type()) {
+		  switch (lval_info.type) {
 		      case IVL_VT_REAL:
 			rv = cast_to_real(rv);
 			break;
 		      case IVL_VT_BOOL:
-			rv = cast_to_int2(rv, lv_width);
+			rv = cast_to_int2(rv, lval_info.width);
 			break;
 		      case IVL_VT_LOGIC:
-			rv = cast_to_int4(rv, lv_width);
+			rv = cast_to_int4(rv, lval_info.width);
 			break;
 		      default:
 			cerr << get_fileline() << ": error: "
@@ -5035,7 +5069,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 			     << task->basename() << "' is called with '";
 			lv->dump_lval(cerr);
 			cerr << "' which has type '"
-			     << lv->expr_type() << "'." << endl;
+			     << lval_info.type << "'." << endl;
 			cerr << get_fileline() << ":      : "
 			        "The task expects to return type '"
 			     << rv->expr_type() << "'." << endl;
@@ -5045,7 +5079,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 			continue;
 		  }
 	    }
-	    rv = pad_to_width(rv, lv_width, *this);
+	    rv = pad_to_width(rv, lval_info.width, *this);
 
 	      /* Generate the assignment statement. */
 	    NetAssign*ass = new NetAssign(lv, rv);
@@ -5286,10 +5320,10 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      unsigned lwid = count_lval_width(lval);
-      ivl_variable_type_t ltype = lval->expr_type();
+      const auto lval_info = get_lval_info(lval);
 
-      NetExpr*rexp = elaborate_rval_expr(des, scope, lval->net_type(), ltype, lwid, expr_);
+      NetExpr*rexp = elaborate_rval_expr(des, scope, lval->net_type(),
+					   lval_info.type, lval_info.width, expr_);
       if (rexp == 0)
 	    return 0;
 
@@ -5297,7 +5331,7 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: Elaborate cassign,"
-		 << " lval width=" << lwid
+		 << " lval width=" << lval_info.width
 		 << " rval width=" << rexp->expr_width()
 		 << " rval=" << *rexp
 		 << endl;
@@ -6148,14 +6182,14 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      unsigned lwid = count_lval_width(lval);
-      ivl_variable_type_t ltype = lval->expr_type();
+      const auto lval_info = get_lval_info(lval);
 
 	// Like a variety of other assigns, we need to figure out a
 	// better way to get a reasonable lv_net_type value, and that
 	// probably will involve NetAssign_ having a method for
 	// synthesizing one as needed.
-      NetExpr*rexp = elaborate_rval_expr(des, scope, lval->net_type(), ltype, lwid, expr_);
+      NetExpr*rexp = elaborate_rval_expr(des, scope, lval->net_type(),
+					   lval_info.type, lval_info.width, expr_);
       if (rexp == 0)
 	    return 0;
 
@@ -6948,7 +6982,7 @@ static std::string ordinary_path_condition_name(Design*des, NetScope*scope,
                                                bool comparison = false)
 {
       const PEIdent*id = dynamic_cast<const PEIdent*>(expr);
-      if (!id || id->path().package || id->path().name.size() != 1
+      if (!id || id->path().is_scoped() || id->path().name.size() != 1
           || !id->path().name.front().index.empty()) return {};
       NetNet*sig = des->find_signal(scope, id->path().name);
       if (!sig || sig->scope() != scope || sig->vector_width() != 1
@@ -7397,20 +7431,27 @@ static void elaborate_tasks(Design*des, NetScope*scope,
       }
 }
 
+static void elaborate_class(Design*des, netclass_t*use_class, PClass*pclass)
+{
+      use_class->elaborate(des, pclass);
+
+      if (use_class->test_for_missing_initializers()) {
+	    cerr << pclass->get_fileline() << ": error: "
+		 << "Const properties of class " << use_class->get_name()
+		 << " are missing initialization." << endl;
+	    des->errors += 1;
+      }
+}
+
 static void elaborate_classes(Design*des, NetScope*scope,
 			      const map<perm_string,PClass*>&classes)
 {
       for (map<perm_string,PClass*>::const_iterator cur = classes.begin()
 		 ; cur != classes.end() ; ++ cur) {
 	    netclass_t*use_class = scope->find_class(des, cur->second->pscope_name());
-	    use_class->elaborate(des, cur->second);
-
-	    if (use_class->test_for_missing_initializers()) {
-		  cerr << cur->second->get_fileline() << ": error: "
-		       << "Const properties of class " << use_class->get_name()
-		       << " are missing initialization." << endl;
-		  des->errors += 1;
-	    }
+	    if (use_class->is_template())
+		  continue;
+	    elaborate_class(des, use_class, cur->second);
       }
 }
 
@@ -7647,7 +7688,13 @@ void netclass_t::elaborate(Design*des, PClass*pclass)
 	    }
 	    NetProcTop*top = new NetProcTop(class_scope_, IVL_PR_INITIAL, stmt);
 	    top->set_line(*pclass);
-	    des->add_process(top);
+	      // A specialization of a parameterized class is elaborated
+	      // after the rest of the design. Still initialize its static
+	      // properties before the other processes run.
+	    if (generic_)
+		  des->add_process_first(top);
+	    else
+		  des->add_process(top);
       }
 
       for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
@@ -8685,6 +8732,16 @@ Design* elaborate(list<perm_string>roots)
 	    }
       }
 
+	// Elaborate the signals of the class specializations made so
+	// far. The signals of specializations made after this point
+	// are elaborated when the specialization is made.
+      des->class_specializations_sig_done = true;
+      while (! des->class_specializations_sig.empty()) {
+	    netclass_t*use_class = des->class_specializations_sig.front();
+	    des->class_specializations_sig.pop_front();
+	    use_class->elaborate_sig(des, use_class->pclass());
+      }
+
 	// Now that the structure and parameters are taken care of,
 	// run through the pform again and generate the full netlist.
 
@@ -8698,6 +8755,13 @@ Design* elaborate(list<perm_string>roots)
 	    const Module *rmod = root_elems[i].mod;
 	    NetScope *scope = root_elems[i].scope;
 	    rc &= rmod->elaborate(des, scope);
+      }
+
+	// Elaborating a class specialization may make more of them.
+      while (! des->class_specializations_elab.empty()) {
+	    netclass_t*use_class = des->class_specializations_elab.front();
+	    des->class_specializations_elab.pop_front();
+	    elaborate_class(des, use_class, use_class->pclass());
       }
 
       if (rc == false) {

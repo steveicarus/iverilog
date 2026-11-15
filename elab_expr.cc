@@ -31,6 +31,7 @@
 # include  "pform.h"
 # include  "netlist.h"
 # include  "netclass.h"
+# include  "PClass.h"
 # include  "netenum.h"
 # include  "netparray.h"
 # include  "netvector.h"
@@ -411,7 +412,7 @@ static const netclass_t* resolve_call_chain_prefix_class(Design*des, NetScope*sc
 
 static ivl_nature_t find_access_function(const pform_scoped_name_t &path)
 {
-      if (path.package || path.name.size() != 1) return nullptr;
+      if (path.is_scoped() || path.name.size() != 1) return nullptr;
       return access_function_nature[peek_tail_name(path)];
 }
 
@@ -956,7 +957,7 @@ bool PEAssignPattern::expand_keyed_struct_(Design *des,
 
       for (const auto &item : keyed_) {
 	    const PEIdent *id = dynamic_cast<const PEIdent*>(item.key);
-	    if (!id || id->path().package || id->path().size() != 1 ||
+	    if (!id || id->path().is_scoped() || id->path().size() != 1 ||
 	        !id->path().back().index.empty()) {
 		  cerr << item.key->get_fileline() << ": error: The key of a"
 		       << " struct assignment pattern item must be a member"
@@ -3968,6 +3969,15 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
       if (!search_results.require_non_type(this, des, "in a function call"))
 	    return 0;
 
+      if (path_.class_scope && search_results.is_scope()
+	  && search_results.scope->get_class_scope()) {
+	    cerr << get_fileline() << ": sorry: Calling the class method `"
+		 << path_ << "' through a class scope is not yet supported."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       // If the symbol is found, but is not a scope...
       if (! search_results.is_scope() && !test_function_return_value(search_results)) {
 
@@ -5235,6 +5245,22 @@ NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      // The name() method of an enumeration parameter. The value is a
+      // constant, so find the matching enumeration name at compile time. If
+      // the value does not match any name, the result is the empty string,
+      // which is what name() returns for a variable.
+      if (dynamic_cast<const netenum_t*>(par_type) && method_name == "name") {
+	    const NetEConst*par_const = dynamic_cast<const NetEConst*>(par_val);
+	    if (par_const) {
+		  check_number_of_args(des, method_name, *this, 0, parms_.size());
+		  const netenum_t*netenum = dynamic_cast<const netenum_t*>(par_type);
+		  perm_string item = netenum->find_value(par_const->value());
+		  NetEConst*use_val = new NetECString(item.nil() ? "" : item.str());
+		  use_val->set_line(*this);
+		  return use_val;
+	    }
+      }
+
       // If we haven't figured out what to do with this method by now,
       // something went wrong.
       cerr << get_fileline() << ": sorry: Don't know how to handle method '"
@@ -6168,6 +6194,15 @@ bool PEIdent::find_type_(Design *des, NetScope *scope,
 	    && search_results.type_def;
 }
 
+bool PEIdent::names_class_declaration(Design *des, NetScope *scope) const
+{
+      symbol_search_results search_results;
+      if (!find_type_(des, scope, search_results, true))
+	    return false;
+      return dynamic_cast<const class_type_t*>(
+		  search_results.type_def->get_data_type()) != nullptr;
+}
+
 bool PEIdent::test_type(Design *des, NetScope *scope)
 {
       if (type_lookup_.valid && type_lookup_.lookup_scope == scope)
@@ -6290,7 +6325,21 @@ ivl_type_t PEIdent::elaborate_type(
 	    return nullptr;
       }
 
-      ivl_type_t base_type = type_def->elaborate_type(des, declaration_scope);
+	// Within a class, the name of the class refers to the class
+	// itself. For a specialization of a parameterized class, that
+	// is the specialization and not the class as declared.
+      ivl_type_t base_type = nullptr;
+      auto class_type = dynamic_cast<const class_type_t*>(type_def->get_data_type());
+      if (class_type) {
+	    for (NetScope*cur = scope ; cur && !base_type ; cur = cur->parent()) {
+		  const netclass_t*cur_class = cur->class_def();
+		  if (cur_class && cur_class->pclass()
+		      && cur_class->pclass()->type == class_type)
+			base_type = cur_class;
+	    }
+      }
+      if (!base_type)
+	    base_type = type_def->elaborate_type(des, declaration_scope);
       if (!base_type)
 	    return nullptr;
 

@@ -1,0 +1,3 @@
+ivltests/sv_class_param_nonparam_fail.v:11: error: Class `C` has no parameters.
+ivltests/sv_class_param_nonparam_fail.v:12: error: Type `T` is not a class, so it can not have a parameter value assignment.
+2 error(s) during elaboration.

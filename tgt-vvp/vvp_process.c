@@ -565,6 +565,10 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		   we need for the current lval. */
 	      if (lidx+1 < ivl_stmt_lvals(net))
 		    fprintf(vvp_out, "    %%split/vec4 %u;\n", bit_limit);
+	      if (ivl_signal_data_type(ivl_lval_sig(lval)) == IVL_VT_BOOL &&
+		  ivl_expr_value(rval) != IVL_VT_BOOL) {
+		    fprintf(vvp_out, "    %%cast2;\n");
+	      }
 	      assign_to_lvector(lval, delay, del, nevents);
 
 	      cur_rbit += bit_limit;

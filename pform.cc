@@ -3120,7 +3120,7 @@ void pform_set_parameter(const struct vlltype&loc,
 	    } else if (!pform_in_parameter_port_list) {
 		  VLerror(loc, "error: parameter declared outside parameter "
 			        "port list must have a default value.");
-	    } else {
+	    } else if (!pform_in_class()) {
 		  pform_requires_sv(loc, "parameter without default value");
 	    }
       }
@@ -3164,7 +3164,10 @@ void pform_set_parameter(const struct vlltype&loc,
           scope->has_parameter_port_list)
 	    overridable = false;
 
-      if (pform_in_class())
+	// Only the parameters in the parameter port list of a class can
+	// be overridden, by a specialization of the class.
+      PClass*in_class = dynamic_cast<PClass*>(scope);
+      if (pform_in_class() && !(in_class && pform_in_parameter_port_list))
 	    overridable = false;
 
       Module::param_expr_t*parm = new Module::param_expr_t();
@@ -3186,9 +3189,11 @@ void pform_set_parameter(const struct vlltype&loc,
 
       scope->parameters[name] = parm;
 
-      // Only a module keeps the position of the parameter.
+      // Only a module or a class keeps the position of the parameter.
       if (overridable && in_module)
 	    pform_cur_module.front()->param_names.push_back(name);
+      if (overridable && in_class)
+	    in_class->param_names.push_back(name);
 }
 
 void pform_set_specparam(const struct vlltype&loc, perm_string name,

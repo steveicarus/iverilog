@@ -27,6 +27,9 @@
 # include  <iostream>
 # include  <cstdlib>
 # include  <cstdio>
+# include  <sstream>
+# include  <algorithm>
+# include  <set>
 
 /*
  * Elaboration happens in two passes, generally. The first scans the
@@ -79,8 +82,8 @@ static void collect_parm_item(Design*des, NetScope*scope, perm_string name,
 		  cerr << *cur.data_type;
 	    else
 		  cerr << "(nil type)";
-	    ivl_assert(cur, cur.expr);
-	    cerr << " = " << *cur.expr << "; ";
+	    if (cur.expr)
+		  cerr << " = " << *cur.expr << "; ";
 	    if (cur.range)
 		  cerr << "with ranges ";
 	    else
@@ -475,31 +478,22 @@ static void blend_class_constructors(PClass*pclass)
       }
 }
 
-static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
+/*
+ * Create the scope and the netclass_t of a class, and collect the
+ * typedefs and parameters of the class. That is enough to evaluate the
+ * parameters, which a specialization of a parameterized class needs
+ * before it knows if it is new.
+ */
+static netclass_t* elaborate_scope_class_start(Design*des, NetScope*scope,
+					       PClass*pclass, const hname_t&name)
 {
       const class_type_t*use_type = pclass->type;
 
-      if (debug_scopes) {
-	    cerr << pclass->get_fileline() <<": elaborate_scope_class: "
-		 << "Elaborate scope class " << pclass->pscope_name()
-		 << " within scope " << scope_path(scope)
-		 << endl;
-      }
+      netclass_t*use_class = new netclass_t(name.peek_name());
+      use_class->set_pclass(pclass);
 
-
-      for (const auto &cur : pclass->externs) {
-	    if (cur.second.defined)
-		  continue;
-	    cerr << cur.second.get_fileline() << ": error: Extern method '"
-		 << pclass->pscope_name() << "::" << cur.first
-		 << "' is declared but never defined." << endl;
-	    des->errors += 1;
-      }
-
-      netclass_t*use_class = new netclass_t(use_type->name);
-
-      NetScope*class_scope = new NetScope(scope, hname_t(pclass->pscope_name()),
-					  NetScope::CLASS, scope->unit());
+      NetScope*class_scope = new NetScope(scope, name, NetScope::CLASS,
+					  scope->unit());
       class_scope->set_line(pclass);
       class_scope->set_class_def(use_class);
       use_class->set_class_scope(class_scope);
@@ -511,6 +505,14 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
       collect_scope_parameters(des, class_scope, pclass->parameters);
 
+      return use_class;
+}
+
+static void elaborate_scope_class_finish(Design*des, netclass_t*use_class,
+					 PClass*pclass)
+{
+      NetScope*class_scope = use_class->class_scope();
+
       collect_scope_signals(class_scope, pclass->wires);
 
 	// Elaborate enum types declared in the class. We need these
@@ -520,7 +522,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 	    cerr << pclass->get_fileline() << ": elaborate_scope_class: "
 		 << "Elaborate " << pclass->enum_sets.size() << " enumerations"
 		 << " in class " << scope_path(class_scope)
-		 << ", scope=" << scope_path(scope) << "."
+		 << ", scope=" << scope_path(class_scope->parent()) << "."
 		 << endl;
       }
       elaborate_scope_enumerations(des, class_scope, pclass->enum_sets);
@@ -580,11 +582,44 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 
 	    cur->second->elaborate_scope(des, method_scope);
       }
+}
+
+static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
+{
+      if (debug_scopes) {
+	    cerr << pclass->get_fileline() <<": elaborate_scope_class: "
+		 << "Elaborate scope class " << pclass->pscope_name()
+		 << " within scope " << scope_path(scope)
+		 << endl;
+      }
+
+      for (const auto &cur : pclass->externs) {
+	    if (cur.second.defined)
+		  continue;
+	    cerr << cur.second.get_fileline() << ": error: Extern method '"
+		 << pclass->pscope_name() << "::" << cur.first
+		 << "' is declared but never defined." << endl;
+	    des->errors += 1;
+      }
+
+      netclass_t*use_class = elaborate_scope_class_start(des, scope, pclass,
+						 hname_t(pclass->pscope_name()));
+      if (pclass->has_required_params()) {
+	      // There are no values for the parameters, so the class can
+	      // not be elaborated until it is specialized. Keep it out of
+	      // the scope tree.
+	    use_class->set_template();
+	    use_class->class_scope()->detach();
+	    scope->add_class(use_class);
+	    return;
+      }
+      elaborate_scope_class_finish(des, use_class, pclass);
 
       scope->add_class(use_class);
 }
 
-static void elaborate_scope_class_bind_super(Design *des, NetScope *scope,
+static void elaborate_scope_class_bind_super(Design *des,
+					     netclass_t *derived_class,
 					     PClass *pclass)
 {
       auto *class_type = pclass->type;
@@ -592,8 +627,11 @@ static void elaborate_scope_class_bind_super(Design *des, NetScope *scope,
       if (!class_type->base_type)
 	    return;
 
+	// Elaborate the base type in the scope of the class, so that a
+	// specialization of a parameterized base class can use the
+	// parameters of this class.
       ivl_type_t elaborated_base_type =
-	    class_type->base_type->elaborate_type(des, scope);
+	    class_type->base_type->elaborate_type(des, derived_class->class_scope());
       const auto *base_class =
 	    dynamic_cast<const netclass_t *>(elaborated_base_type);
       if (!base_class) {
@@ -603,9 +641,6 @@ static void elaborate_scope_class_bind_super(Design *des, NetScope *scope,
 	    des->errors += 1;
 	    return;
       }
-
-      auto *derived_class = scope->find_class(des, class_type->name);
-      ivl_assert(*pclass, derived_class);
 
       for (auto ancestor = base_class; ancestor;
 	   ancestor = ancestor->get_super()) {
@@ -636,8 +671,262 @@ static void elaborate_scope_classes(Design*des, NetScope*scope,
 	    elaborate_scope_class(des, scope, classes[idx]);
       }
 
-      for (auto pclass : classes)
-	    elaborate_scope_class_bind_super(des, scope, pclass);
+      for (auto pclass : classes) {
+	    netclass_t*derived_class = scope->find_class(des, pclass->pscope_name());
+	    ivl_assert(*pclass, derived_class);
+	    if (derived_class->is_template())
+		  continue;
+	    elaborate_scope_class_bind_super(des, derived_class, pclass);
+      }
+}
+
+/*
+ * Compare the parameters of two specializations of a class.
+ */
+static bool class_parameters_equal(Design*des, NetScope*a, NetScope*b,
+				   const list<perm_string>&names)
+{
+      for (perm_string name : names) {
+	    ivl_type_t a_type, b_type;
+	    const NetExpr*a_val = a->get_parameter(des, name, a_type);
+	    const NetExpr*b_val = b->get_parameter(des, name, b_type);
+
+	      // A type parameter has a type, but no value.
+	    if (!a_val || !b_val) {
+		  if (a_val || b_val || !a_type || !b_type
+		      || !a_type->type_equivalent(b_type))
+			return false;
+		  continue;
+	    }
+
+	    if (auto a_const = dynamic_cast<const NetEConst*>(a_val)) {
+		  auto b_const = dynamic_cast<const NetEConst*>(b_val);
+		  if (!b_const
+		      || (a_const->value() == b_const->value()) != verinum::V1)
+			return false;
+	    } else if (auto a_real = dynamic_cast<const NetECReal*>(a_val)) {
+		  auto b_real = dynamic_cast<const NetECReal*>(b_val);
+		  if (!b_real || a_real->value().as_double()
+				 != b_real->value().as_double())
+			return false;
+	    } else {
+		  return false;
+	    }
+      }
+
+      return true;
+}
+
+/*
+ * Make a name like C#(8,int) for a specialization of a class.
+ */
+static string class_specialization_name(Design*des, NetScope*scope,
+					perm_string name,
+					const list<perm_string>&names)
+{
+      ostringstream res;
+      res << name << "#(";
+      for (auto cur = names.begin() ; cur != names.end() ; ++cur) {
+	    if (cur != names.begin())
+		  res << ",";
+
+	    ivl_type_t type;
+	    const NetExpr*val = scope->get_parameter(des, *cur, type);
+	    auto val_const = dynamic_cast<const NetEConst*>(val);
+	    if (!val) {
+		  if (type)
+			res << *type;
+	    } else if (val_const && val_const->value().is_defined()
+		       && !val_const->value().is_string()
+		       && val_const->value().len() <= 8*sizeof(long)) {
+		  if (val_const->value().has_sign())
+			res << val_const->value().as_long();
+		  else
+			res << val_const->value().as_ulong();
+	    } else {
+		  res << *val;
+	    }
+      }
+      res << ")";
+      return res.str();
+}
+
+const netclass_t* netclass_t::specialize(Design*des, NetScope*scope,
+					 const LineInfo&loc,
+					 const list<PExpr*>&by_order,
+					 const list<named_pexpr_t>&by_name) const
+{
+      const netclass_t*base = generic();
+      PClass*pclass = base->pclass_;
+
+      if (!pclass || pclass->param_names.empty()) {
+	    cerr << loc.get_fileline() << ": error: "
+		 << "Class `" << base->get_name() << "` has no parameters."
+		 << endl;
+	    des->errors += 1;
+	    return base;
+      }
+
+	// Map the parameter value assignment to the parameter names,
+	// the same way as for a module instance.
+      Module::replace_t replace;
+
+      if (by_order.size() > pclass->param_names.size()) {
+	    cerr << loc.get_fileline() << ": error: "
+		 << "Too many parameter values for class `"
+		 << base->get_name() << "`, which has "
+		 << pclass->param_names.size() << " parameter(s)." << endl;
+	    des->errors += 1;
+	    return base;
+      }
+
+      auto cur_name = pclass->param_names.begin();
+      for (PExpr*val : by_order) {
+	      // No expression means that the parameter keeps its default.
+	    if (val)
+		  replace[*cur_name] = val;
+	    ++cur_name;
+      }
+
+      for (const named_pexpr_t&cur : by_name) {
+	    if (find(pclass->param_names.begin(), pclass->param_names.end(),
+		     cur.name) == pclass->param_names.end()) {
+		  cerr << cur.get_fileline() << ": error: Parameter `"
+		       << cur.name << "` is not in the parameter port list "
+		       << "of class `" << base->get_name() << "`." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+	    if (cur.parm && !replace.emplace(cur.name, cur.parm).second) {
+		  cerr << loc.get_fileline() << ": error: Parameter `"
+		       << cur.name << "` is assigned more than once for class `"
+		       << base->get_name() << "`." << endl;
+		  des->errors += 1;
+	    }
+      }
+
+	// A type is not a valid value for a value parameter. Report it
+	// here, the parameter evaluation does not handle it well.
+      for (auto cur = replace.begin() ; cur != replace.end() ; ) {
+	    if (dynamic_cast<const PETypename*>(cur->second)
+		&& !pclass->parameters[cur->first]->type_flag) {
+		  cerr << cur->second->get_fileline() << ": error: "
+		       << "Parameter `" << cur->first << "` of class `"
+		       << base->get_name() << "` is not a type parameter."
+		       << endl;
+		  des->errors += 1;
+		  cur = replace.erase(cur);
+	    } else {
+		  ++cur;
+	    }
+      }
+
+      if (base->is_template()) {
+	    bool missing = false;
+	    for (perm_string name : pclass->param_names) {
+		  if (pclass->parameters[name]->expr || replace.count(name))
+			continue;
+		  cerr << loc.get_fileline() << ": error: Parameter `" << name
+		       << "` of class `" << base->get_name() << "` has no "
+		       << "default value, so it needs a value here." << endl;
+		  des->errors += 1;
+		  missing = true;
+	    }
+	    if (missing)
+		  return base;
+      }
+
+      if (replace.empty())
+	    return base;
+
+	// Elaborate the parameters with the new values in a new
+	// class scope, and compare them with the default and the
+	// existing specializations.
+      NetScope*def_scope = base->definition_scope_;
+      string probe_name = string(base->get_name()) + "#";
+	// Evaluating a parameter value can specialize a class while this
+	// probe scope exists, so the probe names cannot be derived from the
+	// number of specializations.
+      static unsigned probe_count = 0;
+      netclass_t*use_class = elaborate_scope_class_start(des, def_scope, pclass,
+		    hname_t(lex_strings.make(probe_name),
+			    probe_count++));
+      NetScope*class_scope = use_class->class_scope_;
+
+      for (const auto&cur : replace)
+	    class_scope->replace_parameter(des, cur.first, cur.second, scope);
+
+      const netclass_t*match = nullptr;
+      if (!base->is_template()
+	  && class_parameters_equal(des, class_scope, base->class_scope_,
+				    pclass->param_names))
+	    match = base;
+
+      for (size_t idx = 0 ; !match && idx < base->specializations_.size()
+		 ; idx += 1) {
+	    netclass_t*cur = base->specializations_[idx];
+	    if (class_parameters_equal(des, class_scope, cur->class_scope_,
+				       pclass->param_names))
+		  match = cur;
+      }
+
+	// Drop the new scope if the specialization exists. The scope
+	// object is not deleted, because elaborated types are cached
+	// by the address of the scope they are elaborated in.
+      if (match) {
+	    class_scope->detach();
+	    return match;
+      }
+
+	// A class that specializes itself with changing values, such as
+	// C#(N+1) inside C#(N), would make specializations forever. The
+	// names of the variables in the methods are shared by all the
+	// specializations, so a method can not have a variable of another
+	// specialization of its own class.
+      if (base->methods_in_sig_ || base->specializations_.size() >= 100) {
+	    static std::set<const netclass_t*> reported;
+	    if (reported.insert(base).second) {
+		  cerr << loc.get_fileline() << ": error: Recursive "
+		       << "specialization of class `" << base->get_name()
+		       << "`, there are too many specializations of it."
+		       << endl;
+		  des->errors += 1;
+	    }
+	    class_scope->detach();
+	    return base;
+      }
+
+      string spec_name = class_specialization_name(des, class_scope,
+						   base->get_name(),
+						   pclass->param_names);
+	// Different parameter values should not print the same, but
+	// keep the names unique anyway.
+      if (def_scope->child(hname_t(lex_strings.make(spec_name))))
+	    spec_name += "#" + to_string(base->specializations_.size());
+      use_class->name_ = lex_strings.make(spec_name);
+      class_scope->rename(hname_t(use_class->name_));
+      use_class->generic_ = base;
+      base->specializations_.push_back(use_class);
+
+      if (debug_scopes) {
+	    cerr << loc.get_fileline() << ": " << __func__ << ": "
+		 << "Elaborate class specialization " << scope_path(class_scope)
+		 << endl;
+      }
+
+      elaborate_scope_class_finish(des, use_class, pclass);
+      def_scope->add_class(use_class);
+      if (des->parameters_evaluated)
+	    class_scope->evaluate_parameters(des);
+      elaborate_scope_class_bind_super(des, use_class, pclass);
+
+      des->class_specializations_elab.push_back(use_class);
+      if (des->class_specializations_sig_done)
+	    use_class->elaborate_sig(des, pclass);
+      else
+	    des->class_specializations_sig.push_back(use_class);
+
+      return use_class;
 }
 
 static void replace_scope_parameters(Design *des, NetScope*scope, const LineInfo&loc,
@@ -1793,6 +2082,15 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 {
       NetScope*my_scope = scope;
 
+      if (scope->is_auto() && default_lifetime == STATIC &&
+	  (bl_type_ == BL_JOIN_NONE || bl_type_ == BL_JOIN_ANY ||
+	   !automatic_variables.empty())) {
+	    cerr << get_fileline()
+		 << ": sorry: Nested automatic lifetimes and detached forks "
+		    "in static blocks are not yet supported." << endl;
+	    des->errors += 1;
+      }
+
       if (pscope_name() != 0) {
 	    hname_t use_name(pscope_name());
 	    if (debug_scopes)
@@ -1806,7 +2104,23 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 				    ? NetScope::FORK_JOIN
 				    : NetScope::BEGIN_END);
 	    my_scope->set_line(get_file(), get_lineno());
-            my_scope->is_auto(scope->is_auto());
+            my_scope->is_auto(scope->is_auto() || !automatic_variables.empty());
+	      // shortcut: scope-wide storage, split it before accepting mixed lifetimes.
+	    if (my_scope->is_auto() && default_lifetime != AUTOMATIC) {
+		  for (const auto&wire : wires) {
+			if (automatic_variables.count(wire.first)) continue;
+			cerr << wire.second->get_fileline()
+			     << ": sorry: Mixed static and automatic variable "
+				"lifetimes in a block are not yet supported." << endl;
+			des->errors += 1;
+		  }
+		  if (!events.empty()) {
+			cerr << get_fileline()
+			     << ": sorry: Static named events in a block with "
+				"automatic variables are not yet supported." << endl;
+			des->errors += 1;
+		  }
+	    }
 	    my_scope->add_imports(&explicit_imports);
 	    my_scope->add_typedefs(&typedefs);
 

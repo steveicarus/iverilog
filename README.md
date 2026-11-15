@@ -420,6 +420,13 @@ constructs.
 The list of unsupported SystemVerilog constructs is too large to
 enumerate here.
 
+Explicit `automatic` locals in a static sequential block are supported when
+all locals in that block are automatic. This uses the existing scope-based
+automatic storage. Mixed static and automatic locals, static named events,
+nested lifetime overrides, detached forks, and overrides in functions remain
+unsupported. Unpacked arrays in these blocks currently require four-state
+integral elements.
+
 ## Nonstandard Constructs and Behaviors
 
 Icarus Verilog includes some features that are not part of the IEEE 1364

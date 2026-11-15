@@ -23,8 +23,11 @@
 # include  "ivl_target.h"
 # include  "nettypes.h"
 # include  "property_qual.h"
+# include  "named.h"
 # include  <iostream>
+# include  <list>
 # include  <map>
+# include  <vector>
 
 class Design;
 class NetExpr;
@@ -49,6 +52,7 @@ class netclass_t : public ivl_type_s {
       void set_class_scope(NetScope*cscope);
 
       inline const NetScope* class_scope(void) const { return class_scope_; }
+      inline NetScope* class_scope(void) { return class_scope_; }
 
 	// Set the scope for the class definition. This is the scope
 	// where the class definition was encountered, and may be used
@@ -57,7 +61,32 @@ class netclass_t : public ivl_type_s {
 	// where a class is defined.
       void set_definition_scope(NetScope*dscope);
 
-      NetScope*definition_scope(void);
+      NetScope*definition_scope(void) const;
+
+	// The class declaration that this class is elaborated from.
+      void set_pclass(PClass*pclass) { pclass_ = pclass; }
+      PClass* pclass() const { return pclass_; }
+
+	// A parameterized class is elaborated as declared, which is
+	// also its default specialization, and once more for each
+	// other set of parameter values that it is specialized
+	// with. For a specialization, generic() returns the class as
+	// declared, otherwise this class itself.
+      const netclass_t* generic() const { return generic_ ? generic_ : this; }
+
+	// A class with a parameter that has no default value has no
+	// default specialization. It is only the template that the
+	// specializations are made from, and is not elaborated.
+      void set_template() { template_ = true; }
+      bool is_template() const { return template_; }
+
+	// Return the specialization C#(...) of this class for the
+	// given parameter value assignment, elaborating it if it does
+	// not exist yet. The scope is where the assignment is used.
+      const netclass_t* specialize(Design*des, NetScope*scope,
+				   const LineInfo&loc,
+				   const std::list<PExpr*>&by_order,
+				   const std::list<named<PExpr*> >&by_name) const;
 
 	// As an ivl_type_s object, the netclass is always an
 	// ivl_VT_CLASS object.
@@ -170,10 +199,19 @@ class netclass_t : public ivl_type_s {
 	// This holds the context for the class type definition.
       NetScope*definition_scope_;
 
+      PClass*pclass_ = nullptr;
+      const netclass_t*generic_ = nullptr;
+      bool template_ = false;
+	// The specializations of this class, other than the default.
+      mutable std::vector<netclass_t*> specializations_;
+	// Set while the signals of the methods of the specializations of
+	// this class are elaborated.
+      mutable unsigned methods_in_sig_ = 0;
+
       bool virtual_class_;
 };
 
-inline NetScope*netclass_t::definition_scope(void)
+inline NetScope*netclass_t::definition_scope(void) const
 {
       return definition_scope_;
 }

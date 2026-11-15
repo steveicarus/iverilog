@@ -1,0 +1,4 @@
+ivltests/sv_class_param_typedef_fail.v:22: error: `c8_t` is a type name, not a class, so it can not have a parameter value assignment.
+ivltests/sv_class_param_typedef_fail.v:23: error: `c_t` is a type name, not a class, so it can not have a parameter value assignment.
+ivltests/sv_class_param_typedef_fail.v:24: error: `D` is a type name, not a class, so it can not have a parameter value assignment.
+3 error(s) during elaboration.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,7 @@
 # include "config.h"
 
 # include  "netlist.h"
+# include  "netmisc.h"
 # include  "netclass.h"
 # include  "netdarray.h"
 # include  "netparray.h"
@@ -32,20 +33,28 @@ using namespace std;
  * NetAssign
  */
 
-unsigned count_lval_width(const NetAssign_*idx)
+/*
+ * Return the width and type context for evaluating the RHS of an assignment
+ * to this l-value. A concatenation needs a four-state context if any component
+ * is four-state, so evaluating the RHS does not discard X/Z values needed by
+ * that component. Two-state components are converted when stored. A single
+ * l-value supplies its own type, including non-integral types.
+ */
+lval_info_t get_lval_info(const NetAssign_*idx)
 {
-      unsigned wid = 0;
-      while (idx) {
-	    wid += idx->lwidth();
-	    idx = idx->more;
+      lval_info_t info;
+      for (; idx ; idx = idx->more) {
+	    info.width += idx->lwidth();
+	    if (info.type != IVL_VT_LOGIC) {
+		  info.type = idx->expr_type();
+	    }
       }
-      return wid;
+      return info;
 }
 
 NetAssign_::NetAssign_(NetAssign_*n)
 : nest_(n), sig_(0), word_(0), base_(0), sel_type_(IVL_SEL_OTHER)
 {
-      lwid_ = 0;
       more = 0;
       turn_sig_to_wire_on_release_ = false;
 }
@@ -53,7 +62,6 @@ NetAssign_::NetAssign_(NetAssign_*n)
 NetAssign_::NetAssign_(NetNet*s)
 : nest_(0), sig_(s), word_(0), base_(0), sel_type_(IVL_SEL_OTHER)
 {
-      lwid_ = sig_->vector_width();
       more = 0;
       turn_sig_to_wire_on_release_ = false;
 }
@@ -120,14 +128,11 @@ void NetAssign_::set_untyped()
 
 unsigned NetAssign_::lwidth() const
 {
-	// This gets me the type of the l-value expression, down to
-	// the type of the member. If this returns nil, then resort to
-	// the lwid_ value.
-      auto ntype = component_type();
-      if (ntype)
-	    return ntype->packed_width();
+      if (base_) return part_width_;
 
-      return lwid_;
+      auto ntype = component_type();
+      ivl_assert(*this, ntype);
+      return ntype->packed_width();
 }
 
 ivl_variable_type_t NetAssign_::expr_type() const
@@ -143,15 +148,13 @@ ivl_variable_type_t NetAssign_::expr_type() const
 ivl_type_t NetAssign_::net_type() const
 {
 	// Concatenations and explicit selects do not retain a declared type.
-      if (untyped_) return nullptr;
+      if (untyped_ || more) return nullptr;
 
       return component_type();
 }
 
 ivl_type_t NetAssign_::component_type() const
 {
-      if (more) return nullptr;
-
 	// A selected member can have its own data type.
       if (base_)
 	    return part_data_type_;
@@ -203,7 +206,7 @@ void NetAssign_::set_part(NetExpr*base, unsigned wid,
                           ivl_select_type_t sel_type)
 {
       base_ = base;
-      lwid_ = wid;
+      part_width_ = wid;
       sel_type_ = sel_type;
 }
 

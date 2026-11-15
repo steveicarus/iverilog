@@ -505,6 +505,8 @@ void Design::evaluate_parameters()
 		 ; scope != root_scopes_.end() ; ++ scope ) {
 	    (*scope)->evaluate_parameters(this);
       }
+
+      parameters_evaluated = true;
 }
 
 /*
@@ -1177,6 +1179,21 @@ void Design::add_process(NetProcTop*pro)
 {
       pro->next_ = procs_;
       procs_ = pro;
+}
+
+void Design::add_process_first(NetProcTop*pro)
+{
+	// The process list is in reverse order of addition, so the
+	// first process to run is at the end of the list.
+      pro->next_ = 0;
+      if (procs_ == 0) {
+	    procs_ = pro;
+	    return;
+      }
+      NetProcTop*cur = procs_;
+      while (cur->next_)
+	    cur = cur->next_;
+      cur->next_ = pro;
 }
 
 void Design::add_process(NetAnalogTop*pro)

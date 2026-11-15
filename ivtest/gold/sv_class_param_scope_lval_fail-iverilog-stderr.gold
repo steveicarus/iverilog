@@ -1,0 +1,1 @@
+ivltests/sv_class_param_scope_lval_fail.v:11: sorry: A class scope member is not supported as an l-value.

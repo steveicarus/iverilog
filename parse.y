@@ -258,6 +258,69 @@ static data_type_t *pform_new_type_identifier(const struct vlltype &loc,
       return pform_new_type_identifier(loc, package, name);
 }
 
+static type_identifier_t *pform_set_type_params(data_type_t *type,
+					       parmvalue_t *params)
+{
+      auto tmp = static_cast<type_identifier_t*>(type);
+      tmp->has_params = true;
+      if (params && params->by_order) {
+	    tmp->params_by_order.splice(tmp->params_by_order.end(),
+					*params->by_order);
+	    delete params->by_order;
+      }
+      if (params && params->by_name) {
+	    tmp->params_by_name.splice(tmp->params_by_name.end(),
+				       *params->by_name);
+	    delete params->by_name;
+      }
+      delete params;
+      return tmp;
+}
+
+  /* A class type with a parameter value assignment, e.g. C#(8). */
+static data_type_t *pform_new_type_identifier(const struct vlltype &loc,
+					     PPackage *package,
+					     char *text,
+					     parmvalue_t *params)
+{
+      return pform_set_type_params(
+	    pform_new_type_identifier(loc, package, text), params);
+}
+
+  /* A name in a class scope, e.g. the type T in C#(8)::T. */
+static data_type_t *pform_new_scoped_type_identifier(const struct vlltype &loc,
+						    data_type_t *scope,
+						    char *text,
+						    parmvalue_t *params = nullptr)
+{
+      std::unique_ptr<char[]> owned_text(text);
+      pform_scoped_name_t path;
+      path.class_scope.reset(scope);
+      path.name.emplace_back(lex_strings.make(text));
+
+      auto identifier = new PEIdent(path);
+      FILE_NAME(identifier, loc);
+      auto tmp = new type_identifier_t(identifier);
+      FILE_NAME(tmp, loc);
+      if (params)
+	    return pform_set_type_params(tmp, params);
+      return tmp;
+}
+
+  /* A name in a class scope used as an expression, e.g. C#(8)::N. */
+static PExpr *pform_class_scope_ident(const struct vlltype &loc,
+				      data_type_t *scope,
+				      pform_name_t *name)
+{
+      pform_scoped_name_t path;
+      path.class_scope.reset(scope);
+      path.name = *name;
+      delete name;
+      auto tmp = new PEIdent(path);
+      FILE_NAME(tmp, loc);
+      return tmp;
+}
+
 static index_component_t *make_index_component(const struct vlltype &loc,
 					       index_component_t::ctype_t sel,
 					       PExpr *msb = nullptr,
@@ -496,6 +559,10 @@ static decl_assignment_t *pform_make_var_decl(const YYLTYPE&loc, char *id,
       decl->lexical_pos(lexical_pos);
       FILE_NAME(decl, loc);
       decl->name = { lex_strings.make(id), lexical_pos };
+      if (var_lifetime == LexicalScope::AUTOMATIC) {
+	    if (auto block = dynamic_cast<PBlock*>(pform_peek_scope()))
+		  block->automatic_variables.insert(decl->name.first);
+      }
       if (udims) {
 	    decl->index = *udims;
 	    delete udims;
@@ -924,8 +991,10 @@ static PBlock *pform_finish_block(const YYLTYPE&block_loc,
 	    if (block_type != PBlock::BL_SEQ)
 		  block->set_join_type(block_type);
       } else {
+	    auto lifetime = block->default_lifetime;
 	    delete block;
 	    block = new PBlock(block_type);
+	    block->default_lifetime = lifetime;
 	    FILE_NAME(block, block_loc);
       }
 
@@ -1496,6 +1565,12 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %nonassoc '('
 %nonassoc K_exclude
 
+ /* to resolve the ambiguity between a delay after the data type of a net
+    declaration, e.g. "wire T #(1) w;", and a class specialization "T #(1)".
+    Nets can not have a class type, so prefer the delay. */
+%nonassoc '#'
+%nonassoc no_index_components
+
  /* to resolve timeunits declaration/redeclaration ambiguity */
 %nonassoc no_timeunits_declaration
 %nonassoc one_timeunits_declaration
@@ -1603,7 +1678,7 @@ assertion_item_label_opt
   ;
 
 class_declaration /* IEEE1800-2005: A.1.2 */
-  : K_virtual_opt K_class lifetime_opt IDENTIFIER class_declaration_extends_opt ';'
+  : K_virtual_opt K_class lifetime_opt IDENTIFIER
       { /* Up to 1800-2017 the grammar in the LRM allowed an optional lifetime
 	 * qualifier for class declarations. But the LRM never specified what
 	 * this qualifier should do. Starting with 1800-2023 the qualifier has
@@ -1619,15 +1694,17 @@ class_declaration /* IEEE1800-2005: A.1.2 */
 	class_type_t *class_type= new class_type_t(name);
 	FILE_NAME(class_type, @4);
 	pform_set_typedef(@4, name, class_type, nullptr);
-	pform_start_class_declaration(@2, class_type, $5.type, $5.args, $1);
+	pform_start_class_declaration(@2, class_type, $1);
       }
+    module_parameter_port_list_opt class_declaration_extends_opt ';'
+      { pform_set_class_extends(@7, $7.type, $7.args); }
     class_items_opt K_endclass
       { // Process a class.
-	pform_end_class_declaration(@9);
+	pform_end_class_declaration(@11);
       }
     label_opt
       { // Wrap up the class.
-	check_end_label(@11, "class", $4, $11);
+	check_end_label(@13, "class", $4, $13);
 	delete[] $4;
       }
   ;
@@ -1998,6 +2075,16 @@ ps_type_identifier /* IEEE1800-2017: A.9.3 */
       { lex_in_package_scope(0);
 	$$ = pform_new_type_identifier(@2, $1, $2);
       }
+  | IDENTIFIER parameter_value_assignment
+      { $$ = pform_new_type_identifier(@1, nullptr, $1, $2); }
+  | package_scope IDENTIFIER parameter_value_assignment
+      { lex_in_package_scope(0);
+	$$ = pform_new_type_identifier(@2, $1, $2, $3);
+      }
+  | class_scope IDENTIFIER
+      { $$ = pform_new_scoped_type_identifier(@2, $1, $2); }
+  | class_scope IDENTIFIER parameter_value_assignment
+      { $$ = pform_new_scoped_type_identifier(@2, $1, $2, $3); }
   ;
 
 ps_type_identifier_dim /* IEEE1800-2017: A.9.3 */
@@ -2009,6 +2096,23 @@ ps_type_identifier_dim /* IEEE1800-2017: A.9.3 */
       { lex_in_package_scope(nullptr);
 	auto tmp = pform_new_type_identifier(@2, $1, $2);
 	$$ = pform_make_parray_type(@3, tmp, $3);
+      }
+  | IDENTIFIER parameter_value_assignment dimensions_opt
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1, $2);
+	$$ = pform_make_parray_type(@3, tmp, $3);
+      }
+  | package_scope IDENTIFIER parameter_value_assignment dimensions_opt
+      { lex_in_package_scope(nullptr);
+	auto tmp = pform_new_type_identifier(@2, $1, $2, $3);
+	$$ = pform_make_parray_type(@4, tmp, $4);
+      }
+  | class_scope IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2);
+	$$ = pform_make_parray_type(@3, tmp, $3);
+      }
+  | class_scope IDENTIFIER parameter_value_assignment dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2, $3);
+	$$ = pform_make_parray_type(@4, tmp, $4);
       }
   ;
 
@@ -2734,6 +2838,24 @@ package_variable_decl_assignments_with_type
 	$$.decl_assignments = $4;
 	$$.type = pform_make_parray_type(@3, tmp, $3);
       }
+  | package_scope IDENTIFIER parameter_value_assignment dimensions_opt
+    list_of_variable_decl_assignments
+      { lex_in_package_scope(nullptr);
+	auto tmp = pform_new_type_identifier(@2, $1, $2, $3);
+	$$.decl_assignments = $5;
+	$$.type = pform_make_parray_type(@4, tmp, $4);
+      }
+  | class_scope IDENTIFIER dimensions_opt list_of_variable_decl_assignments
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2);
+	$$.decl_assignments = $4;
+	$$.type = pform_make_parray_type(@3, tmp, $3);
+      }
+  | class_scope IDENTIFIER parameter_value_assignment dimensions_opt
+    list_of_variable_decl_assignments
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2, $3);
+	$$.decl_assignments = $5;
+	$$.type = pform_make_parray_type(@4, tmp, $4);
+      }
   ;
 
 initializer_opt
@@ -3317,6 +3439,17 @@ data_type_or_implicit_plus_id
 	set_type_id_range($$, pform_make_parray_type(@3, tmp, $3),
 			  $4, @4, nullptr);
       }
+  | IDENTIFIER parameter_value_assignment dimensions_opt IDENTIFIER
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1, $2);
+	set_type_id_range($$, pform_make_parray_type(@3, tmp, $3),
+			  $4, @4, nullptr);
+      }
+  | package_scope IDENTIFIER parameter_value_assignment dimensions_opt IDENTIFIER
+      { lex_in_package_scope(nullptr);
+	auto tmp = pform_new_type_identifier(@2, $1, $2, $3);
+	set_type_id_range($$, pform_make_parray_type(@4, tmp, $4),
+			  $5, @5, nullptr);
+      }
   ;
 
   // A plain identifier can be an implicit declaration name or the first token
@@ -3343,6 +3476,29 @@ data_type_or_implicit_plus_id_dim
 	tmp = pform_make_parray_type(@3, tmp, $3);
 	set_type_id_range($$, tmp, $4, @4, $5);
       }
+  | IDENTIFIER parameter_value_assignment dimensions_opt IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1, $2);
+	tmp = pform_make_parray_type(@3, tmp, $3);
+	set_type_id_range($$, tmp, $4, @4, $5);
+      }
+  | package_scope IDENTIFIER parameter_value_assignment dimensions_opt
+    IDENTIFIER dimensions_opt
+      { lex_in_package_scope(nullptr);
+	auto tmp = pform_new_type_identifier(@2, $1, $2, $3);
+	tmp = pform_make_parray_type(@4, tmp, $4);
+	set_type_id_range($$, tmp, $5, @5, $6);
+      }
+  | class_scope IDENTIFIER dimensions_opt IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2);
+	tmp = pform_make_parray_type(@3, tmp, $3);
+	set_type_id_range($$, tmp, $4, @4, $5);
+      }
+  | class_scope IDENTIFIER parameter_value_assignment dimensions_opt
+    IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2, $3);
+	tmp = pform_make_parray_type(@4, tmp, $4);
+	set_type_id_range($$, tmp, $5, @5, $6);
+      }
   ;
 
   // Parameter port lists can omit the `parameter` keyword, but the optional
@@ -3367,6 +3523,17 @@ data_type_or_parameter_id_dim
 	auto tmp = pform_new_type_identifier(@2, $1, $2);
 	tmp = pform_make_parray_type(@3, tmp, $3);
 	set_type_id_range($$, tmp, $4, @4, $5);
+      }
+  | class_scope IDENTIFIER dimensions_opt IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2);
+	tmp = pform_make_parray_type(@3, tmp, $3);
+	set_type_id_range($$, tmp, $4, @4, $5);
+      }
+  | class_scope IDENTIFIER parameter_value_assignment dimensions_opt
+    IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2, $3);
+	tmp = pform_make_parray_type(@4, tmp, $4);
+	set_type_id_range($$, tmp, $5, @5, $6);
       }
   ;
 
@@ -3648,8 +3815,11 @@ variable_lifetime
 	      }
 	} else if (pform_requires_sv(@1, "Overriding default variable lifetime") &&
 		   $1 != scope->default_lifetime) {
-	      yyerror(@1, "sorry: Overriding the default variable "
-			  "lifetime is not yet supported.");
+	      auto block = dynamic_cast<PBlock*>(scope);
+	      if ($1 != LexicalScope::AUTOMATIC || !block || current_function ||
+		  block->bl_type() != PBlock::BL_SEQ)
+		    yyerror(@1, "sorry: Overriding the default variable "
+				"lifetime is not yet supported.");
 	}
 	var_lifetime = $1;
       }
@@ -4883,6 +5053,11 @@ type_value
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  | IDENTIFIER parameter_value_assignment
+      { auto tmp = new PETypename(pform_new_type_identifier(@1, nullptr, $1, $2));
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
   ;
 
   /* SystemVerilog: a().b() — call a function, then invoke a method on the
@@ -5005,6 +5180,8 @@ expr_primary
 	$$ = pform_package_ident(@2, $1, $2);
 	delete $2;
       }
+  | class_scope hierarchy_identifier
+      { $$ = pform_class_scope_ident(@2, $1, $2); }
 
   /* An identifier followed by an expression list in parentheses is a
      function call. If a system identifier, then a system function
@@ -5032,6 +5209,15 @@ expr_primary
 	FILE_NAME(tmp, @2);
 	delete $2;
 	delete $4;
+	$$ = tmp;
+      }
+  | class_scope hierarchy_identifier argument_list_parens
+      { pform_scoped_name_t call_path(nullptr, *$2);
+	call_path.class_scope.reset($1);
+	auto tmp = new PECallFunction(call_path, *$3);
+	FILE_NAME(tmp, @2);
+	delete $2;
+	delete $3;
 	$$ = tmp;
       }
   | K_this
@@ -5527,7 +5713,7 @@ hierarchy_identifier
 
 index_components_opt
   : index_components
-  |
+  | %prec no_index_components
       { $$ = nullptr; }
   ;
 
@@ -5756,6 +5942,13 @@ lpvalue
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete $1;
+      }
+
+  | class_scope hierarchy_identifier
+      { yyerror(@1, "sorry: A class scope member is not supported as an l-value.");
+	delete $1;
+	delete $2;
+	$$ = 0;
       }
 
   | '{' expression_list_proper '}'
@@ -6217,15 +6410,66 @@ module_item
   | K_pulldown '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
       { pform_makegates(@1, PGBuiltin::PULLDOWN, $3, 0, $7, 0); }
 
-  /* Parameterized module and primitive instances are unambiguous after '#'.
-     Unparameterized instances share a prefix with named declarations and are
-     handled by identifier_module_item. */
+  /* Parameterized module instances share a prefix with declarations of
+     variables with a class specialization type, e.g. "C #(8) h;". These
+     rules mirror identifier_module_item. */
 
   | attribute_list_opt
-	  IDENTIFIER parameter_value_assignment gate_instance_list ';'
-      { perm_string tmp1 = lex_strings.make($2);
-		  pform_make_modgates(@2, tmp1, $3, $4, $1);
-		  delete[]$2;
+	  IDENTIFIER parameter_value_assignment IDENTIFIER gate_instance_ports
+	  gate_instance_continue ';'
+      { std::unique_ptr<lgate> instance($5);
+	instance->name = $4;
+	FILE_NAME(instance.get(), @4);
+	$6->insert($6->begin(), *instance);
+	perm_string tmp1 = lex_strings.make($2);
+	pform_make_modgates(@2, tmp1, $3, $6, $1);
+	delete[]$2;
+	delete[]$4;
+      }
+  | attribute_list_opt
+	  IDENTIFIER parameter_value_assignment gate_instance_positional_connections
+	  gate_instance_continue ';'
+      { std::unique_ptr<lgate> instance($4);
+	instance->name = "";
+	FILE_NAME(instance.get(), @4);
+	$5->insert($5->begin(), *instance);
+	perm_string tmp1 = lex_strings.make($2);
+	pform_make_modgates(@2, tmp1, $3, $5, $1);
+	delete[]$2;
+      }
+  | attribute_list_opt
+	  IDENTIFIER parameter_value_assignment list_of_variable_decl_assignments ';'
+      { if (decl_assignments_require_type(*$4) ||
+	    pform_test_type_identifier(@2, $2)) {
+	      auto type = pform_new_type_identifier(@2, nullptr, $2, $3);
+	      pform_make_var(@2, $4, type, $1, false);
+	      var_lifetime = LexicalScope::INHERITED;
+	      delete $1;
+	} else {
+	      std::unique_ptr<std::vector<lgate>> gates(new std::vector<lgate>);
+	      append_no_port_gate_instances(*gates,
+		    std::unique_ptr<std::list<decl_assignment_t*>>($4));
+	      perm_string tmp1 = lex_strings.make($2);
+	      pform_make_modgates(@2, tmp1, $3, gates.release(), $1);
+	      delete[]$2;
+	}
+      }
+  | attribute_list_opt
+	  IDENTIFIER parameter_value_assignment list_of_variable_decl_assignments ','
+	  IDENTIFIER gate_instance_ports gate_instance_continue ';'
+      { std::unique_ptr<std::vector<lgate>> gates(new std::vector<lgate>);
+	append_no_port_gate_instances(*gates,
+		    std::unique_ptr<std::list<decl_assignment_t*>>($4));
+	std::unique_ptr<lgate> instance($7);
+	instance->name = $6;
+	FILE_NAME(instance.get(), @6);
+	gates->push_back(*instance);
+	gates->insert(gates->end(), $8->begin(), $8->end());
+	delete $8;
+	perm_string tmp1 = lex_strings.make($2);
+	pform_make_modgates(@2, tmp1, $3, gates.release(), $1);
+	delete[]$2;
+	delete[]$6;
       }
 
         | attribute_list_opt
@@ -7794,6 +8038,15 @@ subroutine_call
 	FILE_NAME(tmp, @2);
 	delete $2;
 	delete $4;
+	$$ = tmp;
+      }
+  | class_scope hierarchy_identifier argument_list_parens_opt
+      { pform_scoped_name_t call_path(nullptr, *$2);
+	call_path.class_scope.reset($1);
+	auto tmp = new PCallTask(call_path, *$3);
+	FILE_NAME(tmp, @2);
+	delete $2;
+	delete $3;
 	$$ = tmp;
       }
   | class_hierarchy_identifier argument_list_parens_opt

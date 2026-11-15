@@ -276,6 +276,11 @@ static void store_vec4_to_lval(ivl_statement_t net)
 	    if (lidx+1 < ivl_stmt_lvals(net))
 		  fprintf(vvp_out, "    %%split/vec4 %u;\n", lwid);
 
+	    if (ivl_signal_data_type(lsig) == IVL_VT_BOOL &&
+		ivl_expr_value(ivl_stmt_rval(net)) != IVL_VT_BOOL) {
+		  fprintf(vvp_out, "    %%cast2;\n");
+	    }
+
 	    if (word_ex) {
 		    /* Handle index into an array */
 		  int word_index = allocate_word();
