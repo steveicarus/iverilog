@@ -82,7 +82,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_ARITH_MOD_R K_ARITH_MOD_S
 %token K_ARITH_MULT K_ARITH_MULT_R K_ARITH_SUB K_ARITH_SUB_R
 %token K_ARITH_SUM K_ARITH_SUM_R K_ARITH_POW K_ARITH_POW_R K_ARITH_POW_S
-%token K_ARRAY K_ARRAY_2U K_ARRAY_2S K_ARRAY_I K_ARRAY_OBJ K_ARRAY_R K_ARRAY_S K_ARRAY_STR K_ARRAY_PORT
+%token K_ARRAY K_ARRAY_2U K_ARRAY_4U K_ARRAY_2S K_ARRAY_I K_ARRAY_OBJ K_ARRAY_R K_ARRAY_S K_ARRAY_STR K_ARRAY_PORT
 %token K_CAST_INT K_CAST_REAL K_CAST_REAL_S K_CAST_2
 %token K_CLASS
 %token K_CMP_EEQ K_CMP_EQ K_CMP_EQX K_CMP_EQZ K_CMP_WEQ K_CMP_WNE
@@ -225,10 +225,14 @@ statement
   /* Memory.  Definition, port, initialization */
 
   /* A plain .array with a word range cannot say that its words are
-     scalars, since without the range it is the net array below. */
+     scalars, since without the range it is the net array below. That
+     is what .array/4u is for. */
 
         | T_LABEL K_ARRAY T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
                 { compile_var_array($1, $3, $5, $6, $8, $9, ($8 != $9)? 1 : -1, 0); }
+
+        | T_LABEL K_ARRAY_4U T_STRING ',' signed_t_number signed_t_number word_dims ';'
+                { compile_var_array($1, $3, $5, $6, $7.msb, $7.lsb, $7.vec, 0); }
 
         | T_LABEL K_ARRAY_2U T_STRING ',' signed_t_number signed_t_number word_dims ';'
                 { compile_var2_array($1, $3, $5, $6, $7.msb, $7.lsb, $7.vec, false); }

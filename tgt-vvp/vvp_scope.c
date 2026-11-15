@@ -540,12 +540,12 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	    int last = ivl_signal_array_base(sig)+word_count-1;
 	    int first = ivl_signal_array_base(sig);
 	      /* The words of a variable array are vectors if there is a
-		 word range. A plain .array always has one, because
-		 without it the statement is a net array. */
+		 word range. An unsigned 4-state array is .array/4u, since
+		 a plain .array without a word range is a net array. */
 	    char range[32];
 	    range_str(sig, msb, lsb, range, sizeof(range));
 	    if (datatype_flag[0] == 0)
-		  snprintf(range, sizeof(range), ", %d %d", msb, lsb);
+		  datatype_flag = "/4u";
 	    fprintf(vvp_out, "v%p .array%s \"%s\", %d %d%s;\n",
 		    sig, datatype_flag,
 		    vvp_mangle_name(ivl_signal_basename(sig)),

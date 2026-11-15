@@ -49,6 +49,8 @@ module test;
     failed |= $check_sv(bs_v[1], 1, 1);
     failed |= $check_sv(ls_s[0], 0, 1);
     failed |= $check_sv(ls_v[1], 1, 1);
+    failed |= $check_sv(l_s[0], 0, 1);
+    failed |= $check_sv(l_v[1], 1, 1);
     failed |= $check_sv(l2[0], 1, 2);
     failed |= $check_sv(b8[0], 1, 8);
     failed |= $check_sv(b8s[0], 1, 8);
@@ -61,6 +63,8 @@ module test;
     // Variable word select.
     failed |= $check_sv(b_s[idx], 0, 1);
     failed |= $check_sv(b_v[idx], 1, 1);
+    failed |= $check_sv(l_s[idx], 0, 1);
+    failed |= $check_sv(l_v[idx], 1, 1);
     failed |= $check_sv(l2[idx], 1, 2);
     // Word iteration.
     failed |= $check_sv_words(b_s, 0, 1);
@@ -69,6 +73,8 @@ module test;
     failed |= $check_sv_words(bs_v, 1, 1);
     failed |= $check_sv_words(ls_s, 0, 1);
     failed |= $check_sv_words(ls_v, 1, 1);
+    failed |= $check_sv_words(l_s, 0, 1);
+    failed |= $check_sv_words(l_v, 1, 1);
     failed |= $check_sv_words(l2, 1, 2);
     failed |= $check_sv_words(b8s, 1, 8);
     failed |= $check_sv_words(int_arr, 1, 32);
