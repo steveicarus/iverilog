@@ -384,6 +384,21 @@ extern lval_info_t get_lval_info(const class NetAssign_*first);
  * IVL_VT_NO_TYPE causes the expression to retain its self-determined
  * type.
  */
+/*
+ * The queue that "$" refers to while the index of that queue is being
+ * elaborated. It is null when the index is not of a queue.
+ */
+class dollar_queue_scope {
+    public:
+      explicit dollar_queue_scope(const NetNet*net)
+      : saved_(queue_) { queue_ = net->queue_type() ? net : nullptr; }
+      ~dollar_queue_scope() { queue_ = saved_; }
+      static const NetNet*current() { return queue_; }
+    private:
+      const NetNet*saved_;
+      static const NetNet*queue_;
+};
+
 class PExpr;
 
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,

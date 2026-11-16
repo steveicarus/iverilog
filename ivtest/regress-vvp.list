@@ -953,6 +953,8 @@ sv_pure_virtual_fail		vvp_tests/sv_pure_virtual_fail.json
 sv_pure_virtual_task_fail	vvp_tests/sv_pure_virtual_task_fail.json
 sv_queue_ap_method		vvp_tests/sv_queue_ap_method.json
 sv_queue_assign_op		vvp_tests/sv_queue_assign_op.json
+sv_queue_dollar			vvp_tests/sv_queue_dollar.json
+sv_queue_dollar_fail		vvp_tests/sv_queue_dollar_fail.json
 sv_queue_find			vvp_tests/sv_queue_find.json
 sv_queue_find_locators_ext	vvp_tests/sv_queue_find_locators_ext.json
 sv_queue_find_with		vvp_tests/sv_queue_find_with.json
@@ -970,6 +972,9 @@ sv_queue_product		vvp_tests/sv_queue_product.json
 sv_queue_product_with		vvp_tests/sv_queue_product_with.json
 sv_queue_reduction		vvp_tests/sv_queue_reduction.json
 sv_queue_reverse		vvp_tests/sv_queue_reverse.json
+sv_queue_slice			vvp_tests/sv_queue_slice.json
+sv_queue_slice_fail		vvp_tests/sv_queue_slice_fail.json
+sv_queue_slice_lval_fail	vvp_tests/sv_queue_slice_lval_fail.json
 sv_queue_sort			vvp_tests/sv_queue_sort.json
 sv_queue_sum			vvp_tests/sv_queue_sum.json
 sv_queue_sum_with		vvp_tests/sv_queue_sum_with.json

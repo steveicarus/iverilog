@@ -340,6 +340,17 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 
       ivl_assert(*this, member_path.empty());
 
+      if (use_sel == index_component_t::SEL_PART && reg->darray_type()) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "assigning to a "
+		 << (name_tail.index.size() > 1 ? "part select of an element of "
+					       : "slice of ")
+		 << reg->name() << " is not supported." << endl;
+	    des->errors += 1;
+	    delete lv;
+	    return nullptr;
+      }
+
       if (use_sel == index_component_t::SEL_PART) {
 	    elaborate_lval_net_part_(des, scope, lv, is_force);
 	    return lv;
@@ -756,6 +767,7 @@ bool PEIdent::elaborate_lval_darray_bit_(Design*des,
 	    mux->set_line(*this);
       } else {
 	    ivl_assert(*this, index_tail.msb != 0);
+	    dollar_queue_scope queue_scope(lv->sig());
 	    mux = elab_and_eval(des, scope, index_tail.msb, -1);
       }
 

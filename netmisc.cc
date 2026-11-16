@@ -33,6 +33,8 @@
 
 using namespace std;
 
+const NetNet*dollar_queue_scope::queue_ = nullptr;
+
 NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 {
       const netvector_t*zero_vec = new netvector_t(sig->data_type(),
