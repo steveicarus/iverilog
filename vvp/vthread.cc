@@ -771,6 +771,10 @@ static void vthread_release_context(vthread_t thr)
 #ifdef CHECK_WITH_VALGRIND
 void contexts_delete(class __vpiScope*scope)
 {
+      // Simulation can finish while an automatic scope is still active.
+      while (scope->live_contexts)
+	    vthread_free_context(scope->live_contexts, scope);
+
       vvp_context_t context = scope->free_contexts;
 
       while (context) {
