@@ -187,6 +187,11 @@ int __vpiDarrayVar::vpi_get(int code)
 	  case vpiSize:
             return get_size();
 
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
+	  case _vpiFromThr:
+	    return _vpiNoThr;
+#endif
+
 	  default:
 	    fprintf(stderr, "vpi sorry: property is not implemented");
 	    assert(false);
@@ -308,6 +313,10 @@ static vvp_darray* get_live_darray_from_prop(vvp_net_t* class_net, unsigned pid)
 
 int __vpiPropQueueRef::vpi_get(int code)
 {
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
+      if (code == _vpiFromThr) return _vpi_at_PQ;
+#endif
+
       const vvp_darray* aobj = get_live_darray_from_prop(class_net_, prop_idx_);
       switch (code) {
 	  case vpiArrayType:
