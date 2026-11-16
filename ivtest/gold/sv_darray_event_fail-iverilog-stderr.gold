@@ -1,0 +1,15 @@
+ivltests/sv_darray_event_fail.v:8: sorry: Dynamic array and queue element selects are not supported in this context.
+values['sd1]
+ivltests/sv_darray_event_fail.v:9: sorry: Dynamic array and queue element selects are not supported in this context.
+values[index]
+ivltests/sv_darray_event_fail.v:10: sorry: Dynamic array and queue element selects are not supported in this context.
+posedge values['sd1]
+ivltests/sv_darray_event_fail.v:11: sorry: Dynamic array and queue element selects are not supported in this context.
+queue['sd1]
+ivltests/sv_darray_event_fail.v:12: sorry: Dynamic array and queue element selects are not supported in this context.
+-(values['sd1])
+ivltests/sv_darray_event_fail.v:13: sorry: Dynamic array and queue element selects are not supported in this context.
+packed_value[values['sd1]]
+ivltests/sv_darray_event_fail.v:14: sorry: Dynamic array and queue element selects are not supported in this context.
+static_array[values['sd1]]
+14 error(s) during elaboration.

@@ -1003,12 +1003,14 @@ NetNet* NetEUnary::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       if (op_ == '-') {
 	    NetNet*sig = expr_->synthesize(des, scope, root);
+	    if (sig == 0) return 0;
 	    sig = sub_net_from(des, scope, 0, sig);
 	    return sig;
       }
 
       if (op_ == 'm') {
 	    NetNet*sub = expr_->synthesize(des, scope, root);
+	    if (sub == 0) return 0;
 	    if (expr_->has_sign() == false)
 		  return sub;
 
@@ -1135,6 +1137,13 @@ NetNet* NetECast::synthesize(Design*des, NetScope*scope, NetExpr*root)
  */
 NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 {
+      if (expr_->expr_type() == IVL_VT_DARRAY ||
+	  expr_->expr_type() == IVL_VT_QUEUE) {
+	    cerr << get_fileline() << ": sorry: Dynamic array and queue "
+	         << "element selects are not supported in this context." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       NetNet*sub = expr_->synthesize(des, scope, root);
 
@@ -1240,6 +1249,7 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 	// do the work, and replace "sub" with the selected output.
       if (base_ != 0) {
 	    NetNet*off = base_->synthesize(des, scope, root);
+	    if (off == 0) return 0;
 
 	    NetPartSelect*sel = new NetPartSelect(sub, off, expr_width(),
 	                                          base_->has_sign());
@@ -1479,6 +1489,7 @@ NetNet* NetESignal::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    des->add_node(mux);
 
 	    NetNet*index_net = word_->synthesize(des, scope, root);
+	    if (index_net == 0) return 0;
 	    connect(mux->pin_Address(), index_net->pin(0));
 
 	    connect(tmp->pin(0), mux->pin_Result());
