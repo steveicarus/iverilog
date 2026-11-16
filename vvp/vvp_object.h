@@ -31,6 +31,9 @@
 class vvp_object {
     public:
       inline vvp_object() { ref_cnt_ = 0; total_active_cnt_ += 1; }
+	/* A copy is a new object, so it has no references yet. */
+      inline vvp_object(const vvp_object&) { ref_cnt_ = 0; total_active_cnt_ += 1; }
+      inline vvp_object& operator = (const vvp_object&) { return *this; }
       virtual ~vvp_object() =0;
 
       virtual void shallow_copy(const vvp_object*that);
