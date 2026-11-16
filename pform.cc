@@ -3120,10 +3120,7 @@ void pform_set_parameter(const struct vlltype&loc,
 	    } else if (!pform_in_parameter_port_list) {
 		  VLerror(loc, "error: parameter declared outside parameter "
 			        "port list must have a default value.");
-	    } else if (pform_in_class()) {
-		  VLerror(loc, "sorry: Class parameters without a default "
-			        "value are not yet supported.");
-	    } else {
+	    } else if (!pform_in_class()) {
 		  pform_requires_sv(loc, "parameter without default value");
 	    }
       }

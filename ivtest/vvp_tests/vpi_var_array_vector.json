@@ -1,0 +1,10 @@
+{
+    "type"          : "normal",
+    "source"        : "vpi_var_array_vector.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vpi-sources"   : [ "vpi/scalar_vector.c" ],
+    "vlog95" : {
+        "__comment" : "Packed ranges on array words are not supported.",
+        "type"      : "CE"
+    }
+}

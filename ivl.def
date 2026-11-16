@@ -144,6 +144,7 @@ ivl_lpm_trigger
 ivl_lpm_type
 ivl_lpm_width
 
+ivl_lval_data_type
 ivl_lval_idx
 ivl_lval_mux
 ivl_lval_nest
@@ -304,6 +305,7 @@ ivl_stmt_init_stmt
 ivl_stmt_lexp
 ivl_stmt_lineno
 ivl_stmt_lval
+ivl_stmt_lval_signed
 ivl_stmt_lvals
 ivl_stmt_lwidth
 ivl_stmt_name

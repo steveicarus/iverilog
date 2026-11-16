@@ -514,7 +514,17 @@ static unsigned emit_assign_and_opt_opcode(ivl_scope_t scope, ivl_statement_t st
 	    unsigned cast_signed = ivl_stmt_lvals(stmt) == 1 &&
 		  ivl_lval_part_off(ivl_stmt_lval(stmt, 0)) &&
 		  (opcode == 'R' ||
-		   (opcode != 'l' && opcode != 'r' && ivl_expr_signed(rval)));
+		   (opcode != 'l' && opcode != 'r' &&
+		    (ivl_expr_value(rval) == IVL_VT_REAL
+		     ? ivl_stmt_lval_signed(stmt)
+		     : ivl_expr_signed(rval))));
+	      /* An elided full-width select must remain unsigned when the
+	       * other operand is real and cannot impose an unsigned context. */
+	    ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
+	    ivl_signal_t sig = ivl_lval_sig(lval);
+	    unsigned cast_unsigned = ivl_expr_value(rval) == IVL_VT_REAL &&
+		  ivl_stmt_lvals(stmt) == 1 && !ivl_stmt_lval_signed(stmt) &&
+		  !ivl_lval_part_off(lval) && sig && ivl_signal_signed(sig);
 	    if (cast_signed) {
 		  fprintf(vlog_out, "$signed(");
 		  if (!allow_signed) {
@@ -523,9 +533,12 @@ static unsigned emit_assign_and_opt_opcode(ivl_scope_t scope, ivl_statement_t st
 				ivl_stmt_lineno(stmt));
 			vlog_errors += 1;
 		  }
+	    } else if (cast_unsigned) {
+		  fprintf(vlog_out, "{");
 	    }
 	    unsigned twid = emit_stmt_lval(scope, stmt);
 	    if (cast_signed) fprintf(vlog_out, ")");
+	    if (cast_unsigned) fprintf(vlog_out, "}");
 	    assert(twid == wid);
 	    fprintf(vlog_out, " %s ", opcode_str);
 	      /* The >>>= assignment operator is only allowed when the allow
@@ -537,7 +550,13 @@ static unsigned emit_assign_and_opt_opcode(ivl_scope_t scope, ivl_statement_t st
 		  vlog_errors += 1;
 	    }
       }
-      emit_expr(scope, rval, wid, 1, 0, 0);
+      if (opcode && (ivl_expr_value(rval) == IVL_VT_REAL ||
+		     (ivl_stmt_lvals(stmt) == 1 &&
+		      ivl_lval_data_type(ivl_stmt_lval(stmt, 0)) == IVL_VT_REAL))) {
+	    emit_expr(scope, rval, 0, 0, 0, 0);
+      } else {
+	    emit_expr(scope, rval, wid, 1, 0, 0);
+      }
       return 1;
 }
 

@@ -507,6 +507,16 @@ extern const netclass_t*find_class_containing_scope(const LineInfo&loc,const Net
 extern NetScope* find_method_containing_scope(const LineInfo&log, NetScope*scope);
 
 /*
+ * A static method called through a class scope, C#(8)::f(), has no
+ * object. Return the null handle to pass as its "this" argument, or
+ * report an error and return 0 if the method is not static.
+ */
+struct pform_scoped_name_t;
+extern NetExpr* class_scope_method_this(const LineInfo&li, Design*des,
+					const NetScope*method,
+					const pform_scoped_name_t&path);
+
+/*
  * Return true if the data type is a type that is normally available
  * in vector for. IVL_VT_BOOL and IVL_VT_LOGIC are vectorable,
  * IVL_VT_REAL is not.

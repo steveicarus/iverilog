@@ -74,6 +74,12 @@ class netclass_t : public ivl_type_s {
 	// declared, otherwise this class itself.
       const netclass_t* generic() const { return generic_ ? generic_ : this; }
 
+	// A class with a parameter that has no default value has no
+	// default specialization. It is only the template that the
+	// specializations are made from, and is not elaborated.
+      void set_template() { template_ = true; }
+      bool is_template() const { return template_; }
+
 	// Return the specialization C#(...) of this class for the
 	// given parameter value assignment, elaborating it if it does
 	// not exist yet. The scope is where the assignment is used.
@@ -195,6 +201,7 @@ class netclass_t : public ivl_type_s {
 
       PClass*pclass_ = nullptr;
       const netclass_t*generic_ = nullptr;
+      bool template_ = false;
 	// The specializations of this class, other than the default.
       mutable std::vector<netclass_t*> specializations_;
 	// Set while the signals of the methods of the specializations of

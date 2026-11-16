@@ -154,6 +154,26 @@ static bool vpi_array_is_string(const vvp_array_t arr)
       return false;
 }
 
+/*
+ * vpiVector and vpiScalar of the words of a variable array. This does
+ * not apply to net arrays (the words are nets, which answer for
+ * themselves) or to real, string and object words. A word is a vector if
+ * its .array statement gives it a range, even a single element one, and
+ * a scalar if it has none.
+ */
+static int array_word_vec_get(int code, const vvp_array_t arr)
+{
+      if (arr->nets || vpi_array_is_real(arr) || vpi_array_is_string(arr) ||
+	  dynamic_cast<vvp_darray_object*> (arr->vals))
+	    return 0;
+
+	// The statement could not tell (see the .array syntax).
+      if (arr->word_vec < 0)
+	    return 0;
+      bool vec = arr->word_vec != 0;
+      return (code == vpiVector)? vec : !vec;
+}
+
 int __vpiArray::get_word_size() const
 {
       unsigned width;
@@ -371,6 +391,13 @@ int __vpiArrayWord::as_word_t::vpi_get(int code)
 		  return val.value.integer + base_offset;
 	    }
 
+	  case vpiScalar:
+	  case vpiVector:
+	      // Words of other containers (e.g. darrays) do not answer.
+	    if (struct __vpiArray*base = dynamic_cast<__vpiArray*> (my_parent))
+		  return array_word_vec_get(code, base);
+	    return 0;
+
 	  case vpiAutomatic:
 	    return my_parent->get_scope()->is_automatic()? 1 : 0;
 
@@ -399,6 +426,10 @@ int __vpiArrayVthrA::vpi_get(int code)
 
 	  case vpiRightRange:
 	    return array->lsb.get_value();
+
+	  case vpiScalar:
+	  case vpiVector:
+	    return array_word_vec_get(code, array);
 
 	  case vpiIndex:
 	    return (int)get_address() + array->first_addr.get_value();
@@ -496,6 +527,8 @@ vpiHandle __vpiArrayVthrA::vpi_handle(int code)
 }
 
 
+// Deliberately no vpiScalar/vpiVector: this is an internal part-select
+// handle, not a declared object.
 int __vpiArrayVthrAPV::vpi_get(int code)
 {
       switch (code) {
@@ -822,6 +855,7 @@ vpiHandle vpip_make_array(const char*label, const char*name,
       obj->vals  = 0;
       obj->vals_width = 0;
       obj->vals_words = 0;
+      obj->word_vec = -1;
 
 	// Initialize (clear) the read-ports list.
       obj->ports_ = 0;
@@ -890,7 +924,7 @@ void __vpiArray::attach_word(unsigned addr, vpiHandle word)
 }
 
 void compile_var_array(char*label, char*name, int last, int first,
-		   int msb, int lsb, char signed_flag)
+		   int msb, int lsb, int word_vec, char signed_flag)
 {
       vpiHandle obj = vpip_make_array(label, name, first, last,
                                       signed_flag != 0);
@@ -908,6 +942,7 @@ void compile_var_array(char*label, char*name, int last, int first,
       }
       arr->msb.set_value(msb);
       arr->lsb.set_value(lsb);
+      arr->word_vec = word_vec;
 
       count_var_arrays += 1;
       count_var_array_words += arr->get_size();
@@ -917,7 +952,7 @@ void compile_var_array(char*label, char*name, int last, int first,
 }
 
 void compile_var2_array(char*label, char*name, int last, int first,
-		   int msb, int lsb, bool signed_flag)
+		   int msb, int lsb, int word_vec, bool signed_flag)
 {
       vpiHandle obj = vpip_make_array(label, name, first, last, signed_flag);
 
@@ -926,6 +961,7 @@ void compile_var2_array(char*label, char*name, int last, int first,
 	/* Make the words. */
       arr->msb.set_value(msb);
       arr->lsb.set_value(lsb);
+      arr->word_vec = word_vec;
       arr->vals_width = labs(msb-lsb) + 1;
 
       assert(! arr->nets);
@@ -1573,6 +1609,7 @@ void compile_array_alias(char*label, char*name, char*src)
 
       obj->msb = mem->msb;
       obj->lsb = mem->lsb;
+      obj->word_vec = mem->word_vec;
 
 	// Share the words with the source array.
       obj->nets = mem->nets;

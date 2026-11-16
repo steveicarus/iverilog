@@ -285,6 +285,7 @@ struct vthread_s {
       struct vthread_s*wait_next;
 	/* These are used to access automatically allocated items. */
       vvp_context_t wt_context, rd_context;
+      vector<pair<__vpiScope*, vvp_context_t> > owned_contexts;
 	/* These are used to pass non-blocking event control information. */
       vvp_net_t*event;
       uint64_t ecount;
@@ -298,6 +299,7 @@ struct vthread_s {
 
       inline void cleanup()
       {
+	    assert(owned_contexts.empty());
 	    if (i_was_disabled) {
 		  stack_vec4_.clear();
 		  stack_real_.clear();
@@ -753,9 +755,26 @@ static void vthread_free_context(vvp_context_t context, __vpiScope*scope)
       scope->free_contexts = context;
 }
 
+static void vthread_release_context(vthread_t thr)
+{
+      assert(!thr->owned_contexts.empty());
+      const auto allocation = thr->owned_contexts.back();
+      vvp_context_t context = allocation.second;
+      if (thr->wt_context == context)
+	    thr->wt_context = vvp_get_stacked_context(context);
+      if (thr->rd_context == context)
+	    thr->rd_context = vvp_get_stacked_context(context);
+      vthread_free_context(context, allocation.first);
+      thr->owned_contexts.pop_back();
+}
+
 #ifdef CHECK_WITH_VALGRIND
 void contexts_delete(class __vpiScope*scope)
 {
+      // Simulation can finish while an automatic scope is still active.
+      while (scope->live_contexts)
+	    vthread_free_context(scope->live_contexts, scope);
+
       vvp_context_t context = scope->free_contexts;
 
       while (context) {
@@ -1044,6 +1063,7 @@ bool of_ALLOC(vthread_t thr, vvp_code_t cp)
 {
         /* Allocate a context. */
       vvp_context_t child_context = vthread_alloc_context(cp->scope);
+      thr->owned_contexts.emplace_back(cp->scope, child_context);
 
         /* Push the allocated context onto the write context stack. */
       vvp_set_stacked_context(child_context, thr->wt_context);
@@ -3007,6 +3027,9 @@ static bool do_disable(vthread_t thr, vthread_t match)
 	    vthread_reap(tmp);
       }
 
+      while (!thr->owned_contexts.empty())
+	    vthread_release_context(thr);
+
       vthread_t parent = thr->parent;
       if (parent && parent->i_am_joining) {
 	      // If a parent is waiting in a %join, wake it up. Note
@@ -3719,14 +3742,15 @@ bool of_FORCE_VEC4_OFF(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
       unsigned base_idx = cp->bit_idx[0];
-      long base = thr->words[base_idx].w_int;
+      long base = base_idx ? thr->words[base_idx].w_int : 0;
       vvp_vector4_t value = thr->pop_vec4();
       unsigned wid = value.size();
 
       assert(net->fil);
 
-      if (thr->flags[4] == BIT4_1)
+      if (base_idx != 0 && thr->flags[4] == BIT4_1) {
 	    return true;
+      }
 
 	// This is the width of the target vector.
       unsigned use_size = net->fil->filter_size();
@@ -3768,7 +3792,7 @@ bool of_FORCE_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
       vvp_net_t*net = cp->net;
 
       unsigned base_idx = cp->bit_idx[0];
-      long base = thr->words[base_idx].w_int;
+      long base = base_idx ? thr->words[base_idx].w_int : 0;
 
       unsigned delay_idx = cp->bit_idx[1];
       vvp_time64_t delay = thr->words[delay_idx].w_uint;
@@ -3777,8 +3801,9 @@ bool of_FORCE_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
 
       assert(net->fil);
 
-      if (thr->flags[4] == BIT4_1)
+      if (base_idx != 0 && thr->flags[4] == BIT4_1) {
 	    return true;
+      }
 
 	// This is the width of the target vector.
       unsigned use_size = net->fil->filter_size();
@@ -3825,8 +3850,13 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
       if (thr->i_am_in_function) {
 	    child->is_scheduled = 1;
 	    child->i_am_in_function = 1;
+	      // A nested flow exit may reap this thread before the call returns.
+	    bool delay_delete = thr->delay_delete;
+	    thr->delay_delete = 1;
 	    vthread_run(child);
 	    running_thread = thr;
+	    if (thr->i_was_disabled) return false;
+	    thr->delay_delete = delay_delete;
       } else {
 	    schedule_vthread(child, 0, true);
       }
@@ -3835,12 +3865,10 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
 
 bool of_FREE(vthread_t thr, vvp_code_t cp)
 {
-        /* Pop the child context from the read context stack. */
-      vvp_context_t child_context = thr->rd_context;
-      thr->rd_context = vvp_get_stacked_context(child_context);
-
-        /* Free the context. */
-      vthread_free_context(child_context, cp->scope);
+      assert(!thr->owned_contexts.empty());
+      assert(thr->owned_contexts.back().first == cp->scope);
+      assert(thr->owned_contexts.back().second == thr->rd_context);
+      vthread_release_context(thr);
 
       return true;
 }
@@ -4079,6 +4107,25 @@ bool of_JMP(vthread_t thr, vvp_code_t cp)
       }
 
       return true;
+}
+
+bool of_JMP_FLOW(vthread_t thr, vvp_code_t cp)
+{
+      vthread_t child = thr;
+      while (child->parent && child->parent->parent_scope != cp->scope)
+	    child = child->parent;
+      vthread_t target = child->parent;
+      assert(target && target->parent_scope == cp->scope);
+
+      const bool joining = target->i_am_joining;
+      const bool release = target->wt_context != target->rd_context;
+      target->pc = cp->cptr2;
+      do_disable(child, thr);
+      if (!joining)
+	    do_join(target, child);
+      if (release)
+	    vthread_release_context(target);
+      return false;
 }
 
 /*

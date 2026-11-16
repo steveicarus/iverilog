@@ -25,6 +25,7 @@
 # include  <cstdlib>
 # include  <cstring>
 # include  <climits>
+# include  <cctype>
 # include "compiler.h"
 
 # include  "PPackage.h"
@@ -412,7 +413,7 @@ static const netclass_t* resolve_call_chain_prefix_class(Design*des, NetScope*sc
 
 static ivl_nature_t find_access_function(const pform_scoped_name_t &path)
 {
-      if (path.package || path.name.size() != 1) return nullptr;
+      if (path.is_scoped() || path.name.size() != 1) return nullptr;
       return access_function_nature[peek_tail_name(path)];
 }
 
@@ -957,7 +958,7 @@ bool PEAssignPattern::expand_keyed_struct_(Design *des,
 
       for (const auto &item : keyed_) {
 	    const PEIdent *id = dynamic_cast<const PEIdent*>(item.key);
-	    if (!id || id->path().package || id->path().size() != 1 ||
+	    if (!id || id->path().is_scoped() || id->path().size() != 1 ||
 	        !id->path().back().index.empty()) {
 		  cerr << item.key->get_fileline() << ": error: The key of a"
 		       << " struct assignment pattern item must be a member"
@@ -2506,27 +2507,69 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 	    const netdarray_t*darray = net->darray_type();
 	    ivl_assert(*this, darray);
 
-	    if (darray->element_base_type()==IVL_VT_STRING && method_name=="atohex") {
-		  expr_type_  = IVL_VT_BOOL;
-		  expr_width_ = integer_width;
-		  min_width_  = integer_width;
-		  signed_flag_ = true;
-		  return expr_width_;
-	    }
+	      // Check for string methods if the base type is a string.
+	    if (darray->element_base_type()==IVL_VT_STRING) {
 
-	    if (darray->element_base_type()==IVL_VT_STRING && method_name=="atoi") {
-		  expr_type_  = IVL_VT_BOOL;
-		  expr_width_ = integer_width;
-		  min_width_  = integer_width;
-		  return expr_width_;
-	    }
+		    // These string methods return an int.
+		  if ((method_name == "len") ||
+		      (method_name == "compare") ||
+		      (method_name == "icompare")) {
+			expr_type_  = IVL_VT_BOOL;
+			min_width_  = expr_width_ = 32;
+			signed_flag_= true;
+			return expr_width_;
+		  }
 
-	    if (darray->element_base_type()==IVL_VT_STRING && method_name=="len") {
-		  expr_type_  = IVL_VT_BOOL;
-		  expr_width_ = 32;
-		  min_width_  = 32;
-		  signed_flag_= true;
-		  return expr_width_;
+		    // These string methods return a void.
+		    // They also cannot be used on a parameter.
+		  if ((method_name == "putc") ||
+		      (method_name == "itoa") ||
+		      (method_name == "hextoa") ||
+		      (method_name == "octtoa") ||
+		      (method_name == "bintoa") ||
+		      (method_name == "realtoa")) {
+			expr_type_  = IVL_VT_VOID;
+			min_width_  = expr_width_ = 1;
+			signed_flag_= false;
+			return expr_width_;
+		  }
+
+		    // This string method returns a byte.
+		  if (method_name == "getc") {
+			expr_type_  = IVL_VT_BOOL;
+			min_width_  = expr_width_ = 8;
+			signed_flag_= true;
+			return expr_width_;
+		  }
+
+		    // These string methods return a string.
+		  if ((method_name == "toupper") ||
+		      (method_name == "tolower") ||
+		      (method_name == "substr")) {
+			expr_type_  = IVL_VT_STRING;
+			min_width_  = expr_width_ = 1;
+			signed_flag_= false;
+			return expr_width_;
+		  }
+
+		    // These string methods return an integer.
+		  if ((method_name == "atoi") ||
+		      (method_name == "atohex") ||
+		      (method_name == "atooct") ||
+		      (method_name == "atobin")) {
+			expr_type_  = IVL_VT_LOGIC;
+			min_width_  = expr_width_ = integer_width;
+			signed_flag_= true;
+			return expr_width_;
+		  }
+
+		    // This string methods return a real.
+		  if (method_name == "atoreal") {
+			expr_type_   = IVL_VT_REAL;
+			min_width_   = expr_width_  = 1;
+			signed_flag_ = true;
+			return expr_width_;
+		  }
 	    }
       }
 
@@ -3976,6 +4019,20 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
       if (!search_results.require_non_type(this, des, "in a function call"))
 	    return 0;
 
+      if (path_.class_scope && search_results.is_scope()
+	  && search_results.scope->type() == NetScope::FUNC
+	  && search_results.scope->get_class_scope()) {
+	    NetScope*method = search_results.scope;
+	    NetExpr*this_expr = class_scope_method_this(*this, des, method,
+							path_);
+	    if (!this_expr)
+		  return 0;
+	    return elaborate_class_method_net_this_(
+		  des, scope, this_expr,
+		  method->get_class_scope()->class_def(),
+		  method->basename(), nullptr, true);
+      }
+
       // If the symbol is found, but is not a scope...
       if (! search_results.is_scope() && !test_function_return_value(search_results)) {
 
@@ -4050,6 +4107,16 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 		 use_search_results.path_head.push_back(name_component_t(perm_string::literal(THIS_TOKEN)));
 		 NetScope *method_scope = find_method_containing_scope(*this, scope);
 		 ivl_assert(*this, method_scope);
+		   // A static method has no object to call a method of.
+		 if (method_scope->is_static_method()) {
+		       NetExpr*this_expr = class_scope_method_this(*this, des,
+								   dscope, path_);
+		       if (!this_expr)
+			     return 0;
+		       return elaborate_class_method_net_this_(
+			     des, scope, this_expr, c_scope->class_def(),
+			     dscope->basename(), nullptr, true);
+		 }
 		 use_search_results.net = method_scope->find_signal(
 		       perm_string::literal(THIS_TOKEN));
 		 ivl_assert(*this, use_search_results.net);
@@ -4993,16 +5060,18 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 
 	    if (method_name == "atooct") {
 		  check_number_of_args(des, method_name, *this, 0, parms_.size());
-		  cerr << get_fileline() << ": sorry: String method 'atooct()' "
-		          "is not currently supported." << endl;
-		  return 0;
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atooct",
+						     netvector_t::integer_type(), 1);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
 	    }
 
 	    if (method_name == "atobin") {
 		  check_number_of_args(des, method_name, *this, 0, parms_.size());
-		  cerr << get_fileline() << ": sorry: String method 'atobin()' "
-		          "is not currently supported." << endl;
-		  return 0;
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atobin",
+						     netvector_t::integer_type(), 1);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
 	    }
 
 	    if (method_name == "atoreal") {
@@ -5068,6 +5137,113 @@ static long get_const_int_param(Design*des, NetScope*scope, PExpr*expr,
 	    des->errors += 1;
       }
       return ret;
+}
+
+static uint32_t get_dec_val(const char* str)
+{
+      uint32_t res = 0;
+      while (str && *str) {
+            if (std::isdigit((int)*str)) {
+                  res = (res * 10) + (*str - '0');
+                  str += 1;
+            } else if (*str == '_') {
+                  str += 1;
+            } else {
+                  str = 0;
+            }
+      }
+      return res;
+}
+
+static uint32_t get_hex_val(const char* str)
+{
+      uint32_t res = 0;
+      while (str && *str) {
+            switch (*str) {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                  res = (res * 16) + (*str - '0');
+                  str += 1;
+                  break;
+                case 'a': case 'A':
+                case 'b': case 'B':
+                case 'c': case 'C':
+                case 'd': case 'D':
+                case 'e': case 'E':
+                case 'f': case 'F':
+                  res = (res * 16) + (std::toupper((int)*str) - 'A' + 10);
+                  str += 1;
+                  break;
+                case '_':
+                  str += 1;
+                  break;
+                default:
+                  str = 0;
+                  break;
+            }
+      }
+
+      return res;
+}
+
+static uint32_t get_oct_val(const char* str)
+{
+      uint32_t res = 0;
+
+      while (str && *str) {
+            switch (*str) {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                  res = (res * 8) + (*str - '0');
+                  str += 1;
+                  break;
+                case '_':
+                  str += 1;
+                  break;
+                default:
+                  str = 0;
+                  break;
+            }
+      }
+
+      return res;
+}
+
+static uint32_t get_bin_val(const char* str)
+{
+      uint32_t res = 0;
+      while (str && *str) {
+            switch (*str) {
+                case '0':
+                case '1':
+                  res = (res * 2) + (*str - '0');
+                  str += 1;
+                  break;
+                case '_':
+                  str += 1;
+                  break;
+                default:
+                  str = 0;
+                  break;
+            }
+      }
+
+      return res;
 }
 
 /*
@@ -5188,32 +5364,30 @@ NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, NetScope*scope,
 
 	    if (method_name == "atoi") {
 		  check_number_of_args(des, method_name, *this, 0, parms_.size());
-		  NetEConst*use_val = make_const_val(atoi(par_value.c_str()));
+		  NetEConst*use_val = make_const_val(get_dec_val(par_value.c_str()));
 		  use_val->set_line(*this);
 		  return use_val;
 	    }
 
 	    if (method_name == "atohex") {
 		  check_number_of_args(des, method_name, *this, 0, parms_.size());
-		  NetEConst*use_val = make_const_val(strtoul(par_value.c_str(),0,16));
+		  NetEConst*use_val = make_const_val(get_hex_val(par_value.c_str()));
 		  use_val->set_line(*this);
 		  return use_val;
 	    }
 
 	    if (method_name=="atooct") {
 		  check_number_of_args(des, method_name, *this, 0, parms_.size());
-		  cerr << get_fileline() << ": sorry: string method: '"
-		       << method_name << "()' is not currently supported."
-		       << endl;
-		  return 0;
+		  NetEConst*use_val = make_const_val(get_oct_val(par_value.c_str()));
+		  use_val->set_line(*this);
+		  return use_val;
 	    }
 
 	    if (method_name=="atobin") {
 		  check_number_of_args(des, method_name, *this, 0, parms_.size());
-		  cerr << get_fileline() << ": sorry: string method: '"
-		       << method_name << "()' is not currently supported."
-		       << endl;
-		  return 0;
+		  NetEConst*use_val = make_const_val(get_bin_val(par_value.c_str()));
+		  use_val->set_line(*this);
+		  return use_val;
 	    }
 
 	    if (method_name == "atoreal") {
@@ -6190,6 +6364,15 @@ bool PEIdent::find_type_(Design *des, NetScope *scope,
       return symbol_search(this, des, scope, path_, lexical_pos(),
 			   &search_results, flags)
 	    && search_results.type_def;
+}
+
+bool PEIdent::names_class_declaration(Design *des, NetScope *scope) const
+{
+      symbol_search_results search_results;
+      if (!find_type_(des, scope, search_results, true))
+	    return false;
+      return dynamic_cast<const class_type_t*>(
+		  search_results.type_def->get_data_type()) != nullptr;
 }
 
 bool PEIdent::test_type(Design *des, NetScope *scope)
@@ -7719,6 +7902,18 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
       NetExpr*sel = elab_and_eval(des, scope, index_tail.msb, -1, need_const);
       if (sel == 0) return 0;
 
+      if ((sel->expr_type() == IVL_VT_REAL) ||
+          (sel->expr_type() == IVL_VT_STRING)) {
+	    cerr << get_fileline() << ": error: Index expression for "
+	         << name << "[" << *sel
+	         << "] cannot be a ";
+	    if (sel->expr_type() == IVL_VT_REAL) cerr << "real";
+	    else cerr << "string";
+	    cerr << " value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
 	// An index select of an array parameter selects a whole element, not
 	// a single bit. This applies to a multi-dimension packed array,
 	// e.g. localparam logic [0:63][3:0] MEM = '{...}, and to an
@@ -7753,22 +7948,10 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
       if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
 				 par_ex->value().len())) return 0;
 
-      if ((sel->expr_type() == IVL_VT_REAL) ||
-          (sel->expr_type() == IVL_VT_STRING)) {
-	    cerr << get_fileline() << ": error: Index expression for "
-	         << name << "[" << *sel
-	         << "] cannot be a ";
-	    if (sel->expr_type() == IVL_VT_REAL) cerr << "real";
-	    else cerr << "string";
-	    cerr << " value." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: Calculate bit select "
-		 << name << "[" << *sel << "] from range "
-		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
+		 << name << "[" << *sel << "] from range ["
+		 << par_msv << ":" << par_lsv << "]." << endl;
 
 	// Handle the special case that the selection is constant. In this
 	// case, just precalculate the entire constant result.

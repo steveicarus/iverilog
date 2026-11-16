@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "constfunc_concat_two_state_select.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

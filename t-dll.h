@@ -478,6 +478,7 @@ enum ivl_lval_type_t {
 
 struct ivl_lval_s {
       ivl_expr_t loff;
+      ivl_variable_type_t data_type;
       ivl_select_type_t sel_type :3;
       ivl_expr_t idx;
       unsigned width_;
@@ -791,6 +792,7 @@ struct ivl_statement_s {
 	    struct { /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB
 			IVL_ST_CASSIGN, IVL_ST_DEASSIGN */
 		  unsigned lvals_;
+		  bool lval_signed;
 		  struct ivl_lval_s*lval_;
 		  char oper; // Operator if this is a compressed assignment.
 		  ivl_expr_t rval_;

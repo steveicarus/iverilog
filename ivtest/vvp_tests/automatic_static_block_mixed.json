@@ -1,0 +1,5 @@
+{
+    "type" : "CE",
+    "source" : "automatic_static_block_mixed.v",
+    "iverilog-args" : [ "-g2012" ]
+}

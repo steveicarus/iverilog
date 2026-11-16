@@ -304,6 +304,8 @@ static void elaborate_sig_classes(Design*des, NetScope*scope,
       for (map<perm_string,PClass*>::const_iterator cur = classes.begin()
 		 ; cur != classes.end() ; ++ cur) {
 	    netclass_t*use_class = scope->find_class(des, cur->second->pscope_name());
+	    if (use_class->is_template())
+		  continue;
 	    use_class->elaborate_sig(des, cur->second);
       }
 }
@@ -938,6 +940,18 @@ void PBlock::elaborate_sig(Design*des, NetScope*scope) const
 			     << scope_path(my_scope) << "." << endl;
 
 		  elaborate_sig_wires_(des, my_scope);
+		  if (my_scope->is_auto() && default_lifetime == STATIC) {
+			for (const auto&wire : wires) {
+			      NetNet*sig = my_scope->find_signal(wire.first);
+			      if (sig && sig->unpacked_dimensions() &&
+				  sig->data_type() != IVL_VT_LOGIC) {
+				    cerr << wire.second->get_fileline()
+					 << ": sorry: This automatic array type in a "
+					    "static block is not yet supported." << endl;
+				    des->errors += 1;
+			      }
+			}
+		  }
 	    }
       }
 

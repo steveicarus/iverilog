@@ -1283,6 +1283,11 @@ class NetScope : public Definitions, public Attrib {
       void is_virtual(bool is_virtual__) { is_virtual_ = is_virtual__; };
       bool is_virtual() const { return is_virtual_; };
 
+	/* Was the method declared with the "static" qualifier. A static
+	   method has no object, so it is called through the class. */
+      void is_static_method(bool is_static__) { is_static_method_ = is_static__; };
+      bool is_static_method() const { return is_static_method_; };
+
 	/* Is the module a cell (is in a `celldefine) */
       void is_cell(bool is_cell__) { is_cell_ = is_cell__; };
       bool is_cell() const { return is_cell_; };
@@ -1520,7 +1525,7 @@ class NetScope : public Definitions, public Attrib {
       std::map<perm_string,std::map<long,interface_port_alias_t> > interface_port_alias_arrays_;
 
       unsigned lcounter_;
-      bool need_const_func_, is_const_func_, is_auto_, is_virtual_, is_cell_, calls_stask_;
+      bool need_const_func_, is_const_func_, is_auto_, is_virtual_, is_static_method_, is_cell_, calls_stask_;
 
       /* Final procedures sets this to notify statements that
 	 they are part of a final procedure. */
@@ -3066,6 +3071,9 @@ class NetAssign_ {
 	// The part select has a specific type and the width of the select will
 	// be that of the type.
       void set_part(NetExpr *loff, ivl_type_t data_type);
+	// Set an unsigned part select with the supplied base type and width.
+	// The offset expression calculates a canonical bit address.
+      void set_part(NetExpr*loff, ivl_type_t data_type, unsigned wid);
 	// Set the member or property name if the signal type is a
 	// class.
       void set_property(const perm_string&name, unsigned int idx);
@@ -3203,7 +3211,7 @@ class NetAssign : public NetAssignBase {
 
     private:
       void eval_func_lval_op_real_(const LineInfo&loc, verireal&lv, const verireal&rv) const;
-      void eval_func_lval_op_(const LineInfo&loc, verinum&lv, const verinum&rv) const;
+      void eval_func_lval_op_(const LineInfo&loc, verinum&lv, const NetExpr*rv) const;
       bool eval_func_lval_(const LineInfo&loc, std::map<perm_string,LocalVar>&ctx,
 			   const NetAssign_*lval, NetExpr*rval_result) const;
 

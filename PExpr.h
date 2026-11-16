@@ -459,6 +459,10 @@ class PEIdent : public PExpr {
 
       const pform_scoped_name_t& path() const { return path_; }
 
+	// True if the name is the declaration of a class, and not a
+	// typedef of one.
+      bool names_class_declaration(Design *des, NetScope *scope) const;
+
     private:
       // Type testing and elaboration normally happen as a pair. Preserve the
       // lookup result between them, but only reuse it in the same scope.

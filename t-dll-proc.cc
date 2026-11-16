@@ -153,6 +153,7 @@ bool dll_target::make_assign_lvals_(const NetAssignBase*net)
       unsigned cnt = net->l_val_count();
 
       stmt_cur_->u_.assign_.lvals_ = cnt;
+      stmt_cur_->u_.assign_.lval_signed = net->l_val(0)->get_signed();
       stmt_cur_->u_.assign_.lval_  = new struct ivl_lval_s[cnt];
       stmt_cur_->u_.assign_.delay  = 0;
 
@@ -182,6 +183,7 @@ bool dll_target::make_single_lval_(const LineInfo*li, struct ivl_lval_s*cur, con
       }
 
       cur->width_ = asn->lwidth();
+      cur->data_type = asn->expr_type();
 
       if (asn->sig()) {
 	    cur->type_ = IVL_LVAL_REG;

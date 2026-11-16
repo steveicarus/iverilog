@@ -180,7 +180,7 @@ void compile_var_cobject(char*label, char*name)
  * write the label into the symbol table.
  */
 void compile_variable(char*label, char*name,
-		      int msb, int lsb, int vpi_type_code,
+		      int msb, int lsb, bool vec_flag, int vpi_type_code,
 		      bool signed_flag, bool local_flag, char*enum_label)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
@@ -223,6 +223,7 @@ void compile_variable(char*label, char*name,
 		  break;
 	    }
 	    assert(obj);
+	    dynamic_cast<__vpiSignal*>(obj)->vec_flag = vec_flag;
 	    compile_vpi_symbol(label, obj);
 	    if (enum_label) {
 		  __vpiSignal*sig = dynamic_cast<__vpiSignal*>(obj);
@@ -304,11 +305,12 @@ class __compile_net_resolv : public base_net_resolv {
       explicit __compile_net_resolv(char*ref_label, vvp_array_t array,
 				    __vpiScope*scope,
 				    char*my_label, char*name,
-				    int msb, int lsb, unsigned array_addr,
+				    int msb, int lsb, bool vec_flag, unsigned array_addr,
 				    int vpi_type_code, bool signed_flag, bool local_flag)
       : base_net_resolv(ref_label, array, scope, my_label, name, array_addr, local_flag)
       { msb_ = msb;
 	lsb_ = lsb;
+	vec_flag_ = vec_flag;
 	vpi_type_code_ = vpi_type_code;
 	signed_flag_ = signed_flag;
       }
@@ -319,6 +321,7 @@ class __compile_net_resolv : public base_net_resolv {
 
     private:
       int msb_, lsb_;
+      bool vec_flag_;
       int vpi_type_code_;
       bool signed_flag_;
 };
@@ -326,10 +329,12 @@ class __compile_net_resolv : public base_net_resolv {
 /*
  * Here we handle .net records from the vvp source:
  *
- *    .net   <name>, <msb>, <lsb>, <input> ;
- *    .net/s <name>, <msb>, <lsb>, <input> ;
- *    .net8   <name>, <msb>, <lsb>, <input> ;
- *    .net8/s <name>, <msb>, <lsb>, <input> ;
+ *    .net   <name>, [<msb> <lsb>,] <input> ;
+ *    .net/s <name>, [<msb> <lsb>,] <input> ;
+ *    .net8   <name>, [<msb> <lsb>,] <input> ;
+ *    .net8/s <name>, [<msb> <lsb>,] <input> ;
+ *
+ * The range is only there for a vector.
  *
  * Create a VPI handle to represent it, and fill that handle in with
  * references into the net.
@@ -338,7 +343,7 @@ class __compile_net_resolv : public base_net_resolv {
 static void do_compile_net(vvp_net_t*node, vvp_array_t array,
 			   __vpiScope*scope,
 			   char*my_label, char*name,
-			   int msb, int lsb, unsigned array_addr,
+			   int msb, int lsb, bool vec_flag, unsigned array_addr,
 			   int vpi_type_code, bool signed_flag, bool local_flag)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
@@ -366,6 +371,7 @@ static void do_compile_net(vvp_net_t*node, vvp_array_t array,
       if (! local_flag) {
 	      /* Make the vpiHandle for the reg. */
 	    obj = vpip_make_net4(scope, name, msb, lsb, signed_flag, node);
+	    dynamic_cast<__vpiSignal*>(obj)->vec_flag = vec_flag;
 	      /* This attaches the label to the vpiHandle */
 	    compile_vpi_symbol(my_label, obj);
       }
@@ -390,7 +396,7 @@ static void do_compile_net(vvp_net_t*node, vvp_array_t array,
 
 static void __compile_net(char*label,
 			  char*name, char*array_label, unsigned long array_addr,
-			  int msb, int lsb,
+			  int msb, int lsb, bool vec_flag,
 			  int vpi_type_code, bool signed_flag, bool local_flag,
 			  unsigned argc, struct symb_s*argv)
 {
@@ -417,7 +423,7 @@ static void __compile_net(char*label,
 	    __compile_net_resolv*res
 		  = new __compile_net_resolv(argv[0].text,
 					     array, scope, label, name,
-					     msb, lsb, array_addr,
+					     msb, lsb, vec_flag, array_addr,
 					     vpi_type_code, signed_flag, local_flag);
 	    resolv_submit(res);
 	    free(argv);
@@ -426,7 +432,7 @@ static void __compile_net(char*label,
       assert(node);
 
       __vpiScope*scope = vpip_peek_current_scope();
-      do_compile_net(node, array, scope, label, name, msb, lsb, array_addr,
+      do_compile_net(node, array, scope, label, name, msb, lsb, vec_flag, array_addr,
 		     vpi_type_code, signed_flag, local_flag);
 
       free(argv[0].text);
@@ -442,25 +448,25 @@ bool __compile_net_resolv::resolve(bool msg_flag)
 	    return false;
       }
 
-      do_compile_net(node, array_, scope_, my_label_, name_, msb_, lsb_, array_addr_, vpi_type_code_, signed_flag_, local_flag_);
+      do_compile_net(node, array_, scope_, my_label_, name_, msb_, lsb_, vec_flag_, array_addr_, vpi_type_code_, signed_flag_, local_flag_);
       return true;
 }
 
-void compile_net(char*label, char*name, int msb, int lsb,
+void compile_net(char*label, char*name, int msb, int lsb, bool vec_flag,
 		 int vpi_type_code, bool signed_flag, bool local_flag,
 		 unsigned argc, struct symb_s*argv)
 {
-      __compile_net(label, name, 0, 0, msb, lsb,
+      __compile_net(label, name, 0, 0, msb, lsb, vec_flag,
 		    vpi_type_code, signed_flag, local_flag,
 		    argc, argv);
 }
 
 void compile_netw(char*label, char*array_label, unsigned long array_addr,
-		  int msb, int lsb, int vpi_type_code, bool signed_flag,
-		  unsigned argc, struct symb_s*argv)
+		  int msb, int lsb, bool vec_flag, int vpi_type_code,
+		  bool signed_flag, unsigned argc, struct symb_s*argv)
 {
       __compile_net(label, 0, array_label, array_addr,
-		    msb, lsb, vpi_type_code, signed_flag, false,
+		    msb, lsb, vec_flag, vpi_type_code, signed_flag, false,
 		    argc, argv);
 }
 
@@ -520,10 +526,9 @@ static void __compile_real_net2(vvp_net_t*node, vvp_array_t array,
 
 static void __compile_real(char*label, char*name,
                            char*array_label, unsigned long array_addr,
-                           int msb, int lsb, bool local_flag,
+                           bool local_flag,
                            unsigned argc, struct symb_s*argv)
 {
-      assert(msb == 0 && lsb == 0);
       vvp_array_t array = array_label ? array_find(array_label) : NULL;
       assert(array_label ? array!=0 : true);
 
@@ -568,17 +573,14 @@ bool __compile_real_net_resolv::resolve(bool msg_flag)
       return true;
 }
 
-void compile_net_real(char*label, char*name, int msb, int lsb, bool local_flag,
+void compile_net_real(char*label, char*name, bool local_flag,
 		      unsigned argc, struct symb_s*argv)
 {
-      __compile_real(label, name, 0, 0,
-                     msb, lsb, local_flag, argc, argv);
+      __compile_real(label, name, 0, 0, local_flag, argc, argv);
 }
 
 void compile_netw_real(char*label, char*array_label, unsigned long array_addr,
-                       int msb, int lsb,
                        unsigned argc, struct symb_s*argv)
 {
-      __compile_real(label, 0, array_label, array_addr,
-                     msb, lsb, false, argc, argv);
+      __compile_real(label, 0, array_label, array_addr, false, argc, argv);
 }

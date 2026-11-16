@@ -1,0 +1,2 @@
+ivltests/sv_class_param_nodefault_extends_fail.v:8: error: Class `C` has parameters without a default value, so it needs a parameter value assignment.
+2 error(s) during elaboration.
