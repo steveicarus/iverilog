@@ -692,6 +692,7 @@ extern void vpip_count_drivers(vpiHandle ref, unsigned idx,
 #   define _vpi_at_PV  4
 #   define _vpi_at_A   5
 #   define _vpi_at_APV 6
+#   define _vpi_at_PQ  7
 #endif
 
 #if defined(__MINGW32__) || defined (__CYGWIN__)

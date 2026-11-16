@@ -88,6 +88,7 @@ extern const char* direction_as_string(int dir);
 #   define _vpi_at_PV  4
 #   define _vpi_at_A   5
 #   define _vpi_at_APV 6
+#   define _vpi_at_PQ  7
 #endif
 
 
