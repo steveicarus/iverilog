@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "br_gh1793f.v",
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "__comment" : "Automatic tasks are not supported; vlog95 hits an assertion in emit_stmt_utask for tasks with ports.",
+        "type"      : "NI"
+    }
+}
