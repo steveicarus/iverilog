@@ -1,0 +1,2 @@
+ivltests/sv_assign_pattern_typed_unpacked_expr_fail.v:9: sorry: A typed assignment pattern of an unpacked type is not supported in an expression.
+1 error(s) during elaboration.

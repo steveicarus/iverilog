@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_assign_pattern_typed_unpacked_expr_fail.v",
+    "gold"          : "sv_assign_pattern_typed_unpacked_expr_fail",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

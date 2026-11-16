@@ -1,0 +1,3 @@
+ivltests/sv_assign_pattern_typed_count_fail.v:9: error: Struct assignment pattern expects 2 element(s) in this context.
+ivltests/sv_assign_pattern_typed_count_fail.v:9:      : Found 3 element(s).
+1 error(s) during elaboration.
