@@ -731,10 +731,12 @@ sv_const_fail6			vvp_tests/sv_const_fail6.json
 sv_const_fail7			vvp_tests/sv_const_fail7.json
 sv_const_fail8			vvp_tests/sv_const_fail8.json
 sv_const_fail9			vvp_tests/sv_const_fail9.json
-sv_const_string_getc_err	vvp_tests/sv_const_string_getc_err.json
+sv_const_string_atox		vvp_tests/sv_const_string_atox.json
+sv_const_string_atox_err	vvp_tests/sv_const_string_atox_err.json
 sv_const_string_getc		vvp_tests/sv_const_string_getc.json
-sv_const_string_i_compare_err	vvp_tests/sv_const_string_i_compare_err.json
+sv_const_string_getc_err	vvp_tests/sv_const_string_getc_err.json
 sv_const_string_i_compare	vvp_tests/sv_const_string_i_compare.json
+sv_const_string_i_compare_err	vvp_tests/sv_const_string_i_compare_err.json
 sv_const_string_len_err		vvp_tests/sv_const_string_len_err.json
 sv_const_string_tolower_err	vvp_tests/sv_const_string_tolower_err.json
 sv_const_string_toupper_err	vvp_tests/sv_const_string_toupper_err.json
@@ -995,6 +997,8 @@ sv_statement_label_foreach_scope	vvp_tests/sv_statement_label_foreach_scope.json
 sv_statement_label_for_scope	vvp_tests/sv_statement_label_for_scope.json
 sv_statement_label_loop_hierarchy	vvp_tests/sv_statement_label_loop_hierarchy.json
 sv_statement_label_multiple_fail	vvp_tests/sv_statement_label_multiple_fail.json
+sv_string_atox			vvp_tests/sv_string_atox.json
+sv_string_atox_err		vvp_tests/sv_string_atox_err.json
 sv_string_char_assign_op	vvp_tests/sv_string_char_assign_op.json
 sv_string_getc			vvp_tests/sv_string_getc.json
 sv_string_getc_err		vvp_tests/sv_string_getc_err.json
