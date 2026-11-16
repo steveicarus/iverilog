@@ -28,8 +28,6 @@ module top;
   parameter integer bsp  = str_bsp.atobin();
   parameter integer bmx  = str_bmx.atobin();
   parameter integer bov  = str_bov.atobin();
-  integer res;
-  string str;
   reg passed;
 
   initial begin
