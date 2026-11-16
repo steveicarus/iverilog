@@ -604,6 +604,10 @@ static void draw_property_vec4(ivl_expr_t expr)
       fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 }
 
+/* Defined in vvp_process.c: the word of an array of queues. */
+extern int is_queue_array_word(ivl_expr_t expr);
+extern void draw_queue_array_word(ivl_expr_t expr);
+
 static void draw_select_vec4(ivl_expr_t expr)
 {
 	// This is the sub-expression to part-select.
@@ -650,6 +654,19 @@ static void draw_select_vec4(ivl_expr_t expr)
 			return;
 		  }
 	    }
+      }
+
+	/* Word of an array of queues: q[word][idx] */
+      if (is_queue_array_word(subexpr)) {
+	    assert(base);
+	    draw_queue_array_word(subexpr);
+	    draw_eval_expr_into_integer(base, 3);
+	    fprintf(vvp_out, "    %%load/qo/dar/vec4 %u;\n", wid);
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    if (ivl_expr_value(expr) == IVL_VT_BOOL) {
+		  fprintf(vvp_out, "    %%cast2;\n");
+	    }
+	    return;
       }
 
       if (ivl_expr_value(subexpr) == IVL_VT_DARRAY ||
@@ -731,6 +748,11 @@ static void draw_darray_pop(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%qpop/prop/%s/v %u, %u;\n", fb, pidx,
 	            ivl_expr_width(expr));
 	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+      } else if (is_queue_array_word(arg)) {
+	    draw_queue_array_word(arg);
+	    fprintf(vvp_out, "    %%qpop/qo/%s/v %u;\n", fb,
+	            ivl_expr_width(expr));
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
       } else {
 	    assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
 
@@ -801,6 +823,12 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 		  unsigned pidx = ivl_expr_property_idx(arg);
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  fprintf(vvp_out, "    %%prop/queue/size %u;\n", pidx);
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+		  return;
+	    }
+	    if (is_queue_array_word(arg)) {
+		  draw_queue_array_word(arg);
+		  fprintf(vvp_out, "    %%qo/size;\n");
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 		  return;
 	    }
