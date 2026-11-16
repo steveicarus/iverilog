@@ -153,6 +153,7 @@ bool dll_target::make_assign_lvals_(const NetAssignBase*net)
       unsigned cnt = net->l_val_count();
 
       stmt_cur_->u_.assign_.lvals_ = cnt;
+      stmt_cur_->u_.assign_.lval_signed = net->l_val(0)->get_signed();
       stmt_cur_->u_.assign_.lval_  = new struct ivl_lval_s[cnt];
       stmt_cur_->u_.assign_.delay  = 0;
 

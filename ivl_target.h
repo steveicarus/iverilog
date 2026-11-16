@@ -2182,6 +2182,11 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  *    l-values are presumed to be vector values concatenated together
  *    from msb (idx==0) to lsb.
  *
+ * ivl_stmt_lval_signed
+ *    The signedness of the complete assignment target as an operand.
+ *    Explicit bit and part selects and concatenations are unsigned, while
+ *    selected members retain their signedness.
+ *
  * ivl_stmt_rval
  *    Return the rval expression of the assignment. This is the value
  *    that is to be calculated and assigned to the l-value in all the
@@ -2330,6 +2335,9 @@ extern ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx);
   /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_DEASSIGN
      IVL_ST_FORCE IVL_ST_RELEASE */
 extern unsigned ivl_stmt_lvals(ivl_statement_t net);
+  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_DEASSIGN
+     IVL_ST_FORCE IVL_ST_RELEASE */
+extern int ivl_stmt_lval_signed(ivl_statement_t net);
   /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN */
 extern unsigned ivl_stmt_lwidth(ivl_statement_t net);
   /* IVL_ST_STASK */
