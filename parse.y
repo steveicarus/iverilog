@@ -2902,13 +2902,14 @@ loop_variables /* IEEE1800-2005: A.6.8 */
   ;
 
 method_qualifier /* IEEE1800-2005: A.1.8 */
-  : K_virtual { $$ = true; }
-  | class_item_qualifier { $$ = false; }
+  : K_virtual { $$ = true; pform_set_method_static(false); }
+  | class_item_qualifier { $$ = false; pform_set_method_static($1.test_static()); }
   ;
 
 method_qualifier_opt
   : method_qualifier { $$ = $1; pform_set_method_virtual($1); }
-  |                  { $$ = false; pform_set_method_virtual(false); }
+  |                  { $$ = false; pform_set_method_virtual(false);
+		       pform_set_method_static(false); }
   ;
 
 modport_declaration /* IEEE1800-2012: A.2.9 */
@@ -5945,11 +5946,7 @@ lpvalue
       }
 
   | class_scope hierarchy_identifier
-      { yyerror(@1, "sorry: A class scope member is not supported as an l-value.");
-	delete $1;
-	delete $2;
-	$$ = 0;
-      }
+      { $$ = pform_class_scope_ident(@2, $1, $2); }
 
   | '{' expression_list_proper '}'
       { PEConcat*tmp = new PEConcat(*$2);

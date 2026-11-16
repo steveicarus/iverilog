@@ -55,6 +55,9 @@ class PTaskFunc : public PScope, public PNamedItem {
       inline bool is_virtual() const { return virtual_; }
       inline void set_virtual(bool flag) { virtual_ = flag; }
 
+	// True if the method was declared with the "static" qualifier.
+      inline bool is_static_method() const { return static_method_; }
+      inline void set_static_method(bool flag) { static_method_ = flag; }
 
       virtual void elaborate_sig(Design*des, NetScope*scope) const =0;
       virtual void elaborate(Design*des, NetScope*scope) const =0;
@@ -75,6 +78,7 @@ class PTaskFunc : public PScope, public PNamedItem {
     private:
       class_type_t*this_type_;
       bool virtual_;
+      bool static_method_;
       std::vector<pform_tf_port_t>*ports_;
 };
 

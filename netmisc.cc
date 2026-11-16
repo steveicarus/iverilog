@@ -1854,6 +1854,23 @@ const netclass_t* find_class_containing_scope(const LineInfo&loc, const NetScope
       ivl_assert(loc, found_in);
       return found_in;
 }
+NetExpr* class_scope_method_this(const LineInfo&li, Design*des,
+				 const NetScope*method,
+				 const pform_scoped_name_t&path)
+{
+      if (!method->is_static_method()) {
+	    cerr << li.get_fileline() << ": error: `" << path << "' is not a "
+		 << "static method, so it needs an object to be called."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetENull*tmp = new NetENull;
+      tmp->set_line(li);
+      return tmp;
+}
+
 /*
  * Find the scope that contains this scope, that is the method for a
  * class scope. Look for the scope whose PARENT is the scope for a

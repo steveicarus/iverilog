@@ -1,3 +1,0 @@
-ivltests/sv_class_param_scope_method_fail.v:15: sorry: Calling the class method `C::get' through a class scope is not yet supported.
-ivltests/sv_class_param_scope_method_fail.v:16: sorry: Calling the class method `C::get' through a class scope is not yet supported.
-2 error(s) during elaboration.

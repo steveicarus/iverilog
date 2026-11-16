@@ -69,6 +69,7 @@ class PClass : public PScopeExtra, public PNamedItem {
       struct extern_method_t : public LineInfo {
 	    bool is_task;
 	    bool is_virtual;
+	    bool is_static;
 	    bool defined;
 	    std::vector<pform_tf_port_t>*ports;
 	    data_type_t*ret_type;
