@@ -393,14 +393,33 @@ static unsigned int draw_array_pattern(ivl_signal_t var, ivl_expr_t rval,
       return array_idx;
 }
 
-static void draw_stmt_assign_vector_opcode(unsigned char opcode, bool is_signed)
+static void draw_stmt_assign_real_opcode(unsigned char opcode);
+
+static void draw_stmt_assign_vector_op(ivl_statement_t net)
 {
+      unsigned char opcode = ivl_stmt_opcode(net);
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      bool is_signed = ivl_expr_signed(rval);
+      unsigned lwidth = ivl_stmt_lwidth(net);
       int idx_reg;
 
-      switch (opcode) {
-	  case 0:
-	    break;
+	/*
+	 * The compound operation is not part of the elaborated RHS, so
+	 * convert the loaded target and the completed result here.
+	 */
+      if (ivl_expr_value(rval) == IVL_VT_REAL) {
+	    bool lsign = ivl_stmt_lval_signed(net);
+	    fprintf(vvp_out, "    %%cvt/rv%s;\n", lsign ? "/s" : "");
+	    draw_eval_real(rval);
+	    draw_stmt_assign_real_opcode(opcode);
+	    fprintf(vvp_out, "    %%cvt/vr %u;\n", lwidth);
+	    return;
+      }
 
+      draw_eval_vec4(rval);
+      resize_vec4_wid(rval, lwidth);
+
+      switch (opcode) {
 	  case '+':
 	    fprintf(vvp_out, "    %%add;\n");
 	    break;
@@ -552,10 +571,11 @@ static int show_stmt_assign_vector(ivl_statement_t net)
       }
 
       char opcode = ivl_stmt_opcode(net);
-      draw_eval_vec4(rval);
-      resize_vec4_wid(rval, ivl_stmt_lwidth(net));
       if (opcode) {
-	    draw_stmt_assign_vector_opcode(opcode, ivl_expr_signed(rval));
+	    draw_stmt_assign_vector_op(net);
+      } else {
+	    draw_eval_vec4(rval);
+	    resize_vec4_wid(rval, ivl_stmt_lwidth(net));
       }
 
       for (unsigned lidx = 0 ; lidx < ivl_stmt_lvals(net) ; lidx += 1) {

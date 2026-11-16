@@ -2977,13 +2977,24 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
 	    break;
       }
       const auto lval_info = get_lval_info(lv);
-      NetExpr*rv = elaborate_rval_(des, scope, 0, lval_info.type,
-				   lval_info.width, force_unsigned);
+      auto expr = rval();
+      PExpr::width_mode_t mode = PExpr::SIZED;
+      expr->test_width(des, scope, mode);
+
+      NetExpr*rv;
+      if (lval_info.type == IVL_VT_REAL || expr->expr_type() == IVL_VT_REAL) {
+	      // Real arithmetic uses each integral operand's own width and
+	      // signedness. Convert only the completed operation's result.
+	    unsigned width = expr->expr_width();
+	    rv = expr->elaborate_expr(des, scope, width, PExpr::NO_FLAGS);
+	    if (rv) eval_expr(rv, width);
+      } else {
+	    rv = elaborate_rval_(des, scope, nullptr, lval_info.type,
+				 lval_info.width, force_unsigned);
+      }
       if (rv == 0) return 0;
 
-	// The ivl_target API doesn't support signalling the type
-	// of a lval, so convert arithmetic shifts into logical
-	// shifts now if the lval is unsigned.
+	// Unsigned arithmetic right shifts use the logical shift opcode.
       char op = op_;
       if ((op == 'R') && !lv->get_signed())
 	    op = 'r';

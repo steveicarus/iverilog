@@ -19,6 +19,8 @@ assign_op_array_select		vvp_tests/assign_op_array_select.json
 assign_op_array_select_indices	vvp_tests/assign_op_array_select_indices.json
 assign_op_negative_select	vvp_tests/assign_op_negative_select.json
 assign_op_negative_select_const	vvp_tests/assign_op_negative_select_const.json
+assign_op_real1			vvp_tests/assign_op_real1.json
+assign_op_real2			vvp_tests/assign_op_real2.json
 assign_op_return_select		vvp_tests/assign_op_return_select.json
 assign_op_signed1		vvp_tests/assign_op_signed1.json
 assign_op_signed2		vvp_tests/assign_op_signed2.json
