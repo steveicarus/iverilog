@@ -17,6 +17,11 @@ array_query_invalid_signedness	vvp_tests/array_query_invalid_signedness.json
 array_slice_concat		vvp_tests/array_slice_concat.json
 assign_op_array_select		vvp_tests/assign_op_array_select.json
 assign_op_array_select_indices	vvp_tests/assign_op_array_select_indices.json
+assign_op_context1		vvp_tests/assign_op_context1.json
+assign_op_context10		vvp_tests/assign_op_context10.json
+assign_op_context2		vvp_tests/assign_op_context2.json
+assign_op_context3		vvp_tests/assign_op_context3.json
+assign_op_context4		vvp_tests/assign_op_context4.json
 assign_op_negative_select	vvp_tests/assign_op_negative_select.json
 assign_op_negative_select_const	vvp_tests/assign_op_negative_select_const.json
 assign_op_real1			vvp_tests/assign_op_real1.json
