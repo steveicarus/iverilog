@@ -441,7 +441,9 @@ static void draw_stmt_assign_vector_op(ivl_statement_t net)
       unsigned char opcode = ivl_stmt_opcode(net);
       ivl_expr_t rval = ivl_stmt_rval(net);
       bool is_signed = ivl_expr_signed(rval);
+      bool is_shift = opcode == 'l' || opcode == 'r' || opcode == 'R';
       unsigned lwidth = ivl_stmt_lwidth(net);
+      unsigned width = lwidth;
       int idx_reg;
 
 	/*
@@ -457,8 +459,17 @@ static void draw_stmt_assign_vector_op(ivl_statement_t net)
 	    return;
       }
 
+	/*
+	 * The l-value is already on the stack. Extend it to the common
+	 * operand width before evaluating an arithmetic or bitwise operator.
+	 * Shift counts keep their own width.
+	 */
+      if (!is_shift && ivl_expr_width(rval) > width) {
+	    width = ivl_expr_width(rval);
+	    fprintf(vvp_out, "    %%pad/%c %u;\n", is_signed ? 's' : 'u', width);
+      }
       draw_eval_vec4(rval);
-      resize_vec4_wid(rval, lwidth);
+      if (!is_shift) resize_vec4_wid(rval, width);
 
       switch (opcode) {
 	  case '+':
@@ -518,6 +529,15 @@ static void draw_stmt_assign_vector_op(ivl_statement_t net)
 	    fprintf(vvp_out, "; UNSUPPORTED ASSIGNMENT OPCODE: %c\n", opcode);
 	    assert(0);
 	    break;
+      }
+
+	/*
+	 * Convert the completed result to the assignment width. The compound
+	 * operation is not part of the elaborated RHS expression, so its
+	 * result conversion must be emitted here.
+	 */
+      if (width != lwidth) {
+	    fprintf(vvp_out, "    %%pad/u %u;\n", lwidth);
       }
 }
 

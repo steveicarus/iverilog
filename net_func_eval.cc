@@ -225,10 +225,9 @@ void NetAssign::eval_func_lval_op_(const LineInfo&loc,
 				   verinum&lv, const NetExpr*rval) const
 {
       unsigned lv_width = lv.len();
-      bool lv_sign = lv.has_sign();
+      bool lv_sign = l_val(0)->get_signed();
+      lv.has_sign(lv_sign);
       if (const auto*real = dynamic_cast<const NetECReal*>(rval)) {
-	    lv_sign = l_val(0)->get_signed();
-	    lv.has_sign(lv_sign);
 	    verireal value(lv.as_double());
 	    eval_func_lval_op_real_(loc, value, real->value());
 	    lv = cast_to_width(verinum(value.as_double(), true), lv_width);
@@ -318,7 +317,6 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 	    verinum lval_v = lval_const->value();
 	    verinum lpart(verinum::Vx, lval->lwidth());
 	    if (op_) {
-		  lpart.has_sign(lval->get_signed());
 		  for (unsigned idx = 0 ; idx < lpart.len() ; idx += 1) {
 			long ldx = base + idx;
 			if (ldx >= 0 && (unsigned long)ldx < lval_v.len())
