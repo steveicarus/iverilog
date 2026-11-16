@@ -45,11 +45,62 @@ struct vec_slice_info {
       unsigned int x_flag;
 };
 
+static ivl_type_t draw_lval_expr(ivl_lval_t lval);
+
+/*
+ * Store the top vector to a dynamic array or queue element. The element
+ * index and its undefined flag are already in word 3 and flag 4.
+ */
+static void store_vec4_to_dynamic_array(ivl_signal_t sig, unsigned wid)
+{
+      if (ivl_signal_data_type(sig) == IVL_VT_QUEUE) {
+	    int max_size = allocate_word();
+	    fprintf(vvp_out, "    %%ix/load %d, %u, 0;\n",
+		    max_size, ivl_signal_array_count(sig));
+	    fprintf(vvp_out, "    %%store/qdar/v v%p_0, %d, %u;\n",
+		    sig, max_size, wid);
+	    clr_word(max_size);
+      } else {
+	    fprintf(vvp_out, "    %%store/dar/vec4 v%p_0;\n", sig);
+      }
+}
+
 static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
 				    unsigned int wid)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
       ivl_expr_t word_ex = ivl_lval_idx(lval);
+
+      if (ivl_lval_property_idx(lval) >= 0) {
+	    draw_lval_expr(lval);
+	    fprintf(vvp_out, "    %%prop/v %d;\n", ivl_lval_property_idx(lval));
+	    return;
+      }
+
+      if (ivl_signal_data_type(sig) == IVL_VT_STRING) {
+	    assert(!word_ex);
+	    slice->part_idx_reg = allocate_word();
+	    slice->x_flag = allocate_flag();
+	    draw_eval_expr_into_integer(ivl_lval_part_off(lval), slice->part_idx_reg);
+	    fprintf(vvp_out, "    %%flag_mov %u, 4;\n", slice->x_flag);
+	    fprintf(vvp_out, "    %%load/str v%p_0;\n", sig);
+	    fprintf(vvp_out, "    %%substr/vec4 %d, %u;\n", slice->part_idx_reg, wid);
+	    fprintf(vvp_out, "    %%pop/str 1;\n");
+	    return;
+      }
+
+      if (ivl_signal_data_type(sig) == IVL_VT_DARRAY ||
+	  ivl_signal_data_type(sig) == IVL_VT_QUEUE) {
+	    assert(word_ex);
+	    assert(!ivl_lval_part_off(lval));
+	    slice->word_idx_reg = allocate_word();
+	    slice->x_flag = allocate_flag();
+	    draw_eval_expr_into_integer(word_ex, slice->word_idx_reg);
+	    fprintf(vvp_out, "    %%flag_mov %u, 4;\n", slice->x_flag);
+	    fprintf(vvp_out, "    %%ix/mov 3, %d;\n", slice->word_idx_reg);
+	    fprintf(vvp_out, "    %%load/dar/vec4 v%p_0;\n", sig);
+	    return;
+      }
 
 	/* Load the complete vector or array word. */
       assert(ivl_signal_dimensions(sig) == 0 || !signal_is_return_value(sig));
@@ -151,6 +202,13 @@ static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
 				  unsigned int wid)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
+      if (ivl_lval_property_idx(lval) >= 0) {
+	    fprintf(vvp_out, "    %%store/prop/v %d, %u;\n",
+		    ivl_lval_property_idx(lval), wid);
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    return;
+      }
+
       bool is_array = ivl_signal_dimensions(sig) > 0;
       int word_idx = slice->word_idx_reg;
       int part_idx = slice->part_idx_reg;
@@ -183,7 +241,17 @@ static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
 	    fprintf(vvp_out, "    %%flag_mov 4, %u;\n", slice->x_flag);
       }
 
-      if (is_array) {
+      if (ivl_signal_data_type(sig) == IVL_VT_DARRAY ||
+	  ivl_signal_data_type(sig) == IVL_VT_QUEUE) {
+	    if (word_idx != 3) {
+		  fprintf(vvp_out, "    %%ix/mov 3, %d;\n", word_idx);
+	    }
+	    store_vec4_to_dynamic_array(sig, wid);
+      } else if (ivl_signal_data_type(sig) == IVL_VT_STRING) {
+	      /* TODO: Support character assignments to string function
+	         return values. */
+	    fprintf(vvp_out, "    %%putc/str/vec4 v%p_0, %d;\n", sig, part_idx);
+      } else if (is_array) {
 	    fprintf(vvp_out, "    %%store/vec4a v%p, %d, %d;\n", sig, word_idx, part_idx);
       } else if (signal_is_return_value(sig)) {
 	    fprintf(vvp_out, "    %%ret/vec4 0, %d, %u;\n", part_idx, wid);
@@ -194,38 +262,9 @@ static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
 	    fprintf(vvp_out, "    %%store/vec4 v%p_0, %d, %u;\n", sig, part_idx, wid);
       }
 
-      if (word_idx) clr_word(word_idx);
+      if (word_idx && word_idx != 3) clr_word(word_idx);
       if (part_idx) clr_word(part_idx);
       if (slice->x_flag) clr_flag(slice->x_flag);
-}
-
-static void put_vec_to_lval(ivl_statement_t net, struct vec_slice_info*slices)
-{
-      unsigned lidx;
-      unsigned cur_bit;
-
-      unsigned wid = ivl_stmt_lwidth(net);
-
-      cur_bit = 0;
-      for (lidx = 0 ; lidx < ivl_stmt_lvals(net) ; lidx += 1) {
-	    ivl_lval_t lval;
-	    unsigned bit_limit = wid - cur_bit;
-
-	    lval = ivl_stmt_lval(net, lidx);
-
-	    if (bit_limit > ivl_lval_width(lval))
-		  bit_limit = ivl_lval_width(lval);
-
-	    if (lidx+1 < ivl_stmt_lvals(net))
-		  fprintf(vvp_out, "    %%split/vec4 %u;\n", bit_limit);
-
-	    if (ivl_lval_data_type(lval) == IVL_VT_BOOL) {
-		  fprintf(vvp_out, "    %%cast2;\n");
-	    }
-	    put_vec_to_lval_slice(lval, slices+lidx, bit_limit);
-
-	    cur_bit += bit_limit;
-      }
 }
 
 static ivl_type_t draw_lval_expr(ivl_lval_t lval)
@@ -256,52 +295,50 @@ static ivl_type_t draw_lval_expr(ivl_lval_t lval)
 }
 
 /*
- * Store a vector from the vec4 stack to the statement l-values. This
- * all assumes that the value to be assigned is already on the top of
- * the stack.
+ * Store the top vector in one statement l-value. For compound assignments,
+ * slice holds the indices captured before evaluating the RHS.
  *
  * NOTE TO SELF: The %store/vec4 takes a width, but the %assign/vec4
  * instructions do not, instead relying on the expression width. I
  * think that it the proper way to do it, so soon I should change the
  * %store/vec4 to not include the width operand.
  */
-static void store_vec4_to_lval(ivl_statement_t net)
+static void store_vec4_to_lval(ivl_lval_t lval, struct vec_slice_info*slice)
 {
-      for (unsigned lidx = 0 ; lidx < ivl_stmt_lvals(net) ; lidx += 1) {
-	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
-	    unsigned lwid = ivl_lval_width(lval);
-	    struct vec_slice_info local_slice = {0};
-	    struct vec_slice_info*slice = &local_slice;
-	    ivl_expr_t word_ex = ivl_lval_idx(lval);
-	    ivl_expr_t part_ex = ivl_lval_part_off(lval);
-	    if (word_ex || part_ex) slice->x_flag = 4;
-
-	    if (lidx+1 < ivl_stmt_lvals(net))
-		  fprintf(vvp_out, "    %%split/vec4 %u;\n", lwid);
-
-	    if (ivl_lval_data_type(lval) == IVL_VT_BOOL &&
-		ivl_expr_value(ivl_stmt_rval(net)) != IVL_VT_BOOL) {
-		  fprintf(vvp_out, "    %%cast2;\n");
-	    }
-	    if (word_ex) {
-		  slice->word_idx_reg = allocate_word();
-		  draw_eval_expr_into_integer(word_ex, slice->word_idx_reg);
-	    }
-	    if (part_ex) {
-		  unsigned flag = 0;
+      struct vec_slice_info local_slice = {0};
+      if (slice == NULL) {
+	    slice = &local_slice;
+	    if (ivl_lval_property_idx(lval) >= 0) {
+		  draw_lval_expr(lval);
+	    } else {
+		  ivl_signal_t sig = ivl_lval_sig(lval);
+		  ivl_expr_t word_ex = ivl_lval_idx(lval);
+		  ivl_expr_t part_ex = ivl_lval_part_off(lval);
+		  if (word_ex || part_ex) slice->x_flag = 4;
 		  if (word_ex) {
-			flag = allocate_flag();
-			fprintf(vvp_out, "    %%flag_mov %u, 4;\n", flag);
+			bool is_dynamic = ivl_signal_data_type(sig) == IVL_VT_DARRAY ||
+			      ivl_signal_data_type(sig) == IVL_VT_QUEUE;
+			assert(!is_dynamic || part_ex == NULL);
+			slice->word_idx_reg = is_dynamic ? 3 : allocate_word();
+			draw_eval_expr_into_integer(word_ex, slice->word_idx_reg);
 		  }
-		  slice->part_idx_reg = allocate_word();
-		  draw_eval_expr_into_integer(part_ex, slice->part_idx_reg);
-		  if (word_ex) {
-			fprintf(vvp_out, "    %%flag_or 4, %u;\n", flag);
-			clr_flag(flag);
+		  if (part_ex) {
+			unsigned flag = 0;
+			if (word_ex) {
+			      flag = allocate_flag();
+			      fprintf(vvp_out, "    %%flag_mov %u, 4;\n", flag);
+			}
+			slice->part_idx_reg = allocate_word();
+			draw_eval_expr_into_integer(part_ex, slice->part_idx_reg);
+			if (word_ex) {
+			      fprintf(vvp_out, "    %%flag_or 4, %u;\n", flag);
+			      clr_flag(flag);
+			}
 		  }
 	    }
-	    put_vec_to_lval_slice(lval, slice, lwid);
       }
+
+      put_vec_to_lval_slice(lval, slice, ivl_lval_width(lval));
 }
 
 static unsigned int draw_array_pattern(ivl_signal_t var, ivl_expr_t rval,
@@ -504,29 +541,35 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    return draw_array_copy(ivl_lval_sig(lval), rval);
       }
 
-      unsigned wid = ivl_stmt_lwidth(net);
+      struct vec_slice_info*slices = NULL;
 
-	/* If this is a compressed assignment, then get the contents
-	   of the l-value. We need these values as part of the r-value
-	   calculation. */
+	/* Compound assignments read the l-values and capture their indices
+	   before evaluating the RHS. */
       if (ivl_stmt_opcode(net) != 0) {
-	    struct vec_slice_info *slices;
-
 	    slices = calloc(ivl_stmt_lvals(net), sizeof(struct vec_slice_info));
-
 	    fprintf(vvp_out, "    ; show_stmt_assign_vector: Get l-value for compressed %c= operand\n", ivl_stmt_opcode(net));
 	    get_vec_from_lval(net, slices);
-	    draw_eval_vec4(rval);
-	    resize_vec4_wid(rval, wid);
-	    draw_stmt_assign_vector_opcode(ivl_stmt_opcode(net),
-					   ivl_expr_signed(rval));
-	    put_vec_to_lval(net, slices);
-	    free(slices);
-      } else {
-	    draw_eval_vec4(rval);
-	    resize_vec4_wid(rval, wid);
-	    store_vec4_to_lval(net);
       }
+
+      char opcode = ivl_stmt_opcode(net);
+      draw_eval_vec4(rval);
+      resize_vec4_wid(rval, ivl_stmt_lwidth(net));
+      if (opcode) {
+	    draw_stmt_assign_vector_opcode(opcode, ivl_expr_signed(rval));
+      }
+
+      for (unsigned lidx = 0 ; lidx < ivl_stmt_lvals(net) ; lidx += 1) {
+	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
+	    if (lidx+1 < ivl_stmt_lvals(net)) {
+		  fprintf(vvp_out, "    %%split/vec4 %u;\n", ivl_lval_width(lval));
+	    }
+	    if (ivl_lval_data_type(lval) == IVL_VT_BOOL &&
+		(opcode || ivl_expr_value(rval) != IVL_VT_BOOL)) {
+		  fprintf(vvp_out, "    %%cast2;\n");
+	    }
+	    store_vec4_to_lval(lval, slices ? slices+lidx : NULL);
+      }
+      free(slices);
 
       return 0;
 }
@@ -535,7 +578,9 @@ enum real_lval_type_e {
       REAL_NO_TYPE = 0,
       REAL_SIMPLE_WORD,
       REAL_MEMORY_WORD_STATIC,
-      REAL_MEMORY_WORD_DYNAMIC
+      REAL_MEMORY_WORD_DYNAMIC,
+      REAL_DYNAMIC_ARRAY_WORD,
+      REAL_PROPERTY
 };
 
 struct real_lval_info {
@@ -564,6 +609,28 @@ static void get_real_from_lval(ivl_lval_t lval, struct real_lval_info*slice)
       ivl_signal_t sig = ivl_lval_sig(lval);
       ivl_expr_t word_ix = ivl_lval_idx(lval);
       unsigned long use_word = 0;
+
+      if (ivl_lval_property_idx(lval) >= 0) {
+	    slice->type = REAL_PROPERTY;
+	    draw_lval_expr(lval);
+	    fprintf(vvp_out, "    %%prop/r %d;\n", ivl_lval_property_idx(lval));
+	    return;
+      }
+
+      if (ivl_signal_data_type(sig) == IVL_VT_DARRAY ||
+	  ivl_signal_data_type(sig) == IVL_VT_QUEUE) {
+	    assert(word_ix);
+	    slice->type = REAL_DYNAMIC_ARRAY_WORD;
+	    int index = allocate_word();
+	    unsigned flag = allocate_flag();
+	    slice->u_.memory_word_dynamic.word_idx_reg = index;
+	    slice->u_.memory_word_dynamic.x_flag = flag;
+	    draw_eval_expr_into_integer(word_ix, index);
+	    fprintf(vvp_out, "    %%flag_mov %u, 4;\n", flag);
+	    fprintf(vvp_out, "    %%ix/mov 3, %d;\n", index);
+	    fprintf(vvp_out, "    %%load/dar/r v%p_0;\n", sig);
+	    return;
+      }
 
 	/* If the word index is a constant expression, then evaluate
 	   it to select the word, and pay no further heed to the
@@ -619,8 +686,29 @@ static void get_real_from_lval(ivl_lval_t lval, struct real_lval_info*slice)
       }
 }
 
+static void store_to_dynamic_array(ivl_signal_t sig, const char*suffix)
+{
+      if (ivl_signal_data_type(sig) == IVL_VT_QUEUE) {
+	    int max_size = allocate_word();
+	    fprintf(vvp_out, "    %%ix/load %d, %u, 0;\n",
+		    max_size, ivl_signal_array_count(sig));
+	    fprintf(vvp_out, "    %%store/qdar/%s v%p_0, %d;\n",
+		    suffix, sig, max_size);
+	    clr_word(max_size);
+      } else {
+	    fprintf(vvp_out, "    %%store/dar/%s v%p_0;\n", suffix, sig);
+      }
+}
+
 static void put_real_to_lval(ivl_lval_t lval, struct real_lval_info*slice)
 {
+      if (slice->type == REAL_PROPERTY) {
+	    fprintf(vvp_out, "    %%store/prop/r %d;\n",
+		    ivl_lval_property_idx(lval));
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    return;
+      }
+
       ivl_signal_t sig = ivl_lval_sig(lval);
 
 	/* Special Case: If the l-value signal is named after its scope,
@@ -663,39 +751,65 @@ static void put_real_to_lval(ivl_lval_t lval, struct real_lval_info*slice)
 	    clr_flag(slice->u_.memory_word_dynamic.x_flag);
 	    break;
 
+	  case REAL_DYNAMIC_ARRAY_WORD:
+	    fprintf(vvp_out, "    %%flag_mov 4, %u;\n",
+		    slice->u_.memory_word_dynamic.x_flag);
+	    fprintf(vvp_out, "    %%ix/mov 3, %d;\n",
+		    slice->u_.memory_word_dynamic.word_idx_reg);
+	    store_to_dynamic_array(sig, "r");
+	    clr_word(slice->u_.memory_word_dynamic.word_idx_reg);
+	    clr_flag(slice->u_.memory_word_dynamic.x_flag);
+	    break;
+
       }
 }
 
-static void store_real_to_lval(ivl_lval_t lval)
+/*
+ * Store a real or string value for a simple assignment.
+ */
+static void store_real_string_to_lval(ivl_lval_t lval, bool is_real)
 {
-      ivl_signal_t var;
+      const char*suffix = is_real ? "r" : "str";
 
-      var = ivl_lval_sig(lval);
-      assert(var != 0);
-
-	/* Special Case: If the l-value signal is named after its scope,
-	   and the scope is a function, then this is an assign to a return
-	   value and should be handled differently. */
-      ivl_scope_t sig_scope = ivl_signal_scope(var);
-      if ((ivl_scope_type(sig_scope) == IVL_SCT_FUNCTION)
-	  && (strcmp(ivl_signal_basename(var), ivl_scope_basename(sig_scope)) == 0)) {
-	    assert(ivl_signal_dimensions(var) == 0);
-	    fprintf(vvp_out, "    %%ret/real 0; Assign to %s\n",
-		    ivl_signal_basename(var));
+      if (ivl_lval_property_idx(lval) >= 0) {
+	    draw_lval_expr(lval);
+	    fprintf(vvp_out, "    %%store/prop/%s %d;\n",
+		    suffix, ivl_lval_property_idx(lval));
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 	    return;
       }
 
-      if (ivl_signal_dimensions(var) == 0) {
-	    fprintf(vvp_out, "    %%store/real v%p_0;\n", var);
-	    return;
-      }
-
+      ivl_signal_t sig = ivl_lval_sig(lval);
       ivl_expr_t word_ex = ivl_lval_idx(lval);
+      assert(sig);
+
+      if (ivl_signal_data_type(sig) == IVL_VT_DARRAY ||
+	  ivl_signal_data_type(sig) == IVL_VT_QUEUE) {
+	    assert(word_ex);
+	    draw_eval_expr_into_integer(word_ex, 3);
+	    store_to_dynamic_array(sig, suffix);
+	    return;
+      }
+
+	/* Signal stores and function returns use the longer real suffix. */
+      const char*value_suffix = is_real ? "real" : "str";
+
+      if (signal_is_return_value(sig)) {
+	    assert(ivl_signal_dimensions(sig) == 0 && !word_ex);
+	    fprintf(vvp_out, "    %%ret/%s 0; Assign to %s\n",
+		    value_suffix, ivl_signal_basename(sig));
+	    return;
+      }
+
+      if (!word_ex) {
+	    fprintf(vvp_out, "    %%store/%s v%p_0;\n", value_suffix, sig);
+	    return;
+      }
+
       int word_ix = allocate_word();
-
       draw_eval_expr_into_integer(word_ex, word_ix);
-      fprintf(vvp_out, "    %%store/reala v%p, %d;\n", var, word_ix);
-
+      fprintf(vvp_out, "    %%store/%sa v%p, %d;\n",
+	      value_suffix, sig, word_ix);
       clr_word(word_ix);
 }
 
@@ -732,12 +846,7 @@ static void draw_stmt_assign_real_opcode(unsigned char opcode)
       }
 }
 
-/*
- * This function assigns a value to a real variable. This is destined
- * for /dev/null when typed ivl_signal_t takes over all the real
- * variable support.
- */
-static int show_stmt_assign_sig_real(ivl_statement_t net)
+static int show_stmt_assign_real(ivl_statement_t net)
 {
       ivl_lval_t lval;
 
@@ -769,73 +878,72 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
 	    put_real_to_lval(lval, &slice);
       } else {
 	    draw_eval_real(rval);
-	    store_real_to_lval(lval);
+	    store_real_string_to_lval(lval, true);
       }
 
       return 0;
 }
 
-static int show_stmt_assign_sig_string(ivl_statement_t net)
+static int show_stmt_assign_string(ivl_statement_t net)
 {
       ivl_lval_t lval = ivl_stmt_lval(net, 0);
       ivl_expr_t rval = ivl_stmt_rval(net);
-      ivl_expr_t part = ivl_lval_part_off(lval);
-      ivl_expr_t aidx = ivl_lval_idx(lval);
-      ivl_signal_t var= ivl_lval_sig(lval);
+      ivl_signal_t var = ivl_lval_sig(lval);
 
       assert(ivl_stmt_lvals(net) == 1);
       assert(ivl_stmt_opcode(net) == 0);
+      assert(!ivl_lval_part_off(lval));
 
       if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
 	    draw_array_pattern(var, rval, 0);
 	    return 0;
       }
 
-	/* Special case: If the l-value signal (string) is named after
-	   its scope, and the scope is a function, then this is an
-	   assign to a return value and should be handled
-	   differently. */
-      if (signal_is_return_value(var)) {
-	    assert(ivl_signal_dimensions(var) == 0);
-	    assert(part == 0 && aidx == 0);
-	    draw_eval_string(rval);
-	    fprintf(vvp_out, "    %%ret/str 0; Assign to %s\n",
-		    ivl_signal_basename(var));
-	    return 0;
-      }
+      draw_eval_string(rval);
+      store_real_string_to_lval(lval, false);
 
-	/* Simplest case: no mux. Evaluate the r-value as a string and
-	   store the result into the variable. Note that the
-	   %store/str opcode pops the string result. */
-      if (part == 0 && aidx == 0) {
-	    draw_eval_string(rval);
-	    fprintf(vvp_out, "    %%store/str v%p_0;\n", var);
-	    return 0;
-      }
-
-	/* Assign to array. The l-value has an index expression
-	   expression so we are assigning to an array word. */
-      if (aidx != 0) {
-	    unsigned ix;
-	    assert(part == 0);
-	    draw_eval_string(rval);
-	    draw_eval_expr_into_integer(aidx, (ix = allocate_word()));
-	    fprintf(vvp_out, "    %%store/stra v%p, %u;\n", var, ix);
-	    clr_word(ix);
-	    return 0;
-      }
-
-      draw_eval_vec4(rval);
-      resize_vec4_wid(rval, 8);
-
-	/* Calculate the character select for the word. */
-      int mux_word = allocate_word();
-      draw_eval_expr_into_integer(part, mux_word);
-
-      fprintf(vvp_out, "    %%putc/str/vec4 v%p_0, %d;\n", var, mux_word);
-
-      clr_word(mux_word);
       return 0;
+}
+
+static int show_stmt_assign_object(ivl_statement_t net)
+{
+      ivl_lval_t lval = ivl_stmt_lval(net, 0);
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_signal_t sig = ivl_lval_sig(lval);
+      int prop_idx = ivl_lval_property_idx(lval);
+
+      assert(ivl_stmt_lvals(net) == 1);
+      assert(ivl_stmt_opcode(net) == 0);
+
+      if (prop_idx >= 0) {
+	    draw_lval_expr(lval);
+	    int errors = draw_eval_object(rval);
+	    int index = 0;
+	    if (ivl_lval_idx(lval)) {
+		  index = allocate_word();
+		  draw_eval_expr_into_integer(ivl_lval_idx(lval), index);
+	    }
+	    fprintf(vvp_out, "    %%store/prop/obj %d, %d;\n", prop_idx, index);
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+	    if (index) clr_word(index);
+	    return errors;
+      }
+
+      if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
+	    draw_array_pattern(sig, rval, 0);
+	    return 0;
+      }
+
+      int errors = draw_eval_object(rval);
+      if (ivl_signal_dimensions(sig) > 0) {
+	    int index = allocate_word();
+	    draw_eval_expr_into_integer(ivl_lval_idx(lval), index);
+	    fprintf(vvp_out, "    %%store/obja v%p, %d;\n", sig, index);
+	    clr_word(index);
+      } else {
+	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", sig);
+      }
+      return errors;
 }
 
 /*
@@ -909,116 +1017,25 @@ static int show_stmt_assign_darray_pattern(ivl_statement_t net)
       return errors;
 }
 
-/*
- * Loading an element and updating it is identical for queues and dynamic arrays
- * and is handled here. The updated value is left on the stack and will be
- * written back using type specific functions.
- */
-static void show_stmt_assign_sig_darray_queue_mux(ivl_statement_t net)
-{
-      ivl_lval_t lval = ivl_stmt_lval(net, 0);
-      ivl_signal_t var = ivl_lval_sig(lval);
-      ivl_type_t var_type = ivl_signal_net_type(var);
-      ivl_type_t element_type = ivl_type_element(var_type);
-      ivl_expr_t mux  = ivl_lval_idx(lval);
-      ivl_expr_t rval = ivl_stmt_rval(net);
-
-      /*
-       * Queue and dynamic array load and store functions expect the element
-       * address in index register 3. The index expression must only be
-       * evaluated once. So in case of an assignment operator it is moved to a
-       * scratch register and restored to the index register once the rvalue has
-       * been evaluated.
-       */
-
-      switch (ivl_type_base(element_type)) {
-	  case IVL_VT_REAL:
-	    if (ivl_stmt_opcode(net) != 0) {
-		  int mux_word = allocate_word();
-		  int flag = allocate_flag();
-
-		  draw_eval_expr_into_integer(mux, 3);
-		  fprintf(vvp_out, "    %%ix/mov %d, 3;\n", mux_word);
-		  fprintf(vvp_out, "    %%flag_mov %d, 4;\n", flag);
-		  fprintf(vvp_out, "    %%load/dar/r v%p_0;\n", var);
-		  draw_eval_real(rval);
-		  draw_stmt_assign_real_opcode(ivl_stmt_opcode(net));
-		  fprintf(vvp_out, "    %%flag_mov 4, %d;\n", flag);
-		  fprintf(vvp_out, "    %%ix/mov 3, %d;\n", mux_word);
-		  clr_flag(flag);
-		  clr_word(mux_word);
-	    } else {
-		  draw_eval_real(rval);
-		  draw_eval_expr_into_integer(mux, 3);
-	    }
-	    break;
-	  case IVL_VT_STRING:
-	    assert(ivl_stmt_opcode(net) == 0);
-	    draw_eval_string(rval);
-	    draw_eval_expr_into_integer(mux, 3);
-	    break;
-	  case IVL_VT_BOOL:
-	  case IVL_VT_LOGIC:
-	    if (ivl_stmt_opcode(net) != 0) {
-		  int mux_word = allocate_word();
-		  int flag = allocate_flag();
-
-		  draw_eval_expr_into_integer(mux, 3);
-		  fprintf(vvp_out, "    %%ix/mov %d, 3;\n", mux_word);
-		  fprintf(vvp_out, "    %%flag_mov %d, 4;\n", flag);
-		  fprintf(vvp_out, "    %%load/dar/vec4 v%p_0;\n", var);
-		  draw_eval_vec4(rval);
-		  resize_vec4_wid(rval, ivl_stmt_lwidth(net));
-		  draw_stmt_assign_vector_opcode(ivl_stmt_opcode(net),
-					         ivl_expr_signed(rval));
-		  fprintf(vvp_out, "    %%flag_mov 4, %d;\n", flag);
-		  fprintf(vvp_out, "    %%ix/mov 3, %d;\n", mux_word);
-		  clr_flag(flag);
-		  clr_word(mux_word);
-	    } else {
-		  draw_eval_vec4(rval);
-		  resize_vec4_wid(rval, ivl_stmt_lwidth(net));
-		  draw_eval_expr_into_integer(mux, 3);
-	    }
-	    break;
-	  default:
-	    assert(0);
-	    break;
-      }
-}
-
-static int show_stmt_assign_sig_darray(ivl_statement_t net)
+static int show_stmt_assign_darray(ivl_statement_t net)
 {
       int errors = 0;
       ivl_lval_t lval = ivl_stmt_lval(net, 0);
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_expr_t part = ivl_lval_part_off(lval);
+      if (ivl_lval_property_idx(lval) >= 0) {
+	    return show_stmt_assign_object(net);
+      }
       ivl_signal_t var= ivl_lval_sig(lval);
       ivl_type_t var_type= ivl_signal_net_type(var);
       assert(ivl_type_base(var_type) == IVL_VT_DARRAY);
-      ivl_type_t element_type = ivl_type_element(var_type);
 
       assert(ivl_stmt_lvals(net) == 1);
       assert(part == 0);
 
-      if (ivl_lval_idx(lval)) {
-	    show_stmt_assign_sig_darray_queue_mux(net);
-	    switch (ivl_type_base(element_type)) {
-		case IVL_VT_REAL:
-		  fprintf(vvp_out, "    %%store/dar/r v%p_0;\n", var);
-		  break;
-		case IVL_VT_STRING:
-		  fprintf(vvp_out, "    %%store/dar/str v%p_0;\n", var);
-		  break;
-		case IVL_VT_BOOL:
-		case IVL_VT_LOGIC:
-		  fprintf(vvp_out, "    %%store/dar/vec4 v%p_0;\n", var);
-		  break;
-	    default:
-		  assert(0);
-		  break;
-	    }
-      } else if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
+      assert(!ivl_lval_idx(lval));
+
+      if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
 	    assert(ivl_stmt_opcode(net) == 0);
 	      /* There is no l-value mux, but the r-value is an array
 		 pattern. This is a special case of an assignment to
@@ -1144,18 +1161,22 @@ static int show_stmt_assign_queue_pattern(ivl_signal_t var, ivl_expr_t rval,
       return errors;
 }
 
-static int show_stmt_assign_sig_queue(ivl_statement_t net)
+static int show_stmt_assign_queue(ivl_statement_t net)
 {
       int errors = 0;
       ivl_lval_t lval = ivl_stmt_lval(net, 0);
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_expr_t part = ivl_lval_part_off(lval);
+      if (ivl_lval_property_idx(lval) >= 0) {
+	    return show_stmt_assign_object(net);
+      }
       ivl_signal_t var= ivl_lval_sig(lval);
       ivl_type_t var_type= ivl_signal_net_type(var);
       ivl_type_t element_type = ivl_type_element(var_type);
 
       assert(ivl_stmt_lvals(net) == 1);
       assert(part == 0);
+      assert(!ivl_lval_idx(lval));
 
       assert(ivl_type_base(var_type) == IVL_VT_QUEUE);
 
@@ -1169,24 +1190,6 @@ static int show_stmt_assign_sig_queue(ivl_statement_t net)
 	    errors += draw_eval_object(rval);
 	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", var);
 
-      } else if (ivl_lval_idx(lval)) {
-	    show_stmt_assign_sig_darray_queue_mux(net);
-	    switch (ivl_type_base(element_type)) {
-		case IVL_VT_REAL:
-		  fprintf(vvp_out, "    %%store/qdar/r v%p_0, %d;\n", var, idx);
-		  break;
-		case IVL_VT_STRING:
-		  fprintf(vvp_out, "    %%store/qdar/str v%p_0, %d;\n", var, idx);
-		  break;
-		case IVL_VT_BOOL:
-		case IVL_VT_LOGIC:
-		  fprintf(vvp_out, "    %%store/qdar/v v%p_0, %d, %u;\n", var, idx,
-	                     ivl_type_packed_width(element_type));
-		  break;
-	    default:
-		  assert(0);
-		  break;
-	    }
       } else if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
 	    assert(ivl_stmt_opcode(net) == 0);
 
@@ -1218,157 +1221,27 @@ static int show_stmt_assign_sig_queue(ivl_statement_t net)
       return errors;
 }
 
-static int show_stmt_assign_sig_cobject(ivl_statement_t net)
-{
-      int errors = 0;
-      ivl_lval_t lval = ivl_stmt_lval(net, 0);
-      ivl_expr_t rval = ivl_stmt_rval(net);
-      unsigned lwid = ivl_lval_width(lval);
-      int prop_idx = ivl_lval_property_idx(lval);
-
-
-      if (prop_idx >= 0) {
-	    ivl_type_t sig_type = draw_lval_expr(lval);
-	    ivl_type_t prop_type = ivl_type_prop_type(sig_type, prop_idx);
-
-	    if (ivl_type_base(prop_type) == IVL_VT_BOOL ||
-	        ivl_type_base(prop_type) == IVL_VT_LOGIC) {
-		  if (ivl_stmt_opcode(net) != 0) {
-			fprintf(vvp_out, "    %%prop/v %d;\n", prop_idx);
-		  }
-
-		  draw_eval_vec4(rval);
-		  if (ivl_type_base(prop_type) == IVL_VT_BOOL &&
-		      ivl_expr_value(rval) != IVL_VT_BOOL)
-			fprintf(vvp_out, "    %%cast2;\n");
-
-		  draw_stmt_assign_vector_opcode(ivl_stmt_opcode(net),
-					         ivl_expr_signed(rval));
-
-		  fprintf(vvp_out, "    %%store/prop/v %d, %u; Store in logic property %s\n",
-			  prop_idx, lwid, ivl_type_prop_name(sig_type, prop_idx));
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-
-	    } else if (ivl_type_base(prop_type) == IVL_VT_REAL) {
-
-		  if (ivl_stmt_opcode(net) != 0) {
-			fprintf(vvp_out, "    %%prop/r %d;\n", prop_idx);
-		  }
-
-		    /* Calculate the real value into the real value
-		       stack. The %store/prop/r will pop the stack
-		       value. */
-		  draw_eval_real(rval);
-
-		  draw_stmt_assign_real_opcode(ivl_stmt_opcode(net));
-
-		  fprintf(vvp_out, "    %%store/prop/r %d;\n", prop_idx);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-
-	    } else if (ivl_type_base(prop_type) == IVL_VT_STRING) {
-
-		    /* Calculate the string value into the string value
-		       stack. The %store/prop/r will pop the stack
-		       value. */
-		  draw_eval_string(rval);
-		  fprintf(vvp_out, "    %%store/prop/str %d;\n", prop_idx);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-
-	    } else if (ivl_type_base(prop_type) == IVL_VT_DARRAY ||
-	               ivl_type_base(prop_type) == IVL_VT_QUEUE) {
-
-		  int idx = 0;
-
-		    /* The property is a darray or queue, and there is no mux
-		       expression so the assignment is of an entire
-		       array/queue object. */
-		  errors += draw_eval_object(rval);
-		  fprintf(vvp_out, "    %%store/prop/obj %d, %d; IVL_VT_DARRAY or QUEUE\n", prop_idx, idx);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-
-	    } else if (ivl_type_base(prop_type) == IVL_VT_CLASS) {
-
-		  int idx = 0;
-		  ivl_expr_t idx_expr;
-		  if ( (idx_expr = ivl_lval_idx(lval)) ) {
-			idx = allocate_word();
-		  }
-
-		    /* The property is a class object. */
-		  errors += draw_eval_object(rval);
-		  if (idx_expr) draw_eval_expr_into_integer(idx_expr, idx);
-		  fprintf(vvp_out, "    %%store/prop/obj %d, %d; IVL_VT_CLASS\n", prop_idx, idx);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-
-		  if (idx_expr) clr_word(idx);
-
-	    } else {
-		  fprintf(vvp_out, " ; ERROR: ivl_type_base(prop_type) = %d\n",
-			  ivl_type_base(prop_type));
-		  assert(0);
-	    }
-
-      } else {
-	    ivl_signal_t sig = ivl_lval_sig(lval);
-	    assert(!ivl_lval_nest(lval));
-
-	    if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
-		  draw_array_pattern(sig, rval, 0);
-		  return 0;
-	    }
-
-	      /* There is no property select, so evaluate the r-value
-		 as an object and assign the entire object to the
-		 variable. */
-	    errors += draw_eval_object(rval);
-
-	    if (ivl_signal_dimensions(sig) > 0) {
-		  unsigned ix;
-		  ivl_expr_t aidx = ivl_lval_idx(lval);
-
-		  draw_eval_expr_into_integer(aidx, (ix = allocate_word()));
-		  fprintf(vvp_out, "    %%store/obja v%p, %u;\n", sig, ix);
-		  clr_word(ix);
-
-	    } else {
-		    /* Not an array, so no index expression */
-		  fprintf(vvp_out, "    %%store/obj v%p_0;\n", sig);
-	    }
-      }
-
-      return errors;
-}
-
 int show_stmt_assign(ivl_statement_t net)
 {
-      ivl_lval_t lval;
-      ivl_signal_t sig;
-
       show_stmt_file_line(net, "Blocking assignment.");
 
-      lval = ivl_stmt_lval(net, 0);
-
-      sig = ivl_lval_sig(lval);
-      if (sig && (ivl_signal_data_type(sig) == IVL_VT_REAL)) {
-	    return show_stmt_assign_sig_real(net);
+      ivl_lval_t lval = ivl_stmt_lval(net, 0);
+      switch (ivl_lval_data_type(lval)) {
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    return show_stmt_assign_vector(net);
+	  case IVL_VT_REAL:
+	    return show_stmt_assign_real(net);
+	  case IVL_VT_STRING:
+	    return show_stmt_assign_string(net);
+	  case IVL_VT_DARRAY:
+	    return show_stmt_assign_darray(net);
+	  case IVL_VT_QUEUE:
+	    return show_stmt_assign_queue(net);
+	  case IVL_VT_CLASS:
+	    return show_stmt_assign_object(net);
+	  default:
+	    assert(0);
+	    return 1;
       }
-
-      if (sig && (ivl_signal_data_type(sig) == IVL_VT_STRING)) {
-	    return show_stmt_assign_sig_string(net);
-      }
-
-      if (sig && (ivl_signal_data_type(sig) == IVL_VT_DARRAY)) {
-	    return show_stmt_assign_sig_darray(net);
-      }
-
-      if (sig && (ivl_signal_data_type(sig) == IVL_VT_QUEUE)) {
-	    return show_stmt_assign_sig_queue(net);
-      }
-
-      if ((sig && (ivl_signal_data_type(sig) == IVL_VT_CLASS)) ||
-          ivl_lval_nest(lval)) {
-	    return show_stmt_assign_sig_cobject(net);
-      }
-
-      return show_stmt_assign_vector(net);
 }

@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_lval_concat_array_element_indices.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Dynamic arrays and queues are not supported",
+        "type"      : "CE"
+    }
+}
