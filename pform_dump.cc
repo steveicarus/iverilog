@@ -401,6 +401,8 @@ void PExpr::dump(ostream&out) const
 
 void PEAssignPattern::dump(ostream&out) const
 {
+      if (type_)
+	    out << *type_;
       if (is_keyed_()) {
 	    out << "'{";
 	    const char*sep = "";
@@ -541,7 +543,7 @@ void PETernary::dump(ostream&out) const
 
 void PETypename::dump(ostream&fd) const
 {
-      data_type_->pform_dump(fd, 0);
+      data_type_->debug_dump(fd);
 }
 
 void PEUnary::dump(ostream&out) const

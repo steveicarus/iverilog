@@ -684,8 +684,33 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
  * supported, can assign to packed arrays and structs, unpacked arrays
  * and dynamic arrays.
  */
-unsigned PEAssignPattern::test_width(Design*, NetScope*, width_mode_t&)
+ivl_type_t PEAssignPattern::elaborate_pattern_type_(Design *des,
+						    NetScope *scope) const
 {
+      if (!type_->test_type(des, scope)) {
+	    cerr << get_fileline() << ": error: `" << *type_
+		 << "` in a typed assignment pattern is not a type." << endl;
+	    des->errors++;
+	    return nullptr;
+      }
+      return type_->elaborate_type(des, scope);
+}
+
+unsigned PEAssignPattern::test_width(Design *des, NetScope *scope,
+				     width_mode_t&)
+{
+      if (type_) {
+	    auto type = elaborate_pattern_type_(des, scope);
+	    if (!type)
+		  return 0;
+	    if (type->packed() && type->packed_width() > 0) {
+		  expr_type_  = type->base_type();
+		  expr_width_ = type->packed_width();
+		  min_width_  = expr_width_;
+		  signed_flag_= type->get_signed();
+		  return expr_width_;
+	    }
+      }
       expr_type_  = IVL_VT_DARRAY;
       expr_width_ = 1;
       min_width_  = 1;
@@ -739,6 +764,13 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 					ivl_type_t ntype, unsigned flags) const
 {
       bool need_const = NEED_CONST & flags;
+
+	// A typed pattern uses its own type, not that of the context.
+      if (type_) {
+	    ntype = elaborate_pattern_type_(des, scope);
+	    if (!ntype)
+		  return nullptr;
+      }
 
       if (auto darray_type = dynamic_cast<const netdarray_t*>(ntype)) {
 	    if (is_keyed_()) {
@@ -1201,8 +1233,32 @@ NetExpr* PEAssignPattern::elaborate_expr_struct_(Design *des, NetScope *scope,
       return neconcat;
 }
 
-NetExpr* PEAssignPattern::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
+NetExpr* PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
+					 unsigned expr_wid, unsigned flags) const
 {
+      if (type_) {
+	    auto type = elaborate_pattern_type_(des, scope);
+	    if (!type)
+		  return nullptr;
+	    if (!type->packed()) {
+		  cerr << get_fileline() << ": sorry: A typed assignment pattern"
+		       << " of an unpacked type is not supported in an"
+		       << " expression." << endl;
+		  des->errors++;
+		  return nullptr;
+	    }
+	    unsigned errors = des->errors;
+	    auto res = elaborate_expr(des, scope, type, flags);
+	      // Report a bad pattern once, not again for the incomplete result.
+	    if (res && des->errors != errors) {
+		  delete res;
+		  return nullptr;
+	    }
+	    if (res && res->expr_width() < expr_wid)
+		  res = pad_to_width(res, expr_wid, type->get_signed(), *this);
+	    return res;
+      }
+
       cerr << get_fileline() << ": sorry: I do not know how to"
 	   << " elaborate assignment patterns using old method." << endl;
       cerr << get_fileline() << ":      : Expression is: " << *this
