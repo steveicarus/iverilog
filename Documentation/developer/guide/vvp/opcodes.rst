@@ -573,12 +573,13 @@ to be forced is popped from the vec4 stack and forced to the target
 variable. The /off variant forces a part of a vector. The width of the
 part comes from the width of the popped value, and the <off> is an
 index register that contains the canonical offset where the value
-gets written. The <delay> is an index register that contains the
+gets written. If <off> is 0, use the literal offset 0 instead of reading
+index register 0. The <delay> is an index register that contains the
 delay.
 
-The %force/vec4/off instructions will test the value of flags[4], and if
-it is 1, will suppress the actual assignment. This is intended to help
-with detection of invalid index expressions.
+The %force/vec4/off instructions test flags[4] only when <off> is nonzero.
+If that flag is 1, the assignment is suppressed because the index is
+invalid. A literal zero offset is always valid and ignores flags[4].
 
 * %force/wr <var-label>
 
@@ -673,6 +674,13 @@ the index register <src>.
 
 The %jmp instruction performs an unconditional branch to a given
 location. The parameter is the label of the destination instruction.
+
+* %jmp/flow <code-label>, <scope-label>
+
+Resume the nearest ancestor thread in the given scope at the destination
+instruction. Disable intervening block threads and release their automatic
+storage. This implements break and continue across scoped blocks, preserving
+the loop owner's expression stacks.
 
 * %jmp/[01xz] <code-label>, <flag>
 

@@ -2084,6 +2084,15 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 {
       NetScope*my_scope = scope;
 
+      if (scope->is_auto() && default_lifetime == STATIC &&
+	  (bl_type_ == BL_JOIN_NONE || bl_type_ == BL_JOIN_ANY ||
+	   !automatic_variables.empty())) {
+	    cerr << get_fileline()
+		 << ": sorry: Nested automatic lifetimes and detached forks "
+		    "in static blocks are not yet supported." << endl;
+	    des->errors += 1;
+      }
+
       if (pscope_name() != 0) {
 	    hname_t use_name(pscope_name());
 	    if (debug_scopes)
@@ -2097,7 +2106,23 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 				    ? NetScope::FORK_JOIN
 				    : NetScope::BEGIN_END);
 	    my_scope->set_line(get_file(), get_lineno());
-            my_scope->is_auto(scope->is_auto());
+            my_scope->is_auto(scope->is_auto() || !automatic_variables.empty());
+	      // shortcut: scope-wide storage, split it before accepting mixed lifetimes.
+	    if (my_scope->is_auto() && default_lifetime != AUTOMATIC) {
+		  for (const auto&wire : wires) {
+			if (automatic_variables.count(wire.first)) continue;
+			cerr << wire.second->get_fileline()
+			     << ": sorry: Mixed static and automatic variable "
+				"lifetimes in a block are not yet supported." << endl;
+			des->errors += 1;
+		  }
+		  if (!events.empty()) {
+			cerr << get_fileline()
+			     << ": sorry: Static named events in a block with "
+				"automatic variables are not yet supported." << endl;
+			des->errors += 1;
+		  }
+	    }
 	    my_scope->add_imports(&explicit_imports);
 	    my_scope->add_typedefs(&typedefs);
 

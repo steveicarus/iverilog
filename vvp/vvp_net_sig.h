@@ -151,7 +151,7 @@ class vvp_var_ref : public vvp_object {
 class automatic_signal_base : public vvp_signal_value, public vvp_net_fil_t {
 
     public:
-      automatic_signal_base() : ref_idx_(0) { }
+      automatic_signal_base() { }
 
 	// Make this variable a ref formal, by reserving a slot in the
 	// context for the vvp_var_ref that it is bound to.
@@ -168,7 +168,19 @@ class automatic_signal_base : public vvp_signal_value, public vvp_net_fil_t {
       const vvp_var_ref* ref_rd() const;
 
     private:
-      unsigned ref_idx_;
+	// The slot in each context for the reference that a ref formal
+	// is bound to. It is a member, so it lives as long as the
+	// variable, which is not deleted separately.
+      class ref_slot_t : public automatic_hooks_s {
+	  public:
+	    ref_slot_t() : idx_(0) { }
+	    void alloc_instance(vvp_context_t context) override;
+	    void reset_instance(vvp_context_t context) override;
+#ifdef CHECK_WITH_VALGRIND
+	    void free_instance(vvp_context_t context) override;
+#endif
+	    unsigned idx_;
+      } ref_slot_;
 
     public:
 	// Automatic variables cannot be forced or released. Provide

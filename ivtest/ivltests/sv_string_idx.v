@@ -3,7 +3,7 @@ module top;
   integer idx;
   byte  res;
   string str = "hello";
- 
+
   initial begin
     passed = 1'b1;
 

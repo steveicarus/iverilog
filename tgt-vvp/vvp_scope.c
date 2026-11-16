@@ -425,6 +425,23 @@ static const char *local_flag_str( ivl_signal_t sig )
 }
 
 /*
+ * A signal declared with a packed range is a vector, even when the range
+ * has a single element, and the .var and .net statements give it a
+ * ", <msb> <lsb>" range. A scalar has no range at all, and neither does
+ * a real. Write the range text, or an empty string, into buf.
+ */
+static const char *range_str(ivl_signal_t sig, int msb, int lsb,
+			     char *buf, size_t buf_size)
+{
+      buf[0] = 0;
+      if (ivl_signal_data_type(sig) == IVL_VT_REAL)
+	    return buf;
+      if (ivl_signal_packed_dimensions(sig) > 0 || ivl_signal_width(sig) > 1)
+	    snprintf(buf, buf_size, ", %d %d", msb, lsb);
+      return buf;
+}
+
+/*
  * This function draws a reg/int/variable in the scope. This is a very
  * simple device to draw as there are no inputs to connect so no need
  * to scan the nexus. We do have to account for the possibility that
@@ -522,10 +539,17 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	    unsigned swapped = ivl_signal_array_addr_swapped(sig);
 	    int last = ivl_signal_array_base(sig)+word_count-1;
 	    int first = ivl_signal_array_base(sig);
-	    fprintf(vvp_out, "v%p .array%s \"%s\", %d %d, %d %d;\n",
+	      /* The words of a variable array are vectors if there is a
+		 word range. An unsigned 4-state array is .array/4u, since
+		 a plain .array without a word range is a net array. */
+	    char range[32];
+	    range_str(sig, msb, lsb, range, sizeof(range));
+	    if (datatype_flag[0] == 0)
+		  datatype_flag = "/4u";
+	    fprintf(vvp_out, "v%p .array%s \"%s\", %d %d%s;\n",
 		    sig, datatype_flag,
 		    vvp_mangle_name(ivl_signal_basename(sig)),
-		    swapped ? first: last, swapped ? last : first, msb, lsb);
+		    swapped ? first: last, swapped ? last : first, range);
 
       } else if (ivl_signal_data_type(sig) == IVL_VT_DARRAY) {
 	    ivl_type_t var_type = ivl_signal_net_type(sig);
@@ -559,9 +583,11 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 
 	    ivl_enumtype_t enumtype = ivl_type_enumtype(ivl_signal_net_type(sig));
 
-	    fprintf(vvp_out, "v%p_0 .var%s %s\"%s\", %d %d",
+	    char range[32];
+	    fprintf(vvp_out, "v%p_0 .var%s %s\"%s\"%s",
 		    sig, datatype_flag, local_flag,
-		    vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
+		    vvp_mangle_name(ivl_signal_basename(sig)),
+		    range_str(sig, msb, lsb, range, sizeof(range)));
 	    if (enumtype) fprintf(vvp_out, ", enum%p", enumtype);
 	    fprintf(vvp_out, ";%s\n",
 		    ivl_signal_local(sig)? " Local signal" : "" );
@@ -597,6 +623,8 @@ static void draw_net_in_scope(ivl_signal_t sig)
 
       const char*datatype_flag = ivl_signal_signed(sig)? "/s" : "";
       const char *local_flag = local_flag_str(sig);
+      char range[32];
+      range_str(sig, msb, lsb, range, sizeof(range));
 
       unsigned iword;
 
@@ -648,10 +676,10 @@ static void draw_net_in_scope(ivl_signal_t sig)
 		  if (dimensions > 0) {
 			/* If this is a word of an array, then use an
 			   array reference in place of the net name. */
-			fprintf(vvp_out, "v%p_%u .net%s%s v%p %u, %d %d, %s;"
+			fprintf(vvp_out, "v%p_%u .net%s%s v%p %u%s, %s;"
 				" %u drivers%s\n",
 				sig, iword, vec8, datatype_flag, sig,
-				iword, msb, lsb, driver,
+				iword, range, driver,
 				nex_data->drivers_count,
 				strength_aware_flag?", strength-aware":"" );
 
@@ -669,11 +697,11 @@ static void draw_net_in_scope(ivl_signal_t sig)
 			/* If this is an isolated word, it uses its
 			   own name. */
 			assert(word_count == 1);
-			fprintf(vvp_out, "v%p_%u .net%s%s %s\"%s\", %d %d, %s; "
+			fprintf(vvp_out, "v%p_%u .net%s%s %s\"%s\"%s, %s; "
 				" %u drivers%s\n",
 				sig, iword, vec8, datatype_flag, local_flag,
 				vvp_mangle_name(ivl_signal_basename(sig)),
-				msb, lsb, driver,
+				range, driver,
 				nex_data->drivers_count,
 				strength_aware_flag?", strength-aware":"" );
 		  }
@@ -710,9 +738,9 @@ static void draw_net_in_scope(ivl_signal_t sig)
 				      swapped ? last : first );
 			}
 
-			fprintf(vvp_out, "v%p_%u .net%s v%p %u, %d %d, "
+			fprintf(vvp_out, "v%p_%u .net%s v%p %u%s, "
 			        "v%p_%u; Alias to %s[%u]\n", sig, iword,
-			        datatype_flag, sig, iword, msb, lsb,
+			        datatype_flag, sig, iword, range,
 			        nex_data->net, nex_data->net_word,
 			        ivl_signal_basename(nex_data->net),
 				nex_data->net_word);
@@ -730,11 +758,11 @@ static void draw_net_in_scope(ivl_signal_t sig)
 		  if (strength_aware_flag)
 			vec8 = "8";
 
-		  fprintf(vvp_out, "v%p_%u .net%s%s %s\"%s\", %d %d, %s; "
+		  fprintf(vvp_out, "v%p_%u .net%s%s %s\"%s\"%s, %s; "
 				" alias, %u drivers%s\n",
 				sig, iword, vec8, datatype_flag, local_flag,
 				vvp_mangle_name(ivl_signal_basename(sig)),
-				msb, lsb, driver,
+				range, driver,
 				nex_data->drivers_count,
 				strength_aware_flag?", strength-aware":"");
 	    }
@@ -886,14 +914,14 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
 	 * to define the output delay net when needed, otherwise it will
 	 * not be cleaned up correctly (gives a valgrind warning). */
       if (need_delay_flag) {
-	    fprintf(vvp_out, "v%p_0 .net *\"_d%p\", 0 0, L_%p/d;\n", lptr,
+	    fprintf(vvp_out, "v%p_0 .net *\"_d%p\", L_%p/d;\n", lptr,
 	            lptr, lptr);
       }
 	/* The same situation exists if a modpath is used to connect the UDP
 	 * output to the true output signal. For this case the modpath is
 	 * the only thing connected to the UDP output. */
       if (udp_has_modpath_output(lptr)) {
-	    fprintf(vvp_out, "v%p_0 .net *\"_m%p\", 0 0, L_%p;\n", lptr,
+	    fprintf(vvp_out, "v%p_0 .net *\"_m%p\", L_%p;\n", lptr,
 	            lptr, lptr);
       }
 
@@ -1969,13 +1997,17 @@ static void draw_sfunc_output_def(ivl_lpm_t net, char type)
 
       switch (data_type_of_nexus(nex)) {
 	case IVL_VT_REAL:
-	    fprintf(vvp_out, "v%p_0 .net/real *\"_%c%p\", 0 0, L_%p%s;\n",
+	    fprintf(vvp_out, "v%p_0 .net/real *\"_%c%p\", L_%p%s;\n",
 	            net, type, net, net, suf);
 	    break;
 	case IVL_VT_LOGIC:
 	case IVL_VT_BOOL:
-	    fprintf(vvp_out, "v%p_0 .net *\"_%c%p\", %u 0, L_%p%s;\n",
-	            net, type, net, width_of_nexus(nex)-1, net, suf);
+	    if (width_of_nexus(nex) > 1)
+		  fprintf(vvp_out, "v%p_0 .net *\"_%c%p\", %u 0, L_%p%s;\n",
+		          net, type, net, width_of_nexus(nex)-1, net, suf);
+	    else
+		  fprintf(vvp_out, "v%p_0 .net *\"_%c%p\", L_%p%s;\n",
+		          net, type, net, net, suf);
 	    break;
 	default:
 	    assert(0);

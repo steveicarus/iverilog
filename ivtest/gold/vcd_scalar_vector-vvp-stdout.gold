@@ -1,0 +1,14 @@
+VCD info: dumpfile work/vcd_scalar_vector.vcd opened for output.
+$var wire 1 ! w $end
+$var wire 1 " wv [0:0] $end
+$var wire 1 # wv3 [3:3] $end
+$var reg 1 $ a $end
+$var reg 1 % b [0:0] $end
+$var reg 1 & c [3:3] $end
+$var reg 8 ' d [7:0] $end
+$var reg 1 ( e [0:0] $end
+$var reg 1 ) f $end
+$var integer 32 * fd [31:0] $end
+$var reg 1 + g [0:0] $end
+$var integer 32 , h [31:0] $end
+$var real 1 - r $end

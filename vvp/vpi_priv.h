@@ -388,6 +388,7 @@ struct __vpiSignal : public __vpiHandle {
 	/* Flags */
       unsigned signed_flag  : 1;
       unsigned is_netarray  : 1; // This is word of a net array
+      unsigned vec_flag     : 1; // A vector (has a range), not a scalar
 	/* The represented value is here. */
       vvp_net_t*node;
 
@@ -844,6 +845,9 @@ struct __vpiArray : public __vpiArrayBase, public __vpiHandle {
       struct __vpiCallback *vpi_callbacks;
       bool signed_flag;
       bool swap_addr;
+	// Words of a variable array: 1 for vectors, 0 for scalars, -1 if
+	// the .array statement does not say.
+      signed char word_vec;
 
 private:
       unsigned array_count;

@@ -1,7 +1,7 @@
 #ifndef IVL_parse_misc_H
 #define IVL_parse_misc_H
 /*
- * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -64,6 +64,17 @@ struct symbv_s {
 
 extern void symbv_init(struct symbv_s*obj);
 extern void symbv_add(struct symbv_s*obj, struct symb_s item);
+
+/*
+ * The optional range and enum reference of a .var or .net statement.
+ * A vector has a range, a scalar does not.
+ */
+struct vardim_s {
+      bool vec;
+      int msb;
+      int lsb;
+      char*enum_label;
+};
 
 struct numbv_s {
       unsigned cnt;

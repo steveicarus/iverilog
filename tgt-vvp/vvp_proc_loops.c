@@ -27,8 +27,11 @@
 #define BRK_CONT_LABEL_NONE UINT_MAX
 static unsigned break_label = BRK_CONT_LABEL_NONE;
 static unsigned continue_label = BRK_CONT_LABEL_NONE;
+static ivl_scope_t loop_scope;
 
-#define PUSH_JUMPS(bl, cl) do {			  \
+#define PUSH_JUMPS(bl, cl, sc) do {		  \
+	    save_loop_scope = loop_scope;	  \
+	    loop_scope = sc;			  \
 	    save_break_label = break_label;	  \
 	    save_continue_label = continue_label; \
 	    break_label = bl;			  \
@@ -36,6 +39,7 @@ static unsigned continue_label = BRK_CONT_LABEL_NONE;
       } while (0)
 
 #define POP_JUMPS do {				  \
+	    loop_scope = save_loop_scope;	  \
 	    break_label = save_break_label;	  \
 	    continue_label = save_continue_label; \
       } while (0)
@@ -49,7 +53,11 @@ int show_stmt_break(ivl_statement_t net, ivl_scope_t sscope)
 	    return 1;
       }
 
-      fprintf(vvp_out, "    %%jmp T_%u.%u; break\n", thread_count, break_label);
+      if (sscope == loop_scope)
+	    fprintf(vvp_out, "    %%jmp T_%u.%u; break\n", thread_count, break_label);
+      else
+	    fprintf(vvp_out, "    %%jmp/flow T_%u.%u, S_%p; break\n",
+		    thread_count, break_label, loop_scope);
       return 0;
 }
 
@@ -60,7 +68,11 @@ int show_stmt_continue(ivl_statement_t net, ivl_scope_t sscope)
 	    return 1;
       }
 
-      fprintf(vvp_out, "    %%jmp T_%u.%u; continue\n", thread_count, continue_label);
+      if (sscope == loop_scope)
+	    fprintf(vvp_out, "    %%jmp T_%u.%u; continue\n", thread_count, continue_label);
+      else
+	    fprintf(vvp_out, "    %%jmp/flow T_%u.%u, S_%p; continue\n",
+		    thread_count, continue_label, loop_scope);
       return 0;
 }
 #pragma GCC diagnostic pop
@@ -74,8 +86,9 @@ int show_stmt_forever(ivl_statement_t net, ivl_scope_t sscope)
 
       show_stmt_file_line(net, "Forever statement.");
 
+      ivl_scope_t save_loop_scope;
       unsigned save_break_label, save_continue_label;
-      PUSH_JUMPS(lab_out, lab_top);
+      PUSH_JUMPS(lab_out, lab_top, sscope);
 
       fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_top);
       rc += show_statement(stmt, sscope);
@@ -104,20 +117,21 @@ int show_stmt_forever(ivl_statement_t net, ivl_scope_t sscope)
  * difference is that there is an init statement and a step statement
  * that fits into the flow.
  */
-int show_stmt_forloop(ivl_statement_t net, ivl_scope_t scope)
+int show_stmt_forloop(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
       unsigned top_label = local_count++;
       unsigned out_label = local_count++;
       unsigned cont_label= local_count++;
+      ivl_scope_t save_loop_scope;
       unsigned save_break_label, save_continue_label;
-      PUSH_JUMPS(out_label, cont_label);
+      PUSH_JUMPS(out_label, cont_label, sscope);
 
       show_stmt_file_line(net, "For-loop statement.");
 
       /* Draw the init statement before the entry point to the loop. */
       if (ivl_stmt_init_stmt(net))
-	    rc += show_statement(ivl_stmt_init_stmt(net), scope);
+	    rc += show_statement(ivl_stmt_init_stmt(net), sscope);
 
       /* Top of the loop, draw the condition test. */
       fprintf(vvp_out, "T_%u.%u ; Top of for-loop\n", thread_count, top_label);
@@ -129,12 +143,12 @@ int show_stmt_forloop(ivl_statement_t net, ivl_scope_t scope)
       }
 
       /* Draw the body of the loop. */
-      rc += show_statement(ivl_stmt_sub_stmt(net), scope);
+      rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
 
       fprintf(vvp_out, "T_%u.%u ; for-loop step statement\n",
 	      thread_count, cont_label);
       if (ivl_stmt_step_stmt(net))
-	    rc += show_statement(ivl_stmt_step_stmt(net), scope);
+	    rc += show_statement(ivl_stmt_step_stmt(net), sscope);
       fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, top_label);
 
       fprintf(vvp_out, "T_%u.%u ; for-loop exit label\n",
@@ -168,8 +182,9 @@ int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
 
       unsigned int lab_top = local_count++, lab_cont = local_count++;
       unsigned int lab_out = local_count++;
+      ivl_scope_t save_loop_scope;
       unsigned int save_break_label, save_continue_label;
-      PUSH_JUMPS(lab_out, lab_cont);
+      PUSH_JUMPS(lab_out, lab_cont, sscope);
 
       fprintf(vvp_out, "    %%dup/vec4;\n");
       if (ivl_expr_signed(expr) || ivl_expr_value(expr) != IVL_VT_BOOL) {
@@ -208,8 +223,9 @@ int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
       unsigned top_label = local_count++;
       unsigned out_label = local_count++;
 
+      ivl_scope_t save_loop_scope;
       unsigned save_break_label, save_continue_label;
-      PUSH_JUMPS(out_label, top_label);
+      PUSH_JUMPS(out_label, top_label, sscope);
 
       show_stmt_file_line(net, "While statement.");
 
@@ -248,8 +264,9 @@ int show_stmt_do_while(ivl_statement_t net, ivl_scope_t sscope)
       unsigned cont_label = local_count++;
       unsigned out_label = local_count++;
 
+      ivl_scope_t save_loop_scope;
       unsigned save_break_label, save_continue_label;
-      PUSH_JUMPS(out_label, cont_label);
+      PUSH_JUMPS(out_label, cont_label, sscope);
 
       show_stmt_file_line(net, "Do/While statement.");
 
