@@ -1171,6 +1171,65 @@ static void convert_net(Design*des, const LineInfo *line,
       des->errors += 1;
 }
 
+static void apply_unconnected_drive(Design*des, const LineInfo&loc,
+				    NetNet*port, Module::UCDriveType drive)
+{
+      switch (drive) {
+	  case Module::UCD_PULL0:
+	    convert_net(des, &loc, port, NetNet::TRI0);
+	    break;
+	  case Module::UCD_PULL1:
+	    convert_net(des, &loc, port, NetNet::TRI1);
+	    break;
+	  case Module::UCD_NONE:
+	    break;
+      }
+}
+
+static void warn_dangling_input_port(const LineInfo&loc, const Module*rmod,
+				     unsigned idx, perm_string port_name)
+{
+      cerr << loc.get_fileline() << ": warning: "
+	   << "Instantiating module " << rmod->mod_name()
+	   << " with dangling input port "
+	   << (idx+1) << " (" << port_name;
+      switch (rmod->uc_drive) {
+	  case Module::UCD_PULL0:
+	    cerr << ") pulled low." << endl;
+	    break;
+	  case Module::UCD_PULL1:
+	    cerr << ") pulled high." << endl;
+	    break;
+	  case Module::UCD_NONE:
+	    cerr << ") floating." << endl;
+	    break;
+      }
+}
+
+static void coerce_port_direction(Design*des, NetScope*scope,
+				  NetNet*port, PExpr*expr)
+{
+      if ((port->port_type() == NetNet::PINPUT) &&
+	  (port->type() != NetNet::REG) &&
+	  port->pin(0).nexus()->drivers_present() &&
+	  expr->is_collapsible_net(des, scope, port->port_type())) {
+	    port->port_type(NetNet::PINOUT);
+
+	    cerr << expr->get_fileline() << ": warning: input port "
+		 << port->name() << " is coerced to inout." << endl;
+      }
+
+      if ((port->port_type() == NetNet::POUTPUT) &&
+	  (port->type() != NetNet::REG) &&
+	  port->pin(0).nexus()->has_floating_input() &&
+	  expr->is_collapsible_net(des, scope, port->port_type())) {
+	    port->port_type(NetNet::PINOUT);
+
+	    cerr << expr->get_fileline() << ": warning: output port "
+		 << port->name() << " is coerced to inout." << endl;
+      }
+}
+
 static void isolate_and_connect(Design*des, NetScope*scope, const PGModule*mod,
 				NetNet*port, NetNet*sig, NetNet::PortType ptype, int idx = -1)
 {
@@ -1800,35 +1859,13 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 			  // If we have an unconnected input convert it
 			  // as needed if an unconnected_drive directive
 			  // was given. This only works for tri or wire!
-			switch (rmod->uc_drive) {
-			    case Module::UCD_PULL0:
-			      convert_net(des, this, tmp, NetNet::TRI0);
-			      break;
-			    case Module::UCD_PULL1:
-			      convert_net(des, this, tmp, NetNet::TRI1);
-			      break;
-			    case Module::UCD_NONE:
-			      break;
-			}
+			apply_unconnected_drive(des, *this, tmp,
+						rmod->uc_drive);
 
 			  // Print a warning for an unconnected input.
 			if (warn_portbinding) {
-			      cerr << get_fileline() << ": warning: "
-				   << "Instantiating module "
-				   << rmod->mod_name()
-				   << " with dangling input port "
-				   << (idx+1) << " (" << port_name;
-			      switch (rmod->uc_drive) {
-				  case Module::UCD_PULL0:
-				    cerr << ") pulled low." << endl;
-				    break;
-				  case Module::UCD_PULL1:
-				    cerr << ") pulled high." << endl;
-				    break;
-				  case Module::UCD_NONE:
-				    cerr << ") floating." << endl;
-				    break;
-			      }
+			      warn_dangling_input_port(*this, rmod, idx,
+						       port_name);
 			}
 		  }
 		  unconnected_port = true;
@@ -1897,26 +1934,8 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 	      // even multiple of the instance count.
 	    ivl_assert(*this, prts_vector_width % instance.size() == 0);
 
-	    if (!prts.empty() && (prts[0]->port_type() == NetNet::PINPUT)
-	        && (prts[0]->type() != NetNet::REG)
-	        && prts[0]->pin(0).nexus()->drivers_present()
-	        && pins[idx]->is_collapsible_net(des, scope,
-	                                         prts[0]->port_type())) {
-                  prts[0]->port_type(NetNet::PINOUT);
-
-		  cerr << pins[idx]->get_fileline() << ": warning: input port "
-		       << prts[0]->name() << " is coerced to inout." << endl;
-	    }
-
-	    if (!prts.empty() && (prts[0]->port_type() == NetNet::POUTPUT)
-	        && (prts[0]->type() != NetNet::REG)
-	        && prts[0]->pin(0).nexus()->has_floating_input()
-	        && pins[idx]->is_collapsible_net(des, scope,
-	                                         prts[0]->port_type())) {
-                  prts[0]->port_type(NetNet::PINOUT);
-
-		  cerr << pins[idx]->get_fileline() << ": warning: output port "
-		       << prts[0]->name() << " is coerced to inout." << endl;
+	    if (!prts.empty()) {
+		  coerce_port_direction(des, scope, prts[0], pins[idx]);
 	    }
 
 	      // Elaborate the expression that connects to the
