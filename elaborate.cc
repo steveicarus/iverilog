@@ -4694,6 +4694,23 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 
       if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(sr.type)) {
 	    NetScope*task = class_type->method_from_name(method_name);
+	    if (task == 0 && method_name == "srandom") {
+		    // IEEE 1800 18.13.3: built-in srandom(int seed). Icarus
+		    // has no per-object random state, so accept the call
+		    // and ignore it.
+		  if (parms_.size() != 1) {
+			cerr << get_fileline() << ": error: "
+			     << "srandom() takes exactly one argument." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  cerr << get_fileline() << ": warning: "
+		       << "srandom() is not supported; the call is ignored."
+		       << endl;
+		  NetBlock*nop = new NetBlock(NetBlock::SEQU, 0);
+		  nop->set_line(*this);
+		  return nop;
+	    }
 	    if (task == 0) {
 		    // If an implicit this was added it is not an error if we
 		    // don't find a method. It might actually be a call to a

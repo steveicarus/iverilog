@@ -1,0 +1,12 @@
+{
+    "type"          : "normal",
+    "source"        : "br_gh439.v",
+    "gold"          : "br_gh439",
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "__comment"     : "Classes are not supported by vlog95.",
+        "type"          : "CE",
+        "gold"          : "",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}
