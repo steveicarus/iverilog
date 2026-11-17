@@ -7386,11 +7386,11 @@ bool of_PROP_QUEUE_SIZE(vthread_t thr, vvp_code_t cp)
 
       vvp_object_t qobj;
       cobj->get_object(pid, qobj, 0);
-      vvp_queue_vec4* qsrc = 0;
-      vvp_darray* dsrc = 0;
-      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+	/* Real and string queues are not vvp_queue_vec4, so use the
+	   common vvp_darray base class to get the size. */
+      vvp_darray* darray = qobj.peek<vvp_darray>();
 
-      size_t sz = qsrc ? qsrc->get_size() : (dsrc ? dsrc->get_size() : 0);
+      size_t sz = darray ? darray->get_size() : 0;
 
       vvp_vector4_t val(32, BIT4_0);
       unsigned long ul = sz;
