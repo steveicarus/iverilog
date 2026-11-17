@@ -1197,6 +1197,21 @@ The %store/prop/v pops a vector from the vec4 stack and stores it into
 the property <pid> of the cobject in the top of the object stack. The
 vector is truncated to <wid> bits, and the cobject is NOT popped.
 
+* %store/prop/dar/r <pid>
+* %store/prop/dar/str <pid>
+* %store/prop/dar/vec4 <pid>
+* %store/prop/qdar/r <pid>, <max-idx>
+* %store/prop/qdar/str <pid>, <max-idx>
+* %store/prop/qdar/v <pid>, <max-idx>, <wid>
+
+Pop a real, string or vec4 value and store it into the word of the
+dynamic array (dar) or queue (qdar) property <pid> of the cobject on the
+top of the object stack. The cobject is NOT popped. The element index is
+taken from signed index register 3. For a queue, an index at the end of
+the queue appends the value, the index register <max-idx> holds the
+maximum queue size (0 for none), and the queue is created if the
+property has not been written yet. See also %store/dar/r.
+
 * %store/real <var-label>
 * %store/reala <var-label>, <index>
 

@@ -1212,17 +1212,30 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 
 	      // Now get the type of the property.
 	    ivl_type_t ptype = class_type->get_prop_type(pidx);
-	    const netdarray_t*mtype = dynamic_cast<const netdarray_t*> (ptype);
-	    if (mtype) {
-		  if (! member_cur.index.empty()) {
-			cerr << get_fileline() << ": sorry: "
-			     << "Array index of array properties not supported."
-			     << endl;
-			des->errors += 1;
-		  }
-	    }
 	    NetExpr *canon_index = nullptr;
-	    if (!member_cur.index.empty()) {
+	    if (dynamic_cast<const netdarray_t*> (ptype)) {
+		    // Queue or dynamic array property: optional element index.
+		  if (member_cur.index.size() > 1) {
+			cerr << get_fileline() << ": error: "
+			     << "Got " << member_cur.index.size() << " indices, "
+			     << "expecting 0 or 1 to index the property "
+			     << class_type->get_prop_name(pidx) << "." << endl;
+			des->errors++;
+			return 0;
+		  } else if (!member_cur.index.empty()) {
+			const index_component_t&use_index = member_cur.index.back();
+			if (use_index.sel != index_component_t::SEL_BIT) {
+			      cerr << get_fileline() << ": error: "
+				   << "Only a bit select index of a queue/dynamic "
+				   << "array property is supported." << endl;
+			      des->errors++;
+			      return 0;
+			} else {
+			      ivl_assert(*this, use_index.msb != 0);
+			      canon_index = elab_and_eval(des, scope, use_index.msb, -1);
+			}
+		  }
+	    } else if (!member_cur.index.empty()) {
 		  if (const netsarray_t *stype = dynamic_cast<const netsarray_t*>(ptype)) {
 			canon_index = make_canonical_index(des, scope, this,
 							   member_cur.index, stype, false);
