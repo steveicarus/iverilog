@@ -19,6 +19,7 @@
 
 # include  "class_type.h"
 # include  "compile.h"
+# include  "vvp_darray.h"
 # include  "vpi_priv.h"
 # include  "config.h"
 # include  <map>
@@ -393,8 +394,16 @@ void property_object::copy(char*dst, char*src)
 {
       vvp_object_t*dst_obj = reinterpret_cast<vvp_object_t*>(dst+offset_);
       const vvp_object_t*src_obj = reinterpret_cast<vvp_object_t*>(src+offset_);
-      for (size_t idx = 0 ; idx < array_size_ ; idx += 1)
-	    dst_obj[idx] = src_obj[idx];
+      for (size_t idx = 0 ; idx < array_size_ ; idx += 1) {
+	      // Queues and dynamic arrays have value semantics, so the copy
+	      // gets its own array. Class handles are copied as handles.
+	      // (A dynamic array of handles has no duplicate() yet, but
+	      // cannot be a property today.)
+	    if (src_obj[idx].peek<vvp_darray>())
+		  dst_obj[idx] = src_obj[idx].duplicate();
+	    else
+		  dst_obj[idx] = src_obj[idx];
+      }
 }
 
 /* **** */
