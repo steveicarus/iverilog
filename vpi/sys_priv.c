@@ -72,11 +72,18 @@ char *get_filename(vpiHandle callh, const char *name, vpiHandle file)
       vpi_get_value(file, &val);
 
 	/* Verify that we have a string and that it is not NULL. */
-      if (val.format != vpiStringVal || !*(val.value.str)) {
+      if (val.format != vpiStringVal) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's file name argument (%s) is not a valid string.\n",
 	                name, vpi_get_str(vpiType, file));
+	    return 0;
+      }
+      if (!*(val.value.str)) {
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's file name argument (%s) has an empty or "
+	               "undefined value.\n", name, vpi_get_str(vpiType, file));
 	    return 0;
       }
 
