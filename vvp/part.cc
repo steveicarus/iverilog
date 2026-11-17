@@ -44,13 +44,20 @@ vvp_fun_part::~vvp_fun_part()
 }
 
 vvp_fun_part_sa::vvp_fun_part_sa(unsigned base, unsigned wid)
-: vvp_fun_part(base, wid)
+: vvp_fun_part(base, wid), changes_(0)
 {
       net_ = 0;
 }
 
 vvp_fun_part_sa::~vvp_fun_part_sa()
 {
+      delete changes_;
+}
+
+void vvp_fun_part_sa::set_event_input()
+{
+      if (changes_ == 0)
+	    changes_ = new changes_s;
 }
 
 void vvp_fun_part_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -62,12 +69,16 @@ void vvp_fun_part_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       if (val_ .eeq( tmp ))
 	    return;
 
-      val_ = tmp;
-
       if (net_ == 0) {
+	    if (changes_) {
+		  changes_->sent = val_;
+		  changes_->first = tmp;
+	    }
 	    net_ = port.ptr();
 	    schedule_functor(this);
       }
+
+      val_ = tmp;
 }
 
 /*
@@ -89,6 +100,10 @@ void vvp_fun_part_sa::run_run()
 {
       vvp_net_t*ptr = net_;
       net_ = 0;
+	// The selected bits changed and changed back. Send the change
+	// first, so that an event input sees it.
+      if (changes_ && val_.eeq(changes_->sent))
+	    ptr->send_vec4(changes_->first, 0);
       ptr->send_vec4(val_, 0);
 }
 
