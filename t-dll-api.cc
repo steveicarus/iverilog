@@ -3043,6 +3043,18 @@ extern "C" unsigned ivl_stmt_lvals(ivl_statement_t net)
       return 0;
 }
 
+extern "C" int ivl_stmt_lval_signed(ivl_statement_t net)
+{
+      assert(net);
+      assert(net->type_ == IVL_ST_ASSIGN ||
+	     net->type_ == IVL_ST_ASSIGN_NB ||
+	     net->type_ == IVL_ST_CASSIGN ||
+	     net->type_ == IVL_ST_DEASSIGN ||
+	     net->type_ == IVL_ST_FORCE ||
+	     net->type_ == IVL_ST_RELEASE);
+      return net->u_.assign_.lval_signed;
+}
+
 extern "C" unsigned ivl_stmt_lwidth(ivl_statement_t net)
 {
       assert(net);

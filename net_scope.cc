@@ -118,6 +118,7 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, NetScope*in_u
       lcounter_ = 0;
       is_auto_ = false;
       is_virtual_ = false;
+      is_static_method_ = false;
       is_cell_ = false;
       calls_stask_ = false;
       in_final_ = false;

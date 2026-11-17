@@ -771,6 +771,10 @@ static void vthread_release_context(vthread_t thr)
 #ifdef CHECK_WITH_VALGRIND
 void contexts_delete(class __vpiScope*scope)
 {
+      // Simulation can finish while an automatic scope is still active.
+      while (scope->live_contexts)
+	    vthread_free_context(scope->live_contexts, scope);
+
       vvp_context_t context = scope->free_contexts;
 
       while (context) {
@@ -5608,6 +5612,74 @@ bool of_QINSERT_STR(vthread_t thr, vvp_code_t cp)
 bool of_QINSERT_V(vthread_t thr, vvp_code_t cp)
 {
       return qinsert<vvp_vector4_t, vvp_queue_vec4>(thr, cp, cp->bit_idx[1]);
+}
+
+/*
+ * %qslice
+ *
+ * Pop the high and low bounds (vec4, signed) and a queue object, and
+ * push a new queue holding the elements from low to high, inclusive.
+ * The bounds are clamped to the queue. If either bound is X/Z, or the
+ * low bound is above the high bound, the new queue is empty.
+ */
+static bool qslice_bound(const vvp_vector4_t&val, int64_t&res)
+{
+      unsigned wid = val.size();
+      if (wid <= 64) return vector4_to_value(val, res, true);
+
+	// Saturate a value that does not fit in 64 bits. The top bit is
+	// the sign.
+      bool neg = false;
+      bool fits = true;
+      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+	    vvp_bit4_t bit = val.value(idx);
+	    if (bit == BIT4_X || bit == BIT4_Z) return false;
+	    if (idx == wid-1) neg = (bit == BIT4_1);
+      }
+      for (unsigned idx = 63 ; idx < wid ; idx += 1)
+	    if ((val.value(idx) == BIT4_1) != neg) fits = false;
+      if (!fits) {
+	    res = neg ? INT64_MIN : INT64_MAX;
+	    return true;
+      }
+      return vector4_to_value(vvp_vector4_t(val, 0, 64), res, true);
+}
+
+bool of_QSLICE(vthread_t thr, vvp_code_t)
+{
+      int64_t hi = 0, lo = 0;
+      bool defined = qslice_bound(thr->peek_vec4(0), hi);
+      defined &= qslice_bound(thr->peek_vec4(1), lo);
+      thr->pop_vec4(2);
+
+      vvp_object_t src;
+      thr->pop_object(src);
+
+      vvp_queue*queue = src.peek<vvp_queue>();
+      if (!queue) {
+	      // A queue that was never written has no object to slice.
+	    thr->push_object(src);
+	    return true;
+      }
+
+      vvp_object_t dup = src.duplicate();
+      vvp_queue*res = dup.peek<vvp_queue>();
+      int64_t size = res->get_size();
+      if (!defined) {
+	    res->erase_tail(0);
+      } else {
+	    if (lo < 0) lo = 0;
+	    if (hi >= size) hi = size - 1;
+	    if (lo > hi) {
+		  res->erase_tail(0);
+	    } else {
+		  res->erase_tail(hi + 1);
+		  for (int64_t idx = 0 ; idx < lo ; idx += 1)
+			res->pop_front();
+	    }
+      }
+      thr->push_object(dup);
+      return true;
 }
 
 /*

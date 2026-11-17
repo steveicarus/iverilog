@@ -2977,13 +2977,24 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
 	    break;
       }
       const auto lval_info = get_lval_info(lv);
-      NetExpr*rv = elaborate_rval_(des, scope, 0, lval_info.type,
-				   lval_info.width, force_unsigned);
+      auto expr = rval();
+      PExpr::width_mode_t mode = PExpr::SIZED;
+      expr->test_width(des, scope, mode);
+
+      NetExpr*rv;
+      if (lval_info.type == IVL_VT_REAL || expr->expr_type() == IVL_VT_REAL) {
+	      // Real arithmetic uses each integral operand's own width and
+	      // signedness. Convert only the completed operation's result.
+	    unsigned width = expr->expr_width();
+	    rv = expr->elaborate_expr(des, scope, width, PExpr::NO_FLAGS);
+	    if (rv) eval_expr(rv, width);
+      } else {
+	    rv = elaborate_rval_(des, scope, nullptr, lval_info.type,
+				 lval_info.width, force_unsigned);
+      }
       if (rv == 0) return 0;
 
-	// The ivl_target API doesn't support signalling the type
-	// of a lval, so convert arithmetic shifts into logical
-	// shifts now if the lval is unsigned.
+	// Unsigned arithmetic right shifts use the logical shift opcode.
       char op = op_;
       if ((op == 'R') && !lv->get_signed())
 	    op = 'r';
@@ -4033,11 +4044,13 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
 	    if (path_.class_scope && search_results.is_scope()
 		&& search_results.scope->get_class_scope()) {
-		  cerr << get_fileline() << ": sorry: Calling the class method `"
-		       << path_ << "' through a class scope is not yet "
-		       << "supported." << endl;
-		  des->errors += 1;
-		  return nullptr;
+		  NetScope*method = search_results.scope;
+		  NetExpr*this_expr = class_scope_method_this(*this, des, method,
+							      path_);
+		  if (!this_expr)
+			return nullptr;
+		  return elaborate_build_call_(des, scope, method, this_expr,
+					       true);
 	    }
 
 	    if (search_results.is_scope()) {
@@ -4049,6 +4062,22 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 		    // A recursive function call resolves to the function return
 		    // variable. Its containing scope is the function being called.
 		  func_scope = search_results.scope;
+	    }
+
+	      // A static method has no object to call a method of.
+	    NetScope*callee = task ? task : func_scope;
+	    const NetScope*c_scope = scope->get_class_scope();
+	    const NetScope*caller = c_scope
+		  ? find_method_containing_scope(*this, scope) : nullptr;
+	    if (gn_system_verilog() && path_.size() == 1 && callee && caller
+		&& c_scope == callee->get_class_scope()
+		&& caller->is_static_method()) {
+		  NetExpr*this_expr = class_scope_method_this(*this, des, callee,
+							      path_);
+		  if (!this_expr)
+			return nullptr;
+		  return elaborate_build_call_(des, scope, callee, this_expr,
+					       true);
 	    }
       }
 

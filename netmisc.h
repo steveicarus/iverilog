@@ -384,6 +384,21 @@ extern lval_info_t get_lval_info(const class NetAssign_*first);
  * IVL_VT_NO_TYPE causes the expression to retain its self-determined
  * type.
  */
+/*
+ * The queue that "$" refers to while the index of that queue is being
+ * elaborated. It is null when the index is not of a queue.
+ */
+class dollar_queue_scope {
+    public:
+      explicit dollar_queue_scope(const NetNet*net)
+      : saved_(queue_) { queue_ = net->queue_type() ? net : nullptr; }
+      ~dollar_queue_scope() { queue_ = saved_; }
+      static const NetNet*current() { return queue_; }
+    private:
+      const NetNet*saved_;
+      static const NetNet*queue_;
+};
+
 class PExpr;
 
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
@@ -490,6 +505,16 @@ extern hname_t eval_path_component(Design*des, NetScope*scope,
  */
 extern const netclass_t*find_class_containing_scope(const LineInfo&loc,const NetScope*scope);
 extern NetScope* find_method_containing_scope(const LineInfo&log, NetScope*scope);
+
+/*
+ * A static method called through a class scope, C#(8)::f(), has no
+ * object. Return the null handle to pass as its "this" argument, or
+ * report an error and return 0 if the method is not static.
+ */
+struct pform_scoped_name_t;
+extern NetExpr* class_scope_method_this(const LineInfo&li, Design*des,
+					const NetScope*method,
+					const pform_scoped_name_t&path);
 
 /*
  * Return true if the data type is a type that is normally available

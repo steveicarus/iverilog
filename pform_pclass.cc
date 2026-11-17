@@ -140,10 +140,16 @@ void pform_class_property(const struct vlltype&loc,
  * the method.
  */
 static bool method_virtual_flag = false;
+static bool method_static_flag = false;
 
 void pform_set_method_virtual(bool flag)
 {
       method_virtual_flag = flag;
+}
+
+void pform_set_method_static(bool flag)
+{
+      method_static_flag = flag;
 }
 
 void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net)
@@ -153,6 +159,8 @@ void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net)
 
       net->set_virtual(method_virtual_flag);
       method_virtual_flag = false;
+      net->set_static_method(method_static_flag);
+      method_static_flag = false;
 
       list<pform_port_t>*this_name = new list<pform_port_t>;
       this_name->push_back(pform_port_t({ perm_string::literal(THIS_TOKEN), 0 }, 0, 0));
@@ -186,6 +194,8 @@ void pform_class_extern_method(const struct vlltype&loc, const char*name,
       FILE_NAME(&info, loc);
       info.is_task = is_task;
       info.is_virtual = is_virtual;
+      info.is_static = method_static_flag;
+      method_static_flag = false;
       info.defined = false;
       info.ports = ports;
       info.ret_type = ret_type;
@@ -294,6 +304,7 @@ bool pform_start_extern_method(const struct vlltype&loc, const char*class_name,
       extern_saved_class = pform_cur_class;
       pform_cur_class = pclass;
       method_virtual_flag = proto->second.is_virtual;
+      method_static_flag = proto->second.is_static;
       return true;
 }
 

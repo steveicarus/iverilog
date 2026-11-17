@@ -1,0 +1,5 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_queue_slice_lval_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ]
+}

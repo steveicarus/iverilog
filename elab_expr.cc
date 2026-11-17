@@ -25,6 +25,7 @@
 # include  <cstdlib>
 # include  <cstring>
 # include  <climits>
+# include  <cctype>
 # include "compiler.h"
 
 # include  "PPackage.h"
@@ -2562,27 +2563,69 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 	    const netdarray_t*darray = net->darray_type();
 	    ivl_assert(*this, darray);
 
-	    if (darray->element_base_type()==IVL_VT_STRING && method_name=="atohex") {
-		  expr_type_  = IVL_VT_BOOL;
-		  expr_width_ = integer_width;
-		  min_width_  = integer_width;
-		  signed_flag_ = true;
-		  return expr_width_;
-	    }
+	      // Check for string methods if the base type is a string.
+	    if (darray->element_base_type()==IVL_VT_STRING) {
 
-	    if (darray->element_base_type()==IVL_VT_STRING && method_name=="atoi") {
-		  expr_type_  = IVL_VT_BOOL;
-		  expr_width_ = integer_width;
-		  min_width_  = integer_width;
-		  return expr_width_;
-	    }
+		    // These string methods return an int.
+		  if ((method_name == "len") ||
+		      (method_name == "compare") ||
+		      (method_name == "icompare")) {
+			expr_type_  = IVL_VT_BOOL;
+			min_width_  = expr_width_ = 32;
+			signed_flag_= true;
+			return expr_width_;
+		  }
 
-	    if (darray->element_base_type()==IVL_VT_STRING && method_name=="len") {
-		  expr_type_  = IVL_VT_BOOL;
-		  expr_width_ = 32;
-		  min_width_  = 32;
-		  signed_flag_= true;
-		  return expr_width_;
+		    // These string methods return a void.
+		    // They also cannot be used on a parameter.
+		  if ((method_name == "putc") ||
+		      (method_name == "itoa") ||
+		      (method_name == "hextoa") ||
+		      (method_name == "octtoa") ||
+		      (method_name == "bintoa") ||
+		      (method_name == "realtoa")) {
+			expr_type_  = IVL_VT_VOID;
+			min_width_  = expr_width_ = 1;
+			signed_flag_= false;
+			return expr_width_;
+		  }
+
+		    // This string method returns a byte.
+		  if (method_name == "getc") {
+			expr_type_  = IVL_VT_BOOL;
+			min_width_  = expr_width_ = 8;
+			signed_flag_= true;
+			return expr_width_;
+		  }
+
+		    // These string methods return a string.
+		  if ((method_name == "toupper") ||
+		      (method_name == "tolower") ||
+		      (method_name == "substr")) {
+			expr_type_  = IVL_VT_STRING;
+			min_width_  = expr_width_ = 1;
+			signed_flag_= false;
+			return expr_width_;
+		  }
+
+		    // These string methods return an integer.
+		  if ((method_name == "atoi") ||
+		      (method_name == "atohex") ||
+		      (method_name == "atooct") ||
+		      (method_name == "atobin")) {
+			expr_type_  = IVL_VT_LOGIC;
+			min_width_  = expr_width_ = integer_width;
+			signed_flag_= true;
+			return expr_width_;
+		  }
+
+		    // This string methods return a real.
+		  if (method_name == "atoreal") {
+			expr_type_   = IVL_VT_REAL;
+			min_width_   = expr_width_  = 1;
+			signed_flag_ = true;
+			return expr_width_;
+		  }
 	    }
       }
 
@@ -3927,8 +3970,15 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
 	    } else {
 		  const index_component_t&use_index = idx_list->back();
 		  ivl_assert(*this, use_index.msb != 0);
-		  ivl_assert(*this, use_index.lsb == 0);
-		  canon_index = elab_and_eval(des, scope, use_index.msb, -1, false);
+		  if (use_index.lsb) {
+			cerr << get_fileline() << ": sorry: "
+			     << "a slice of the queue/dynamic-array property "
+			     << class_type->get_prop_name(pidx)
+			     << " is not supported." << endl;
+			des->errors++;
+		  } else {
+			canon_index = elab_and_eval(des, scope, use_index.msb, -1, false);
+		  }
 	    }
       } else if (!comp.index.empty()) {
 	    /* IEEE 1800-2023 §11.5.1: bit-select on a scalar packed property,
@@ -4026,12 +4076,17 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 	    return 0;
 
       if (path_.class_scope && search_results.is_scope()
+	  && search_results.scope->type() == NetScope::FUNC
 	  && search_results.scope->get_class_scope()) {
-	    cerr << get_fileline() << ": sorry: Calling the class method `"
-		 << path_ << "' through a class scope is not yet supported."
-		 << endl;
-	    des->errors += 1;
-	    return 0;
+	    NetScope*method = search_results.scope;
+	    NetExpr*this_expr = class_scope_method_this(*this, des, method,
+							path_);
+	    if (!this_expr)
+		  return 0;
+	    return elaborate_class_method_net_this_(
+		  des, scope, this_expr,
+		  method->get_class_scope()->class_def(),
+		  method->basename(), nullptr, true);
       }
 
       // If the symbol is found, but is not a scope...
@@ -4108,6 +4163,16 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 		 use_search_results.path_head.push_back(name_component_t(perm_string::literal(THIS_TOKEN)));
 		 NetScope *method_scope = find_method_containing_scope(*this, scope);
 		 ivl_assert(*this, method_scope);
+		   // A static method has no object to call a method of.
+		 if (method_scope->is_static_method()) {
+		       NetExpr*this_expr = class_scope_method_this(*this, des,
+								   dscope, path_);
+		       if (!this_expr)
+			     return 0;
+		       return elaborate_class_method_net_this_(
+			     des, scope, this_expr, c_scope->class_def(),
+			     dscope->basename(), nullptr, true);
+		 }
 		 use_search_results.net = method_scope->find_signal(
 		       perm_string::literal(THIS_TOKEN));
 		 ivl_assert(*this, use_search_results.net);
@@ -5051,16 +5116,18 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 
 	    if (method_name == "atooct") {
 		  check_number_of_args(des, method_name, *this, 0, parms_.size());
-		  cerr << get_fileline() << ": sorry: String method 'atooct()' "
-		          "is not currently supported." << endl;
-		  return 0;
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atooct",
+						     netvector_t::integer_type(), 1);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
 	    }
 
 	    if (method_name == "atobin") {
 		  check_number_of_args(des, method_name, *this, 0, parms_.size());
-		  cerr << get_fileline() << ": sorry: String method 'atobin()' "
-		          "is not currently supported." << endl;
-		  return 0;
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atobin",
+						     netvector_t::integer_type(), 1);
+		  sys_expr->parm(0, sub_expr);
+		  return sys_expr;
 	    }
 
 	    if (method_name == "atoreal") {
@@ -5126,6 +5193,113 @@ static long get_const_int_param(Design*des, NetScope*scope, PExpr*expr,
 	    des->errors += 1;
       }
       return ret;
+}
+
+static uint32_t get_dec_val(const char* str)
+{
+      uint32_t res = 0;
+      while (str && *str) {
+            if (std::isdigit((int)*str)) {
+                  res = (res * 10) + (*str - '0');
+                  str += 1;
+            } else if (*str == '_') {
+                  str += 1;
+            } else {
+                  str = 0;
+            }
+      }
+      return res;
+}
+
+static uint32_t get_hex_val(const char* str)
+{
+      uint32_t res = 0;
+      while (str && *str) {
+            switch (*str) {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                  res = (res * 16) + (*str - '0');
+                  str += 1;
+                  break;
+                case 'a': case 'A':
+                case 'b': case 'B':
+                case 'c': case 'C':
+                case 'd': case 'D':
+                case 'e': case 'E':
+                case 'f': case 'F':
+                  res = (res * 16) + (std::toupper((int)*str) - 'A' + 10);
+                  str += 1;
+                  break;
+                case '_':
+                  str += 1;
+                  break;
+                default:
+                  str = 0;
+                  break;
+            }
+      }
+
+      return res;
+}
+
+static uint32_t get_oct_val(const char* str)
+{
+      uint32_t res = 0;
+
+      while (str && *str) {
+            switch (*str) {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                  res = (res * 8) + (*str - '0');
+                  str += 1;
+                  break;
+                case '_':
+                  str += 1;
+                  break;
+                default:
+                  str = 0;
+                  break;
+            }
+      }
+
+      return res;
+}
+
+static uint32_t get_bin_val(const char* str)
+{
+      uint32_t res = 0;
+      while (str && *str) {
+            switch (*str) {
+                case '0':
+                case '1':
+                  res = (res * 2) + (*str - '0');
+                  str += 1;
+                  break;
+                case '_':
+                  str += 1;
+                  break;
+                default:
+                  str = 0;
+                  break;
+            }
+      }
+
+      return res;
 }
 
 /*
@@ -5246,32 +5420,30 @@ NetExpr* PECallFunction::elaborate_expr_method_par_(Design*des, NetScope*scope,
 
 	    if (method_name == "atoi") {
 		  check_number_of_args(des, method_name, *this, 0, parms_.size());
-		  NetEConst*use_val = make_const_val(atoi(par_value.c_str()));
+		  NetEConst*use_val = make_const_val(get_dec_val(par_value.c_str()));
 		  use_val->set_line(*this);
 		  return use_val;
 	    }
 
 	    if (method_name == "atohex") {
 		  check_number_of_args(des, method_name, *this, 0, parms_.size());
-		  NetEConst*use_val = make_const_val(strtoul(par_value.c_str(),0,16));
+		  NetEConst*use_val = make_const_val(get_hex_val(par_value.c_str()));
 		  use_val->set_line(*this);
 		  return use_val;
 	    }
 
 	    if (method_name=="atooct") {
 		  check_number_of_args(des, method_name, *this, 0, parms_.size());
-		  cerr << get_fileline() << ": sorry: string method: '"
-		       << method_name << "()' is not currently supported."
-		       << endl;
-		  return 0;
+		  NetEConst*use_val = make_const_val(get_oct_val(par_value.c_str()));
+		  use_val->set_line(*this);
+		  return use_val;
 	    }
 
 	    if (method_name=="atobin") {
 		  check_number_of_args(des, method_name, *this, 0, parms_.size());
-		  cerr << get_fileline() << ": sorry: string method: '"
-		       << method_name << "()' is not currently supported."
-		       << endl;
-		  return 0;
+		  NetEConst*use_val = make_const_val(get_bin_val(par_value.c_str()));
+		  use_val->set_line(*this);
+		  return use_val;
 	    }
 
 	    if (method_name == "atoreal") {
@@ -6624,6 +6796,77 @@ static NetExpr* build_unpacked_reduction(Design *des,
       return fun;
 }
 
+static NetExpr* elaborate_last_index_(Design*des, const LineInfo*loc)
+{
+      if (!dollar_queue_scope::current()) {
+	    cerr << loc->get_fileline() << ": error: "
+		 << "'$' is only allowed in a queue index." << endl;
+	    des->errors += 1;
+	      // Keep the callers going with a placeholder value.
+	    NetEConst*bad = new NetEConst(verinum(verinum::Vx, 32, true));
+	    bad->set_line(*loc);
+	    return bad;
+      }
+      NetELast*tmp = new NetELast(const_cast<NetNet*>(dollar_queue_scope::current()));
+      tmp->set_line(*loc);
+      return tmp;
+}
+
+/*
+ * Q[a:b] is a new queue holding elements a through b of Q. The bounds
+ * are clamped to the queue at run time ($ in a bound is Q.size()-1).
+ */
+static NetExpr* elaborate_queue_slice(Design*des, NetScope*scope,
+				      const PEIdent*pe, NetNet*net,
+				      const index_component_t&index,
+				      ivl_type_t ntype, bool need_const)
+{
+      if (!dynamic_cast<const netdarray_t*>(ntype)) {
+	    cerr << pe->get_fileline() << ": sorry: "
+		 << "a slice of queue " << net->name()
+		 << " is only supported where a queue is expected." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetExpr*bound[2] = { 0, 0 };
+      PExpr*bound_pe[2] = { index.msb, index.lsb };
+      for (int idx = 0 ; idx < 2 ; idx += 1) {
+	    bound[idx] = elab_and_eval(des, scope, bound_pe[idx], -1, need_const);
+	    if (!bound[idx]) {
+		  delete bound[0];
+		  return 0;
+	    }
+	    if (bound[idx]->expr_type() == IVL_VT_REAL ||
+		bound[idx]->expr_type() == IVL_VT_STRING) {
+		  cerr << pe->get_fileline() << ": error: A queue slice "
+		       << "bound cannot be a "
+		       << (bound[idx]->expr_type() == IVL_VT_REAL ? "real"
+								  : "string")
+		       << " value." << endl;
+		  des->errors += 1;
+		  delete bound[0];
+		  delete bound[1];
+		  return 0;
+	    }
+	      // The runtime reads each bound as a signed value, and
+	      // saturates it to 64 bits if it is wider.
+	    bound[idx] = pad_to_width(bound[idx],
+				      std::max(66u, bound[idx]->expr_width() + 1),
+				      bound[idx]->has_sign(), *pe);
+      }
+
+      NetESFunc*fun = new NetESFunc("$ivl_queue_method$slice",
+				    net->queue_type(), 3);
+      fun->set_line(*pe);
+      NetESignal*arg = new NetESignal(net);
+      arg->set_line(*net);
+      fun->parm(0, arg);
+      fun->parm(1, bound[0]);
+      fun->parm(2, bound[1]);
+      return fun;
+}
+
 static NetExpr* build_queue_method(const LineInfo &loc,
                                    symbol_search_results&sr,
                                    ivl_type_t element_type,
@@ -6690,6 +6933,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       }
 
       NetNet *net = sr.net;
+      dollar_queue_scope queue_scope(net);
 
       if (!sr.path_tail.empty()) {
 	    if (net->struct_type()) {
@@ -6756,6 +7000,24 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       }
 
       const name_component_t&use_comp = path_.back();
+
+      if (net->darray_type() && !use_comp.index.empty() &&
+	  (use_comp.index.back().sel == index_component_t::SEL_PART ||
+	   use_comp.index.back().sel == index_component_t::SEL_IDX_UP ||
+	   use_comp.index.back().sel == index_component_t::SEL_IDX_DO)) {
+	    if (use_comp.index.back().sel == index_component_t::SEL_PART &&
+		net->queue_type() && net->unpacked_dimensions() == 0 &&
+		use_comp.index.size() == 1)
+		  return elaborate_queue_slice(des, scope, this, net,
+					       use_comp.index.back(), ntype,
+					       need_const);
+	    cerr << get_fileline() << ": sorry: "
+		 << "this part select of " << net->name()
+		 << " is not supported (only a [a:b] slice of a queue is)."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
 	// When the whole net is referenced (no unpacked index), the type to
 	// compare against the context is the net's type as seen by the caller.
@@ -8333,6 +8595,14 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      if (net->sig()->darray_type()) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "a slice of " << net->name()
+		 << " is only supported where a queue is expected." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       list<long> prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
       if (!rc)
@@ -8469,6 +8739,14 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_do_(Design*des, NetScope*scope,
 					     bool up,
                                              bool need_const) const
 {
+      if (net->sig()->darray_type()) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "an indexed part select of " << net->name()
+		 << " is not supported." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       if (net->sig()->data_type() == IVL_VT_STRING) {
 	    cerr << get_fileline() << ": error: Cannot take the index part "
 	            "select of a string ('" << net->name() << "')." << endl;
@@ -8924,6 +9202,8 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
 		 << endl;
       }
 
+      dollar_queue_scope queue_scope(net);
+
       if (net->unpacked_dimensions() > 0)
 	    return elaborate_expr_net_word_(des, scope, net, found_in,
                                             expr_wid, flags);
@@ -9238,6 +9518,27 @@ NetExpr* PENull::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
       NetENull*tmp = new NetENull;
       tmp->set_line(*this);
       return tmp;
+}
+
+unsigned PEQueueDimension::test_width(Design*, NetScope*, width_mode_t&)
+{
+      expr_type_   = IVL_VT_BOOL;
+      expr_width_  = 32;
+      min_width_   = 32;
+      signed_flag_ = true;
+      return expr_width_;
+}
+
+NetExpr* PEQueueDimension::elaborate_expr(Design*des, NetScope*, ivl_type_t,
+					  unsigned) const
+{
+      return elaborate_last_index_(des, this);
+}
+
+NetExpr* PEQueueDimension::elaborate_expr(Design*des, NetScope*, unsigned,
+					  unsigned) const
+{
+      return elaborate_last_index_(des, this);
 }
 
 unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)

@@ -1,6 +1,0 @@
-{
-    "type"          : "CE",
-    "source"        : "sv_class_param_scope_lval_fail.v",
-    "iverilog-args" : [ "-g2012" ],
-    "gold"          : "sv_class_param_scope_lval_fail"
-}

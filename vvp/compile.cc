@@ -286,6 +286,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%qpop/prop/f/r",   of_QPOP_PROP_F_REAL, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%qpop/prop/f/str", of_QPOP_PROP_F_STR, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%qpop/prop/f/v",   of_QPOP_PROP_F_V,    2, {OA_NUMBER, OA_BIT1, OA_NONE} },
+      { "%qslice", of_QSLICE, 0, {OA_NONE, OA_NONE, OA_NONE} },
       { "%queue/append_word/v", of_QUEUE_APPEND_WORD_V, 1, {OA_BIT1, OA_NONE, OA_NONE} },
       { "%queue/find/index/prop/v", of_QUEUE_FIND_INDEX_PROP_V, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%queue/find/index/v", of_QUEUE_FIND_INDEX_V, 2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },

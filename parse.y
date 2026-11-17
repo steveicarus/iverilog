@@ -2902,13 +2902,14 @@ loop_variables /* IEEE1800-2005: A.6.8 */
   ;
 
 method_qualifier /* IEEE1800-2005: A.1.8 */
-  : K_virtual { $$ = true; }
-  | class_item_qualifier { $$ = false; }
+  : K_virtual { $$ = true; pform_set_method_static(false); }
+  | class_item_qualifier { $$ = false; pform_set_method_static($1.test_static()); }
   ;
 
 method_qualifier_opt
   : method_qualifier { $$ = $1; pform_set_method_virtual($1); }
-  |                  { $$ = false; pform_set_method_virtual(false); }
+  |                  { $$ = false; pform_set_method_virtual(false);
+		       pform_set_method_static(false); }
   ;
 
 modport_declaration /* IEEE1800-2012: A.2.9 */
@@ -3781,21 +3782,25 @@ value_range /* IEEE1800-2005: A.8.3 */
 
 index_component
   : '[' expression ']'
-      { $$ = make_index_component(@$, index_component_t::SEL_BIT, $2);
-      }
-  | '[' '$' ']'
-      { $$ = make_index_component(@$, index_component_t::SEL_BIT_LAST);
+      { if (dynamic_cast<PEQueueDimension*>($2)) {
+	      delete $2;
+	      $$ = make_index_component(@$, index_component_t::SEL_BIT_LAST);
+	} else {
+	      $$ = make_index_component(@$, index_component_t::SEL_BIT, $2);
+	}
       }
   | '[' expression ':' expression ']'
-      { $$ = make_index_component(@$, index_component_t::SEL_PART, $2, $4);
+      { if (dynamic_cast<PEQueueDimension*>($2)) {
+	      delete $2;
+	      $$ = make_index_component(@$,
+				       index_component_t::SEL_QUEUE_BOUND,
+				       nullptr, $4);
+	} else {
+	      $$ = make_index_component(@$, index_component_t::SEL_PART, $2, $4);
+	}
       }
   | '[' ']'
       { $$ = make_index_component(@$, index_component_t::SEL_NONE);
-      }
-  | '[' '$' ':' expression ']'
-      { $$ = make_index_component(@$,
-				 index_component_t::SEL_QUEUE_BOUND,
-				 nullptr, $4);
       }
   | '[' expression K_PO_POS expression ']'
       { $$ = make_index_component(@$, index_component_t::SEL_IDX_UP, $2, $4);
@@ -5508,6 +5513,13 @@ expr_primary
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+
+  /* The "$" in a queue index is the index of the last element. */
+  | '$'
+      { PEQueueDimension*tmp = new PEQueueDimension;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
   ;
 
 tf_item_declaration /* IEEE1800-2017: A.2.7 */
@@ -5966,11 +5978,7 @@ lpvalue
       }
 
   | class_scope hierarchy_identifier
-      { yyerror(@1, "sorry: A class scope member is not supported as an l-value.");
-	delete $1;
-	delete $2;
-	$$ = 0;
-      }
+      { $$ = pform_class_scope_ident(@2, $1, $2); }
 
   | '{' expression_list_proper '}'
       { PEConcat*tmp = new PEConcat(*$2);
