@@ -4520,7 +4520,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 									   method_name,
 									   "$ivl_queue_method$pop_back");
 			      }
-			      if (!queue && method_name == "delete") {
+			      if (method_name == "delete") {
 				    static const std::vector<perm_string> parm_names = {
 					  perm_string::literal("index")
 				    };
