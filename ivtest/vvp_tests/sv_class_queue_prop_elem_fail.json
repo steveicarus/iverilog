@@ -1,0 +1,10 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_class_queue_prop_elem_fail.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "gold"          : "sv_class_queue_prop_elem_fail",
+    "vlog95" : {
+        "__comment"     : "Classes are not supported",
+        "type"          : "CE"
+    }
+}
