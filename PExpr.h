@@ -238,6 +238,10 @@ class PEAssignPattern : public PExpr {
       PEAssignPattern(PExpr*r, const std::list<PExpr*>&p);
       ~PEAssignPattern() override;
 
+	// The type of a typed pattern, `type'{...}`. The pattern is then
+	// self-determined and has that type.
+      void set_type(PExpr*type) { type_.reset(type); }
+
       void dump(std::ostream&) const override;
 
       virtual bool has_aa_term(Design*des, NetScope*scope) const override;
@@ -251,6 +255,9 @@ class PEAssignPattern : public PExpr {
                                      unsigned flags) const override;
     private:
       bool is_keyed_() const { return !keyed_.empty() || default_; }
+	// Elaborate the type of a typed pattern. Return nullptr after
+	// reporting an error.
+      ivl_type_t elaborate_pattern_type_(Design *des, NetScope *scope) const;
 	// Repeat the items of a replication pattern. Return false after
 	// reporting an error.
       bool expand_repeat_(Design *des, NetScope *scope, size_t limit,
@@ -282,6 +289,7 @@ class PEAssignPattern : public PExpr {
 				      bool need_const) const;
 
     private:
+      std::unique_ptr<PExpr> type_;
       std::vector<PExpr*>parms_;
       PExpr*repeat_ = nullptr;
       std::vector<pattern_item_t>keyed_;
@@ -815,6 +823,8 @@ class PETypename : public PExpr {
     public:
       explicit PETypename(data_type_t*data_type);
       ~PETypename() override;
+
+      const data_type_t *get_type() const { return data_type_; }
 
       virtual void dump(std::ostream&) const override;
       virtual unsigned test_width(Design*des, NetScope*scope,

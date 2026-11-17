@@ -5483,6 +5483,27 @@ expr_primary
   | assignment_pattern
       { $$ = $1; }
 
+  /* A typed assignment pattern, IEEE1800-2017 10.9: the type is a type
+     name or a type parameter, which the elaborator tells apart from an
+     expression, as it does for a cast. */
+  | expr_primary_or_typename assignment_pattern
+      { auto tmp = static_cast<PEAssignPattern*>($2);
+	auto tn = dynamic_cast<PETypename*>($1);
+	if (!pform_requires_sv(@1, "Typed assignment pattern")) {
+	      delete $1;
+	} else if (tn && !dynamic_cast<const atom_type_t*>(tn->get_type()) &&
+		   !dynamic_cast<const type_identifier_t*>(tn->get_type())) {
+	      yyerror(@1, "error: Only a type name, an integer atom type, a type "
+			  "parameter or a type reference is allowed as the type "
+			  "of an assignment pattern.");
+	      delete $1;
+	} else {
+	      tmp->set_type($1);
+	}
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+
   /* SystemVerilog supports streaming concatenation */
   | streaming_concatenation
       { $$ = $1; }
