@@ -349,6 +349,13 @@ extern NetEConst*make_const_val(unsigned long val);
 extern NetEConst*make_const_val_s(long val);
 
 /*
+ * Make the expression for the index of the last element, "[$]", of the
+ * queue property pidx of the class object sig.
+ */
+extern NetExpr*make_property_last_index(const LineInfo*li, NetNet*sig,
+					size_t pidx);
+
+/*
  * Make a const net.
  */
 extern NetNet* make_const_0(Design*des, NetScope*scope, unsigned long wid);
@@ -384,6 +391,33 @@ extern lval_info_t get_lval_info(const class NetAssign_*first);
  * IVL_VT_NO_TYPE causes the expression to retain its self-determined
  * type.
  */
+/*
+ * The queue that "$" refers to while the index of that queue is being
+ * elaborated. It is null when the index is not of a queue.
+ */
+class dollar_queue_scope {
+    public:
+	// The pidx of a property of a nested class object.
+      static const int NESTED = -2;
+      explicit dollar_queue_scope(const NetNet*net)
+      : saved_(queue_), saved_pidx_(pidx_)
+      { queue_ = net->queue_type() ? net : nullptr; pidx_ = -1; }
+	// "$" refers to property pidx of the class object net. It is
+	// a queue only if is_queue is true.
+      dollar_queue_scope(const NetNet*net, int pidx, bool is_queue)
+      : saved_(queue_), saved_pidx_(pidx_)
+      { queue_ = is_queue ? net : nullptr; pidx_ = pidx; }
+      ~dollar_queue_scope() { queue_ = saved_; pidx_ = saved_pidx_; }
+      static const NetNet*current() { return queue_; }
+	// The property of current() that is the queue, or -1.
+      static int current_property() { return pidx_; }
+    private:
+      const NetNet*saved_;
+      int saved_pidx_;
+      static const NetNet*queue_;
+      static int pidx_;
+};
+
 class PExpr;
 
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,

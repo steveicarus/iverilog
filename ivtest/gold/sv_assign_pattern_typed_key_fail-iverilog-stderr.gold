@@ -1,0 +1,2 @@
+ivltests/sv_assign_pattern_typed_key_fail.v:9: error: Struct has no member named `x`.
+Elaboration failed

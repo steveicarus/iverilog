@@ -1,0 +1,15 @@
+ivltests/sv_class_queue_prop_elem_fail.v:23: error: elements of dynamically sized arrays may not be assigned values using non-blocking assignments.
+ivltests/sv_class_queue_prop_elem_fail.v:24: error: elements of dynamically sized arrays may not be assigned values using non-blocking assignments.
+ivltests/sv_class_queue_prop_elem_fail.v:25: error: elements of dynamically sized arrays may not be assigned values using non-blocking assignments.
+ivltests/sv_class_queue_prop_elem_fail.v:26: error: elements of dynamically sized arrays may not be assigned values using non-blocking assignments.
+ivltests/sv_class_queue_prop_elem_fail.v:27: error: A part select of a queue/dynamic array property is not supported.
+ivltests/sv_class_queue_prop_elem_fail.v:28: error: A part select of a queue/dynamic array property is not supported.
+ivltests/sv_class_queue_prop_elem_fail.v:29: sorry: a slice of the queue/dynamic-array property q is not supported.
+ivltests/sv_class_queue_prop_elem_fail.v:30: sorry: Assignment operators on elements of queue/dynamic array properties are not supported.
+ivltests/sv_class_queue_prop_elem_fail.v:31: error: The $ index is only allowed for queues.
+ivltests/sv_class_queue_prop_elem_fail.v:32: error: '$' is only allowed in a queue index.
+ivltests/sv_class_queue_prop_elem_fail.v:33: error: Got 2 indices, expecting 0 or 1 to index the property q.
+ivltests/sv_class_queue_prop_elem_fail.v:34: sorry: The $ index of a nested class property is not supported.
+ivltests/sv_class_queue_prop_elem_fail.v:35: sorry: The $ index of a nested class property is not supported.
+ivltests/sv_class_queue_prop_elem_fail.v:36: error: '$' is only allowed in a queue index.
+14 error(s) during elaboration.

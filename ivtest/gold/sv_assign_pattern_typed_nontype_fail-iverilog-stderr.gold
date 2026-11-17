@@ -1,0 +1,2 @@
+ivltests/sv_assign_pattern_typed_nontype_fail.v:9: error: `x` in a typed assignment pattern is not a type.
+Elaboration failed

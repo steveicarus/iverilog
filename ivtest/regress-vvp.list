@@ -71,6 +71,7 @@ br_gh383b			vvp_tests/br_gh383b.json
 br_gh383c			vvp_tests/br_gh383c.json
 br_gh383d			vvp_tests/br_gh383d.json
 br_gh413			vvp_tests/br_gh413.json
+br_gh439			vvp_tests/br_gh439.json
 br_gh440			vvp_tests/br_gh440.json
 br_gh483a			vvp_tests/br_gh483a.json
 br_gh483b			vvp_tests/br_gh483b.json
@@ -617,6 +618,12 @@ sv_assign_pattern_repl_count_fail	vvp_tests/sv_assign_pattern_repl_count_fail.js
 sv_assign_pattern_repl_neg_fail	vvp_tests/sv_assign_pattern_repl_neg_fail.json
 sv_assign_pattern_repl_nonconst_fail	vvp_tests/sv_assign_pattern_repl_nonconst_fail.json
 sv_assign_pattern_repl_zero_fail	vvp_tests/sv_assign_pattern_repl_zero_fail.json
+sv_assign_pattern_typed	vvp_tests/sv_assign_pattern_typed.json
+sv_assign_pattern_typed_count_fail	vvp_tests/sv_assign_pattern_typed_count_fail.json
+sv_assign_pattern_typed_key_fail	vvp_tests/sv_assign_pattern_typed_key_fail.json
+sv_assign_pattern_typed_nontype_fail	vvp_tests/sv_assign_pattern_typed_nontype_fail.json
+sv_assign_pattern_typed_prefix_fail	vvp_tests/sv_assign_pattern_typed_prefix_fail.json
+sv_assign_pattern_typed_unpacked_expr_fail	vvp_tests/sv_assign_pattern_typed_unpacked_expr_fail.json
 sv_assign_pattern_unbound_fail	vvp_tests/sv_assign_pattern_unbound_fail.json
 sv_automatic_2state		vvp_tests/sv_automatic_2state.json
 sv_bad_member_lval_proc_fail	vvp_tests/sv_bad_member_lval_proc_fail.json
@@ -724,8 +731,13 @@ sv_class_prop_type_dup_fail	vvp_tests/sv_class_prop_type_dup_fail.json
 sv_class_prop_type_name		vvp_tests/sv_class_prop_type_name.json
 sv_class_prop_wildcard_type_name	vvp_tests/sv_class_prop_wildcard_type_name.json
 sv_class_property_reference	vvp_tests/sv_class_property_reference.json
+sv_class_queue_prop_elem	vvp_tests/sv_class_queue_prop_elem.json
+sv_class_queue_prop_elem_fail	vvp_tests/sv_class_queue_prop_elem_fail.json
+sv_class_queue_prop_foreach	vvp_tests/sv_class_queue_prop_foreach.json
+sv_class_queue_prop_last	vvp_tests/sv_class_queue_prop_last.json
 sv_class_queue_prop_locators	vvp_tests/sv_class_queue_prop_locators.json
 sv_class_queue_prop_methods	vvp_tests/sv_class_queue_prop_methods.json
+sv_class_queue_prop_size_str_real	vvp_tests/sv_class_queue_prop_size_str_real.json
 sv_class_static_array		vvp_tests/sv_class_static_array.json
 sv_class_task_expr_fail		vvp_tests/sv_class_task_expr_fail.json
 sv_const1			vvp_tests/sv_const1.json
@@ -754,6 +766,7 @@ sv_const_string_toupper_err	vvp_tests/sv_const_string_toupper_err.json
 sv_const_string_toupper_tolower	vvp_tests/sv_const_string_toupper_tolower.json
 sv_darray_assign_op		vvp_tests/sv_darray_assign_op.json
 sv_darray_duplicate_with_fail	vvp_tests/sv_darray_duplicate_with_fail.json
+sv_darray_event_fail		vvp_tests/sv_darray_event_fail.json
 sv_darray_find_locators		vvp_tests/sv_darray_find_locators.json
 sv_darray_last_read_fail	vvp_tests/sv_darray_last_read_fail.json
 sv_darray_last_write_fail	vvp_tests/sv_darray_last_write_fail.json
@@ -958,6 +971,8 @@ sv_pure_virtual_fail		vvp_tests/sv_pure_virtual_fail.json
 sv_pure_virtual_task_fail	vvp_tests/sv_pure_virtual_task_fail.json
 sv_queue_ap_method		vvp_tests/sv_queue_ap_method.json
 sv_queue_assign_op		vvp_tests/sv_queue_assign_op.json
+sv_queue_dollar			vvp_tests/sv_queue_dollar.json
+sv_queue_dollar_fail		vvp_tests/sv_queue_dollar_fail.json
 sv_queue_find			vvp_tests/sv_queue_find.json
 sv_queue_find_locators_ext	vvp_tests/sv_queue_find_locators_ext.json
 sv_queue_find_with		vvp_tests/sv_queue_find_with.json
@@ -975,6 +990,9 @@ sv_queue_product		vvp_tests/sv_queue_product.json
 sv_queue_product_with		vvp_tests/sv_queue_product_with.json
 sv_queue_reduction		vvp_tests/sv_queue_reduction.json
 sv_queue_reverse		vvp_tests/sv_queue_reverse.json
+sv_queue_slice			vvp_tests/sv_queue_slice.json
+sv_queue_slice_fail		vvp_tests/sv_queue_slice_fail.json
+sv_queue_slice_lval_fail	vvp_tests/sv_queue_slice_lval_fail.json
 sv_queue_sort			vvp_tests/sv_queue_sort.json
 sv_queue_sum			vvp_tests/sv_queue_sum.json
 sv_queue_sum_with		vvp_tests/sv_queue_sum_with.json
