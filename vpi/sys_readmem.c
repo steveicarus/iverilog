@@ -461,8 +461,8 @@ static PLI_INT32 sys_readmempath_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       if (!*(val.value.str)) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	                (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s's argument (%s) has an empty or undefined value.\n",
-	               name, vpi_get_str(vpiType, paths));
+	    vpi_printf("%s's argument has an empty or undefined value.\n",
+	               name);
 	    return 0;
       }
 

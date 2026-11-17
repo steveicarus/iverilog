@@ -82,8 +82,8 @@ char *get_filename(vpiHandle callh, const char *name, vpiHandle file)
       if (!*(val.value.str)) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s's file name argument (%s) has an empty or "
-	               "undefined value.\n", name, vpi_get_str(vpiType, file));
+	    vpi_printf("%s's file name argument has an empty or "
+	               "undefined value.\n", name);
 	    return 0;
       }
 

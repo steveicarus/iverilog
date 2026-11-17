@@ -1,3 +1,3 @@
-WARNING: work/vlog95.v:14: $readmempath's argument (vpiReg) has an empty or undefined value.
+WARNING: work/vlog95.v:14: $readmempath's argument has an empty or undefined value.
 WARNING: work/vlog95.v:17: $readmempath's argument contains non-printable characters.
                            "tes\200"

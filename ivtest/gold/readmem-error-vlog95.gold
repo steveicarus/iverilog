@@ -1,5 +1,5 @@
-WARNING: vlog95.v:20: $readmemb's file name argument (vpiReg) has an empty or undefined value.
-WARNING: vlog95.v:21: $readmemb's file name argument (vpiIntegerVar) has an empty or undefined value.
+WARNING: vlog95.v:20: $readmemb's file name argument has an empty or undefined value.
+WARNING: vlog95.v:21: $readmemb's file name argument has an empty or undefined value.
 WARNING: vlog95.v:26: $readmemb's file name argument contains non-printable characters.
                       "ivltests/readmemb.tx\002"
 WARNING: vlog95.v:29: $readmemb's third argument (start address) is a real value.
@@ -11,8 +11,8 @@ ERROR: vlog95.v:42: $readmemb: Finish address 16 is out of bounds for memory 'to
 WARNING: vlog95.v:45: $readmemb(ivltests/readmemb.txt): Too many words in the file for the requested range [0:6].
 WARNING: vlog95.v:48: $readmemb(ivltests/readmemb.txt): Not enough words in the file for the requested range [-1:7].
 ERROR: vlog95.v:51: $readmemb(ivltests/readmem-error.txt): Invalid input character: u
-WARNING: vlog95.v:53: $readmemh's file name argument (vpiReg) has an empty or undefined value.
-WARNING: vlog95.v:54: $readmemh's file name argument (vpiIntegerVar) has an empty or undefined value.
+WARNING: vlog95.v:53: $readmemh's file name argument has an empty or undefined value.
+WARNING: vlog95.v:54: $readmemh's file name argument has an empty or undefined value.
 WARNING: vlog95.v:59: $readmemh's file name argument contains non-printable characters.
                       "ivltests/readmemh.tx\002"
 WARNING: vlog95.v:62: $readmemh's third argument (start address) is a real value.
