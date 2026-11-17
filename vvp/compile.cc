@@ -219,6 +219,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%load/dar/vec4",of_LOAD_DAR_VEC4,1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%load/obj",   of_LOAD_OBJ,  1,{OA_FUNC_PTR,OA_NONE, OA_NONE} },
       { "%load/obja",  of_LOAD_OBJA, 2,{OA_ARR_PTR, OA_BIT1, OA_NONE} },
+      { "%load/prop/dar/r", of_LOAD_PROP_DAR_R, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%load/prop/dar/str", of_LOAD_PROP_DAR_STR, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%load/prop/dar/vec4", of_LOAD_PROP_DAR_VEC4, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%load/real",  of_LOAD_REAL, 1,{OA_VPI_PTR, OA_NONE, OA_NONE} },
       { "%load/str",   of_LOAD_STR,  1,{OA_FUNC_PTR,OA_NONE, OA_NONE} },

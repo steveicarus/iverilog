@@ -4366,15 +4366,10 @@ bool of_LOAD_DAR_VEC4(vthread_t thr, vvp_code_t cp)
       return load_dar<vvp_vector4_t>(thr, cp);
 }
 
-/*
- * %load/prop/dar/vec4 <pid>, <wid>;
- *   Indexed read of queue/dynamic-array class property; object on stack,
- *   index in words[3] (same as %load/dar/vec4).
- */
-bool of_LOAD_PROP_DAR_VEC4(vthread_t thr, vvp_code_t cp)
+template <typename ELEM>
+static bool load_prop_dar(vthread_t thr, vvp_code_t cp, unsigned wid)
 {
       size_t pid = cp->number;
-      unsigned wid = cp->bit_idx[0];
       int64_t adr = thr->words[3].w_int;
 
       vvp_object_t& top = thr->peek_object();
@@ -4385,15 +4380,36 @@ bool of_LOAD_PROP_DAR_VEC4(vthread_t thr, vvp_code_t cp)
       cobj->get_object(pid, pobj, 0);
       vvp_darray*darray = pobj.peek<vvp_darray>();
 
-      vvp_vector4_t word;
-      if (darray && (adr >= 0) && (thr->flags[4] == BIT4_0)) {
+      ELEM word;
+      if (darray && (adr >= 0) && (thr->flags[4] == BIT4_0))
 	    darray->get_word(adr, word);
-      } else {
+      else
 	    dq_default(word, wid);
-      }
 
-      thr->push_vec4(word);
+      vthread_push(thr, word);
       return true;
+}
+
+/*
+ * %load/prop/dar/r <pid>
+ * %load/prop/dar/str <pid>
+ * %load/prop/dar/vec4 <pid>, <wid>;
+ *   Indexed read of queue/dynamic-array class property; object on stack,
+ *   index in words[3] (same as %load/dar/vec4).
+ */
+bool of_LOAD_PROP_DAR_R(vthread_t thr, vvp_code_t cp)
+{
+      return load_prop_dar<double>(thr, cp, 0);
+}
+
+bool of_LOAD_PROP_DAR_STR(vthread_t thr, vvp_code_t cp)
+{
+      return load_prop_dar<string>(thr, cp, 0);
+}
+
+bool of_LOAD_PROP_DAR_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      return load_prop_dar<vvp_vector4_t>(thr, cp, cp->bit_idx[0]);
 }
 
 /*

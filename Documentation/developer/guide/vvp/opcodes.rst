@@ -722,6 +722,16 @@ the object handle stack.
 
 See also %store/obj.
 
+* %load/prop/dar/r <pid>
+* %load/prop/dar/str <pid>
+* %load/prop/dar/vec4 <pid>, <wid>
+
+Push a word of the queue or dynamic array property <pid> of the class
+object on the top of the object stack onto the real, string or vec4
+stack. The object is NOT popped. The element index is taken from signed
+index register 3, and an index that is negative, undefined or past the
+end gives the default value (<wid> bits for the vec4 form).
+
 * %load/real <vpi-label>
 * %load/dar/r <functor-label>
 
