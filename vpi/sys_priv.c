@@ -43,7 +43,7 @@ char *as_escaped(const char *arg)
       cur = 0;
       cnt = len - 1;
       for (idx = 0; idx < cnt; idx++) {
-	    if (isprint((unsigned char)arg[idx])) {
+	    if (isprint((int)(unsigned char)arg[idx])) {
 		  res[cur] = arg[idx];
 		  cur += 1;
 	    } else {
