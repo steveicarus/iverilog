@@ -3969,14 +3969,36 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
 		  des->errors++;
 	    } else {
 		  const index_component_t&use_index = idx_list->back();
-		  ivl_assert(*this, use_index.msb != 0);
-		  if (use_index.lsb) {
+		  if (use_index.sel == index_component_t::SEL_PART ||
+		      use_index.sel == index_component_t::SEL_QUEUE_BOUND) {
 			cerr << get_fileline() << ": sorry: "
 			     << "a slice of the queue/dynamic-array property "
 			     << class_type->get_prop_name(pidx)
 			     << " is not supported." << endl;
 			des->errors++;
+			return nullptr;
+		  }
+		  if (use_index.sel != index_component_t::SEL_BIT &&
+		      use_index.sel != index_component_t::SEL_BIT_LAST) {
+			cerr << get_fileline() << ": error: "
+			     << "A part select of a queue/dynamic array "
+			     << "property is not supported." << endl;
+			des->errors++;
+			return nullptr;
+		  }
+		  const bool is_queue = dynamic_cast<const netqueue_t*>(tmp_type) != nullptr;
+		  if (use_index.sel == index_component_t::SEL_BIT_LAST) {
+			if (!is_queue) {
+			      cerr << get_fileline() << ": error: "
+				   << "The $ index is only allowed for queues."
+				   << endl;
+			      des->errors++;
+			      return nullptr;
+			}
+			canon_index = make_property_last_index(this, sr.net, pidx);
 		  } else {
+			ivl_assert(*this, use_index.msb != 0);
+			dollar_queue_scope queue_scope(sr.net, pidx, is_queue);
 			canon_index = elab_and_eval(des, scope, use_index.msb, -1, false);
 		  }
 	    }
@@ -6798,6 +6820,15 @@ static NetExpr* build_unpacked_reduction(Design *des,
 
 static NetExpr* elaborate_last_index_(Design*des, const LineInfo*loc)
 {
+      if (dollar_queue_scope::current_property() == dollar_queue_scope::NESTED) {
+	    cerr << loc->get_fileline() << ": sorry: "
+		 << "The $ index of a nested class property "
+		 << "is not supported." << endl;
+	    des->errors += 1;
+	    NetEConst*bad = new NetEConst(verinum(verinum::Vx, 32, true));
+	    bad->set_line(*loc);
+	    return bad;
+      }
       if (!dollar_queue_scope::current()) {
 	    cerr << loc->get_fileline() << ": error: "
 		 << "'$' is only allowed in a queue index." << endl;
@@ -6807,7 +6838,11 @@ static NetExpr* elaborate_last_index_(Design*des, const LineInfo*loc)
 	    bad->set_line(*loc);
 	    return bad;
       }
-      NetELast*tmp = new NetELast(const_cast<NetNet*>(dollar_queue_scope::current()));
+      NetNet*queue = const_cast<NetNet*>(dollar_queue_scope::current());
+      if (dollar_queue_scope::current_property() >= 0)
+	    return make_property_last_index(loc, queue,
+				dollar_queue_scope::current_property());
+      NetELast*tmp = new NetELast(queue);
       tmp->set_line(*loc);
       return tmp;
 }

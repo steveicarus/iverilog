@@ -295,6 +295,44 @@ static ivl_type_t draw_lval_expr(ivl_lval_t lval)
 }
 
 /*
+ * If the l-value is an element of a queue or dynamic array property of a
+ * class object, store the value on the top of the value stack into it and
+ * return true. The object holding the property is on the object stack.
+ * The wid is the width of a vector element, or 0 for a real or string.
+ */
+static bool store_prop_darray_word(ivl_lval_t lval, ivl_type_t sig_type,
+				   const char*suffix, unsigned wid)
+{
+      ivl_expr_t word_ex = ivl_lval_idx(lval);
+      int prop_idx = ivl_lval_property_idx(lval);
+      if (word_ex == 0)
+	    return false;
+
+      ivl_type_t prop_type = ivl_type_prop_type(sig_type, prop_idx);
+      ivl_variable_type_t base = ivl_type_base(prop_type);
+      if (base != IVL_VT_DARRAY && base != IVL_VT_QUEUE)
+	    return false;
+
+      draw_eval_expr_into_integer(word_ex, 3);
+      if (base == IVL_VT_QUEUE) {
+	    int max_idx = allocate_word();
+	    fprintf(vvp_out, "    %%ix/load %d, %u, 0;\n", max_idx,
+		    ivl_type_queue_max(prop_type));
+	    if (wid)
+		  fprintf(vvp_out, "    %%store/prop/qdar/v %d, %d, %u;\n",
+			  prop_idx, max_idx, wid);
+	    else
+		  fprintf(vvp_out, "    %%store/prop/qdar/%s %d, %d;\n",
+			  suffix, prop_idx, max_idx);
+	    clr_word(max_idx);
+      } else {
+	    fprintf(vvp_out, "    %%store/prop/dar/%s %d;\n", suffix, prop_idx);
+      }
+      fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+      return true;
+}
+
+/*
  * Store the top vector in one statement l-value. For compound assignments,
  * slice holds the indices captured before evaluating the RHS.
  *
@@ -309,7 +347,10 @@ static void store_vec4_to_lval(ivl_lval_t lval, struct vec_slice_info*slice)
       if (slice == NULL) {
 	    slice = &local_slice;
 	    if (ivl_lval_property_idx(lval) >= 0) {
-		  draw_lval_expr(lval);
+		  ivl_type_t sig_type = draw_lval_expr(lval);
+		  if (store_prop_darray_word(lval, sig_type, "vec4",
+					   ivl_lval_width(lval)))
+			return;
 	    } else {
 		  ivl_signal_t sig = ivl_lval_sig(lval);
 		  ivl_expr_t word_ex = ivl_lval_idx(lval);
@@ -792,7 +833,9 @@ static void store_real_string_to_lval(ivl_lval_t lval, bool is_real)
       const char*suffix = is_real ? "r" : "str";
 
       if (ivl_lval_property_idx(lval) >= 0) {
-	    draw_lval_expr(lval);
+	    ivl_type_t sig_type = draw_lval_expr(lval);
+	    if (store_prop_darray_word(lval, sig_type, suffix, 0))
+		  return;
 	    fprintf(vvp_out, "    %%store/prop/%s %d;\n",
 		    suffix, ivl_lval_property_idx(lval));
 	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");

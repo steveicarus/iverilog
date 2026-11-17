@@ -2950,6 +2950,21 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
       return dex;
 }
 
+/*
+ * Is this l-value an element of a queue or dynamic array property of a
+ * class object?
+ */
+static bool is_darray_prop_element_(const NetAssign_*lv)
+{
+      if (!lv->word() || lv->get_property_idx() < 0)
+	    return false;
+      ivl_type_t ctype = lv->nest() ? lv->nest()->net_type()
+				    : lv->sig()->net_type();
+      const netclass_t*cls = dynamic_cast<const netclass_t*>(ctype);
+      return cls && dynamic_cast<const netdarray_t*>(
+			  cls->get_prop_type(lv->get_property_idx()));
+}
+
 NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
 {
       ivl_assert(*this, ! delay_);
@@ -2958,6 +2973,15 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
 
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
+
+      if (is_darray_prop_element_(lv)) {
+	    cerr << get_fileline() << ": sorry: Assignment operators on "
+		    "elements of queue/dynamic array properties are not "
+		    "supported." << endl;
+	    des->errors += 1;
+	    delete lv;
+	    return 0;
+      }
 
 	// Compressed assignments should behave identically to the
 	// equivalent uncompressed assignments. This means we need
@@ -3278,7 +3302,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	// IEEE 1800-2023 6.21 and 10.4.2: it is illegal to make
 	// nonblocking assignments to elements of dynamically sized
 	// array variables. Assigning the whole array is fine.
-      if (is_darray_element_(lv)) {
+      if (is_darray_element_(lv) || is_darray_prop_element_(lv)) {
 	    cerr << get_fileline() << ": error: elements of dynamically sized arrays "
 		    "may not be assigned values using non-blocking "
 		    "assignments." << endl;

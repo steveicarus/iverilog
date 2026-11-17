@@ -34,6 +34,7 @@
 using namespace std;
 
 const NetNet*dollar_queue_scope::queue_ = nullptr;
+int dollar_queue_scope::pidx_ = -1;
 
 NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 {
@@ -754,6 +755,21 @@ NetEConst* make_const_val_s(long value)
       tmp.has_sign(true);
       NetEConst*res = new NetEConst(tmp);
       return res;
+}
+
+NetExpr* make_property_last_index(const LineInfo*li, NetNet*sig, size_t pidx)
+{
+      NetEProperty*prop = new NetEProperty(sig, pidx);
+      prop->set_line(*li);
+
+      NetESFunc*size = new NetESFunc("$size", &netvector_t::atom2s32, 1);
+      size->set_line(*li);
+      size->parm(0, prop);
+
+      NetEBAdd*last = new NetEBAdd('-', size, make_const_val_s(1),
+				   integer_width, true);
+      last->set_line(*li);
+      return last;
 }
 
 static NetNet* make_const_net(Design*des, NetScope*scope, verinum val)
