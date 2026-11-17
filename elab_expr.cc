@@ -3882,6 +3882,7 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
 	    cerr << get_fileline() << ": sorry: "
 		 << "Nested member path not yet supported for class properties."
 		 << endl;
+	    des->errors += 1;
 	    return nullptr;
       }
 

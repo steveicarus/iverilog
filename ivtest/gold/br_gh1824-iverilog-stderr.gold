@@ -1,0 +1,2 @@
+ivltests/br_gh1824.v:18: sorry: Nested member path not yet supported for class properties.
+1 error(s) during elaboration.
