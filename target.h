@@ -1,7 +1,7 @@
 #ifndef IVL_target_H
 #define IVL_target_H
 /*
- * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -75,6 +75,7 @@ struct target_t {
 	/* Output a signal (called for each signal) */
       virtual void signal(const NetNet*) =0;
       virtual bool signal_paths(const NetNet*);
+      virtual void width_check(const NetWidth*);
 
         /* Analog branches */
       virtual bool branch(const NetBranch*);

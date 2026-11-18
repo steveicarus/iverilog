@@ -1,0 +1,11 @@
+(DELAYFILE
+  (SDFVERSION "3.0")
+  (DIVIDER .)
+  (TIMESCALE 1ps)
+  (CELL (CELLTYPE "width_dot") (INSTANCE dotted)
+    (TIMINGCHECK (WIDTH CLK\.dot (20:20:20))))
+  (CELL (CELLTYPE "width_backslash") (INSTANCE slashed)
+    (TIMINGCHECK (WIDTH (posedge CLK\\tail) (20:20:20))))
+  (CELL (CELLTYPE "width_hierarchy") (INSTANCE hierarchy)
+    (TIMINGCHECK (WIDTH (posedge nested.CLK) (20:20:20))))
+)

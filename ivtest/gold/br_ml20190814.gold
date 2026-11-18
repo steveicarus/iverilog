@@ -1,1 +1,6 @@
-SDF WARNING: ivltests/br_ml20190814.sdf:37: TIMINGCHECK not supported.
+SDF WARNING: ivltests/br_ml20190814.sdf:39: SETUPHOLD not supported.
+SDF WARNING: ivltests/br_ml20190814.sdf:41: SETUPHOLD not supported.
+SDF WARNING: ivltests/br_ml20190814.sdf:43: PERIOD not supported.
+SDF WARNING: ivltests/br_ml20190814.sdf:45: PERIOD not supported.
+SDF ERROR: ivltests/br_ml20190814.sdf:47: Unable to match WIDTH negedge CE in top.dut.clk_IBUF_BUFG_inst
+SDF ERROR: ivltests/br_ml20190814.sdf:49: Unable to match WIDTH posedge CE in top.dut.clk_IBUF_BUFG_inst

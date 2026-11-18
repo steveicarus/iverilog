@@ -1,0 +1,10 @@
+{
+    "type": "CE",
+    "source": "width_hdl_conditional_fail.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-s",
+        "tb"
+    ]
+}

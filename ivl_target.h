@@ -153,6 +153,9 @@ _BEGIN_DECL
  * ivl_switch_t
  *    Switches are the tran/tranif devices in the design.
  *
+ * ivl_width_t
+ *    An elaborated unconditional scalar $width timing check.
+ *
  * -- A Note About Bit Sets --
  * Some objects hold a value as an array of bits. In these cases there
  * is some method that retrieves the width of the value and another
@@ -195,6 +198,7 @@ typedef struct ivl_switch_s   *ivl_switch_t;
 typedef struct ivl_memory_s   *ivl_memory_t; //XXXX __attribute__((deprecated));
 typedef struct ivl_statement_s*ivl_statement_t;
 typedef const _CLASS ivl_type_s*ivl_type_t;
+typedef struct ivl_width_s    *ivl_width_t;
 
 /*
  * These are types that are defined as enumerations. These have
@@ -1893,6 +1897,11 @@ extern unsigned    ivl_parameter_lineno(ivl_parameter_t net);
  *    an instance of module foo, its type is IVL_SCT_MODULE and its
  *    type name is "foo". This is different from the instance name
  *    returned by ivl_scope_name above.
+ *
+ * ivl_scope_widths
+ *    Returns the number of $width checks in this scope.
+ * ivl_scope_width
+ *    Returns the check at idx, where 0 <= idx < ivl_scope_widths(net).
  */
 
 extern unsigned        ivl_scope_attr_cnt(ivl_scope_t net);
@@ -1949,6 +1958,9 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
 extern ivl_variable_type_t ivl_scope_func_type(ivl_scope_t net);
 extern int ivl_scope_func_signed(ivl_scope_t net);
 extern unsigned ivl_scope_func_width(ivl_scope_t net);
+
+extern unsigned    ivl_scope_widths(ivl_scope_t net);
+extern ivl_width_t ivl_scope_width(ivl_scope_t net, unsigned idx);
 
 /* SIGNALS
  * Signals are named things in the Verilog source, like wires and
@@ -2464,6 +2476,40 @@ extern ivl_scope_t ivl_type_virtual(ivl_type_t net, unsigned idx);
  * when ivl_type_base(net) == IVL_VT_QUEUE. */
 extern unsigned ivl_type_queue_max(ivl_type_t net);
 
+/* WIDTH CHECKS
+ * These accessors describe unconditional scalar $width checks.
+ *
+ * ivl_width_file
+ * ivl_width_lineno
+ *    Return the source file and line of the timing check declaration.
+ *
+ * ivl_width_limit
+ * ivl_width_threshold
+ *    Return the elaborated limit and threshold in the owning scope's
+ *    time units (ivl_scope_time_units), before rounding to its precision.
+ *    The threshold defaults to zero when omitted.
+ *
+ * ivl_width_notifier
+ *    Returns the local scalar notifier variable, or NULL if omitted.
+ *
+ * ivl_width_posedge
+ *    Returns 1 for a posedge reference event and 0 for negedge.
+ *
+ * ivl_width_reference
+ *    Returns the local scalar signal of the reference event.
+ *
+ * ivl_width_scope
+ *    Returns the scope containing the declaration.
+ */
+extern const char*  ivl_width_file(ivl_width_t check);
+extern double       ivl_width_limit(ivl_width_t check);
+extern unsigned     ivl_width_lineno(ivl_width_t check);
+extern ivl_signal_t ivl_width_notifier(ivl_width_t check);
+extern int          ivl_width_posedge(ivl_width_t check);
+extern ivl_signal_t ivl_width_reference(ivl_width_t check);
+extern ivl_scope_t  ivl_width_scope(ivl_width_t check);
+extern double       ivl_width_threshold(ivl_width_t check);
+
 
 #if defined(__MINGW32__) || defined (__CYGWIN__)
 #  define DLLEXPORT __declspec(dllexport)
@@ -2490,6 +2536,9 @@ extern DLLEXPORT const char* target_query(const char*key);
    ivl core. This function is how the target module is invoked. */
 
 typedef int  (*target_design_f)(ivl_design_t des);
+/* target_query("supports-width") returns "1" when the target consumes
+ * ivl_scope_width checks. Other targets receive a warning for each ignored
+ * $width declaration; a missing query or any other response means unsupported. */
 typedef const char* (*target_query_f) (const char*key);
 
 

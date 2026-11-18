@@ -1,0 +1,7 @@
+(DELAYFILE
+  (SDFVERSION "3.0")
+  (TIMESCALE 1ps)
+  (CELL (CELLTYPE "leaf_annotated") (INSTANCE)
+    (TIMINGCHECK (WIDTH (posedge CLK) (20:20:20)))
+  )
+)
