@@ -349,6 +349,7 @@ localparam_type			vvp_tests/localparam_type.json
 loop_condition_real		vvp_tests/loop_condition_real.json
 loop_named_block_exit		vvp_tests/loop_named_block_exit.json
 lval_concat_expr_fail		vvp_tests/lval_concat_expr_fail.json
+macro_many_args			vvp_tests/macro_many_args.json
 macro_str_esc			vvp_tests/macro_str_esc.json
 memsynth1			vvp_tests/memsynth1.json
 memsynth2			vvp_tests/memsynth2.json
