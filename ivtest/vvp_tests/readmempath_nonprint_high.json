@@ -1,0 +1,8 @@
+{
+    "type" : "normal",
+    "source" : "readmempath_nonprint_high.v",
+    "gold" : "readmempath_nonprint_high",
+    "vlog95" : {
+        "gold" : "readmempath_nonprint_high-vlog95"
+    }
+}

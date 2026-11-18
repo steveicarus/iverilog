@@ -43,13 +43,13 @@ char *as_escaped(const char *arg)
       cur = 0;
       cnt = len - 1;
       for (idx = 0; idx < cnt; idx++) {
-	    if (isprint((int)arg[idx])) {
+	    if (isprint((int)(unsigned char)arg[idx])) {
 		  res[cur] = arg[idx];
 		  cur += 1;
 	    } else {
 		  len += 3;
 		  res = (char *) realloc(res, sizeof(char) * len);
-		  sprintf(&(res[cur]), "\\%03o", arg[idx]);
+		  sprintf(&(res[cur]), "\\%03o", (unsigned char)arg[idx]);
 		  cur += 4;
 	    }
       }
@@ -72,11 +72,18 @@ char *get_filename(vpiHandle callh, const char *name, vpiHandle file)
       vpi_get_value(file, &val);
 
 	/* Verify that we have a string and that it is not NULL. */
-      if (val.format != vpiStringVal || !*(val.value.str)) {
+      if (val.format != vpiStringVal) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's file name argument (%s) is not a valid string.\n",
 	                name, vpi_get_str(vpiType, file));
+	    return 0;
+      }
+      if (!*(val.value.str)) {
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's file name argument has an empty or "
+	               "undefined value.\n", name);
 	    return 0;
       }
 
