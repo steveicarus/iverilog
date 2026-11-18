@@ -2222,9 +2222,11 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  * is the compressed operator used it statements like this:
  *      foo += <expr>
  * The ivl_stmt_opcode() returns null (0) if this is not a compressed
- * assignment statement. If either operand is real, the r-value retains its
- * own type, width and signedness. The target evaluates the operation as real
- * and converts the completed result to the l-value's width and data type.
+ * assignment statement. For integral compound assignments, the r-value is an
+ * operand of the operator and can be wider than the l-value. Shift counts are
+ * self-determined. If either operand is real, the r-value retains its own type,
+ * width and signedness. The target evaluates the operation as real and
+ * converts the completed result to the l-value's width and data type.
  *
  * - IVL_ST_CASSIGN
  * This reflects a procedural continuous assignment to an l-value. The

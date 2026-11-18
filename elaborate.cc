@@ -2972,7 +2972,7 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
       ivl_assert(*this, ! event_);
 
       NetAssign_*lv = elaborate_lval(des, scope);
-      if (lv == 0) return 0;
+      if (!lv) return nullptr;
 
       if (is_darray_prop_element_(lv)) {
 	    cerr << get_fileline() << ": sorry: Assignment operators on "
@@ -2983,50 +2983,35 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-	// Compressed assignments should behave identically to the
-	// equivalent uncompressed assignments. This means we need
-	// to take the type of the LHS into account when determining
-	// the type of the RHS expression.
-      bool force_unsigned;
-      switch (op_) {
-	  case 'l':
-	  case 'r':
-	  case 'R':
-	      // The right-hand operand of shift operations is
-	      // self-determined.
-	    force_unsigned = false;
-	    break;
-	  default:
-	    force_unsigned = !lv->get_signed();
-	    break;
-      }
       const auto lval_info = get_lval_info(lv);
+
+	// Unsigned arithmetic right shifts use the logical shift opcode.
+      char op = op_;
+      if (op == 'R' && !lv->get_signed()) op = 'r';
+      unique_ptr<NetAssign>cur(new NetAssign(lv, op, nullptr));
+      cur->set_line(*this);
+
+      bool is_shift = op_ == 'l' || op_ == 'r' || op_ == 'R';
       auto expr = rval();
       PExpr::width_mode_t mode = PExpr::SIZED;
       expr->test_width(des, scope, mode);
 
-      NetExpr*rv;
-      if (lval_info.type == IVL_VT_REAL || expr->expr_type() == IVL_VT_REAL) {
-	      // Real arithmetic uses each integral operand's own width and
-	      // signedness. Convert only the completed operation's result.
-	    unsigned width = expr->expr_width();
-	    rv = expr->elaborate_expr(des, scope, width, PExpr::NO_FLAGS);
-	    if (rv) eval_expr(rv, width);
-      } else {
-	    rv = elaborate_rval_(des, scope, nullptr, lval_info.type,
-				 lval_info.width, force_unsigned);
+      ivl_variable_type_t rtype = expr->expr_type();
+      bool is_real = lval_info.type == IVL_VT_REAL || rtype == IVL_VT_REAL;
+
+	// Integral operands share a width and signedness. Shift counts and
+	// integral operands paired with a real operand are self-determined.
+      unsigned width = expr->expr_width();
+      if (!is_shift && !is_real) {
+	    width = max(width, lval_info.width);
+	    expr->cast_signed(lv->get_signed() && expr->has_sign());
       }
-      if (rv == 0) return 0;
+      NetExpr::Ptr rv(expr->elaborate_expr(des, scope, width, PExpr::NO_FLAGS));
+      if (!rv) return nullptr;
+      eval_expr(rv, width);
 
-	// Unsigned arithmetic right shifts use the logical shift opcode.
-      char op = op_;
-      if ((op == 'R') && !lv->get_signed())
-	    op = 'r';
-
-      NetAssign*cur = new NetAssign(lv, op, rv);
-      cur->set_line(*this);
-
-      return cur;
+      cur->set_rval(rv.release());
+      return cur.release();
 }
 
 /*
