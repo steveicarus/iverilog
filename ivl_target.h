@@ -385,7 +385,8 @@ typedef enum OUT {
       IVL_SIP_NONE  = 0,
       IVL_SIP_INPUT = 1,
       IVL_SIP_OUTPUT= 2,
-      IVL_SIP_INOUT = 3
+      IVL_SIP_INOUT = 3,
+      IVL_SIP_REF   = 4
 } ivl_signal_port_t;
 
 /* This is the type code for an ivl_signal_t object. Implicit types
@@ -1524,6 +1525,11 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  *    for the local part selecting I might to in the lval object, as
  *    well as the target object width.
  *
+ * ivl_lval_data_type
+ *    The data type of this l-value component, accounting for selected
+ *    members and array elements. This can differ from the containing
+ *    signal's type, such as a two-state member of a four-state struct.
+ *
  * ivl_lval_mux (* obsolete *)
  *
  * ivl_lval_nest
@@ -1576,6 +1582,7 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  */
 
 extern unsigned    ivl_lval_width(ivl_lval_t net);
+extern ivl_variable_type_t ivl_lval_data_type(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net) __attribute__((deprecated)); /* XXXX Obsolete? */
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_part_off(ivl_lval_t net);
@@ -2012,9 +2019,9 @@ extern unsigned ivl_scope_func_width(ivl_scope_t net);
  *    dimensions. They will return msb==lsb==0 for scalars.
  *
  * ivl_signal_port
- *    If the signal is a port to a module, this function returns the
- *    port direction. If the signal is not a port, it returns
- *    IVL_SIP_NONE.
+ *    If the signal is a port to a module, task or function, this function
+ *    returns the port direction. A ref argument of a task or function is
+ *    IVL_SIP_REF. If the signal is not a port, it returns IVL_SIP_NONE.
  *
  * ivl_signal_signed
  *    A signal, which is a vector, may be signed. In Verilog 2000, any
@@ -2189,6 +2196,11 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  *    l-values are presumed to be vector values concatenated together
  *    from msb (idx==0) to lsb.
  *
+ * ivl_stmt_lval_signed
+ *    The signedness of the complete assignment target as an operand.
+ *    Explicit bit and part selects and concatenations are unsigned, while
+ *    selected members retain their signedness.
+ *
  * ivl_stmt_rval
  *    Return the rval expression of the assignment. This is the value
  *    that is to be calculated and assigned to the l-value in all the
@@ -2209,8 +2221,8 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  * the l-value that receives the value. The compiler has already made
  * sure that the types (l-value and r-value) are compatible.
  *
- * If the l-value is a vector, then the compiler also makes sure the
- * expression width of the r-values matches. It handles padding or
+ * For an ordinary vector assignment, the compiler also makes sure the
+ * expression width of the r-value matches. It handles padding or
  * operator sizing as needed to get the width exactly right.
  *
  * The blocking and non-blocking assignments may also have an internal
@@ -2224,7 +2236,9 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  * is the compressed operator used it statements like this:
  *      foo += <expr>
  * The ivl_stmt_opcode() returns null (0) if this is not a compressed
- * assignment statement.
+ * assignment statement. If either operand is real, the r-value retains its
+ * own type, width and signedness. The target evaluates the operation as real
+ * and converts the completed result to the l-value's width and data type.
  *
  * - IVL_ST_CASSIGN
  * This reflects a procedural continuous assignment to an l-value. The
@@ -2337,6 +2351,9 @@ extern ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx);
   /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_DEASSIGN
      IVL_ST_FORCE IVL_ST_RELEASE */
 extern unsigned ivl_stmt_lvals(ivl_statement_t net);
+  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_DEASSIGN
+     IVL_ST_FORCE IVL_ST_RELEASE */
+extern int ivl_stmt_lval_signed(ivl_statement_t net);
   /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN */
 extern unsigned ivl_stmt_lwidth(ivl_statement_t net);
   /* IVL_ST_STASK */
@@ -2444,6 +2461,9 @@ extern const char* ivl_type_name(ivl_type_t net);
 extern int         ivl_type_properties(ivl_type_t net);
 extern const char* ivl_type_prop_name(ivl_type_t net, int idx);
 extern ivl_type_t  ivl_type_prop_type(ivl_type_t net, int idx);
+
+/* The base class of a class type, or nil if it has none. */
+extern ivl_type_t  ivl_type_super(ivl_type_t net);
 
 /* A class type has a table of the virtual methods that the class or a
    base class overrides. Each entry is the override that a call of the

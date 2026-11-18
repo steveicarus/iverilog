@@ -181,16 +181,31 @@ extern void pform_endmodule(const char*, bool inside_celldefine,
 
 extern void pform_start_class_declaration(const struct vlltype&loc,
 					  class_type_t*type,
-					  data_type_t*base_type,
-					  std::list<named_pexpr_t> *base_args,
 					  bool virtual_class);
+extern void pform_set_class_extends(const struct vlltype&loc,
+				    data_type_t*base_type,
+				    std::list<named_pexpr_t> *base_args);
 extern void pform_class_property(const struct vlltype&loc,
 				 property_qualifier_t pq,
 				 data_type_t*data_type,
 				 std::list<decl_assignment_t*>*decls);
 extern void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net);
 extern void pform_set_method_virtual(bool flag);
+extern void pform_set_method_static(bool flag);
 extern void pform_set_constructor_return(PFunction*net);
+extern void pform_class_extern_method(const struct vlltype&loc,
+				      const char*name, bool is_task,
+				      bool is_virtual,
+				      std::vector<pform_tf_port_t>*ports,
+				      data_type_t*ret_type =0);
+extern void pform_check_extern_ports(const struct vlltype&loc,
+				     std::vector<pform_tf_port_t>*ports);
+extern bool pform_start_extern_method(const struct vlltype&loc,
+				      const char*class_name, const char*name,
+				      bool is_task);
+extern PFunction*pform_push_extern_constructor_scope(const struct vlltype&loc,
+						     const char*class_name);
+extern void pform_end_extern_method();
 
 extern void pform_end_class_declaration(const struct vlltype&loc);
 extern bool pform_in_class();
@@ -264,6 +279,12 @@ extern bool pform_check_local_symbol(LexicalScope *scope, perm_string name,
 				     const PNamedItem *item);
 
 extern PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name);
+
+  // Make scope the current lexical scope. Returns the previous one.
+extern LexicalScope* pform_set_scope(LexicalScope*scope);
+
+  // Push an unnamed scope that holds the ports of an extern prototype.
+extern void pform_push_proto_scope(const struct vlltype&loc);
 
 extern PFunction*pform_push_constructor_scope(const struct vlltype&loc);
 

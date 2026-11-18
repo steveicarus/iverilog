@@ -1101,7 +1101,7 @@ void NetAssign_::dump_lval(ostream&o) const
 	    o << "[word=" << *word_ << "]";
       }
       if (base_) {
-	    o << "[" << *base_ << " +: " << lwid_ << "]";
+	    o << "[" << *base_ << " +: " << part_width_ << "]";
       }
 }
 
@@ -1650,6 +1650,8 @@ void NetScope::dump(ostream&o) const
 
       for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
 		 ; cur != classes_.end() ; ++ cur ) {
+	    if (cur->second->is_template())
+		  continue;
 	    cur->second->dump_scope(o);
       }
 }

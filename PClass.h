@@ -1,7 +1,7 @@
 #ifndef IVL_PClass_H
 #define IVL_PClass_H
 /*
- * Copyright (c) 2012-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,6 +23,7 @@
 # include  "PNamedItem.h"
 # include  "StringHeap.h"
 # include  <iostream>
+# include  <list>
 
 class PChainConstructor;
 
@@ -44,6 +45,37 @@ class PClass : public PScopeExtra, public PNamedItem {
 
     public:
       class_type_t*type;
+
+	// The names of the parameters in the parameter port list, in
+	// the order they are declared. Positional overrides in a
+	// specialization C#(...) are matched against this list.
+      std::list<perm_string> param_names;
+
+	// True if a parameter in the parameter port list has no default
+	// value, so that the class can only be used with a parameter
+	// value assignment.
+      bool has_required_params() const
+      {
+	    for (perm_string name : param_names) {
+		  auto cur = parameters.find(name);
+		  if (cur != parameters.end() && !cur->second->expr)
+			return true;
+	    }
+	    return false;
+      }
+
+	// Methods declared "extern" in the class body. The definition
+	// is given outside the class (IEEE1800-2017 8.24).
+      struct extern_method_t : public LineInfo {
+	    bool is_task;
+	    bool is_virtual;
+	    bool is_static;
+	    bool defined;
+	    std::vector<pform_tf_port_t>*ports;
+	    data_type_t*ret_type;
+	    LineInfo def; // Where the definition is, once there is one.
+      };
+      std::map<perm_string,extern_method_t> externs;
 };
 
 #endif /* IVL_PClass_H */

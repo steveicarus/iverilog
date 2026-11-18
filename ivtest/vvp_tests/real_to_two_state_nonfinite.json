@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "real_to_two_state_nonfinite.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Two-state casts are emitted without conversion",
+        "type"      : "NI"
+    }
+}

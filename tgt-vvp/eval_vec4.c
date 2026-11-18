@@ -855,6 +855,12 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 	    return;
       }
 
+      if (strcmp(ivl_expr_name(expr), "$cast") == 0) {
+	    vvp_errors += draw_class_cast(ivl_expr_parm(expr, 0),
+					  ivl_expr_parm(expr, 1), 0, 1);
+	    return;
+      }
+
       draw_vpi_func_call(expr);
 }
 
@@ -1091,6 +1097,8 @@ static void draw_unary_vec4(ivl_expr_t expr)
 		case IVL_VT_REAL:
 		  draw_eval_real(sub);
 		  fprintf(vvp_out, "    %%cvt/vr %u;\n", ivl_expr_width(expr));
+		    /* Convert X from NaN/Inf to zero for the two-state result. */
+		  fprintf(vvp_out, "    %%cast2;\n");
 		  break;
 		case IVL_VT_STRING:
 		  draw_eval_string(sub);

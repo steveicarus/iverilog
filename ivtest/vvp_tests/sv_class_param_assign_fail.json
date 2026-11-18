@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_class_param_assign_fail.v",
+    "iverilog-args" : [ "-g2012" ],
+    "gold"          : "sv_class_param_assign_fail"
+}

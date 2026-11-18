@@ -222,10 +222,22 @@ void NetAssign::eval_func_lval_op_real_(const LineInfo&loc,
 }
 
 void NetAssign::eval_func_lval_op_(const LineInfo&loc,
-				   verinum&lv, const verinum&rv) const
+				   verinum&lv, const NetExpr*rval) const
 {
       unsigned lv_width = lv.len();
       bool lv_sign = lv.has_sign();
+      if (const auto*real = dynamic_cast<const NetECReal*>(rval)) {
+	    lv_sign = l_val(0)->get_signed();
+	    lv.has_sign(lv_sign);
+	    verireal value(lv.as_double());
+	    eval_func_lval_op_real_(loc, value, real->value());
+	    lv = cast_to_width(verinum(value.as_double(), true), lv_width);
+	    lv.has_sign(lv_sign);
+	    return;
+      }
+      const auto*rval_const = dynamic_cast<const NetEConst*>(rval);
+      ivl_assert(loc, rval_const);
+      const verinum&rv = rval_const->value();
       switch (op_) {
 	  case 'l':
 	  case 'r':
@@ -304,10 +316,6 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 	    const NetEConst*lval_const = dynamic_cast<NetEConst*>(old_lval);
 	    ivl_assert(loc, lval_const);
 	    verinum lval_v = lval_const->value();
-	    const NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
-	    ivl_assert(loc, rval_const);
-	    verinum rval_v = rval_const->value();
-
 	    verinum lpart(verinum::Vx, lval->lwidth());
 	    if (op_) {
 		  lpart.has_sign(lval->get_signed());
@@ -316,9 +324,12 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 			if (ldx >= 0 && (unsigned long)ldx < lval_v.len())
 			      lpart.set(idx, lval_v[ldx]);
 		  }
-		  eval_func_lval_op_(loc, lpart, rval_v);
+		  eval_func_lval_op_(loc, lpart, rval_result);
+		  if (lval->expr_type() == IVL_VT_BOOL) lpart.cast_to_int2();
 	    } else {
-		  lpart = cast_to_width(rval_v, lval->lwidth());
+		  const auto*rval_const = dynamic_cast<NetEConst*>(rval_result);
+		  ivl_assert(loc, rval_const);
+		  lpart = cast_to_width(rval_const->value(), lval->lwidth());
 	    }
 	    for (unsigned idx = 0 ; idx < lpart.len() ; idx += 1) {
 		  long ldx = base + idx;
@@ -332,13 +343,18 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
       } else {
 	    if (op_ == 0) {
 		  rval_result = fix_assign_value(lval->sig(), rval_result);
-	    } else if (dynamic_cast<NetECReal*>(rval_result)) {
+	    } else if (lval->expr_type() == IVL_VT_REAL) {
 		  const NetECReal*lval_const = dynamic_cast<NetECReal*>(old_lval);
 		  ivl_assert(loc, lval_const);
 		  verireal lval_r = lval_const->value();
-		  const NetECReal*rval_const = dynamic_cast<NetECReal*>(rval_result);
-		  ivl_assert(loc, rval_const);
-		  verireal rval_r = rval_const->value();
+		  verireal rval_r;
+		  if (const auto*real = dynamic_cast<NetECReal*>(rval_result)) {
+			rval_r = real->value();
+		  } else {
+			const auto*integer = dynamic_cast<NetEConst*>(rval_result);
+			ivl_assert(loc, integer);
+			rval_r = verireal(integer->value().as_double());
+		  }
 
 		  eval_func_lval_op_real_(loc, lval_r, rval_r);
 
@@ -348,11 +364,8 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 		  const NetEConst*lval_const = dynamic_cast<NetEConst*>(old_lval);
 		  ivl_assert(loc, lval_const);
 		  verinum lval_v = lval_const->value();
-		  const NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
-		  ivl_assert(loc, rval_const);
-		  verinum rval_v = rval_const->value();
-
-		  eval_func_lval_op_(loc, lval_v, rval_v);
+		  eval_func_lval_op_(loc, lval_v, rval_result);
+		  if (lval->expr_type() == IVL_VT_BOOL) lval_v.cast_to_int2();
 
 		  delete rval_result;
 		  rval_result = new NetEConst(lval_v);
@@ -392,17 +405,18 @@ bool NetAssign::evaluate_function(const LineInfo&loc,
       if (l_val_count() == 1)
 	    return eval_func_lval_(loc, context_map, l_val(0), rval_result);
 
-	// If we get here, the LHS must be a concatenation, so we
-	// expect the RHS to be a vector value.
-      const NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
-      ivl_assert(*this, rval_const);
-
       if (op_) {
 	    cerr << get_fileline() << ": sorry: Assignment operators "
 		    "inside a constant function are not currently "
 		    "supported if the LHS is a concatenation." << endl;
+	    delete rval_result;
 	    return false;
       }
+
+	// If we get here, the LHS must be a concatenation, so we
+	// expect the RHS to be a vector value.
+      const NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
+      ivl_assert(*this, rval_const);
 
       verinum rval_full = rval_const->value();
       delete rval_result;
@@ -414,6 +428,8 @@ bool NetAssign::evaluate_function(const LineInfo&loc,
 	    verinum rval_part(verinum::Vx, lval->lwidth());
 	    for (unsigned idx = 0 ; idx < rval_part.len() ; idx += 1)
 		  rval_part.set(idx, rval_full[base+idx]);
+
+	    if (lval->expr_type() == IVL_VT_BOOL) rval_part.cast_to_int2();
 
 	    bool flag = eval_func_lval_(loc, context_map, lval,
 					new NetEConst(rval_part));

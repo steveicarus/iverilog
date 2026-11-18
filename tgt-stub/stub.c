@@ -1411,6 +1411,10 @@ static void show_signal(ivl_signal_t net)
 	    port = "inout ";
 	    break;
 
+	  case IVL_SIP_REF:
+	    port = "ref ";
+	    break;
+
 	  case IVL_SIP_NONE:
 	    break;
       }

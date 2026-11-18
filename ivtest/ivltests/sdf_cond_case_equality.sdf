@@ -1,0 +1,9 @@
+(DELAYFILE
+ (SDFVERSION "3.0") (DESIGN "top") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "case_cond_cell") (INSTANCE u)
+  (DELAY (ABSOLUTE
+   (COND E === 1'b1 (IOPATH A Z1 (3) (5)))
+   (COND E === 1'b0 (IOPATH A Z0 (7) (11)))
+   (COND (E === 1'b1 && F == 1'b0) (IOPATH A ZAND (13) (17)))
+   (COND (E === 1'b1 || F == 1'b0) (IOPATH A ZOR (19) (23))))))
+)

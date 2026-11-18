@@ -92,6 +92,12 @@ extern void draw_lpm_substitute(ivl_lpm_t net);
 extern int draw_array_copy(ivl_signal_t dst, ivl_expr_t rval);
 
 extern void draw_ufunc(ivl_expr_t expr);
+
+/*
+ * Push a reference to the variable or class property that is the actual
+ * argument for a ref formal onto the object stack.
+ */
+extern int draw_eval_ref(ivl_expr_t expr);
 extern void draw_ufunc_object(ivl_expr_t expr);
 
 extern char* process_octal_codes(const char*txt, unsigned wid);
@@ -123,6 +129,14 @@ extern void draw_vpi_rfunc_call(ivl_expr_t expr);
 extern void draw_vpi_sfunc_call(ivl_expr_t expr);
 
 extern void draw_class_in_scope(ivl_type_t classtype);
+
+/*
+ * Draw $cast(dest, src) of class handles. The dest is a signal or a
+ * property expression. If want_result is true, a 32 bit 1 or 0 is left
+ * on the vec4 stack. If report is true, a failed cast prints an error.
+ */
+extern int draw_class_cast(ivl_expr_t dest, ivl_expr_t src,
+			   int report, int want_result);
 
 /*
  * Enumeration draw routine.

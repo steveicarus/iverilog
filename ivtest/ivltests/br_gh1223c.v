@@ -15,7 +15,7 @@ module top;
   cmos(out_rcm_p, inr, ctrl, ctrl);
 
   always @(out_pm) begin
-    int inr_int;
+    integer inr_int;
     inr_int = inr;
     if (out_pm !== inr_int[0]) begin
       $display("pmos of %f not equal to %b", inr, inr_int[0]);
@@ -24,7 +24,7 @@ module top;
   end
 
   always @(out_rpm) begin
-    int inr_int;
+    integer inr_int;
     inr_int = inr;
     if (out_rpm !== inr_int[0]) begin
       $display("rpmos of %f not equal to %b", inr, inr_int[0]);
@@ -33,7 +33,7 @@ module top;
   end
 
   always @(out_nm) begin
-    int inr_int;
+    integer inr_int;
     inr_int = inr;
     if (out_nm !== inr_int[0]) begin
       $display("nmos of %f not equal to %b", inr, inr_int[0]);
@@ -42,7 +42,7 @@ module top;
   end
 
   always @(out_rnm) begin
-    int inr_int;
+    integer inr_int;
     inr_int = inr;
     if (out_rnm !== inr_int[0]) begin
       $display("rnmos of %f not equal to %b", inr, inr_int[0]);
@@ -51,7 +51,7 @@ module top;
   end
 
   always @(out_cm_n) begin
-    int inr_int;
+    integer inr_int;
     inr_int = inr;
     if (out_cm_n !== inr_int[0]) begin
       $display("cmos(N) of %f not equal to %b", inr, inr_int[0]);
@@ -60,7 +60,7 @@ module top;
   end
 
   always @(out_cm_p) begin
-    int inr_int;
+    integer inr_int;
     inr_int = inr;
     if (out_cm_p !== inr_int[0]) begin
       $display("cmos(P) of %f not equal to %b", inr, inr_int[0]);
@@ -69,7 +69,7 @@ module top;
   end
 
   always @(out_rcm_n) begin
-    int inr_int;
+    integer inr_int;
     inr_int = inr;
     if (out_rcm_n !== inr_int[0]) begin
       $display("rcmos(N) of %f not equal to %b", inr, inr_int[0]);
@@ -78,7 +78,7 @@ module top;
   end
 
   always @(out_rcm_p) begin
-    int inr_int;
+    integer inr_int;
     inr_int = inr;
     if (out_rcm_p !== inr_int[0]) begin
       $display("rcmos(P) of %f not equal to %b", inr, inr_int[0]);

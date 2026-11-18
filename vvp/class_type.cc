@@ -400,7 +400,7 @@ void property_object::copy(char*dst, char*src)
 /* **** */
 
 class_type::class_type(const string&nam, size_t nprop)
-: class_name_(nam), properties_(nprop)
+: class_name_(nam), properties_(nprop), super_(nullptr)
 {
       instance_size_ = 0;
 }
@@ -584,6 +584,16 @@ vvp_code_t class_type::get_virtual(vpiHandle scope) const
 {
       auto cur = virtual_.find(scope);
       return cur == virtual_.end() ? nullptr : cur->second;
+}
+
+bool class_type::is_a(const class_type*that) const
+{
+      for (const class_type*cur = this ; cur ; cur = cur->super_) {
+	    if (cur == that)
+		  return true;
+      }
+
+      return false;
 }
 
 int class_type::get_type_code(void) const

@@ -64,12 +64,12 @@ static void delete_sub_scopes(__vpiScope *scope)
 	    switch(item->get_type_code()) {
 		case vpiFunction:
 		case vpiTask:
+		case vpiNamedBegin:
+		case vpiNamedFork:
 		  contexts_delete(static_cast<__vpiScope*>(item));
 		  // fallthrough
 		case vpiModule:
 		case vpiGenScope:
-		case vpiNamedBegin:
-		case vpiNamedFork:
 		case vpiClassTypespec: {
 		  __vpiScope*lscope = static_cast<__vpiScope*>(item);
 		  delete_sub_scopes(lscope);

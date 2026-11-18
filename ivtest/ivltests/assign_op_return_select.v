@@ -24,6 +24,8 @@ module test;
     `check(calc(index), 8'hb5);
     index = 8;
     `check(calc(index), 8'ha5);
+    index = -2;
+    `check(calc(index), 8'b101001xx);
     index = 'bx;
     `check(calc(index), 8'ha5);
     if (!failed) begin

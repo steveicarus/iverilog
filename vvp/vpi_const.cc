@@ -224,7 +224,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 	      for(unsigned i=0; i<size; i += 1){
 		  vecp->aval |= value_[i] << uint_value*8;
 		  uint_value += 1;
-		  if (uint_value > 3) {
+		  if (uint_value > 3 && i+1 < size) {
 		      uint_value = 0;
 		      vecp += 1;
 		      vecp->aval = vecp->bval = 0;

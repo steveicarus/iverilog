@@ -50,9 +50,45 @@ static void function_argument_real(ivl_signal_t port, ivl_expr_t expr)
       draw_eval_real(expr);
 }
 
+/*
+ * Push a reference to the variable or class property that is the
+ * actual argument for a ref formal. The formal is bound to the
+ * reference with %ref/bind once the callee has its context.
+ */
+int draw_eval_ref(ivl_expr_t expr)
+{
+      ivl_signal_t sig = ivl_expr_signal(expr);
+
+      switch (ivl_expr_type(expr)) {
+	  case IVL_EX_SIGNAL:
+	      /* A ref formal passed on to another subroutine. */
+	    if (ivl_signal_port(sig) == IVL_SIP_REF)
+		  fprintf(vvp_out, "    %%ref/get v%p_0;\n", sig);
+	    else
+		  fprintf(vvp_out, "    %%ref/net v%p_0;\n", sig);
+	    return 0;
+
+	  case IVL_EX_PROPERTY:
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+	    fprintf(vvp_out, "    %%ref/prop %u;\n",
+		    ivl_expr_property_idx(expr));
+	    return 0;
+
+	  default:
+	    fprintf(stderr, "%s:%u: tgt-vvp sorry: ref argument is not a "
+		    "variable.\n", ivl_expr_file(expr), ivl_expr_lineno(expr));
+	    return 1;
+      }
+}
+
 static void draw_eval_function_argument(ivl_signal_t port, ivl_expr_t expr)
 {
       ivl_variable_type_t dtype = ivl_signal_data_type(port);
+
+      if (ivl_signal_port(port) == IVL_SIP_REF) {
+	    vvp_errors += draw_eval_ref(expr);
+	    return;
+      }
       switch (dtype) {
 	  case IVL_VT_BOOL:
 	      /* For now, treat bit2 variables as bit4 variables. */
@@ -85,6 +121,11 @@ static void draw_eval_function_argument(ivl_signal_t port, ivl_expr_t expr)
 static void draw_send_function_argument(ivl_signal_t port, ivl_expr_t expr)
 {
       ivl_variable_type_t dtype = ivl_signal_data_type(port);
+
+      if (ivl_signal_port(port) == IVL_SIP_REF) {
+	    fprintf(vvp_out, "    %%ref/bind v%p_0;\n", port);
+	    return;
+      }
 
 	/* An unpacked array argument is a memory-to-memory copy rather than a
 	   value on the stack, so it is done here in the send pass, reading the
@@ -228,6 +269,12 @@ void draw_ufunc_object(ivl_expr_t expr)
  */
 static void draw_virtual_copy(ivl_signal_t from, ivl_signal_t to)
 {
+      if (ivl_signal_port(to) == IVL_SIP_REF) {
+	    fprintf(vvp_out, "    %%ref/get v%p_0;\n", from);
+	    fprintf(vvp_out, "    %%ref/bind v%p_0;\n", to);
+	    return;
+      }
+
       switch (ivl_signal_data_type(to)) {
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
@@ -283,7 +330,8 @@ int draw_virtual_adapter(ivl_scope_t root, ivl_scope_t impl)
 	    for (idx = first ; idx < ivl_scope_ports(root) ; idx += 1) {
 		  ivl_signal_t from = ivl_scope_port(impl, idx);
 		  ivl_signal_t to = ivl_scope_port(root, idx);
-		  if (ivl_signal_port(to) != IVL_SIP_INPUT)
+		  if (ivl_signal_port(to) != IVL_SIP_INPUT &&
+		      ivl_signal_port(to) != IVL_SIP_REF)
 			draw_virtual_copy(from, to);
 	    }
       } else {

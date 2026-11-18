@@ -1,0 +1,8 @@
+{
+  "type": "CE",
+  "source": "automatic_static_block_unsupported.v",
+  "iverilog-args": [
+    "-g2012",
+    "-DHIERARCHY"
+  ]
+}

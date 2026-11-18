@@ -65,6 +65,13 @@ class class_type : public __vpiHandle {
 	// overridden in this class.
       vvp_code_t get_virtual(vpiHandle scope) const;
 
+	// Set the base class. This is used during parse of the .vvp
+	// file. A class with no base class has none set.
+      void set_super(const class_type*super) { super_ = super; }
+	// Return true if this class is the given class or is derived
+	// from it.
+      bool is_a(const class_type*that) const;
+
     public:
 	// Constructors and destructors for making instances.
       inst_t instance_new() const;
@@ -95,6 +102,7 @@ class class_type : public __vpiHandle {
       size_t instance_size_;
 
       std::map<vpiHandle,vvp_code_t> virtual_;
+      const class_type*super_;
 };
 
 #endif /* IVL_class_type_H */

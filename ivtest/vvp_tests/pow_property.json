@@ -1,0 +1,10 @@
+{
+    "type"          : "normal",
+    "source"        : "pow_property.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Classes and power expressions are not supported",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}

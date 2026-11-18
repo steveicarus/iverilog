@@ -478,7 +478,7 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 	   - this is not an implicit named port connection */
      if (no_implicit_sig_)
 	    return;
-     if (path_.package)
+     if (path_.is_scoped())
 	    return;
      if (path_.name.size() == 1 && path_.name.front().index.empty()) {
             perm_string name = path_.name.front().name;

@@ -1,7 +1,7 @@
 #ifndef IVL_PWire_H
 #define IVL_PWire_H
 /*
- * Copyright (c) 1998-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -90,6 +90,12 @@ class PWire : public PNamedItem {
       void dump(std::ostream&out, unsigned ind=4) const;
 
       NetNet* elaborate_sig(Design*, NetScope*scope);
+
+	// Elaborate the type that a port declaration gives, as
+	// elaborate_sig() would, without making a signal. The unpacked
+	// dimensions are returned separately. Returns 0 on error.
+      ivl_type_t elaborate_port_type(Design*, NetScope*scope,
+				     netranges_t&unpacked_dimensions);
 
       SymbolType symbol_type() const override;
 

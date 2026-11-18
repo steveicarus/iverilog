@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "assign_op_two_state4.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Two-state conversion of packed member selects is not supported",
+        "type"      : "NI"
+    }
+}

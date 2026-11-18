@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "br_gh1782.v",
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "__comment" : "Packages and enums are not supported",
+        "type"      : "CE"
+    }
+}

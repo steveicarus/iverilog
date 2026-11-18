@@ -383,10 +383,10 @@ extern char **compile_udp_table(char **table, char *row);
 
 extern void compile_var_array(char*label, char*name,
 			      int last, int first,
-			      int msb, int lsb, char signed_flag);
+			      int msb, int lsb, int word_vec, char signed_flag);
 extern void compile_var2_array(char*label, char*name,
 			      int last, int first,
-			      int msb, int lsb, bool signed_flag);
+			      int msb, int lsb, int word_vec, bool signed_flag);
 extern void compile_real_array(char*label, char*name,
 			       int last, int first);
 extern void compile_string_array(char*label, char*name,
@@ -499,6 +499,12 @@ extern void compile_scope_recall(char*sym);
 extern void compile_thread(char*start_sym, char*flag);
 
 /*
+ * The .refvar statement makes the automatic variable with the given
+ * label a ref formal of a task or function.
+ */
+extern void compile_ref_var(char*label);
+
+/*
  * This function is called to create a var vector with the given name.
  *
  * The vpi_type_code argument of compile_variable() is one of the vpi
@@ -506,7 +512,7 @@ extern void compile_thread(char*start_sym, char*flag);
  * vpiIntVar, etc.
  */
 extern void compile_variable(char*label, char*name,
-			     int msb, int lsb, int vpi_type_code,
+			     int msb, int lsb, bool vec_flag, int vpi_type_code,
 			     bool signed_flag, bool local_flag, char*enum_label);
 
 extern void compile_var_real(char*label, char*name, bool local_flag);
@@ -537,21 +543,19 @@ extern void compile_port_info( unsigned index, int vpi_port_type, unsigned width
  *   vpiIntVar -- 2-value logic
  *  -vpiLogic  -- 8-value (i.e. strength aware) logic
  */
-extern void compile_net(char*label, char*name, int msb, int lsb,
+extern void compile_net(char*label, char*name, int msb, int lsb, bool vec_flag,
 			int vpi_type_code, bool signed_flag, bool local_flag,
 			unsigned argc, struct symb_s*argv);
 
-extern void compile_net_real(char*label, char*name,
-			     int msb, int lsb, bool local_flag,
+extern void compile_net_real(char*label, char*name, bool local_flag,
 			     unsigned argc, struct symb_s*argv);
 
 extern void compile_netw(char*label, char*array_label, unsigned long array_addr,
-			 int msb, int lsb, int vpi_type_code, bool signed_flag,
+			 int msb, int lsb, bool vec_flag, int vpi_type_code, bool signed_flag,
 			 unsigned argc, struct symb_s*argv);
 
 extern void compile_netw_real(char*label, char*array_symbol,
 			      unsigned long array_addr,
-			      int msb, int lsb,
 			      unsigned argc, struct symb_s*argv);
 
 
@@ -577,6 +581,12 @@ extern void delete_udp_symbols(void);
 extern void compile_class_start(char*lab, char*nam, unsigned nprop);
 extern void compile_class_property(unsigned idx, char*nam, char*typ, uint64_t array_size);
 extern void compile_class_done(void);
+
+/*
+ * The .super statement sets the base class of a class. The first label
+ * is the class and the second is its base class.
+ */
+extern void compile_super(char*cls, char*super);
 
 /*
  * The .virt statement adds an entry to the virtual function table of a

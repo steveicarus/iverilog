@@ -149,6 +149,7 @@ width_real ([0-9]+[.][0-9]*|[0-9]*[.][0-9]+)([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0
 ".array"        { return K_ARRAY; }
 ".array/2s"     { return K_ARRAY_2S; }
 ".array/2u"     { return K_ARRAY_2U; }
+".array/4u"     { return K_ARRAY_4U; }
 ".array/i"      { return K_ARRAY_I; }
 ".array/obj"    { return K_ARRAY_OBJ; }
 ".array/real"   { return K_ARRAY_R; }
@@ -222,6 +223,7 @@ width_real ([0-9]+[.][0-9]*|[0-9]*[.][0-9]+)([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0
 ".reduce/nand"  { return K_REDUCE_NAND; }
 ".reduce/nor"   { return K_REDUCE_NOR; }
 ".reduce/xnor"  { return K_REDUCE_XNOR; }
+".refvar"       { return K_REFVAR; }
 ".repeat"       { return K_REPEAT; }
 ".resolv"       { return K_RESOLV; }
 ".rtran"        { return K_RTRAN; }
@@ -246,6 +248,7 @@ width_real ([0-9]+[.][0-9]*|[0-9]*[.][0-9]+)([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0
 ".ufunc/vec4"   { return K_UFUNC_VEC4; }
 ".ufunc/e"      { return K_UFUNC_E; }
 ".var"          { return K_VAR; }
+".super"        { return K_SUPER; }
 ".virt"         { return K_VIRT; }
 ".var/cobj"     { return K_VAR_COBJECT; }
 ".var/darray"   { return K_VAR_DARRAY; }

@@ -43,7 +43,7 @@ memory	.array	"memory", 27 5, 8 2;
 ;   reg [6:0]  m;
 
 a	.var	"a", 4 0;
-we	.var	"we", 0 0;
+we	.var	"we";
 wclk	.event	"wclk";
 di	.var	"di", 5 0;
 d	.net	"d", 5 0, m_part;

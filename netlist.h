@@ -1098,6 +1098,14 @@ class NetScope : public Definitions, public Attrib {
 	   if a unique name couldn't be generated. */
       bool auto_name(const char* prefix, char pad, const char* suffix);
 
+	/* Change the name of the scope in its parent scope, or remove
+	   it from its parent scope. These are used for the scope of a
+	   specialization of a parameterized class, which is named
+	   after its parameter values, and dropped if it turns out to
+	   be equal to an existing specialization. */
+      void rename(const hname_t&name);
+      void detach();
+
       void add_imports(const package_import_map_t *imports);
       NetScope *find_import(const Design *des, perm_string name,
 			    unsigned int lexical_pos = UINT_MAX);
@@ -1300,6 +1308,11 @@ class NetScope : public Definitions, public Attrib {
 	   netclass_t::virtual_root() to also account for inheritance. */
       void is_virtual(bool is_virtual__) { is_virtual_ = is_virtual__; };
       bool is_virtual() const { return is_virtual_; };
+
+	/* Was the method declared with the "static" qualifier. A static
+	   method has no object, so it is called through the class. */
+      void is_static_method(bool is_static__) { is_static_method_ = is_static__; };
+      bool is_static_method() const { return is_static_method_; };
 
 	/* Is the module a cell (is in a `celldefine) */
       void is_cell(bool is_cell__) { is_cell_ = is_cell__; };
@@ -1539,7 +1552,7 @@ class NetScope : public Definitions, public Attrib {
       std::map<perm_string,std::map<long,interface_port_alias_t> > interface_port_alias_arrays_;
 
       unsigned lcounter_;
-      bool need_const_func_, is_const_func_, is_auto_, is_virtual_, is_cell_, calls_stask_;
+      bool need_const_func_, is_const_func_, is_auto_, is_virtual_, is_static_method_, is_cell_, calls_stask_;
 
       /* Final procedures sets this to notify statements that
 	 they are part of a final procedure. */
@@ -3085,6 +3098,9 @@ class NetAssign_ {
 	// The part select has a specific type and the width of the select will
 	// be that of the type.
       void set_part(NetExpr *loff, ivl_type_t data_type);
+	// Set an unsigned part select with the supplied base type and width.
+	// The offset expression calculates a canonical bit address.
+      void set_part(NetExpr*loff, ivl_type_t data_type, unsigned wid);
 	// Set the member or property name if the signal type is a
 	// class.
       void set_property(const perm_string&name, unsigned int idx);
@@ -3101,6 +3117,8 @@ class NetAssign_ {
 	// method accounts for the presence of the mux, so it is not
 	// necessarily the same as the pin_count().
       unsigned lwidth() const;
+	// Get the base type of this component, ignoring the rest of a
+	// concatenation.
       ivl_variable_type_t expr_type() const;
 
 	// Get the expression type of the l-value. This may be
@@ -3136,9 +3154,7 @@ class NetAssign_ {
       void dump_lval(std::ostream&o) const;
 
     private:
-	// Return the type of this l-value component, if any. Return nullptr
-	// if more components follow. Unlike net_type(), this retains the type
-	// when the component is marked untyped.
+	// Get the declared component type, including for untyped l-values.
       ivl_type_t component_type() const;
 
 	// Nested l-value. If this is set, sig_ must NOT be set!
@@ -3154,7 +3170,7 @@ class NetAssign_ {
       bool turn_sig_to_wire_on_release_;
 	// indexed part select base
       NetExpr*base_;
-      unsigned lwid_;
+      unsigned part_width_ = 0;
       ivl_select_type_t sel_type_;
       ivl_type_t part_data_type_ = nullptr;
 };
@@ -3222,7 +3238,7 @@ class NetAssign : public NetAssignBase {
 
     private:
       void eval_func_lval_op_real_(const LineInfo&loc, verireal&lv, const verireal&rv) const;
-      void eval_func_lval_op_(const LineInfo&loc, verinum&lv, const verinum&rv) const;
+      void eval_func_lval_op_(const LineInfo&loc, verinum&lv, const NetExpr*rv) const;
       bool eval_func_lval_(const LineInfo&loc, std::map<perm_string,LocalVar>&ctx,
 			   const NetAssign_*lval, NetExpr*rval_result) const;
 
@@ -5346,6 +5362,18 @@ class Design {
 
       std::set<NetScope*> defparams_later;
 
+	/* Specializations of parameterized classes are created on
+	   demand during elaboration. Their signals and statements are
+	   elaborated after those of the rest of the design. Once the
+	   signal pass is done, the signals of new specializations are
+	   elaborated right away. */
+      std::list<netclass_t*> class_specializations_sig;
+      std::list<netclass_t*> class_specializations_elab;
+      bool class_specializations_sig_done = false;
+	// Set once the parameters of all the scopes are evaluated. Class
+	// specializations made after that evaluate their own.
+      bool parameters_evaluated = false;
+
 	// PARAMETERS
 
       void run_defparams();
@@ -5369,6 +5397,10 @@ class Design {
 
 	// PROCESSES
       void add_process(NetProcTop*);
+	// Add a process that runs before the processes already added,
+	// for example the static initialization of a class that is
+	// elaborated late.
+      void add_process_first(NetProcTop*);
       void add_process(NetAnalogTop*);
       void delete_process(NetProcTop*);
       bool check_proc_delay() const;

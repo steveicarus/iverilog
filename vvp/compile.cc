@@ -124,6 +124,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%cassign/vec4",    of_CASSIGN_VEC4,    1,{OA_FUNC_PTR,OA_NONE,     OA_NONE} },
       { "%cassign/vec4/off",of_CASSIGN_VEC4_OFF,2,{OA_FUNC_PTR,OA_BIT1,     OA_NONE} },
       { "%cassign/wr",  of_CASSIGN_WR,  1,{OA_FUNC_PTR,OA_NONE,     OA_NONE} },
+      { "%cast/class", of_CAST_CLASS, 2, {OA_VPI_PTR,OA_BIT1,OA_NONE} },
       { "%cast/vec2/dar", of_CAST_VEC2_DAR, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%cast/vec4/dar", of_CAST_VEC4_DAR, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%cast/vec4/str", of_CAST_VEC4_STR, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
@@ -210,6 +211,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%jmp/0xz",of_JMP0XZ, 2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%jmp/1",  of_JMP1,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%jmp/1xz",of_JMP1XZ, 2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
+      { "%jmp/flow",of_JMP_FLOW,2,{OA_CODE_PTR2,OA_VPI_PTR,  OA_NONE} },
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%join/detach",of_JOIN_DETACH,1,{OA_NUMBER,OA_NONE,  OA_NONE} },
       { "%load/ar",of_LOAD_AR,2,  {OA_ARR_PTR,  OA_BIT1,     OA_NONE} },
@@ -218,6 +220,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%load/dar/vec4",of_LOAD_DAR_VEC4,1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%load/obj",   of_LOAD_OBJ,  1,{OA_FUNC_PTR,OA_NONE, OA_NONE} },
       { "%load/obja",  of_LOAD_OBJA, 2,{OA_ARR_PTR, OA_BIT1, OA_NONE} },
+      { "%load/prop/dar/r", of_LOAD_PROP_DAR_R, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%load/prop/dar/str", of_LOAD_PROP_DAR_STR, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%load/prop/dar/vec4", of_LOAD_PROP_DAR_VEC4, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%load/real",  of_LOAD_REAL, 1,{OA_VPI_PTR, OA_NONE, OA_NONE} },
       { "%load/str",   of_LOAD_STR,  1,{OA_FUNC_PTR,OA_NONE, OA_NONE} },
@@ -285,6 +289,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%qpop/prop/f/r",   of_QPOP_PROP_F_REAL, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%qpop/prop/f/str", of_QPOP_PROP_F_STR, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%qpop/prop/f/v",   of_QPOP_PROP_F_V,    2, {OA_NUMBER, OA_BIT1, OA_NONE} },
+      { "%qslice", of_QSLICE, 0, {OA_NONE, OA_NONE, OA_NONE} },
       { "%queue/append_word/v", of_QUEUE_APPEND_WORD_V, 1, {OA_BIT1, OA_NONE, OA_NONE} },
       { "%queue/find/index/prop/v", of_QUEUE_FIND_INDEX_PROP_V, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%queue/find/index/v", of_QUEUE_FIND_INDEX_V, 2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
@@ -314,6 +319,10 @@ static const struct opcode_table_s opcode_table[] = {
       { "%queue/unique/v", of_QUEUE_UNIQUE_V, 2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
       { "%queue/word/prop/v", of_QUEUE_WORD_PROP_V, 3, {OA_NUMBER, OA_BIT1, OA_BIT2} },
       { "%queue/word/v", of_QUEUE_WORD_V, 3, {OA_FUNC_PTR, OA_BIT1, OA_BIT2} },
+      { "%ref/bind", of_REF_BIND, 1,{OA_FUNC_PTR,OA_NONE,   OA_NONE} },
+      { "%ref/get",  of_REF_GET,  1,{OA_FUNC_PTR,OA_NONE,   OA_NONE} },
+      { "%ref/net",  of_REF_NET,  1,{OA_FUNC_PTR,OA_NONE,   OA_NONE} },
+      { "%ref/prop", of_REF_PROP, 1,{OA_NUMBER,  OA_NONE,   OA_NONE} },
       { "%release/net",of_RELEASE_NET,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/reg",of_RELEASE_REG,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/wr", of_RELEASE_WR, 2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
@@ -345,10 +354,16 @@ static const struct opcode_table_s opcode_table[] = {
       { "%store/dar/vec4",of_STORE_DAR_VEC4,1,{OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%store/obj",   of_STORE_OBJ,   1, {OA_FUNC_PTR,OA_NONE, OA_NONE} },
       { "%store/obja",  of_STORE_OBJA,  2, {OA_ARR_PTR, OA_BIT1, OA_NONE} },
+      { "%store/prop/dar/r",   of_STORE_PROP_DAR_R,   1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%store/prop/dar/str", of_STORE_PROP_DAR_STR, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%store/prop/dar/vec4",of_STORE_PROP_DAR_VEC4,1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%store/prop/obj",of_STORE_PROP_OBJ,2, {OA_NUMBER,  OA_BIT1, OA_NONE} },
       { "%store/prop/qb/r",   of_STORE_PROP_QB_R,   2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%store/prop/qb/str", of_STORE_PROP_QB_STR, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%store/prop/qb/v",   of_STORE_PROP_QB_V,   3, {OA_NUMBER, OA_BIT1, OA_BIT2} },
+      { "%store/prop/qdar/r",   of_STORE_PROP_QDAR_R,   2, {OA_NUMBER, OA_BIT1, OA_NONE} },
+      { "%store/prop/qdar/str", of_STORE_PROP_QDAR_STR, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
+      { "%store/prop/qdar/v",   of_STORE_PROP_QDAR_V,   3, {OA_NUMBER, OA_BIT1, OA_BIT2} },
       { "%store/prop/qf/r",   of_STORE_PROP_QF_R,   2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%store/prop/qf/str", of_STORE_PROP_QF_STR, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%store/prop/qf/v",   of_STORE_PROP_QF_V,   3, {OA_NUMBER, OA_BIT1, OA_BIT2} },
@@ -867,6 +882,41 @@ bool virt_resolv_list_s::resolve(bool mes)
 void compile_virt(char*cls, char*scope, char*code)
 {
       resolv_submit(new virt_resolv_list_s(cls, scope, code));
+}
+
+/*
+ * Set the base class of a class. The labels may both be defined later
+ * in the source file.
+ */
+struct super_resolv_list_s: public resolv_list_s {
+      super_resolv_list_s(char*cls, char*super)
+      : resolv_list_s(cls), super_(super) { }
+      ~super_resolv_list_s() override { free(super_); }
+      virtual bool resolve(bool mes) override;
+      char*super_;
+};
+
+bool super_resolv_list_s::resolve(bool mes)
+{
+      symbol_value_t cls = sym_get_value(sym_vpi, label());
+      symbol_value_t super = sym_get_value(sym_vpi, super_);
+      if (cls.ptr && super.ptr) {
+	    class_type*defn = dynamic_cast<class_type*>(static_cast<vpiHandle>(cls.ptr));
+	    class_type*base = dynamic_cast<class_type*>(static_cast<vpiHandle>(super.ptr));
+	    assert(defn && base);
+	    defn->set_super(base);
+	    return true;
+      }
+
+      if (mes)
+	    fprintf(stderr, "unresolved base class of class: %s\n", label());
+
+      return false;
+}
+
+void compile_super(char*cls, char*super)
+{
+      resolv_submit(new super_resolv_list_s(cls, super));
 }
 
 static std::list<struct __vpiSysTaskCall*> scheduled_compiletf;

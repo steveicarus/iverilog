@@ -545,6 +545,11 @@ static void emit_port(ivl_signal_t port)
 	case IVL_SIP_INOUT:
 	    fprintf(vlog_out, "inout");
 	    break;
+	case IVL_SIP_REF:
+	      /* The sorry for the call of a task with ref arguments is
+	       * reported where the call is translated. */
+	    fprintf(vlog_out, "<ref>");
+	    break;
 	default:
 	    fprintf(vlog_out, "<unknown>");
 	    fprintf(stderr, "%s:%u: vlog95 error: Unknown port direction (%d) "

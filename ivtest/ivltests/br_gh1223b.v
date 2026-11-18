@@ -9,7 +9,7 @@ module top;
   notif1(out_nt1, inr, 1'b1);
 
   always @(out_bf0) begin
-    int inr_int;
+    integer inr_int;
     inr_int = inr;
     if (out_bf0 !== inr_int[0]) begin
       $display("bufif0 of %f not equal to %b", inr, inr_int[0]);
@@ -18,7 +18,7 @@ module top;
   end
 
   always @(out_bf1) begin
-    int inr_int;
+    integer inr_int;
     inr_int = inr;
     if (out_bf1 !== inr_int[0]) begin
       $display("bufif1 of %f not equal to %b", inr, inr_int[0]);
@@ -27,7 +27,7 @@ module top;
   end
 
   always @(out_nt0) begin
-    int inr_int;
+    integer inr_int;
     inr_int = inr;
     if (out_nt0 !== !inr_int[0]) begin
       $display("bufif0 of %f not equal to %b", inr, !inr_int[0]);
@@ -36,7 +36,7 @@ module top;
   end
 
   always @(out_nt1) begin
-    int inr_int;
+    integer inr_int;
     inr_int = inr;
     if (out_nt1 !== !inr_int[0]) begin
       $display("bufif1 of %f not equal to %b", inr, !inr_int[0]);

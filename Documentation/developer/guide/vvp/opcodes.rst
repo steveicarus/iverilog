@@ -573,12 +573,13 @@ to be forced is popped from the vec4 stack and forced to the target
 variable. The /off variant forces a part of a vector. The width of the
 part comes from the width of the popped value, and the <off> is an
 index register that contains the canonical offset where the value
-gets written. The <delay> is an index register that contains the
+gets written. If <off> is 0, use the literal offset 0 instead of reading
+index register 0. The <delay> is an index register that contains the
 delay.
 
-The %force/vec4/off instructions will test the value of flags[4], and if
-it is 1, will suppress the actual assignment. This is intended to help
-with detection of invalid index expressions.
+The %force/vec4/off instructions test flags[4] only when <off> is nonzero.
+If that flag is 1, the assignment is suppressed because the index is
+invalid. A literal zero offset is always valid and ignores flags[4].
 
 * %force/wr <var-label>
 
@@ -674,6 +675,13 @@ the index register <src>.
 The %jmp instruction performs an unconditional branch to a given
 location. The parameter is the label of the destination instruction.
 
+* %jmp/flow <code-label>, <scope-label>
+
+Resume the nearest ancestor thread in the given scope at the destination
+instruction. Disable intervening block threads and release their automatic
+storage. This implements break and continue across scoped blocks, preserving
+the loop owner's expression stacks.
+
 * %jmp/[01xz] <code-label>, <flag>
 
 This is a conditional version of the %jmp instruction. In this case,
@@ -713,6 +721,16 @@ This instruction loads an object handle and pushes it to the top of
 the object handle stack.
 
 See also %store/obj.
+
+* %load/prop/dar/r <pid>
+* %load/prop/dar/str <pid>
+* %load/prop/dar/vec4 <pid>, <wid>
+
+Push a word of the queue or dynamic array property <pid> of the class
+object on the top of the object stack onto the real, string or vec4
+stack. The object is NOT popped. The element index is taken from signed
+index register 3, and an index that is negative, undefined or past the
+end gives the default value (<wid> bits for the vec4 form).
 
 * %load/real <vpi-label>
 * %load/dar/r <functor-label>
@@ -1022,6 +1040,30 @@ basically an implementation of <string>.putc(<muxr>, <val>) where
 
 Pop values from a dynamic queue object.
 
+* %qslice
+
+Pop the high bound and then the low bound from the vec4 stack, pop a
+queue object from the object stack, and push a new queue with the
+elements from the low to the high bound, inclusive. The bounds are
+signed and are clamped to the queue. If either bound is X/Z, or the
+low bound is above the high bound, the new queue is empty.
+
+* %ref/bind <var-label>
+* %ref/get <var-label>
+* %ref/net <var-label>
+* %ref/prop <pid>
+
+These instructions implement ref arguments of automatic tasks and
+functions. The %ref/net instruction pushes a reference to the variable
+<var-label> onto the object stack, and %ref/prop pops a class object and
+pushes a reference to its property <pid>. The %ref/bind instruction pops
+a reference and binds the ref formal <var-label> to it, in the context
+that was allocated for the call. After that, the reads and writes of the
+formal are done on the variable that the reference is to. The %ref/get
+instruction pushes the reference that a formal is bound to, to pass it on
+to another call. The formal is declared with a .refvar statement after
+its .var statement.
+
 * %release/net <functor-label>, <base>, <width>
 * %release/reg <functor-label>, <base>, <width>
 
@@ -1154,6 +1196,21 @@ instead of index register zero. Use 0 for non-array properties.
 The %store/prop/v pops a vector from the vec4 stack and stores it into
 the property <pid> of the cobject in the top of the object stack. The
 vector is truncated to <wid> bits, and the cobject is NOT popped.
+
+* %store/prop/dar/r <pid>
+* %store/prop/dar/str <pid>
+* %store/prop/dar/vec4 <pid>
+* %store/prop/qdar/r <pid>, <max-idx>
+* %store/prop/qdar/str <pid>, <max-idx>
+* %store/prop/qdar/v <pid>, <max-idx>, <wid>
+
+Pop a real, string or vec4 value and store it into the word of the
+dynamic array (dar) or queue (qdar) property <pid> of the cobject on the
+top of the object stack. The cobject is NOT popped. The element index is
+taken from signed index register 3. For a queue, an index at the end of
+the queue appends the value, the index register <max-idx> holds the
+maximum queue size (0 for none), and the queue is created if the
+property has not been written yet. See also %store/dar/r.
 
 * %store/real <var-label>
 * %store/reala <var-label>, <index>

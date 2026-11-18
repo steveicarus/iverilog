@@ -124,6 +124,8 @@ jobs:
         install: >
           git
           base-devel
+          bison
+          flex
           python-pip
           mingw-w64-${{ matrix.env }}-perl
 
@@ -187,6 +189,8 @@ jobs:
         install: >
           git
           base-devel
+          bison
+          flex
           python-pip
           mingw-w64-${{ matrix.env }}-perl
 

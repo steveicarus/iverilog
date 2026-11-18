@@ -114,7 +114,73 @@ class vvp_fun_signal_vec : public vvp_fun_signal_base {
       virtual const vvp_vector4_t& vec4_unfiltered_value() const =0;
 };
 
+/*
+ * A reference to a variable or class property. This is the value that
+ * a ref argument of an automatic task or function is bound to, see
+ * automatic_signal_base::enable_ref().
+ */
+class vvp_var_ref : public vvp_object {
+
+    public:
+	// Refer to the variable <net>, whose context is <ctx> if the
+	// variable is automatic.
+      vvp_var_ref(vvp_net_t*net, vvp_context_t ctx);
+	// Refer to property <pid> of the class object <obj>.
+      vvp_var_ref(const vvp_object_t&obj, unsigned pid);
+      ~vvp_var_ref() override;
+
+      void get_vec4(vvp_vector4_t&val) const;
+      double get_real() const;
+      std::string get_string() const;
+      vvp_object_t get_object() const;
+
+      void put_vec4(const vvp_vector4_t&val) const;
+      void put_vec4_pv(const vvp_vector4_t&val, unsigned base,
+		       unsigned vwid) const;
+      void put_real(double val) const;
+      void put_string(const std::string&val) const;
+      void put_object(const vvp_object_t&val) const;
+
+    private:
+      vvp_net_t*net_;
+      vvp_context_t ctx_;
+      vvp_object_t obj_;
+      unsigned pid_;
+};
+
 class automatic_signal_base : public vvp_signal_value, public vvp_net_fil_t {
+
+    public:
+      automatic_signal_base() { }
+
+	// Make this variable a ref formal, by reserving a slot in the
+	// context for the vvp_var_ref that it is bound to.
+      void enable_ref();
+
+	// Bind the ref formal in <context> to the reference <ref>, and
+	// get the reference that it is bound to in the read context.
+      void bind_ref(vvp_context_t context, const vvp_object_t&ref) const;
+      vvp_object_t bound_ref() const;
+
+	// The reference that this variable is bound to in the context
+	// being written (ref_wt) or read (ref_rd), or 0 if none.
+      const vvp_var_ref* ref_wt(vvp_context_t context) const;
+      const vvp_var_ref* ref_rd() const;
+
+    private:
+	// The slot in each context for the reference that a ref formal
+	// is bound to. It is a member, so it lives as long as the
+	// variable, which is not deleted separately.
+      class ref_slot_t : public automatic_hooks_s {
+	  public:
+	    ref_slot_t() : idx_(0) { }
+	    void alloc_instance(vvp_context_t context) override;
+	    void reset_instance(vvp_context_t context) override;
+#ifdef CHECK_WITH_VALGRIND
+	    void free_instance(vvp_context_t context) override;
+#endif
+	    unsigned idx_;
+      } ref_slot_;
 
     public:
 	// Automatic variables cannot be forced or released. Provide

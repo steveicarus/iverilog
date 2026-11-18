@@ -22,6 +22,7 @@
 # include  <cstdlib>
 # include  <climits>
 # include  "netlist.h"
+# include  "netclass.h"
 # include  "netparray.h"
 # include  "netvector.h"
 # include  "netmisc.h"
@@ -31,6 +32,9 @@
 # include  "ivl_assert.h"
 
 using namespace std;
+
+const NetNet*dollar_queue_scope::queue_ = nullptr;
+int dollar_queue_scope::pidx_ = -1;
 
 NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 {
@@ -751,6 +755,21 @@ NetEConst* make_const_val_s(long value)
       tmp.has_sign(true);
       NetEConst*res = new NetEConst(tmp);
       return res;
+}
+
+NetExpr* make_property_last_index(const LineInfo*li, NetNet*sig, size_t pidx)
+{
+      NetEProperty*prop = new NetEProperty(sig, pidx);
+      prop->set_line(*li);
+
+      NetESFunc*size = new NetESFunc("$size", &netvector_t::atom2s32, 1);
+      size->set_line(*li);
+      size->parm(0, prop);
+
+      NetEBAdd*last = new NetEBAdd('-', size, make_const_val_s(1),
+				   integer_width, true);
+      last->set_line(*li);
+      return last;
 }
 
 static NetNet* make_const_net(Design*des, NetScope*scope, verinum val)
@@ -1853,6 +1872,23 @@ const netclass_t* find_class_containing_scope(const LineInfo&loc, const NetScope
       ivl_assert(loc, found_in);
       return found_in;
 }
+NetExpr* class_scope_method_this(const LineInfo&li, Design*des,
+				 const NetScope*method,
+				 const pform_scoped_name_t&path)
+{
+      if (!method->is_static_method()) {
+	    cerr << li.get_fileline() << ": error: `" << path << "' is not a "
+		 << "static method, so it needs an object to be called."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetENull*tmp = new NetENull;
+      tmp->set_line(li);
+      return tmp;
+}
+
 /*
  * Find the scope that contains this scope, that is the method for a
  * class scope. Look for the scope whose PARENT is the scope for a
@@ -1963,6 +1999,73 @@ bool calculate_param_range(const LineInfo&line, ivl_type_t par_type,
       netrange_t use_range = packed_dims[0];
       par_msv = use_range.get_msb();
       par_lsv = use_range.get_lsb();
+
+      return true;
+}
+
+static bool class_derives_from(const netclass_t*cls, const netclass_t*base)
+{
+      for ( ; cls ; cls = cls->get_super()) {
+	    if (cls == base)
+		  return true;
+      }
+
+      return false;
+}
+
+bool check_class_cast_args(Design*des, const LineInfo*li,
+			   const NetExpr*dest, const NetExpr*src)
+{
+      const netclass_t*dest_class = dest
+	    ? dynamic_cast<const netclass_t*>(dest->net_type()) : 0;
+      if (dest_class == 0) {
+	    cerr << li->get_fileline() << ": sorry: $cast is only supported "
+	            "for class handles." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      const NetESignal*dest_sig = dynamic_cast<const NetESignal*>(dest);
+      const NetEProperty*dest_prop = dynamic_cast<const NetEProperty*>(dest);
+      bool dest_ok = (dest_sig && !dest_sig->word_index()
+		      && dest_sig->sig()->type() == NetNet::REG)
+	          || (dest_prop && !dest_prop->get_index());
+      if (dest_sig && dest_sig->sig()->name() == perm_string::literal(THIS_TOKEN)) {
+	    cerr << li->get_fileline() << ": error: The first argument of "
+	            "$cast cannot be \"this\", it is not assignable." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+      if (!dest_ok) {
+	    cerr << li->get_fileline() << ": error: The first argument of "
+	            "$cast must be a class variable or a class property." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      if (dynamic_cast<const NetENull*>(src))
+	    return true;
+
+      const netclass_t*src_class = src
+	    ? dynamic_cast<const netclass_t*>(src->net_type()) : 0;
+      if (src_class == 0) {
+	    cerr << li->get_fileline() << ": error: The second argument of "
+	            "$cast must be a class handle." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+	// A cast that can never succeed is an error: the two classes
+	// must be the same or one must derive from the other.
+      if (!class_derives_from(dest_class, src_class) &&
+	  !class_derives_from(src_class, dest_class)) {
+	    cerr << li->get_fileline() << ": error: $cast from class "
+		 << src_class->get_name() << " to class "
+		 << dest_class->get_name() << " can never succeed, as the "
+		    "classes are not related by inheritance." << endl;
+	    des->errors += 1;
+	    return false;
+      }
 
       return true;
 }

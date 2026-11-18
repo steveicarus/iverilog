@@ -27,6 +27,7 @@
 # include  "PWire.h"
 # include  "PModport.h"
 # include  "ivl_assert.h"
+# include  <set>
 
 using namespace std;
 
@@ -88,6 +89,14 @@ static scope_object_search_result_t symbol_search_scope_objects(
 		  res->path_head = path_head;
 		  return scope_object_search_result_t::found;
 	    }
+	    return scope_object_search_result_t::failed;
+      }
+
+      if (path_tail.name == perm_string::literal(THIS_TOKEN)
+	  && scope->is_static_method()) {
+	    cerr << li->get_fileline() << ": error: `this' can not be used in "
+		 << "a static method." << endl;
+	    des->errors += 1;
 	    return scope_object_search_result_t::failed;
       }
 
@@ -203,7 +212,10 @@ static scope_object_search_result_t symbol_search_scope_objects(
 		  // property name for the path tail.
 		  NetScope *scope_method =
 			find_method_containing_scope(*li, start_scope);
-		  ivl_assert(*li, scope_method);
+		    // There is no object for a non-static property
+		    // outside a method, or in a static method.
+		  if (!scope_method || scope_method->is_static_method())
+			return scope_object_search_result_t::not_found;
 		  res->net = scope_method->find_signal(
 			perm_string::literal(THIS_TOKEN));
 		  ivl_assert(*li, res->net);
@@ -629,11 +641,31 @@ bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 {
       NetScope *search_scope = scope;
       bool scope_is_bound = false;
+      const netclass_t *class_type = nullptr;
 
       if (path.package) {
 	    search_scope = des->find_package(path.package->pscope_name());
 	    if (!search_scope)
 		  return false;
+	    scope_is_bound = true;
+      } else if (path.class_scope) {
+	      // The scope is looked up each time the name is, so report
+	      // a bad scope only once.
+	    static std::set<const data_type_t*> bad_scopes;
+	    if (bad_scopes.count(path.class_scope.get()))
+		  return false;
+	    ivl_type_t type = path.class_scope->elaborate_type(des, scope);
+	    class_type = dynamic_cast<const netclass_t*>(type);
+	    if (!class_type) {
+		  bad_scopes.insert(path.class_scope.get());
+		  if (type)
+			cerr << li->get_fileline() << ": error: `"
+			     << *path.class_scope << "` is not a class, so "
+			     << "it can not be used as a scope." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+	    search_scope = const_cast<NetScope*>(class_type->class_scope());
 	    scope_is_bound = true;
       }
 
@@ -641,9 +673,19 @@ bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 	    flags & SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE;
       const unsigned int terminal_lexical_pos = allow_forward_reference
 	    ? UINT_MAX : lexical_pos;
-      return symbol_search_(li, des, search_scope, path.name,
-			    terminal_lexical_pos, lexical_pos, res,
-			    search_scope, scope_is_bound, flags);
+      bool found = symbol_search_(li, des, search_scope, path.name,
+				  terminal_lexical_pos, lexical_pos, res,
+				  search_scope, scope_is_bound, flags);
+
+	// A class scope also names the members inherited from the base
+	// classes.
+      while (!found && class_type && (class_type = class_type->get_super())) {
+	    search_scope = const_cast<NetScope*>(class_type->class_scope());
+	    found = symbol_search_(li, des, search_scope, path.name,
+				   terminal_lexical_pos, lexical_pos, res,
+				   search_scope, scope_is_bound, flags);
+      }
+      return found;
 }
 
 bool check_interface_modport_access(const LineInfo *li, Design *des,

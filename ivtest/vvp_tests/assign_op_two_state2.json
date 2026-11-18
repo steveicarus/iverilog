@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "assign_op_two_state2.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Two-state member result conversion is not supported",
+        "type"      : "NI"
+    }
+}

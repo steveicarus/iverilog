@@ -565,6 +565,10 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		   we need for the current lval. */
 	      if (lidx+1 < ivl_stmt_lvals(net))
 		    fprintf(vvp_out, "    %%split/vec4 %u;\n", bit_limit);
+	      if (ivl_lval_data_type(lval) == IVL_VT_BOOL &&
+		  ivl_expr_value(rval) != IVL_VT_BOOL) {
+		    fprintf(vvp_out, "    %%cast2;\n");
+	      }
 	      assign_to_lvector(lval, delay, del, nevents);
 
 	      cur_rbit += bit_limit;
@@ -2023,9 +2027,27 @@ static int show_push_frontback_method(ivl_statement_t net, bool is_front)
       return 0;
 }
 
+/*
+ * The call of a task with a ref argument binds the formal to the actual
+ * variable in place of the assignment that passes other arguments.
+ */
+static int show_ref_bind(ivl_statement_t net)
+{
+      ivl_signal_t formal = ivl_expr_signal(ivl_stmt_parm(net, 0));
+
+      show_stmt_file_line(net, "Bind a ref argument.");
+      int rc = draw_eval_ref(ivl_stmt_parm(net, 1));
+      fprintf(vvp_out, "    %%ref/bind v%p_0;\n", formal);
+
+      return rc;
+}
+
 static int show_system_task_call(ivl_statement_t net)
 {
       const char*stmt_name = ivl_stmt_name(net);
+
+      if (strcmp(stmt_name,"$ivl_ref_bind") == 0)
+	    return show_ref_bind(net);
 
       if (strcmp(stmt_name,"$ivl_darray_method$delete") == 0)
 	    return show_delete_method(net);
@@ -2053,6 +2075,12 @@ static int show_system_task_call(ivl_statement_t net)
 
       if (strcmp(stmt_name,"$ivl_queue_method$push_back") == 0)
 	    return show_push_frontback_method(net, false);
+
+      if (strcmp(stmt_name,"$cast") == 0) {
+	    show_stmt_file_line(net, "Class $cast.");
+	    return draw_class_cast(ivl_stmt_parm(net, 0),
+				   ivl_stmt_parm(net, 1), 1, 0);
+      }
 
       show_stmt_file_line(net, "System task call.");
 

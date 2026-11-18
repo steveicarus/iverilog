@@ -142,13 +142,61 @@ static void sig_check_data_type(Design*des, const NetScope*scope,
       }
 }
 
+/*
+ * A ref argument is bound to the variable of the caller when the task
+ * or function is called, so it needs the storage of an automatic
+ * subroutine. Only some types of variables can be bound.
+ */
+static void sig_check_ref_port(Design*des, const NetScope*scope,
+			       const PWire *wire, const NetNet *sig)
+{
+      if (scope->type() != NetScope::TASK && scope->type() != NetScope::FUNC) {
+	    cerr << wire->get_fileline() << ": sorry: "
+		 << "Reference ports not supported yet." << endl;
+	    des->errors += 1;
+	    return;
+      }
+
+      if (!scope->is_auto()) {
+	    cerr << wire->get_fileline() << ": error: "
+		 << "Reference argument `" << wire->basename()
+		 << "` requires an automatic task or function." << endl;
+	    des->errors += 1;
+	    return;
+      }
+
+      bool supported = sig->unpacked_dimensions() == 0;
+      switch (sig->data_type()) {
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	  case IVL_VT_REAL:
+	  case IVL_VT_STRING:
+	  case IVL_VT_CLASS:
+	  case IVL_VT_DARRAY:
+	  case IVL_VT_QUEUE:
+	    break;
+	  default:
+	    supported = false;
+	    break;
+      }
+
+      if (!supported) {
+	    cerr << wire->get_fileline() << ": sorry: "
+		 << "Reference argument `" << wire->basename() << "` ";
+	    if (sig->unpacked_dimensions() > 0)
+		  cerr << "that is an unpacked array";
+	    else
+		  cerr << "of type `" << sig->data_type() << "`";
+	    cerr << " is not supported." << endl;
+	    des->errors += 1;
+      }
+}
+
 static void sig_check_port_type(Design*des, const NetScope*scope,
 			        const PWire *wire, const NetNet *sig)
 {
       if (sig->port_type() == NetNet::PREF) {
-	    cerr << wire->get_fileline() << ": sorry: "
-		 << "Reference ports not supported yet." << endl;
-	    des->errors += 1;
+	    sig_check_ref_port(des, scope, wire, sig);
       }
 
       // Some extra checks for module ports
@@ -256,6 +304,8 @@ static void elaborate_sig_classes(Design*des, NetScope*scope,
       for (map<perm_string,PClass*>::const_iterator cur = classes.begin()
 		 ; cur != classes.end() ; ++ cur) {
 	    netclass_t*use_class = scope->find_class(des, cur->second->pscope_name());
+	    if (use_class->is_template())
+		  continue;
 	    use_class->elaborate_sig(des, cur->second);
       }
 }
@@ -438,6 +488,7 @@ void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 	    }
       }
 
+      generic()->methods_in_sig_ += 1;
       for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
 		 ; cur != pclass->funcs.end() ; ++ cur) {
 	    if (debug_elaborate) {
@@ -461,7 +512,7 @@ void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 	    ivl_assert(*cur->second, scope);
 	    cur->second->elaborate_sig(des, scope);
       }
-
+      generic()->methods_in_sig_ -= 1;
 }
 
 bool PGate::elaborate_sig(Design*, NetScope*) const
@@ -856,7 +907,8 @@ void PTaskFunc::elaborate_sig_ports_(Design*des, NetScope*scope,
 	    ports[idx] = tmp;
 	    port_names[idx] = port_name;
 	    pdefs[idx] = tmp_def;
-	    if (scope->type()==NetScope::FUNC && tmp->port_type()!=NetNet::PINPUT) {
+	    if (scope->type()==NetScope::FUNC && tmp->port_type()!=NetNet::PINPUT &&
+	        tmp->port_type()!=NetNet::PREF) {
 		  cerr << tmp->get_fileline() << ": error: "
 		       << "Function " << scope_path(scope)
 		       << " port " << port_name
@@ -888,6 +940,18 @@ void PBlock::elaborate_sig(Design*des, NetScope*scope) const
 			     << scope_path(my_scope) << "." << endl;
 
 		  elaborate_sig_wires_(des, my_scope);
+		  if (my_scope->is_auto() && default_lifetime == STATIC) {
+			for (const auto&wire : wires) {
+			      NetNet*sig = my_scope->find_signal(wire.first);
+			      if (sig && sig->unpacked_dimensions() &&
+				  sig->data_type() != IVL_VT_LOGIC) {
+				    cerr << wire.second->get_fileline()
+					 << ": sorry: This automatic array type in a "
+					    "static block is not yet supported." << endl;
+				    des->errors += 1;
+			      }
+			}
+		  }
 	    }
       }
 
@@ -1019,6 +1083,25 @@ ivl_type_t PWire::elaborate_type(Design*des, NetScope*scope,
       vec->set_signed(get_signed());
 
       return vec;
+}
+
+ivl_type_t PWire::elaborate_port_type(Design*des, NetScope*scope,
+				      netranges_t&unpacked_dimensions)
+{
+      netranges_t packed_dimensions;
+      if (!port_.empty() &&
+	  !evaluate_ranges(des, scope, this, packed_dimensions, port_))
+	    return 0;
+
+      ivl_type_t type = elaborate_type(des, scope, packed_dimensions);
+      type = elaborate_array_type(des, scope, *this, type, unpacked_);
+      while (const netuarray_t *atype = dynamic_cast<const netuarray_t*>(type)) {
+	    unpacked_dimensions.insert(unpacked_dimensions.begin(),
+				       atype->static_dimensions().begin(),
+				       atype->static_dimensions().end());
+	    type = atype->element_type();
+      }
+      return type;
 }
 
 /*

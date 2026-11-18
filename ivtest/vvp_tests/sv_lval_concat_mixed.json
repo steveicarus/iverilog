@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_lval_concat_mixed.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment" : "Classes, dynamic arrays, queues and strings are not supported",
+        "type"      : "CE"
+    }
+}

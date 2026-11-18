@@ -1,0 +1,6 @@
+{
+    "type": "normal",
+    "source": "sdf_cond_case_equality.v",
+    "iverilog-args": ["-gspecify", "-Ttyp"],
+    "gold": "sdf_cond_case_equality"
+}

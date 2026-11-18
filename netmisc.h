@@ -349,6 +349,13 @@ extern NetEConst*make_const_val(unsigned long val);
 extern NetEConst*make_const_val_s(long val);
 
 /*
+ * Make the expression for the index of the last element, "[$]", of the
+ * queue property pidx of the class object sig.
+ */
+extern NetExpr*make_property_last_index(const LineInfo*li, NetNet*sig,
+					size_t pidx);
+
+/*
  * Make a const net.
  */
 extern NetNet* make_const_0(Design*des, NetScope*scope, unsigned long wid);
@@ -356,11 +363,15 @@ extern NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid);
 extern NetNet* make_const_z(Design*des, NetScope*scope, unsigned long wid);
 
 /*
- * In some cases the lval is accessible as a pointer to the head of
- * a list of NetAssign_ objects. This function returns the width of
- * the l-value represented by this list.
+ * Get the total width and RHS type context of an l-value list. Use a
+ * four-state context if any concatenation component is four-state.
  */
-extern unsigned count_lval_width(const class NetAssign_*first);
+struct lval_info_t {
+      unsigned width = 0;
+      ivl_variable_type_t type = IVL_VT_NO_TYPE;
+};
+
+extern lval_info_t get_lval_info(const class NetAssign_*first);
 
 /*
  * This function elaborates an expression, and tries to evaluate it
@@ -380,6 +391,33 @@ extern unsigned count_lval_width(const class NetAssign_*first);
  * IVL_VT_NO_TYPE causes the expression to retain its self-determined
  * type.
  */
+/*
+ * The queue that "$" refers to while the index of that queue is being
+ * elaborated. It is null when the index is not of a queue.
+ */
+class dollar_queue_scope {
+    public:
+	// The pidx of a property of a nested class object.
+      static const int NESTED = -2;
+      explicit dollar_queue_scope(const NetNet*net)
+      : saved_(queue_), saved_pidx_(pidx_)
+      { queue_ = net->queue_type() ? net : nullptr; pidx_ = -1; }
+	// "$" refers to property pidx of the class object net. It is
+	// a queue only if is_queue is true.
+      dollar_queue_scope(const NetNet*net, int pidx, bool is_queue)
+      : saved_(queue_), saved_pidx_(pidx_)
+      { queue_ = is_queue ? net : nullptr; pidx_ = pidx; }
+      ~dollar_queue_scope() { queue_ = saved_; pidx_ = saved_pidx_; }
+      static const NetNet*current() { return queue_; }
+	// The property of current() that is the queue, or -1.
+      static int current_property() { return pidx_; }
+    private:
+      const NetNet*saved_;
+      int saved_pidx_;
+      static const NetNet*queue_;
+      static int pidx_;
+};
+
 class PExpr;
 
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
@@ -430,6 +468,14 @@ extern NetExpr* elaborate_rval_expr(Design *des, NetScope *scope,
 				    bool need_const = false,
 				    bool force_unsigned = false);
 
+/*
+ * Elaborate the actual argument <expr> of a call for the ref formal
+ * <formal>. The result is a NetESignal or NetEProperty for the
+ * variable, or nil after reporting an error. (See elab_expr.cc)
+ */
+extern NetExpr* elaborate_ref_argument(Design*des, NetScope*scope,
+				       const NetNet*formal, PExpr*expr);
+
 extern bool evaluate_range(Design*des, NetScope*scope, const LineInfo*li,
                            const pform_range_t&range,
                            long&index_l, long&index_r);
@@ -478,6 +524,16 @@ extern hname_t eval_path_component(Design*des, NetScope*scope,
  */
 extern const netclass_t*find_class_containing_scope(const LineInfo&loc,const NetScope*scope);
 extern NetScope* find_method_containing_scope(const LineInfo&log, NetScope*scope);
+
+/*
+ * A static method called through a class scope, C#(8)::f(), has no
+ * object. Return the null handle to pass as its "this" argument, or
+ * report an error and return 0 if the method is not static.
+ */
+struct pform_scoped_name_t;
+extern NetExpr* class_scope_method_this(const LineInfo&li, Design*des,
+					const NetScope*method,
+					const pform_scoped_name_t&path);
 
 /*
  * Return true if the data type is a type that is normally available
@@ -539,5 +595,14 @@ extern NetPartSelect* detect_partselect_lval(Link&pin);
  * based delays in the design, since this is likely an error.
  */
 extern void check_for_inconsistent_delays(const NetScope*scope);
+
+/*
+ * Check the arguments of a $cast(dest, src) call for class handles:
+ * the dest must be a class variable or property, and the classes must
+ * be the same or related by inheritance. Print an error and return
+ * false if not.
+ */
+extern bool check_class_cast_args(Design*des, const LineInfo*li,
+				  const NetExpr*dest, const NetExpr*src);
 
 #endif /* IVL_netmisc_H */

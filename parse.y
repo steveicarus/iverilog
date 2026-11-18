@@ -57,7 +57,9 @@ static struct {
       NetNet::Type port_net_type;
       NetNet::PortType port_type;
       data_type_t* data_type;
-} port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT, 0};
+	// True if the ports are const ref arguments of a task or function.
+      bool is_const;
+} port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT, 0, false};
 
 /* Modport port declaration lists use this structure for context. */
 enum modport_port_type_t { MP_NONE, MP_SIMPLE, MP_TF, MP_CLOCKING };
@@ -198,6 +200,21 @@ static void set_type_id_range(T&value, data_type_t *type, char *id,
       value.id = id;
       value.id_loc = loc;
       value.ranges = ranges;
+      value.scope_id = nullptr;
+}
+
+/*
+ * If the name is class::name, enter the scope of that class so that the
+ * method is defined as if it was written inside the class.
+ */
+template <class T>
+static void start_method_scope(const YYLTYPE&loc, T&value, bool is_task)
+{
+      if (!value.scope_id)
+	    return;
+      pform_start_extern_method(loc, value.scope_id, value.id, is_task);
+      delete[] value.scope_id;
+      value.scope_id = nullptr;
 }
 
 template <class T>
@@ -205,6 +222,7 @@ static void delete_type_id_range(T&value)
 {
       delete value.type;
       delete[] value.id;
+      delete[] value.scope_id;
       delete value.ranges;
       value.type = nullptr;
       value.id = nullptr;
@@ -238,6 +256,69 @@ static data_type_t *pform_new_type_identifier(const struct vlltype &loc,
       std::unique_ptr<char[]> owned_text(text);
       const char *name = owned_text.get();
       return pform_new_type_identifier(loc, package, name);
+}
+
+static type_identifier_t *pform_set_type_params(data_type_t *type,
+					       parmvalue_t *params)
+{
+      auto tmp = static_cast<type_identifier_t*>(type);
+      tmp->has_params = true;
+      if (params && params->by_order) {
+	    tmp->params_by_order.splice(tmp->params_by_order.end(),
+					*params->by_order);
+	    delete params->by_order;
+      }
+      if (params && params->by_name) {
+	    tmp->params_by_name.splice(tmp->params_by_name.end(),
+				       *params->by_name);
+	    delete params->by_name;
+      }
+      delete params;
+      return tmp;
+}
+
+  /* A class type with a parameter value assignment, e.g. C#(8). */
+static data_type_t *pform_new_type_identifier(const struct vlltype &loc,
+					     PPackage *package,
+					     char *text,
+					     parmvalue_t *params)
+{
+      return pform_set_type_params(
+	    pform_new_type_identifier(loc, package, text), params);
+}
+
+  /* A name in a class scope, e.g. the type T in C#(8)::T. */
+static data_type_t *pform_new_scoped_type_identifier(const struct vlltype &loc,
+						    data_type_t *scope,
+						    char *text,
+						    parmvalue_t *params = nullptr)
+{
+      std::unique_ptr<char[]> owned_text(text);
+      pform_scoped_name_t path;
+      path.class_scope.reset(scope);
+      path.name.emplace_back(lex_strings.make(text));
+
+      auto identifier = new PEIdent(path);
+      FILE_NAME(identifier, loc);
+      auto tmp = new type_identifier_t(identifier);
+      FILE_NAME(tmp, loc);
+      if (params)
+	    return pform_set_type_params(tmp, params);
+      return tmp;
+}
+
+  /* A name in a class scope used as an expression, e.g. C#(8)::N. */
+static PExpr *pform_class_scope_ident(const struct vlltype &loc,
+				      data_type_t *scope,
+				      pform_name_t *name)
+{
+      pform_scoped_name_t path;
+      path.class_scope.reset(scope);
+      path.name = *name;
+      delete name;
+      auto tmp = new PEIdent(path);
+      FILE_NAME(tmp, loc);
+      return tmp;
 }
 
 static index_component_t *make_index_component(const struct vlltype &loc,
@@ -478,6 +559,10 @@ static decl_assignment_t *pform_make_var_decl(const YYLTYPE&loc, char *id,
       decl->lexical_pos(lexical_pos);
       FILE_NAME(decl, loc);
       decl->name = { lex_strings.make(id), lexical_pos };
+      if (var_lifetime == LexicalScope::AUTOMATIC) {
+	    if (auto block = dynamic_cast<PBlock*>(pform_peek_scope()))
+		  block->automatic_variables.insert(decl->name.first);
+      }
       if (udims) {
 	    decl->index = *udims;
 	    delete udims;
@@ -906,8 +991,10 @@ static PBlock *pform_finish_block(const YYLTYPE&block_loc,
 	    if (block_type != PBlock::BL_SEQ)
 		  block->set_join_type(block_type);
       } else {
+	    auto lifetime = block->default_lifetime;
 	    delete block;
 	    block = new PBlock(block_type);
+	    block->default_lifetime = lifetime;
 	    FILE_NAME(block, block_loc);
       }
 
@@ -1143,6 +1230,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 	    char *id;
 	    struct vlltype id_loc;
 	    std::list<pform_range_t>*ranges;
+	    char *scope_id;  // class name of an out-of-block method definition
       } type_id_range;
 
       struct {
@@ -1309,6 +1397,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <tf_ports> tf_item_declaration
 %type <tf_ports> tf_port_declaration tf_port_item tf_port_item_list
 %type <tf_ports> tf_port_list tf_port_list_opt tf_port_list_parens_opt
+%type <tf_ports> extern_proto_ports
 
 %type <named_pexpr> named_expression named_expression_opt port_name
 %type <named_pexprs> port_name_list parameter_value_byname_list
@@ -1387,7 +1476,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 
 %type <nettype>  net_type net_type_opt net_type_or_var net_type_or_var_opt
 %type <gatetype> gatetype switchtype
-%type <porttype> port_direction port_direction_opt
+%type <porttype> port_direction port_direction_opt tf_port_direction_opt
 %type <vartype> integer_vector_type integer_vector_type_no_reg
 %type <parmvalue> parameter_value_assignment
 
@@ -1443,6 +1532,8 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <type_id_range> data_type_or_implicit_plus_id
 %type <type_id_range> data_type_or_implicit_plus_id_dim
 %type <type_id_range> data_type_or_implicit_or_void_plus_id
+%type <type_id_range> method_data_type_or_implicit_or_void_plus_id
+%type <type_id_range> method_task_id
 %type <type_id_range> data_type_or_parameter_id_dim
 %type <type_id_range> partial_port_identifier_dim
 %type <type_id_range> partial_port_type_plus_id_dim
@@ -1473,6 +1564,12 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
  /* to resolve exclude (... ambiguity */
 %nonassoc '('
 %nonassoc K_exclude
+
+ /* to resolve the ambiguity between a delay after the data type of a net
+    declaration, e.g. "wire T #(1) w;", and a class specialization "T #(1)".
+    Nets can not have a class type, so prefer the delay. */
+%nonassoc '#'
+%nonassoc no_index_components
 
  /* to resolve timeunits declaration/redeclaration ambiguity */
 %nonassoc no_timeunits_declaration
@@ -1581,7 +1678,7 @@ assertion_item_label_opt
   ;
 
 class_declaration /* IEEE1800-2005: A.1.2 */
-  : K_virtual_opt K_class lifetime_opt IDENTIFIER class_declaration_extends_opt ';'
+  : K_virtual_opt K_class lifetime_opt IDENTIFIER
       { /* Up to 1800-2017 the grammar in the LRM allowed an optional lifetime
 	 * qualifier for class declarations. But the LRM never specified what
 	 * this qualifier should do. Starting with 1800-2023 the qualifier has
@@ -1597,15 +1694,17 @@ class_declaration /* IEEE1800-2005: A.1.2 */
 	class_type_t *class_type= new class_type_t(name);
 	FILE_NAME(class_type, @4);
 	pform_set_typedef(@4, name, class_type, nullptr);
-	pform_start_class_declaration(@2, class_type, $5.type, $5.args, $1);
+	pform_start_class_declaration(@2, class_type, $1);
       }
+    module_parameter_port_list_opt class_declaration_extends_opt ';'
+      { pform_set_class_extends(@7, $7.type, $7.args); }
     class_items_opt K_endclass
       { // Process a class.
-	pform_end_class_declaration(@9);
+	pform_end_class_declaration(@11);
       }
     label_opt
       { // Wrap up the class.
-	check_end_label(@11, "class", $4, $11);
+	check_end_label(@13, "class", $4, $13);
 	delete[] $4;
       }
   ;
@@ -1688,15 +1787,16 @@ class_item /* IEEE1800-2005: A.1.8 */
 
     /* External class method definitions... */
 
-  | K_extern method_qualifier_opt K_function K_new tf_port_list_parens_opt ';'
-      { yyerror(@1, "sorry: External constructors are not yet supported."); }
+  | K_extern method_qualifier_opt K_function K_new extern_proto_ports ';'
+      { pform_class_extern_method(@3, "new", false, $2, $5); }
   | K_extern method_qualifier_opt K_function data_type_or_implicit_or_void_plus_id
-    tf_port_list_parens_opt ';'
-      { yyerror(@1, "sorry: External methods are not yet supported.");
+    extern_proto_ports ';'
+      { pform_class_extern_method(@3, $4.id, false, $2, $5, $4.type);
+	$4.type = nullptr; // Kept by the prototype.
 	delete_type_id_range($4);
       }
-  | K_extern method_qualifier_opt K_task IDENTIFIER tf_port_list_parens_opt ';'
-      { yyerror(@1, "sorry: External methods are not yet supported.");
+  | K_extern method_qualifier_opt K_task IDENTIFIER extern_proto_ports ';'
+      { pform_class_extern_method(@3, $4, true, $2, $5);
 	delete[] $4;
       }
 
@@ -1975,6 +2075,16 @@ ps_type_identifier /* IEEE1800-2017: A.9.3 */
       { lex_in_package_scope(0);
 	$$ = pform_new_type_identifier(@2, $1, $2);
       }
+  | IDENTIFIER parameter_value_assignment
+      { $$ = pform_new_type_identifier(@1, nullptr, $1, $2); }
+  | package_scope IDENTIFIER parameter_value_assignment
+      { lex_in_package_scope(0);
+	$$ = pform_new_type_identifier(@2, $1, $2, $3);
+      }
+  | class_scope IDENTIFIER
+      { $$ = pform_new_scoped_type_identifier(@2, $1, $2); }
+  | class_scope IDENTIFIER parameter_value_assignment
+      { $$ = pform_new_scoped_type_identifier(@2, $1, $2, $3); }
   ;
 
 ps_type_identifier_dim /* IEEE1800-2017: A.9.3 */
@@ -1986,6 +2096,23 @@ ps_type_identifier_dim /* IEEE1800-2017: A.9.3 */
       { lex_in_package_scope(nullptr);
 	auto tmp = pform_new_type_identifier(@2, $1, $2);
 	$$ = pform_make_parray_type(@3, tmp, $3);
+      }
+  | IDENTIFIER parameter_value_assignment dimensions_opt
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1, $2);
+	$$ = pform_make_parray_type(@3, tmp, $3);
+      }
+  | package_scope IDENTIFIER parameter_value_assignment dimensions_opt
+      { lex_in_package_scope(nullptr);
+	auto tmp = pform_new_type_identifier(@2, $1, $2, $3);
+	$$ = pform_make_parray_type(@4, tmp, $4);
+      }
+  | class_scope IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2);
+	$$ = pform_make_parray_type(@3, tmp, $3);
+      }
+  | class_scope IDENTIFIER parameter_value_assignment dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2, $3);
+	$$ = pform_make_parray_type(@4, tmp, $4);
       }
   ;
 
@@ -2286,13 +2413,15 @@ for_step_opt
      definitions in the func_body to take on the scope of the function
      instead of the module. */
 function_declaration /* IEEE1800-2005: A.2.6 */
-  : K_function lifetime_opt data_type_or_implicit_or_void_plus_id ';'
+  : K_function lifetime_opt method_data_type_or_implicit_or_void_plus_id ';'
       { assert(current_function == 0);
+	start_method_scope(@3, $3, false);
 	current_function = pform_push_function_scope(@1, $3.id, $2);
       }
     tf_item_or_statement_list_opt
     K_endfunction
       { std::unique_ptr<procedural_item_list_t> items($6);
+	pform_check_extern_ports(@3, items->ports.get());
 	current_function->set_ports(items->ports.release());
 	current_function->set_return($3.type);
 	current_function_set_statement(items->statements ? items->statements_loc : @3,
@@ -2307,14 +2436,16 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	delete[]$3.id;
       }
 
-  | K_function lifetime_opt data_type_or_implicit_or_void_plus_id
+  | K_function lifetime_opt method_data_type_or_implicit_or_void_plus_id
       { assert(current_function == 0);
+	start_method_scope(@3, $3, false);
 	current_function = pform_push_function_scope(@1, $3.id, $2);
       }
     '(' tf_port_list_opt ')' ';'
     block_item_or_statement_list_opt
     K_endfunction
       { std::unique_ptr<procedural_item_list_t> items($9);
+	pform_check_extern_ports(@3, $6);
 	current_function->set_ports($6);
 	current_function->set_return($3.type);
 	current_function_set_statement(items->statements ? items->statements_loc : @3,
@@ -2332,14 +2463,34 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	delete[]$3.id;
       }
 
+  | K_function lifetime_opt IDENTIFIER K_SCOPE_RES K_new
+      { assert(current_function == 0);
+	current_function = pform_push_extern_constructor_scope(@5, $3);
+	delete[] $3;
+      }
+    tf_port_list_parens_opt ';'
+    block_item_or_statement_list_opt
+    K_endfunction endnew_opt
+      { std::unique_ptr<procedural_item_list_t> items($9);
+	pform_check_extern_ports(@5, $7);
+	current_function->set_ports($7);
+	if (pform_in_class())
+	      pform_set_constructor_return(current_function);
+	pform_set_this_class(@5, current_function);
+	current_function_set_statement(@5, items->statements.get());
+	pform_pop_scope();
+	current_function = 0;
+      }
+
   /* Detect and recover from some errors. */
 
-  | K_function lifetime_opt data_type_or_implicit_or_void_plus_id error K_endfunction
+  | K_function lifetime_opt method_data_type_or_implicit_or_void_plus_id error K_endfunction
       { /* */
 	if (current_function) {
 	      pform_pop_scope();
 	      current_function = 0;
 	}
+	pform_end_extern_method();
 	assert(current_function == 0);
 	yyerror(@1, "error: Syntax error defining function.");
 	yyerrok;
@@ -2687,6 +2838,24 @@ package_variable_decl_assignments_with_type
 	$$.decl_assignments = $4;
 	$$.type = pform_make_parray_type(@3, tmp, $3);
       }
+  | package_scope IDENTIFIER parameter_value_assignment dimensions_opt
+    list_of_variable_decl_assignments
+      { lex_in_package_scope(nullptr);
+	auto tmp = pform_new_type_identifier(@2, $1, $2, $3);
+	$$.decl_assignments = $5;
+	$$.type = pform_make_parray_type(@4, tmp, $4);
+      }
+  | class_scope IDENTIFIER dimensions_opt list_of_variable_decl_assignments
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2);
+	$$.decl_assignments = $4;
+	$$.type = pform_make_parray_type(@3, tmp, $3);
+      }
+  | class_scope IDENTIFIER parameter_value_assignment dimensions_opt
+    list_of_variable_decl_assignments
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2, $3);
+	$$.decl_assignments = $5;
+	$$.type = pform_make_parray_type(@4, tmp, $4);
+      }
   ;
 
 initializer_opt
@@ -2733,13 +2902,14 @@ loop_variables /* IEEE1800-2005: A.6.8 */
   ;
 
 method_qualifier /* IEEE1800-2005: A.1.8 */
-  : K_virtual { $$ = true; }
-  | class_item_qualifier { $$ = false; }
+  : K_virtual { $$ = true; pform_set_method_static(false); }
+  | class_item_qualifier { $$ = false; pform_set_method_static($1.test_static()); }
   ;
 
 method_qualifier_opt
   : method_qualifier { $$ = $1; pform_set_method_virtual($1); }
-  |                  { $$ = false; pform_set_method_virtual(false); }
+  |                  { $$ = false; pform_set_method_virtual(false);
+		       pform_set_method_static(false); }
   ;
 
 modport_declaration /* IEEE1800-2012: A.2.9 */
@@ -3151,13 +3321,15 @@ task_declaration /* IEEE1800-2005: A.2.7 */
   /* Tasks do not have a return type, so the leading identifier is always the
      task name. */
 
-  : K_task lifetime_opt IDENTIFIER ';'
+  : K_task lifetime_opt method_task_id ';'
       { assert(current_task == 0);
-	current_task = pform_push_task_scope(@1, $3, $2);
+	start_method_scope(@3, $3, true);
+	current_task = pform_push_task_scope(@1, $3.id, $2);
       }
     tf_item_or_statement_list_opt
     K_endtask
       { std::unique_ptr<procedural_item_list_t> items($6);
+	pform_check_extern_ports(@3, items->ports.get());
 	current_task->set_ports(items->ports.release());
 	current_task_set_statement(@3, items->statements.get());
 	pform_set_this_class(@3, current_task);
@@ -3174,24 +3346,26 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	// label_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	check_end_label(@9, "task", $3, $9);
-	delete[]$3;
+	check_end_label(@9, "task", $3.id, $9);
+	delete[]$3.id;
       }
 
-  | K_task lifetime_opt IDENTIFIER '('
+  | K_task lifetime_opt method_task_id '('
       { assert(current_task == 0);
-	current_task = pform_push_task_scope(@1, $3, $2);
+	start_method_scope(@3, $3, true);
+	current_task = pform_push_task_scope(@1, $3.id, $2);
       }
     tf_port_list_opt ')' ';'
     block_item_or_statement_list_opt
     K_endtask
       { std::unique_ptr<procedural_item_list_t> items($9);
+	pform_check_extern_ports(@3, $6);
 	current_task->set_ports($6);
 	current_task_set_statement(@3, items->statements.get());
 	pform_set_this_class(@3, current_task);
 	pform_pop_scope();
 	if (generation_flag < GN_VER2005 && $6 == 0) {
-	      cerr << @3 << ": warning: task definition for \"" << $3
+	      cerr << @3 << ": warning: task definition for \"" << $3.id
 		   << "\" has an empty port declaration list!" << endl;
 	}
 	current_task = 0;
@@ -3202,16 +3376,17 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	// label_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	check_end_label(@12, "task", $3, $12);
-	delete[]$3;
+	check_end_label(@12, "task", $3.id, $12);
+	delete[]$3.id;
       }
 
-  | K_task lifetime_opt IDENTIFIER error K_endtask
+  | K_task lifetime_opt method_task_id error K_endtask
       {
 	if (current_task) {
 	      pform_pop_scope();
 	      current_task = 0;
 	}
+	pform_end_extern_method();
       }
     label_opt
       { // Last step: check any closing name. This is done late so
@@ -3219,8 +3394,8 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	// label_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	check_end_label(@7, "task", $3, $7);
-	delete[]$3;
+	check_end_label(@7, "task", $3.id, $7);
+	delete[]$3.id;
       }
 
   ;
@@ -3265,6 +3440,17 @@ data_type_or_implicit_plus_id
 	set_type_id_range($$, pform_make_parray_type(@3, tmp, $3),
 			  $4, @4, nullptr);
       }
+  | IDENTIFIER parameter_value_assignment dimensions_opt IDENTIFIER
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1, $2);
+	set_type_id_range($$, pform_make_parray_type(@3, tmp, $3),
+			  $4, @4, nullptr);
+      }
+  | package_scope IDENTIFIER parameter_value_assignment dimensions_opt IDENTIFIER
+      { lex_in_package_scope(nullptr);
+	auto tmp = pform_new_type_identifier(@2, $1, $2, $3);
+	set_type_id_range($$, pform_make_parray_type(@4, tmp, $4),
+			  $5, @5, nullptr);
+      }
   ;
 
   // A plain identifier can be an implicit declaration name or the first token
@@ -3291,6 +3477,29 @@ data_type_or_implicit_plus_id_dim
 	tmp = pform_make_parray_type(@3, tmp, $3);
 	set_type_id_range($$, tmp, $4, @4, $5);
       }
+  | IDENTIFIER parameter_value_assignment dimensions_opt IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1, $2);
+	tmp = pform_make_parray_type(@3, tmp, $3);
+	set_type_id_range($$, tmp, $4, @4, $5);
+      }
+  | package_scope IDENTIFIER parameter_value_assignment dimensions_opt
+    IDENTIFIER dimensions_opt
+      { lex_in_package_scope(nullptr);
+	auto tmp = pform_new_type_identifier(@2, $1, $2, $3);
+	tmp = pform_make_parray_type(@4, tmp, $4);
+	set_type_id_range($$, tmp, $5, @5, $6);
+      }
+  | class_scope IDENTIFIER dimensions_opt IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2);
+	tmp = pform_make_parray_type(@3, tmp, $3);
+	set_type_id_range($$, tmp, $4, @4, $5);
+      }
+  | class_scope IDENTIFIER parameter_value_assignment dimensions_opt
+    IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2, $3);
+	tmp = pform_make_parray_type(@4, tmp, $4);
+	set_type_id_range($$, tmp, $5, @5, $6);
+      }
   ;
 
   // Parameter port lists can omit the `parameter` keyword, but the optional
@@ -3315,6 +3524,61 @@ data_type_or_parameter_id_dim
 	auto tmp = pform_new_type_identifier(@2, $1, $2);
 	tmp = pform_make_parray_type(@3, tmp, $3);
 	set_type_id_range($$, tmp, $4, @4, $5);
+      }
+  | class_scope IDENTIFIER dimensions_opt IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2);
+	tmp = pform_make_parray_type(@3, tmp, $3);
+	set_type_id_range($$, tmp, $4, @4, $5);
+      }
+  | class_scope IDENTIFIER parameter_value_assignment dimensions_opt
+    IDENTIFIER dimensions_opt
+      { auto tmp = pform_new_scoped_type_identifier(@2, $1, $2, $3);
+	tmp = pform_make_parray_type(@4, tmp, $4);
+	set_type_id_range($$, tmp, $5, @5, $6);
+      }
+  ;
+
+  // Function name in a function_declaration. Besides the plain form this also
+  // accepts class_scope::name for the out-of-block definition of an extern
+  // class method (IEEE1800-2017 8.24).
+method_data_type_or_implicit_or_void_plus_id
+  : data_type_or_implicit_or_void_plus_id
+      { $$ = $1;
+      }
+  | IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { set_type_id_range($$, nullptr, $3, @3, nullptr);
+	$$.scope_id = $1;
+      }
+  | IDENTIFIER dimensions_opt IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1);
+	tmp = pform_make_parray_type(@2, tmp, $2);
+	set_type_id_range($$, tmp, $5, @5, nullptr);
+	$$.scope_id = $3;
+      }
+  | atomic_type IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { set_type_id_range($$, $1, $4, @4, nullptr);
+	$$.scope_id = $2;
+      }
+  | implicit_type IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { set_type_id_range($$, $1, $4, @4, nullptr);
+	$$.scope_id = $2;
+      }
+  | K_void IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { void_type_t*tmp = new void_type_t;
+	FILE_NAME(tmp, @1);
+	set_type_id_range($$, tmp, $4, @4, nullptr);
+	$$.scope_id = $2;
+      }
+  ;
+
+  // Task name in a task_declaration, optionally class_scope::name.
+method_task_id
+  : IDENTIFIER
+      { set_type_id_range($$, nullptr, $1, @1, nullptr);
+      }
+  | IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { set_type_id_range($$, nullptr, $3, @3, nullptr);
+	$$.scope_id = $1;
       }
   ;
 
@@ -3366,7 +3630,7 @@ partial_port_identifier_dim
 
 tf_port_item /* IEEE1800-2005: A.2.7 */
 
-  : port_direction_opt K_var_opt data_type_or_implicit_plus_id_dim initializer_opt
+  : tf_port_direction_opt K_var_opt data_type_or_implicit_plus_id_dim initializer_opt
       { std::vector<pform_tf_port_t>*tmp;
 	NetNet::PortType use_port_type = $1;
         if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || !$3.type))
@@ -3402,6 +3666,10 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	}
 
 	$$ = tmp;
+	if (port_declaration_context.is_const) {
+	      for (size_t idx = 0 ; idx < tmp->size() ; idx += 1)
+		    tmp->at(idx).port->set_const(true);
+	}
 	if ($4) {
 	      pform_requires_sv(@4, "Task/function default argument");
 	      assert(tmp->size()==1);
@@ -3411,7 +3679,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 
   /* Rules to match error cases... */
 
-  | port_direction_opt K_var_opt data_type_or_implicit_plus_id_dim error
+  | tf_port_direction_opt K_var_opt data_type_or_implicit_plus_id_dim error
       { yyerror(@3, "error: Error in task/function port item after port name %s.", $3.id);
 	delete_type_id_range($3);
 	yyerrok;
@@ -3419,9 +3687,30 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
       }
   ;
 
+  /* The direction of a task/function port. A "const ref" port is a ref
+     port that the task or function can not write. A port without a
+     direction keeps the direction and const of the previous port. */
+
+tf_port_direction_opt
+  : port_direction_opt
+      { $$ = $1;
+	if ($1 != NetNet::PIMPLICIT)
+	      port_declaration_context.is_const = false;
+      }
+  | K_const K_ref
+      { $$ = NetNet::PREF;
+	port_declaration_context.is_const = true;
+	if (!pform_requires_sv(@2, "Reference port (ref)")) {
+	      $$ = NetNet::PINPUT;
+	      port_declaration_context.is_const = false;
+	}
+      }
+  ;
+
 tf_port_list /* IEEE1800-2005: A.2.7 */
   :   { port_declaration_context.port_type = gn_system_verilog() ? NetNet::PINPUT : NetNet::PIMPLICIT;
 	port_declaration_context.data_type = nullptr;
+	port_declaration_context.is_const = false;
       }
     tf_port_item_list
       { $$ = $2; }
@@ -3493,21 +3782,25 @@ value_range /* IEEE1800-2005: A.8.3 */
 
 index_component
   : '[' expression ']'
-      { $$ = make_index_component(@$, index_component_t::SEL_BIT, $2);
-      }
-  | '[' '$' ']'
-      { $$ = make_index_component(@$, index_component_t::SEL_BIT_LAST);
+      { if (dynamic_cast<PEQueueDimension*>($2)) {
+	      delete $2;
+	      $$ = make_index_component(@$, index_component_t::SEL_BIT_LAST);
+	} else {
+	      $$ = make_index_component(@$, index_component_t::SEL_BIT, $2);
+	}
       }
   | '[' expression ':' expression ']'
-      { $$ = make_index_component(@$, index_component_t::SEL_PART, $2, $4);
+      { if (dynamic_cast<PEQueueDimension*>($2)) {
+	      delete $2;
+	      $$ = make_index_component(@$,
+				       index_component_t::SEL_QUEUE_BOUND,
+				       nullptr, $4);
+	} else {
+	      $$ = make_index_component(@$, index_component_t::SEL_PART, $2, $4);
+	}
       }
   | '[' ']'
       { $$ = make_index_component(@$, index_component_t::SEL_NONE);
-      }
-  | '[' '$' ':' expression ']'
-      { $$ = make_index_component(@$,
-				 index_component_t::SEL_QUEUE_BOUND,
-				 nullptr, $4);
       }
   | '[' expression K_PO_POS expression ']'
       { $$ = make_index_component(@$, index_component_t::SEL_IDX_UP, $2, $4);
@@ -3527,8 +3820,11 @@ variable_lifetime
 	      }
 	} else if (pform_requires_sv(@1, "Overriding default variable lifetime") &&
 		   $1 != scope->default_lifetime) {
-	      yyerror(@1, "sorry: Overriding the default variable "
-			  "lifetime is not yet supported.");
+	      auto block = dynamic_cast<PBlock*>(scope);
+	      if ($1 != LexicalScope::AUTOMATIC || !block || current_function ||
+		  block->bl_type() != PBlock::BL_SEQ)
+		    yyerror(@1, "sorry: Overriding the default variable "
+				"lifetime is not yet supported.");
 	}
 	var_lifetime = $1;
       }
@@ -4762,6 +5058,11 @@ type_value
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  | IDENTIFIER parameter_value_assignment
+      { auto tmp = new PETypename(pform_new_type_identifier(@1, nullptr, $1, $2));
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
   ;
 
   /* SystemVerilog: a().b() — call a function, then invoke a method on the
@@ -4884,6 +5185,8 @@ expr_primary
 	$$ = pform_package_ident(@2, $1, $2);
 	delete $2;
       }
+  | class_scope hierarchy_identifier
+      { $$ = pform_class_scope_ident(@2, $1, $2); }
 
   /* An identifier followed by an expression list in parentheses is a
      function call. If a system identifier, then a system function
@@ -4911,6 +5214,15 @@ expr_primary
 	FILE_NAME(tmp, @2);
 	delete $2;
 	delete $4;
+	$$ = tmp;
+      }
+  | class_scope hierarchy_identifier argument_list_parens
+      { pform_scoped_name_t call_path(nullptr, *$2);
+	call_path.class_scope.reset($1);
+	auto tmp = new PECallFunction(call_path, *$3);
+	FILE_NAME(tmp, @2);
+	delete $2;
+	delete $3;
 	$$ = tmp;
       }
   | K_this
@@ -5171,12 +5483,40 @@ expr_primary
   | assignment_pattern
       { $$ = $1; }
 
+  /* A typed assignment pattern, IEEE1800-2017 10.9: the type is a type
+     name or a type parameter, which the elaborator tells apart from an
+     expression, as it does for a cast. */
+  | expr_primary_or_typename assignment_pattern
+      { auto tmp = static_cast<PEAssignPattern*>($2);
+	auto tn = dynamic_cast<PETypename*>($1);
+	if (!pform_requires_sv(@1, "Typed assignment pattern")) {
+	      delete $1;
+	} else if (tn && !dynamic_cast<const atom_type_t*>(tn->get_type()) &&
+		   !dynamic_cast<const type_identifier_t*>(tn->get_type())) {
+	      yyerror(@1, "error: Only a type name, an integer atom type, a type "
+			  "parameter or a type reference is allowed as the type "
+			  "of an assignment pattern.");
+	      delete $1;
+	} else {
+	      tmp->set_type($1);
+	}
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+
   /* SystemVerilog supports streaming concatenation */
   | streaming_concatenation
       { $$ = $1; }
 
   | K_null
       { PENull*tmp = new PENull;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+
+  /* The "$" in a queue index is the index of the last element. */
+  | '$'
+      { PEQueueDimension*tmp = new PEQueueDimension;
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
@@ -5406,7 +5746,7 @@ hierarchy_identifier
 
 index_components_opt
   : index_components
-  |
+  | %prec no_index_components
       { $$ = nullptr; }
   ;
 
@@ -5636,6 +5976,9 @@ lpvalue
 	$$ = tmp;
 	delete $1;
       }
+
+  | class_scope hierarchy_identifier
+      { $$ = pform_class_scope_ident(@2, $1, $2); }
 
   | '{' expression_list_proper '}'
       { PEConcat*tmp = new PEConcat(*$2);
@@ -6096,15 +6439,66 @@ module_item
   | K_pulldown '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
       { pform_makegates(@1, PGBuiltin::PULLDOWN, $3, 0, $7, 0); }
 
-  /* Parameterized module and primitive instances are unambiguous after '#'.
-     Unparameterized instances share a prefix with named declarations and are
-     handled by identifier_module_item. */
+  /* Parameterized module instances share a prefix with declarations of
+     variables with a class specialization type, e.g. "C #(8) h;". These
+     rules mirror identifier_module_item. */
 
   | attribute_list_opt
-	  IDENTIFIER parameter_value_assignment gate_instance_list ';'
-      { perm_string tmp1 = lex_strings.make($2);
-		  pform_make_modgates(@2, tmp1, $3, $4, $1);
-		  delete[]$2;
+	  IDENTIFIER parameter_value_assignment IDENTIFIER gate_instance_ports
+	  gate_instance_continue ';'
+      { std::unique_ptr<lgate> instance($5);
+	instance->name = $4;
+	FILE_NAME(instance.get(), @4);
+	$6->insert($6->begin(), *instance);
+	perm_string tmp1 = lex_strings.make($2);
+	pform_make_modgates(@2, tmp1, $3, $6, $1);
+	delete[]$2;
+	delete[]$4;
+      }
+  | attribute_list_opt
+	  IDENTIFIER parameter_value_assignment gate_instance_positional_connections
+	  gate_instance_continue ';'
+      { std::unique_ptr<lgate> instance($4);
+	instance->name = "";
+	FILE_NAME(instance.get(), @4);
+	$5->insert($5->begin(), *instance);
+	perm_string tmp1 = lex_strings.make($2);
+	pform_make_modgates(@2, tmp1, $3, $5, $1);
+	delete[]$2;
+      }
+  | attribute_list_opt
+	  IDENTIFIER parameter_value_assignment list_of_variable_decl_assignments ';'
+      { if (decl_assignments_require_type(*$4) ||
+	    pform_test_type_identifier(@2, $2)) {
+	      auto type = pform_new_type_identifier(@2, nullptr, $2, $3);
+	      pform_make_var(@2, $4, type, $1, false);
+	      var_lifetime = LexicalScope::INHERITED;
+	      delete $1;
+	} else {
+	      std::unique_ptr<std::vector<lgate>> gates(new std::vector<lgate>);
+	      append_no_port_gate_instances(*gates,
+		    std::unique_ptr<std::list<decl_assignment_t*>>($4));
+	      perm_string tmp1 = lex_strings.make($2);
+	      pform_make_modgates(@2, tmp1, $3, gates.release(), $1);
+	      delete[]$2;
+	}
+      }
+  | attribute_list_opt
+	  IDENTIFIER parameter_value_assignment list_of_variable_decl_assignments ','
+	  IDENTIFIER gate_instance_ports gate_instance_continue ';'
+      { std::unique_ptr<std::vector<lgate>> gates(new std::vector<lgate>);
+	append_no_port_gate_instances(*gates,
+		    std::unique_ptr<std::list<decl_assignment_t*>>($4));
+	std::unique_ptr<lgate> instance($7);
+	instance->name = $6;
+	FILE_NAME(instance.get(), @6);
+	gates->push_back(*instance);
+	gates->insert(gates->end(), $8->begin(), $8->end());
+	delete $8;
+	perm_string tmp1 = lex_strings.make($2);
+	pform_make_modgates(@2, tmp1, $3, gates.release(), $1);
+	delete[]$2;
+	delete[]$6;
       }
 
         | attribute_list_opt
@@ -7669,6 +8063,15 @@ subroutine_call
 	delete $4;
 	$$ = tmp;
       }
+  | class_scope hierarchy_identifier argument_list_parens_opt
+      { pform_scoped_name_t call_path(nullptr, *$2);
+	call_path.class_scope.reset($1);
+	auto tmp = new PCallTask(call_path, *$3);
+	FILE_NAME(tmp, @2);
+	delete $2;
+	delete $3;
+	$$ = tmp;
+      }
   | class_hierarchy_identifier argument_list_parens_opt
       { PCallTask*tmp = new PCallTask(*$1, *$2);
 	FILE_NAME(tmp, @1);
@@ -8166,6 +8569,25 @@ tf_port_list_opt
 tf_port_list_parens_opt
   : '(' tf_port_list_opt ')' { $$ = $2; }
   |                          { $$ = 0; }
+
+  /* The ports of an extern prototype are kept for checking the later
+     definition. They are made in a scope of their own so the wires do
+     not end up in the class. */
+extern_proto_ports
+  : extern_proto_scope tf_port_list_parens_opt
+      { pform_pop_scope();
+	$$ = $2;
+      }
+  | extern_proto_scope error
+      { pform_pop_scope();
+	yyerrok;
+	$$ = 0;
+      }
+  ;
+
+extern_proto_scope
+  : { pform_push_proto_scope(@$); }
+  ;
 
   /* Note that the lexor notices the "table" keyword and starts
      the UDPTABLE state. It needs to happen there so that all the

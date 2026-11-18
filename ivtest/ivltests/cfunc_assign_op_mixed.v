@@ -111,7 +111,7 @@ initial begin
 
   $display("div2_5 = %0f", div2_5);
   if (div2_5 != div2(5)) failed = 1;
-  if (div2_5 != 2) failed = 1;
+  if (div2_5 != 3) failed = 1;
 
   $display("mod2_5 = %0f", mod2_5);
   if (mod2_5 != mod2(5)) failed = 1;
@@ -131,7 +131,7 @@ initial begin
 
   $display("div3_5 = %0f", div3_5);
   if (div3_5 != div3(5)) failed = 1;
-  if (div3_5 != 1) failed = 1;
+  if (div3_5 != 2) failed = 1;
 
   $display("mod3_5 = %0f", mod3_5);
   if (mod3_5 != mod3(5)) failed = 1;

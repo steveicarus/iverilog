@@ -319,14 +319,25 @@ general syntax of a variable is::
 	<label> .var/s "name", <msb> <lsb>; Signed logic variable
 	<label> .var/2u "name", <msb> <lsb>; Unsigned bool/bit variable
 	<label> .var/2s "name", <msb> <lsb>; Signed bool/bit variable
-	<label> .var/real "name", <msb>, <lsb>; real variable
-	<label> .var/i "name", <msb>, <lsb>; vpiIntegerVar variable
+	<label> .var/real "name"; real variable
+	<label> .var/i "name", <msb> <lsb>; vpiIntegerVar variable
 	<label> .var/str "name"; vpiStringVar variable
+
+The ``, <msb> <lsb>`` range is what makes a variable a vector. A vector
+always has a range, even when it has a single element (``logic [0:0]`` is
+``0 0``). A scalar has no range, and its width is one::
+
+	<label> .var "name", 0 0;	A one-element vector (vpiVector)
+	<label> .var "name";		A scalar (vpiScalar)
+
+This applies to every ``.var`` form above, and to the ``.net`` forms. A real
+has neither a range nor a vector/scalar distinction.
 
 Enum variables may append a reference to an enumeration definition before
 the terminating semicolon::
 
         <label> .var "name", <msb> <lsb>, <enum-label>;
+        <label> .var "name", <enum-label>;
 
 This optional reference is also accepted by the ``/s``, ``/2u``, ``/2s``
 and ``/i`` forms. It identifies the enum typespec exposed through
@@ -368,17 +379,31 @@ it (unless it uses a force) and it is given a different VPI type
 code. The syntax of a .net statement is also similar to but not
 exactly the same as the .var statement::
 
-	<label> .net      "name", <msb>, <lsb>, <symbol>;
-	<label> .net/s    "name", <msb>, <lsb>, <symbol>;
-	<label> .net8     "name", <msb>, <lsb>, <symbol>;
-	<label> .net8/s   "name", <msb>, <lsb>, <symbol>;
-	<label> .net/real "name", <msb>, <lsb>, <symbol>;
+	<label> .net      "name", <msb> <lsb>, <symbol>;
+	<label> .net/s    "name", <msb> <lsb>, <symbol>;
+	<label> .net/2u   "name", <msb> <lsb>, <symbol>;
+	<label> .net/2s   "name", <msb> <lsb>, <symbol>;
+	<label> .net8     "name", <msb> <lsb>, <symbol>;
+	<label> .net8/s   "name", <msb> <lsb>, <symbol>;
+	<label> .net8/2u  "name", <msb> <lsb>, <symbol>;
+	<label> .net8/2s  "name", <msb> <lsb>, <symbol>;
+	<label> .net/real "name", <symbol>;
+
+As for a variable, the range is what makes a net a vector. A scalar net has
+no range::
+
+	<label> .net "name", <symbol>;
 
 
 Like a .var statement, the .net statement creates a VPI object with
 the basename and dimensions given as parameters. The symbol is a
 functor that feeds into the vector of the net, and the vpiHandle
 holds references to that functor.
+
+Words of a net array are declared with the array label and index in place
+of the name, with the same optional range::
+
+	<label> .net v<array> <index>, <msb> <lsb>, <symbol>;
 
 The input of a .net is replicated to its output. In this sense, it
 acts like a diode. The purpose of this node is to hold various VPI
@@ -481,6 +506,23 @@ declared separately, this statement collects them together::
 
 the .var or .net statements after this array statement, that have the
 same "name" are collected, in order, as words.
+
+An array of variables holds its words inside the .array statement, so the
+statement also carries their type and range. The ``.array/4u``,
+``.array/s``, ``.array/2u`` and ``.array/2s`` forms follow the same rule as
+``.var``: the words are vectors if there is a word range, and scalars if
+there is none::
+
+	<label> .array/2u "name", <last> <first>, <msb> <lsb>;	Vector words
+	<label> .array/2u "name", <last> <first>;		Scalar words
+
+The ``.array/i`` form always has a word range, and the real, string and
+object forms have none. ``.array/4u`` is the unsigned 4-state form. The
+older plain ``.array`` with a word range is still accepted, but cannot give
+scalar words a form without one, since that would be the net array
+statement above. A word of a plain ``.array`` is a vector (``vpiVector``) if
+it is more than one bit wide, and a one-bit word does not report either
+``vpiVector`` or ``vpiScalar``.
 
 The syntax below is different, in that it creates an alias for an
 existing array. The dimensions and storage are taken from the .array
@@ -1186,7 +1228,7 @@ Each bit of a variable is created by a `.var` statement. For example::
 
 becomes::
 
-	a	.var "a", 0, 0;
+	a	.var "a";
 
 
 * named events
