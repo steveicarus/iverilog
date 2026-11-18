@@ -28,7 +28,7 @@ module tb;
     check2.complete;
     check3.complete;
     $display("PASSED");
-    $finish;
+    $finish(0);
   end
 endmodule
 `include "width_history_check.vh"

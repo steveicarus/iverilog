@@ -219,16 +219,6 @@ ivl_scope_enumerate
 ivl_scope_enumerates
 ivl_scope_event
 ivl_scope_events
-ivl_scope_widths
-ivl_scope_width
-ivl_width_scope
-ivl_width_reference
-ivl_width_notifier
-ivl_width_posedge
-ivl_width_limit
-ivl_width_threshold
-ivl_width_file
-ivl_width_lineno
 ivl_scope_file
 ivl_scope_func_type
 ivl_scope_func_signed
@@ -261,6 +251,8 @@ ivl_scope_time_units
 ivl_scope_type
 ivl_scope_tname
 ivl_scope_virtual_root
+ivl_scope_width
+ivl_scope_widths
 
 ivl_signal_array_addr_swapped
 ivl_signal_array_base
@@ -370,3 +362,12 @@ ivl_udp_port
 ivl_udp_row
 ivl_udp_rows
 ivl_udp_sequ
+
+ivl_width_file
+ivl_width_limit
+ivl_width_lineno
+ivl_width_notifier
+ivl_width_posedge
+ivl_width_reference
+ivl_width_scope
+ivl_width_threshold

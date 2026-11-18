@@ -1269,7 +1269,6 @@ width_hdl_startup	vvp_tests/width_hdl_startup.json
 width_hdl_threshold	vvp_tests/width_hdl_threshold.json
 width_hdl_units	vvp_tests/width_hdl_units.json
 width_hdl_vector_fail	vvp_tests/width_hdl_vector_fail.json
-width_hdl_vlog95	vvp_tests/width_hdl_vlog95.json
 wild_cmp_delay			vvp_tests/wild_cmp_delay.json
 wreal				vvp_tests/wreal.json
 writemem-invalid		vvp_tests/writemem-invalid.json

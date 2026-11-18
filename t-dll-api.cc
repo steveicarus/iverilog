@@ -2165,36 +2165,6 @@ extern "C" ivl_enumtype_t ivl_scope_enumerate(ivl_scope_t net, unsigned idx)
       return net->enumerations_[idx];
 }
 
-extern "C" unsigned ivl_scope_widths(ivl_scope_t net)
-{ assert(net); return net->widths_.size(); }
-
-extern "C" ivl_width_t ivl_scope_width(ivl_scope_t net, unsigned idx)
-{ assert(net && idx < net->widths_.size()); return net->widths_[idx]; }
-
-extern "C" ivl_scope_t ivl_width_scope(ivl_width_t check)
-{ assert(check); return check->scope; }
-
-extern "C" ivl_signal_t ivl_width_reference(ivl_width_t check)
-{ assert(check); return check->reference; }
-
-extern "C" ivl_signal_t ivl_width_notifier(ivl_width_t check)
-{ assert(check); return check->notifier; }
-
-extern "C" int ivl_width_posedge(ivl_width_t check)
-{ assert(check); return check->posedge; }
-
-extern "C" double ivl_width_limit(ivl_width_t check)
-{ assert(check); return check->limit; }
-
-extern "C" double ivl_width_threshold(ivl_width_t check)
-{ assert(check); return check->threshold; }
-
-extern "C" const char*ivl_width_file(ivl_width_t check)
-{ assert(check); return check->file.str(); }
-
-extern "C" unsigned ivl_width_lineno(ivl_width_t check)
-{ assert(check); return check->lineno; }
-
 extern "C" unsigned ivl_scope_events(ivl_scope_t net)
 {
       assert(net);
@@ -2465,6 +2435,19 @@ extern "C" const char* ivl_scope_tname(ivl_scope_t net)
 {
       assert(net);
       return net->tname_;
+}
+
+extern "C" unsigned ivl_scope_widths(ivl_scope_t net)
+{
+      assert(net);
+      return net->widths_.size();
+}
+
+extern "C" ivl_width_t ivl_scope_width(ivl_scope_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->widths_.size());
+      return net->widths_[idx];
 }
 
 extern "C" int ivl_signal_array_base(ivl_signal_t net)
@@ -3434,4 +3417,52 @@ extern "C" int ivl_type_signed(ivl_type_t net)
 {
       assert(net);
       return net->get_signed()? 1 : 0;
+}
+
+extern "C" const char* ivl_width_file(ivl_width_t check)
+{
+      assert(check);
+      return check->file.str();
+}
+
+extern "C" double ivl_width_limit(ivl_width_t check)
+{
+      assert(check);
+      return check->limit;
+}
+
+extern "C" unsigned ivl_width_lineno(ivl_width_t check)
+{
+      assert(check);
+      return check->lineno;
+}
+
+extern "C" ivl_signal_t ivl_width_notifier(ivl_width_t check)
+{
+      assert(check);
+      return check->notifier;
+}
+
+extern "C" int ivl_width_posedge(ivl_width_t check)
+{
+      assert(check);
+      return check->posedge;
+}
+
+extern "C" ivl_signal_t ivl_width_reference(ivl_width_t check)
+{
+      assert(check);
+      return check->reference;
+}
+
+extern "C" ivl_scope_t ivl_width_scope(ivl_width_t check)
+{
+      assert(check);
+      return check->scope;
+}
+
+extern "C" double ivl_width_threshold(ivl_width_t check)
+{
+      assert(check);
+      return check->threshold;
 }
