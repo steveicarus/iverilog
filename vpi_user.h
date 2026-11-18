@@ -311,6 +311,7 @@ typedef struct t_vpi_delay  {
 #define vpiSysTfCall   85
 #define vpiArgument    89
 #define vpiBit         90
+#define vpiDriver      91
 #define vpiInternalScope 92
 #define vpiModPathIn     95
 #define vpiModPathOut    96
@@ -320,7 +321,11 @@ typedef struct t_vpi_delay  {
 /********************** object types added with 1364-2001 *********************/
 
 #define vpiCallback   107
+#define vpiDelayTerm  108
+#define vpiDelayDevice 109
 #define vpiRegArray   116
+#define vpiInTerm     120
+#define vpiOutTerm    124
 
 /********************** object types added with 1364-2005 *********************/
 
@@ -397,6 +402,8 @@ typedef struct t_vpi_delay  {
 #define vpiUserDefn       45
 #define vpiAutomatic      50
 #define vpiConstantSelect 53
+#define vpiDelayType      56
+#   define vpiModPathDelay 1
 #define vpiSigned         65
 #define vpiLocalParam     70
 /* IVL private properties, also see vvp/vpi_priv.h for other properties */
