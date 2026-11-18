@@ -279,6 +279,10 @@ overrides the public net. A device and its terminals retain their identity
 across queries. The device represents the delay node shared by the module
 paths, while the individual ``vpiModPath`` objects still expose delay values.
 
+Both terminals support ``cbValueChange``. The input reports changes as the
+device receives them. The output reports delivered changes, so a rejected
+pulse or a force on the destination net does not create output callbacks.
+
 This driver traversal covers direct scalar module-path drivers. Queries
 outside that topology return NULL.
 

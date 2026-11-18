@@ -520,10 +520,14 @@ struct modpath_scalar_state {
 
 // The VPI delay device models the existing functor, not the individual
 // specify arcs which supply its delay values.
-class modpath_delay_term : public __vpiHandle {
+class modpath_delay_term : public __vpiHandle, public vvp_vpi_callback {
     public:
       modpath_delay_term(modpath_delay_device&device, bool input)
       : device_(device), input_(input) { }
+
+#ifdef CHECK_WITH_VALGRIND
+      ~modpath_delay_term() override { clear_all_callbacks(); }
+#endif
 
       int get_type_code() const override { return vpiDelayTerm; }
       int vpi_get(int code) override
@@ -531,6 +535,8 @@ class modpath_delay_term : public __vpiHandle {
       char* vpi_get_str(int code) override;
       vpiHandle vpi_handle(int code) override;
       void vpi_get_value(p_vpi_value value) override;
+      void get_value(p_vpi_value value) override { vpi_get_value(value); }
+      void value_changed() { run_vpi_callbacks(); }
 
     private:
       modpath_delay_device&device_;
@@ -572,6 +578,15 @@ void modpath_delay_term::vpi_get_value(p_vpi_value value)
                                     : fun->scalar_->delivered;
       if (value->format == vpiObjTypeVal) value->format = vpiScalarVal;
       vpip_vec4_get_value(vvp_vector4_t(1, bit), 1, false, value);
+}
+
+value_callback* vpip_make_delay_term_callback(p_cb_data data)
+{
+      auto*term = dynamic_cast<modpath_delay_term*>(data->obj);
+      assert(term);
+      auto*callback = new value_callback(data);
+      term->add_vpi_callback(callback);
+      return callback;
 }
 
 char* modpath_delay_device::vpi_get_str(int code)
@@ -688,7 +703,12 @@ void modpath_scalar_event::run_run()
       assert(schedule_simtime() == due);
       vvp_fun_modpath*o = owner;
       detach();
+      const bool changed = o->scalar_->delivered != target;
       o->scalar_->delivered = target;
+      // Observe the device output before forwarding through the public
+      // net's filter, which may replace the value while it is forced.
+      if (changed && o->scalar_->path->delay_device)
+	    o->scalar_->path->delay_device->out_term.value_changed();
       o->net_->send_vec4(vvp_vector4_t(1, target), 0);
       // The generic scheduler deletes this payload after return.
 }
@@ -711,9 +731,14 @@ void vvp_fun_modpath::scalar_request_(vvp_bit4_t value, vvp_time64_t delay,
       // A due-now transaction is still the projected output until it runs.
       const vvp_bit4_t base = scalar_->pending.empty() ? scalar_->delivered
                             : scalar_->pending.back()->target;
-      if (value == base) return;
-      modpath_scalar_event*event = new modpath_scalar_event(this, value, due);
-      schedule_generic(event, delay, false, true, true);
+      if (value != base) {
+	    auto*event = new modpath_scalar_event(this, value, due);
+	    schedule_generic(event, delay, false, true, true);
+      }
+
+      // The input changes even if no corresponding output event survives.
+      if (scalar_->path->delay_device)
+	    scalar_->path->delay_device->in_term.value_changed();
 }
 
 vvp_fun_modpath::vvp_fun_modpath(vvp_net_t*net, unsigned width, __vpiModPath*path)

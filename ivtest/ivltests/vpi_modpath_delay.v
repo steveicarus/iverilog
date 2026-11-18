@@ -11,19 +11,24 @@ primitive delay_mux_udp (q, a, b, s);
   endtable
 endprimitive
 
+`timescale 1ns/1ps
+
 module delay_mux (output q, input a, b, s);
   delay_mux_udp logic_gate(q, a, b, s);
   specify
-    (a => q) = (3,5,9,9,9,9,9,9,9,9,9,9);
-    (b => q) = (3,5,9,9,9,9,9,9,9,9,9,9);
-    (s => q) = (3,5,9,9,9,9,9,9,9,9,9,9);
+    specparam R = 0.003, F = 0.005, U = 0.009;
+    (a => q) = (R,F,U,U,U,U,U,U,U,U,U,U);
+    (b => q) = (R,F,U,U,U,U,U,U,U,U,U,U);
+    (s => q) = (R,F,U,U,U,U,U,U,U,U,U,U);
   endspecify
 
   initial begin
-    #90 force q = 1'b0;
-    #30 release q;
+    #0.090 force q = 1'b0;
+    #0.030 release q;
   end
 endmodule
+
+`timescale 1ps/1ps
 
 module no_path (output q, input a);
   not logic_gate(q, a);
@@ -56,6 +61,8 @@ module test;
     #100 b = 0;    // Delay input becomes 0; delivery at 205.
     #100 b = 1'bx; // Delay input becomes X; delivery at 309.
     #100 b = 1;    // Delay input becomes 1; delivery at 409.
-    #100;
+    #50 b = 0;    // The short pulse changes the input, but is not delivered.
+    #2 b = 1;
+    #48;
   end
 endmodule

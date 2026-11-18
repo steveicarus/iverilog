@@ -20,8 +20,32 @@ static const struct sample schedule[] = {
     {301, vpiX, vpi0, vpi0},
     {310, vpiX, vpiX, vpiX},
     {401, vpi1, vpiX, vpiX},
-    {410, vpi1, vpi1, vpi1}
+    {410, vpi1, vpi1, vpi1},
+    {451, vpi0, vpi1, vpi1},
+    {458, vpi1, vpi1, vpi1}
 };
+
+struct transition {
+    unsigned tick;
+    int value;
+};
+
+struct stream {
+    vpiHandle terminal;
+    const struct transition *events;
+    unsigned expected_count;
+    int time_type;
+    unsigned count;
+};
+
+static const struct transition input_changes[] = {
+    {100, vpi1}, {200, vpi0}, {300, vpiX}, {400, vpi1}, {450, vpi0}, {452, vpi1}
+};
+static const struct transition output_changes[] = {
+    {103, vpi1}, {205, vpi0}, {309, vpiX}, {409, vpi1}
+};
+static struct stream source_events, delivery_events, removed_events;
+static vpiHandle removed_callback;
 
 static int check(int condition, const char *label)
 {
@@ -39,6 +63,60 @@ static int scalar_value(vpiHandle object)
     vpi_get_value(object, &value);
     if (!check(value.format == vpiScalarVal, "scalar value format")) return -1;
     return value.value.scalar;
+}
+
+static PLI_INT32 value_changed(p_cb_data cb)
+{
+    struct stream *stream = (struct stream *)cb->user_data;
+    unsigned index = stream->count++;
+    vpiHandle object = cb->obj;
+    int reason = cb->reason;
+    int scalar = cb->value && cb->value->format == vpiScalarVal;
+    int value = scalar ? cb->value->value.scalar : -1;
+    s_vpi_time reported = {0}, now = {0};
+    if (cb->time) reported = *cb->time;
+    if (!check(index < stream->expected_count, "unexpected terminal callback")) return 0;
+
+    now.type = vpiSimTime;
+    vpi_get_time(NULL, &now);
+    unsigned tick = stream->events[index].tick;
+    int expected = stream->events[index].value;
+    check(reason == cbValueChange && object == stream->terminal, "callback reason and object");
+    check(now.high == 0 && now.low == tick, "callback execution time");
+    check(reported.type == stream->time_type, "callback time format");
+    if (stream->time_type == vpiSimTime) {
+        check(reported.high == 0 && reported.low == tick, "callback simulation ticks");
+    } else {
+        /* The owning module uses ns, while the global tick is ps. */
+        double difference = reported.real - tick / 1000.0;
+        check(difference > -1e-12 && difference < 1e-12, "callback module-scaled time");
+    }
+    check(scalar && value == expected, "callback scalar payload");
+    check(scalar_value(stream->terminal) == expected, "callback terminal readback");
+    return 0;
+}
+
+static vpiHandle observe(struct stream *stream, vpiHandle terminal,
+                         const struct transition *events, unsigned expected_count, int time_type)
+{
+    s_vpi_time time = {0};
+    s_vpi_value value = {0};
+    s_cb_data cb = {0};
+    stream->terminal = terminal;
+    stream->events = events;
+    stream->expected_count = expected_count;
+    stream->time_type = time_type;
+    time.type = time_type;
+    value.format = vpiScalarVal;
+    cb.reason = cbValueChange;
+    cb.cb_rtn = value_changed;
+    cb.obj = terminal;
+    cb.time = &time;
+    cb.value = &value;
+    cb.user_data = (PLI_BYTE8 *)stream;
+    vpiHandle handle = vpi_register_cb(&cb);
+    check(handle != NULL, "terminal callback registration");
+    return handle;
 }
 
 static vpiHandle sole_driver(vpiHandle net)
@@ -98,6 +176,16 @@ static PLI_INT32 sample_values(p_cb_data cb)
     check(scalar_value(input_term) == expected->input, "delay input value");
     check(scalar_value(output_term) == expected->output, "device output value");
     check(scalar_value(public_net) == expected->net, "public output value");
+    if (expected->tick == 80) {
+        observe(&source_events, input_term, input_changes,
+                sizeof(input_changes)/sizeof(input_changes[0]), vpiSimTime);
+        observe(&delivery_events, output_term, output_changes,
+                sizeof(output_changes)/sizeof(output_changes[0]), vpiScaledRealTime);
+        removed_callback = observe(&removed_events, output_term, output_changes, 1, vpiSimTime);
+    } else if (expected->tick == 104) {
+        check(removed_events.count == 1, "callback ran before removal");
+        if (removed_callback) check(vpi_remove_cb(removed_callback) == 1, "callback removal");
+    }
     return 0;
 }
 
@@ -145,8 +233,13 @@ static PLI_INT32 discover(p_cb_data ignored)
 static PLI_INT32 finish(p_cb_data ignored)
 {
     (void)ignored;
-    if (input_term)
+    if (input_term) {
         check(samples == sizeof(schedule)/sizeof(schedule[0]), "complete snapshots");
+        check(source_events.count == source_events.expected_count &&
+              delivery_events.count == delivery_events.expected_count,
+              "complete input and delivery callbacks");
+        check(removed_events.count == 1, "removed callback stayed inactive");
+    }
     if (!failures) vpi_printf("PASSED\n");
     return 0;
 }

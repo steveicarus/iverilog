@@ -219,6 +219,7 @@ class value_callback : public __vpiCallback {
 };
 
 extern void callback_execute(struct __vpiCallback*cur);
+extern value_callback* vpip_make_delay_term_callback(p_cb_data data);
 
 struct __vpiSystemTime : public __vpiHandle {
       __vpiSystemTime();

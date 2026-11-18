@@ -322,6 +322,9 @@ static value_callback* make_value_change(p_cb_data data)
       if (!check_callback_time(data, true))
 	    return 0;
 
+      if (data->obj && data->obj->get_type_code() == vpiDelayTerm)
+	    return vpip_make_delay_term_callback(data);
+
       if (vpi_get(vpiAutomatic, data->obj)) {
             fprintf(stderr, "vpi error: cannot place value change "
                             "callback on automatically allocated "
