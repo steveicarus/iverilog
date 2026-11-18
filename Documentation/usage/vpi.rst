@@ -264,6 +264,24 @@ whether every intended SDF entry was annotated or every path was exercised.
 Separate annotation checks and receiving-event observations are needed for
 those claims.
 
+Scalar Module-Path Delay Devices
+--------------------------------
+
+A scalar net driven directly by a compiled module-path delay exposes its
+output delay terminal through ``vpi_iterate(vpiDriver, net)``. A terminal's
+``vpiDelayDevice`` relationship identifies the device. Use ``vpiInTerm`` and
+``vpiOutTerm`` on that device to obtain the two terminals and ``vpiModule`` to
+obtain the owning module.
+
+Reading the input terminal gives the value before the delay. Reading the
+output terminal gives the value delivered by the device, even if a force
+overrides the public net. A device and its terminals retain their identity
+across queries. The device represents the delay node shared by the module
+paths, while the individual ``vpiModPath`` objects still expose delay values.
+
+This driver traversal covers direct scalar module-path drivers. Queries
+outside that topology return NULL.
+
 Cadence PLI Modules
 -------------------
 

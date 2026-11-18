@@ -162,13 +162,15 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
 */
 class vvp_fun_modpath;
 class vvp_fun_modpath_src;
+class modpath_delay_term;
 struct modpath_scalar_event;
 struct modpath_scalar_state;
+struct __vpiModPath;
 
 class vvp_fun_modpath  : public vvp_net_fun_t, private vvp_gen_event_s {
 
     public:
-      vvp_fun_modpath(vvp_net_t*net, unsigned width);
+      vvp_fun_modpath(vvp_net_t*net, unsigned width, __vpiModPath*path);
       ~vvp_fun_modpath() override;
 
       void add_modpath_src(vvp_fun_modpath_src*that, bool ifnone);
@@ -176,11 +178,14 @@ class vvp_fun_modpath  : public vvp_net_fun_t, private vvp_gen_event_s {
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t) override;
 
+      vpiHandle iterate_driver();
+
     private:
       virtual void run_run() override;
       void scalar_request_(vvp_bit4_t value, vvp_time64_t delay,
                            vvp_time64_t reject_limit);
       friend struct modpath_scalar_event;
+      friend class modpath_delay_term;
 
     private:
       vvp_net_t*net_;

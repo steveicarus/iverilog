@@ -569,6 +569,7 @@ struct __vpiModPath {
 
       struct __vpiModPathTerm path_term_out;
       vvp_net_t *input_net  ;
+      class modpath_delay_device* delay_device = nullptr;
 };
 
 

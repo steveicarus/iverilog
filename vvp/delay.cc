@@ -511,10 +511,100 @@ void vvp_fun_delay::run_run_real_(const struct vvp_fun_delay::event_*cur)
 // Keep functional requests separate from values already delivered. Each
 // surviving scalar transaction owns its value and scheduled delivery time.
 struct modpath_scalar_state {
+      __vpiModPath* const path;
       vvp_bit4_t delivered;
       list<modpath_scalar_event*> pending;
-      modpath_scalar_state() : delivered(BIT4_X) { }
+      explicit modpath_scalar_state(__vpiModPath*owner)
+      : path(owner), delivered(BIT4_X) { }
 };
+
+// The VPI delay device models the existing functor, not the individual
+// specify arcs which supply its delay values.
+class modpath_delay_term : public __vpiHandle {
+    public:
+      modpath_delay_term(modpath_delay_device&device, bool input)
+      : device_(device), input_(input) { }
+
+      int get_type_code() const override { return vpiDelayTerm; }
+      int vpi_get(int code) override
+      { return code == vpiDelayType ? vpiModPathDelay : vpiUndefined; }
+      char* vpi_get_str(int code) override;
+      vpiHandle vpi_handle(int code) override;
+      void vpi_get_value(p_vpi_value value) override;
+
+    private:
+      modpath_delay_device&device_;
+      const bool input_;
+};
+
+class modpath_delay_device : public __vpiHandle {
+    public:
+      explicit modpath_delay_device(__vpiModPath&owner)
+      : path(owner), in_term(*this, true), out_term(*this, false) { }
+
+      int get_type_code() const override { return vpiDelayDevice; }
+      int vpi_get(int code) override
+      { return code == vpiDelayType ? vpiModPathDelay : vpiUndefined; }
+      char* vpi_get_str(int code) override;
+      vpiHandle vpi_handle(int code) override;
+
+      __vpiModPath&path;
+      modpath_delay_term in_term;
+      modpath_delay_term out_term;
+};
+
+char* modpath_delay_term::vpi_get_str(int code)
+{
+      if (code == vpiType) return simple_set_rbuf_str("vpiDelayTerm");
+      if (code == vpiDelayType) return simple_set_rbuf_str("vpiModPathDelay");
+      return nullptr;
+}
+
+vpiHandle modpath_delay_term::vpi_handle(int code)
+{
+      return code == vpiDelayDevice ? &device_ : nullptr;
+}
+
+void modpath_delay_term::vpi_get_value(p_vpi_value value)
+{
+      const auto*fun = device_.path.modpath;
+      const vvp_bit4_t bit = input_ ? fun->cur_vec4_.value(0)
+                                    : fun->scalar_->delivered;
+      if (value->format == vpiObjTypeVal) value->format = vpiScalarVal;
+      vpip_vec4_get_value(vvp_vector4_t(1, bit), 1, false, value);
+}
+
+char* modpath_delay_device::vpi_get_str(int code)
+{
+      if (code == vpiType) return simple_set_rbuf_str("vpiDelayDevice");
+      if (code == vpiDelayType) return simple_set_rbuf_str("vpiModPathDelay");
+      return nullptr;
+}
+
+vpiHandle modpath_delay_device::vpi_handle(int code)
+{
+      switch (code) {
+	  case vpiInTerm: return &in_term;
+	  case vpiOutTerm: return &out_term;
+	  case vpiModule: return vpip_module(path.scope);
+      }
+      return nullptr;
+}
+
+vpiHandle vvp_fun_modpath::iterate_driver()
+{
+      if (!scalar_) return nullptr;
+      auto&path = *scalar_->path;
+      const auto*out = dynamic_cast<__vpiSignal*>(path.path_term_out.expr);
+      if (!out || out->get_type_code() != vpiNet || out->is_netarray ||
+          out->vec_flag || out->node != net_)
+	    return nullptr;
+
+      if (!path.delay_device) path.delay_device = new modpath_delay_device(path);
+      auto*args = static_cast<vpiHandle*>(malloc(sizeof(vpiHandle)));
+      args[0] = &path.delay_device->out_term;
+      return vpip_make_iterator(1, args, true);
+}
 
 struct modpath_event_registry;
 struct modpath_scalar_event : public vvp_gen_event_s {
@@ -626,8 +716,8 @@ void vvp_fun_modpath::scalar_request_(vvp_bit4_t value, vvp_time64_t delay,
       schedule_generic(event, delay, false, true, true);
 }
 
-vvp_fun_modpath::vvp_fun_modpath(vvp_net_t*net, unsigned width)
-: net_(net), scalar_(width == 1 ? new modpath_scalar_state : 0),
+vvp_fun_modpath::vvp_fun_modpath(vvp_net_t*net, unsigned width, __vpiModPath*path)
+: net_(net), scalar_(width == 1 ? new modpath_scalar_state(path) : 0),
   src_list_(0), ifnone_list_(0)
 {
       cur_vec4_ = vvp_vector4_t(width, BIT4_X);
@@ -1240,6 +1330,7 @@ struct __vpiModPath* vpip_make_modpath(vvp_net_t *net)
 void modpath_delete()
 {
       for (unsigned idx = 0; idx < mp_count; idx += 1) {
+	    delete mp_list[idx]->delay_device;
 	    delete mp_list[idx];
       }
       free(mp_list);

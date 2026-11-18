@@ -1,0 +1,6 @@
+{
+    "type": "normal",
+    "source": "vpi_modpath_delay.v",
+    "iverilog-args": ["-gspecify"],
+    "vpi-sources": ["vpi/modpath_delay_device.c"]
+}
