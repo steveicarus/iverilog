@@ -238,6 +238,11 @@ struct vthread_s {
 	    assert(stack_obj_size_ > 0);
 	    return stack_obj_[stack_obj_size_-1];
       }
+      inline vvp_object_t& peek_object(unsigned depth)
+      {
+	    assert(stack_obj_size_ > depth);
+	    return stack_obj_[stack_obj_size_-1-depth];
+      }
       inline void pop_object(vvp_object_t&obj)
       {
 	    assert(stack_obj_size_ > 0);
@@ -2065,6 +2070,20 @@ bool of_CMPNE(vthread_t thr, vvp_code_t)
       thr->flags[6] =  ~thr->flags[6];
 
       thr->pop_vec4(2);
+      return true;
+}
+
+/*
+ * %cmp/obj
+ * Compare the top two objects on the object stack for identity. Write
+ * "1" into flags[4] if they are the same object (or both nil), otherwise
+ * "0". Neither object is popped.
+ */
+bool of_CMPOBJ(vthread_t thr, vvp_code_t)
+{
+      vvp_object_t&a = thr->peek_object(0);
+      vvp_object_t&b = thr->peek_object(1);
+      thr->flags[4] = (a == b) ? BIT4_1 : BIT4_0;
       return true;
 }
 

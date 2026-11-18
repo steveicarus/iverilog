@@ -359,6 +359,15 @@ For the purposes of calculating the lt bit, the top string is the
 right operand and the string underneath is the left operand. This
 instruction removes two strings from the stack.
 
+* %cmp/obj
+
+This instruction compares the top two objects on the object stack for
+identity. It sets bit 4 to 1 if they are the same object (or both are
+null), otherwise it sets bit 4 to 0. The objects are NOT popped.
+
+This is intended to implement the SystemVerilog expression (<a> == <b>),
+where <a> and <b> are class handles.
+
 * %concat/str
 * %concati/str <string>
 
