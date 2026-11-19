@@ -577,7 +577,11 @@ extern void compile_tchk_recrem(unsigned file_idx, unsigned lineno,
                                    char* reference_edge_text, struct symb_s reference,
                                    char* data_edge_text, struct symb_s data,
                                    double recovery_limit, double removal_limit,
-                                   char* notifier);
+                                   char* notifier,
+                                   char* reference_condition = nullptr,
+                                   uint64_t reference_condition_value = 1,
+                                   char* data_condition = nullptr,
+                                   uint64_t data_condition_value = 1);
 
 // SETUPHOLD records preserve reference/data and setup/hold order.
 extern void compile_tchk_setuphold(unsigned file_idx, unsigned lineno,

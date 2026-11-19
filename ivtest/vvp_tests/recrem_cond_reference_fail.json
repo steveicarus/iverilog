@@ -1,0 +1,12 @@
+{
+    "type": "CE",
+    "gold": "recrem_cond_reference_fail",
+    "source": "recrem_cond_reference_fail.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ]
+}

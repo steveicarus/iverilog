@@ -1,0 +1,4 @@
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
+(CELL (CELLTYPE "leaf") (INSTANCE ro) (TIMINGCHECK (RECOVERY (posedge R) (posedge C) (20))))
+(CELL (CELLTYPE "leaf") (INSTANCE mo) (TIMINGCHECK (REMOVAL (posedge R) (posedge C) (8))))
+(CELL (CELLTYPE "leaf") (INSTANCE both) (TIMINGCHECK (RECREM (posedge R) (posedge C) (20) (8)))))
