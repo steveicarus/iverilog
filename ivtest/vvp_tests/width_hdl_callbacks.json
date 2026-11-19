@@ -1,0 +1,15 @@
+{
+    "type": "normal",
+    "source": "width_hdl_objects.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-Iivltests",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/width_callbacks.c"
+    ]
+}

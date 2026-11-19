@@ -1,0 +1,15 @@
+{
+    "type": "normal",
+    "source": "setup_hold_hdl_sdf_slots.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Tmax",
+        "-s",
+        "tb",
+        "-DSH_SLOT_MAX"
+    ],
+    "vpi-sources": [
+        "vpi/setup_hold_audit.c"
+    ]
+}

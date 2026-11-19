@@ -30,6 +30,7 @@
 # include  <algorithm>
 # include  <typeinfo>
 # include  <climits>
+# include  <cmath>
 # include  <cstdlib>
 # include  <cstring>
 # include  <iostream>
@@ -2972,7 +2973,7 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
       ivl_assert(*this, ! event_);
 
       NetAssign_*lv = elaborate_lval(des, scope);
-      if (lv == 0) return 0;
+      if (!lv) return nullptr;
 
       if (is_darray_prop_element_(lv)) {
 	    cerr << get_fileline() << ": sorry: Assignment operators on "
@@ -2983,50 +2984,35 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-	// Compressed assignments should behave identically to the
-	// equivalent uncompressed assignments. This means we need
-	// to take the type of the LHS into account when determining
-	// the type of the RHS expression.
-      bool force_unsigned;
-      switch (op_) {
-	  case 'l':
-	  case 'r':
-	  case 'R':
-	      // The right-hand operand of shift operations is
-	      // self-determined.
-	    force_unsigned = false;
-	    break;
-	  default:
-	    force_unsigned = !lv->get_signed();
-	    break;
-      }
       const auto lval_info = get_lval_info(lv);
+
+	// Unsigned arithmetic right shifts use the logical shift opcode.
+      char op = op_;
+      if (op == 'R' && !lv->get_signed()) op = 'r';
+      unique_ptr<NetAssign>cur(new NetAssign(lv, op, nullptr));
+      cur->set_line(*this);
+
+      bool is_shift = op_ == 'l' || op_ == 'r' || op_ == 'R';
       auto expr = rval();
       PExpr::width_mode_t mode = PExpr::SIZED;
       expr->test_width(des, scope, mode);
 
-      NetExpr*rv;
-      if (lval_info.type == IVL_VT_REAL || expr->expr_type() == IVL_VT_REAL) {
-	      // Real arithmetic uses each integral operand's own width and
-	      // signedness. Convert only the completed operation's result.
-	    unsigned width = expr->expr_width();
-	    rv = expr->elaborate_expr(des, scope, width, PExpr::NO_FLAGS);
-	    if (rv) eval_expr(rv, width);
-      } else {
-	    rv = elaborate_rval_(des, scope, nullptr, lval_info.type,
-				 lval_info.width, force_unsigned);
+      ivl_variable_type_t rtype = expr->expr_type();
+      bool is_real = lval_info.type == IVL_VT_REAL || rtype == IVL_VT_REAL;
+
+	// Integral operands share a width and signedness. Shift counts and
+	// integral operands paired with a real operand are self-determined.
+      unsigned width = expr->expr_width();
+      if (!is_shift && !is_real) {
+	    width = max(width, lval_info.width);
+	    expr->cast_signed(lv->get_signed() && expr->has_sign());
       }
-      if (rv == 0) return 0;
+      NetExpr::Ptr rv(expr->elaborate_expr(des, scope, width, PExpr::NO_FLAGS));
+      if (!rv) return nullptr;
+      eval_expr(rv, width);
 
-	// Unsigned arithmetic right shifts use the logical shift opcode.
-      char op = op_;
-      if ((op == 'R') && !lv->get_signed())
-	    op = 'r';
-
-      NetAssign*cur = new NetAssign(lv, op, rv);
-      cur->set_line(*this);
-
-      return cur;
+      cur->set_rval(rv.release());
+      return cur.release();
 }
 
 /*
@@ -4534,7 +4520,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 									   method_name,
 									   "$ivl_queue_method$pop_back");
 			      }
-			      if (!queue && method_name == "delete") {
+			      if (method_name == "delete") {
 				    static const std::vector<perm_string> parm_names = {
 					  perm_string::literal("index")
 				    };
@@ -5084,6 +5070,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	   expression that can be a target to a procedural
 	   assignment, including a memory word. */
 
+      list<NetAssign*> copy_out;
       for (unsigned int idx = off; idx < parm_count; idx++) {
 
 	    size_t parms_idx = idx - off;
@@ -5122,7 +5109,24 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	    if (lv == 0)
 		  continue;
 
-	    NetExpr*rv = new NetESignal(port);
+	      /* While the callee's context is the read context, the
+		 caller's automatic variables cannot be read, and that
+		 includes the object a store to a container element
+		 needs. So between an automatic caller and an automatic
+		 callee, copy the port to a temporary of the caller and do
+		 the copy-out to the l-value after the context is freed. */
+	    NetNet*src = port;
+	    if (task->is_auto() && scope->is_auto()) {
+		  src = new NetNet(scope, scope->local_symbol(), NetNet::REG,
+				   port->unpacked_dims(), port->net_type());
+		  src->set_line(*this);
+		  NetAssign*tmp_ass = new NetAssign(new NetAssign_(src),
+						    new NetESignal(port));
+		  tmp_ass->set_line(*this);
+		  block->append(tmp_ass);
+	    }
+
+	    NetExpr*rv = new NetESignal(src);
 
 	      /* Handle any implicit cast. */
 	    const auto lval_info = get_lval_info(lv);
@@ -5159,7 +5163,10 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	    NetAssign*ass = new NetAssign(lv, rv);
 	    ass->set_line(*this);
 
-	    block->append(ass);
+	    if (src == port)
+		  block->append(ass);
+	    else
+		  copy_out.push_back(ass);
       }
 
         /* If this is an automatic task, generate a statement to free
@@ -5169,6 +5176,9 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	    fp->set_line(*this);
 	    block->append(fp);
       }
+
+      for (NetAssign*ass : copy_out)
+	    block->append(ass);
 
       return block;
 }
@@ -7343,13 +7353,207 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       }
 }
 
+/* Timing-check arguments are constant physical times in this module's units.
+ * Keep them real until the runtime applies the module precision. */
+static bool timing_check_constant(Design*des, NetScope*scope, PExpr*expr,
+                                  const LineInfo&loc, const char*kind,
+                                  const char*which, double&value)
+{
+      // Timing-check limits may use specparams. Require a constant without
+      // treating this timing context as a non-annotatable parameter use.
+      std::unique_ptr<NetExpr> elaborated(elab_and_eval(des, scope, expr, -1,
+                                                      true, true));
+      bool valid = false;
+      if (const auto*real = dynamic_cast<const NetECReal*>(elaborated.get())) {
+	    value = real->value().as_double();
+	    valid = true;
+      } else if (const auto*bits = dynamic_cast<const NetEConst*>(elaborated.get())) {
+	    if (bits->value().is_defined() && !bits->value().is_string()) {
+		  value = bits->value().as_double();
+		  valid = true;
+	    }
+      }
+      if (!valid || !std::isfinite(value) || value < 0.0) {
+	    cerr << loc.get_fileline() << ": error: " << kind << " " << which
+		 << " must be a finite nonnegative constant." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+      // The nonnegative VVP real grammar has no sign. IEEE negative zero
+      // is the same timing value as zero, so emit its canonical form.
+      if (value == 0.0) value = 0.0;
+      return true;
+}
+
+static NetNet*timing_check_signal(Design*des, NetScope*scope,
+                                 const pform_name_t&name, const LineInfo&loc,
+                                 const char*kind, bool notifier,
+                                 const char*event_role = "reference")
+{
+      const char*role = notifier ? "notifier" : event_role;
+      if (name.size() != 1 || !name.front().index.empty()) {
+	    cerr << loc.get_fileline() << ": error: " << kind << " " << role
+		 << " must be an unselected local scalar signal." << endl;
+	    des->errors += 1;
+	    return nullptr;
+      }
+      NetNet*sig = scope->find_signal(name.front().name);
+      if (!sig || sig->vector_width() != 1 || sig->packed_dimensions() != 0
+	  || sig->unpacked_dimensions() != 0
+	  || (sig->data_type() != IVL_VT_LOGIC && sig->data_type() != IVL_VT_BOOL)
+	  || (notifier && sig->type() != NetNet::REG)) {
+	    cerr << loc.get_fileline() << ": error: " << kind << " " << role
+		 << (notifier ? " must be a local scalar variable."
+		              : " must be a local scalar logic or bit signal.") << endl;
+	    des->errors += 1;
+	    return nullptr;
+      }
+      return sig;
+}
+
+void PWidth::elaborate(Design*des, NetScope*scope) const
+{
+      if (!gn_specify_blocks_flag) return;
+      bool posedge = reference_->posedge;
+      bool negedge = reference_->negedge;
+      if (!reference_->edges.empty()) {
+            unsigned edges = 0;
+            for (PTimingCheck::EdgeType edge : reference_->edges)
+                  edges |= 1U << edge;
+            // IEEE 1800 section 31.5 defines these lists as the keywords.
+            const unsigned positive = (1U << PTimingCheck::EDGE_01)
+                                    | (1U << PTimingCheck::EDGE_0X)
+                                    | (1U << PTimingCheck::EDGE_X1);
+            const unsigned negative = (1U << PTimingCheck::EDGE_10)
+                                    | (1U << PTimingCheck::EDGE_1X)
+                                    | (1U << PTimingCheck::EDGE_X0);
+            posedge = edges == positive;
+            negedge = edges == negative;
+      }
+      if (reference_->condition || posedge == negedge) {
+	    cerr << get_fileline() << ": error: $width supports only unconditional"
+		 << " posedge or negedge scalar reference events." << endl;
+	    des->errors += 1;
+	    return;
+      }
+      NetNet*reference = timing_check_signal(des, scope, reference_->name,
+                                            *this, "$width", false);
+      NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
+                                                      *this, "$width", true)
+                                  : nullptr;
+      if (!reference || (notifier_ && !notifier)) return;
+      double limit = 0.0, threshold = 0.0;
+      if (!timing_check_constant(des, scope, limit_.get(), *this,
+                                 "$width", "limit", limit)) return;
+      if (threshold_ && !timing_check_constant(des, scope, threshold_.get(), *this,
+                                              "$width", "threshold", threshold))
+            return;
+      std::unique_ptr<NetWidth> check(new NetWidth(scope, reference, notifier,
+					 posedge, limit, threshold));
+      check->set_line(*this);
+      scope->add_width(std::move(check));
+}
+
+void PPeriod::elaborate(Design*des, NetScope*scope) const
+{
+      if (!gn_specify_blocks_flag) return;
+      if (reference_->condition || reference_->posedge == reference_->negedge
+          || !reference_->edges.empty()) {
+            cerr << get_fileline() << ": error: $period supports only unconditional"
+                 << " posedge or negedge scalar reference events." << endl;
+            des->errors += 1;
+            return;
+      }
+      NetNet*reference = timing_check_signal(des, scope, reference_->name,
+                                            *this, "$period", false);
+      NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
+                                                      *this, "$period", true)
+                                  : nullptr;
+      if (!reference || (notifier_ && !notifier)) return;
+      double limit = 0.0;
+      if (!timing_check_constant(des, scope, limit_.get(), *this,
+                                 "$period", "limit", limit)) return;
+      std::unique_ptr<NetPeriod> check(new NetPeriod(scope, reference, notifier,
+                                                   reference_->posedge, limit));
+      check->set_line(*this);
+      scope->add_period(std::move(check));
+}
+
+/* Standalone SETUP/HOLD permit an unqualified transition or one selected
+ * edge. Conditional events and edge-descriptor lists are separate support. */
+static bool timing_check_event(Design*des, const LineInfo&loc,
+                                const PTimingCheck::event_t&event,
+                                const char*kind, const char*role, int&edge)
+{
+      if (event.condition || !event.edges.empty() ||
+          (event.posedge && event.negedge)) {
+            cerr << loc.get_fileline() << ": error: " << kind << " " << role
+                 << " supports only unconditional scalar events with no edge,"
+                 << " posedge or negedge." << endl;
+            des->errors += 1;
+            return false;
+      }
+      edge = event.posedge ? 1 : event.negedge ? -1 : 0;
+      return true;
+}
+
+void PSetup::elaborate(Design*des, NetScope*scope) const
+{
+      if (!gn_specify_blocks_flag) return;
+      int reference_edge, data_edge;
+      if (!timing_check_event(des, *this, *reference_, "$setup", "reference",
+                              reference_edge) ||
+          !timing_check_event(des, *this, *data_, "$setup", "data", data_edge))
+            return;
+      NetNet*reference = timing_check_signal(des, scope, reference_->name,
+                                             *this, "$setup", false);
+      NetNet*data = timing_check_signal(des, scope, data_->name,
+                                        *this, "$setup", false, "data");
+      NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
+                                                       *this, "$setup", true)
+                                  : nullptr;
+      if (!reference || !data || (notifier_ && !notifier)) return;
+      double limit = 0.0;
+      if (!timing_check_constant(des, scope, limit_.get(), *this,
+                                 "$setup", "limit", limit)) return;
+      std::unique_ptr<NetSetup> check(new NetSetup(scope, reference, data,
+                                          notifier, reference_edge, data_edge,
+                                          limit));
+      check->set_line(*this);
+      scope->add_setup(std::move(check));
+}
+
+void PHold::elaborate(Design*des, NetScope*scope) const
+{
+      if (!gn_specify_blocks_flag) return;
+      int reference_edge, data_edge;
+      if (!timing_check_event(des, *this, *reference_, "$hold", "reference",
+                              reference_edge) ||
+          !timing_check_event(des, *this, *data_, "$hold", "data", data_edge))
+            return;
+      NetNet*reference = timing_check_signal(des, scope, reference_->name,
+                                             *this, "$hold", false);
+      NetNet*data = timing_check_signal(des, scope, data_->name,
+                                        *this, "$hold", false, "data");
+      NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
+                                                       *this, "$hold", true)
+                                  : nullptr;
+      if (!reference || !data || (notifier_ && !notifier)) return;
+      double limit = 0.0;
+      if (!timing_check_constant(des, scope, limit_.get(), *this,
+                                 "$hold", "limit", limit)) return;
+      std::unique_ptr<NetHold> check(new NetHold(scope, reference, data,
+                                          notifier, reference_edge, data_edge,
+                                          limit));
+      check->set_line(*this);
+      scope->add_hold(std::move(check));
+}
+
 void PRecRem::elaborate(Design*des, NetScope*scope) const
 {
-      // At present, no timing checks are supported.
-      // Still, in order to get some models working
-      // assign the original reference and data signals to
-      // the delayed reference and data signals as per
-      // 15.5.4 Option behavior
+      // This fallback does not create a $recrem timing check.
+      // It only connects the original reference and data signals to
+      // the optional delayed signals per 15.5.4 Option behavior.
 
       if (delayed_reference_ != nullptr)
       {
@@ -7412,11 +7616,9 @@ void PRecRem::elaborate(Design*des, NetScope*scope) const
 
 void PSetupHold::elaborate(Design*des, NetScope*scope) const
 {
-      // At present, no timing checks are supported.
-      // Still, in order to get some models working
-      // assign the original reference and data signals to
-      // the delayed reference and data signals as per
-      // 15.5.4 Option behavior
+      // This fallback does not create a $setuphold timing check.
+      // It only connects the original reference and data signals to
+      // the optional delayed signals per 15.5.4 Option behavior.
 
       if (delayed_reference_ != nullptr)
       {

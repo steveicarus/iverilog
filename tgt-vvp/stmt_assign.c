@@ -441,7 +441,9 @@ static void draw_stmt_assign_vector_op(ivl_statement_t net)
       unsigned char opcode = ivl_stmt_opcode(net);
       ivl_expr_t rval = ivl_stmt_rval(net);
       bool is_signed = ivl_expr_signed(rval);
+      bool is_shift = opcode == 'l' || opcode == 'r' || opcode == 'R';
       unsigned lwidth = ivl_stmt_lwidth(net);
+      unsigned width = lwidth;
       int idx_reg;
 
 	/*
@@ -457,8 +459,17 @@ static void draw_stmt_assign_vector_op(ivl_statement_t net)
 	    return;
       }
 
+	/*
+	 * The l-value is already on the stack. Extend it to the common
+	 * operand width before evaluating an arithmetic or bitwise operator.
+	 * Shift counts keep their own width.
+	 */
+      if (!is_shift && ivl_expr_width(rval) > width) {
+	    width = ivl_expr_width(rval);
+	    fprintf(vvp_out, "    %%pad/%c %u;\n", is_signed ? 's' : 'u', width);
+      }
       draw_eval_vec4(rval);
-      resize_vec4_wid(rval, lwidth);
+      if (!is_shift) resize_vec4_wid(rval, width);
 
       switch (opcode) {
 	  case '+':
@@ -518,6 +529,15 @@ static void draw_stmt_assign_vector_op(ivl_statement_t net)
 	    fprintf(vvp_out, "; UNSUPPORTED ASSIGNMENT OPCODE: %c\n", opcode);
 	    assert(0);
 	    break;
+      }
+
+	/*
+	 * Convert the completed result to the assignment width. The compound
+	 * operation is not part of the elaborated RHS expression, so its
+	 * result conversion must be emitted here.
+	 */
+      if (width != lwidth) {
+	    fprintf(vvp_out, "    %%pad/u %u;\n", lwidth);
       }
 }
 
@@ -968,6 +988,27 @@ static int show_stmt_assign_string(ivl_statement_t net)
       return 0;
 }
 
+/*
+ * Queues and dynamic arrays have value semantics, but evaluating a
+ * variable or a class property as an object leaves the stored handle
+ * on the object stack. Such a value must be duplicated before it is
+ * stored as the array, whereas the result of "new[]", an array pattern,
+ * an automatic function call or a slice is already a private copy. The
+ * result of a static function is held by the function's return variable.
+ */
+static int rval_shares_array_object(ivl_expr_t rval)
+{
+      switch (ivl_expr_type(rval)) {
+	  case IVL_EX_SIGNAL:
+	  case IVL_EX_PROPERTY:
+	    return 1;
+	  case IVL_EX_UFUNC:
+	    return !ivl_scope_is_auto(ivl_expr_def(rval));
+	  default:
+	    return 0;
+      }
+}
+
 static int show_stmt_assign_object(ivl_statement_t net)
 {
       ivl_lval_t lval = ivl_stmt_lval(net, 0);
@@ -981,6 +1022,12 @@ static int show_stmt_assign_object(ivl_statement_t net)
       if (prop_idx >= 0) {
 	    draw_lval_expr(lval);
 	    int errors = draw_eval_object(rval);
+	    ivl_variable_type_t lval_type = ivl_lval_data_type(lval);
+	    if ((lval_type == IVL_VT_DARRAY || lval_type == IVL_VT_QUEUE) &&
+		rval_shares_array_object(rval)) {
+		  fprintf(vvp_out, "    %%dup/obj;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+	    }
 	    int index = 0;
 	    if (ivl_lval_idx(lval)) {
 		  index = allocate_word();
@@ -1115,13 +1162,13 @@ static int show_stmt_assign_darray(ivl_statement_t net)
 		    var, ivl_stmt_file(net), ivl_stmt_lineno(net),
 		    ivl_signal_basename(var));
 
-      } else if (ivl_expr_type(rval) == IVL_EX_SIGNAL) {
+      } else if (rval_shares_array_object(rval)) {
 	    assert(ivl_stmt_opcode(net) == 0);
 
 	    // There is no l-value mux, and the r-value expression is
-	    // a "signal" expression. Store a duplicate into the lvalue
-	    // By using the %dup/obj. Remember to pop the rvalue that
-	    // is no longer needed.
+	    // a "signal" or class property expression. Store a duplicate
+	    // into the lvalue by using the %dup/obj. Remember to pop the
+	    // rvalue that is no longer needed.
 	    errors += draw_eval_object(rval);
 	    fprintf(vvp_out, "    %%dup/obj;\n");
 	    fprintf(vvp_out, "    %%store/obj v%p_0; %s:%u: %s = <signal>\n",

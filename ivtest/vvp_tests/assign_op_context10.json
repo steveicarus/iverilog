@@ -1,0 +1,10 @@
+{
+    "type"          : "normal",
+    "source"        : "assign_op_context10.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Two-state result conversion is not supported",
+        "type"          : "NI",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}

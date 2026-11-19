@@ -1,0 +1,6 @@
+ivltests/setup_hdl_edge_data_fail.v:7: error: $setup data supports only unconditional scalar events with no edge, posedge or negedge.
+ivltests/setup_hdl_edge_data_fail.v:8: error: $setup data supports only unconditional scalar events with no edge, posedge or negedge.
+ivltests/setup_hdl_edge_data_fail.v:9: error: $setup data supports only unconditional scalar events with no edge, posedge or negedge.
+ivltests/setup_hdl_edge_data_fail.v:10: error: $setup data supports only unconditional scalar events with no edge, posedge or negedge.
+ivltests/setup_hdl_edge_data_fail.v:11: error: $setup data supports only unconditional scalar events with no edge, posedge or negedge.
+5 error(s) during elaboration.

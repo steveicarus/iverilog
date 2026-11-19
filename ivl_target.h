@@ -135,6 +135,9 @@ _BEGIN_DECL
  *    that is fully elaborated, with defparams and other parameter
  *    overrides taken care of.
  *
+ * ivl_period_t
+ *    An elaborated unconditional scalar $period timing check.
+ *
  * ivl_process_t
  *    A Verilog process is represented by one of these. A process may
  *    be an "initial" or an "always" process. These come from initial
@@ -152,6 +155,9 @@ _BEGIN_DECL
  *
  * ivl_switch_t
  *    Switches are the tran/tranif devices in the design.
+ *
+ * ivl_width_t
+ *    An elaborated unconditional scalar $width timing check.
  *
  * -- A Note About Bit Sets --
  * Some objects hold a value as an array of bits. In these cases there
@@ -175,6 +181,8 @@ typedef struct ivl_design_s   *ivl_design_t;
 typedef _CLASS ivl_discipline_s*ivl_discipline_t;
 typedef const _CLASS netenum_t*ivl_enumtype_t;
 typedef struct ivl_event_s    *ivl_event_t;
+typedef struct ivl_setup_s    *ivl_setup_t;
+typedef struct ivl_hold_s    *ivl_hold_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
 typedef struct ivl_island_s   *ivl_island_t;
 typedef struct ivl_lpm_s      *ivl_lpm_t;
@@ -187,6 +195,7 @@ typedef struct ivl_net_probe_s*ivl_net_probe_t;
 typedef struct ivl_nexus_s    *ivl_nexus_t;
 typedef struct ivl_nexus_ptr_s*ivl_nexus_ptr_t;
 typedef struct ivl_parameter_s*ivl_parameter_t;
+typedef struct ivl_period_s   *ivl_period_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
@@ -195,6 +204,7 @@ typedef struct ivl_switch_s   *ivl_switch_t;
 typedef struct ivl_memory_s   *ivl_memory_t; //XXXX __attribute__((deprecated));
 typedef struct ivl_statement_s*ivl_statement_t;
 typedef const _CLASS ivl_type_s*ivl_type_t;
+typedef struct ivl_width_s    *ivl_width_t;
 
 /*
  * These are types that are defined as enumerations. These have
@@ -1745,6 +1755,36 @@ extern int         ivl_parameter_is_type(ivl_parameter_t net);
 extern const char* ivl_parameter_file(ivl_parameter_t net);
 extern unsigned    ivl_parameter_lineno(ivl_parameter_t net);
 
+/* PERIOD CHECKS
+ * These accessors describe unconditional scalar $period checks.
+ *
+ * ivl_period_file
+ * ivl_period_lineno
+ *    Return the source file and line of the timing check declaration.
+ *
+ * ivl_period_limit
+ *    Returns the elaborated limit in the owning scope's time units
+ *    (ivl_scope_time_units), before rounding to its precision.
+ *
+ * ivl_period_notifier
+ *    Returns the local scalar notifier variable, or NULL if omitted.
+ *
+ * ivl_period_posedge
+ *    Returns 1 for a posedge reference event and 0 for negedge.
+ *
+ * ivl_period_reference
+ *    Returns the local scalar signal of the reference event.
+ *
+ * ivl_period_scope
+ *    Returns the scope containing the declaration.
+ */
+extern const char*  ivl_period_file(ivl_period_t check);
+extern double       ivl_period_limit(ivl_period_t check);
+extern unsigned     ivl_period_lineno(ivl_period_t check);
+extern ivl_signal_t ivl_period_notifier(ivl_period_t check);
+extern int          ivl_period_posedge(ivl_period_t check);
+extern ivl_signal_t ivl_period_reference(ivl_period_t check);
+extern ivl_scope_t  ivl_period_scope(ivl_period_t check);
 
 /* SCOPE
  * Scopes of various sort have these properties. Use these methods to
@@ -1862,6 +1902,11 @@ extern unsigned    ivl_parameter_lineno(ivl_parameter_t net);
  *    If this is a non-root scope, then the parent is the scope that
  *    contains this scope. Otherwise, the parent is nil.
  *
+ * ivl_scope_periods
+ *    Returns the number of $period checks in this scope.
+ * ivl_scope_period
+ *    Returns the check at idx, where 0 <= idx < ivl_scope_periods(net).
+ *
  * ivl_scope_port
  * ivl_scope_ports
  *    Scopes that are functions or tasks have ports defined by
@@ -1893,6 +1938,11 @@ extern unsigned    ivl_parameter_lineno(ivl_parameter_t net);
  *    an instance of module foo, its type is IVL_SCT_MODULE and its
  *    type name is "foo". This is different from the instance name
  *    returned by ivl_scope_name above.
+ *
+ * ivl_scope_widths
+ *    Returns the number of $width checks in this scope.
+ * ivl_scope_width
+ *    Returns the check at idx, where 0 <= idx < ivl_scope_widths(net).
  */
 
 extern unsigned        ivl_scope_attr_cnt(ivl_scope_t net);
@@ -1911,6 +1961,34 @@ extern unsigned   ivl_scope_classes(ivl_scope_t net);
 extern ivl_type_t ivl_scope_class(ivl_scope_t net, unsigned idx);
 extern unsigned       ivl_scope_enumerates(ivl_scope_t net);
 extern ivl_enumtype_t ivl_scope_enumerate(ivl_scope_t net, unsigned idx);
+/* Standalone SETUP: normalized reference/data roles; limits use declaring
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+extern unsigned ivl_scope_setups(ivl_scope_t net);
+extern ivl_setup_t ivl_scope_setup(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_setup_scope(ivl_setup_t check);
+extern ivl_signal_t ivl_setup_reference(ivl_setup_t check);
+extern ivl_signal_t ivl_setup_data(ivl_setup_t check);
+extern ivl_signal_t ivl_setup_notifier(ivl_setup_t check);
+extern int ivl_setup_reference_edge(ivl_setup_t check);
+extern int ivl_setup_data_edge(ivl_setup_t check);
+extern double ivl_setup_limit(ivl_setup_t check);
+extern const char*ivl_setup_file(ivl_setup_t check);
+extern unsigned ivl_setup_lineno(ivl_setup_t check);
+
+/* Standalone HOLD: normalized reference/data roles; limits use declaring
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+extern unsigned ivl_scope_holds(ivl_scope_t net);
+extern ivl_hold_t ivl_scope_hold(ivl_scope_t net, unsigned idx);
+extern ivl_scope_t ivl_hold_scope(ivl_hold_t check);
+extern ivl_signal_t ivl_hold_reference(ivl_hold_t check);
+extern ivl_signal_t ivl_hold_data(ivl_hold_t check);
+extern ivl_signal_t ivl_hold_notifier(ivl_hold_t check);
+extern int ivl_hold_reference_edge(ivl_hold_t check);
+extern int ivl_hold_data_edge(ivl_hold_t check);
+extern double ivl_hold_limit(ivl_hold_t check);
+extern const char*ivl_hold_file(ivl_hold_t check);
+extern unsigned ivl_hold_lineno(ivl_hold_t check);
+
 extern unsigned     ivl_scope_events(ivl_scope_t net);
 extern ivl_event_t  ivl_scope_event(ivl_scope_t net, unsigned idx);
 extern const char* ivl_scope_file(ivl_scope_t net);
@@ -1927,6 +2005,8 @@ extern const char*  ivl_scope_basename(ivl_scope_t net);
 extern unsigned     ivl_scope_params(ivl_scope_t net);
 extern ivl_parameter_t ivl_scope_param(ivl_scope_t net, unsigned idx);
 extern ivl_scope_t  ivl_scope_parent(ivl_scope_t net);
+extern unsigned     ivl_scope_periods(ivl_scope_t net);
+extern ivl_period_t ivl_scope_period(ivl_scope_t net, unsigned idx);
 
 extern unsigned ivl_scope_mod_module_ports(ivl_scope_t net);
 extern const char *ivl_scope_mod_module_port_name(ivl_scope_t net, unsigned idx );
@@ -1949,6 +2029,9 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
 extern ivl_variable_type_t ivl_scope_func_type(ivl_scope_t net);
 extern int ivl_scope_func_signed(ivl_scope_t net);
 extern unsigned ivl_scope_func_width(ivl_scope_t net);
+
+extern unsigned    ivl_scope_widths(ivl_scope_t net);
+extern ivl_width_t ivl_scope_width(ivl_scope_t net, unsigned idx);
 
 /* SIGNALS
  * Signals are named things in the Verilog source, like wires and
@@ -2222,9 +2305,11 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  * is the compressed operator used it statements like this:
  *      foo += <expr>
  * The ivl_stmt_opcode() returns null (0) if this is not a compressed
- * assignment statement. If either operand is real, the r-value retains its
- * own type, width and signedness. The target evaluates the operation as real
- * and converts the completed result to the l-value's width and data type.
+ * assignment statement. For integral compound assignments, the r-value is an
+ * operand of the operator and can be wider than the l-value. Shift counts are
+ * self-determined. If either operand is real, the r-value retains its own type,
+ * width and signedness. The target evaluates the operation as real and
+ * converts the completed result to the l-value's width and data type.
  *
  * - IVL_ST_CASSIGN
  * This reflects a procedural continuous assignment to an l-value. The
@@ -2462,6 +2547,40 @@ extern ivl_scope_t ivl_type_virtual(ivl_type_t net, unsigned idx);
  * when ivl_type_base(net) == IVL_VT_QUEUE. */
 extern unsigned ivl_type_queue_max(ivl_type_t net);
 
+/* WIDTH CHECKS
+ * These accessors describe unconditional scalar $width checks.
+ *
+ * ivl_width_file
+ * ivl_width_lineno
+ *    Return the source file and line of the timing check declaration.
+ *
+ * ivl_width_limit
+ * ivl_width_threshold
+ *    Return the elaborated limit and threshold in the owning scope's
+ *    time units (ivl_scope_time_units), before rounding to its precision.
+ *    The threshold defaults to zero when omitted.
+ *
+ * ivl_width_notifier
+ *    Returns the local scalar notifier variable, or NULL if omitted.
+ *
+ * ivl_width_posedge
+ *    Returns 1 for a posedge reference event and 0 for negedge.
+ *
+ * ivl_width_reference
+ *    Returns the local scalar signal of the reference event.
+ *
+ * ivl_width_scope
+ *    Returns the scope containing the declaration.
+ */
+extern const char*  ivl_width_file(ivl_width_t check);
+extern double       ivl_width_limit(ivl_width_t check);
+extern unsigned     ivl_width_lineno(ivl_width_t check);
+extern ivl_signal_t ivl_width_notifier(ivl_width_t check);
+extern int          ivl_width_posedge(ivl_width_t check);
+extern ivl_signal_t ivl_width_reference(ivl_width_t check);
+extern ivl_scope_t  ivl_width_scope(ivl_width_t check);
+extern double       ivl_width_threshold(ivl_width_t check);
+
 
 #if defined(__MINGW32__) || defined (__CYGWIN__)
 #  define DLLEXPORT __declspec(dllexport)
@@ -2488,6 +2607,10 @@ extern DLLEXPORT const char* target_query(const char*key);
    ivl core. This function is how the target module is invoked. */
 
 typedef int  (*target_design_f)(ivl_design_t des);
+/* The target returns "1" from target_query("supports-width") or
+ * target_query("supports-period") to consume checks of that type.
+ * The compiler warns for each ignored declaration when the query is
+ * unavailable or returns a different value. */
 typedef const char* (*target_query_f) (const char*key);
 
 

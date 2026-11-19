@@ -23,6 +23,7 @@
  */
 
 # include  "compile.h"
+# include  "delay.h"
 # include  "vpi_priv.h"
 # include  "vvp_net_sig.h"
 # include  "vvp_island.h"
@@ -690,6 +691,14 @@ static vpiHandle signal_iterate(int code, vpiHandle ref)
 
       if (code == vpiIndex) {
 	    return rfp->is_netarray ? rfp->id.index->vpi_iterate(code) : NULL;
+      }
+
+      if (code == vpiDriver && rfp->get_type_code() == vpiNet &&
+          !rfp->is_netarray && !rfp->vec_flag) {
+	    // A .net aliases its driving functor. A resolver or other
+	    // intervening node is outside this direct-driver case.
+	    if (auto*path = dynamic_cast<vvp_fun_modpath*>(rfp->node->fun))
+		  return path->iterate_driver();
       }
 
       return 0;

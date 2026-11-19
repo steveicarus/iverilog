@@ -1,0 +1,3 @@
+SDF ERROR: ivltests/width_hdl_sdf_negative_magnitude.sdf:5: invalid WIDTH limit
+WIDTH_REJECTED_LIMITS 4 unchanged
+PASSED

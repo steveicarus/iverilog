@@ -24,6 +24,7 @@ program main;
       tmp = obj.b;
       tmp[0] = 0;
       tmp[1] = 1;
+      obj.b = tmp;
 
       if (obj.a != -1) begin
 	 $display("FAILED -- assign to object: obj.a=%0d", obj.a);

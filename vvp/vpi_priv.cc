@@ -356,6 +356,10 @@ const char* vpi_type_as_string(PLI_INT32 code)
 	    return "vpiClassVar";
 	  case vpiConstant:
 	    return "vpiConstant";
+	  case vpiDelayDevice:
+	    return "vpiDelayDevice";
+	  case vpiDelayTerm:
+	    return "vpiDelayTerm";
 	  case vpiEnumTypespec:
 	    return "vpiEnumTypespec";
 	  case vpiFunction:
@@ -534,6 +538,10 @@ __vpiScope*vpip_timescale_scope_from_handle(vpiHandle obj)
 	  case vpiModule:
 	    return dynamic_cast<__vpiScope*>(obj);
 
+	  case vpiDelayTerm:
+	    return dynamic_cast<__vpiScope*>(
+		  obj->vpi_handle(vpiDelayDevice)->vpi_handle(vpiModule));
+
 	  case vpiNet:
 	  case vpiReg:
 	  case vpiIntegerVar:
@@ -553,6 +561,7 @@ __vpiScope*vpip_timescale_scope_from_handle(vpiHandle obj)
 	    event = dynamic_cast<__vpiNamedEvent*>(obj);
 	    return event->get_scope();
 
+	  case vpiTchk:
 	  case vpiMemory:
 	  case vpiMemoryWord:
 	  case vpiPartSelect:

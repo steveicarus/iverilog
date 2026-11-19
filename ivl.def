@@ -195,6 +195,14 @@ ivl_path_source
 ivl_path_source_negedge
 ivl_path_source_posedge
 
+ivl_period_file
+ivl_period_limit
+ivl_period_lineno
+ivl_period_notifier
+ivl_period_posedge
+ivl_period_reference
+ivl_period_scope
+
 ivl_process_analog
 ivl_process_attr_cnt
 ivl_process_attr_val
@@ -219,6 +227,28 @@ ivl_scope_enumerate
 ivl_scope_enumerates
 ivl_scope_event
 ivl_scope_events
+ivl_scope_setups
+ivl_scope_setup
+ivl_setup_scope
+ivl_setup_reference
+ivl_setup_data
+ivl_setup_notifier
+ivl_setup_reference_edge
+ivl_setup_data_edge
+ivl_setup_limit
+ivl_setup_file
+ivl_setup_lineno
+ivl_scope_holds
+ivl_scope_hold
+ivl_hold_scope
+ivl_hold_reference
+ivl_hold_data
+ivl_hold_notifier
+ivl_hold_reference_edge
+ivl_hold_data_edge
+ivl_hold_limit
+ivl_hold_file
+ivl_hold_lineno
 ivl_scope_file
 ivl_scope_func_type
 ivl_scope_func_signed
@@ -240,6 +270,8 @@ ivl_scope_name
 ivl_scope_param
 ivl_scope_params
 ivl_scope_parent
+ivl_scope_period
+ivl_scope_periods
 ivl_scope_port
 ivl_scope_ports
 ivl_scope_sigs
@@ -251,6 +283,8 @@ ivl_scope_time_units
 ivl_scope_type
 ivl_scope_tname
 ivl_scope_virtual_root
+ivl_scope_width
+ivl_scope_widths
 
 ivl_signal_array_addr_swapped
 ivl_signal_array_base
@@ -360,3 +394,12 @@ ivl_udp_port
 ivl_udp_row
 ivl_udp_rows
 ivl_udp_sequ
+
+ivl_width_file
+ivl_width_limit
+ivl_width_lineno
+ivl_width_notifier
+ivl_width_posedge
+ivl_width_reference
+ivl_width_scope
+ivl_width_threshold

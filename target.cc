@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2021 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2026 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -69,6 +69,30 @@ bool target_t::signal_paths(const NetNet*)
 {
       return true;
 }
+void target_t::width_check(const NetWidth*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $width." << endl;
+      errors += 1;
+}
+
+void target_t::period_check(const NetPeriod*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $period." << endl;
+      errors += 1;
+}
+
+void target_t::setup_check(const NetSetup*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $setup." << endl;
+      errors += 1;
+}
+
+void target_t::hold_check(const NetHold*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $hold." << endl;
+      errors += 1;
+}
+
 bool target_t::func_def(const NetScope*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "

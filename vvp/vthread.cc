@@ -3742,9 +3742,8 @@ bool of_FORCE_VEC4_OFF(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
       unsigned base_idx = cp->bit_idx[0];
-      long base = base_idx ? thr->words[base_idx].w_int : 0;
+      int64_t base = base_idx ? thr->words[base_idx].w_int : 0;
       vvp_vector4_t value = thr->pop_vec4();
-      unsigned wid = value.size();
 
       assert(net->fil);
 
@@ -3755,13 +3754,8 @@ bool of_FORCE_VEC4_OFF(vthread_t thr, vvp_code_t cp)
 	// This is the width of the target vector.
       unsigned use_size = net->fil->filter_size();
 
-      if (base >= (long)use_size)
-	    return true;
-      if (base < -(long)use_size)
-	    return true;
-
-      if ((base + wid) > use_size)
-	    wid = use_size - base;
+      if (!resize_rval_vec(value, base, use_size)) return true;
+      unsigned wid = value.size();
 
 	// Make a mask of which bits are to be forced, 0 for unforced
 	// bits and 1 for forced bits.
