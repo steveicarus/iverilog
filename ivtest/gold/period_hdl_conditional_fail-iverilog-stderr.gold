@@ -1,0 +1,2 @@
+ivltests/period_hdl_conditional_fail.v:5: error: $period condition must be a local scalar signal, its bitwise complement, or a comparison (===, !==, ==, !=) with 1'b0 or 1'b1.
+1 error(s) during elaboration.

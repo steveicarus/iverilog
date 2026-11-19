@@ -892,10 +892,21 @@ static void emit_tchk_condition(ivl_signal_t signal, ivl_tchk_cond_t kind)
 {
       if (!signal) { assert(kind == IVL_TCHK_COND_NONE); return; }
       fprintf(vlog_out, " &&& (");
+      if (kind == IVL_TCHK_COND_BIT_NOT) fprintf(vlog_out, "~");
       emit_id(ivl_signal_basename(signal));
-      if (kind == IVL_TCHK_COND_EQ0) fprintf(vlog_out, " === 1'b0");
-      else if (kind == IVL_TCHK_COND_EQ1) fprintf(vlog_out, " === 1'b1");
-      else assert(kind == IVL_TCHK_COND_BARE);
+      switch (kind) {
+          case IVL_TCHK_COND_BARE:
+          case IVL_TCHK_COND_BIT_NOT: break;
+          case IVL_TCHK_COND_CASE_EQ0: fprintf(vlog_out, " === 1'b0"); break;
+          case IVL_TCHK_COND_CASE_EQ1: fprintf(vlog_out, " === 1'b1"); break;
+          case IVL_TCHK_COND_CASE_NE0: fprintf(vlog_out, " !== 1'b0"); break;
+          case IVL_TCHK_COND_CASE_NE1: fprintf(vlog_out, " !== 1'b1"); break;
+          case IVL_TCHK_COND_LOGIC_EQ0: fprintf(vlog_out, " == 1'b0"); break;
+          case IVL_TCHK_COND_LOGIC_EQ1: fprintf(vlog_out, " == 1'b1"); break;
+          case IVL_TCHK_COND_LOGIC_NE0: fprintf(vlog_out, " != 1'b0"); break;
+          case IVL_TCHK_COND_LOGIC_NE1: fprintf(vlog_out, " != 1'b1"); break;
+          default: assert(0);
+      }
       fprintf(vlog_out, ")");
 }
 

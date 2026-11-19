@@ -2250,7 +2250,7 @@ void compile_island(char*label, char*type)
 void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
                         struct symb_s reference, double limit,
                         double threshold, char* notifier,
-                        char* condition, uint64_t condition_value)
+                        char* condition, uint64_t condition_code)
 {
       int start_edge = 0;
       if (strcmp(edge, "posedge") == 0) start_edge = 1;
@@ -2258,7 +2258,7 @@ void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
       delete[] edge;
       __vpiScope* scope = vpip_peek_current_scope();
       vvp_time64_t limit_ticks, threshold_ticks;
-      if (!start_edge || condition_value > 1 ||
+      if (!start_edge || condition_code > 3 ||
           !vpip_tchk_delay_to_ticks(limit, scope, limit_ticks) ||
           !vpip_tchk_delay_to_ticks(threshold, scope, threshold_ticks)) {
             yyerror("invalid WIDTH edge/condition or unrepresentable limit/threshold");
@@ -2271,7 +2271,7 @@ void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
       vvp_net_t* net = new vvp_net_t;
       vvp_fun_tchk_width* fun = new vvp_fun_tchk_width(start_edge,
                                                      limit_ticks, threshold_ticks,
-                                                     condition_value);
+                                                     condition_code);
       net->fun = fun;
       __vpiTchkWidth* obj = new __vpiTchkWidth(scope, file_idx, lineno, fun);
       fun->vpi_tchk = obj;
@@ -2285,7 +2285,7 @@ void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
 
 void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
                         struct symb_s reference, double limit, char* notifier,
-                        char* condition, uint64_t condition_value)
+                        char* condition, uint64_t condition_code)
 {
       int reference_edge = 0;
       if (strcmp(edge, "posedge") == 0) reference_edge = 1;
@@ -2293,7 +2293,7 @@ void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
       delete[] edge;
       __vpiScope* scope = vpip_peek_current_scope();
       vvp_time64_t limit_ticks;
-      if (!reference_edge || condition_value > 1 ||
+      if (!reference_edge || condition_code > 3 ||
           !vpip_tchk_delay_to_ticks(limit, scope, limit_ticks)) {
             yyerror("invalid PERIOD edge/condition or unrepresentable limit");
             free(reference.text);
@@ -2304,7 +2304,7 @@ void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
 
       vvp_net_t* net = new vvp_net_t;
       vvp_fun_tchk_period* fun = new vvp_fun_tchk_period(reference_edge,
-                                                     limit_ticks, condition_value);
+                                                     limit_ticks, condition_code);
       net->fun = fun;
       __vpiTchkPeriod* obj = new __vpiTchkPeriod(scope, file_idx, lineno, fun);
       fun->vpi_tchk = obj;

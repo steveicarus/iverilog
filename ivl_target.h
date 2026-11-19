@@ -468,15 +468,24 @@ typedef enum ivl_sfunc_as_task_e {
       IVL_SFUNC_AS_TASK_IGNORE  = 2
 } ivl_sfunc_as_task_t;
 
-/* Retained local scalar timing-event qualifier. NONE has no condition signal;
- * BARE, EQ0 and EQ1 preserve the source form for targets such as vlog95.
- * An event is admitted only when its signal is exactly 0 for EQ0, or exactly
- * 1 for BARE/EQ1; X and Z do not qualify. */
+/* Retained local scalar timing-event qualifier. NONE has no condition signal.
+ * CASE_EQ/CASE_NE preserve ===/!==; LOGIC_EQ/LOGIC_NE preserve ==/!=.
+ * SETUP/HOLD use BARE and CASE_EQ. WIDTH/PERIOD use all forms. */
 typedef enum ivl_tchk_cond_e {
       IVL_TCHK_COND_NONE = 0,
       IVL_TCHK_COND_BARE = 1,
-      IVL_TCHK_COND_EQ0 = 2,
-      IVL_TCHK_COND_EQ1 = 3
+      IVL_TCHK_COND_CASE_EQ0 = 2,
+      IVL_TCHK_COND_CASE_EQ1 = 3,
+      /* Original names retained for external targets. */
+      IVL_TCHK_COND_EQ0 = IVL_TCHK_COND_CASE_EQ0,
+      IVL_TCHK_COND_EQ1 = IVL_TCHK_COND_CASE_EQ1,
+      IVL_TCHK_COND_BIT_NOT = 4,
+      IVL_TCHK_COND_LOGIC_EQ0 = 5,
+      IVL_TCHK_COND_LOGIC_EQ1 = 6,
+      IVL_TCHK_COND_LOGIC_NE0 = 7,
+      IVL_TCHK_COND_LOGIC_NE1 = 8,
+      IVL_TCHK_COND_CASE_NE0 = 9,
+      IVL_TCHK_COND_CASE_NE1 = 10
 } ivl_tchk_cond_t;
 
 /* This is the type of a variable, and also used as the type for an

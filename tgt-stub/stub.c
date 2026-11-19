@@ -1704,9 +1704,22 @@ static void show_width(ivl_width_t check)
               ivl_signal_basename(ivl_width_reference(check)));
       if (condition) {
             ivl_tchk_cond_t kind = ivl_width_condition_kind(check);
-            fprintf(out, " &&& (%s", ivl_signal_basename(condition));
-            if (kind == IVL_TCHK_COND_EQ0) fprintf(out, " === 1'b0");
-            else if (kind == IVL_TCHK_COND_EQ1) fprintf(out, " === 1'b1");
+            fprintf(out, " &&& (%s%s",
+                    kind == IVL_TCHK_COND_BIT_NOT ? "~" : "",
+                    ivl_signal_basename(condition));
+            switch (kind) {
+                case IVL_TCHK_COND_BARE:
+                case IVL_TCHK_COND_BIT_NOT: break;
+                case IVL_TCHK_COND_CASE_EQ0: fprintf(out, " === 1'b0"); break;
+                case IVL_TCHK_COND_CASE_EQ1: fprintf(out, " === 1'b1"); break;
+                case IVL_TCHK_COND_CASE_NE0: fprintf(out, " !== 1'b0"); break;
+                case IVL_TCHK_COND_CASE_NE1: fprintf(out, " !== 1'b1"); break;
+                case IVL_TCHK_COND_LOGIC_EQ0: fprintf(out, " == 1'b0"); break;
+                case IVL_TCHK_COND_LOGIC_EQ1: fprintf(out, " == 1'b1"); break;
+                case IVL_TCHK_COND_LOGIC_NE0: fprintf(out, " != 1'b0"); break;
+                case IVL_TCHK_COND_LOGIC_NE1: fprintf(out, " != 1'b1"); break;
+                default: assert(0);
+            }
             fprintf(out, ")");
       }
       fprintf(out, ", %.17g, %.17g", ivl_width_limit(check),

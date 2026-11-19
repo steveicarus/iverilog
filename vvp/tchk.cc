@@ -47,20 +47,24 @@ bool vpip_tchk_delay_to_ticks(double value, const __vpiScope* scope,
 // Sample the current scalar directly at a physical reference delivery. A
 // separately cached condition input would depend on fanout delivery order when
 // the condition aliases the reference, and condition changes are not events.
-static bool timing_condition_satisfied(vpiHandle condition, unsigned wanted)
+static bool timing_condition_satisfied(vpiHandle condition, unsigned code)
 {
       if (!condition) return true;
       s_vpi_value value;
       value.format = vpiScalarVal;
       vpi_get_value(condition, &value);
-      return value.value.scalar == (wanted ? vpi1 : vpi0);
+      // Codes 2 and 3 also admit X/Z. Against a known bit, case inequality
+      // is true for X/Z, and a logical comparison yields X and qualifies.
+      if (code >= 2 && (value.value.scalar == vpiX || value.value.scalar == vpiZ))
+            return true;
+      return value.value.scalar == ((code & 1) ? vpi1 : vpi0);
 }
 
 vvp_fun_tchk_width::vvp_fun_tchk_width(int start_edge,
                                       vvp_time64_t limit,
                                       vvp_time64_t threshold,
-                                      unsigned condition_value)
-: vpi_tchk(nullptr), previous_(BIT4_X), condition_value_(condition_value),
+                                      unsigned condition_code)
+: vpi_tchk(nullptr), previous_(BIT4_X), condition_code_(condition_code),
   start_edge_(start_edge),
   close_edge_(start_edge == 1 ? -1 : 1),
   limit_(limit), threshold_(threshold), opening_time_(0), have_opening_(false)
@@ -74,7 +78,7 @@ void vvp_fun_tchk_width::recv_vec4(vvp_net_ptr_t port,
       assert(port.port() == 0 && value.size() == 1);
       int transition = edge(previous_, value.value(0));
       previous_ = value.value(0);
-      if (!timing_condition_satisfied(vpi_tchk->condition_, condition_value_))
+      if (!timing_condition_satisfied(vpi_tchk->condition_, condition_code_))
             return;
       if (transition == start_edge_) {
             opening_time_ = schedule_simtime();
@@ -127,8 +131,8 @@ void vvp_fun_tchk_width::violation(vvp_time64_t now, vvp_time64_t width)
 }
 
 vvp_fun_tchk_period::vvp_fun_tchk_period(int reference_edge, vvp_time64_t limit,
-                                        unsigned condition_value)
-: vpi_tchk(nullptr), previous_(BIT4_X), condition_value_(condition_value),
+                                        unsigned condition_code)
+: vpi_tchk(nullptr), previous_(BIT4_X), condition_code_(condition_code),
   reference_edge_(reference_edge),
   limit_(limit), reference_time_(0), have_reference_(false)
 {
@@ -142,7 +146,7 @@ void vvp_fun_tchk_period::recv_vec4(vvp_net_ptr_t port,
       int transition = edge(previous_, value.value(0));
       previous_ = value.value(0);
       if (transition != reference_edge_ ||
-          !timing_condition_satisfied(vpi_tchk->condition_, condition_value_))
+          !timing_condition_satisfied(vpi_tchk->condition_, condition_code_))
             return;
 
       vvp_time64_t now = schedule_simtime();
