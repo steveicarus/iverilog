@@ -7414,8 +7414,23 @@ static NetNet*timing_check_signal(Design*des, NetScope*scope,
 void PWidth::elaborate(Design*des, NetScope*scope) const
 {
       if (!gn_specify_blocks_flag) return;
-      if (reference_->condition || reference_->posedge == reference_->negedge
-	  || !reference_->edges.empty()) {
+      bool posedge = reference_->posedge;
+      bool negedge = reference_->negedge;
+      if (!reference_->edges.empty()) {
+            unsigned edges = 0;
+            for (PTimingCheck::EdgeType edge : reference_->edges)
+                  edges |= 1U << edge;
+            // IEEE 1800 section 31.5 defines these lists as the keywords.
+            const unsigned positive = (1U << PTimingCheck::EDGE_01)
+                                    | (1U << PTimingCheck::EDGE_0X)
+                                    | (1U << PTimingCheck::EDGE_X1);
+            const unsigned negative = (1U << PTimingCheck::EDGE_10)
+                                    | (1U << PTimingCheck::EDGE_1X)
+                                    | (1U << PTimingCheck::EDGE_X0);
+            posedge = edges == positive;
+            negedge = edges == negative;
+      }
+      if (reference_->condition || posedge == negedge) {
 	    cerr << get_fileline() << ": error: $width supports only unconditional"
 		 << " posedge or negedge scalar reference events." << endl;
 	    des->errors += 1;
@@ -7434,7 +7449,7 @@ void PWidth::elaborate(Design*des, NetScope*scope) const
                                               "$width", "threshold", threshold))
             return;
       std::unique_ptr<NetWidth> check(new NetWidth(scope, reference, notifier,
-					 reference_->posedge, limit, threshold));
+					 posedge, limit, threshold));
       check->set_line(*this);
       scope->add_width(std::move(check));
 }

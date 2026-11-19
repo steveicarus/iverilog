@@ -1,0 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2026 Jerry Zhong
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
+  (CELL (CELLTYPE "width_edge_list_leaf") (INSTANCE)
+    (TIMINGCHECK
+      (WIDTH (posedge CLK) (12:12:12))
+      (WIDTH (negedge CLK) (14:14:14)))))

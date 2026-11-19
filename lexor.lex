@@ -326,15 +326,15 @@ TU [munpf]
 <UDPTABLE>[01\?\*\-:;] { return yytext[0]; }
 
 <EDGES>"01" { yylval.int_val = PTimingCheck::EDGE_01; return K_edge_descriptor; }
-<EDGES>"0x" { yylval.int_val = PTimingCheck::EDGE_0X; return K_edge_descriptor; }
-<EDGES>"0z" { yylval.int_val = PTimingCheck::EDGE_0X; return K_edge_descriptor; }
+<EDGES>0[xX] { yylval.int_val = PTimingCheck::EDGE_0X; return K_edge_descriptor; }
+<EDGES>0[zZ] { yylval.int_val = PTimingCheck::EDGE_0X; return K_edge_descriptor; }
 <EDGES>"10" { yylval.int_val = PTimingCheck::EDGE_10; return K_edge_descriptor; }
-<EDGES>"1x" { yylval.int_val = PTimingCheck::EDGE_1X; return K_edge_descriptor; }
-<EDGES>"1z" { yylval.int_val = PTimingCheck::EDGE_1X; return K_edge_descriptor; }
-<EDGES>"x0" { yylval.int_val = PTimingCheck::EDGE_X0; return K_edge_descriptor; }
-<EDGES>"x1" { yylval.int_val = PTimingCheck::EDGE_X1; return K_edge_descriptor; }
-<EDGES>"z0" { yylval.int_val = PTimingCheck::EDGE_X0; return K_edge_descriptor; }
-<EDGES>"z1" { yylval.int_val = PTimingCheck::EDGE_X1; return K_edge_descriptor; }
+<EDGES>1[xX] { yylval.int_val = PTimingCheck::EDGE_1X; return K_edge_descriptor; }
+<EDGES>1[zZ] { yylval.int_val = PTimingCheck::EDGE_1X; return K_edge_descriptor; }
+<EDGES>[xX]0 { yylval.int_val = PTimingCheck::EDGE_X0; return K_edge_descriptor; }
+<EDGES>[xX]1 { yylval.int_val = PTimingCheck::EDGE_X1; return K_edge_descriptor; }
+<EDGES>[zZ]0 { yylval.int_val = PTimingCheck::EDGE_X0; return K_edge_descriptor; }
+<EDGES>[zZ]1 { yylval.int_val = PTimingCheck::EDGE_X1; return K_edge_descriptor; }
 
 {ID} {
       int rc = lexor_keyword_code(yytext, yyleng);

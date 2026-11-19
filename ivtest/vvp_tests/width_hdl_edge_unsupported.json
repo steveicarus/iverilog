@@ -1,0 +1,6 @@
+{
+    "type": "CE",
+    "source": "width_hdl_edge_unsupported.v",
+    "iverilog-args": ["-g2012", "-gspecify", "-s", "tb"],
+    "gold": "width_hdl_edge_unsupported"
+}
