@@ -1,6 +1,6 @@
-ivltests/setup_hdl_edge_reference_fail.v:7: error: $setup reference supports only unconditional scalar events with no edge, posedge or negedge.
-ivltests/setup_hdl_edge_reference_fail.v:8: error: $setup reference supports only unconditional scalar events with no edge, posedge or negedge.
-ivltests/setup_hdl_edge_reference_fail.v:9: error: $setup reference supports only unconditional scalar events with no edge, posedge or negedge.
-ivltests/setup_hdl_edge_reference_fail.v:10: error: $setup reference supports only unconditional scalar events with no edge, posedge or negedge.
-ivltests/setup_hdl_edge_reference_fail.v:11: error: $setup reference supports only unconditional scalar events with no edge, posedge or negedge.
+ivltests/setup_hdl_edge_reference_fail.v:7: error: $setup reference supports only scalar events with no edge, posedge or negedge.
+ivltests/setup_hdl_edge_reference_fail.v:8: error: $setup reference supports only scalar events with no edge, posedge or negedge.
+ivltests/setup_hdl_edge_reference_fail.v:9: error: $setup reference supports only scalar events with no edge, posedge or negedge.
+ivltests/setup_hdl_edge_reference_fail.v:10: error: $setup reference supports only scalar events with no edge, posedge or negedge.
+ivltests/setup_hdl_edge_reference_fail.v:11: error: $setup reference supports only scalar events with no edge, posedge or negedge.
 5 error(s) during elaboration.

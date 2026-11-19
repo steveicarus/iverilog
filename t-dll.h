@@ -815,6 +815,8 @@ struct ivl_width_s {
 struct ivl_setup_s {
       ivl_scope_t scope;
       ivl_signal_t reference, data, notifier;
+      ivl_signal_t reference_condition, data_condition;
+      ivl_tchk_cond_t reference_condition_kind, data_condition_kind;
       int reference_edge, data_edge;
       double limit;
       perm_string file;
@@ -825,6 +827,8 @@ struct ivl_setup_s {
 struct ivl_hold_s {
       ivl_scope_t scope;
       ivl_signal_t reference, data, notifier;
+      ivl_signal_t reference_condition, data_condition;
+      ivl_tchk_cond_t reference_condition_kind, data_condition_kind;
       int reference_edge, data_edge;
       double limit;
       perm_string file;

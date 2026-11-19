@@ -957,9 +957,13 @@ static void emit_setup_checks(ivl_scope_t scope)
             fprintf(vlog_out, "%*c$setup(", indent, ' ');
             emit_simple_timing_event(ivl_setup_data(check),
                                      ivl_setup_data_edge(check));
+            emit_tchk_condition(ivl_setup_data_condition(check),
+                                ivl_setup_data_condition_kind(check));
             fprintf(vlog_out, ", ");
             emit_simple_timing_event(ivl_setup_reference(check),
                                      ivl_setup_reference_edge(check));
+            emit_tchk_condition(ivl_setup_reference_condition(check),
+                                ivl_setup_reference_condition_kind(check));
             fprintf(vlog_out, ", %.17e", ivl_setup_limit(check));
             if (notifier) {
                   fprintf(vlog_out, ", ");
@@ -978,9 +982,13 @@ static void emit_hold_checks(ivl_scope_t scope)
             fprintf(vlog_out, "%*c$hold(", indent, ' ');
             emit_simple_timing_event(ivl_hold_reference(check),
                                      ivl_hold_reference_edge(check));
+            emit_tchk_condition(ivl_hold_reference_condition(check),
+                                ivl_hold_reference_condition_kind(check));
             fprintf(vlog_out, ", ");
             emit_simple_timing_event(ivl_hold_data(check),
                                      ivl_hold_data_edge(check));
+            emit_tchk_condition(ivl_hold_data_condition(check),
+                                ivl_hold_data_condition_kind(check));
             fprintf(vlog_out, ", %.17e", ivl_hold_limit(check));
             if (notifier) {
                   fprintf(vlog_out, ", ");
