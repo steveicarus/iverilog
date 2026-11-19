@@ -1341,3 +1341,9 @@ hold_hdl_notifier_fail	vvp_tests/hold_hdl_notifier_fail.json
 setup_hold_hdl_sdf_min	vvp_tests/setup_hold_hdl_sdf_min.json
 setup_hold_hdl_sdf_typ	vvp_tests/setup_hold_hdl_sdf_typ.json
 setup_hold_hdl_sdf_max	vvp_tests/setup_hold_hdl_sdf_max.json
+
+# Explicit edge descriptor timing events must remain distinguishable.
+setup_hdl_edge_reference_fail	vvp_tests/setup_hdl_edge_reference_fail.json
+setup_hdl_edge_data_fail	vvp_tests/setup_hdl_edge_data_fail.json
+hold_hdl_edge_reference_fail	vvp_tests/hold_hdl_edge_reference_fail.json
+hold_hdl_edge_data_fail	vvp_tests/hold_hdl_edge_data_fail.json
