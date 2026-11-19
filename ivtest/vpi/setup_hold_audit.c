@@ -18,6 +18,10 @@
 #ifndef AUDIT_LIMIT_COUNT
 #define AUDIT_LIMIT_COUNT(t) 1
 #endif
+#ifdef AUDIT_SETUPHOLD
+#define AUDIT_COMBINED 1
+#define AUDIT_COMBINED_TYPE vpiSetupHold
+#endif
 #define MAX_CHECKS 64
 #define MAX_EVENTS 32
 static unsigned failed, started, finished, check_count, notifier_count;
@@ -259,7 +263,11 @@ static PLI_INT32 population(PLI_BYTE8 *unused)
     if(!scope || vpi_scan(args)) { fail("population arguments");return 0; }
     it=vpi_iterate(vpiTchk,scope);
     if(it) while((obj=vpi_scan(it))) ++count;
+#ifdef AUDIT_SETUPHOLD
+    if(count!=want || !want) fail("compiled population mismatch or empty expectation");
+#else
     if(count!=want) fail("compiled population mismatch");
+#endif
     free(owner);return 0;
 }
 static PLI_INT32 put_limits(PLI_BYTE8 *unused)

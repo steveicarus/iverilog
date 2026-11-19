@@ -638,6 +638,7 @@ class vvp_fun_tchk_width;
 class vvp_fun_tchk_period;
 class vvp_fun_tchk_two_event;
 class vvp_fun_tchk_recrem;
+class vvp_fun_tchk_setuphold;
 class __vpiTchkRefTerm : public __vpiHandle {
     public:
       __vpiTchkRefTerm(int edge, vpiHandle expr) : edge_(edge), expr_(expr) { }
@@ -738,6 +739,26 @@ class __vpiTchkRecRem : public __vpiHandle {
       __vpiTchkRefTerm* reference_term_;
       __vpiTchkRefTerm* data_term_;
       friend class vvp_fun_tchk_recrem;
+};
+
+class __vpiTchkSetupHold : public __vpiHandle {
+    public:
+      __vpiTchkSetupHold(__vpiScope* scope, unsigned file_idx, unsigned lineno,
+                         vvp_fun_tchk_setuphold* fun);
+      ~__vpiTchkSetupHold();
+      int get_type_code(void) const override { return vpiTchk; }
+      int vpi_get(int code) override;
+      vpiHandle vpi_handle(int code) override;
+      void vpi_get_delays(p_vpi_delay delays) override;
+      void vpi_put_delays(p_vpi_delay delays) override;
+      vpiHandle reference_, data_, notifier_;
+    private:
+      __vpiScope* scope_;
+      unsigned file_idx_, lineno_;
+      vvp_fun_tchk_setuphold* fun_;
+      __vpiTchkRefTerm* reference_term_;
+      __vpiTchkRefTerm* data_term_;
+      friend class vvp_fun_tchk_setuphold;
 };
 
 extern void vpip_tchk_violation(vpiHandle tchk);

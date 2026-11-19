@@ -579,6 +579,13 @@ extern void compile_tchk_recrem(unsigned file_idx, unsigned lineno,
                                    double recovery_limit, double removal_limit,
                                    char* notifier);
 
+// SETUPHOLD records preserve reference/data and setup/hold order.
+extern void compile_tchk_setuphold(unsigned file_idx, unsigned lineno,
+                                   char* reference_edge_text, struct symb_s reference,
+                                   char* data_edge_text, struct symb_s data,
+                                   double setup_limit, double hold_limit,
+                                   char* notifier);
+
 // Standalone checks use normalized reference/data order.
 extern void compile_tchk_two_event(int kind, unsigned file_idx, unsigned lineno,
                                     char* reference_edge, struct symb_s reference,

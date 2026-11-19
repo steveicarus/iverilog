@@ -264,6 +264,7 @@ const char* target_query(const char*key)
       if (strcmp(key,"supports-recovery") == 0) return "1";
       if (strcmp(key,"supports-removal") == 0) return "1";
       if (strcmp(key,"supports-recrem") == 0) return "1";
+      if (strcmp(key,"supports-setuphold") == 0) return "1";
 
       return 0;
 }

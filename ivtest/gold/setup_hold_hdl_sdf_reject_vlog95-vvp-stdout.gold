@@ -15,7 +15,6 @@ SDF WARNING: ivltests/setup_hold_hdl_reject.sdf:9: conditional or hierarchical S
 SDF WARNING: ivltests/setup_hold_hdl_reject.sdf:9: conditional or hierarchical HOLD event not supported.
 SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:11: Cannot find absent_instance in scope tb.
 SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:11: Unable to find absent_instance in scope tb.
-SDF WARNING: ivltests/setup_hold_hdl_reject.sdf:12: SETUPHOLD not supported.
 SH_OBJECT tb.wrong_data setup C/posedge D/any limit=10 ticks=10 events=0
 SH_OBJECT tb.wrong_data hold C/posedge D/any limit=10 ticks=10 events=0
 SH_OBJECT tb.wrong_ref setup C/posedge D/any limit=10 ticks=10 events=0
@@ -34,12 +33,16 @@ SH_OBJECT tb.hierarchy setup C/posedge D/any limit=10 ticks=10 events=0
 SH_OBJECT tb.hierarchy hold C/posedge D/any limit=10 ticks=10 events=0
 SH_OBJECT tb.valid setup C/posedge D/any limit=30 ticks=30 events=1
 SH_OBJECT tb.valid hold C/posedge D/any limit=30 ticks=30 events=1
-SH_OBJECT tb.combined setup C/posedge D/any limit=10 ticks=10 events=0
-SH_OBJECT tb.combined hold C/posedge D/any limit=10 ticks=10 events=0
+SH_OBJECT tb.combined setup C/posedge D/any limit=30 ticks=30 events=1
+SH_OBJECT tb.combined hold C/posedge D/any limit=30 ticks=30 events=1
 Timing violation: $setup at 115 (module units), interval=15 limit=30, work/vlog95.v:99, scope=tb.valid
 SH_VIOLATION 16 115
+Timing violation: $setup at 115 (module units), interval=15 limit=30, work/vlog95.v:99, scope=tb.combined
+SH_VIOLATION 18 115
 Timing violation: $hold at 130 (module units), interval=15 limit=30, work/vlog95.v:100, scope=tb.valid
 SH_VIOLATION 17 130
-SH_COMPLETE objects=20 callbacks=2
+Timing violation: $hold at 130 (module units), interval=15 limit=30, work/vlog95.v:100, scope=tb.combined
+SH_VIOLATION 19 130
+SH_COMPLETE objects=20 callbacks=4
 PASSED
 work/vlog95.v:55: $finish called at 150 (1ps)

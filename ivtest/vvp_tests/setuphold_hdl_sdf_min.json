@@ -1,0 +1,15 @@
+{
+    "type": "normal",
+    "source": "setuphold_hdl_sdf_slots.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-s",
+        "tb",
+        "-DSHC_MIN",
+        "-Tmin"
+    ],
+    "vpi-sources": [
+        "vpi/setuphold_audit.c"
+    ]
+}

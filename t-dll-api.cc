@@ -2668,6 +2668,12 @@ extern "C" ivl_nexus_t ivl_scope_mod_port(ivl_scope_t net, unsigned idx)
       return net->u_.nex[idx];
 }
 
+extern "C" ivl_setuphold_t ivl_scope_setuphold(ivl_scope_t net, unsigned idx)
+{ assert(net && idx < net->setupholds_.size()); return net->setupholds_[idx]; }
+
+extern "C" unsigned ivl_scope_setupholds(ivl_scope_t net)
+{ assert(net); return net->setupholds_.size(); }
+
 extern "C" unsigned ivl_scope_sigs(ivl_scope_t net)
 {
       assert(net);
@@ -2730,6 +2736,36 @@ extern "C" ivl_width_t ivl_scope_width(ivl_scope_t net, unsigned idx)
       assert(idx < net->widths_.size());
       return net->widths_[idx];
 }
+
+extern "C" ivl_signal_t ivl_setuphold_data(ivl_setuphold_t check)
+{ assert(check); return check->data; }
+
+extern "C" int ivl_setuphold_data_edge(ivl_setuphold_t check)
+{ assert(check); return check->data_edge; }
+
+extern "C" const char*ivl_setuphold_file(ivl_setuphold_t check)
+{ assert(check); return check->file.str(); }
+
+extern "C" double ivl_setuphold_hold_limit(ivl_setuphold_t check)
+{ assert(check); return check->hold_limit; }
+
+extern "C" unsigned ivl_setuphold_lineno(ivl_setuphold_t check)
+{ assert(check); return check->lineno; }
+
+extern "C" ivl_signal_t ivl_setuphold_notifier(ivl_setuphold_t check)
+{ assert(check); return check->notifier; }
+
+extern "C" ivl_signal_t ivl_setuphold_reference(ivl_setuphold_t check)
+{ assert(check); return check->reference; }
+
+extern "C" int ivl_setuphold_reference_edge(ivl_setuphold_t check)
+{ assert(check); return check->reference_edge; }
+
+extern "C" ivl_scope_t ivl_setuphold_scope(ivl_setuphold_t check)
+{ assert(check); return check->scope; }
+
+extern "C" double ivl_setuphold_setup_limit(ivl_setuphold_t check)
+{ assert(check); return check->setup_limit; }
 
 extern "C" int ivl_signal_array_base(ivl_signal_t net)
 {
