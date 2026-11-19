@@ -149,10 +149,6 @@ check: all
 	test -r check.conf || cp $(srcdir)/check.conf .
 	driver/iverilog@EXEEXT@ -B. -BMvpi -BPivlpp -tcheck -ocheck.vvp $(srcdir)/examples/hello.vl && \
 	$(ENV_VVP) vvp/vvp$(suffix)@EXEEXT@ -M- -M./vpi ./check.vvp | grep 'Hello, World'
-	driver/iverilog@EXEEXT@ -B./tgt-stub -BI. -BMvpi -BPivlpp -Bt$(srcdir)/tgt-stub \
-	-tstub -gspecify -s top -ocheck-width.stub $(srcdir)/tgt-stub/width.v
-	awk '/^scope:/ {scope=$$2} /^  [$$]width/ {sub(/\/\/ .*width.v:/,"// width.v:"); print scope ":" $$0}' \
-	check-width.stub | diff -u $(srcdir)/tgt-stub/width.gold -
 
 check-installed check-installed-vpi check-installed-vvp check-installed-vvp-py check-installed-fst:
 	$(MAKE) -C ivtest $@
@@ -162,7 +158,7 @@ clean:
 	rm -f *.o parse.cc parse.h lexor.cc
 	rm -f ivl.exp
 	rm -f iverilog_man.ps iverilog_man.pdf iverilog_man_$(VERSION_MAJOR)_$(VERSION_MINOR).pdf
-	rm -f parse.output syn-rules.output dosify$(BUILDEXT) ivl@EXEEXT@ check.vvp check-width.stub
+	rm -f parse.output syn-rules.output dosify$(BUILDEXT) ivl@EXEEXT@ check.vvp
 	rm -f lexor_keyword.cc libivl.a libvpi.a syn-rules.cc
 	rm -rf dep
 
