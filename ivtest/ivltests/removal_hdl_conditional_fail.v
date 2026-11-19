@@ -4,5 +4,5 @@
 module rr_nested(R,C);input R,C;endmodule
 module tb(R,C);
  input R,C;reg n;wire EN=1;
- specify $removal(posedge R,posedge C &&& EN,10,n);endspecify
+ specify $removal(posedge R,posedge C &&& (EN && EN),10,n);endspecify
 endmodule

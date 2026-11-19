@@ -2318,6 +2318,12 @@ extern "C" ivl_recovery_t ivl_scope_recovery(ivl_scope_t net, unsigned idx)
 extern "C" ivl_signal_t ivl_recovery_data(ivl_recovery_t check)
 { assert(check); return check->data; }
 
+extern "C" ivl_signal_t ivl_recovery_data_condition(ivl_recovery_t check)
+{ assert(check); return check->data_condition; }
+
+extern "C" ivl_tchk_cond_t ivl_recovery_data_condition_kind(ivl_recovery_t check)
+{ assert(check); return check->data_condition_kind; }
+
 extern "C" int ivl_recovery_data_edge(ivl_recovery_t check)
 { assert(check); return check->data_edge; }
 
@@ -2336,6 +2342,12 @@ extern "C" ivl_signal_t ivl_recovery_notifier(ivl_recovery_t check)
 extern "C" ivl_signal_t ivl_recovery_reference(ivl_recovery_t check)
 { assert(check); return check->reference; }
 
+extern "C" ivl_signal_t ivl_recovery_reference_condition(ivl_recovery_t check)
+{ assert(check); return check->reference_condition; }
+
+extern "C" ivl_tchk_cond_t ivl_recovery_reference_condition_kind(ivl_recovery_t check)
+{ assert(check); return check->reference_condition_kind; }
+
 extern "C" int ivl_recovery_reference_edge(ivl_recovery_t check)
 { assert(check); return check->reference_edge; }
 
@@ -2350,6 +2362,12 @@ extern "C" unsigned ivl_scope_removals(ivl_scope_t net)
 
 extern "C" ivl_signal_t ivl_removal_data(ivl_removal_t check)
 { assert(check); return check->data; }
+
+extern "C" ivl_signal_t ivl_removal_data_condition(ivl_removal_t check)
+{ assert(check); return check->data_condition; }
+
+extern "C" ivl_tchk_cond_t ivl_removal_data_condition_kind(ivl_removal_t check)
+{ assert(check); return check->data_condition_kind; }
 
 extern "C" int ivl_removal_data_edge(ivl_removal_t check)
 { assert(check); return check->data_edge; }
@@ -2368,6 +2386,12 @@ extern "C" ivl_signal_t ivl_removal_notifier(ivl_removal_t check)
 
 extern "C" ivl_signal_t ivl_removal_reference(ivl_removal_t check)
 { assert(check); return check->reference; }
+
+extern "C" ivl_signal_t ivl_removal_reference_condition(ivl_removal_t check)
+{ assert(check); return check->reference_condition; }
+
+extern "C" ivl_tchk_cond_t ivl_removal_reference_condition_kind(ivl_removal_t check)
+{ assert(check); return check->reference_condition_kind; }
 
 extern "C" int ivl_removal_reference_edge(ivl_removal_t check)
 { assert(check); return check->reference_edge; }
