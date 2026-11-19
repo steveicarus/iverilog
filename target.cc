@@ -81,6 +81,18 @@ void target_t::period_check(const NetPeriod*check)
       errors += 1;
 }
 
+void target_t::setup_check(const NetSetup*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $setup." << endl;
+      errors += 1;
+}
+
+void target_t::hold_check(const NetHold*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $hold." << endl;
+      errors += 1;
+}
+
 bool target_t::func_def(const NetScope*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "

@@ -116,10 +116,14 @@ These flags affect the general behavior of the compiler.
 
     Conditional, vector and hierarchical WIDTH/PERIOD declarations are
     diagnosed as unsupported. Targets other than VVP and vlog95 warn that
-    these checks are ignored. This does not enable other timing-check kinds.
-    SDF annotation refusals are reported as diagnostics and do not necessarily
-    change the process exit code. Hot reannotation and general four-state
-    timing-check behavior are not qualified by these finite implementations.
+    these checks are ignored. SDF annotation refusals are reported as
+    diagnostics and do not necessarily change the process exit code. Hot
+    reannotation and general four-state timing-check behavior are not
+    qualified by these finite implementations.
+
+    VVP also implements local scalar ``$setup`` and ``$hold`` checks with
+    finite nonnegative limits and optional scalar notifiers.
+    Event qualifiers are not supported for these checks.
 
   * std-include/no-std-include
 

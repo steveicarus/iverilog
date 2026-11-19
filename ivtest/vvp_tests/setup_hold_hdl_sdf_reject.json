@@ -1,0 +1,18 @@
+{
+    "type": "normal",
+    "source": "setup_hold_hdl_sdf_reject.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/setup_hold_audit.c"
+    ],
+    "gold": "setup_hold_hdl_sdf_reject",
+    "vlog95": {
+        "gold": "setup_hold_hdl_sdf_reject_vlog95"
+    }
+}
