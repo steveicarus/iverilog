@@ -138,7 +138,9 @@ These flags affect the general behavior of the compiler.
     VVP also implements local scalar ``$setup``, ``$hold``, ``$recovery``
     and ``$removal`` checks with finite nonnegative limits and optional
     scalar notifiers.
-    Event qualifiers are not supported for these checks.
+    Each SETUP or HOLD event can independently use a local scalar
+    ``&&&`` qualifier: a bare signal, ``signal === 1'b0``, or
+    ``signal === 1'b1``. RECOVERY and REMOVAL remain unconditional.
 
   * std-include/no-std-include
 

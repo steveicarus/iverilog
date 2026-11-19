@@ -91,12 +91,16 @@ ivl_file_table_item
 ivl_file_table_size
 
 ivl_hold_data
+ivl_hold_data_condition
+ivl_hold_data_condition_kind
 ivl_hold_data_edge
 ivl_hold_file
 ivl_hold_limit
 ivl_hold_lineno
 ivl_hold_notifier
 ivl_hold_reference
+ivl_hold_reference_condition
+ivl_hold_reference_condition_kind
 ivl_hold_reference_edge
 ivl_hold_scope
 
@@ -305,12 +309,16 @@ ivl_scope_width
 ivl_scope_widths
 
 ivl_setup_data
+ivl_setup_data_condition
+ivl_setup_data_condition_kind
 ivl_setup_data_edge
 ivl_setup_file
 ivl_setup_limit
 ivl_setup_lineno
 ivl_setup_notifier
 ivl_setup_reference
+ivl_setup_reference_condition
+ivl_setup_reference_condition_kind
 ivl_setup_reference_edge
 ivl_setup_scope
 
