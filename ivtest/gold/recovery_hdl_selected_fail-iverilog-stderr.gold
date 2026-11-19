@@ -1,0 +1,2 @@
+ivltests/recovery_hdl_selected_fail.v:7: error: $recovery reference must be an unselected local scalar signal.
+1 error(s) during elaboration.

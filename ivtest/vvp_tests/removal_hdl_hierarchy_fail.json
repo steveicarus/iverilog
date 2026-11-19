@@ -1,0 +1,11 @@
+{
+    "type": "CE",
+    "source": "removal_hdl_hierarchy_fail.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-s",
+        "tb"
+    ],
+    "gold": "removal_hdl_hierarchy_fail"
+}

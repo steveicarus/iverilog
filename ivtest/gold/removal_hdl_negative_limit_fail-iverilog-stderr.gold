@@ -1,0 +1,2 @@
+ivltests/removal_hdl_negative_limit_fail.v:7: error: $removal limit must be a finite nonnegative constant.
+1 error(s) during elaboration.

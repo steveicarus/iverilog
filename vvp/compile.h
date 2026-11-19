@@ -573,7 +573,7 @@ extern void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
                                  uint64_t condition_value = 1);
 
 // SETUP/HOLD records use normalized reference/data order for both checks.
-extern void compile_tchk_two_event(bool setup, unsigned file_idx, unsigned lineno,
+extern void compile_tchk_two_event(int kind, unsigned file_idx, unsigned lineno,
                                     char* reference_edge, struct symb_s reference,
                                     char* data_edge, struct symb_s data,
                                     double limit, char* notifier);
