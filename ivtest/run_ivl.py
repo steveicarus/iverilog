@@ -318,6 +318,16 @@ def do_run_normal(options: dict, cfg: dict, expected_fail: bool,
             options['iverilog_args'] = [ "-g1995" ]
         options['iverilog_args'].extend(saved_options)
         options['source'] = os.path.join("work", "vlog95.v")
+        # Some distinct HDL expressions have the same simulation behavior.
+        # Check the captured fields in the HDL that will be recompiled.
+        check = options.get('check_output')
+        if check:
+            with open(options['source'], encoding='utf-8') as fd:
+                matches = re.finditer(check['pattern'], fd.read(), re.MULTILINE)
+                actual = sorted(list(match.groups()) for match in matches)
+            expected = sorted(check['expected'])
+            if actual != expected:
+                return [1, f"Failed - vlog95 output: expected {expected}, found {actual}."]
 
     # Run the iverilog command
     ivl_cmd = assemble_iverilog_cmd(options, cfg, 'a.out')
