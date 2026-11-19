@@ -85,6 +85,10 @@ int main(int argc, char*argv[])
 	    }
 	    break;
 	  case 'm':
+	    if (module_cnt >= sizeof(module_tab)/sizeof(module_tab[0])) {
+		  fprintf(stderr, "Too many modules specified\n");
+		  exit(1);
+	    }
 	    module_tab[module_cnt++] = optarg;
 	    break;
 	  case 'n':
