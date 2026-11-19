@@ -25,6 +25,7 @@
 class __vpiScope;
 class __vpiTchkWidth;
 class __vpiTchkPeriod;
+class __vpiTchkTwoEvent;
 
 // The record values use the declaring module's units. Reject values that
 // cannot be rounded to its precision and represented in simulator ticks.
@@ -66,6 +67,29 @@ class vvp_fun_tchk_period : public vvp_net_fun_t {
       bool have_reference_;
       void violation(vvp_time64_t now, vvp_time64_t period);
       friend class __vpiTchkPeriod;
+};
+
+/* Standalone SETUP and HOLD share signal/limit storage, but reverse the
+ * timestamp and timecheck roles and use different lower endpoints. */
+class vvp_fun_tchk_two_event : public vvp_net_fun_t {
+    public:
+      vvp_fun_tchk_two_event(bool setup, int reference_edge, int data_edge,
+                             vvp_time64_t limit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t& value,
+                     vvp_context_t) override;
+      __vpiTchkTwoEvent* vpi_tchk;
+
+    private:
+      bool setup_;
+      vvp_bit4_t previous_[2];
+      int reference_edge_;
+      int data_edge_;
+      vvp_time64_t limit_;
+      vvp_time64_t timestamp_;
+      bool have_timestamp_;
+      void process_events(bool reference_event, bool data_event);
+      void violation(vvp_time64_t now, vvp_time64_t interval);
+      friend class __vpiTchkTwoEvent;
 };
 
 #endif
