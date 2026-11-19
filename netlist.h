@@ -1085,7 +1085,9 @@ class NetRecRem : public NetTwoEventCheck {
                    NetNet*notifier, int reference_edge, int data_edge,
                    double recovery_limit, double removal_limit)
       : NetTwoEventCheck(scope, reference, data, notifier, reference_edge,
-                         data_edge, recovery_limit), removal_limit_(removal_limit) { }
+                         data_edge, recovery_limit, nullptr, IVL_TCHK_COND_NONE,
+                         nullptr, IVL_TCHK_COND_NONE),
+        removal_limit_(removal_limit) { }
       double recovery_limit() const { return limit(); }
       double removal_limit() const { return removal_limit_; }
     private:

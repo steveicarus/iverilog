@@ -7624,8 +7624,7 @@ void PHold::elaborate(Design*des, NetScope*scope) const
       scope->add_hold(std::move(check));
 }
 
-/* Keep RECOVERY/REMOVAL's unconditional admission boundary independent of
- * the SETUP/HOLD qualifier support. */
+/* RECOVERY, REMOVAL and RECREM use unconditional events. */
 static bool unconditional_timing_check_event(Design*des, const LineInfo&loc,
                                               const PTimingCheck::event_t&event,
                                               const char*kind, const char*role,
@@ -7709,10 +7708,12 @@ void PRecRem::elaborate(Design*des, NetScope*scope) const
                   return;
             }
             int reference_edge, data_edge;
-            if (!timing_check_event(des, *this, *reference_event_, "$recrem",
-                                    "reference", reference_edge) ||
-                !timing_check_event(des, *this, *data_event_, "$recrem",
-                                    "data", data_edge)) return;
+            if (!unconditional_timing_check_event(des, *this, *reference_event_,
+                                                  "$recrem", "reference",
+                                                  reference_edge) ||
+                !unconditional_timing_check_event(des, *this, *data_event_,
+                                                  "$recrem", "data", data_edge))
+                  return;
             NetNet*reference = timing_check_signal(des, scope, reference_event_->name,
                                                    *this, "$recrem", false);
             NetNet*data = timing_check_signal(des, scope, data_event_->name,
