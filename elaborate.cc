@@ -4480,10 +4480,22 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 			      const netdarray_t*use_darray = dynamic_cast<const netdarray_t*>(ptype);
 			      ivl_assert(*this, use_darray);
 
+			      NetNet*static_net = nullptr;
+			      if (cls->get_prop_qual(pidx).test_static()) {
+				    perm_string pname = lex_strings.make(cls->get_prop_name(pidx));
+				    static_net = cls->find_static_property(pname);
+				    ivl_assert(*this, static_net);
+			      }
+
 			      if (queue && method_name == "push_back") {
 				    static const std::vector<perm_string> parm_names = {
 					  perm_string::literal("item")
 				    };
+				    if (static_net)
+					  return elaborate_queue_method_(des, scope, static_net,
+									method_name,
+									"$ivl_queue_method$push_back",
+									parm_names);
 				    return elaborate_queue_property_method_(des, scope, net, pidx,
 									    method_name,
 									    "$ivl_queue_method$push_back",
@@ -4493,6 +4505,11 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 				    static const std::vector<perm_string> parm_names = {
 					  perm_string::literal("item")
 				    };
+				    if (static_net)
+					  return elaborate_queue_method_(des, scope, static_net,
+									method_name,
+									"$ivl_queue_method$push_front",
+									parm_names);
 				    return elaborate_queue_property_method_(des, scope, net, pidx,
 									    method_name,
 									    "$ivl_queue_method$push_front",
@@ -4503,18 +4520,33 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 					  perm_string::literal("index"),
 					  perm_string::literal("item")
 				    };
+				    if (static_net)
+					  return elaborate_queue_method_(des, scope, static_net,
+									method_name,
+									"$ivl_queue_method$insert",
+									parm_names);
 				    return elaborate_queue_property_method_(des, scope, net, pidx,
 									    method_name,
 									    "$ivl_queue_method$insert",
 									    parm_names);
 			      }
 			      if (queue && method_name == "pop_front") {
+				    if (static_net)
+					  return elaborate_method_func_(scope, static_net,
+									use_darray->element_type(),
+									method_name,
+									"$ivl_queue_method$pop_front");
 				    return elaborate_method_property_func_(scope, net, pidx,
 									   use_darray->element_type(),
 									   method_name,
 									   "$ivl_queue_method$pop_front");
 			      }
 			      if (queue && method_name == "pop_back") {
+				    if (static_net)
+					  return elaborate_method_func_(scope, static_net,
+									use_darray->element_type(),
+									method_name,
+									"$ivl_queue_method$pop_back");
 				    return elaborate_method_property_func_(scope, net, pidx,
 									   use_darray->element_type(),
 									   method_name,
@@ -4524,18 +4556,32 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 				    static const std::vector<perm_string> parm_names = {
 					  perm_string::literal("index")
 				    };
+				    if (static_net)
+					  return elaborate_sys_task_method_(des, scope, static_net,
+									    method_name,
+									    "$ivl_darray_method$delete",
+									    parm_names);
 				    return elaborate_sys_task_property_method_(des, scope, net, pidx,
 									       method_name,
 									       "$ivl_darray_method$delete",
 									       parm_names);
 			      }
 			      if (method_name == "size") {
+				    if (static_net)
+					  return elaborate_method_func_(scope, static_net,
+									&netvector_t::atom2s32,
+									method_name, "$size");
 				    return elaborate_method_property_func_(scope, net, pidx,
 									   &netvector_t::atom2s32,
 									   method_name, "$size");
 			      }
 			      if (method_name == "reverse") {
 				    static const std::vector<perm_string> parm_names;
+				    if (static_net)
+					  return elaborate_sys_task_method_(des, scope, static_net,
+									    method_name,
+									    "$ivl_darray_method$reverse",
+									    parm_names);
 				    return elaborate_sys_task_property_method_(des, scope, net, pidx,
 									       method_name,
 									       "$ivl_darray_method$reverse",
@@ -4543,6 +4589,11 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "sort") {
 				    static const std::vector<perm_string> parm_names;
+				    if (static_net)
+					  return elaborate_sys_task_method_(des, scope, static_net,
+									    method_name,
+									    "$ivl_darray_method$sort",
+									    parm_names);
 				    return elaborate_sys_task_property_method_(des, scope, net, pidx,
 									       method_name,
 									       "$ivl_darray_method$sort",
@@ -4550,6 +4601,11 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "rsort") {
 				    static const std::vector<perm_string> parm_names;
+				    if (static_net)
+					  return elaborate_sys_task_method_(des, scope, static_net,
+									    method_name,
+									    "$ivl_darray_method$rsort",
+									    parm_names);
 				    return elaborate_sys_task_property_method_(des, scope, net, pidx,
 									       method_name,
 									       "$ivl_darray_method$rsort",
@@ -4557,6 +4613,11 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "shuffle") {
 				    static const std::vector<perm_string> parm_names;
+				    if (static_net)
+					  return elaborate_sys_task_method_(des, scope, static_net,
+									    method_name,
+									    "$ivl_darray_method$shuffle",
+									    parm_names);
 				    return elaborate_sys_task_property_method_(des, scope, net, pidx,
 									       method_name,
 									       "$ivl_darray_method$shuffle",
