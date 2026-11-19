@@ -1254,6 +1254,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 
       PSpecPath* specpath;
       PTimingCheck::event_t* timing_check_event;
+      std::vector<PTimingCheck::EdgeType>* timing_check_edges;
       PTimingCheck::optional_args_t* spec_optional_args;
 
       LexicalScope::lifetime_t lifetime;
@@ -1275,7 +1276,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %token K_PSTAR K_STARP K_DOTSTAR
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER K_NB_TRIGGER K_LEQUIV
 %token K_SCOPE_RES
-%token K_edge_descriptor
+%token <int_val> K_edge_descriptor
 
 %token K_CONSTRAINT_IMPL
 
@@ -1426,6 +1427,8 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <index_components> index_components_opt index_components
 %type <pform_name> spec_notifier_opt spec_notifier
 %type <timing_check_event> spec_reference_event
+%type <timing_check_edges> edge_descriptor_list
+%destructor { delete $$; } <timing_check_edges>
 %type <spec_optional_args> setuphold_opt_args recrem_opt_args setuphold_recrem_opt_notifier
 %type <spec_optional_args> setuphold_recrem_opt_timestamp_cond setuphold_recrem_opt_timecheck_cond
 %type <spec_optional_args> setuphold_recrem_opt_delayed_reference setuphold_recrem_opt_delayed_data
@@ -7818,7 +7821,8 @@ spec_reference_event
 	event->name = *$5;
 	event->posedge = false;
 	event->negedge = false;
-	// TODO add edge descriptors
+	event->edges.swap(*$3);
+	delete $3;
 	event->condition = nullptr;
 	delete $5;
 	$$ = event;
@@ -7828,20 +7832,25 @@ spec_reference_event
 	event->name = *$5;
 	event->posedge = false;
 	event->negedge = false;
-	// TODO add edge descriptors
+	event->edges.swap(*$3);
+	delete $3;
 	event->condition = std::unique_ptr<PExpr>($7);
 	delete $5;
 	$$ = event;
       }
   ;
 
-  /* The edge_descriptor is detected by the lexor as the various
-     2-letter edge sequences that are supported here. For now, we
-     don't care what they are, because we do not yet support specify
-     edge events. */
+  /* Preserve edge descriptors so unsupported timing events remain
+     distinguishable from unqualified any-change events. */
 edge_descriptor_list
   : edge_descriptor_list ',' K_edge_descriptor
+      { $1->push_back(static_cast<PTimingCheck::EdgeType>($3));
+        $$ = $1;
+      }
   | K_edge_descriptor
+      { $$ = new std::vector<PTimingCheck::EdgeType>(
+                  1, static_cast<PTimingCheck::EdgeType>($1));
+      }
   ;
 
 setuphold_opt_args
