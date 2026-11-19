@@ -198,6 +198,7 @@ typedef struct ivl_parameter_s*ivl_parameter_t;
 typedef struct ivl_period_s   *ivl_period_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_recovery_s    *ivl_recovery_t;
+typedef struct ivl_recrem_s *ivl_recrem_t;
 typedef struct ivl_removal_s    *ivl_removal_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
@@ -2035,6 +2036,21 @@ extern ivl_signal_t ivl_removal_notifier(ivl_removal_t check);
 extern ivl_signal_t ivl_removal_reference(ivl_removal_t check);
 extern int ivl_removal_reference_edge(ivl_removal_t check);
 extern ivl_scope_t ivl_removal_scope(ivl_removal_t check);
+
+/* Combined RECREM: reference is control, data is clock. Limits use declaring
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+extern ivl_recrem_t ivl_scope_recrem(ivl_scope_t net, unsigned idx);
+extern unsigned ivl_scope_recrems(ivl_scope_t net);
+extern ivl_signal_t ivl_recrem_data(ivl_recrem_t check);
+extern int ivl_recrem_data_edge(ivl_recrem_t check);
+extern const char*ivl_recrem_file(ivl_recrem_t check);
+extern unsigned ivl_recrem_lineno(ivl_recrem_t check);
+extern ivl_signal_t ivl_recrem_notifier(ivl_recrem_t check);
+extern double ivl_recrem_recovery_limit(ivl_recrem_t check);
+extern ivl_signal_t ivl_recrem_reference(ivl_recrem_t check);
+extern int ivl_recrem_reference_edge(ivl_recrem_t check);
+extern double ivl_recrem_removal_limit(ivl_recrem_t check);
+extern ivl_scope_t ivl_recrem_scope(ivl_recrem_t check);
 
 extern unsigned     ivl_scope_events(ivl_scope_t net);
 extern ivl_event_t  ivl_scope_event(ivl_scope_t net, unsigned idx);

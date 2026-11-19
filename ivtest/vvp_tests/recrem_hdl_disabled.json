@@ -1,0 +1,14 @@
+{
+    "type": "normal",
+    "source": "recrem_hdl_disabled.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gno-specify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/recrem_audit.c"
+    ]
+}

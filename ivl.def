@@ -234,6 +234,17 @@ ivl_recovery_reference
 ivl_recovery_reference_edge
 ivl_recovery_scope
 
+ivl_recrem_data
+ivl_recrem_data_edge
+ivl_recrem_file
+ivl_recrem_lineno
+ivl_recrem_notifier
+ivl_recrem_recovery_limit
+ivl_recrem_reference
+ivl_recrem_reference_edge
+ivl_recrem_removal_limit
+ivl_recrem_scope
+
 ivl_removal_data
 ivl_removal_data_edge
 ivl_removal_file
@@ -288,6 +299,8 @@ ivl_scope_port
 ivl_scope_ports
 ivl_scope_recoveries
 ivl_scope_recovery
+ivl_scope_recrem
+ivl_scope_recrems
 ivl_scope_removal
 ivl_scope_removals
 ivl_scope_setup
