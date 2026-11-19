@@ -1,0 +1,18 @@
+ivltests/setup_cond_data_fail.v:9: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:10: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:11: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:12: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:13: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:14: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:15: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:16: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:17: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:18: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:19: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:20: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:21: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:22: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:23: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:24: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+ivltests/setup_cond_data_fail.v:25: error: $setup data condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
+17 error(s) during elaboration.

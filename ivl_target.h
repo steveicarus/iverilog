@@ -470,7 +470,9 @@ typedef enum ivl_sfunc_as_task_e {
 } ivl_sfunc_as_task_t;
 
 /* Retained local scalar timing-event qualifier. NONE has no condition signal;
- * BARE, EQ0 and EQ1 preserve the source form for targets such as vlog95. */
+ * BARE, EQ0 and EQ1 preserve the source form for targets such as vlog95.
+ * An event is admitted only when its signal is exactly 0 for EQ0, or exactly
+ * 1 for BARE/EQ1; X and Z do not qualify. */
 typedef enum ivl_tchk_cond_e {
       IVL_TCHK_COND_NONE = 0,
       IVL_TCHK_COND_BARE = 1,
@@ -1982,13 +1984,19 @@ extern ivl_type_t ivl_scope_class(ivl_scope_t net, unsigned idx);
 extern unsigned       ivl_scope_enumerates(ivl_scope_t net);
 extern ivl_enumtype_t ivl_scope_enumerate(ivl_scope_t net, unsigned idx);
 /* Standalone SETUP: normalized reference/data roles; limits use declaring
- * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge).
+ * Each event has its own optional qualifier, sampled on that event; a null
+ * condition signal pairs with NONE and means the event is unconditional. */
 extern unsigned ivl_scope_setups(ivl_scope_t net);
 extern ivl_setup_t ivl_scope_setup(ivl_scope_t net, unsigned idx);
 extern ivl_scope_t ivl_setup_scope(ivl_setup_t check);
 extern ivl_signal_t ivl_setup_reference(ivl_setup_t check);
 extern ivl_signal_t ivl_setup_data(ivl_setup_t check);
 extern ivl_signal_t ivl_setup_notifier(ivl_setup_t check);
+extern ivl_signal_t ivl_setup_data_condition(ivl_setup_t check);
+extern ivl_tchk_cond_t ivl_setup_data_condition_kind(ivl_setup_t check);
+extern ivl_signal_t ivl_setup_reference_condition(ivl_setup_t check);
+extern ivl_tchk_cond_t ivl_setup_reference_condition_kind(ivl_setup_t check);
 extern int ivl_setup_reference_edge(ivl_setup_t check);
 extern int ivl_setup_data_edge(ivl_setup_t check);
 extern double ivl_setup_limit(ivl_setup_t check);
@@ -1996,13 +2004,19 @@ extern const char*ivl_setup_file(ivl_setup_t check);
 extern unsigned ivl_setup_lineno(ivl_setup_t check);
 
 /* Standalone HOLD: normalized reference/data roles; limits use declaring
- * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge).
+ * Each event has its own optional qualifier, sampled on that event; a null
+ * condition signal pairs with NONE and means the event is unconditional. */
 extern unsigned ivl_scope_holds(ivl_scope_t net);
 extern ivl_hold_t ivl_scope_hold(ivl_scope_t net, unsigned idx);
 extern ivl_scope_t ivl_hold_scope(ivl_hold_t check);
 extern ivl_signal_t ivl_hold_reference(ivl_hold_t check);
 extern ivl_signal_t ivl_hold_data(ivl_hold_t check);
 extern ivl_signal_t ivl_hold_notifier(ivl_hold_t check);
+extern ivl_signal_t ivl_hold_data_condition(ivl_hold_t check);
+extern ivl_tchk_cond_t ivl_hold_data_condition_kind(ivl_hold_t check);
+extern ivl_signal_t ivl_hold_reference_condition(ivl_hold_t check);
+extern ivl_tchk_cond_t ivl_hold_reference_condition_kind(ivl_hold_t check);
 extern int ivl_hold_reference_edge(ivl_hold_t check);
 extern int ivl_hold_data_edge(ivl_hold_t check);
 extern double ivl_hold_limit(ivl_hold_t check);

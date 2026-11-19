@@ -7533,17 +7533,26 @@ void PPeriod::elaborate(Design*des, NetScope*scope) const
       scope->add_period(std::move(check));
 }
 
-/* Standalone SETUP/HOLD permit an unqualified transition or one selected
- * edge. Conditional events and edge-descriptor lists are separate support. */
-static bool timing_check_event(Design*des, const LineInfo&loc,
+/* Standalone SETUP/HOLD retain a qualifier independently for each event.
+ * Edge-descriptor lists remain unsupported. */
+static bool timing_check_event(Design*des, NetScope*scope, const LineInfo&loc,
                                 const PTimingCheck::event_t&event,
-                                const char*kind, const char*role, int&edge)
+                                const char*kind, const char*role, int&edge,
+                                NetNet*&condition,
+                                ivl_tchk_cond_t&condition_kind)
 {
-      if (event.condition || !event.edges.empty() ||
-          (event.posedge && event.negedge)) {
+      if (!event.edges.empty() || (event.posedge && event.negedge)) {
             cerr << loc.get_fileline() << ": error: " << kind << " " << role
-                 << " supports only unconditional scalar events with no edge,"
+                 << " supports only scalar events with no edge,"
                  << " posedge or negedge." << endl;
+            des->errors += 1;
+            return false;
+      }
+      if (!timing_check_condition(scope, event.condition.get(), condition,
+                                  condition_kind)) {
+            cerr << loc.get_fileline() << ": error: " << kind << " " << role
+                 << " condition must be a local scalar signal, or that signal"
+                 << " === 1'b0 or === 1'b1." << endl;
             des->errors += 1;
             return false;
       }
@@ -7555,9 +7564,13 @@ void PSetup::elaborate(Design*des, NetScope*scope) const
 {
       if (!gn_specify_blocks_flag) return;
       int reference_edge, data_edge;
-      if (!timing_check_event(des, *this, *reference_, "$setup", "reference",
-                              reference_edge) ||
-          !timing_check_event(des, *this, *data_, "$setup", "data", data_edge))
+      NetNet*reference_condition, *data_condition;
+      ivl_tchk_cond_t reference_condition_kind, data_condition_kind;
+      if (!timing_check_event(des, scope, *this, *reference_, "$setup", "reference",
+                              reference_edge, reference_condition,
+                              reference_condition_kind) ||
+          !timing_check_event(des, scope, *this, *data_, "$setup", "data",
+                              data_edge, data_condition, data_condition_kind))
             return;
       NetNet*reference = timing_check_signal(des, scope, reference_->name,
                                              *this, "$setup", false);
@@ -7572,7 +7585,9 @@ void PSetup::elaborate(Design*des, NetScope*scope) const
                                  "$setup", "limit", limit)) return;
       std::unique_ptr<NetSetup> check(new NetSetup(scope, reference, data,
                                           notifier, reference_edge, data_edge,
-                                          limit));
+                                          limit, reference_condition,
+                                          reference_condition_kind,
+                                          data_condition, data_condition_kind));
       check->set_line(*this);
       scope->add_setup(std::move(check));
 }
@@ -7581,9 +7596,13 @@ void PHold::elaborate(Design*des, NetScope*scope) const
 {
       if (!gn_specify_blocks_flag) return;
       int reference_edge, data_edge;
-      if (!timing_check_event(des, *this, *reference_, "$hold", "reference",
-                              reference_edge) ||
-          !timing_check_event(des, *this, *data_, "$hold", "data", data_edge))
+      NetNet*reference_condition, *data_condition;
+      ivl_tchk_cond_t reference_condition_kind, data_condition_kind;
+      if (!timing_check_event(des, scope, *this, *reference_, "$hold", "reference",
+                              reference_edge, reference_condition,
+                              reference_condition_kind) ||
+          !timing_check_event(des, scope, *this, *data_, "$hold", "data",
+                              data_edge, data_condition, data_condition_kind))
             return;
       NetNet*reference = timing_check_signal(des, scope, reference_->name,
                                              *this, "$hold", false);
@@ -7598,18 +7617,40 @@ void PHold::elaborate(Design*des, NetScope*scope) const
                                  "$hold", "limit", limit)) return;
       std::unique_ptr<NetHold> check(new NetHold(scope, reference, data,
                                           notifier, reference_edge, data_edge,
-                                          limit));
+                                          limit, reference_condition,
+                                          reference_condition_kind,
+                                          data_condition, data_condition_kind));
       check->set_line(*this);
       scope->add_hold(std::move(check));
+}
+
+/* Keep RECOVERY/REMOVAL's unconditional admission boundary independent of
+ * the SETUP/HOLD qualifier support. */
+static bool unconditional_timing_check_event(Design*des, const LineInfo&loc,
+                                              const PTimingCheck::event_t&event,
+                                              const char*kind, const char*role,
+                                              int&edge)
+{
+      if (event.condition || !event.edges.empty() ||
+          (event.posedge && event.negedge)) {
+            cerr << loc.get_fileline() << ": error: " << kind << " " << role
+                 << " supports only unconditional scalar events with no edge,"
+                 << " posedge or negedge." << endl;
+            des->errors += 1;
+            return false;
+      }
+      edge = event.posedge ? 1 : event.negedge ? -1 : 0;
+      return true;
 }
 
 void PRecovery::elaborate(Design*des, NetScope*scope) const
 {
       if (!gn_specify_blocks_flag) return;
       int reference_edge, data_edge;
-      if (!timing_check_event(des, *this, *reference_, "$recovery", "reference",
-                              reference_edge) ||
-          !timing_check_event(des, *this, *data_, "$recovery", "data", data_edge))
+      if (!unconditional_timing_check_event(des, *this, *reference_, "$recovery",
+                                            "reference", reference_edge) ||
+          !unconditional_timing_check_event(des, *this, *data_, "$recovery",
+                                            "data", data_edge))
             return;
       NetNet*reference = timing_check_signal(des, scope, reference_->name,
                                              *this, "$recovery", false);
@@ -7624,7 +7665,8 @@ void PRecovery::elaborate(Design*des, NetScope*scope) const
                                  "$recovery", "limit", limit)) return;
       std::unique_ptr<NetRecovery> check(new NetRecovery(scope, reference, data,
                                           notifier, reference_edge, data_edge,
-                                          limit));
+                                          limit, nullptr, IVL_TCHK_COND_NONE,
+                                          nullptr, IVL_TCHK_COND_NONE));
       check->set_line(*this);
       scope->add_recovery(std::move(check));
 }
@@ -7633,9 +7675,10 @@ void PRemoval::elaborate(Design*des, NetScope*scope) const
 {
       if (!gn_specify_blocks_flag) return;
       int reference_edge, data_edge;
-      if (!timing_check_event(des, *this, *reference_, "$removal", "reference",
-                              reference_edge) ||
-          !timing_check_event(des, *this, *data_, "$removal", "data", data_edge))
+      if (!unconditional_timing_check_event(des, *this, *reference_, "$removal",
+                                            "reference", reference_edge) ||
+          !unconditional_timing_check_event(des, *this, *data_, "$removal",
+                                            "data", data_edge))
             return;
       NetNet*reference = timing_check_signal(des, scope, reference_->name,
                                              *this, "$removal", false);
@@ -7650,7 +7693,8 @@ void PRemoval::elaborate(Design*des, NetScope*scope) const
                                  "$removal", "limit", limit)) return;
       std::unique_ptr<NetRemoval> check(new NetRemoval(scope, reference, data,
                                           notifier, reference_edge, data_edge,
-                                          limit));
+                                          limit, nullptr, IVL_TCHK_COND_NONE,
+                                          nullptr, IVL_TCHK_COND_NONE));
       check->set_line(*this);
       scope->add_removal(std::move(check));
 }
