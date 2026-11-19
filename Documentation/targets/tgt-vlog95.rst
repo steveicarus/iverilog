@@ -81,6 +81,9 @@ module timescale is preserved. A module containing only timing checks still
 receives a ``specify`` block. The translated file must also be compiled with
 ``-gspecify`` to execute the checks.
 
+Unconditional scalar ``$period`` checks are emitted in the same way, with
+their selected edge, elaborated limit, and optional notifier.
+
 Known Issues and Limitations
 ----------------------------
 

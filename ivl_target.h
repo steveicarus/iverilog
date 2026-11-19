@@ -135,6 +135,9 @@ _BEGIN_DECL
  *    that is fully elaborated, with defparams and other parameter
  *    overrides taken care of.
  *
+ * ivl_period_t
+ *    An elaborated unconditional scalar $period timing check.
+ *
  * ivl_process_t
  *    A Verilog process is represented by one of these. A process may
  *    be an "initial" or an "always" process. These come from initial
@@ -190,6 +193,7 @@ typedef struct ivl_net_probe_s*ivl_net_probe_t;
 typedef struct ivl_nexus_s    *ivl_nexus_t;
 typedef struct ivl_nexus_ptr_s*ivl_nexus_ptr_t;
 typedef struct ivl_parameter_s*ivl_parameter_t;
+typedef struct ivl_period_s   *ivl_period_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
@@ -1749,6 +1753,36 @@ extern int         ivl_parameter_is_type(ivl_parameter_t net);
 extern const char* ivl_parameter_file(ivl_parameter_t net);
 extern unsigned    ivl_parameter_lineno(ivl_parameter_t net);
 
+/* PERIOD CHECKS
+ * These accessors describe unconditional scalar $period checks.
+ *
+ * ivl_period_file
+ * ivl_period_lineno
+ *    Return the source file and line of the timing check declaration.
+ *
+ * ivl_period_limit
+ *    Returns the elaborated limit in the owning scope's time units
+ *    (ivl_scope_time_units), before rounding to its precision.
+ *
+ * ivl_period_notifier
+ *    Returns the local scalar notifier variable, or NULL if omitted.
+ *
+ * ivl_period_posedge
+ *    Returns 1 for a posedge reference event and 0 for negedge.
+ *
+ * ivl_period_reference
+ *    Returns the local scalar signal of the reference event.
+ *
+ * ivl_period_scope
+ *    Returns the scope containing the declaration.
+ */
+extern const char*  ivl_period_file(ivl_period_t check);
+extern double       ivl_period_limit(ivl_period_t check);
+extern unsigned     ivl_period_lineno(ivl_period_t check);
+extern ivl_signal_t ivl_period_notifier(ivl_period_t check);
+extern int          ivl_period_posedge(ivl_period_t check);
+extern ivl_signal_t ivl_period_reference(ivl_period_t check);
+extern ivl_scope_t  ivl_period_scope(ivl_period_t check);
 
 /* SCOPE
  * Scopes of various sort have these properties. Use these methods to
@@ -1866,6 +1900,11 @@ extern unsigned    ivl_parameter_lineno(ivl_parameter_t net);
  *    If this is a non-root scope, then the parent is the scope that
  *    contains this scope. Otherwise, the parent is nil.
  *
+ * ivl_scope_periods
+ *    Returns the number of $period checks in this scope.
+ * ivl_scope_period
+ *    Returns the check at idx, where 0 <= idx < ivl_scope_periods(net).
+ *
  * ivl_scope_port
  * ivl_scope_ports
  *    Scopes that are functions or tasks have ports defined by
@@ -1936,6 +1975,8 @@ extern const char*  ivl_scope_basename(ivl_scope_t net);
 extern unsigned     ivl_scope_params(ivl_scope_t net);
 extern ivl_parameter_t ivl_scope_param(ivl_scope_t net, unsigned idx);
 extern ivl_scope_t  ivl_scope_parent(ivl_scope_t net);
+extern unsigned     ivl_scope_periods(ivl_scope_t net);
+extern ivl_period_t ivl_scope_period(ivl_scope_t net, unsigned idx);
 
 extern unsigned ivl_scope_mod_module_ports(ivl_scope_t net);
 extern const char *ivl_scope_mod_module_port_name(ivl_scope_t net, unsigned idx );
@@ -2536,9 +2577,10 @@ extern DLLEXPORT const char* target_query(const char*key);
    ivl core. This function is how the target module is invoked. */
 
 typedef int  (*target_design_f)(ivl_design_t des);
-/* target_query("supports-width") returns "1" when the target consumes
- * ivl_scope_width checks. Other targets receive a warning for each ignored
- * $width declaration; a missing query or any other response means unsupported. */
+/* The target returns "1" from target_query("supports-width") or
+ * target_query("supports-period") to consume checks of that type.
+ * The compiler warns for each ignored declaration when the query is
+ * unavailable or returns a different value. */
 typedef const char* (*target_query_f) (const char*key);
 
 

@@ -2022,6 +2022,48 @@ extern int ivl_path_source_negedge(ivl_delaypath_t net)
       return net->negedge ? 1 : 0;
 }
 
+extern "C" const char* ivl_period_file(ivl_period_t check)
+{
+      assert(check);
+      return check->file.str();
+}
+
+extern "C" double ivl_period_limit(ivl_period_t check)
+{
+      assert(check);
+      return check->limit;
+}
+
+extern "C" unsigned ivl_period_lineno(ivl_period_t check)
+{
+      assert(check);
+      return check->lineno;
+}
+
+extern "C" ivl_signal_t ivl_period_notifier(ivl_period_t check)
+{
+      assert(check);
+      return check->notifier;
+}
+
+extern "C" int ivl_period_posedge(ivl_period_t check)
+{
+      assert(check);
+      return check->posedge;
+}
+
+extern "C" ivl_signal_t ivl_period_reference(ivl_period_t check)
+{
+      assert(check);
+      return check->reference;
+}
+
+extern "C" ivl_scope_t ivl_period_scope(ivl_period_t check)
+{
+      assert(check);
+      return check->scope;
+}
+
 extern "C" const char*ivl_process_file(ivl_process_t net)
 {
       assert(net);
@@ -2320,6 +2362,17 @@ extern "C" ivl_scope_t ivl_scope_parent(ivl_scope_t net)
       return net->parent;
 }
 
+extern "C" unsigned ivl_scope_periods(ivl_scope_t net)
+{
+      assert(net);
+      return net->periods_.size();
+}
+
+extern "C" ivl_period_t ivl_scope_period(ivl_scope_t net, unsigned idx)
+{
+      assert(net && idx < net->periods_.size());
+      return net->periods_[idx];
+}
 
 extern "C" unsigned ivl_scope_mod_module_ports(ivl_scope_t net)
 {

@@ -195,6 +195,14 @@ ivl_path_source
 ivl_path_source_negedge
 ivl_path_source_posedge
 
+ivl_period_file
+ivl_period_limit
+ivl_period_lineno
+ivl_period_notifier
+ivl_period_posedge
+ivl_period_reference
+ivl_period_scope
+
 ivl_process_analog
 ivl_process_attr_cnt
 ivl_process_attr_val
@@ -240,6 +248,8 @@ ivl_scope_name
 ivl_scope_param
 ivl_scope_params
 ivl_scope_parent
+ivl_scope_period
+ivl_scope_periods
 ivl_scope_port
 ivl_scope_ports
 ivl_scope_sigs

@@ -1,0 +1,13 @@
+{
+    "type": "normal",
+    "source": "period_hdl_sdf_units.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-Iivltests",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": ["vpi/period_limits.c", "vpi/pulse_history.c"]
+}
