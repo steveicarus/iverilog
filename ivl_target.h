@@ -136,7 +136,7 @@ _BEGIN_DECL
  *    overrides taken care of.
  *
  * ivl_period_t
- *    An elaborated unconditional scalar $period timing check.
+ *    An elaborated scalar $period timing check.
  *
  * ivl_process_t
  *    A Verilog process is represented by one of these. A process may
@@ -157,7 +157,7 @@ _BEGIN_DECL
  *    Switches are the tran/tranif devices in the design.
  *
  * ivl_width_t
- *    An elaborated unconditional scalar $width timing check.
+ *    An elaborated scalar $width timing check.
  *
  * -- A Note About Bit Sets --
  * Some objects hold a value as an array of bits. In these cases there
@@ -465,6 +465,15 @@ typedef enum ivl_sfunc_as_task_e {
       IVL_SFUNC_AS_TASK_WARNING = 1,
       IVL_SFUNC_AS_TASK_IGNORE  = 2
 } ivl_sfunc_as_task_t;
+
+/* Retained local scalar timing-event qualifier. NONE has no condition signal;
+ * BARE, EQ0 and EQ1 preserve the source form for targets such as vlog95. */
+typedef enum ivl_tchk_cond_e {
+      IVL_TCHK_COND_NONE = 0,
+      IVL_TCHK_COND_BARE = 1,
+      IVL_TCHK_COND_EQ0 = 2,
+      IVL_TCHK_COND_EQ1 = 3
+} ivl_tchk_cond_t;
 
 /* This is the type of a variable, and also used as the type for an
    expression. */
@@ -1756,7 +1765,13 @@ extern const char* ivl_parameter_file(ivl_parameter_t net);
 extern unsigned    ivl_parameter_lineno(ivl_parameter_t net);
 
 /* PERIOD CHECKS
- * These accessors describe unconditional scalar $period checks.
+ * These accessors describe scalar $period checks.
+ *
+ * ivl_period_condition
+ *    Returns the local scalar timing-event qualifier, or NULL if absent.
+ *
+ * ivl_period_condition_kind
+ *    Returns the source form of the timing-event qualifier.
  *
  * ivl_period_file
  * ivl_period_lineno
@@ -1778,6 +1793,8 @@ extern unsigned    ivl_parameter_lineno(ivl_parameter_t net);
  * ivl_period_scope
  *    Returns the scope containing the declaration.
  */
+extern ivl_signal_t    ivl_period_condition(ivl_period_t check);
+extern ivl_tchk_cond_t ivl_period_condition_kind(ivl_period_t check);
 extern const char*  ivl_period_file(ivl_period_t check);
 extern double       ivl_period_limit(ivl_period_t check);
 extern unsigned     ivl_period_lineno(ivl_period_t check);
@@ -2548,7 +2565,13 @@ extern ivl_scope_t ivl_type_virtual(ivl_type_t net, unsigned idx);
 extern unsigned ivl_type_queue_max(ivl_type_t net);
 
 /* WIDTH CHECKS
- * These accessors describe unconditional scalar $width checks.
+ * These accessors describe scalar $width checks.
+ *
+ * ivl_width_condition
+ *    Returns the local scalar timing-event qualifier, or NULL if absent.
+ *
+ * ivl_width_condition_kind
+ *    Returns the source form of the timing-event qualifier.
  *
  * ivl_width_file
  * ivl_width_lineno
@@ -2572,6 +2595,8 @@ extern unsigned ivl_type_queue_max(ivl_type_t net);
  * ivl_width_scope
  *    Returns the scope containing the declaration.
  */
+extern ivl_signal_t    ivl_width_condition(ivl_width_t check);
+extern ivl_tchk_cond_t ivl_width_condition_kind(ivl_width_t check);
 extern const char*  ivl_width_file(ivl_width_t check);
 extern double       ivl_width_limit(ivl_width_t check);
 extern unsigned     ivl_width_lineno(ivl_width_t check);

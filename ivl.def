@@ -195,6 +195,8 @@ ivl_path_source
 ivl_path_source_negedge
 ivl_path_source_posedge
 
+ivl_period_condition
+ivl_period_condition_kind
 ivl_period_file
 ivl_period_limit
 ivl_period_lineno
@@ -395,6 +397,8 @@ ivl_udp_row
 ivl_udp_rows
 ivl_udp_sequ
 
+ivl_width_condition
+ivl_width_condition_kind
 ivl_width_file
 ivl_width_limit
 ivl_width_lineno

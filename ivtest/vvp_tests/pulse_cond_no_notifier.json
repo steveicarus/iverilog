@@ -1,0 +1,6 @@
+{
+  "type": "normal",
+  "source": "pulse_cond_no_notifier.v",
+  "iverilog-args": ["-g2012", "-gspecify", "-Ttyp", "-s", "tb"],
+  "vpi-sources": ["vpi/pulse_cond_no_notifier.c"]
+}
