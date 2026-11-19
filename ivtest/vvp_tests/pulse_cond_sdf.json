@@ -1,0 +1,14 @@
+{
+  "type": "normal",
+  "source": "pulse_cond_sdf.v",
+  "iverilog-args": [
+    "-g2012",
+    "-gspecify",
+    "-Ttyp",
+    "-s",
+    "tb"
+  ],
+  "vpi-sources": [
+    "vpi/pulse_conditional.c"
+  ]
+}

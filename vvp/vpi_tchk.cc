@@ -23,7 +23,8 @@
 
 __vpiTchkWidth::__vpiTchkWidth(__vpiScope* scope, unsigned file_idx,
                                unsigned lineno, vvp_fun_tchk_width* fun)
-: reference_(nullptr), notifier_(nullptr), scope_(scope), file_idx_(file_idx),
+: reference_(nullptr), notifier_(nullptr), condition_(nullptr), scope_(scope),
+  file_idx_(file_idx),
   lineno_(lineno), fun_(fun), reference_term_(nullptr)
 {
 }
@@ -89,7 +90,8 @@ void __vpiTchkWidth::vpi_put_delays(p_vpi_delay delays)
 
 __vpiTchkPeriod::__vpiTchkPeriod(__vpiScope* scope, unsigned file_idx,
                                unsigned lineno, vvp_fun_tchk_period* fun)
-: reference_(nullptr), notifier_(nullptr), scope_(scope), file_idx_(file_idx),
+: reference_(nullptr), notifier_(nullptr), condition_(nullptr), scope_(scope),
+  file_idx_(file_idx),
   lineno_(lineno), fun_(fun), reference_term_(nullptr)
 {
 }

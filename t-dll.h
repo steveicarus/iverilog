@@ -791,11 +791,13 @@ struct ivl_signal_s {
  * is defined by the ivl_statement_type_t enumeration. Given the type,
  * certain information about the statement may be available.
  */
-/* Typed unconditional WIDTH check; times remain in declaring-scope units. */
+/* Typed scalar WIDTH check; times remain in declaring-scope units. */
 struct ivl_width_s {
       ivl_scope_t scope;
       ivl_signal_t reference;
       ivl_signal_t notifier;
+      ivl_signal_t condition;
+      ivl_tchk_cond_t condition_kind;
       bool posedge;
       double limit;
       double threshold;
@@ -823,11 +825,13 @@ struct ivl_hold_s {
       unsigned lineno;
 };
 
-/* Typed unconditional PERIOD check; the limit uses declaring-scope units. */
+/* Typed scalar PERIOD check; the limit uses declaring-scope units. */
 struct ivl_period_s {
       ivl_scope_t scope;
       ivl_signal_t reference;
       ivl_signal_t notifier;
+      ivl_signal_t condition;
+      ivl_tchk_cond_t condition_kind;
       bool posedge;
       double limit;
       perm_string file;

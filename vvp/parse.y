@@ -739,7 +739,8 @@ statement
 		{ compile_scope_recall($2); }
 
 
-  /* Unconditional WIDTH checks: limits are in the recalled module's units. */
+  /* WIDTH/PERIOD limits use the recalled module's units. Optional trailing
+     condition signal and binary value preserve the unconditional record form. */
 
         | K_TCHK_WIDTH T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_SYMBOL ';'
                 { compile_tchk_width($2, $3, $5, $7, $9, $11, $13); }
@@ -748,6 +749,12 @@ statement
                   char* notifier = strdup($13);
                   delete[] $13;
                   compile_tchk_width($2, $3, $5, $7, $9, $11, notifier); }
+        | K_TCHK_WIDTH T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_SYMBOL ',' T_SYMBOL ',' T_NUMBER ';'
+                { compile_tchk_width($2, $3, $5, $7, $9, $11, $13, $15, $17); }
+        | K_TCHK_WIDTH T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_STRING ',' T_SYMBOL ',' T_NUMBER ';'
+                { char* notifier = strdup($13);
+                  delete[] $13;
+                  compile_tchk_width($2, $3, $5, $7, $9, $11, notifier, $15, $17); }
 
         | K_TCHK_PERIOD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_SYMBOL ';'
                 { compile_tchk_period($2, $3, $5, $7, $9, $11); }
@@ -756,6 +763,12 @@ statement
                   char* notifier = strdup($11);
                   delete[] $11;
                   compile_tchk_period($2, $3, $5, $7, $9, notifier); }
+        | K_TCHK_PERIOD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_SYMBOL ',' T_SYMBOL ',' T_NUMBER ';'
+                { compile_tchk_period($2, $3, $5, $7, $9, $11, $13, $15); }
+        | K_TCHK_PERIOD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_STRING ',' T_SYMBOL ',' T_NUMBER ';'
+                { char* notifier = strdup($11);
+                  delete[] $11;
+                  compile_tchk_period($2, $3, $5, $7, $9, notifier, $13, $15); }
 
         | K_TCHK_SETUP T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_SYMBOL ';'
                 { compile_tchk_two_event(true, $2, $3, $5, $7, $9, $11, $13, $15); }

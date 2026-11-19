@@ -1696,12 +1696,21 @@ static void show_logic(ivl_net_logic_t net)
 
 static void show_width(ivl_width_t check)
 {
+      ivl_signal_t condition = ivl_width_condition(check);
       ivl_signal_t notifier = ivl_width_notifier(check);
 
-      fprintf(out, "  $width(%s %s, %.17g, %.17g",
+      fprintf(out, "  $width(%s %s",
               ivl_width_posedge(check) ? "posedge" : "negedge",
-              ivl_signal_basename(ivl_width_reference(check)),
-              ivl_width_limit(check), ivl_width_threshold(check));
+              ivl_signal_basename(ivl_width_reference(check)));
+      if (condition) {
+            ivl_tchk_cond_t kind = ivl_width_condition_kind(check);
+            fprintf(out, " &&& (%s", ivl_signal_basename(condition));
+            if (kind == IVL_TCHK_COND_EQ0) fprintf(out, " === 1'b0");
+            else if (kind == IVL_TCHK_COND_EQ1) fprintf(out, " === 1'b1");
+            fprintf(out, ")");
+      }
+      fprintf(out, ", %.17g, %.17g", ivl_width_limit(check),
+              ivl_width_threshold(check));
       if (notifier)
             fprintf(out, ", %s", ivl_signal_basename(notifier));
       fprintf(out, "); // %s:%u\n", ivl_width_file(check),

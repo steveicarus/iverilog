@@ -2022,6 +2022,18 @@ extern int ivl_path_source_negedge(ivl_delaypath_t net)
       return net->negedge ? 1 : 0;
 }
 
+extern "C" ivl_signal_t ivl_period_condition(ivl_period_t check)
+{
+      assert(check);
+      return check->condition;
+}
+
+extern "C" ivl_tchk_cond_t ivl_period_condition_kind(ivl_period_t check)
+{
+      assert(check);
+      return check->condition_kind;
+}
+
 extern "C" const char* ivl_period_file(ivl_period_t check)
 {
       assert(check);
@@ -3536,6 +3548,18 @@ extern "C" int ivl_type_signed(ivl_type_t net)
 {
       assert(net);
       return net->get_signed()? 1 : 0;
+}
+
+extern "C" ivl_signal_t ivl_width_condition(ivl_width_t check)
+{
+      assert(check);
+      return check->condition;
+}
+
+extern "C" ivl_tchk_cond_t ivl_width_condition_kind(ivl_width_t check)
+{
+      assert(check);
+      return check->condition_kind;
 }
 
 extern "C" const char* ivl_width_file(ivl_width_t check)

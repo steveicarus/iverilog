@@ -660,6 +660,8 @@ class __vpiTchkWidth : public __vpiHandle {
       void vpi_put_delays(p_vpi_delay delays) override;
       vpiHandle reference_;
       vpiHandle notifier_;
+      // Borrowed from the declaring scope, like reference_ and notifier_.
+      vpiHandle condition_;
     private:
       __vpiScope* scope_;
       unsigned file_idx_;
@@ -681,6 +683,8 @@ class __vpiTchkPeriod : public __vpiHandle {
       void vpi_put_delays(p_vpi_delay delays) override;
       vpiHandle reference_;
       vpiHandle notifier_;
+      // Borrowed from the declaring scope, like reference_ and notifier_.
+      vpiHandle condition_;
     private:
       __vpiScope* scope_;
       unsigned file_idx_;
