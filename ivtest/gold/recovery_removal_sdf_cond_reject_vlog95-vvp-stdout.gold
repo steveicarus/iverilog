@@ -1,0 +1,51 @@
+SDF WARNING: ivltests/recovery_removal_sdf_cond_reject.sdf:3: conditional or hierarchical RECOVERY event not supported.
+SDF WARNING: ivltests/recovery_removal_sdf_cond_reject.sdf:4: conditional or hierarchical REMOVAL event not supported.
+SDF WARNING: ivltests/recovery_removal_sdf_cond_reject.sdf:5: conditional or hierarchical RECOVERY event not supported.
+SDF WARNING: ivltests/recovery_removal_sdf_cond_reject.sdf:6: conditional or hierarchical REMOVAL event not supported.
+SDF WARNING: ivltests/recovery_removal_sdf_cond_reject.sdf:7: conditional or hierarchical RECOVERY event not supported.
+SDF WARNING: ivltests/recovery_removal_sdf_cond_reject.sdf:8: conditional or hierarchical REMOVAL event not supported.
+SDF WARNING: ivltests/recovery_removal_sdf_cond_reject.sdf:9: conditional or hierarchical RECOVERY event not supported.
+SDF WARNING: ivltests/recovery_removal_sdf_cond_reject.sdf:10: conditional or hierarchical REMOVAL event not supported.
+SDF WARNING: ivltests/recovery_removal_sdf_cond_reject.sdf:11: conditional or hierarchical RECOVERY event not supported.
+SDF WARNING: ivltests/recovery_removal_sdf_cond_reject.sdf:12: conditional or hierarchical REMOVAL event not supported.
+SDF WARNING: ivltests/recovery_removal_sdf_cond_reject.sdf:13: conditional or hierarchical RECOVERY event not supported.
+SDF WARNING: ivltests/recovery_removal_sdf_cond_reject.sdf:14: conditional or hierarchical REMOVAL event not supported.
+SDF WARNING: ivltests/recovery_removal_sdf_cond_reject.sdf:15: conditional or hierarchical RECOVERY event not supported.
+SDF WARNING: ivltests/recovery_removal_sdf_cond_reject.sdf:16: conditional or hierarchical REMOVAL event not supported.
+SDF ERROR: ivltests/recovery_removal_sdf_cond_reject.sdf:17: Unable to match RECOVERY R -> C in tb.u
+SDF ERROR: ivltests/recovery_removal_sdf_cond_reject.sdf:18: Unable to match REMOVAL R -> C in tb.u
+SDF ERROR: ivltests/recovery_removal_sdf_cond_reject.sdf:19: Unable to match RECOVERY R -> C in tb.u
+SDF ERROR: ivltests/recovery_removal_sdf_cond_reject.sdf:20: Unable to match REMOVAL R -> C in tb.u
+SDF ERROR: ivltests/recovery_removal_sdf_cond_reject.sdf:21: Unable to match RECOVERY R -> C in tb.u
+SDF ERROR: ivltests/recovery_removal_sdf_cond_reject.sdf:22: Unable to match REMOVAL R -> C in tb.u
+SDF ERROR: ivltests/recovery_removal_sdf_cond_reject.sdf:23: Unable to match RECOVERY R -> C in tb.u
+SDF ERROR: ivltests/recovery_removal_sdf_cond_reject.sdf:24: Unable to match RECOVERY R -> C in tb.u
+SDF ERROR: ivltests/recovery_removal_sdf_cond_reject.sdf:25: Unable to match REMOVAL R -> C in tb.u
+SDF ERROR: ivltests/recovery_removal_sdf_cond_reject.sdf:26: Unable to match REMOVAL R -> C in tb.u
+RR_OBJECT tb.u recovery R/any C/posedge limit=10 ticks=10 events=1
+RR_OBJECT tb.u removal R/any C/posedge limit=10 ticks=10 events=1
+RR_OBJECT tb.valid recovery R/any C/posedge limit=20 ticks=20 events=2
+RR_OBJECT tb.valid removal R/any C/posedge limit=20 ticks=20 events=2
+COND_OBJECT tb.u ns reference bare E 0
+COND_OBJECT tb.u ns data case F 0
+COND_OBJECT tb.u nh reference bare E 0
+COND_OBJECT tb.u nh data case F 0
+COND_OBJECT tb.valid ns reference bare E 0
+COND_OBJECT tb.valid ns data case F 0
+COND_OBJECT tb.valid nh reference bare E 0
+COND_OBJECT tb.valid nh data case F 0
+Timing violation: $recovery at 115 (module units), interval=15 limit=20, work/vlog95.v:83, scope=tb.valid
+RR_VIOLATION 2 115
+Timing violation: $removal at 130 (module units), interval=15 limit=20, work/vlog95.v:84, scope=tb.valid
+RR_VIOLATION 3 130
+Timing violation: $recovery at 205 (module units), interval=5 limit=20, work/vlog95.v:83, scope=tb.valid
+RR_VIOLATION 2 205
+Timing violation: $recovery at 205 (module units), interval=5 limit=10, work/vlog95.v:83, scope=tb.u
+RR_VIOLATION 0 205
+Timing violation: $removal at 208 (module units), interval=3 limit=20, work/vlog95.v:84, scope=tb.valid
+RR_VIOLATION 3 208
+Timing violation: $removal at 208 (module units), interval=3 limit=10, work/vlog95.v:84, scope=tb.u
+RR_VIOLATION 1 208
+RR_COMPLETE objects=4 callbacks=6
+PASSED
+work/vlog95.v:53: $finish called at 230 (1ps)

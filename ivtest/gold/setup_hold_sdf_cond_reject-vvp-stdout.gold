@@ -1,0 +1,51 @@
+SDF WARNING: ivltests/setup_hold_sdf_cond_reject.sdf:3: conditional or hierarchical SETUP event not supported.
+SDF WARNING: ivltests/setup_hold_sdf_cond_reject.sdf:4: conditional or hierarchical HOLD event not supported.
+SDF WARNING: ivltests/setup_hold_sdf_cond_reject.sdf:5: conditional or hierarchical SETUP event not supported.
+SDF WARNING: ivltests/setup_hold_sdf_cond_reject.sdf:6: conditional or hierarchical HOLD event not supported.
+SDF WARNING: ivltests/setup_hold_sdf_cond_reject.sdf:7: conditional or hierarchical SETUP event not supported.
+SDF WARNING: ivltests/setup_hold_sdf_cond_reject.sdf:8: conditional or hierarchical HOLD event not supported.
+SDF WARNING: ivltests/setup_hold_sdf_cond_reject.sdf:9: conditional or hierarchical SETUP event not supported.
+SDF WARNING: ivltests/setup_hold_sdf_cond_reject.sdf:10: conditional or hierarchical HOLD event not supported.
+SDF WARNING: ivltests/setup_hold_sdf_cond_reject.sdf:11: conditional or hierarchical SETUP event not supported.
+SDF WARNING: ivltests/setup_hold_sdf_cond_reject.sdf:12: conditional or hierarchical HOLD event not supported.
+SDF WARNING: ivltests/setup_hold_sdf_cond_reject.sdf:13: conditional or hierarchical SETUP event not supported.
+SDF WARNING: ivltests/setup_hold_sdf_cond_reject.sdf:14: conditional or hierarchical HOLD event not supported.
+SDF WARNING: ivltests/setup_hold_sdf_cond_reject.sdf:15: conditional or hierarchical SETUP event not supported.
+SDF WARNING: ivltests/setup_hold_sdf_cond_reject.sdf:16: conditional or hierarchical HOLD event not supported.
+SDF ERROR: ivltests/setup_hold_sdf_cond_reject.sdf:17: Unable to match SETUP D -> C in tb.u
+SDF ERROR: ivltests/setup_hold_sdf_cond_reject.sdf:18: Unable to match HOLD D -> C in tb.u
+SDF ERROR: ivltests/setup_hold_sdf_cond_reject.sdf:19: Unable to match SETUP D -> C in tb.u
+SDF ERROR: ivltests/setup_hold_sdf_cond_reject.sdf:20: Unable to match HOLD D -> C in tb.u
+SDF ERROR: ivltests/setup_hold_sdf_cond_reject.sdf:21: Unable to match SETUP D -> C in tb.u
+SDF ERROR: ivltests/setup_hold_sdf_cond_reject.sdf:22: Unable to match HOLD D -> C in tb.u
+SDF ERROR: ivltests/setup_hold_sdf_cond_reject.sdf:23: Unable to match SETUP D -> C in tb.u
+SDF ERROR: ivltests/setup_hold_sdf_cond_reject.sdf:24: Unable to match SETUP D -> C in tb.u
+SDF ERROR: ivltests/setup_hold_sdf_cond_reject.sdf:25: Unable to match HOLD D -> C in tb.u
+SDF ERROR: ivltests/setup_hold_sdf_cond_reject.sdf:26: Unable to match HOLD D -> C in tb.u
+SH_OBJECT tb.u setup C/posedge D/any limit=10 ticks=10 events=1
+SH_OBJECT tb.u hold C/posedge D/any limit=10 ticks=10 events=1
+SH_OBJECT tb.valid setup C/posedge D/any limit=20 ticks=20 events=2
+SH_OBJECT tb.valid hold C/posedge D/any limit=20 ticks=20 events=2
+COND_OBJECT tb.u ns data bare E 0
+COND_OBJECT tb.u ns reference case F 0
+COND_OBJECT tb.u nh data bare E 0
+COND_OBJECT tb.u nh reference case F 0
+COND_OBJECT tb.valid ns data bare E 0
+COND_OBJECT tb.valid ns reference case F 0
+COND_OBJECT tb.valid nh data bare E 0
+COND_OBJECT tb.valid nh reference case F 0
+Timing violation: $setup at 115 (module units), interval=15 limit=20, ivltests/setup_hold_sdf_cond_reject.v:10, scope=tb.valid
+SH_VIOLATION 2 115
+Timing violation: $hold at 130 (module units), interval=15 limit=20, ivltests/setup_hold_sdf_cond_reject.v:11, scope=tb.valid
+SH_VIOLATION 3 130
+Timing violation: $setup at 205 (module units), interval=5 limit=20, ivltests/setup_hold_sdf_cond_reject.v:10, scope=tb.valid
+SH_VIOLATION 2 205
+Timing violation: $setup at 205 (module units), interval=5 limit=10, ivltests/setup_hold_sdf_cond_reject.v:10, scope=tb.u
+SH_VIOLATION 0 205
+Timing violation: $hold at 208 (module units), interval=3 limit=20, ivltests/setup_hold_sdf_cond_reject.v:11, scope=tb.valid
+SH_VIOLATION 3 208
+Timing violation: $hold at 208 (module units), interval=3 limit=10, ivltests/setup_hold_sdf_cond_reject.v:11, scope=tb.u
+SH_VIOLATION 1 208
+SH_COMPLETE objects=4 callbacks=6
+PASSED
+ivltests/setup_hold_sdf_cond_reject.v:37: $finish called at 230 (1ps)

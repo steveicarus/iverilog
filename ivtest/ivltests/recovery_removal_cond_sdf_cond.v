@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Stephen Williams (steve@icarus.com)
 // SPDX-License-Identifier: GPL-2.0-or-later
+// Explicit COND on either role binds the conditional declaration at30ps.
+// The unconditional peer is unmatched and retains10ps; both remain live.
 `timescale 1ps/1ps
 module conditional(C,R,CE,RE);
   input C,R,CE,RE;
@@ -29,14 +31,14 @@ module tb;
     #1;
 `ifdef VLOG95_SDF
     // Tied input ports specialize the translated module types per instance.
-    $sdf_annotate("ivltests/recovery_removal_cond_reject_vlog95.sdf",tb);
+    $sdf_annotate("ivltests/recovery_removal_cond_partial_vlog95.sdf",tb);
 `else
-    $sdf_annotate("ivltests/recovery_removal_cond_reject.sdf",tb);
+    $sdf_annotate("ivltests/recovery_removal_cond_partial.sdf",tb);
 `endif
 
-    $rr_watch("tb.c", "recovery", "R", "any", "C", "posedge", 10.0, 10, "ns", 1'b0, 1, 205);
+    $rr_watch("tb.c", "recovery", "R", "any", "C", "posedge", 30.0, 30, "ns", 1'b0, 2, 115, 205);
 
-    $rr_watch("tb.c", "removal", "R", "any", "C", "posedge", 10.0, 10, "nh", 1'b0, 1, 208);
+    $rr_watch("tb.c", "removal", "R", "any", "C", "posedge", 30.0, 30, "nh", 1'b0, 2, 130, 208);
 
     $rr_watch("tb.u", "recovery", "R", "any", "C", "posedge", 10.0, 10, "ns", 1'b0, 1, 205);
 

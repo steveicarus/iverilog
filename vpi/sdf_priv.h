@@ -59,6 +59,26 @@ struct port_with_edge_s {
       char*string_val;
 };
 
+/* Timing COND identity is separate from IOPATH condition expressions. */
+enum sdf_tchk_cond_kind {
+      SDF_TCHK_COND_NONE,
+      SDF_TCHK_COND_UNSUPPORTED,
+      SDF_TCHK_COND_BARE,
+      SDF_TCHK_COND_EQ0,
+      SDF_TCHK_COND_EQ1
+};
+
+struct sdf_tchk_condition_s {
+      enum sdf_tchk_cond_kind kind;
+      char*name;
+      int logical_not_line;
+};
+
+struct sdf_tchk_port_s {
+      struct port_with_edge_s port;
+      struct sdf_tchk_condition_s condition;
+};
+
 struct interconnect_port_s {
       char* name;
       bool has_index;
@@ -85,17 +105,17 @@ extern void sdf_width_limits(int edge, const char* reference,
 extern void sdf_period_limits(int edge, const char* reference,
                                struct sdf_delay_s limit, int lineno);
 extern void sdf_two_event_limits(int check_type,
-                                  struct port_with_edge_s first,
-                                  struct port_with_edge_s second,
+                                  struct sdf_tchk_port_s first,
+                                  struct sdf_tchk_port_s second,
                                   struct sdf_delay_s limit, int lineno);
 
-extern void sdf_recrem_limits(struct port_with_edge_s reference,
-                              struct port_with_edge_s data,
+extern void sdf_recrem_limits(struct sdf_tchk_port_s reference,
+                              struct sdf_tchk_port_s data,
                               struct sdf_delay_s recovery,
                               struct sdf_delay_s removal, int lineno);
 
-extern void sdf_setuphold_limits(struct port_with_edge_s data,
-                                 struct port_with_edge_s reference,
+extern void sdf_setuphold_limits(struct sdf_tchk_port_s data,
+                                 struct sdf_tchk_port_s reference,
                                  struct sdf_delay_s setup,
                                  struct sdf_delay_s hold, int lineno);
 

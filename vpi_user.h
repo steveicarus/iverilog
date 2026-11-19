@@ -288,6 +288,7 @@ typedef struct t_vpi_delay  {
 #define vpiNamedFork   35
 #define vpiNet         36
 #define vpiNetBit      37
+#define vpiOperation   39
 #define vpiParameter   41
 #define vpiPartSelect  42
 #define vpiPathTerm    43
@@ -305,6 +306,7 @@ typedef struct t_vpi_delay  {
 #define vpiUdpDefn     66
 #define vpiUserSystf   67
 #define vpiNetArray   114
+#define vpiCondition   71
 #define vpiIndex       78
 #define vpiLeftRange   79
 #define vpiParent      81
@@ -320,6 +322,7 @@ typedef struct t_vpi_delay  {
 #define vpiInternalScope 92
 #define vpiModPathIn     95
 #define vpiModPathOut    96
+#define vpiOperand      97
 #define vpiVariables   100
 #define vpiExpr        102
 
@@ -399,6 +402,8 @@ typedef struct t_vpi_delay  {
 #   define vpiRecrem      10
 #   define vpiRemoval     11
 #   define vpiTimeskew    12
+#define vpiOpType         39
+#   define vpiCaseEqOp    16
 #define vpiConstType 40
 #   define vpiDecConst    1
 #   define vpiRealConst   2
@@ -420,6 +425,7 @@ typedef struct t_vpi_delay  {
 #define vpiUserDefn       45
 #define vpiAutomatic      50
 #define vpiConstantSelect 53
+#define vpiDecompile      54
 #define vpiDelayType      56
 #   define vpiModPathDelay 1
 #define vpiSigned         65

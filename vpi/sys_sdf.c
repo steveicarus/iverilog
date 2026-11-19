@@ -656,14 +656,56 @@ void sdf_period_limits(int edge, const char* reference,
       sdf_single_limit(vpiPeriod, "PERIOD", edge, reference, limit, lineno);
 }
 
-static int sdf_tchk_terminal_matches(vpiHandle check, int role,
-                                    struct port_with_edge_s port)
+/* Match the supported source expression, not its value at annotation time.
+ * An absent SDF condition is a wildcard; an explicit one requires the same
+ * local scalar signal and expression form on that timing-check terminal. */
+static int sdf_tchk_condition_matches(vpiHandle term,
+                                     struct sdf_tchk_condition_s condition)
 {
+      if (condition.kind == SDF_TCHK_COND_NONE) return 1;
+      vpiHandle expression = vpi_handle(vpiCondition, term);
+      if (!expression) return 0;
+      vpiHandle signal = expression;
+      if (condition.kind == SDF_TCHK_COND_EQ0 ||
+          condition.kind == SDF_TCHK_COND_EQ1) {
+            if (vpi_get(vpiType, expression) != vpiOperation ||
+                vpi_get(vpiOpType, expression) != vpiCaseEqOp) return 0;
+            vpiHandle operands = vpi_iterate(vpiOperand, expression);
+            vpiHandle operand, pair[2];
+            unsigned count = 0;
+            while (operands && (operand = vpi_scan(operands))) {
+                  if (count == 2) {
+                        vpi_free_object(operands);
+                        return 0;
+                  }
+                  pair[count++] = operand;
+            }
+            if (count != 2 || vpi_get(vpiType, pair[1]) != vpiConstant ||
+                vpi_get(vpiSize, pair[1]) != 1) return 0;
+            s_vpi_value value;
+            value.format = vpiScalarVal;
+            vpi_get_value(pair[1], &value);
+            int wanted = condition.kind == SDF_TCHK_COND_EQ0 ? vpi0 : vpi1;
+            if (value.value.scalar != wanted) return 0;
+            signal = pair[0];
+      } else if (condition.kind != SDF_TCHK_COND_BARE) return 0;
+      int type = vpi_get(vpiType, signal);
+      if ((type != vpiNet && type != vpiReg) || vpi_get(vpiSize, signal) != 1)
+            return 0;
+      const char* name = vpi_get_str(vpiName, signal);
+      return name && !strcmp(condition.name, name);
+}
+
+static int sdf_tchk_terminal_matches(vpiHandle check, int role,
+                                    struct sdf_tchk_port_s event)
+{
+      struct port_with_edge_s port = event.port;
       vpiHandle term = vpi_handle(role, check);
       if (!term || (port.vpi_edge != vpiNoEdge &&
                     vpi_get(vpiEdge, term) != port.vpi_edge)) return 0;
       vpiHandle signal = vpi_handle(vpiExpr, term);
-      return signal && !strcmp(port.string_val, vpi_get_str(vpiName, signal));
+      return signal && !strcmp(port.string_val, vpi_get_str(vpiName, signal)) &&
+            sdf_tchk_condition_matches(term, event.condition);
 }
 
 /* Convert an already validated limit using the same local rounding and
@@ -685,8 +727,8 @@ static void sdf_tchk_limit_time(double value, vpiHandle scope, p_vpi_time time)
  * and RECREM.
  * Standard cross-mapping updates standalone checks and the corresponding
  * combined limit slots. An omitted slot retains the existing object value. */
-static void sdf_recovery_removal_values(int check_type, struct port_with_edge_s reference,
-                                  struct port_with_edge_s data,
+static void sdf_recovery_removal_values(int check_type, struct sdf_tchk_port_s reference,
+                                  struct sdf_tchk_port_s data,
                                   struct sdf_delay_s recovery,
                                   struct sdf_delay_s removal, int lineno)
 {
@@ -694,7 +736,12 @@ static void sdf_recovery_removal_values(int check_type, struct port_with_edge_s 
                          check_type == vpiRemoval ? "REMOVAL" : "RECREM";
       assert(check_type == vpiRecovery || check_type == vpiRemoval ||
              check_type == vpiRecrem);
-      if (!data.string_val || !reference.string_val) {
+      bool has_condition = data.condition.kind != SDF_TCHK_COND_NONE ||
+                           reference.condition.kind != SDF_TCHK_COND_NONE;
+      if (!data.port.string_val || !reference.port.string_val ||
+          (check_type == vpiRecrem && has_condition) ||
+          data.condition.kind == SDF_TCHK_COND_UNSUPPORTED ||
+          reference.condition.kind == SDF_TCHK_COND_UNSUPPORTED) {
             vpi_printf("SDF WARNING: %s:%d: conditional or hierarchical %s event not supported.\n",
                        sdf_fname, lineno, name);
             return;
@@ -716,6 +763,7 @@ static void sdf_recovery_removal_values(int check_type, struct port_with_edge_s 
                   continue;
             if (check_type != vpiRecrem && target != check_type &&
                 target != vpiRecrem) continue;
+            if (has_condition && target == vpiRecrem) continue;
             if ((target == vpiRecovery && !recovery.defined) ||
                 (target == vpiRemoval && !removal.defined)) continue;
             if (!sdf_tchk_terminal_matches(check, vpiTchkDataTerm, data) ||
@@ -756,22 +804,22 @@ static void sdf_recovery_removal_values(int check_type, struct port_with_edge_s 
             if (sdf_flag_inform) {
                   if (check_type == vpiRecrem)
                         vpi_printf("SDF INFO: %s:%d: RECREM %s -> %s annotated\n",
-                                   sdf_fname, lineno, reference.string_val, data.string_val);
+                                   sdf_fname, lineno, reference.port.string_val, data.port.string_val);
                   else
                         vpi_printf("SDF INFO: %s:%d: %s %s -> %s limit %g\n",
-                                   sdf_fname, lineno, name, reference.string_val,
-                                   data.string_val,
+                                   sdf_fname, lineno, name, reference.port.string_val,
+                                   data.port.string_val,
                                    check_type == vpiRecovery ? scaled_recovery : scaled_removal);
             }
       }
       if (!matches)
             vpi_printf("SDF ERROR: %s:%d: Unable to match %s %s -> %s in %s\n",
-                       sdf_fname, lineno, name, reference.string_val,
-                       data.string_val, vpi_get_str(vpiFullName, sdf_cur_cell));
+                       sdf_fname, lineno, name, reference.port.string_val,
+                       data.port.string_val, vpi_get_str(vpiFullName, sdf_cur_cell));
 }
 
-static void sdf_recovery_removal_limits(int check_type, struct port_with_edge_s reference,
-                           struct port_with_edge_s data,
+static void sdf_recovery_removal_limits(int check_type, struct sdf_tchk_port_s reference,
+                           struct sdf_tchk_port_s data,
                            struct sdf_delay_s limit, int lineno)
 {
       struct sdf_delay_s omitted = {0, 0.0};
@@ -781,8 +829,8 @@ static void sdf_recovery_removal_limits(int check_type, struct port_with_edge_s 
                             check_type == vpiRemoval ? limit : omitted, lineno);
 }
 
-void sdf_recrem_limits(struct port_with_edge_s reference,
-                          struct port_with_edge_s data,
+void sdf_recrem_limits(struct sdf_tchk_port_s reference,
+                          struct sdf_tchk_port_s data,
                           struct sdf_delay_s recovery,
                           struct sdf_delay_s removal, int lineno)
 {
@@ -792,8 +840,8 @@ void sdf_recrem_limits(struct port_with_edge_s reference,
 /* SDF lists data before reference for SETUP, HOLD and SETUPHOLD.
  * Standard cross-mapping updates standalone checks and the corresponding
  * combined limit slots. An omitted slot retains the existing object value. */
-static void sdf_setup_hold_values(int check_type, struct port_with_edge_s data,
-                                  struct port_with_edge_s reference,
+static void sdf_setup_hold_values(int check_type, struct sdf_tchk_port_s data,
+                                  struct sdf_tchk_port_s reference,
                                   struct sdf_delay_s setup,
                                   struct sdf_delay_s hold, int lineno)
 {
@@ -801,7 +849,12 @@ static void sdf_setup_hold_values(int check_type, struct port_with_edge_s data,
                          check_type == vpiHold ? "HOLD" : "SETUPHOLD";
       assert(check_type == vpiSetup || check_type == vpiHold ||
              check_type == vpiSetupHold);
-      if (!data.string_val || !reference.string_val) {
+      bool has_condition = data.condition.kind != SDF_TCHK_COND_NONE ||
+                           reference.condition.kind != SDF_TCHK_COND_NONE;
+      if (!data.port.string_val || !reference.port.string_val ||
+          (check_type == vpiSetupHold && has_condition) ||
+          data.condition.kind == SDF_TCHK_COND_UNSUPPORTED ||
+          reference.condition.kind == SDF_TCHK_COND_UNSUPPORTED) {
             vpi_printf("SDF WARNING: %s:%d: conditional or hierarchical %s event not supported.\n",
                        sdf_fname, lineno, name);
             return;
@@ -823,6 +876,7 @@ static void sdf_setup_hold_values(int check_type, struct port_with_edge_s data,
                   continue;
             if (check_type != vpiSetupHold && target != check_type &&
                 target != vpiSetupHold) continue;
+            if (has_condition && target == vpiSetupHold) continue;
             if ((target == vpiSetup && !setup.defined) ||
                 (target == vpiHold && !hold.defined)) continue;
             if (!sdf_tchk_terminal_matches(check, vpiTchkDataTerm, data) ||
@@ -863,22 +917,22 @@ static void sdf_setup_hold_values(int check_type, struct port_with_edge_s data,
             if (sdf_flag_inform) {
                   if (check_type == vpiSetupHold)
                         vpi_printf("SDF INFO: %s:%d: SETUPHOLD %s -> %s annotated\n",
-                                   sdf_fname, lineno, data.string_val, reference.string_val);
+                                   sdf_fname, lineno, data.port.string_val, reference.port.string_val);
                   else
                         vpi_printf("SDF INFO: %s:%d: %s %s -> %s limit %g\n",
-                                   sdf_fname, lineno, name, data.string_val,
-                                   reference.string_val,
+                                   sdf_fname, lineno, name, data.port.string_val,
+                                   reference.port.string_val,
                                    check_type == vpiSetup ? scaled_setup : scaled_hold);
             }
       }
       if (!matches)
             vpi_printf("SDF ERROR: %s:%d: Unable to match %s %s -> %s in %s\n",
-                       sdf_fname, lineno, name, data.string_val,
-                       reference.string_val, vpi_get_str(vpiFullName, sdf_cur_cell));
+                       sdf_fname, lineno, name, data.port.string_val,
+                       reference.port.string_val, vpi_get_str(vpiFullName, sdf_cur_cell));
 }
 
-static void sdf_setup_hold_limits(int check_type, struct port_with_edge_s data,
-                           struct port_with_edge_s reference,
+static void sdf_setup_hold_limits(int check_type, struct sdf_tchk_port_s data,
+                           struct sdf_tchk_port_s reference,
                            struct sdf_delay_s limit, int lineno)
 {
       struct sdf_delay_s omitted = {0, 0.0};
@@ -888,8 +942,8 @@ static void sdf_setup_hold_limits(int check_type, struct port_with_edge_s data,
                             check_type == vpiHold ? limit : omitted, lineno);
 }
 
-void sdf_setuphold_limits(struct port_with_edge_s data,
-                          struct port_with_edge_s reference,
+void sdf_setuphold_limits(struct sdf_tchk_port_s data,
+                          struct sdf_tchk_port_s reference,
                           struct sdf_delay_s setup,
                           struct sdf_delay_s hold, int lineno)
 {
@@ -898,8 +952,8 @@ void sdf_setuphold_limits(struct port_with_edge_s data,
 
 /* SETUP/HOLD SDF records list data before reference. RECOVERY/REMOVAL
  * records list the asynchronous reference before the clock/data event. */
-void sdf_two_event_limits(int check_type, struct port_with_edge_s first,
-                          struct port_with_edge_s second,
+void sdf_two_event_limits(int check_type, struct sdf_tchk_port_s first,
+                          struct sdf_tchk_port_s second,
                           struct sdf_delay_s limit, int lineno)
 {
       if (check_type == vpiRecovery || check_type == vpiRemoval)
