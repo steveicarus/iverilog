@@ -9,6 +9,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#ifndef AUDIT_LABEL
+# define AUDIT_LABEL "SETUP/HOLD"
+# define AUDIT_TAG "SH"
+# define AUDIT_PREFIX "sh"
+# define AUDIT_CHECK_TYPE(s) (!strcmp((s),"setup")?vpiSetup:!strcmp((s),"hold")?vpiHold:0)
+#endif
 #define MAX_CHECKS 64
 #define MAX_EVENTS 32
 static unsigned failed, started, finished, check_count, notifier_count;
@@ -43,7 +49,7 @@ static struct { vpiHandle object; unsigned long long time; }
 static void fail(const char *why)
 {
     failed = 1;
-    vpi_printf("FAILED SETUP/HOLD audit: %s\n", why);
+    vpi_printf("FAILED " AUDIT_LABEL " audit: %s\n", why);
     vpi_control(vpiFinish, 1);
 }
 static unsigned long long now(void)
@@ -176,12 +182,12 @@ static PLI_INT32 watch(PLI_BYTE8 *unused)
     expected_initial=scalar_arg(args);
     expected=(unsigned)number_arg(args);
     if (failed || expected>MAX_EVENTS) { fail("invalid expectation"); return 0; }
-    type=!strcmp(kind,"setup")?vpiSetup:!strcmp(kind,"hold")?vpiHold:0;
+    type=AUDIT_CHECK_TYPE(kind);
     redge=edge_code(re); dedge=edge_code(de);
     scope=vpi_handle_by_name(owner,NULL);
     if (!scope || !type) { fail("scope/check type"); return 0; }
     iter=vpi_iterate(vpiTchk,scope);
-    if (!iter) { fail("missing compiled SETUP/HOLD objects"); return 0; }
+    if (!iter) { fail("missing compiled " AUDIT_LABEL " objects"); return 0; }
     while ((obj=vpi_scan(iter))) {
         s_vpi_time t={0}; s_vpi_delay d={0};
         if (vpi_get(vpiTchkType,obj)!=type || !terminal(obj,vpiTchkRefTerm,scope,ref,redge) ||
@@ -225,7 +231,7 @@ static PLI_INT32 watch(PLI_BYTE8 *unused)
             notifiers[ni].times[notifiers[ni].expected++]=t;
     }
     if (vpi_scan(args)) { fail("extra watch argument");return 0; }
-    vpi_printf("SH_OBJECT %s %s %s/%s %s/%s limit=%g ticks=%llu events=%u\n",
+    vpi_printf(AUDIT_TAG "_OBJECT %s %s %s/%s %s/%s limit=%g ticks=%llu events=%u\n",
                owner,kind,ref,re,data,de,expected_limit,expected_ticks,expected);
     ++check_count;
     free(owner);free(kind);free(ref);free(re);free(data);free(de);free(nname);
@@ -240,7 +246,7 @@ static void timing_event(vpiHandle object, unsigned long long time)
         fail("extra/wrong identity/type/time timing callback"); return;
     }
     ++checks[i].seen;
-    vpi_printf("SH_VIOLATION %u %llu\n",i,time);
+    vpi_printf(AUDIT_TAG "_VIOLATION %u %llu\n",i,time);
 }
 static PLI_INT32 violation(p_cb_data cb)
 {
@@ -368,7 +374,7 @@ static PLI_INT32 finish(PLI_BYTE8 *unused)
         scalar(notifiers[i].signal)!=notifiers[i].previous) {
         fail("missing notifier callbacks/final value");return 0;
     }
-    finished=1;vpi_printf("SH_COMPLETE objects=%u callbacks=%u\nPASSED\n",check_count,total);
+    finished=1;vpi_printf(AUDIT_TAG "_COMPLETE objects=%u callbacks=%u\nPASSED\n",check_count,total);
     return 0;
 }
 #else
@@ -383,8 +389,8 @@ static void register_all(void)
     s_cb_data cb={0};cb.reason=cbStartOfSimulation;cb.cb_rtn=observe_initial;
     if (!vpi_register_cb(&cb)) fail("start-of-simulation registration");
 #endif
-    tf.tfname="$sh_watch";tf.calltf=watch;vpi_register_systf(&tf);
-    tf.tfname="$sh_start";tf.calltf=start;vpi_register_systf(&tf);
-    tf.tfname="$sh_finish";tf.calltf=finish;vpi_register_systf(&tf);
+    tf.tfname="$" AUDIT_PREFIX "_watch";tf.calltf=watch;vpi_register_systf(&tf);
+    tf.tfname="$" AUDIT_PREFIX "_start";tf.calltf=start;vpi_register_systf(&tf);
+    tf.tfname="$" AUDIT_PREFIX "_finish";tf.calltf=finish;vpi_register_systf(&tf);
 }
 void (*vlog_startup_routines[])(void)={register_all,0};

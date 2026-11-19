@@ -1,0 +1,2 @@
+ivltests/removal_hdl_vector_fail.v:7: error: $removal data must be a local scalar logic or bit signal.
+1 error(s) during elaboration.
