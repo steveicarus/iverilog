@@ -1,2 +1,2 @@
-ivltests/recovery_hdl_conditional_fail.v:7: error: $recovery reference supports only unconditional scalar events with no edge, posedge or negedge.
+ivltests/recovery_hdl_conditional_fail.v:7: error: $recovery reference condition must be a local scalar signal, or that signal === 1'b0 or === 1'b1.
 1 error(s) during elaboration.
