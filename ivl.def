@@ -90,6 +90,16 @@ ivl_file_table_index
 ivl_file_table_item
 ivl_file_table_size
 
+ivl_hold_data
+ivl_hold_data_edge
+ivl_hold_file
+ivl_hold_limit
+ivl_hold_lineno
+ivl_hold_notifier
+ivl_hold_reference
+ivl_hold_reference_edge
+ivl_hold_scope
+
 ivl_island_flag_set
 ivl_island_flag_test
 
@@ -229,32 +239,12 @@ ivl_scope_enumerate
 ivl_scope_enumerates
 ivl_scope_event
 ivl_scope_events
-ivl_scope_setups
-ivl_scope_setup
-ivl_setup_scope
-ivl_setup_reference
-ivl_setup_data
-ivl_setup_notifier
-ivl_setup_reference_edge
-ivl_setup_data_edge
-ivl_setup_limit
-ivl_setup_file
-ivl_setup_lineno
-ivl_scope_holds
-ivl_scope_hold
-ivl_hold_scope
-ivl_hold_reference
-ivl_hold_data
-ivl_hold_notifier
-ivl_hold_reference_edge
-ivl_hold_data_edge
-ivl_hold_limit
-ivl_hold_file
-ivl_hold_lineno
 ivl_scope_file
 ivl_scope_func_type
 ivl_scope_func_signed
 ivl_scope_func_width
+ivl_scope_hold
+ivl_scope_holds
 ivl_scope_is_auto
 ivl_scope_is_cell
 ivl_scope_lineno
@@ -276,6 +266,8 @@ ivl_scope_period
 ivl_scope_periods
 ivl_scope_port
 ivl_scope_ports
+ivl_scope_setup
+ivl_scope_setups
 ivl_scope_sigs
 ivl_scope_sig
 ivl_scope_switch
@@ -287,6 +279,16 @@ ivl_scope_tname
 ivl_scope_virtual_root
 ivl_scope_width
 ivl_scope_widths
+
+ivl_setup_data
+ivl_setup_data_edge
+ivl_setup_file
+ivl_setup_limit
+ivl_setup_lineno
+ivl_setup_notifier
+ivl_setup_reference
+ivl_setup_reference_edge
+ivl_setup_scope
 
 ivl_signal_array_addr_swapped
 ivl_signal_array_base
