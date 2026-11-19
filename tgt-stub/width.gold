@@ -1,4 +1,0 @@
-top.a:  $width(posedge CLK, 1.25, 0.125, notifier); // width.v:7
-top.a:  $width(negedge GATE, 2.5, 0); // width.v:8
-top.b:  $width(posedge CLK, 1.25, 0.125, notifier); // width.v:7
-top.b:  $width(negedge GATE, 2.5, 0); // width.v:8
