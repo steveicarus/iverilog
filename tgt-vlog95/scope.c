@@ -1094,9 +1094,13 @@ static void emit_setuphold_checks(ivl_scope_t scope)
             fprintf(vlog_out, "%*c$setuphold(", indent, ' ');
             emit_simple_timing_event(ivl_setuphold_reference(check),
                                      ivl_setuphold_reference_edge(check));
+            emit_tchk_condition(ivl_setuphold_reference_condition(check),
+                                ivl_setuphold_reference_condition_kind(check));
             fprintf(vlog_out, ", ");
             emit_simple_timing_event(ivl_setuphold_data(check),
                                      ivl_setuphold_data_edge(check));
+            emit_tchk_condition(ivl_setuphold_data_condition(check),
+                                ivl_setuphold_data_condition_kind(check));
             fprintf(vlog_out, ", %.17e, %.17e", ivl_setuphold_setup_limit(check),
                     ivl_setuphold_hold_limit(check));
             if (notifier) {

@@ -2552,8 +2552,13 @@ static void draw_setuphold_in_scope(ivl_setuphold_t check)
               ivl_setuphold_reference(check),
               two_event_edge(ivl_setuphold_data_edge(check)), ivl_setuphold_data(check),
               ivl_setuphold_setup_limit(check), ivl_setuphold_hold_limit(check));
-      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
-      else fprintf(vvp_out, "\"\";\n");
+      if (notifier) fprintf(vvp_out, "v%p_0", notifier);
+      else fprintf(vvp_out, "\"\"");
+      draw_two_event_conditions(ivl_setuphold_reference_condition(check),
+                                ivl_setuphold_reference_condition_kind(check),
+                                ivl_setuphold_data_condition(check),
+                                ivl_setuphold_data_condition_kind(check));
+      fprintf(vvp_out, ";\n");
 }
 
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)

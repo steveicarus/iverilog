@@ -7646,7 +7646,7 @@ void PPeriod::elaborate(Design*des, NetScope*scope) const
       scope->add_period(std::move(check));
 }
 
-/* Standalone two-event checks retain a qualifier independently for each event.
+/* Two-event timing checks retain a qualifier independently for each event.
  * Edge-descriptor lists remain unsupported. */
 static bool timing_check_event(Design*des, NetScope*scope, const LineInfo&loc,
                                 const PTimingCheck::event_t&event,
@@ -7930,12 +7930,14 @@ void PSetupHold::elaborate(Design*des, NetScope*scope) const
                   return;
             }
             int reference_edge, data_edge;
-            if (!unconditional_timing_check_event(des, *this, *reference_event_,
-                                                   "$setuphold", "reference",
-                                                   reference_edge) ||
-                !unconditional_timing_check_event(des, *this, *data_event_,
-                                                   "$setuphold", "data", data_edge))
-                  return;
+            NetNet*reference_condition, *data_condition;
+            ivl_tchk_cond_t reference_condition_kind, data_condition_kind;
+            if (!timing_check_event(des, scope, *this, *reference_event_, "$setuphold",
+                                    "reference", reference_edge, reference_condition,
+                                    reference_condition_kind) ||
+                !timing_check_event(des, scope, *this, *data_event_, "$setuphold",
+                                    "data", data_edge, data_condition,
+                                    data_condition_kind)) return;
             NetNet*reference = timing_check_signal(des, scope, reference_event_->name,
                                                    *this, "$setuphold", false);
             NetNet*data = timing_check_signal(des, scope, data_event_->name,
@@ -7950,7 +7952,9 @@ void PSetupHold::elaborate(Design*des, NetScope*scope) const
                 !timing_check_constant(des, scope, hold_limit_.get(), *this,
                                        "$setuphold", "hold limit", hold_limit)) return;
             std::unique_ptr<NetSetupHold> check(new NetSetupHold(scope, reference,
-                  data, notifier, reference_edge, data_edge, setup_limit, hold_limit));
+                  data, notifier, reference_edge, data_edge, setup_limit, hold_limit,
+                  reference_condition, reference_condition_kind,
+                  data_condition, data_condition_kind));
             check->set_line(*this);
             scope->add_setuphold(std::move(check));
             return;

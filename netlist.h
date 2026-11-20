@@ -1101,11 +1101,13 @@ class NetSetupHold : public NetTwoEventCheck {
     public:
       NetSetupHold(NetScope*scope, NetNet*reference, NetNet*data,
                    NetNet*notifier, int reference_edge, int data_edge,
-                   double setup_limit, double hold_limit)
+                   double setup_limit, double hold_limit,
+                   NetNet*reference_condition, ivl_tchk_cond_t reference_condition_kind,
+                   NetNet*data_condition, ivl_tchk_cond_t data_condition_kind)
       : NetTwoEventCheck(scope, reference, data, notifier, reference_edge,
-                         data_edge, setup_limit,
-                         nullptr, IVL_TCHK_COND_NONE, nullptr,
-                         IVL_TCHK_COND_NONE), hold_limit_(hold_limit) { }
+                         data_edge, setup_limit, reference_condition,
+                         reference_condition_kind, data_condition,
+                         data_condition_kind), hold_limit_(hold_limit) { }
       double setup_limit() const { return limit(); }
       double hold_limit() const { return hold_limit_; }
     private:

@@ -350,12 +350,16 @@ ivl_setup_reference_edge
 ivl_setup_scope
 
 ivl_setuphold_data
+ivl_setuphold_data_condition
+ivl_setuphold_data_condition_kind
 ivl_setuphold_data_edge
 ivl_setuphold_file
 ivl_setuphold_hold_limit
 ivl_setuphold_lineno
 ivl_setuphold_notifier
 ivl_setuphold_reference
+ivl_setuphold_reference_condition
+ivl_setuphold_reference_condition_kind
 ivl_setuphold_reference_edge
 ivl_setuphold_scope
 ivl_setuphold_setup_limit
