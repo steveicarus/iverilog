@@ -1,0 +1,7 @@
+SDF WARNING: ivltests/pulse_cond_sdf_logical_not.sdf:6: WIDTH COND uses unsupported logical '!'. It cannot match a standard SystemVerilog specify timing-check condition.
+SDF WARNING: ivltests/pulse_cond_sdf_logical_not.sdf:7: PERIOD COND uses unsupported logical '!'. It cannot match a standard SystemVerilog specify timing-check condition.
+PERIOD_LIMIT tb.rejected width CLK posedge 10 10
+PERIOD_LIMIT tb.rejected period CLK posedge 11 11
+PERIOD_LIMIT tb.later width CLK posedge 20 20
+PERIOD_LIMIT tb.later period CLK posedge 21 21
+PASSED

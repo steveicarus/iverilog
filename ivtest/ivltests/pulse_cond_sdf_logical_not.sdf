@@ -1,0 +1,12 @@
+(DELAYFILE
+  (SDFVERSION "3.0")
+  (TIMESCALE 1ps)
+  (CELL (CELLTYPE "pulse_cond_sdf_logical_not_leaf") (INSTANCE rejected)
+    (TIMINGCHECK
+      (WIDTH (COND !EN (posedge CLK)) (30:30:30))
+      (PERIOD (COND "enabled" !EN (posedge CLK)) (31:31:31))))
+  (CELL (CELLTYPE "pulse_cond_sdf_logical_not_leaf") (INSTANCE later)
+    (TIMINGCHECK
+      (WIDTH (posedge CLK) (20:20:20))
+      (PERIOD (posedge CLK) (21:21:21))))
+)

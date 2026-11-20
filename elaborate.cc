@@ -7528,6 +7528,28 @@ static bool timing_check_condition(NetScope*scope, const PExpr*expr,
           && (signal->data_type() == IVL_VT_LOGIC || signal->data_type() == IVL_VT_BOOL);
 }
 
+static bool pulse_timing_check_condition(Design*des, NetScope*scope,
+                                         const LineInfo&loc, const char*kind,
+                                         const PExpr*expr, NetNet*&signal,
+                                         ivl_tchk_cond_t&condition_kind)
+{
+      if (timing_check_condition(scope, expr, true, signal, condition_kind))
+            return true;
+
+      const PEUnary*unary = dynamic_cast<const PEUnary*>(expr);
+      if (unary && unary->get_op() == '!') {
+            cerr << unary->get_fileline() << ": sorry: " << kind
+                 << " condition uses unsupported logical '!'. Standard SystemVerilog"
+                 << " specify timing-check inversion uses '~'." << endl;
+      } else {
+            cerr << loc.get_fileline() << ": error: " << kind
+                 << " condition must be a local scalar signal, its bitwise complement,"
+                 << " or a comparison (===, !==, ==, !=) with 1'b0 or 1'b1." << endl;
+      }
+      des->errors += 1;
+      return false;
+}
+
 void PWidth::elaborate(Design*des, NetScope*scope) const
 {
       if (!gn_specify_blocks_flag) return;
@@ -7557,14 +7579,10 @@ void PWidth::elaborate(Design*des, NetScope*scope) const
       }
       NetNet*condition;
       ivl_tchk_cond_t condition_kind;
-      if (!timing_check_condition(scope, reference_->condition.get(), true,
-                                  condition, condition_kind)) {
-            cerr << get_fileline() << ": error: $width condition must be a local"
-                 << " scalar signal, its bitwise complement, or a comparison"
-                 << " (===, !==, ==, !=) with 1'b0 or 1'b1." << endl;
-            des->errors += 1;
+      if (!pulse_timing_check_condition(des, scope, *this, "$width",
+                                        reference_->condition.get(),
+                                        condition, condition_kind))
             return;
-      }
       NetNet*reference = timing_check_signal(des, scope, reference_->name,
                                             *this, "$width", false);
       NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
@@ -7596,14 +7614,10 @@ void PPeriod::elaborate(Design*des, NetScope*scope) const
       }
       NetNet*condition;
       ivl_tchk_cond_t condition_kind;
-      if (!timing_check_condition(scope, reference_->condition.get(), true,
-                                  condition, condition_kind)) {
-            cerr << get_fileline() << ": error: $period condition must be a local"
-                 << " scalar signal, its bitwise complement, or a comparison"
-                 << " (===, !==, ==, !=) with 1'b0 or 1'b1." << endl;
-            des->errors += 1;
+      if (!pulse_timing_check_condition(des, scope, *this, "$period",
+                                        reference_->condition.get(),
+                                        condition, condition_kind))
             return;
-      }
       NetNet*reference = timing_check_signal(des, scope, reference_->name,
                                             *this, "$period", false);
       NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,

@@ -476,9 +476,6 @@ typedef enum ivl_tchk_cond_e {
       IVL_TCHK_COND_BARE = 1,
       IVL_TCHK_COND_CASE_EQ0 = 2,
       IVL_TCHK_COND_CASE_EQ1 = 3,
-      /* Original names retained for external targets. */
-      IVL_TCHK_COND_EQ0 = IVL_TCHK_COND_CASE_EQ0,
-      IVL_TCHK_COND_EQ1 = IVL_TCHK_COND_CASE_EQ1,
       IVL_TCHK_COND_BIT_NOT = 4,
       IVL_TCHK_COND_LOGIC_EQ0 = 5,
       IVL_TCHK_COND_LOGIC_EQ1 = 6,
