@@ -1,0 +1,19 @@
+{
+    "type": "normal",
+    "source": "setuphold_sdf_cond_select.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/setuphold_sdf_cond_audit.c"
+    ],
+    "vlog95": {
+        "iverilog-args": [
+            "-DVLOG95_SDF"
+        ]
+    }
+}

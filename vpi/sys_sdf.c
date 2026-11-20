@@ -853,10 +853,7 @@ static void sdf_setup_hold_values(int check_type, struct sdf_tchk_port_s data,
                          check_type == vpiHold ? "HOLD" : "SETUPHOLD";
       assert(check_type == vpiSetup || check_type == vpiHold ||
              check_type == vpiSetupHold);
-      bool has_condition = data.condition.kind != SDF_TCHK_COND_NONE ||
-                           reference.condition.kind != SDF_TCHK_COND_NONE;
       if (!data.port.string_val || !reference.port.string_val ||
-          (check_type == vpiSetupHold && has_condition) ||
           data.condition.kind == SDF_TCHK_COND_UNSUPPORTED ||
           reference.condition.kind == SDF_TCHK_COND_UNSUPPORTED) {
             vpi_printf("SDF WARNING: %s:%d: conditional or hierarchical %s event not supported.\n",
@@ -880,7 +877,6 @@ static void sdf_setup_hold_values(int check_type, struct sdf_tchk_port_s data,
                   continue;
             if (check_type != vpiSetupHold && target != check_type &&
                 target != vpiSetupHold) continue;
-            if (has_condition && target == vpiSetupHold) continue;
             if ((target == vpiSetup && !setup.defined) ||
                 (target == vpiHold && !hold.defined)) continue;
             if (!sdf_tchk_terminal_matches(check, vpiTchkDataTerm, data) ||

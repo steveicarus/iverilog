@@ -1,0 +1,4 @@
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
+ (CELL (CELLTYPE "setuphold_cond_wildcard") (INSTANCE u) (TIMINGCHECK
+  (SETUPHOLD D C (20:20:20) (8:8:8))))
+)

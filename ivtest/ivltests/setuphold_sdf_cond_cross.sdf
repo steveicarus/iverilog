@@ -1,0 +1,11 @@
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
+ (CELL (CELLTYPE "setuphold_cond_cross") (INSTANCE combined) (TIMINGCHECK
+  (SETUPHOLD (COND F === 1'b0 D) (COND E (posedge C)) (20:20:20) (8:8:8))))
+ (CELL (CELLTYPE "setuphold_cond_cross") (INSTANCE separate) (TIMINGCHECK
+  (SETUP (COND F === 1'b0 D) (COND E (posedge C)) (20:20:20))
+  (HOLD (COND F === 1'b0 D) (COND E (posedge C)) (8:8:8))))
+ (CELL (CELLTYPE "setuphold_cond_cross") (INSTANCE first) (TIMINGCHECK
+  (SETUP (COND F === 1'b0 D) (COND E (posedge C)) (20:20:20))))
+ (CELL (CELLTYPE "setuphold_cond_cross") (INSTANCE second) (TIMINGCHECK
+  (HOLD (COND F === 1'b0 D) (COND E (posedge C)) (8:8:8))))
+)

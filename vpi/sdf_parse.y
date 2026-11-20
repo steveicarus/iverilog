@@ -517,7 +517,7 @@ tchk_def_list
   | tchk_def
   ;
 
-  /* Explicit scalar timing conditions are supported on standalone checks. */
+  /* The matcher for each check type receives the source condition on each event. */
 tchk_def
   : '(' K_SETUP scalar_port_tchk scalar_port_tchk rvalue ')'
       { sdf_two_event_limits(vpiSetup, $3, $4, $5, @2.first_line);

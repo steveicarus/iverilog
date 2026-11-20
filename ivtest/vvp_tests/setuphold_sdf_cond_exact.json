@@ -1,0 +1,14 @@
+{
+    "type": "normal",
+    "source": "setuphold_sdf_cond_exact.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/setuphold_precision_audit.c"
+    ]
+}

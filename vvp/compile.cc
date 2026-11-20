@@ -2491,6 +2491,8 @@ void compile_tchk_setuphold(unsigned file_idx, unsigned lineno,
             reference_condition_value != 0, data_condition_value != 0);
       net->fun = fun;
       __vpiTchkSetupHold* obj = new __vpiTchkSetupHold(scope, file_idx, lineno, fun);
+      obj->reference_condition_mode_ = reference_condition_value;
+      obj->data_condition_mode_ = data_condition_value;
       fun->vpi_tchk = obj;
       input_connect(net, 0, strdup(reference.text));
       input_connect(net, 1, strdup(data.text));
