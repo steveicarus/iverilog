@@ -564,13 +564,13 @@ extern void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
                                 struct symb_s reference, double limit,
                                 double threshold, char* notifier,
                                 char* condition = nullptr,
-                                uint64_t condition_value = 1);
+                                uint64_t condition_code = 1);
 
 // PERIOD records carry one limit and no WIDTH threshold.
 extern void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
                                  struct symb_s reference, double limit,
                                  char* notifier, char* condition = nullptr,
-                                 uint64_t condition_value = 1);
+                                 uint64_t condition_code = 1);
 
 // RECREM records preserve control/reference and clock/data order.
 extern void compile_tchk_recrem(unsigned file_idx, unsigned lineno,

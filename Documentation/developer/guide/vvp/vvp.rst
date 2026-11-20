@@ -510,14 +510,22 @@ are scalar signal labels; an omitted notifier is ``""``. File and line operands
 identify the HDL declaration. Limit and threshold are real constants in the
 module's time units, rounded to its precision and converted to simulator ticks.
 
-A conditional declaration appends a raw local scalar condition label and a
-required binary value before the semicolon::
+A conditional declaration appends a local scalar condition label and a
+numeric condition code before the semicolon::
 
-        .tchk_width <file> <line>, "<edge>", <reference>, <limit>, <threshold>, <notifier>, <condition>, <value>;
-        .tchk_period <file> <line>, "<edge>", <reference>, <limit>, <notifier>, <condition>, <value>;
+        .tchk_width <file> <line>, "<edge>", <reference>, <limit>, <threshold>, <notifier>, <condition>, <code>;
+        .tchk_period <file> <line>, "<edge>", <reference>, <limit>, <notifier>, <condition>, <code>;
 
-``<value>`` must be zero or one. Bare HDL qualifiers and case equality to one
-use one; case equality to zero uses zero. The condition is read at a physical
+``<code>`` selects which values of the condition signal qualify a delivery:
+
+* ``0``: 0 only (bitwise complement or case equality to zero).
+* ``1``: 1 only (bare signal or case equality to one).
+* ``2``: 0, X or Z (logical equality to zero, or logical or case inequality to one).
+* ``3``: 1, X or Z (logical equality to one, or logical or case inequality to zero).
+
+With a known binary constant, an X or Z operand makes a logical comparison
+produce X and case inequality produce true. Both qualify the delivery.
+The condition is read at a physical
 reference delivery, after updating the previous physical reference value. It
 has no event input of its own. An unmatched condition leaves timing history
 unchanged. Omitting the suffix preserves the unconditional record behavior.

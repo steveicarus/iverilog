@@ -8,5 +8,6 @@
         "-Iivltests",
         "-s",
         "tb"
-    ]
+    ],
+    "gold": "period_hdl_conditional_fail"
 }

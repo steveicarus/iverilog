@@ -1,0 +1,11 @@
+{
+  "type": "normal",
+  "source": "pulse_cond_four_state.v",
+  "iverilog-args": [
+    "-g1995",
+    "-gspecify",
+    "-s",
+    "tb"
+  ],
+  "vpi-sources": ["vpi/pulse_conditional.c"]
+}

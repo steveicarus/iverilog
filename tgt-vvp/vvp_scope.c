@@ -2375,6 +2375,25 @@ static const char *vvp_port_info_type_str(ivl_signal_port_t ptype)
       }
 }
 
+/* Keep 0/1 as exact matches in VVP. The additional codes also admit X/Z.
+ * Case inequality then evaluates to true; logical comparisons evaluate to X. */
+static unsigned timing_condition_code(ivl_tchk_cond_t kind)
+{
+      switch (kind) {
+          case IVL_TCHK_COND_CASE_EQ0:
+          case IVL_TCHK_COND_BIT_NOT: return 0;
+          case IVL_TCHK_COND_BARE:
+          case IVL_TCHK_COND_CASE_EQ1: return 1;
+          case IVL_TCHK_COND_LOGIC_EQ0:
+          case IVL_TCHK_COND_CASE_NE1:
+          case IVL_TCHK_COND_LOGIC_NE1: return 2;
+          case IVL_TCHK_COND_LOGIC_EQ1:
+          case IVL_TCHK_COND_CASE_NE0:
+          case IVL_TCHK_COND_LOGIC_NE0: return 3;
+          default: assert(0); return 0;
+      }
+}
+
 /* Emit exactly one record for each elaborated declaration, after its signals. */
 static void draw_width_in_scope(ivl_width_t check)
 {
@@ -2389,7 +2408,7 @@ static void draw_width_in_scope(ivl_width_t check)
       ivl_signal_t condition = ivl_width_condition(check);
       if (condition)
             fprintf(vvp_out, ", v%p_0, %u", condition,
-                    ivl_width_condition_kind(check) == IVL_TCHK_COND_EQ0 ? 0 : 1);
+                    timing_condition_code(ivl_width_condition_kind(check)));
       fprintf(vvp_out, ";\n");
 }
 
@@ -2410,7 +2429,7 @@ static void draw_period_in_scope(ivl_period_t check)
       ivl_signal_t condition = ivl_period_condition(check);
       if (condition)
             fprintf(vvp_out, ", v%p_0, %u", condition,
-                    ivl_period_condition_kind(check) == IVL_TCHK_COND_EQ0 ? 0 : 1);
+                    timing_condition_code(ivl_period_condition_kind(check)));
       fprintf(vvp_out, ";\n");
 }
 
@@ -2423,10 +2442,10 @@ static void draw_two_event_conditions(ivl_signal_t reference,
 {
       if (!reference && !data) return;
       if (reference) fprintf(vvp_out, ", \"v%p_0\", %u", reference,
-                             reference_kind == IVL_TCHK_COND_EQ0 ? 0 : 1);
+                             reference_kind == IVL_TCHK_COND_CASE_EQ0 ? 0 : 1);
       else fprintf(vvp_out, ", \"\", 1");
       if (data) fprintf(vvp_out, ", \"v%p_0\", %u", data,
-                        data_kind == IVL_TCHK_COND_EQ0 ? 0 : 1);
+                        data_kind == IVL_TCHK_COND_CASE_EQ0 ? 0 : 1);
       else fprintf(vvp_out, ", \"\", 1");
 }
 

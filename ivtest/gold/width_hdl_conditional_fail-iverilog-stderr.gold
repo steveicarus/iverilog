@@ -1,0 +1,3 @@
+ivltests/width_hdl_conditional_fail.v:6: error: $width condition must be a local scalar signal, its bitwise complement, or a comparison (===, !==, ==, !=) with 1'b0 or 1'b1.
+ivltests/width_hdl_conditional_fail.v:7: sorry: $width condition uses unsupported logical '!'. Standard SystemVerilog specify timing-check inversion uses '~'.
+2 error(s) during elaboration.

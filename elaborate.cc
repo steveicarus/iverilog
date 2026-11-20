@@ -7476,6 +7476,7 @@ static NetNet*timing_check_signal(Design*des, NetScope*scope,
  * gating the physical timing signal. Check the parsed shape before expression
  * optimization so unsupported expressions cannot become accidentally admitted. */
 static bool timing_check_condition(NetScope*scope, const PExpr*expr,
+                                    bool extended,
                                     NetNet*&signal, ivl_tchk_cond_t&kind)
 {
       signal = nullptr;
@@ -7483,9 +7484,14 @@ static bool timing_check_condition(NetScope*scope, const PExpr*expr,
       if (!expr) return true;
       const PEIdent*id = dynamic_cast<const PEIdent*>(expr);
       kind = IVL_TCHK_COND_BARE;
-      if (!id) {
+      if (const PEUnary*unary = dynamic_cast<const PEUnary*>(expr)) {
+            if (!extended || unary->get_op() != '~') return false;
+            id = dynamic_cast<const PEIdent*>(unary->get_expr());
+            if (!id) return false;
+            kind = IVL_TCHK_COND_BIT_NOT;
+      } else if (!id) {
             const PEBComp*comparison = dynamic_cast<const PEBComp*>(expr);
-            if (!comparison || comparison->peek_opcode() != 'E') return false;
+            if (!comparison) return false;
             id = dynamic_cast<const PEIdent*>(comparison->peek_left());
             const PENumber*number =
                   dynamic_cast<const PENumber*>(comparison->peek_right());
@@ -7494,7 +7500,25 @@ static bool timing_check_condition(NetScope*scope, const PExpr*expr,
             if (!value.has_len() || value.len() != 1 || value.has_sign()
                 || value.is_single() || value.is_string() || !value.is_defined())
                   return false;
-            kind = value.is_zero() ? IVL_TCHK_COND_EQ0 : IVL_TCHK_COND_EQ1;
+            switch (comparison->peek_opcode()) {
+                case 'E':
+                  kind = value.is_zero() ? IVL_TCHK_COND_CASE_EQ0 : IVL_TCHK_COND_CASE_EQ1;
+                  break;
+                case 'N':
+                  if (!extended) return false;
+                  kind = value.is_zero() ? IVL_TCHK_COND_CASE_NE0 : IVL_TCHK_COND_CASE_NE1;
+                  break;
+                case 'e':
+                  if (!extended) return false;
+                  kind = value.is_zero() ? IVL_TCHK_COND_LOGIC_EQ0 : IVL_TCHK_COND_LOGIC_EQ1;
+                  break;
+                case 'n':
+                  if (!extended) return false;
+                  kind = value.is_zero() ? IVL_TCHK_COND_LOGIC_NE0 : IVL_TCHK_COND_LOGIC_NE1;
+                  break;
+                default:
+                  return false;
+            }
       }
       if (id->path().package || id->path().name.size() != 1
           || !id->path().name.front().index.empty()) return false;
@@ -7502,6 +7526,28 @@ static bool timing_check_condition(NetScope*scope, const PExpr*expr,
       return signal && signal->scope() == scope && signal->vector_width() == 1
           && signal->packed_dimensions() == 0 && signal->unpacked_dimensions() == 0
           && (signal->data_type() == IVL_VT_LOGIC || signal->data_type() == IVL_VT_BOOL);
+}
+
+static bool pulse_timing_check_condition(Design*des, NetScope*scope,
+                                         const LineInfo&loc, const char*kind,
+                                         const PExpr*expr, NetNet*&signal,
+                                         ivl_tchk_cond_t&condition_kind)
+{
+      if (timing_check_condition(scope, expr, true, signal, condition_kind))
+            return true;
+
+      const PEUnary*unary = dynamic_cast<const PEUnary*>(expr);
+      if (unary && unary->get_op() == '!') {
+            cerr << unary->get_fileline() << ": sorry: " << kind
+                 << " condition uses unsupported logical '!'. Standard SystemVerilog"
+                 << " specify timing-check inversion uses '~'." << endl;
+      } else {
+            cerr << loc.get_fileline() << ": error: " << kind
+                 << " condition must be a local scalar signal, its bitwise complement,"
+                 << " or a comparison (===, !==, ==, !=) with 1'b0 or 1'b1." << endl;
+      }
+      des->errors += 1;
+      return false;
 }
 
 void PWidth::elaborate(Design*des, NetScope*scope) const
@@ -7533,13 +7579,10 @@ void PWidth::elaborate(Design*des, NetScope*scope) const
       }
       NetNet*condition;
       ivl_tchk_cond_t condition_kind;
-      if (!timing_check_condition(scope, reference_->condition.get(), condition,
-                                  condition_kind)) {
-            cerr << get_fileline() << ": error: $width condition must be a local"
-                 << " scalar signal or that signal === 1'b0 or 1'b1." << endl;
-            des->errors += 1;
+      if (!pulse_timing_check_condition(des, scope, *this, "$width",
+                                        reference_->condition.get(),
+                                        condition, condition_kind))
             return;
-      }
       NetNet*reference = timing_check_signal(des, scope, reference_->name,
                                             *this, "$width", false);
       NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
@@ -7571,13 +7614,10 @@ void PPeriod::elaborate(Design*des, NetScope*scope) const
       }
       NetNet*condition;
       ivl_tchk_cond_t condition_kind;
-      if (!timing_check_condition(scope, reference_->condition.get(), condition,
-                                  condition_kind)) {
-            cerr << get_fileline() << ": error: $period condition must be a local"
-                 << " scalar signal or that signal === 1'b0 or 1'b1." << endl;
-            des->errors += 1;
+      if (!pulse_timing_check_condition(des, scope, *this, "$period",
+                                        reference_->condition.get(),
+                                        condition, condition_kind))
             return;
-      }
       NetNet*reference = timing_check_signal(des, scope, reference_->name,
                                             *this, "$period", false);
       NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
@@ -7609,8 +7649,8 @@ static bool timing_check_event(Design*des, NetScope*scope, const LineInfo&loc,
             des->errors += 1;
             return false;
       }
-      if (!timing_check_condition(scope, event.condition.get(), condition,
-                                  condition_kind)) {
+      if (!timing_check_condition(scope, event.condition.get(), false,
+                                  condition, condition_kind)) {
             cerr << loc.get_fileline() << ": error: " << kind << " " << role
                  << " condition must be a local scalar signal, or that signal"
                  << " === 1'b0 or === 1'b1." << endl;
