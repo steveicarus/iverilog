@@ -71,6 +71,7 @@ br_gh308		normal			br_gh308.c		br_gh308.gold
 br_gh317		normal			br_gh317.c		br_gh317.gold
 br_gh496		normal,-g2009		br_gh496.c		br_gh496.gold
 br_gh1037		normal,-g2009		br_gh1037.c		br_gh1037.gold
+br_gh1038		normal,-g2009		br_gh1038.c		br_gh1038.gold
 br_gh1041		normal			br_gh1041.c		br_gh1041.gold
 br_gh1041b		normal			br_gh1041b.c		br_gh1041b.gold
 br_ml20191013		normal			br_ml20191013.c		br_ml20191013.gold
@@ -100,6 +101,8 @@ hello_tf		PLI1			hello_tf.c		hello_tf.log
 hello_vpi		normal			hello_vpi.c		hello.log
 hello_vpi2		normal			hello_vpi2.c		hello2.log		vpi/hello_vpi1.c
 interconnect_readback	normal,-g2012,-gspecify,-ginterconnect,-Ttyp	interconnect_readback.c	interconnect_readback.gold
+interconnect_reuse	normal,-g2012,-gspecify,-ginterconnect,-Ttyp	interconnect_reuse.c	interconnect_reuse.gold
+interconnect_reuse_bits	normal,-g2012,-gspecify,-ginterconnect,-Ttyp	interconnect_reuse_bits.c	interconnect_reuse_bits.gold
 listparams		normal			listparams.c		listparams.log
 nextsimtime_cb1		normal			nextsimtime_cb1.c	nextsimtime_cb1.gold
 nextsimtime_cb2		normal			nextsimtime_cb2.c	nextsimtime_cb2.gold
@@ -151,5 +154,3 @@ vpi_control		normal			vpi_control.c		vpi_control.log
 # version or if it uses something not implemented (NI) by other
 # versions of the program it will also need a version specific
 # line above.
-interconnect_reuse	normal,-g2012,-gspecify,-ginterconnect,-Ttyp	interconnect_reuse.c	interconnect_reuse.gold
-interconnect_reuse_bits	normal,-g2012,-gspecify,-ginterconnect,-Ttyp	interconnect_reuse_bits.c	interconnect_reuse_bits.gold
