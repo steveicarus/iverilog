@@ -310,7 +310,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%queue/min/obj/v", of_QUEUE_MIN_OBJ_V, 1, {OA_BIT1, OA_NONE, OA_NONE} },
       { "%queue/min/prop/v", of_QUEUE_MIN_PROP_V, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%queue/min/v", of_QUEUE_MIN_V, 2, {OA_FUNC_PTR, OA_BIT1, OA_NONE} },
-      { "%queue/new_empty/v", of_QUEUE_NEW_EMPTY_V, 0, {OA_NONE, OA_NONE, OA_NONE} },
+      { "%queue/new_empty/v", of_QUEUE_NEW_EMPTY_V, 1, {OA_BIT1, OA_NONE, OA_NONE} },
       { "%queue/size/v", of_QUEUE_SIZE_V, 1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%queue/unique/index/obj/v", of_QUEUE_UNIQUE_INDEX_OBJ_V, 1, {OA_BIT1, OA_NONE, OA_NONE} },
       { "%queue/unique/index/prop/v", of_QUEUE_UNIQUE_INDEX_PROP_V, 2, {OA_NUMBER, OA_BIT1, OA_NONE} },

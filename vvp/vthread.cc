@@ -488,6 +488,23 @@ const vvp_vector4_t& vthread_get_vec4_stack(struct vthread_s*thr, unsigned depth
  * Some thread management functions
  */
 /*
+ * Create a queue object of the given type. A vector queue is told its
+ * element width, so that it can return a properly sized value for a
+ * read of an empty queue. The real and string queues have no element
+ * width, so the width is ignored for them. This keeps the queue
+ * creation parameterized by the queue type.
+ */
+template <class VVP_QUEUE> static VVP_QUEUE*make_queue(unsigned)
+{
+      return new VVP_QUEUE;
+}
+
+template <> vvp_queue_vec4*make_queue<vvp_queue_vec4>(unsigned word_wid)
+{
+      return new vvp_queue_vec4(word_wid);
+}
+
+/*
  * This is a function to get a vvp_queue handle from the variable
  * referenced by "net". If the queue is nil, then allocated it and
  * assign the value to the net. Note that this function is
@@ -502,7 +519,7 @@ template <class VVP_QUEUE> static vvp_queue*get_queue_object(vthread_t thr, vvp_
       vvp_queue*queue = obj->get_object().peek<vvp_queue>();
       if (queue == 0) {
 	    assert(obj->get_object().test_nil());
-	    queue = new VVP_QUEUE;
+	    queue = make_queue<VVP_QUEUE>(obj->size());
 	    vvp_object_t val (queue);
 	    vvp_net_ptr_t ptr (net, 0);
 	    vvp_send_object(ptr, val, thr->wt_context);
@@ -535,7 +552,7 @@ static void get_queue_or_darray_vec4_from_net(vthread_t thr, vvp_net_t* net,
 	    return;
       }
       if (top.test_nil()) {
-	    qsrc = new vvp_queue_vec4();
+	    qsrc = new vvp_queue_vec4(obj->size());
 	    vvp_object_t val(qsrc);
 	    vvp_net_ptr_t ptr(net, 0);
 	    vvp_send_object(ptr, val, thr->wt_context);
@@ -6636,13 +6653,13 @@ bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
 }
 
 template <class QTYPE>
-static QTYPE* get_queue_prop(vvp_cobject*cobj, size_t pid)
+static QTYPE* get_queue_prop(vvp_cobject*cobj, size_t pid, unsigned word_wid)
 {
       vvp_object_t qobj;
       cobj->get_object(pid, qobj, 0);
       QTYPE* queue = qobj.peek<QTYPE>();
       if (queue == 0) {
-	    queue = new QTYPE;
+	    queue = make_queue<QTYPE>(word_wid);
 	    vvp_object_t val(queue);
 	    cobj->set_object(pid, val, 0);
       }
@@ -6661,7 +6678,7 @@ static bool store_prop_qb(vthread_t thr, vvp_code_t cp, unsigned wid)
       vvp_cobject*cobj = top.peek<vvp_cobject>();
       assert(cobj);
 
-      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid);
+      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid, wid);
       assert(queue);
       queue->push_back(value, max_size);
       return true;
@@ -6679,7 +6696,7 @@ static bool store_prop_qf(vthread_t thr, vvp_code_t cp, unsigned wid)
       vvp_cobject*cobj = top.peek<vvp_cobject>();
       assert(cobj);
 
-      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid);
+      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid, wid);
       assert(queue);
       queue->push_front(value, max_size);
       return true;
@@ -6727,7 +6744,7 @@ static bool qinsert_prop(vthread_t thr, vvp_code_t cp, unsigned wid)
       vvp_cobject*cobj = top.peek<vvp_cobject>();
       assert(cobj);
 
-      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid);
+      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid, wid);
       assert(queue);
       if (idx < 0) {
 	    cerr << thr->get_fileline()
@@ -6775,7 +6792,7 @@ static bool q_pop_prop(vthread_t thr, vvp_code_t cp,
       vvp_cobject*cobj = top.peek<vvp_cobject>();
       assert(cobj);
 
-      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid);
+      QTYPE* queue = get_queue_prop<QTYPE>(cobj, pid, wid);
       assert(queue);
 
       size_t size = queue->get_size();
@@ -6854,7 +6871,8 @@ template <class SRC> static vvp_queue_vec4* queue_run_unique_src(SRC* src,
 								 unsigned wid,
 								 bool as_index)
 {
-      vvp_queue_vec4* dst = new vvp_queue_vec4();
+	/* An index result is a 32 bit value, not a queue element. */
+      vvp_queue_vec4* dst = new vvp_queue_vec4(as_index ? 32 : wid);
       if (!src) return dst;
       size_t n = src->get_size();
       for (size_t i = 0; i < n; i += 1) {
@@ -6884,7 +6902,7 @@ static vvp_queue_vec4* queue_run_find_matches_src(SRC* src, unsigned wid,
 						  const vvp_vector4_t& cmp,
 						  bool as_index)
 {
-      vvp_queue_vec4* dst = new vvp_queue_vec4();
+      vvp_queue_vec4* dst = new vvp_queue_vec4(as_index ? 32 : wid);
       if (!src) return dst;
       size_t n = src->get_size();
       for (size_t i = 0; i < n; i += 1) {
@@ -6909,7 +6927,7 @@ static vvp_queue_vec4* queue_find_first_last_to_queue_src(SRC* src,
 							  bool want_first,
 							  bool want_index)
 {
-      vvp_queue_vec4* dst = new vvp_queue_vec4();
+      vvp_queue_vec4* dst = new vvp_queue_vec4(want_index ? 32 : wid);
       if (!src || src->get_size() == 0) return dst;
       size_t n = src->get_size();
       if (want_first) {
@@ -6951,7 +6969,7 @@ static vvp_queue_vec4* queue_find_first_last_to_queue_src(SRC* src,
 template <class SRC>
 static vvp_queue_vec4* queue_run_min_max_src(SRC* src, unsigned wid, bool want_max)
 {
-      vvp_queue_vec4* dst = new vvp_queue_vec4();
+      vvp_queue_vec4* dst = new vvp_queue_vec4(wid);
       if (!src || src->get_size() == 0) return dst;
 
       vvp_vector4_t best(wid);
@@ -7651,9 +7669,12 @@ bool of_PUSH_IX_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_QUEUE_NEW_EMPTY_V(vthread_t thr, vvp_code_t)
+/*
+ * %queue/new_empty/v <wid>
+ */
+bool of_QUEUE_NEW_EMPTY_V(vthread_t thr, vvp_code_t cp)
 {
-      thr->push_object(vvp_object_t(new vvp_queue_vec4()));
+      thr->push_object(vvp_object_t(new vvp_queue_vec4(cp->bit_idx[0])));
       return true;
 }
 
@@ -7838,7 +7859,7 @@ static bool store_prop_qdar(vthread_t thr, vvp_code_t cp, unsigned wid=0)
       vvp_cobject*cobj = top.peek<vvp_cobject>();
       assert(cobj);
 
-      QTYPE*queue = get_queue_prop<QTYPE>(cobj, pid);
+      QTYPE*queue = get_queue_prop<QTYPE>(cobj, pid, wid);
       store_qdar_word(thr, queue, thr->words[cp->bit_idx[0]].w_int, value);
       return true;
 }

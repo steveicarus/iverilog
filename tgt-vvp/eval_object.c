@@ -194,7 +194,8 @@ static int eval_array_pattern_object(ivl_expr_t ex)
 		          ivl_expr_file(ex), ivl_expr_lineno(ex), max_elems, max_size, max_size);
 		  max_elems = max_size;
 	    }
-	    fprintf(vvp_out, "    %%queue/new_empty/v;\n");
+	    fprintf(vvp_out, "    %%queue/new_empty/v %u;\n",
+	            ivl_type_packed_width(element_type));
       } else {
 	    unsigned size_reg = allocate_word();
 	    fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", size_reg, max_elems);
@@ -506,7 +507,8 @@ static void emit_queue_with_on_match(enum queue_locator_with_mode_e mode,
       int as_index = queue_with_as_index(mode);
 
       if (!multi) {
-	    fprintf(vvp_out, "    %%queue/new_empty/v;\n");
+	    fprintf(vvp_out, "    %%queue/new_empty/v %u;\n",
+	            as_index ? 32 : elem_wid);
       }
       if (as_index) {
 	    fprintf(vvp_out, "    %%push/ix/vec4 %d, 32, 1;\n", i_reg);
@@ -593,7 +595,8 @@ static void emit_queue_with_finish(enum queue_locator_with_mode_e mode,
 	    }
 	    return;
       }
-      fprintf(vvp_out, "    %%queue/new_empty/v;\n");
+      fprintf(vvp_out, "    %%queue/new_empty/v %u;\n",
+              queue_with_as_index(mode) ? 32 : elem_wid);
       if (is_prop) {
 	    fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
       }
@@ -639,7 +642,8 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%prop/queue/size %u;\n", pidx);
 	    fprintf(vvp_out, "    %%ix/vec4/s %d;\n", n_reg);
 	    if (multi) {
-		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
+		  fprintf(vvp_out, "    %%queue/new_empty/v %u;\n",
+		          queue_with_as_index(mode) ? 32 : elem_wid);
 	    }
 	    emit_queue_with_init_index(reverse, i_reg, n_reg);
 	    fprintf(vvp_out, "T_%u.%u ; queue with loop\n", thread_count, lab_top);
@@ -653,7 +657,8 @@ static int eval_queue_method_find_with(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%queue/size/v v%p_0;\n", sig);
 	    fprintf(vvp_out, "    %%ix/vec4/s %d;\n", n_reg);
 	    if (multi) {
-		  fprintf(vvp_out, "    %%queue/new_empty/v;\n");
+		  fprintf(vvp_out, "    %%queue/new_empty/v %u;\n",
+		          queue_with_as_index(mode) ? 32 : elem_wid);
 	    }
 	    emit_queue_with_init_index(reverse, i_reg, n_reg);
 	    fprintf(vvp_out, "T_%u.%u ; queue with loop (var)\n", thread_count,

@@ -258,6 +258,11 @@ class vvp_queue_string : public vvp_queue {
 class vvp_queue_vec4 : public vvp_queue {
 
     public:
+	/* The element width is needed to return a properly sized value
+	 * for an out of range read, including a read of an empty queue
+	 * that has no element to take the width from. */
+      explicit inline vvp_queue_vec4(unsigned word_wid) : word_wid_(word_wid) { }
+
       size_t get_size(void) const override { return queue.size(); };
       void copy_elems(vvp_object_t src, unsigned max_size) override;
       void set_word_max(unsigned adr, const vvp_vector4_t&value, unsigned max_size) override;
@@ -277,6 +282,7 @@ class vvp_queue_vec4 : public vvp_queue {
 
     private:
       std::deque<vvp_vector4_t> queue;
+      unsigned word_wid_;
 };
 
 extern std::string get_fileline();

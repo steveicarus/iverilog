@@ -997,6 +997,7 @@ void vvp_queue_vec4::copy_elems(vvp_object_t src, unsigned max_size)
 
 void vvp_queue_vec4::set_word_max(unsigned adr, const vvp_vector4_t&value, unsigned max_size)
 {
+      assert(value.size() == word_wid_);
       if (adr == queue.size())
 	    if (!max_size || (queue.size() < max_size))
 		  queue.push_back(value);
@@ -1011,6 +1012,7 @@ void vvp_queue_vec4::set_word_max(unsigned adr, const vvp_vector4_t&value, unsig
 
 void vvp_queue_vec4::set_word(unsigned adr, const vvp_vector4_t&value)
 {
+      assert(value.size() == word_wid_);
       if (adr < queue.size())
 	    queue[adr] = value;
       else
@@ -1022,14 +1024,23 @@ void vvp_queue_vec4::set_word(unsigned adr, const vvp_vector4_t&value)
 
 void vvp_queue_vec4::get_word(unsigned adr, vvp_vector4_t&value)
 {
-      if (adr >= queue.size())
-	    value = vvp_vector4_t(queue[0].size());
-      else
-	    value = queue[adr];
+	/*
+	 * Return an undefined value of the element width for an out of
+	 * range address. An empty queue has no element to take the width
+	 * from, hence the saved element width is used.
+	 */
+      if (adr >= queue.size()) {
+	    value = vvp_vector4_t(word_wid_, BIT4_X);
+	    return;
+      }
+      value = queue[adr];
+      assert(value.size() == word_wid_);
 }
 
 void vvp_queue_vec4::insert(unsigned idx, const vvp_vector4_t&value, unsigned max_size)
 {
+      assert(value.size() == word_wid_);
+
 	// Inserting past the end of the queue
       if (idx > queue.size())
 	    cerr << get_fileline()
@@ -1059,6 +1070,7 @@ void vvp_queue_vec4::insert(unsigned idx, const vvp_vector4_t&value, unsigned ma
 
 void vvp_queue_vec4::push_back(const vvp_vector4_t&value, unsigned max_size)
 {
+      assert(value.size() == word_wid_);
       if (!max_size || (queue.size() < max_size))
 	    queue.push_back(value);
       else
@@ -1070,6 +1082,7 @@ void vvp_queue_vec4::push_back(const vvp_vector4_t&value, unsigned max_size)
 
 void vvp_queue_vec4::push_front(const vvp_vector4_t&value, unsigned max_size)
 {
+      assert(value.size() == word_wid_);
       if (max_size && (queue.size() == max_size)) {
 	    cerr << get_fileline()
 	         << "Warning: push_front(" << value << ") removed "
