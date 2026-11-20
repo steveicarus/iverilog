@@ -1,0 +1,14 @@
+{
+    "type": "normal",
+    "source": "recrem_cond_names.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/recrem_audit.c"
+    ]
+}

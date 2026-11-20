@@ -2408,6 +2408,12 @@ extern "C" unsigned ivl_scope_recrems(ivl_scope_t net)
 extern "C" ivl_signal_t ivl_recrem_data(ivl_recrem_t check)
 { assert(check); return check->data; }
 
+extern "C" ivl_signal_t ivl_recrem_data_condition(ivl_recrem_t check)
+{ assert(check); return check->data_condition; }
+
+extern "C" ivl_tchk_cond_t ivl_recrem_data_condition_kind(ivl_recrem_t check)
+{ assert(check); return check->data_condition_kind; }
+
 extern "C" int ivl_recrem_data_edge(ivl_recrem_t check)
 { assert(check); return check->data_edge; }
 
@@ -2425,6 +2431,12 @@ extern "C" double ivl_recrem_recovery_limit(ivl_recrem_t check)
 
 extern "C" ivl_signal_t ivl_recrem_reference(ivl_recrem_t check)
 { assert(check); return check->reference; }
+
+extern "C" ivl_signal_t ivl_recrem_reference_condition(ivl_recrem_t check)
+{ assert(check); return check->reference_condition; }
+
+extern "C" ivl_tchk_cond_t ivl_recrem_reference_condition_kind(ivl_recrem_t check)
+{ assert(check); return check->reference_condition_kind; }
 
 extern "C" int ivl_recrem_reference_edge(ivl_recrem_t check)
 { assert(check); return check->reference_edge; }
