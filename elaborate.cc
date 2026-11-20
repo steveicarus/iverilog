@@ -4165,6 +4165,7 @@ NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
       sig->set_line(*this);
 
       unsigned nparms = parms_.size();
+      bool bad_parms = false;
 
       vector<NetExpr*>argv (1 + nparms);
       argv[0] = sig;
@@ -4176,18 +4177,23 @@ NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
 			cerr << get_fileline() << ": error: queue delete() "
 			     << "method takes zero or one argument." << endl;
 			des->errors += 1;
+			bad_parms = true;
 		  }
 	    } else if (nparms > 0) {
 		  cerr << get_fileline() << ": error: darray delete() "
 		       << "method takes no arguments." << endl;
 		  des->errors += 1;
+		  bad_parms = true;
 	    }
       } else if (parm_names.size() != parms_.size()) {
 	    cerr << get_fileline() << ": error: " << method_name
 	         << "() method takes " << parm_names.size() << " arguments, got "
 		 << parms_.size() << "." << endl;
 	    des->errors++;
+	    bad_parms = true;
       }
+
+      if (bad_parms) return new NetBlock(NetBlock::SEQU, 0);
 
       auto args = map_named_args(des, parm_names, parms_);
       for (unsigned idx = 0 ; idx < nparms ; idx += 1) {
@@ -4210,6 +4216,7 @@ NetProc* PCallTask::elaborate_sys_task_property_method_(Design*des, NetScope*sco
       prop->set_line(*this);
 
       unsigned nparms = parms_.size();
+      bool bad_parms = false;
 
       vector<NetExpr*>argv (1 + nparms);
       argv[0] = prop;
@@ -4224,18 +4231,23 @@ NetProc* PCallTask::elaborate_sys_task_property_method_(Design*des, NetScope*sco
 			cerr << get_fileline() << ": error: queue delete() "
 			     << "method takes zero or one argument." << endl;
 			des->errors += 1;
+			bad_parms = true;
 		  }
 	    } else if (nparms > 0) {
 		  cerr << get_fileline() << ": error: darray delete() "
 		       << "method takes no arguments." << endl;
 		  des->errors += 1;
+		  bad_parms = true;
 	    }
       } else if (parm_names.size() != parms_.size()) {
 	    cerr << get_fileline() << ": error: " << method_name
 	         << "() method takes " << parm_names.size() << " arguments, got "
 		 << parms_.size() << "." << endl;
 	    des->errors++;
+	    bad_parms = true;
       }
+
+      if (bad_parms) return new NetBlock(NetBlock::SEQU, 0);
 
       auto args = map_named_args(des, parm_names, parms_);
       for (unsigned idx = 0 ; idx < nparms ; idx += 1) {

@@ -1,0 +1,3 @@
+ivltests/sv_class_method_arg_fail.v:12: error: sort() method takes 0 arguments, got 1.
+ivltests/sv_class_method_arg_fail.v:13: error: reverse() method takes 0 arguments, got 1.
+2 error(s) during elaboration.
