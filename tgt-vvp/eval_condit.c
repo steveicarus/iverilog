@@ -316,10 +316,22 @@ static int draw_compare_class(ivl_expr_t expr)
 	    return 4;
       }
 
-      fprintf(stderr, "SORRY: Compare class handles not implemented\n");
-      fprintf(vvp_out, " ; XXXX compare class handles. re-type=%d, le-type=%d\n",
-	      ivl_expr_type(re), ivl_expr_type(le));
-      vvp_errors += 1;
+	/* General case: evaluate the operand(s) onto the object stack. */
+      vvp_errors += draw_eval_object(le);
+
+      if (ivl_expr_type(re)==IVL_EX_NULL) {
+	      /* Handle (e.g. a function call result) compared to null. */
+	    fprintf(vvp_out, "    %%test_nul/obj;\n");
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+      } else {
+	      /* Handle compared to handle: compare object identity. */
+	    vvp_errors += draw_eval_object(re);
+	    fprintf(vvp_out, "    %%cmp/obj;\n");
+	    fprintf(vvp_out, "    %%pop/obj 2, 0;\n");
+      }
+
+      if (ivl_expr_opcode(expr) == 'n')
+	    fprintf(vvp_out, "    %%flag_inv 4;\n");
       return 4;
 }
 

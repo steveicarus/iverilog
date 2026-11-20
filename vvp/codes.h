@@ -73,6 +73,7 @@ extern bool of_CMPE(vthread_t thr, vvp_code_t code);
 extern bool of_CMPIE(vthread_t thr, vvp_code_t code);
 extern bool of_CMPINE(vthread_t thr, vvp_code_t code);
 extern bool of_CMPNE(vthread_t thr, vvp_code_t code);
+extern bool of_CMPOBJ(vthread_t thr, vvp_code_t code);
 extern bool of_CMPS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPIS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPSTR(vthread_t thr, vvp_code_t code);
