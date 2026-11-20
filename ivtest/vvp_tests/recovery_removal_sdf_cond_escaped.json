@@ -1,0 +1,14 @@
+{
+    "type": "normal",
+    "source": "recovery_removal_sdf_cond_escaped.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/sdf_rr_cond_audit.c"
+    ]
+}

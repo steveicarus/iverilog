@@ -1,0 +1,14 @@
+{
+    "type": "normal",
+    "source": "setup_hold_sdf_cond_both.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/sdf_tchk_cond_audit.c"
+    ]
+}

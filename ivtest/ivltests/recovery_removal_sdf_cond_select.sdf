@@ -1,0 +1,9 @@
+(DELAYFILE (SDFVERSION "3.0") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "dut") (INSTANCE u) (TIMINGCHECK
+  (RECOVERY (COND "bare gate" E R) (posedge C) (20:20:20))
+  (RECOVERY (COND E === 1'b1 R) (posedge C) (12:12:12))
+  (RECOVERY (COND E === 1'b0 R) (posedge C) (30:30:30))
+  (REMOVAL (COND "bare gate" E R) (posedge C) (20:20:20))
+  (REMOVAL (COND E === 1'b1 R) (posedge C) (12:12:12))
+  (REMOVAL (COND E === 1'b0 R) (posedge C) (30:30:30))))
+)

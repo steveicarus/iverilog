@@ -131,6 +131,21 @@ static struct sdf_cond_expr_s condition_binary(char op,
       return result;
 }
 
+/* Consume the raw name before decoding escapes, preserving the distinction
+   between local escaped names and unsupported hierarchical/selected names. */
+static struct sdf_tchk_condition_s timing_condition(
+      struct interconnect_port_s port, enum sdf_tchk_cond_kind kind)
+{
+      struct sdf_tchk_condition_s result = {kind, 0, 0};
+      if (port.has_index || kind == SDF_TCHK_COND_UNSUPPORTED) {
+            free(port.name);
+      } else {
+            result.name = local_condition_name(port.name);
+      }
+      if (!result.name) result.kind = SDF_TCHK_COND_UNSUPPORTED;
+      return result;
+}
+
 /* This is the hierarchy separator to use. */
 char sdf_use_hchar = '.';
 
@@ -150,10 +165,8 @@ static void warn_timing_check_logical_not(const char* kind, int line)
 
       struct sdf_delay_s delay;
       struct port_with_edge_s port_with_edge;
-      struct {
-            struct port_with_edge_s port;
-            int logical_not_line;
-      } scalar_tchk_port;
+      struct sdf_tchk_port_s tchk_port;
+      struct sdf_tchk_condition_s tchk_condition;
       struct sdf_delval_list_s delval_list;
       struct interconnect_port_s interconnect_port;
       struct sdf_cond_expr_s condition;
@@ -177,7 +190,11 @@ static void warn_timing_check_logical_not(const char* kind, int line)
 
 %type <condition> conditional_port_expr
 %destructor { free($$.key); } conditional_port_expr
-%type <int_val> scalar_constant
+%type <int_val> scalar_constant equality_operator
+%type <tchk_condition> timing_check_condition
+%destructor { free($$.name); } timing_check_condition
+%type <tchk_port> scalar_port_tchk
+%destructor { free($$.port.string_val); free($$.condition.name); } scalar_port_tchk
 %type <string_val> celltype
 %type <string_val> cell_instance
 %type <string_val> hierarchical_identifier
@@ -189,9 +206,8 @@ static void warn_timing_check_logical_not(const char* kind, int line)
 %type <delay> delval rvalue_opt rvalue rtriple signed_real_number_opt
 
 %type <int_val> edge_identifier cond_edge_start cond_edge_identifier
-%type <int_val> timing_check_condition
-%type <port_with_edge> port_edge port_spec
-%type <scalar_tchk_port> scalar_port_tchk
+%type <port_with_edge> port_edge port_spec scalar_tchk_port_spec
+%destructor { free($$.string_val); } scalar_tchk_port_spec
 
 %type <delval_list> delval_list
 
@@ -501,80 +517,86 @@ tchk_def_list
   | tchk_def
   ;
 
-  /* Unconditional scalar timing-check annotation. */
+  /* Explicit scalar timing conditions are supported on standalone checks. */
 tchk_def
   : '(' K_SETUP scalar_port_tchk scalar_port_tchk rvalue ')'
-      { sdf_two_event_limits(vpiSetup, $3.port, $4.port, $5, @2.first_line);
-        free($3.port.string_val);
-        free($4.port.string_val);
+      { sdf_two_event_limits(vpiSetup, $3, $4, $5, @2.first_line);
+        free($3.port.string_val); free($3.condition.name);
+        free($4.port.string_val); free($4.condition.name);
       }
   | '(' K_HOLD scalar_port_tchk scalar_port_tchk rvalue ')'
-      { sdf_two_event_limits(vpiHold, $3.port, $4.port, $5, @2.first_line);
-        free($3.port.string_val);
-        free($4.port.string_val);
+      { sdf_two_event_limits(vpiHold, $3, $4, $5, @2.first_line);
+        free($3.port.string_val); free($3.condition.name);
+        free($4.port.string_val); free($4.condition.name);
       }
   | '(' K_SETUPHOLD scalar_port_tchk scalar_port_tchk rvalue rvalue ')'
-      { sdf_setuphold_limits($3.port, $4.port, $5, $6, @2.first_line);
-        free($3.port.string_val);
-        free($4.port.string_val);
+      { sdf_setuphold_limits($3, $4, $5, $6, @2.first_line);
+        free($3.port.string_val); free($3.condition.name);
+        free($4.port.string_val); free($4.condition.name);
       }
   | '(' K_RECOVERY scalar_port_tchk scalar_port_tchk rvalue ')'
-      { sdf_two_event_limits(vpiRecovery, $3.port, $4.port, $5, @2.first_line);
-        free($3.port.string_val);
-        free($4.port.string_val);
+      { sdf_two_event_limits(vpiRecovery, $3, $4, $5, @2.first_line);
+        free($3.port.string_val); free($3.condition.name);
+        free($4.port.string_val); free($4.condition.name);
       }
   | '(' K_RECREM scalar_port_tchk scalar_port_tchk rvalue rvalue ')'
-      { sdf_recrem_limits($3.port, $4.port, $5, $6, @2.first_line);
-        free($3.port.string_val);
-        free($4.port.string_val);
+      { sdf_recrem_limits($3, $4, $5, $6, @2.first_line);
+        free($3.port.string_val); free($3.condition.name);
+        free($4.port.string_val); free($4.condition.name);
       }
   | '(' K_REMOVAL scalar_port_tchk scalar_port_tchk rvalue ')'
-      { sdf_two_event_limits(vpiRemoval, $3.port, $4.port, $5, @2.first_line);
-        free($3.port.string_val);
-        free($4.port.string_val);
+      { sdf_two_event_limits(vpiRemoval, $3, $4, $5, @2.first_line);
+        free($3.port.string_val); free($3.condition.name);
+        free($4.port.string_val); free($4.condition.name);
       }
   | '(' K_WIDTH scalar_port_tchk rvalue ')'
-      { if ($3.logical_not_line)
-              warn_timing_check_logical_not("WIDTH", $3.logical_not_line);
-        else if ($3.port.string_val)
+      { if ($3.condition.logical_not_line)
+              warn_timing_check_logical_not("WIDTH", $3.condition.logical_not_line);
+        else if ($3.port.string_val && $3.condition.kind == SDF_TCHK_COND_NONE)
               sdf_width_limits($3.port.vpi_edge, $3.port.string_val, $4, @2.first_line);
         else
               vpi_printf("SDF WARNING: %s:%d: conditional or hierarchical WIDTH event not supported.\n",
                          sdf_parse_path, @2.first_line);
-        free($3.port.string_val);
+        free($3.port.string_val); free($3.condition.name);
       }
   | '(' K_PERIOD scalar_port_tchk rvalue ')'
-      { if ($3.logical_not_line)
-              warn_timing_check_logical_not("PERIOD", $3.logical_not_line);
-        else if ($3.port.string_val)
+      { if ($3.condition.logical_not_line)
+              warn_timing_check_logical_not("PERIOD", $3.condition.logical_not_line);
+        else if ($3.port.string_val && $3.condition.kind == SDF_TCHK_COND_NONE)
               sdf_period_limits($3.port.vpi_edge, $3.port.string_val, $4, @2.first_line);
         else
               vpi_printf("SDF WARNING: %s:%d: conditional or hierarchical PERIOD event not supported.\n",
                          sdf_parse_path, @2.first_line);
-        free($3.port.string_val);
+        free($3.port.string_val); free($3.condition.name);
       }
   ;
 
-/* Retain raw escapes until the local-name/hierarchy check has run. The
-   generic port_instance production has already decoded them. */
-scalar_port_tchk
+/* Retain raw escapes until the local-name/hierarchy check has run. */
+scalar_tchk_port_spec
   : hierarchical_identifier
-      { $$.port.vpi_edge = vpiNoEdge;
-        $$.port.string_val = local_condition_name($1);
-        $$.logical_not_line = 0; }
+      { $$.vpi_edge = vpiNoEdge; $$.string_val = local_condition_name($1); }
   | cond_edge_start hierarchical_identifier ')'
-      { $$.port.vpi_edge = $1;
-        if ($1 == vpiNoEdge) { $$.port.string_val = 0; free($2); }
-        else $$.port.string_val = local_condition_name($2);
-        $$.logical_not_line = 0; }
-  | cond_edge_start timing_check_condition port_spec ')'
-      { $$.port.vpi_edge = vpiNoEdge; $$.port.string_val = 0;
-        $$.logical_not_line = $1 == vpiNoEdge ? $2 : 0;
-        free($3.string_val); }
-  | cond_edge_start QSTRING timing_check_condition port_spec ')'
-      { $$.port.vpi_edge = vpiNoEdge; $$.port.string_val = 0;
-        $$.logical_not_line = $1 == vpiNoEdge ? $3 : 0;
-        free($2); free($4.string_val); }
+      { $$.vpi_edge = $1;
+        if ($1 == vpiNoEdge) { $$.string_val = 0; free($2); }
+        else $$.string_val = local_condition_name($2); }
+  ;
+
+scalar_port_tchk
+  : scalar_tchk_port_spec
+      { $$.port = $1;
+        $$.condition = (struct sdf_tchk_condition_s){SDF_TCHK_COND_NONE, 0, 0}; }
+  | cond_edge_start timing_check_condition scalar_tchk_port_spec ')'
+      { $$.port = $3; $$.condition = $2;
+        if ($1 != vpiNoEdge) {
+              $$.condition.kind = SDF_TCHK_COND_UNSUPPORTED;
+              $$.condition.logical_not_line = 0;
+        } }
+  | cond_edge_start QSTRING timing_check_condition scalar_tchk_port_spec ')'
+      { $$.port = $4; $$.condition = $3; free($2);
+        if ($1 != vpiNoEdge) {
+              $$.condition.kind = SDF_TCHK_COND_UNSUPPORTED;
+              $$.condition.logical_not_line = 0;
+        } }
   ;
 
 cond_edge_start
@@ -593,16 +615,18 @@ cond_edge_identifier
   | K_COND { $$ = vpiNoEdge; }
   ;
 
-/* Retain the location of logical negation for a targeted diagnostic. */
 timing_check_condition
   : port_interconnect
-      { $$ = 0; free($1.name); }
+      { $$ = timing_condition($1, SDF_TCHK_COND_BARE); }
   | '~' port_interconnect
-      { $$ = 0; free($2.name); }
+      { $$ = timing_condition($2, SDF_TCHK_COND_UNSUPPORTED); }
   | '!' port_interconnect
-      { $$ = @1.first_line; free($2.name); }
+      { $$ = timing_condition($2, SDF_TCHK_COND_UNSUPPORTED);
+        $$.logical_not_line = @1.first_line; }
   | port_interconnect equality_operator scalar_constant
-      { $$ = 0; free($1.name); }
+      { $$ = timing_condition($1, $2 == K_CEQ
+              ? ($3 ? SDF_TCHK_COND_EQ1 : SDF_TCHK_COND_EQ0)
+              : SDF_TCHK_COND_UNSUPPORTED); }
   ;
 
   /* This is not complete! */
@@ -624,10 +648,10 @@ conditional_port_expr
   ;
 
 equality_operator
-  : K_EQ
-  | K_NE
-  | K_CEQ
-  | K_CNE
+  : K_EQ { $$ = K_EQ; }
+  | K_NE { $$ = K_NE; }
+  | K_CEQ { $$ = K_CEQ; }
+  | K_CNE { $$ = K_CNE; }
   ;
 
 scalar_constant
