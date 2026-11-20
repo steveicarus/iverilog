@@ -740,10 +740,7 @@ static void sdf_recovery_removal_values(int check_type, struct sdf_tchk_port_s r
                          check_type == vpiRemoval ? "REMOVAL" : "RECREM";
       assert(check_type == vpiRecovery || check_type == vpiRemoval ||
              check_type == vpiRecrem);
-      bool has_condition = data.condition.kind != SDF_TCHK_COND_NONE ||
-                           reference.condition.kind != SDF_TCHK_COND_NONE;
       if (!data.port.string_val || !reference.port.string_val ||
-          (check_type == vpiRecrem && has_condition) ||
           data.condition.kind == SDF_TCHK_COND_UNSUPPORTED ||
           reference.condition.kind == SDF_TCHK_COND_UNSUPPORTED) {
             vpi_printf("SDF WARNING: %s:%d: conditional or hierarchical %s event not supported.\n",
@@ -767,7 +764,6 @@ static void sdf_recovery_removal_values(int check_type, struct sdf_tchk_port_s r
                   continue;
             if (check_type != vpiRecrem && target != check_type &&
                 target != vpiRecrem) continue;
-            if (has_condition && target == vpiRecrem) continue;
             if ((target == vpiRecovery && !recovery.defined) ||
                 (target == vpiRemoval && !removal.defined)) continue;
             if (!sdf_tchk_terminal_matches(check, vpiTchkDataTerm, data) ||

@@ -1,0 +1,14 @@
+{
+    "type": "normal",
+    "source": "recrem_sdf_cond_escaped.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/recrem_sdf_cond_audit.c"
+    ]
+}

@@ -1,5 +1,5 @@
-SDF ERROR: ivltests/recrem_cond_reject.sdf:3: Unable to match RECOVERY R -> C in tb.u
-SDF ERROR: ivltests/recrem_cond_reject.sdf:4: Unable to match REMOVAL R -> C in tb.u
+SDF WARNING: ivltests/recrem_cond_reject.sdf:3: conditional or hierarchical RECOVERY event not supported.
+SDF WARNING: ivltests/recrem_cond_reject.sdf:4: conditional or hierarchical REMOVAL event not supported.
 SDF WARNING: ivltests/recrem_cond_reject.sdf:5: conditional or hierarchical RECREM event not supported.
 RRC_OBJECT tb.u recrem R/posedge C/posedge limit=10 ticks=10 limit=6 ticks=6 events=1
 Timing violation: $recrem removal at 120 (module units), interval=5 limit=6, work/vlog95.v:66, scope=tb.u
