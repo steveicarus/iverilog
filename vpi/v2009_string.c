@@ -22,6 +22,7 @@
 # include  <ctype.h>
 # include  <math.h>
 # include  <stdlib.h>
+# include  <stdint.h>
 # include  <string.h>
 
 static PLI_INT32 one_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
@@ -184,7 +185,7 @@ static PLI_INT32 atoi_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       assert(arg);
       vpi_free_object(argv);
 
-      PLI_INT32 res = 0;
+      uint32_t res = 0;
 
       value.format = vpiStringVal;
       vpi_get_value(arg, &value);
@@ -201,7 +202,7 @@ static PLI_INT32 atoi_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       value.format = vpiIntVal;
-      value.value.integer = res;
+      value.value.integer = (PLI_INT32)res;
 
       vpi_put_value(callh, &value, 0, vpiNoDelay);
 
@@ -223,7 +224,7 @@ static PLI_INT32 atohex_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       assert(arg);
       vpi_free_object(argv);
 
-      PLI_INT32 res = 0;
+      uint32_t res = 0;
 
       value.format = vpiStringVal;
       vpi_get_value(arg, &value);
@@ -262,7 +263,7 @@ static PLI_INT32 atohex_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       value.format = vpiIntVal;
-      value.value.integer = res;
+      value.value.integer = (PLI_INT32)res;
 
       vpi_put_value(callh, &value, 0, vpiNoDelay);
 
@@ -284,7 +285,7 @@ static PLI_INT32 atooct_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       assert(arg);
       vpi_free_object(argv);
 
-      PLI_INT32 res = 0;
+      uint32_t res = 0;
 
       value.format = vpiStringVal;
       vpi_get_value(arg, &value);
@@ -313,7 +314,7 @@ static PLI_INT32 atooct_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       value.format = vpiIntVal;
-      value.value.integer = res;
+      value.value.integer = (PLI_INT32)res;
 
       vpi_put_value(callh, &value, 0, vpiNoDelay);
 
@@ -335,7 +336,7 @@ static PLI_INT32 atobin_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       assert(arg);
       vpi_free_object(argv);
 
-      PLI_INT32 res = 0;
+      uint32_t res = 0;
 
       value.format = vpiStringVal;
       vpi_get_value(arg, &value);
@@ -357,7 +358,7 @@ static PLI_INT32 atobin_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       }
 
       value.format = vpiIntVal;
-      value.value.integer = res;
+      value.value.integer = (PLI_INT32)res;
 
       vpi_put_value(callh, &value, 0, vpiNoDelay);
 
