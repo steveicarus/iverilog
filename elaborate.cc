@@ -4480,10 +4480,22 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 			      const netdarray_t*use_darray = dynamic_cast<const netdarray_t*>(ptype);
 			      ivl_assert(*this, use_darray);
 
+			      NetNet*static_net = nullptr;
+			      if (cls->get_prop_qual(pidx).test_static()) {
+				    perm_string pname = lex_strings.make(cls->get_prop_name(pidx));
+				    static_net = cls->find_static_property(pname);
+				    ivl_assert(*this, static_net);
+			      }
+
 			      if (queue && method_name == "push_back") {
 				    static const std::vector<perm_string> parm_names = {
 					  perm_string::literal("item")
 				    };
+				    if (static_net)
+					  return elaborate_queue_method_(des, scope, static_net,
+									method_name,
+									"$ivl_queue_method$push_back",
+									parm_names);
 				    return elaborate_queue_property_method_(des, scope, net, pidx,
 									    method_name,
 									    "$ivl_queue_method$push_back",
@@ -4493,6 +4505,11 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 				    static const std::vector<perm_string> parm_names = {
 					  perm_string::literal("item")
 				    };
+				    if (static_net)
+					  return elaborate_queue_method_(des, scope, static_net,
+									method_name,
+									"$ivl_queue_method$push_front",
+									parm_names);
 				    return elaborate_queue_property_method_(des, scope, net, pidx,
 									    method_name,
 									    "$ivl_queue_method$push_front",
@@ -4503,18 +4520,33 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 					  perm_string::literal("index"),
 					  perm_string::literal("item")
 				    };
+				    if (static_net)
+					  return elaborate_queue_method_(des, scope, static_net,
+									method_name,
+									"$ivl_queue_method$insert",
+									parm_names);
 				    return elaborate_queue_property_method_(des, scope, net, pidx,
 									    method_name,
 									    "$ivl_queue_method$insert",
 									    parm_names);
 			      }
 			      if (queue && method_name == "pop_front") {
+				    if (static_net)
+					  return elaborate_method_func_(scope, static_net,
+									use_darray->element_type(),
+									method_name,
+									"$ivl_queue_method$pop_front");
 				    return elaborate_method_property_func_(scope, net, pidx,
 									   use_darray->element_type(),
 									   method_name,
 									   "$ivl_queue_method$pop_front");
 			      }
 			      if (queue && method_name == "pop_back") {
+				    if (static_net)
+					  return elaborate_method_func_(scope, static_net,
+									use_darray->element_type(),
+									method_name,
+									"$ivl_queue_method$pop_back");
 				    return elaborate_method_property_func_(scope, net, pidx,
 									   use_darray->element_type(),
 									   method_name,
@@ -4524,18 +4556,32 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 				    static const std::vector<perm_string> parm_names = {
 					  perm_string::literal("index")
 				    };
+				    if (static_net)
+					  return elaborate_sys_task_method_(des, scope, static_net,
+									    method_name,
+									    "$ivl_darray_method$delete",
+									    parm_names);
 				    return elaborate_sys_task_property_method_(des, scope, net, pidx,
 									       method_name,
 									       "$ivl_darray_method$delete",
 									       parm_names);
 			      }
 			      if (method_name == "size") {
+				    if (static_net)
+					  return elaborate_method_func_(scope, static_net,
+									&netvector_t::atom2s32,
+									method_name, "$size");
 				    return elaborate_method_property_func_(scope, net, pidx,
 									   &netvector_t::atom2s32,
 									   method_name, "$size");
 			      }
 			      if (method_name == "reverse") {
 				    static const std::vector<perm_string> parm_names;
+				    if (static_net)
+					  return elaborate_sys_task_method_(des, scope, static_net,
+									    method_name,
+									    "$ivl_darray_method$reverse",
+									    parm_names);
 				    return elaborate_sys_task_property_method_(des, scope, net, pidx,
 									       method_name,
 									       "$ivl_darray_method$reverse",
@@ -4543,6 +4589,11 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "sort") {
 				    static const std::vector<perm_string> parm_names;
+				    if (static_net)
+					  return elaborate_sys_task_method_(des, scope, static_net,
+									    method_name,
+									    "$ivl_darray_method$sort",
+									    parm_names);
 				    return elaborate_sys_task_property_method_(des, scope, net, pidx,
 									       method_name,
 									       "$ivl_darray_method$sort",
@@ -4550,6 +4601,11 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "rsort") {
 				    static const std::vector<perm_string> parm_names;
+				    if (static_net)
+					  return elaborate_sys_task_method_(des, scope, static_net,
+									    method_name,
+									    "$ivl_darray_method$rsort",
+									    parm_names);
 				    return elaborate_sys_task_property_method_(des, scope, net, pidx,
 									       method_name,
 									       "$ivl_darray_method$rsort",
@@ -4557,6 +4613,11 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 			      }
 			      if (method_name == "shuffle") {
 				    static const std::vector<perm_string> parm_names;
+				    if (static_net)
+					  return elaborate_sys_task_method_(des, scope, static_net,
+									    method_name,
+									    "$ivl_darray_method$shuffle",
+									    parm_names);
 				    return elaborate_sys_task_property_method_(des, scope, net, pidx,
 									       method_name,
 									       "$ivl_darray_method$shuffle",
@@ -7533,7 +7594,7 @@ void PPeriod::elaborate(Design*des, NetScope*scope) const
       scope->add_period(std::move(check));
 }
 
-/* Standalone SETUP/HOLD retain a qualifier independently for each event.
+/* Standalone two-event checks retain a qualifier independently for each event.
  * Edge-descriptor lists remain unsupported. */
 static bool timing_check_event(Design*des, NetScope*scope, const LineInfo&loc,
                                 const PTimingCheck::event_t&event,
@@ -7624,32 +7685,17 @@ void PHold::elaborate(Design*des, NetScope*scope) const
       scope->add_hold(std::move(check));
 }
 
-/* RECOVERY, REMOVAL and RECREM use unconditional events. */
-static bool unconditional_timing_check_event(Design*des, const LineInfo&loc,
-                                              const PTimingCheck::event_t&event,
-                                              const char*kind, const char*role,
-                                              int&edge)
-{
-      if (event.condition || !event.edges.empty() ||
-          (event.posedge && event.negedge)) {
-            cerr << loc.get_fileline() << ": error: " << kind << " " << role
-                 << " supports only unconditional scalar events with no edge,"
-                 << " posedge or negedge." << endl;
-            des->errors += 1;
-            return false;
-      }
-      edge = event.posedge ? 1 : event.negedge ? -1 : 0;
-      return true;
-}
-
 void PRecovery::elaborate(Design*des, NetScope*scope) const
 {
       if (!gn_specify_blocks_flag) return;
       int reference_edge, data_edge;
-      if (!unconditional_timing_check_event(des, *this, *reference_, "$recovery",
-                                            "reference", reference_edge) ||
-          !unconditional_timing_check_event(des, *this, *data_, "$recovery",
-                                            "data", data_edge))
+      NetNet*reference_condition, *data_condition;
+      ivl_tchk_cond_t reference_condition_kind, data_condition_kind;
+      if (!timing_check_event(des, scope, *this, *reference_, "$recovery", "reference",
+                              reference_edge, reference_condition,
+                              reference_condition_kind) ||
+          !timing_check_event(des, scope, *this, *data_, "$recovery", "data",
+                              data_edge, data_condition, data_condition_kind))
             return;
       NetNet*reference = timing_check_signal(des, scope, reference_->name,
                                              *this, "$recovery", false);
@@ -7664,8 +7710,9 @@ void PRecovery::elaborate(Design*des, NetScope*scope) const
                                  "$recovery", "limit", limit)) return;
       std::unique_ptr<NetRecovery> check(new NetRecovery(scope, reference, data,
                                           notifier, reference_edge, data_edge,
-                                          limit, nullptr, IVL_TCHK_COND_NONE,
-                                          nullptr, IVL_TCHK_COND_NONE));
+                                          limit, reference_condition,
+                                          reference_condition_kind,
+                                          data_condition, data_condition_kind));
       check->set_line(*this);
       scope->add_recovery(std::move(check));
 }
@@ -7674,10 +7721,13 @@ void PRemoval::elaborate(Design*des, NetScope*scope) const
 {
       if (!gn_specify_blocks_flag) return;
       int reference_edge, data_edge;
-      if (!unconditional_timing_check_event(des, *this, *reference_, "$removal",
-                                            "reference", reference_edge) ||
-          !unconditional_timing_check_event(des, *this, *data_, "$removal",
-                                            "data", data_edge))
+      NetNet*reference_condition, *data_condition;
+      ivl_tchk_cond_t reference_condition_kind, data_condition_kind;
+      if (!timing_check_event(des, scope, *this, *reference_, "$removal", "reference",
+                              reference_edge, reference_condition,
+                              reference_condition_kind) ||
+          !timing_check_event(des, scope, *this, *data_, "$removal", "data",
+                              data_edge, data_condition, data_condition_kind))
             return;
       NetNet*reference = timing_check_signal(des, scope, reference_->name,
                                              *this, "$removal", false);
@@ -7692,10 +7742,27 @@ void PRemoval::elaborate(Design*des, NetScope*scope) const
                                  "$removal", "limit", limit)) return;
       std::unique_ptr<NetRemoval> check(new NetRemoval(scope, reference, data,
                                           notifier, reference_edge, data_edge,
-                                          limit, nullptr, IVL_TCHK_COND_NONE,
-                                          nullptr, IVL_TCHK_COND_NONE));
+                                          limit, reference_condition,
+                                          reference_condition_kind,
+                                          data_condition, data_condition_kind));
       check->set_line(*this);
       scope->add_removal(std::move(check));
+}
+
+static bool recrem_timing_check_event(Design*des, const LineInfo&loc,
+                                     const PTimingCheck::event_t&event,
+                                     const char*role, int&edge)
+{
+      if (event.condition || !event.edges.empty() ||
+          (event.posedge && event.negedge)) {
+            cerr << loc.get_fileline() << ": error: $recrem " << role
+                 << " supports only unconditional scalar events with no edge,"
+                 << " posedge or negedge." << endl;
+            des->errors += 1;
+            return false;
+      }
+      edge = event.posedge ? 1 : event.negedge ? -1 : 0;
+      return true;
 }
 
 void PRecRem::elaborate(Design*des, NetScope*scope) const
@@ -7708,11 +7775,10 @@ void PRecRem::elaborate(Design*des, NetScope*scope) const
                   return;
             }
             int reference_edge, data_edge;
-            if (!unconditional_timing_check_event(des, *this, *reference_event_,
-                                                  "$recrem", "reference",
-                                                  reference_edge) ||
-                !unconditional_timing_check_event(des, *this, *data_event_,
-                                                  "$recrem", "data", data_edge))
+            if (!recrem_timing_check_event(des, *this, *reference_event_,
+                                           "reference", reference_edge) ||
+                !recrem_timing_check_event(des, *this, *data_event_,
+                                           "data", data_edge))
                   return;
             NetNet*reference = timing_check_signal(des, scope, reference_event_->name,
                                                    *this, "$recrem", false);

@@ -4,5 +4,5 @@
 module rr_nested(R,C);input R,C;endmodule
 module tb(R,C);
  input R,C;reg n;wire EN=1;
- specify $recovery(posedge R &&& EN,posedge C,10,n);endspecify
+ specify $recovery(posedge R &&& (EN && EN),posedge C,10,n);endspecify
 endmodule

@@ -842,6 +842,8 @@ struct ivl_hold_s {
 struct ivl_recovery_s {
       ivl_scope_t scope;
       ivl_signal_t reference, data, notifier;
+      ivl_signal_t reference_condition, data_condition;
+      ivl_tchk_cond_t reference_condition_kind, data_condition_kind;
       int reference_edge, data_edge;
       double limit;
       perm_string file;
@@ -852,6 +854,8 @@ struct ivl_recovery_s {
 struct ivl_removal_s {
       ivl_scope_t scope;
       ivl_signal_t reference, data, notifier;
+      ivl_signal_t reference_condition, data_condition;
+      ivl_tchk_cond_t reference_condition_kind, data_condition_kind;
       int reference_edge, data_edge;
       double limit;
       perm_string file;

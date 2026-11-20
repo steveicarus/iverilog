@@ -1,0 +1,12 @@
+(DELAYFILE (SDFVERSION "3.0") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "conditional") (INSTANCE c) (TIMINGCHECK
+  (RECOVERY (COND RE R) (posedge C) (30:30:30))
+  (REMOVAL (COND RE R) (posedge C) (30:30:30))
+  (RECOVERY R (COND CE (posedge C)) (30:30:30))
+  (REMOVAL R (COND CE (posedge C)) (30:30:30))))
+ (CELL (CELLTYPE "unconditional") (INSTANCE u) (TIMINGCHECK
+  (RECOVERY (COND RE R) (posedge C) (30:30:30))
+  (REMOVAL (COND RE R) (posedge C) (30:30:30))
+  (RECOVERY R (COND CE (posedge C)) (30:30:30))
+  (REMOVAL R (COND CE (posedge C)) (30:30:30))))
+)
