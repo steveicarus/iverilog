@@ -19,6 +19,7 @@
 
 # include  "event.h"
 # include  "compile.h"
+# include  "part.h"
 # include  "vthread.h"
 # include  "schedule.h"
 # include  "vpi_priv.h"
@@ -978,6 +979,36 @@ void vvp_named_event_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 
 static void compile_event_or(char*label, unsigned argc, struct symb_s*argv);
 
+/*
+ * An event expression that is a constant bit or part select, such as
+ * @(a[3:2]), reaches the event through a .part functor. In a static
+ * scope that functor sends its output from a scheduled event, so the
+ * changes of its input before that event runs are merged. If the
+ * selected bits change and change back, the event sees no change,
+ * although a process woken by another input of the event may already
+ * have read the changed value, and the process is not run again. So
+ * find the source of each event input, and if it is such a part
+ * select, have it send the change it would otherwise merge away (see
+ * vvp_fun_part_sa). The link itself is made, and an unresolved label
+ * reported, by inputs_connect().
+ */
+struct event_input_resolv_list_s : public resolv_list_s {
+      explicit event_input_resolv_list_s(char*lab) : resolv_list_s(lab) { }
+      bool resolve(bool mes) override;
+};
+
+bool event_input_resolv_list_s::resolve(bool mes)
+{
+      vvp_net_t*net = vvp_net_lookup(label());
+      if (net == 0)
+	    return mes;
+
+      if (vvp_fun_part_sa*part = dynamic_cast<vvp_fun_part_sa*>(net->fun))
+	    part->set_event_input();
+
+      return true;
+}
+
 void compile_event(char*label, char*type, unsigned argc, struct symb_s*argv)
 {
       vvp_net_fun_t*fun = 0;
@@ -1024,6 +1055,13 @@ void compile_event(char*label, char*type, unsigned argc, struct symb_s*argv)
 
       define_functor_symbol(label, ptr);
       free(label);
+
+      for (unsigned idx = 0 ;  idx < argc ;  idx += 1) {
+	    const char*text = argv[idx].text;
+	    if (! (c4string_test(text) || c8string_test(text)
+	           || crstring_test(text)))
+		  resolv_submit(new event_input_resolv_list_s(strdup(text)));
+      }
 
       inputs_connect(ptr, argc, argv);
       free(argv);

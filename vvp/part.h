@@ -43,13 +43,26 @@ class vvp_fun_part  : public vvp_net_fun_t {
 };
 
 /*
- * Statically allocated vvp_fun_part.
+ * Statically allocated vvp_fun_part. The output is sent from a
+ * scheduled event, so all the changes of the input before that event
+ * runs are merged. If the selected bits change and change back, the
+ * output does not change. That loses an event when the part select
+ * feeds an event functor: a process woken by another input of the
+ * event may have read the changed value, and then misses the change
+ * back. For such a part select compile_event() calls
+ * set_event_input(), and then the first changed value is sent before
+ * the final one whenever the final value equals the value last sent.
  */
 class vvp_fun_part_sa  : public vvp_fun_part, public vvp_gen_event_s {
 
     public:
       vvp_fun_part_sa(unsigned base, unsigned wid);
       ~vvp_fun_part_sa() override;
+
+      vvp_fun_part_sa(const vvp_fun_part_sa&) = delete;
+      vvp_fun_part_sa& operator=(const vvp_fun_part_sa&) = delete;
+
+      void set_event_input();
 
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -64,6 +77,12 @@ class vvp_fun_part_sa  : public vvp_fun_part, public vvp_gen_event_s {
     private:
       vvp_vector4_t val_;
       vvp_net_t*net_;
+	// Only for an event input: the value last sent and the first
+	// value received after it.
+      struct changes_s {
+	    vvp_vector4_t sent;
+	    vvp_vector4_t first;
+      } *changes_;
 };
 
 /*
