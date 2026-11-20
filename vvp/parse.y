@@ -126,7 +126,7 @@ static struct __vpiModPath*modpath_dst = 0;
 
 %type <flag>  local_flag
 %type <vpi_enum> port_type
-%type <numb>  signed_t_number
+%type <numb>  signed_t_number pulse_condition_form_opt
 %type <numb>  dimension dimensions dimensions_opt
 %type <symb>  symbol symbol_opt
 %type <symbv> symbols symbols_net
@@ -741,8 +741,8 @@ statement
 		{ compile_scope_recall($2); }
 
 
-  /* WIDTH/PERIOD limits use the recalled module's units. Optional trailing
-     condition signal and binary value preserve the unconditional record form. */
+  /* WIDTH/PERIOD limits use the recalled module's units. A qualified record
+     carries its truth table and may also identify the source expression. */
 
         | K_TCHK_WIDTH T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_SYMBOL ';'
                 { compile_tchk_width($2, $3, $5, $7, $9, $11, $13); }
@@ -751,12 +751,12 @@ statement
                   char* notifier = strdup($13);
                   delete[] $13;
                   compile_tchk_width($2, $3, $5, $7, $9, $11, notifier); }
-        | K_TCHK_WIDTH T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_SYMBOL ',' T_SYMBOL ',' T_NUMBER ';'
-                { compile_tchk_width($2, $3, $5, $7, $9, $11, $13, $15, $17); }
-        | K_TCHK_WIDTH T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_STRING ',' T_SYMBOL ',' T_NUMBER ';'
+        | K_TCHK_WIDTH T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_SYMBOL ',' T_SYMBOL ',' T_NUMBER pulse_condition_form_opt ';'
+                { compile_tchk_width($2, $3, $5, $7, $9, $11, $13, $15, $17, $18); }
+        | K_TCHK_WIDTH T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_STRING ',' T_SYMBOL ',' T_NUMBER pulse_condition_form_opt ';'
                 { char* notifier = strdup($13);
                   delete[] $13;
-                  compile_tchk_width($2, $3, $5, $7, $9, $11, notifier, $15, $17); }
+                  compile_tchk_width($2, $3, $5, $7, $9, $11, notifier, $15, $17, $18); }
 
         | K_TCHK_PERIOD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_SYMBOL ';'
                 { compile_tchk_period($2, $3, $5, $7, $9, $11); }
@@ -765,12 +765,12 @@ statement
                   char* notifier = strdup($11);
                   delete[] $11;
                   compile_tchk_period($2, $3, $5, $7, $9, notifier); }
-        | K_TCHK_PERIOD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_SYMBOL ',' T_SYMBOL ',' T_NUMBER ';'
-                { compile_tchk_period($2, $3, $5, $7, $9, $11, $13, $15); }
-        | K_TCHK_PERIOD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_STRING ',' T_SYMBOL ',' T_NUMBER ';'
+        | K_TCHK_PERIOD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_SYMBOL ',' T_SYMBOL ',' T_NUMBER pulse_condition_form_opt ';'
+                { compile_tchk_period($2, $3, $5, $7, $9, $11, $13, $15, $16); }
+        | K_TCHK_PERIOD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_REAL ',' T_STRING ',' T_SYMBOL ',' T_NUMBER pulse_condition_form_opt ';'
                 { char* notifier = strdup($11);
                   delete[] $11;
-                  compile_tchk_period($2, $3, $5, $7, $9, notifier, $13, $15); }
+                  compile_tchk_period($2, $3, $5, $7, $9, notifier, $13, $15, $16); }
 
         | K_TCHK_RECREM T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_SYMBOL ';'
                 { compile_tchk_recrem($2, $3, $5, $7, $9, $11, $13, $15, $17); }
@@ -1161,6 +1161,11 @@ local_flag
   : '*' { $$ = true; }
   |     { $$ = false; }
   ;
+
+pulse_condition_form_opt
+        : ',' T_NUMBER { $$ = $2; }
+        |              { $$ = 3; }
+        ;
 
   /* There are a few places where the label is optional. This rule
      returns the label value if present, or 0 if not. */

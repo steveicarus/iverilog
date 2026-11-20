@@ -1,0 +1,16 @@
+(DELAYFILE (SDFVERSION "3.0") (DIVIDER /) (TIMESCALE 1ps)
+ (CELL (CELLTYPE "dut") (INSTANCE u) (TIMINGCHECK
+  (WIDTH (COND E == 1'b1 (posedge C)) (99:99:99))
+  (WIDTH (COND !E (posedge C)) (99:99:99))
+  (WIDTH (COND E[0] (posedge C)) (99:99:99))
+  (WIDTH (COND sub/E (posedge C)) (99:99:99))
+  (WIDTH (COND E != 1'b1 (posedge C)) (99:99:99))
+  (WIDTH (COND F (posedge C)) (99:99:99))
+  (WIDTH (COND E === 1'b1 (posedge C)) (99:99:99))
+  (WIDTH (COND E === 1'b0 (posedge C)) (99:99:99))
+  (WIDTH (COND E (negedge C)) (99:99:99))
+ ))
+ (CELL (CELLTYPE "dut") (INSTANCE valid) (TIMINGCHECK
+  (WIDTH (COND E (posedge C)) (20:20:20))
+ ))
+)

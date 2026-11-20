@@ -1,0 +1,18 @@
+{
+  "type": "normal",
+  "source": "width_sdf_cond_reject.v",
+  "iverilog-args": [
+    "-g2012",
+    "-gspecify",
+    "-Ttyp",
+    "-s",
+    "tb"
+  ],
+  "vpi-sources": [
+    "vpi/pulse_sdf_cond_audit.c"
+  ],
+  "gold": "width_sdf_cond_reject",
+  "vlog95": {
+    "gold": "width_sdf_cond_reject_vlog95"
+  }
+}

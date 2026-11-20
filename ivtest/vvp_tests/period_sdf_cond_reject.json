@@ -1,0 +1,18 @@
+{
+  "type": "normal",
+  "source": "period_sdf_cond_reject.v",
+  "iverilog-args": [
+    "-g2012",
+    "-gspecify",
+    "-Ttyp",
+    "-s",
+    "tb"
+  ],
+  "vpi-sources": [
+    "vpi/pulse_sdf_cond_audit.c"
+  ],
+  "gold": "period_sdf_cond_reject",
+  "vlog95": {
+    "gold": "period_sdf_cond_reject_vlog95"
+  }
+}

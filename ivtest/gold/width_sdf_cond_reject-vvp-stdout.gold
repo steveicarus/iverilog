@@ -1,0 +1,17 @@
+SDF WARNING: ivltests/width_sdf_cond_reject.sdf:3: conditional or hierarchical WIDTH event not supported.
+SDF WARNING: ivltests/width_sdf_cond_reject.sdf:4: WIDTH COND uses unsupported logical '!'. It cannot match a standard SystemVerilog specify timing-check condition.
+SDF WARNING: ivltests/width_sdf_cond_reject.sdf:5: conditional or hierarchical WIDTH event not supported.
+SDF WARNING: ivltests/width_sdf_cond_reject.sdf:6: conditional or hierarchical WIDTH event not supported.
+SDF WARNING: ivltests/width_sdf_cond_reject.sdf:7: conditional or hierarchical WIDTH event not supported.
+SDF ERROR: ivltests/width_sdf_cond_reject.sdf:8: Unable to match WIDTH posedge C in tb.u
+SDF ERROR: ivltests/width_sdf_cond_reject.sdf:9: Unable to match WIDTH posedge C in tb.u
+SDF ERROR: ivltests/width_sdf_cond_reject.sdf:10: Unable to match WIDTH posedge C in tb.u
+SDF ERROR: ivltests/width_sdf_cond_reject.sdf:11: Unable to match WIDTH negedge C in tb.u
+Timing violation: $width at 115 (module units), width=15 limit=20 threshold=0, ivltests/width_sdf_cond_reject.v:7, scope=tb.valid
+PULSE_CHANGE tb.valid.n 115 1
+PULSE_TCHK tb.valid.n 115
+Timing violation: $width at 145 (module units), width=15 limit=20 threshold=0, ivltests/width_sdf_cond_reject.v:7, scope=tb.valid
+PULSE_CHANGE tb.valid.n 145 0
+PULSE_TCHK tb.valid.n 145
+PASSED
+ivltests/width_sdf_cond_reject.v:20: $finish called at 160 (1ps)

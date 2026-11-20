@@ -2394,6 +2394,22 @@ static unsigned timing_condition_code(ivl_tchk_cond_t kind)
       }
 }
 
+/* The first field selects the runtime truth table. An optional second
+ * field names the declared expression for VPI/SDF matching. Older VVP
+ * records contain the truth table alone, which cannot identify a source
+ * expression: for example, ~EN and EN === 1'b0 both use table 0. */
+static void draw_pulse_condition(ivl_signal_t signal, ivl_tchk_cond_t kind)
+{
+      if (!signal) return;
+      fprintf(vvp_out, ", v%p_0, %u", signal, timing_condition_code(kind));
+      switch (kind) {
+          case IVL_TCHK_COND_CASE_EQ0: fprintf(vvp_out, ", 0"); break;
+          case IVL_TCHK_COND_CASE_EQ1: fprintf(vvp_out, ", 1"); break;
+          case IVL_TCHK_COND_BARE:     fprintf(vvp_out, ", 2"); break;
+          default: break;
+      }
+}
+
 /* Emit exactly one record for each elaborated declaration, after its signals. */
 static void draw_width_in_scope(ivl_width_t check)
 {
@@ -2405,10 +2421,7 @@ static void draw_width_in_scope(ivl_width_t check)
               ivl_width_threshold(check));
       if (notifier) fprintf(vvp_out, "v%p_0", notifier);
       else fprintf(vvp_out, "\"\"");
-      ivl_signal_t condition = ivl_width_condition(check);
-      if (condition)
-            fprintf(vvp_out, ", v%p_0, %u", condition,
-                    timing_condition_code(ivl_width_condition_kind(check)));
+      draw_pulse_condition(ivl_width_condition(check), ivl_width_condition_kind(check));
       fprintf(vvp_out, ";\n");
 }
 
@@ -2426,10 +2439,7 @@ static void draw_period_in_scope(ivl_period_t check)
               ivl_period_reference(check), ivl_period_limit(check));
       if (notifier) fprintf(vvp_out, "v%p_0", notifier);
       else fprintf(vvp_out, "\"\"");
-      ivl_signal_t condition = ivl_period_condition(check);
-      if (condition)
-            fprintf(vvp_out, ", v%p_0, %u", condition,
-                    timing_condition_code(ivl_period_condition_kind(check)));
+      draw_pulse_condition(ivl_period_condition(check), ivl_period_condition_kind(check));
       fprintf(vvp_out, ";\n");
 }
 

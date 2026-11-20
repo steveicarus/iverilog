@@ -552,21 +552,15 @@ tchk_def
   | '(' K_WIDTH scalar_port_tchk rvalue ')'
       { if ($3.condition.logical_not_line)
               warn_timing_check_logical_not("WIDTH", $3.condition.logical_not_line);
-        else if ($3.port.string_val && $3.condition.kind == SDF_TCHK_COND_NONE)
-              sdf_width_limits($3.port.vpi_edge, $3.port.string_val, $4, @2.first_line);
         else
-              vpi_printf("SDF WARNING: %s:%d: conditional or hierarchical WIDTH event not supported.\n",
-                         sdf_parse_path, @2.first_line);
+              sdf_width_limits($3, $4, @2.first_line);
         free($3.port.string_val); free($3.condition.name);
       }
   | '(' K_PERIOD scalar_port_tchk rvalue ')'
       { if ($3.condition.logical_not_line)
               warn_timing_check_logical_not("PERIOD", $3.condition.logical_not_line);
-        else if ($3.port.string_val && $3.condition.kind == SDF_TCHK_COND_NONE)
-              sdf_period_limits($3.port.vpi_edge, $3.port.string_val, $4, @2.first_line);
         else
-              vpi_printf("SDF WARNING: %s:%d: conditional or hierarchical PERIOD event not supported.\n",
-                         sdf_parse_path, @2.first_line);
+              sdf_period_limits($3, $4, @2.first_line);
         free($3.port.string_val); free($3.condition.name);
       }
   ;

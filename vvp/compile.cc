@@ -2246,12 +2246,22 @@ void compile_island(char*label, char*type)
       free(type);
 }
 
+/* A missing expression (3) is valid for any of the four evaluation tables.
+ * The optional forms use the same 0/1 case equality and 2 bare encoding
+ * as the two-event VPI terminal. */
+static bool valid_pulse_condition(uint64_t code, uint64_t form)
+{
+      if (form == 3) return code <= 3;
+      return form <= 2 && code == (form == 0 ? 0u : 1u);
+}
+
 /* Adapted from the unconditional WIDTH runtime hookup in Leo Moser's
  * timingcheck-width work. The compiler now supplies real declarations. */
 void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
                         struct symb_s reference, double limit,
                         double threshold, char* notifier,
-                        char* condition, uint64_t condition_code)
+                        char* condition, uint64_t condition_code,
+                        uint64_t condition_form)
 {
       int start_edge = 0;
       if (strcmp(edge, "posedge") == 0) start_edge = 1;
@@ -2259,7 +2269,7 @@ void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
       delete[] edge;
       __vpiScope* scope = vpip_peek_current_scope();
       vvp_time64_t limit_ticks, threshold_ticks;
-      if (!start_edge || condition_code > 3 ||
+      if (!start_edge || !valid_pulse_condition(condition_code, condition_form) ||
           !vpip_tchk_delay_to_ticks(limit, scope, limit_ticks) ||
           !vpip_tchk_delay_to_ticks(threshold, scope, threshold_ticks)) {
             yyerror("invalid WIDTH edge/condition or unrepresentable limit/threshold");
@@ -2274,7 +2284,7 @@ void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
                                                      limit_ticks, threshold_ticks,
                                                      condition_code);
       net->fun = fun;
-      __vpiTchkWidth* obj = new __vpiTchkWidth(scope, file_idx, lineno, fun);
+      __vpiTchkWidth* obj = new __vpiTchkWidth(scope, file_idx, lineno, fun, condition_form);
       fun->vpi_tchk = obj;
       input_connect(net, 0, strdup(reference.text));
       compile_vpi_lookup(&obj->reference_, reference.text);
@@ -2286,7 +2296,8 @@ void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
 
 void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
                         struct symb_s reference, double limit, char* notifier,
-                        char* condition, uint64_t condition_code)
+                        char* condition, uint64_t condition_code,
+                         uint64_t condition_form)
 {
       int reference_edge = 0;
       if (strcmp(edge, "posedge") == 0) reference_edge = 1;
@@ -2294,7 +2305,7 @@ void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
       delete[] edge;
       __vpiScope* scope = vpip_peek_current_scope();
       vvp_time64_t limit_ticks;
-      if (!reference_edge || condition_code > 3 ||
+      if (!reference_edge || !valid_pulse_condition(condition_code, condition_form) ||
           !vpip_tchk_delay_to_ticks(limit, scope, limit_ticks)) {
             yyerror("invalid PERIOD edge/condition or unrepresentable limit");
             free(reference.text);
@@ -2307,7 +2318,7 @@ void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
       vvp_fun_tchk_period* fun = new vvp_fun_tchk_period(reference_edge,
                                                      limit_ticks, condition_code);
       net->fun = fun;
-      __vpiTchkPeriod* obj = new __vpiTchkPeriod(scope, file_idx, lineno, fun);
+      __vpiTchkPeriod* obj = new __vpiTchkPeriod(scope, file_idx, lineno, fun, condition_form);
       fun->vpi_tchk = obj;
       input_connect(net, 0, strdup(reference.text));
       compile_vpi_lookup(&obj->reference_, reference.text);

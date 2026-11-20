@@ -455,6 +455,8 @@ period_hdl_sdf_units	vvp_tests/period_hdl_sdf_units.json
 period_hdl_startup	vvp_tests/period_hdl_startup.json
 period_hdl_units	vvp_tests/period_hdl_units.json
 period_hdl_vector_fail	vvp_tests/period_hdl_vector_fail.json
+period_sdf_cond_reject	vvp_tests/period_sdf_cond_reject.json
+period_sdf_cond_select	vvp_tests/period_sdf_cond_select.json
 plusargs_dec_underscore		vvp_tests/plusargs_dec_underscore.json
 port_concat_coercion		vvp_tests/port_concat_coercion.json
 port_concat_output_coercion	vvp_tests/port_concat_output_coercion.json
@@ -498,6 +500,8 @@ pulse_cond_startup_early	vvp_tests/pulse_cond_startup_early.json
 pulse_cond_threshold	vvp_tests/pulse_cond_threshold.json
 pulse_cond_width	vvp_tests/pulse_cond_width.json
 pulse_cond_width_negedge	vvp_tests/pulse_cond_width_negedge.json
+pulse_sdf_cond_escaped	vvp_tests/pulse_sdf_cond_escaped.json
+pulse_sdf_cond_wildcard	vvp_tests/pulse_sdf_cond_wildcard.json
 pv_wr_fn_vec2			vvp_tests/pv_wr_fn_vec2.json
 pv_wr_fn_vec4			vvp_tests/pv_wr_fn_vec4.json
 queue_bounded_pattern_integer	vvp_tests/queue_bounded_pattern_integer.json
@@ -1530,6 +1534,8 @@ width_hdl_startup	vvp_tests/width_hdl_startup.json
 width_hdl_threshold	vvp_tests/width_hdl_threshold.json
 width_hdl_units	vvp_tests/width_hdl_units.json
 width_hdl_vector_fail	vvp_tests/width_hdl_vector_fail.json
+width_sdf_cond_reject	vvp_tests/width_sdf_cond_reject.json
+width_sdf_cond_select	vvp_tests/width_sdf_cond_select.json
 wild_cmp_delay			vvp_tests/wild_cmp_delay.json
 wreal				vvp_tests/wreal.json
 writemem-invalid		vvp_tests/writemem-invalid.json
