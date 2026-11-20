@@ -221,6 +221,10 @@ extern int sdfparse(void);
 void sdf_process_file(FILE*fd, const char*path)
 {
       yyrestart(fd);
+      sdflloc.first_line = 1;
+      sdflloc.first_column = 1;
+      sdflloc.last_line = 1;
+      sdflloc.last_column = 1;
 
       sdf_parse_path = path;
       sdfparse();
