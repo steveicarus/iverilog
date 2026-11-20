@@ -1,0 +1,2 @@
+ivltests/recrem_hdl_timestamp_fail.v:7: error: $recrem timestamp/timecheck conditions and delayed signals are not supported.
+1 error(s) during elaboration.

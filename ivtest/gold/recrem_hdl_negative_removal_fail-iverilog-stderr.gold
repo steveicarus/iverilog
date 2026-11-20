@@ -1,0 +1,2 @@
+ivltests/recrem_hdl_negative_removal_fail.v:7: error: $recrem removal limit must be a finite nonnegative constant.
+1 error(s) during elaboration.

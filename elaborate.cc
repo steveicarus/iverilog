@@ -7749,11 +7749,59 @@ void PRemoval::elaborate(Design*des, NetScope*scope) const
       scope->add_removal(std::move(check));
 }
 
+static bool recrem_timing_check_event(Design*des, const LineInfo&loc,
+                                     const PTimingCheck::event_t&event,
+                                     const char*role, int&edge)
+{
+      if (event.condition || !event.edges.empty() ||
+          (event.posedge && event.negedge)) {
+            cerr << loc.get_fileline() << ": error: $recrem " << role
+                 << " supports only unconditional scalar events with no edge,"
+                 << " posedge or negedge." << endl;
+            des->errors += 1;
+            return false;
+      }
+      edge = event.posedge ? 1 : event.negedge ? -1 : 0;
+      return true;
+}
+
 void PRecRem::elaborate(Design*des, NetScope*scope) const
 {
-      // This fallback does not create a $recrem timing check.
-      // It only connects the original reference and data signals to
-      // the optional delayed signals per 15.5.4 Option behavior.
+      if (gn_specify_blocks_flag) {
+            if (timestamp_cond_ || timecheck_cond_ || delayed_reference_ || delayed_data_) {
+                  cerr << get_fileline() << ": error: $recrem timestamp/timecheck"
+                       << " conditions and delayed signals are not supported." << endl;
+                  des->errors += 1;
+                  return;
+            }
+            int reference_edge, data_edge;
+            if (!recrem_timing_check_event(des, *this, *reference_event_,
+                                           "reference", reference_edge) ||
+                !recrem_timing_check_event(des, *this, *data_event_,
+                                           "data", data_edge))
+                  return;
+            NetNet*reference = timing_check_signal(des, scope, reference_event_->name,
+                                                   *this, "$recrem", false);
+            NetNet*data = timing_check_signal(des, scope, data_event_->name,
+                                              *this, "$recrem", false, "data");
+            NetNet*notifier = notifier_ ? timing_check_signal(des, scope, *notifier_,
+                                                             *this, "$recrem", true)
+                                        : nullptr;
+            if (!reference || !data || (notifier_ && !notifier)) return;
+            double recovery_limit = 0.0, removal_limit = 0.0;
+            if (!timing_check_constant(des, scope, setup_limit_.get(), *this,
+                                       "$recrem", "recovery limit", recovery_limit) ||
+                !timing_check_constant(des, scope, hold_limit_.get(), *this,
+                                       "$recrem", "removal limit", removal_limit)) return;
+            std::unique_ptr<NetRecRem> check(new NetRecRem(scope, reference,
+                  data, notifier, reference_edge, data_edge, recovery_limit, removal_limit));
+            check->set_line(*this);
+            scope->add_recrem(std::move(check));
+            return;
+      }
+
+      // Preserve the historical delayed-terminal copies when specify timing
+      // is disabled. They do not create a runtime timing check.
 
       if (delayed_reference_ != nullptr)
       {

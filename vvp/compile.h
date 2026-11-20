@@ -572,7 +572,14 @@ extern void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
                                  char* notifier, char* condition = nullptr,
                                  uint64_t condition_value = 1);
 
-// SETUP/HOLD records use normalized reference/data order for both checks.
+// RECREM records preserve control/reference and clock/data order.
+extern void compile_tchk_recrem(unsigned file_idx, unsigned lineno,
+                                   char* reference_edge_text, struct symb_s reference,
+                                   char* data_edge_text, struct symb_s data,
+                                   double recovery_limit, double removal_limit,
+                                   char* notifier);
+
+// Standalone checks use normalized reference/data order.
 extern void compile_tchk_two_event(int kind, unsigned file_idx, unsigned lineno,
                                     char* reference_edge, struct symb_s reference,
                                     char* data_edge, struct symb_s data,

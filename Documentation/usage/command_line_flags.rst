@@ -141,6 +141,8 @@ These flags affect the general behavior of the compiler.
     Each event in these checks can independently use a local scalar
     ``&&&`` qualifier: a bare signal, ``signal === 1'b0``, or
     ``signal === 1'b1``.
+    VVP also implements unconditional local scalar ``$recrem`` with finite
+    nonnegative limits and an optional scalar notifier.
 
   * std-include/no-std-include
 
