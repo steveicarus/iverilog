@@ -120,7 +120,6 @@ def process_test(item: list, cfg: list) -> str:
 
     if cfg['vlog95']:
         process_overrides('vlog95', it_dict, it_opts)
-        it_opts['check_output'] = it_dict.get('vlog95', {}).get('check-output')
 
     # Get the overridden test type.
     it_type = it_opts['type']

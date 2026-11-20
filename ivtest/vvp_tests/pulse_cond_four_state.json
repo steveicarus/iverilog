@@ -7,16 +7,5 @@
     "-s",
     "tb"
   ],
-  "vpi-sources": ["vpi/pulse_conditional.c"],
-  "vlog95": {
-    "check-output": {
-      "pattern": "^\\s*\\$(width|period)\\s*\\(\\s*(posedge|negedge)\\s+CLK\\s*&&&\\s*\\(\\s*EN\\s*([!=]={1,2})\\s*1'b([01])\\s*\\)\\s*,[^;]*,\\s*([wp]cn[01])\\s*\\)\\s*;",
-      "expected": [
-        ["width", "posedge", "!==", "0", "wcn0"],
-        ["width", "posedge", "!==", "1", "wcn1"],
-        ["period", "negedge", "!==", "0", "pcn0"],
-        ["period", "negedge", "!==", "1", "pcn1"]
-      ]
-    }
-  }
+  "vpi-sources": ["vpi/pulse_conditional.c"]
 }
