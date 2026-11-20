@@ -40,10 +40,14 @@ module main;
 
     // handle vs null still works
     if (a == null) begin $display("FAILED: a == null"); errors += 1; end
+    if (null == a) begin $display("FAILED: null == a"); errors += 1; end
     if (!(n == null)) begin $display("FAILED: n == null"); errors += 1; end
+    if (!(null == n)) begin $display("FAILED: null == n"); errors += 1; end
 
     // call result vs null
     if (h.get() == null) begin $display("FAILED: get() == null"); errors += 1; end
+    if (null == h.get()) begin $display("FAILED: null == get()"); errors += 1; end
+    if (!(null != h.get())) begin $display("FAILED: null != get()"); errors += 1; end
     if (!(h.get() != null)) begin $display("FAILED: get() != null"); errors += 1; end
 
     // call result vs handle
@@ -52,6 +56,7 @@ module main;
 
     h.c = null;
     if (!(h.get() == null)) begin $display("FAILED: null get() == null"); errors += 1; end
+    if (!(null == h.get())) begin $display("FAILED: null null == get()"); errors += 1; end
 
     if (errors == 0) $display("PASSED");
   end

@@ -261,9 +261,11 @@ static int draw_compare_class(ivl_expr_t expr)
       if (ivl_expr_type(le)==IVL_EX_NULL && ivl_expr_type(re)==IVL_EX_NULL) {
 	    switch (ivl_expr_opcode(expr)) {
 		case 'e': /* == */
+		case 'E': /* === */
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 1;\n");
 		  break;
 		case 'n': /* != */
+		case 'N': /* !== */
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  break;
 		default:
@@ -288,7 +290,8 @@ static int draw_compare_class(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%test_nul/a v%p, %d;\n", sig, word_ix);
 		  clr_word(word_ix);
 	    }
-	    if (ivl_expr_opcode(expr) == 'n')
+	    if ((ivl_expr_opcode(expr) == 'n') ||
+	        (ivl_expr_opcode(expr) == 'N'))
 		  fprintf(vvp_out, "    %%flag_inv 4;\n");
 	    return 4;
       }
@@ -309,7 +312,8 @@ static int draw_compare_class(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 	    fprintf(vvp_out, "    %%test_nul/prop %u, %d;\n", pidx, idx);
 	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-	    if (ivl_expr_opcode(expr) == 'n')
+	    if ((ivl_expr_opcode(expr) == 'n') ||
+	        (ivl_expr_opcode(expr) == 'N'))
 		  fprintf(vvp_out, "    %%flag_inv 4;\n");
 
 	    if (idx != 0) clr_word(idx);
@@ -330,7 +334,8 @@ static int draw_compare_class(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%pop/obj 2, 0;\n");
       }
 
-      if (ivl_expr_opcode(expr) == 'n')
+      if ((ivl_expr_opcode(expr) == 'n') ||
+          (ivl_expr_opcode(expr) == 'N'))
 	    fprintf(vvp_out, "    %%flag_inv 4;\n");
       return 4;
 }
