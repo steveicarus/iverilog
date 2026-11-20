@@ -4828,8 +4828,19 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			// c.p.m() where p is a class-typed property: call m in the
 			// property's class, using the property access as "this".
 			if (const netclass_t*prop_cls = dynamic_cast<const netclass_t*>(ptype)) {
-			      NetEProperty*prop = new NetEProperty(search_results.net, pidx, nullptr);
-			      prop->set_line(*this);
+			      NetExpr*prop;
+			      if (cls->get_prop_qual(pidx).test_static()) {
+				    perm_string pname = lex_strings.make(cls->get_prop_name(pidx));
+				    NetNet*static_net = cls->find_static_property(pname);
+				    ivl_assert(*this, static_net);
+				    NetESignal*sig = new NetESignal(static_net);
+				    sig->set_line(*this);
+				    prop = sig;
+			      } else {
+				    NetEProperty*eprop = new NetEProperty(search_results.net, pidx, nullptr);
+				    eprop->set_line(*this);
+				    prop = eprop;
+			      }
 			      perm_string method_name = search_results.path_tail.back().name;
 			      return elaborate_class_method_net_this_(des, scope, prop, prop_cls,
 							      method_name, nullptr);

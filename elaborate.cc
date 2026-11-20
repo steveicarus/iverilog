@@ -4637,8 +4637,20 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 				    des->errors += 1;
 				    return 0;
 			      }
-			      NetEProperty*use_this = new NetEProperty(net, pidx);
-			      use_this->set_line(*this);
+			      NetExpr*use_this;
+			      NetNet*static_net = nullptr;
+			      if (cls->get_prop_qual(pidx).test_static()) {
+				    perm_string pname = lex_strings.make(cls->get_prop_name(pidx));
+				    static_net = cls->find_static_property(pname);
+				    ivl_assert(*this, static_net);
+				    NetESignal*sig = new NetESignal(static_net);
+				    sig->set_line(*this);
+				    use_this = sig;
+			      } else {
+				    NetEProperty*prop = new NetEProperty(net, pidx);
+				    prop->set_line(*this);
+				    use_this = prop;
+			      }
 			      return elaborate_build_call_(des, scope, task, use_this, false);
 			}
 		  }
