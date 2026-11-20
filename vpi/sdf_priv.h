@@ -94,5 +94,10 @@ extern void sdf_recrem_limits(struct port_with_edge_s reference,
                               struct sdf_delay_s recovery,
                               struct sdf_delay_s removal, int lineno);
 
+extern void sdf_setuphold_limits(struct port_with_edge_s data,
+                                 struct port_with_edge_s reference,
+                                 struct sdf_delay_s setup,
+                                 struct sdf_delay_s hold, int lineno);
+
 #endif /* IVL_sdf_priv_h */
 

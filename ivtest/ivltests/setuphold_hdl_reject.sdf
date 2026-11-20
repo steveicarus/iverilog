@@ -1,0 +1,6 @@
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
+ (CELL (CELLTYPE "shc_sdf_cell") (INSTANCE negative_setup) (TIMINGCHECK (SETUPHOLD D (posedge C) (-4096:-4096:-4096) (99:99:99))))
+ (CELL (CELLTYPE "shc_sdf_cell") (INSTANCE negative_hold) (TIMINGCHECK (SETUPHOLD D (posedge C) (99:99:99) (-4096:-4096:-4096))))
+ (CELL (CELLTYPE "shc_sdf_cell") (INSTANCE overflow) (TIMINGCHECK (SETUPHOLD D (posedge C) (99:99:99) (1e30:1e30:1e30))))
+ (CELL (CELLTYPE "shc_sdf_cell") (INSTANCE valid) (TIMINGCHECK (SETUPHOLD D (posedge C) (20:20:20) (8:8:8))))
+)

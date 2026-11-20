@@ -1,0 +1,16 @@
+{
+    "type": "normal",
+    "source": "setuphold_hdl_disabled.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb",
+        "-gno-specify"
+    ],
+    "vlog95": {
+        "type": "NI",
+        "__comment": "Inherited vlog95 aliased-output emission does not preserve these delayed copies; native preservation remains tested."
+    }
+}

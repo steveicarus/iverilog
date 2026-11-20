@@ -81,6 +81,7 @@ struct target_t {
       virtual void recovery_check(const NetRecovery*);
       virtual void removal_check(const NetRemoval*);
       virtual void recrem_check(const NetRecRem*);
+      virtual void setuphold_check(const NetSetupHold*);
       virtual void period_check(const NetPeriod*);
 
         /* Analog branches */

@@ -513,9 +513,11 @@ tchk_def
         free($3.port.string_val);
         free($4.port.string_val);
       }
-  | '(' K_SETUPHOLD port_tchk port_tchk rvalue rvalue ')'
-      { vpi_printf("SDF WARNING: %s:%d: SETUPHOLD not supported.\n",
-                   sdf_parse_path, @2.first_line); }
+  | '(' K_SETUPHOLD scalar_port_tchk scalar_port_tchk rvalue rvalue ')'
+      { sdf_setuphold_limits($3.port, $4.port, $5, $6, @2.first_line);
+        free($3.port.string_val);
+        free($4.port.string_val);
+      }
   | '(' K_RECOVERY scalar_port_tchk scalar_port_tchk rvalue ')'
       { sdf_two_event_limits(vpiRecovery, $3.port, $4.port, $5, @2.first_line);
         free($3.port.string_val);
@@ -573,21 +575,6 @@ scalar_port_tchk
       { $$.port.vpi_edge = vpiNoEdge; $$.port.string_val = 0;
         $$.logical_not_line = $1 == vpiNoEdge ? $3 : 0;
         free($2); free($4.string_val); }
-  ;
-
-port_tchk
-  : port_instance
-      { free($1); }
-  /* This must only be an edge. For now we just accept everything. */
-  | cond_edge_start port_instance ')'
-      { free($2); }
-  /* These must only be a cond. For now we just accept everything. */
-  | cond_edge_start timing_check_condition port_spec ')'
-      { free($3.string_val); }
-  | cond_edge_start QSTRING timing_check_condition port_spec ')'
-      { free($2);
-	free($4.string_val);
-      }
   ;
 
 cond_edge_start

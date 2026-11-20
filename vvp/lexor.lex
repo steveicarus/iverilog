@@ -241,6 +241,7 @@ width_real ([0-9]+[.][0-9]*|[0-9]*[.][0-9]+)([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0
 ".tchk_width"   { return K_TCHK_WIDTH; }
 ".tchk_period"  { return K_TCHK_PERIOD; }
 ".tchk_setup"   { return K_TCHK_SETUP; }
+".tchk_setuphold" { return K_TCHK_SETUPHOLD; }
 ".tchk_hold"    { return K_TCHK_HOLD; }
 ".tchk_recovery"    { return K_TCHK_RECOVERY; }
 ".tchk_removal"    { return K_TCHK_REMOVAL; }

@@ -201,6 +201,7 @@ typedef struct ivl_recovery_s    *ivl_recovery_t;
 typedef struct ivl_recrem_s *ivl_recrem_t;
 typedef struct ivl_removal_s    *ivl_removal_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
+typedef struct ivl_setuphold_s *ivl_setuphold_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
 typedef struct ivl_port_info_s*ivl_port_info_t;
 typedef struct ivl_switch_s   *ivl_switch_t;
@@ -1945,6 +1946,11 @@ extern ivl_scope_t  ivl_period_scope(ivl_period_t check);
  *    includes the return value, as port 0. The remaining ports are
  *    the input ports in order.
  *
+ * ivl_scope_setuphold
+ *    Returns the check at idx, where 0 <= idx < ivl_scope_setupholds(net).
+ * ivl_scope_setupholds
+ *    Returns the number of $setuphold checks in this scope.
+ *
  * ivl_scope_sig
  * ivl_scope_sigs
  *    Scopes have 0 or more signals in them. These signals are
@@ -2113,6 +2119,8 @@ extern ivl_net_logic_t ivl_scope_mod_module_port_buffer(ivl_scope_t net, unsigne
 extern unsigned     ivl_scope_ports(ivl_scope_t net);
 extern ivl_signal_t ivl_scope_port(ivl_scope_t net, unsigned idx);
 extern ivl_nexus_t  ivl_scope_mod_port(ivl_scope_t net, unsigned idx);
+extern ivl_setuphold_t ivl_scope_setuphold(ivl_scope_t net, unsigned idx);
+extern unsigned ivl_scope_setupholds(ivl_scope_t net);
 extern unsigned     ivl_scope_sigs(ivl_scope_t net);
 extern ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_switches(ivl_scope_t net);
@@ -2128,6 +2136,19 @@ extern unsigned ivl_scope_func_width(ivl_scope_t net);
 
 extern unsigned    ivl_scope_widths(ivl_scope_t net);
 extern ivl_width_t ivl_scope_width(ivl_scope_t net, unsigned idx);
+
+/* Combined SETUPHOLD: normalized reference/data roles; limits use declaring
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+extern ivl_signal_t ivl_setuphold_data(ivl_setuphold_t check);
+extern int ivl_setuphold_data_edge(ivl_setuphold_t check);
+extern const char*ivl_setuphold_file(ivl_setuphold_t check);
+extern double ivl_setuphold_hold_limit(ivl_setuphold_t check);
+extern unsigned ivl_setuphold_lineno(ivl_setuphold_t check);
+extern ivl_signal_t ivl_setuphold_notifier(ivl_setuphold_t check);
+extern ivl_signal_t ivl_setuphold_reference(ivl_setuphold_t check);
+extern int ivl_setuphold_reference_edge(ivl_setuphold_t check);
+extern ivl_scope_t ivl_setuphold_scope(ivl_setuphold_t check);
+extern double ivl_setuphold_setup_limit(ivl_setuphold_t check);
 
 /* SIGNALS
  * Signals are named things in the Verilog source, like wires and

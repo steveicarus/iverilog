@@ -316,6 +316,8 @@ ivl_scope_recrems
 ivl_scope_removal
 ivl_scope_removals
 ivl_scope_setup
+ivl_scope_setuphold
+ivl_scope_setupholds
 ivl_scope_setups
 ivl_scope_sigs
 ivl_scope_sig
@@ -342,6 +344,17 @@ ivl_setup_reference_condition
 ivl_setup_reference_condition_kind
 ivl_setup_reference_edge
 ivl_setup_scope
+
+ivl_setuphold_data
+ivl_setuphold_data_edge
+ivl_setuphold_file
+ivl_setuphold_hold_limit
+ivl_setuphold_lineno
+ivl_setuphold_notifier
+ivl_setuphold_reference
+ivl_setuphold_reference_edge
+ivl_setuphold_scope
+ivl_setuphold_setup_limit
 
 ivl_signal_array_addr_swapped
 ivl_signal_array_base

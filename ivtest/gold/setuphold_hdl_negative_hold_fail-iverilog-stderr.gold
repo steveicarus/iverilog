@@ -1,0 +1,2 @@
+ivltests/setuphold_hdl_negative_hold_fail.v:7: error: $setuphold hold limit must be a finite nonnegative constant.
+1 error(s) during elaboration.

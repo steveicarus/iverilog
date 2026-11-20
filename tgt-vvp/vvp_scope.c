@@ -2534,6 +2534,19 @@ static void draw_recrem_in_scope(ivl_recrem_t check)
       else fprintf(vvp_out, "\"\";\n");
 }
 
+static void draw_setuphold_in_scope(ivl_setuphold_t check)
+{
+      ivl_signal_t notifier = ivl_setuphold_notifier(check);
+      fprintf(vvp_out, "    .tchk_setuphold %u %u, \"%s\", v%p_0, \"%s\", v%p_0, %.17e, %.17e, ",
+              ivl_file_table_index(ivl_setuphold_file(check)), ivl_setuphold_lineno(check),
+              two_event_edge(ivl_setuphold_reference_edge(check)),
+              ivl_setuphold_reference(check),
+              two_event_edge(ivl_setuphold_data_edge(check)), ivl_setuphold_data(check),
+              ivl_setuphold_setup_limit(check), ivl_setuphold_hold_limit(check));
+      if (notifier) fprintf(vvp_out, "v%p_0;\n", notifier);
+      else fprintf(vvp_out, "\"\";\n");
+}
+
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
@@ -2745,7 +2758,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
       if (ivl_scope_setups(net) || ivl_scope_holds(net) ||
           ivl_scope_recoveries(net) || ivl_scope_removals(net) ||
-          ivl_scope_recrems(net)) {
+          ivl_scope_recrems(net) || ivl_scope_setupholds(net)) {
             fprintf(vvp_out, "    .scope S_%p;\n", net);
             for (idx = 0; idx < ivl_scope_setups(net); idx += 1)
                   draw_setup_in_scope(ivl_scope_setup(net, idx));
@@ -2757,6 +2770,8 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
                   draw_removal_in_scope(ivl_scope_removal(net, idx));
             for (idx = 0; idx < ivl_scope_recrems(net); idx += 1)
                   draw_recrem_in_scope(ivl_scope_recrem(net, idx));
+            for (idx = 0; idx < ivl_scope_setupholds(net); idx += 1)
+                  draw_setuphold_in_scope(ivl_scope_setuphold(net, idx));
       }
 
       for (idx = 0 ;  idx < ivl_scope_events(net) ;  idx += 1) {
