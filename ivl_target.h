@@ -2142,14 +2142,19 @@ extern unsigned    ivl_scope_widths(ivl_scope_t net);
 extern ivl_width_t ivl_scope_width(ivl_scope_t net, unsigned idx);
 
 /* Combined SETUPHOLD: normalized reference/data roles; limits use declaring
- * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). */
+ * scope units. Edges are -1 (negedge), 0 (any change), or 1 (posedge). Each
+ * event has an optional qualifier. A null signal with NONE is unconditional. */
 extern ivl_signal_t ivl_setuphold_data(ivl_setuphold_t check);
+extern ivl_signal_t ivl_setuphold_data_condition(ivl_setuphold_t check);
+extern ivl_tchk_cond_t ivl_setuphold_data_condition_kind(ivl_setuphold_t check);
 extern int ivl_setuphold_data_edge(ivl_setuphold_t check);
 extern const char*ivl_setuphold_file(ivl_setuphold_t check);
 extern double ivl_setuphold_hold_limit(ivl_setuphold_t check);
 extern unsigned ivl_setuphold_lineno(ivl_setuphold_t check);
 extern ivl_signal_t ivl_setuphold_notifier(ivl_setuphold_t check);
 extern ivl_signal_t ivl_setuphold_reference(ivl_setuphold_t check);
+extern ivl_signal_t ivl_setuphold_reference_condition(ivl_setuphold_t check);
+extern ivl_tchk_cond_t ivl_setuphold_reference_condition_kind(ivl_setuphold_t check);
 extern int ivl_setuphold_reference_edge(ivl_setuphold_t check);
 extern ivl_scope_t ivl_setuphold_scope(ivl_setuphold_t check);
 extern double ivl_setuphold_setup_limit(ivl_setuphold_t check);

@@ -2752,6 +2752,12 @@ extern "C" ivl_width_t ivl_scope_width(ivl_scope_t net, unsigned idx)
 extern "C" ivl_signal_t ivl_setuphold_data(ivl_setuphold_t check)
 { assert(check); return check->data; }
 
+extern "C" ivl_signal_t ivl_setuphold_data_condition(ivl_setuphold_t check)
+{ assert(check); return check->data_condition; }
+
+extern "C" ivl_tchk_cond_t ivl_setuphold_data_condition_kind(ivl_setuphold_t check)
+{ assert(check); return check->data_condition_kind; }
+
 extern "C" int ivl_setuphold_data_edge(ivl_setuphold_t check)
 { assert(check); return check->data_edge; }
 
@@ -2769,6 +2775,12 @@ extern "C" ivl_signal_t ivl_setuphold_notifier(ivl_setuphold_t check)
 
 extern "C" ivl_signal_t ivl_setuphold_reference(ivl_setuphold_t check)
 { assert(check); return check->reference; }
+
+extern "C" ivl_signal_t ivl_setuphold_reference_condition(ivl_setuphold_t check)
+{ assert(check); return check->reference_condition; }
+
+extern "C" ivl_tchk_cond_t ivl_setuphold_reference_condition_kind(ivl_setuphold_t check)
+{ assert(check); return check->reference_condition_kind; }
 
 extern "C" int ivl_setuphold_reference_edge(ivl_setuphold_t check)
 { assert(check); return check->reference_edge; }

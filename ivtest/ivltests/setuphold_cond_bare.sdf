@@ -1,0 +1,4 @@
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
+ (CELL (CELLTYPE "sdfcell") (INSTANCE a) (TIMINGCHECK (SETUPHOLD D (posedge C) (20:20:20) (8:8:8))))
+ (CELL (CELLTYPE "sdfcell") (INSTANCE b) (TIMINGCHECK (SETUP D (posedge C) (20:20:20)) (HOLD D (posedge C) (8:8:8))))
+)

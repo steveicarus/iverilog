@@ -135,14 +135,12 @@ These flags affect the general behavior of the compiler.
     reannotation and general four-state timing-check behavior are not qualified
     by these finite implementations.
 
-    VVP also implements local scalar ``$setup``, ``$hold``, ``$recovery``,
-    ``$removal`` and ``$recrem`` checks with finite nonnegative limits and
-    optional scalar notifiers.
+    VVP also implements local scalar ``$setup``, ``$hold``, ``$setuphold``,
+    ``$recovery``, ``$removal`` and ``$recrem`` checks with finite nonnegative
+    limits and optional scalar notifiers.
     Each event in these checks can independently use a local scalar
     ``&&&`` qualifier: a bare signal, ``signal === 1'b0``, or
     ``signal === 1'b1``.
-    VVP also implements unconditional local scalar ``$setuphold`` checks
-    with finite nonnegative limits and optional scalar notifiers.
 
   * std-include/no-std-include
 

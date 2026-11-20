@@ -881,6 +881,8 @@ struct ivl_recrem_s {
 struct ivl_setuphold_s {
       ivl_scope_t scope;
       ivl_signal_t reference, data, notifier;
+      ivl_signal_t reference_condition, data_condition;
+      ivl_tchk_cond_t reference_condition_kind, data_condition_kind;
       int reference_edge, data_edge;
       double setup_limit, hold_limit;
       perm_string file;

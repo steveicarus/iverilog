@@ -4,5 +4,5 @@
 module shc_nested(D);input D;endmodule
 module tb(C,D);
  input C,D;reg n;wire EN=1;
- specify $setuphold(posedge C &&& EN,D,10,6,n);endspecify
+ specify $setuphold(posedge C &&& (EN || D),D,10,6,n);endspecify
 endmodule
