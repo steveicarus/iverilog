@@ -1254,6 +1254,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 
       PSpecPath* specpath;
       PTimingCheck::event_t* timing_check_event;
+      std::vector<PTimingCheck::EdgeType>* timing_check_edges;
       PTimingCheck::optional_args_t* spec_optional_args;
 
       LexicalScope::lifetime_t lifetime;
@@ -1275,7 +1276,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %token K_PSTAR K_STARP K_DOTSTAR
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER K_NB_TRIGGER K_LEQUIV
 %token K_SCOPE_RES
-%token K_edge_descriptor
+%token <int_val> K_edge_descriptor
 
 %token K_CONSTRAINT_IMPL
 
@@ -1426,6 +1427,8 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <index_components> index_components_opt index_components
 %type <pform_name> spec_notifier_opt spec_notifier
 %type <timing_check_event> spec_reference_event
+%type <timing_check_edges> edge_descriptor_list
+%destructor { delete $$; } <timing_check_edges>
 %type <spec_optional_args> setuphold_opt_args recrem_opt_args setuphold_recrem_opt_notifier
 %type <spec_optional_args> setuphold_recrem_opt_timestamp_cond setuphold_recrem_opt_timecheck_cond
 %type <spec_optional_args> setuphold_recrem_opt_delayed_reference setuphold_recrem_opt_delayed_data
@@ -7404,13 +7407,9 @@ specify_item
   | K_Shold '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
       {
-	if (gn_specify_blocks_flag) {
-	      yywarn(@3, "warning: Timing checks are not supported.");
-	}
-	delete $3; // spec_reference_event
-	delete $5; // spec_reference_event
-	delete $7; // delay_value
-	delete $8; // spec_notifier_opt
+	PHold*check = new PHold($3, $5, $7, $8);
+	FILE_NAME(check, @1);
+	pform_module_timing_check(check);
       }
   | K_Snochange '(' spec_reference_event ',' spec_reference_event
 	  ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
@@ -7427,36 +7426,20 @@ specify_item
   | K_Speriod '(' spec_reference_event ',' delay_value
     spec_notifier_opt ')' ';'
       {
-	if (gn_specify_blocks_flag) {
-	      yywarn(@3, "warning: Timing checks are not supported.");
-	}
-	delete $3; // spec_reference_event
-	delete $5; // delay_value
-	delete $6; // spec_notifier_opt
+	PPeriod*period = new PPeriod($3, $5, $6);
+	FILE_NAME(period, @1);
+	pform_module_timing_check(period);
       }
   | K_Srecovery '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
       {
-	if (gn_specify_blocks_flag) {
-	      yywarn(@3, "warning: Timing checks are not supported.");
-	}
-	delete $3; // spec_reference_event
-	delete $5; // spec_reference_event
-	delete $7; // delay_value
-	delete $8; // spec_notifier_opt
+	PRecovery*check = new PRecovery($3, $5, $7, $8);
+	FILE_NAME(check, @1);
+	pform_module_timing_check(check);
       }
   | K_Srecrem '(' spec_reference_event ',' spec_reference_event
     ',' expr_mintypmax ',' expr_mintypmax recrem_opt_args ')' ';'
       {
-	if (gn_specify_blocks_flag) {
-	      cerr << @3 << ": warning: Timing checks are not supported. ";
-	      if ($10->delayed_reference != nullptr || $10->delayed_data != nullptr) {
-		    cerr << "Delayed reference and data signals become copies of the"
-			 << " original reference and data signals.";
-	      }
-	      cerr << endl;
-	}
-
 	PRecRem*recrem = pform_make_recrem(@1, $3, $5, $7, $9, $10);
 	pform_module_timing_check(recrem);
 
@@ -7465,24 +7448,16 @@ specify_item
   | K_Sremoval '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
       {
-	if (gn_specify_blocks_flag) {
-	      yywarn(@3, "warning: Timing checks are not supported.");
-	}
-	delete $3; // spec_reference_event
-	delete $5; // spec_reference_event
-	delete $7; // delay_value
-	delete $8; // spec_notifier_opt
+	PRemoval*check = new PRemoval($3, $5, $7, $8);
+	FILE_NAME(check, @1);
+	pform_module_timing_check(check);
       }
   | K_Ssetup '(' spec_reference_event ',' spec_reference_event
     ',' delay_value spec_notifier_opt ')' ';'
       {
-	if (gn_specify_blocks_flag) {
-	      yywarn(@3, "warning: Timing checks are not supported.");
-	}
-	delete $3; // spec_reference_event
-	delete $5; // spec_reference_event
-	delete $7; // delay_value
-	delete $8; // spec_notifier_opt
+	PSetup*check = new PSetup($5, $3, $7, $8);
+	FILE_NAME(check, @1);
+	pform_module_timing_check(check);
       }
   | K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
     ',' expr_mintypmax ',' expr_mintypmax setuphold_opt_args ')' ';'
@@ -7821,7 +7796,8 @@ spec_reference_event
 	event->name = *$5;
 	event->posedge = false;
 	event->negedge = false;
-	// TODO add edge descriptors
+	event->edges.swap(*$3);
+	delete $3;
 	event->condition = nullptr;
 	delete $5;
 	$$ = event;
@@ -7831,20 +7807,25 @@ spec_reference_event
 	event->name = *$5;
 	event->posedge = false;
 	event->negedge = false;
-	// TODO add edge descriptors
+	event->edges.swap(*$3);
+	delete $3;
 	event->condition = std::unique_ptr<PExpr>($7);
 	delete $5;
 	$$ = event;
       }
   ;
 
-  /* The edge_descriptor is detected by the lexor as the various
-     2-letter edge sequences that are supported here. For now, we
-     don't care what they are, because we do not yet support specify
-     edge events. */
+  /* Preserve edge descriptors so unsupported timing events remain
+     distinguishable from unqualified any-change events. */
 edge_descriptor_list
   : edge_descriptor_list ',' K_edge_descriptor
+      { $1->push_back(static_cast<PTimingCheck::EdgeType>($3));
+        $$ = $1;
+      }
   | K_edge_descriptor
+      { $$ = new std::vector<PTimingCheck::EdgeType>(
+                  1, static_cast<PTimingCheck::EdgeType>($1));
+      }
   ;
 
 setuphold_opt_args

@@ -75,6 +75,42 @@ void target_t::width_check(const NetWidth*check)
       errors += 1;
 }
 
+void target_t::period_check(const NetPeriod*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $period." << endl;
+      errors += 1;
+}
+
+void target_t::setup_check(const NetSetup*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $setup." << endl;
+      errors += 1;
+}
+
+void target_t::hold_check(const NetHold*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $hold." << endl;
+      errors += 1;
+}
+
+void target_t::recovery_check(const NetRecovery*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $recovery." << endl;
+      errors += 1;
+}
+
+void target_t::removal_check(const NetRemoval*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $removal." << endl;
+      errors += 1;
+}
+
+void target_t::recrem_check(const NetRecRem*check)
+{
+      cerr << check->get_fileline() << ": error: target does not support $recrem." << endl;
+      errors += 1;
+}
+
 bool target_t::func_def(const NetScope*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "

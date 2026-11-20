@@ -562,7 +562,32 @@ extern void compile_netw_real(char*label, char*array_symbol,
 // Standard HDL WIDTH declarations emit this explicit record.
 extern void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
                                 struct symb_s reference, double limit,
-                                double threshold, char* notifier);
+                                double threshold, char* notifier,
+                                char* condition = nullptr,
+                                uint64_t condition_code = 1);
+
+// PERIOD records carry one limit and no WIDTH threshold.
+extern void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
+                                 struct symb_s reference, double limit,
+                                 char* notifier, char* condition = nullptr,
+                                 uint64_t condition_code = 1);
+
+// RECREM records preserve control/reference and clock/data order.
+extern void compile_tchk_recrem(unsigned file_idx, unsigned lineno,
+                                   char* reference_edge_text, struct symb_s reference,
+                                   char* data_edge_text, struct symb_s data,
+                                   double recovery_limit, double removal_limit,
+                                   char* notifier);
+
+// Standalone checks use normalized reference/data order.
+extern void compile_tchk_two_event(int kind, unsigned file_idx, unsigned lineno,
+                                    char* reference_edge, struct symb_s reference,
+                                    char* data_edge, struct symb_s data,
+                                    double limit, char* notifier,
+                                    char* reference_condition = nullptr,
+                                    uint64_t reference_condition_value = 1,
+                                    char* data_condition = nullptr,
+                                    uint64_t data_condition_value = 1);
 
 extern void compile_island(char*label, char*type);
 extern void compile_island_port(char*label, char*island, char*src);

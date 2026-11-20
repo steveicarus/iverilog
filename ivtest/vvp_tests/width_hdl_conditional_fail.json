@@ -6,5 +6,6 @@
         "-gspecify",
         "-s",
         "tb"
-    ]
+    ],
+    "gold": "width_hdl_conditional_fail"
 }

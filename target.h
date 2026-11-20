@@ -76,6 +76,12 @@ struct target_t {
       virtual void signal(const NetNet*) =0;
       virtual bool signal_paths(const NetNet*);
       virtual void width_check(const NetWidth*);
+      virtual void setup_check(const NetSetup*);
+      virtual void hold_check(const NetHold*);
+      virtual void recovery_check(const NetRecovery*);
+      virtual void removal_check(const NetRemoval*);
+      virtual void recrem_check(const NetRecRem*);
+      virtual void period_check(const NetPeriod*);
 
         /* Analog branches */
       virtual bool branch(const NetBranch*);

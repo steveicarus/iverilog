@@ -1,0 +1,2 @@
+ivltests/recrem_hdl_hierarchy_fail.v:7: error: $recrem data must be an unselected local scalar signal.
+1 error(s) during elaboration.

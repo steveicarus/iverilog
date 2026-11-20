@@ -25,6 +25,35 @@ PWidth::PWidth(event_t*reference, PExpr*limit, PExpr*threshold,
 {
 }
 
+PPeriod::PPeriod(event_t*reference, PExpr*limit, pform_name_t*notifier)
+: reference_(reference), limit_(limit), notifier_(notifier)
+{
+}
+
+PSetup::PSetup(event_t*reference, event_t*data, PExpr*limit,
+                 pform_name_t*notifier)
+: reference_(reference), data_(data), limit_(limit), notifier_(notifier)
+{
+}
+
+PHold::PHold(event_t*reference, event_t*data, PExpr*limit,
+                 pform_name_t*notifier)
+: reference_(reference), data_(data), limit_(limit), notifier_(notifier)
+{
+}
+
+PRecovery::PRecovery(event_t*reference, event_t*data, PExpr*limit,
+                 pform_name_t*notifier)
+: reference_(reference), data_(data), limit_(limit), notifier_(notifier)
+{
+}
+
+PRemoval::PRemoval(event_t*reference, event_t*data, PExpr*limit,
+                 pform_name_t*notifier)
+: reference_(reference), data_(data), limit_(limit), notifier_(notifier)
+{
+}
+
 PRecRem::PRecRem(event_t* reference_event,
       event_t* data_event,
       PExpr* setup_limit,

@@ -3882,6 +3882,7 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
 	    cerr << get_fileline() << ": sorry: "
 		 << "Nested member path not yet supported for class properties."
 		 << endl;
+	    des->errors += 1;
 	    return nullptr;
       }
 
@@ -4757,8 +4758,22 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 			if (ptype &&
 			    (ptype->base_type() == IVL_VT_DARRAY ||
 			     ptype->base_type() == IVL_VT_QUEUE)) {
-			      NetEProperty*prop = new NetEProperty(search_results.net, pidx, nullptr);
-			      prop->set_line(*this);
+			      NetNet*static_net = nullptr;
+			      if (cls->get_prop_qual(pidx).test_static()) {
+				    perm_string pname = lex_strings.make(cls->get_prop_name(pidx));
+				    static_net = cls->find_static_property(pname);
+				    ivl_assert(*this, static_net);
+			      }
+			      NetExpr*prop;
+			      if (static_net) {
+				    NetESignal*sig = new NetESignal(static_net);
+				    sig->set_line(*this);
+				    prop = sig;
+			      } else {
+				    NetEProperty*eprop = new NetEProperty(search_results.net, pidx, nullptr);
+				    eprop->set_line(*this);
+				    prop = eprop;
+			      }
 			      perm_string method_name = search_results.path_tail.back().name;
 			      ivl_type_t element_type = ivl_type_element(ptype);
 			      const netqueue_t*queue = dynamic_cast<const netqueue_t*>(ptype);

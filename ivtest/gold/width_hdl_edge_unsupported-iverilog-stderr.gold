@@ -1,0 +1,4 @@
+ivltests/width_hdl_edge_unsupported.v:6: error: $width supports only unconditional posedge or negedge scalar reference events.
+ivltests/width_hdl_edge_unsupported.v:7: error: $width supports only unconditional posedge or negedge scalar reference events.
+ivltests/width_hdl_edge_unsupported.v:8: error: $width supports only unconditional posedge or negedge scalar reference events.
+3 error(s) during elaboration.

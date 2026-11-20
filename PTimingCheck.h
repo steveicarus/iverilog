@@ -59,7 +59,7 @@ class PTimingCheck  : public LineInfo {
       virtual void dump(std::ostream&out, unsigned ind) const = 0;
 };
 
-/* The parsed unconditional scalar $width declaration. */
+/* The parsed scalar $width declaration and its optional qualifier. */
 class PWidth : public PTimingCheck {
     public:
       PWidth(event_t*reference, PExpr*limit, PExpr*threshold,
@@ -71,6 +71,79 @@ class PWidth : public PTimingCheck {
       std::unique_ptr<event_t> reference_;
       std::unique_ptr<PExpr> limit_;
       std::unique_ptr<PExpr> threshold_;
+      std::unique_ptr<pform_name_t> notifier_;
+};
+
+/* The parsed scalar $period declaration and its optional qualifier. */
+class PPeriod : public PTimingCheck {
+    public:
+      PPeriod(event_t*reference, PExpr*limit, pform_name_t*notifier);
+      void elaborate(class Design*des, class NetScope*scope) const override;
+      void dump(std::ostream&out, unsigned ind) const override;
+
+    private:
+      std::unique_ptr<event_t> reference_;
+      std::unique_ptr<PExpr> limit_;
+      std::unique_ptr<pform_name_t> notifier_;
+};
+
+/* Parsed standalone $setup declaration; events are stored by role. */
+class PSetup : public PTimingCheck {
+    public:
+      PSetup(event_t*reference, event_t*data, PExpr*limit,
+             pform_name_t*notifier);
+      void elaborate(class Design*des, class NetScope*scope) const override;
+      void dump(std::ostream&out, unsigned ind) const override;
+
+    private:
+      std::unique_ptr<event_t> reference_;
+      std::unique_ptr<event_t> data_;
+      std::unique_ptr<PExpr> limit_;
+      std::unique_ptr<pform_name_t> notifier_;
+};
+
+/* Parsed standalone $hold declaration; events are stored by role. */
+class PHold : public PTimingCheck {
+    public:
+      PHold(event_t*reference, event_t*data, PExpr*limit,
+             pform_name_t*notifier);
+      void elaborate(class Design*des, class NetScope*scope) const override;
+      void dump(std::ostream&out, unsigned ind) const override;
+
+    private:
+      std::unique_ptr<event_t> reference_;
+      std::unique_ptr<event_t> data_;
+      std::unique_ptr<PExpr> limit_;
+      std::unique_ptr<pform_name_t> notifier_;
+};
+
+/* Parsed standalone $recovery declaration; events are stored by role. */
+class PRecovery : public PTimingCheck {
+    public:
+      PRecovery(event_t*reference, event_t*data, PExpr*limit,
+             pform_name_t*notifier);
+      void elaborate(class Design*des, class NetScope*scope) const override;
+      void dump(std::ostream&out, unsigned ind) const override;
+
+    private:
+      std::unique_ptr<event_t> reference_;
+      std::unique_ptr<event_t> data_;
+      std::unique_ptr<PExpr> limit_;
+      std::unique_ptr<pform_name_t> notifier_;
+};
+
+/* Parsed standalone $removal declaration; events are stored by role. */
+class PRemoval : public PTimingCheck {
+    public:
+      PRemoval(event_t*reference, event_t*data, PExpr*limit,
+             pform_name_t*notifier);
+      void elaborate(class Design*des, class NetScope*scope) const override;
+      void dump(std::ostream&out, unsigned ind) const override;
+
+    private:
+      std::unique_ptr<event_t> reference_;
+      std::unique_ptr<event_t> data_;
+      std::unique_ptr<PExpr> limit_;
       std::unique_ptr<pform_name_t> notifier_;
 };
 

@@ -1720,7 +1720,7 @@ static void expand_using_args(void)
 	if (*tail != ARG_MARK) {
 	    tail++;
 	} else {
-	    int arg = tail[1]; assert(arg < def_argc);
+	    int arg = (unsigned char)tail[1]; assert(arg < def_argc);
 
 	    const char*use_argv;
 	    int  use_argl;

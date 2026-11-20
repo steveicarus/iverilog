@@ -1,0 +1,7 @@
+{
+  "type": "normal",
+  "source": "pulse_cond_sdf_logical_not.v",
+  "iverilog-args": ["-g1995", "-gspecify", "-Ttyp", "-s", "tb"],
+  "vpi-sources": ["vpi/period_limits.c", "vpi/pulse_history.c"],
+  "gold": "pulse_cond_sdf_logical_not"
+}

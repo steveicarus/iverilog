@@ -533,6 +533,18 @@ void NetScope::emit_scope(struct target_t*tgt) const
 
       for (const auto& check : widths_)
 	    tgt->width_check(check.get());
+      for (const auto& check : periods_)
+	    tgt->period_check(check.get());
+      for (const auto& check : setups_)
+            tgt->setup_check(check.get());
+      for (const auto& check : holds_)
+            tgt->hold_check(check.get());
+      for (const auto& check : recoveries_)
+            tgt->recovery_check(check.get());
+      for (const auto& check : removals_)
+            tgt->removal_check(check.get());
+      for (const auto& check : recrems_)
+            tgt->recrem_check(check.get());
 
       if (type_ == MODULE) tgt->convert_module_ports(this);
 }

@@ -1694,6 +1694,42 @@ static void show_logic(ivl_net_logic_t net)
       }
 }
 
+static void show_width(ivl_width_t check)
+{
+      ivl_signal_t condition = ivl_width_condition(check);
+      ivl_signal_t notifier = ivl_width_notifier(check);
+
+      fprintf(out, "  $width(%s %s",
+              ivl_width_posedge(check) ? "posedge" : "negedge",
+              ivl_signal_basename(ivl_width_reference(check)));
+      if (condition) {
+            ivl_tchk_cond_t kind = ivl_width_condition_kind(check);
+            fprintf(out, " &&& (%s%s",
+                    kind == IVL_TCHK_COND_BIT_NOT ? "~" : "",
+                    ivl_signal_basename(condition));
+            switch (kind) {
+                case IVL_TCHK_COND_BARE:
+                case IVL_TCHK_COND_BIT_NOT: break;
+                case IVL_TCHK_COND_CASE_EQ0: fprintf(out, " === 1'b0"); break;
+                case IVL_TCHK_COND_CASE_EQ1: fprintf(out, " === 1'b1"); break;
+                case IVL_TCHK_COND_CASE_NE0: fprintf(out, " !== 1'b0"); break;
+                case IVL_TCHK_COND_CASE_NE1: fprintf(out, " !== 1'b1"); break;
+                case IVL_TCHK_COND_LOGIC_EQ0: fprintf(out, " == 1'b0"); break;
+                case IVL_TCHK_COND_LOGIC_EQ1: fprintf(out, " == 1'b1"); break;
+                case IVL_TCHK_COND_LOGIC_NE0: fprintf(out, " != 1'b0"); break;
+                case IVL_TCHK_COND_LOGIC_NE1: fprintf(out, " != 1'b1"); break;
+                default: assert(0);
+            }
+            fprintf(out, ")");
+      }
+      fprintf(out, ", %.17g, %.17g", ivl_width_limit(check),
+              ivl_width_threshold(check));
+      if (notifier)
+            fprintf(out, ", %s", ivl_signal_basename(notifier));
+      fprintf(out, "); // %s:%u\n", ivl_width_file(check),
+              ivl_width_lineno(check));
+}
+
 static int show_scope(ivl_scope_t net, void*x)
 {
       unsigned idx;
@@ -1766,6 +1802,9 @@ static int show_scope(ivl_scope_t net, void*x)
 
       for (idx = 0 ;  idx < ivl_scope_events(net) ;  idx += 1)
 	    show_event(ivl_scope_event(net, idx));
+
+      for (idx = 0 ; idx < ivl_scope_widths(net) ; idx += 1)
+            show_width(ivl_scope_width(net, idx));
 
       for (idx = 0 ;  idx < ivl_scope_logs(net) ;  idx += 1)
 	    show_logic(ivl_scope_log(net, idx));
@@ -1912,6 +1951,9 @@ const char* target_query(const char*key)
 {
       if (strcmp(key,"version") == 0)
 	    return version_string;
+
+      if (strcmp(key,"supports-width") == 0)
+            return "1";
 
       return 0;
 }
