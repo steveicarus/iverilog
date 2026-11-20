@@ -182,6 +182,7 @@ br_gh1812			vvp_tests/br_gh1812.json
 br_gh1824			vvp_tests/br_gh1824.json
 br_gh1833			vvp_tests/br_gh1833.json
 br_gh1833b			vvp_tests/br_gh1833b.json
+br_gh1853			vvp_tests/br_gh1853.json
 ca_func2			vvp_tests/ca_func2.json
 ca_time_real			vvp_tests/ca_time_real.json
 case1				vvp_tests/case1.json
