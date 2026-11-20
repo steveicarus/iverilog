@@ -470,7 +470,8 @@ typedef enum ivl_sfunc_as_task_e {
 
 /* Retained local scalar timing-event qualifier. NONE has no condition signal.
  * CASE_EQ/CASE_NE preserve ===/!==; LOGIC_EQ/LOGIC_NE preserve ==/!=.
- * SETUP/HOLD use BARE and CASE_EQ. WIDTH/PERIOD use all forms. */
+ * SETUP, HOLD, RECOVERY and REMOVAL use BARE and CASE_EQ.
+ * WIDTH and PERIOD use all forms. */
 typedef enum ivl_tchk_cond_e {
       IVL_TCHK_COND_NONE = 0,
       IVL_TCHK_COND_BARE = 1,
