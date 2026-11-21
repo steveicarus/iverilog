@@ -25,6 +25,7 @@
 # include  <typeinfo>
 # include  <iostream>
 # include  <iomanip>
+# include  <set>
 # include  "netlist.h"
 # include  "compiler.h"
 # include  "discipline.h"
@@ -261,6 +262,14 @@ ostream& ivl_type_s::debug_dump(ostream&o) const
 
 ostream& netclass_t::debug_dump(ostream&fd) const
 {
+	// A property type can lead back to this class (C holds L#(C,C),
+	// which holds a C), so a class already being dumped prints by name.
+      static set<const netclass_t*> being_dumped;
+      if (!being_dumped.insert(this).second) {
+	    fd << "class " << name_ << "{...}";
+	    return fd;
+      }
+
       fd << "class " << name_ << "{";
       for (size_t idx = 0 ; idx < property_table_.size() ; idx += 1) {
 	    if (idx != 0) fd << "; ";
@@ -271,6 +280,7 @@ ostream& netclass_t::debug_dump(ostream&fd) const
 	    fd << " " << property_table_[idx].name;
       }
       fd << "}";
+      being_dumped.erase(this);
       return fd;
 }
 
