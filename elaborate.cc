@@ -1208,7 +1208,7 @@ static void warn_dangling_input_port(const LineInfo&loc, const Module*rmod,
 }
 
 static void coerce_port_direction(Design*des, NetScope*scope,
-				  NetNet*port, PExpr*expr)
+				  NetNet*port, const PExpr*expr)
 {
       if ((port->port_type() == NetNet::PINPUT) &&
 	  (port->type() != NetNet::REG) &&
@@ -4650,10 +4650,9 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 				    return 0;
 			      }
 			      NetExpr*use_this;
-			      NetNet*static_net = nullptr;
 			      if (cls->get_prop_qual(pidx).test_static()) {
 				    perm_string pname = lex_strings.make(cls->get_prop_name(pidx));
-				    static_net = cls->find_static_property(pname);
+				    NetNet*static_net = cls->find_static_property(pname);
 				    ivl_assert(*this, static_net);
 				    NetESignal*sig = new NetESignal(static_net);
 				    sig->set_line(*this);
@@ -8062,12 +8061,12 @@ static void elaborate_tasks(Design*des, NetScope*scope,
       }
 }
 
-static void elaborate_class(Design*des, netclass_t*use_class, PClass*pclass)
+static void elaborate_class(Design*des, netclass_t*use_class, PClass*p_class)
 {
-      use_class->elaborate(des, pclass);
+      use_class->elaborate(des, p_class);
 
       if (use_class->test_for_missing_initializers()) {
-	    cerr << pclass->get_fileline() << ": error: "
+	    cerr << p_class->get_fileline() << ": error: "
 		 << "Const properties of class " << use_class->get_name()
 		 << " are missing initialization." << endl;
 	    des->errors += 1;
@@ -8265,7 +8264,7 @@ static void check_extern_types(Design*des, NetScope*class_scope,
 
       if (proto.ports) {
 	    for (const auto&port : *proto.ports) {
-		  NetNet*sig = method->find_signal(port.port->basename());
+		  const NetNet*sig = method->find_signal(port.port->basename());
 		  if (sig == 0)
 			continue;
 		  netranges_t unpacked;
@@ -8307,10 +8306,10 @@ static void check_extern_types(Design*des, NetScope*class_scope,
       }
 }
 
-void netclass_t::elaborate(Design*des, PClass*pclass)
+void netclass_t::elaborate(Design*des, PClass*p_class)
 {
-      if (! pclass->type->initialize_static.empty()) {
-	    const std::vector<Statement*>&stmt_list = pclass->type->initialize_static;
+      if (! p_class->type->initialize_static.empty()) {
+	    const std::vector<Statement*>&stmt_list = p_class->type->initialize_static;
 	    NetBlock*stmt = new NetBlock(NetBlock::SEQU, 0);
 	    for (size_t idx = 0 ; idx < stmt_list.size() ; idx += 1) {
 		  NetProc*tmp = stmt_list[idx]->elaborate(des, class_scope_);
@@ -8318,7 +8317,7 @@ void netclass_t::elaborate(Design*des, PClass*pclass)
 		  stmt->append(tmp);
 	    }
 	    NetProcTop*top = new NetProcTop(class_scope_, IVL_PR_INITIAL, stmt);
-	    top->set_line(*pclass);
+	    top->set_line(*p_class);
 	      // A specialization of a parameterized class is elaborated
 	      // after the rest of the design. Still initialize its static
 	      // properties before the other processes run.
@@ -8328,8 +8327,8 @@ void netclass_t::elaborate(Design*des, PClass*pclass)
 		  des->add_process(top);
       }
 
-      for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
-		 ; cur != pclass->funcs.end() ; ++ cur) {
+      for (map<perm_string,PFunction*>::iterator cur = p_class->funcs.begin()
+		 ; cur != p_class->funcs.end() ; ++ cur) {
 	    if (debug_elaborate) {
 		  cerr << cur->second->get_fileline() << ": netclass_t::elaborate: "
 		       << "Elaborate class " << scope_path(class_scope_)
@@ -8341,8 +8340,8 @@ void netclass_t::elaborate(Design*des, PClass*pclass)
 	    cur->second->elaborate(des, scope);
       }
 
-      for (map<perm_string,PTask*>::iterator cur = pclass->tasks.begin()
-		 ; cur != pclass->tasks.end() ; ++ cur) {
+      for (map<perm_string,PTask*>::iterator cur = p_class->tasks.begin()
+		 ; cur != p_class->tasks.end() ; ++ cur) {
 	    if (debug_elaborate) {
 		  cerr << cur->second->get_fileline() << ": netclass_t::elaborate: "
 		       << "Elaborate class " << scope_path(class_scope_)
@@ -8354,18 +8353,18 @@ void netclass_t::elaborate(Design*des, PClass*pclass)
 	    cur->second->elaborate(des, scope);
       }
 
-      for (const auto&cur : pclass->externs)
-	    check_extern_types(des, class_scope_, pclass->pscope_name(),
+      for (const auto&cur : p_class->externs)
+	    check_extern_types(des, class_scope_, p_class->pscope_name(),
 			       cur.first, cur.second);
 
 	// Check that each override of a virtual method has the same
 	// signature as the virtual method that it overrides.
       std::vector<perm_string> names;
-      for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
-		 ; cur != pclass->funcs.end() ; ++ cur)
+      for (map<perm_string,PFunction*>::iterator cur = p_class->funcs.begin()
+		 ; cur != p_class->funcs.end() ; ++ cur)
 	    names.push_back(cur->first);
-      for (map<perm_string,PTask*>::iterator cur = pclass->tasks.begin()
-		 ; cur != pclass->tasks.end() ; ++ cur)
+      for (map<perm_string,PTask*>::iterator cur = p_class->tasks.begin()
+		 ; cur != p_class->tasks.end() ; ++ cur)
 	    names.push_back(cur->first);
 
       for (perm_string name : names) {

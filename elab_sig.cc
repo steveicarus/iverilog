@@ -440,16 +440,16 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
       return flag;
 }
 
-void netclass_t::elaborate_sig(Design*des, PClass*pclass)
+void netclass_t::elaborate_sig(Design*des, PClass*p_class)
 {
 	// Collect the properties, elaborate them, and add them to the
 	// elaborated class definition.
-      for (map<perm_string,struct class_type_t::prop_info_t>::iterator cur = pclass->type->properties.begin()
-		 ; cur != pclass->type->properties.end() ; ++ cur) {
+      for (map<perm_string,struct class_type_t::prop_info_t>::iterator cur = p_class->type->properties.begin()
+		 ; cur != p_class->type->properties.end() ; ++ cur) {
 
 	    ivl_type_t use_type = cur->second.type->elaborate_type(des, class_scope_);
 	    if (debug_scopes) {
-		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "
+		  cerr << p_class->get_fileline() << ": elaborate_scope_class: "
 		       << "  Property " << cur->first
 		       << " type=" << *use_type << endl;
 	    }
@@ -460,7 +460,7 @@ void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 		  continue;
 
 	    if (debug_elaborate) {
-		  cerr << pclass->get_fileline() << ": netclass_t::elaborate_sig: "
+		  cerr << p_class->get_fileline() << ": netclass_t::elaborate_sig: "
 		       << "Elaborate static property " << cur->first
 		       << " as signal in scope " << scope_path(class_scope_)
 		       << "." << endl;
@@ -489,8 +489,8 @@ void netclass_t::elaborate_sig(Design*des, PClass*pclass)
       }
 
       generic()->methods_in_sig_ += 1;
-      for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
-		 ; cur != pclass->funcs.end() ; ++ cur) {
+      for (map<perm_string,PFunction*>::iterator cur = p_class->funcs.begin()
+		 ; cur != p_class->funcs.end() ; ++ cur) {
 	    if (debug_elaborate) {
 		  cerr << cur->second->get_fileline() << ": netclass_t::elaborate_sig: "
 		       << "Elaborate signals in function method " << cur->first << endl;
@@ -501,8 +501,8 @@ void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 	    cur->second->elaborate_sig(des, scope);
       }
 
-      for (map<perm_string,PTask*>::iterator cur = pclass->tasks.begin()
-		 ; cur != pclass->tasks.end() ; ++ cur) {
+      for (map<perm_string,PTask*>::iterator cur = p_class->tasks.begin()
+		 ; cur != p_class->tasks.end() ; ++ cur) {
 	    if (debug_elaborate) {
 		  cerr << cur->second->get_fileline() << ": netclass_t::elaborate_sig: "
 		       << "Elaborate signals in task method " << cur->first << endl;
@@ -942,7 +942,7 @@ void PBlock::elaborate_sig(Design*des, NetScope*scope) const
 		  elaborate_sig_wires_(des, my_scope);
 		  if (my_scope->is_auto() && default_lifetime == STATIC) {
 			for (const auto&wire : wires) {
-			      NetNet*sig = my_scope->find_signal(wire.first);
+			      const NetNet*sig = my_scope->find_signal(wire.first);
 			      if (sig && sig->unpacked_dimensions() &&
 				  sig->data_type() != IVL_VT_LOGIC) {
 				    cerr << wire.second->get_fileline()

@@ -2257,16 +2257,16 @@ static bool valid_pulse_condition(uint64_t code, uint64_t form)
 
 /* Adapted from the unconditional WIDTH runtime hookup in Leo Moser's
  * timingcheck-width work. The compiler now supplies real declarations. */
-void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
+void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge_nm,
                         struct symb_s reference, double limit,
                         double threshold, char* notifier,
                         char* condition, uint64_t condition_code,
                         uint64_t condition_form)
 {
       int start_edge = 0;
-      if (strcmp(edge, "posedge") == 0) start_edge = 1;
-      else if (strcmp(edge, "negedge") == 0) start_edge = -1;
-      delete[] edge;
+      if (strcmp(edge_nm, "posedge") == 0) start_edge = 1;
+      else if (strcmp(edge_nm, "negedge") == 0) start_edge = -1;
+      delete[] edge_nm;
       __vpiScope* scope = vpip_peek_current_scope();
       vvp_time64_t limit_ticks, threshold_ticks;
       if (!start_edge || !valid_pulse_condition(condition_code, condition_form) ||
@@ -2294,15 +2294,15 @@ void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge,
       vpip_attach_to_current_scope(obj);
 }
 
-void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge,
+void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge_nm,
                         struct symb_s reference, double limit, char* notifier,
                         char* condition, uint64_t condition_code,
                          uint64_t condition_form)
 {
       int reference_edge = 0;
-      if (strcmp(edge, "posedge") == 0) reference_edge = 1;
-      else if (strcmp(edge, "negedge") == 0) reference_edge = -1;
-      delete[] edge;
+      if (strcmp(edge_nm, "posedge") == 0) reference_edge = 1;
+      else if (strcmp(edge_nm, "negedge") == 0) reference_edge = -1;
+      delete[] edge_nm;
       __vpiScope* scope = vpip_peek_current_scope();
       vvp_time64_t limit_ticks;
       if (!reference_edge || !valid_pulse_condition(condition_code, condition_form) ||

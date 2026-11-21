@@ -17,10 +17,10 @@ integerOverflow:sys_random.c:591
 integerOverflow:sys_random.c:593
 
 // cppcheck is missing this is passed/used as part of the delay structure
-unreadVariable:sys_sdf.c:269
-unreadVariable:sys_sdf.c:297
-unreadVariable:sys_sdf.c:343
-unreadVariable:sys_sdf.c:345
+unreadVariable:sys_sdf.c:800
+unreadVariable:sys_sdf.c:801
+unreadVariable:sys_sdf.c:909
+unreadVariable:sys_sdf.c:910
 
 // Skip since table_model() is not complete.
 memleak:table_mod.c:225
@@ -44,7 +44,7 @@ constParameterCallback:sys_display.c:1585
 constParameterCallback:sys_display.c:2212
 constParameterCallback:sys_fileio.c:261
 constParameterCallback:sys_random.c:497
-constParameterCallback:sys_sdf.c:481
+constParameterCallback:sys_sdf.c:961
 constParameterCallback:sys_time.c:25
 constParameterCallback:sys_time.c:81
 constParameterCallback:table_mod.c:663
@@ -53,16 +53,16 @@ constParameterCallback:va_math.c:270
 constParameterCallback:v2005_math.c:166
 constParameterCallback:v2005_math.c:243
 constParameterCallback:v2009_enum.c:301
-constParameterCallback:v2009_string.c:302
-constParameterCallback:v2009_string.c:327
-constParameterCallback:v2009_string.c:425
+constParameterCallback:v2009_string.c:397
+constParameterCallback:v2009_string.c:422
+constParameterCallback:v2009_string.c:520
 constParameterCallback:vhdl_table.c:95
 constParameterCallback:vhdl_table.c:155
 constParameterCallback:vhdl_table.c:200
 
 // Unused functions.
 // sdf_warn_file_line()
-unusedFunction:sys_sdf.c:95
+unusedFunction:sys_sdf.c:120
 
 // This is not constant false/true.
 knownConditionTrueFalse:vhdl_textio.c:219
@@ -134,7 +134,7 @@ unusedFunction:fstapi.c:3609
 // fstReaderGetValueChangeSectionCount()
 unusedFunction:fstapi.c:3584
 // fstReaderGetValueFromHandleAtTime()
-unusedFunction:fstapi.c:5953
+unusedFunction:fstapi.c:5967
 // fstReaderGetVarCount()
 unusedFunction:fstapi.c:3569
 // fstReaderGetVersionString()
@@ -166,9 +166,9 @@ unusedFunction:fstapi.c:3646
 // fstReaderSetVcdExtensions()
 unusedFunction:fstapi.c:3653
 // fstUtilityExtractEnumTableFromString()
-unusedFunction:fstapi.c:6978
+unusedFunction:fstapi.c:6992
 // fstUtilityFreeEnumTable()
-unusedFunction:fstapi.c:7043
+unusedFunction:fstapi.c:7057
 // fstWriterCreateEnumTable()
 unusedFunction:fstapi.c:2715
 // fstWriterCreateVar2()

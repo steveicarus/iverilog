@@ -486,7 +486,7 @@ extern "C" const char* ivl_expr_name(ivl_expr_t net)
 	  case IVL_EX_PROPERTY:
 	      { ivl_signal_t sig = ivl_expr_signal(net);
 		ivl_type_t use_type = ivl_signal_net_type(sig);
-		unsigned idx = ivl_expr_property_idx(net);
+		int idx = ivl_expr_property_idx(net);
 		return ivl_type_prop_name(use_type, idx);
 	      }
 
@@ -3696,7 +3696,7 @@ extern "C" const char* ivl_type_name(ivl_type_t net)
       return 0;
 }
 
-extern "C" int ivl_type_properties(ivl_type_t net)
+extern "C" unsigned ivl_type_properties(ivl_type_t net)
 {
       const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
       assert(class_type);
@@ -3710,15 +3710,16 @@ extern "C" const char* ivl_type_prop_name(ivl_type_t net, int idx)
       const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
       assert(class_type);
 
-      return class_type->get_prop_name(idx);
+      return class_type->get_prop_name((size_t)idx);
 }
 
 extern "C" ivl_type_t ivl_type_prop_type(ivl_type_t net, int idx)
 {
+      if (idx < 0) return 0;
       const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
       assert(class_type);
 
-      return class_type->get_prop_type(idx);
+      return class_type->get_prop_type((size_t)idx);
 }
 
 extern "C" ivl_type_t ivl_type_super(ivl_type_t net)
@@ -3754,7 +3755,7 @@ extern "C" unsigned ivl_type_queue_max(ivl_type_t net)
       return 0;
 }
 
-extern "C" int ivl_type_signed(ivl_type_t net)
+extern "C" unsigned ivl_type_signed(ivl_type_t net)
 {
       assert(net);
       return net->get_signed()? 1 : 0;

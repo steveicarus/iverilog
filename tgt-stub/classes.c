@@ -24,7 +24,7 @@
 void show_class(ivl_type_t net)
 {
       fprintf(out, "  class %s\n", ivl_type_name(net));
-      for (int idx = 0 ; idx < ivl_type_properties(net) ; idx += 1) {
+      for (unsigned idx = 0 ; idx < ivl_type_properties(net) ; idx += 1) {
 	    fprintf(out, "      ");
 	    show_net_type(ivl_type_prop_type(net,idx));
 	    fprintf(out, " %s\n", ivl_type_prop_name(net,idx));

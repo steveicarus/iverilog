@@ -80,12 +80,11 @@ static void show_prop_type(ivl_type_t ptype)
 
 void draw_class_in_scope(ivl_type_t classtype)
 {
-      int idx;
-      fprintf(vvp_out, "C%p  .class \"%s\" [%d]\n",
+      fprintf(vvp_out, "C%p  .class \"%s\" [%u]\n",
 	      classtype, vvp_mangle_name(ivl_type_name(classtype)),
 	      ivl_type_properties(classtype));
 
-      for (idx = 0 ; idx < ivl_type_properties(classtype) ; idx += 1) {
+      for (int idx = 0 ; idx < (int)ivl_type_properties(classtype) ; idx += 1) {
 	    fprintf(vvp_out, " %3d: \"%s\", ", idx,
 		    vvp_mangle_name(ivl_type_prop_name(classtype, idx)));
 	    show_prop_type(ivl_type_prop_type(classtype,idx));
@@ -98,7 +97,7 @@ void draw_class_in_scope(ivl_type_t classtype)
 	    fprintf(vvp_out, "    .super C%p, C%p;\n", classtype,
 		    ivl_type_super(classtype));
 
-      for (idx = 0 ; idx < ivl_type_virtuals(classtype) ; idx += 1) {
+      for (unsigned idx = 0 ; idx < ivl_type_virtuals(classtype) ; idx += 1) {
 	    ivl_scope_t impl = ivl_type_virtual(classtype, idx);
 	    ivl_scope_t root = ivl_scope_virtual_root(impl);
 	    fprintf(vvp_out, "    .virt C%p, S_%p, TA_%p_%p;\n",

@@ -38,6 +38,9 @@ class __vpiTchkCondition : public __vpiHandle {
             delete operands_[1];
       }
 
+      __vpiTchkCondition(const __vpiTchkCondition&) = delete;
+      __vpiTchkCondition& operator=(const __vpiTchkCondition&) = delete;
+
       int get_type_code(void) const override { return vpiOperation; }
 
       int vpi_get(int code) override
@@ -86,9 +89,9 @@ class __vpiTchkCondition : public __vpiHandle {
       std::string decompile_;
 };
 
-__vpiTchkRefTerm::__vpiTchkRefTerm(int edge, vpiHandle expr,
+__vpiTchkRefTerm::__vpiTchkRefTerm(int edge_val, vpiHandle expr,
                                  vpiHandle condition, unsigned condition_mode)
-: edge_(edge), expr_(expr), condition_(condition), owns_condition_(false)
+: edge_(edge_val), expr_(expr), condition_(condition), owns_condition_(false)
 {
       if (condition && condition_mode != 2) {
             condition_ = new __vpiTchkCondition(condition, condition_mode);

@@ -70,7 +70,8 @@ int draw_eval_ref(ivl_expr_t expr)
 
 	  case IVL_EX_PROPERTY:
 	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
-	    fprintf(vvp_out, "    %%ref/prop %u;\n",
+	    assert(ivl_expr_property_idx(expr) >= 0);
+	    fprintf(vvp_out, "    %%ref/prop %d;\n",
 		    ivl_expr_property_idx(expr));
 	    return 0;
 
