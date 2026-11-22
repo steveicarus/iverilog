@@ -3558,6 +3558,13 @@ method_data_type_or_implicit_or_void_plus_id
 	set_type_id_range($$, tmp, $5, @5, nullptr);
 	$$.scope_id = $3;
       }
+  | IDENTIFIER parameter_value_assignment dimensions_opt
+    IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { auto tmp = pform_new_type_identifier(@1, nullptr, $1, $2);
+	tmp = pform_make_parray_type(@3, tmp, $3);
+	set_type_id_range($$, tmp, $6, @6, nullptr);
+	$$.scope_id = $4;
+      }
   | atomic_type IDENTIFIER K_SCOPE_RES IDENTIFIER
       { set_type_id_range($$, $1, $4, @4, nullptr);
 	$$.scope_id = $2;
