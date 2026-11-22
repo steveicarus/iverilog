@@ -456,6 +456,9 @@ void class_type::set_property(size_t idx, const string&name, const string&type, 
       } else if (type[0] == 's' && type[1] == 'L') {
 	    size_t wid = strtoul(type.c_str()+2,0,0);
 	    properties_[idx].type = new property_logic(wid);
+      } else if (type[0] == 's' && type[1] == 'b') {
+	    size_t wid = strtoul(type.c_str()+2,0,0);
+	    properties_[idx].type = new property_bit(wid);
       } else {
 	    properties_[idx].type = 0;
       }
