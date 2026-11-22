@@ -291,7 +291,7 @@ void sdf_interconnect_delays(struct interconnect_port_s port1, struct interconne
             any_defined = false;
             expand_interconnect_increment(delval_list, &expanded);
             for (int idx = 0; idx < expanded.count; idx += 1)
-                  any_defined |= expanded.val[idx].defined;
+                  any_defined = any_defined || expanded.val[idx].defined;
             delval_list = &expanded;
       }
 

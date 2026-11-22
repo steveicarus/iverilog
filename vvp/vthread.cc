@@ -2081,8 +2081,8 @@ bool of_CMPNE(vthread_t thr, vvp_code_t)
  */
 bool of_CMPOBJ(vthread_t thr, vvp_code_t)
 {
-      vvp_object_t&a = thr->peek_object(0);
-      vvp_object_t&b = thr->peek_object(1);
+      const vvp_object_t&a = thr->peek_object(0);
+      const vvp_object_t&b = thr->peek_object(1);
       thr->flags[4] = (a == b) ? BIT4_1 : BIT4_0;
       return true;
 }
@@ -5684,7 +5684,7 @@ bool of_QSLICE(vthread_t thr, vvp_code_t)
       vvp_object_t src;
       thr->pop_object(src);
 
-      vvp_queue*queue = src.peek<vvp_queue>();
+      const vvp_queue*queue = src.peek<vvp_queue>();
       if (!queue) {
 	      // A queue that was never written has no object to slice.
 	    thr->push_object(src);
@@ -7461,7 +7461,7 @@ bool of_PROP_QUEUE_SIZE(vthread_t thr, vvp_code_t cp)
       cobj->get_object(pid, qobj, 0);
 	/* Real and string queues are not vvp_queue_vec4, so use the
 	   common vvp_darray base class to get the size. */
-      vvp_darray* darray = qobj.peek<vvp_darray>();
+      const vvp_darray* darray = qobj.peek<vvp_darray>();
 
       size_t sz = darray ? darray->get_size() : 0;
 

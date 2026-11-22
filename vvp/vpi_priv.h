@@ -644,6 +644,10 @@ class __vpiTchkRefTerm : public __vpiHandle {
       __vpiTchkRefTerm(int edge, vpiHandle expr, vpiHandle condition = nullptr,
                       unsigned condition_mode = 2);
       ~__vpiTchkRefTerm() override;
+
+      __vpiTchkRefTerm(const __vpiTchkRefTerm&) = delete;
+      __vpiTchkRefTerm& operator=(const __vpiTchkRefTerm&) = delete;
+
       int get_type_code(void) const override { return vpiTchkTerm; }
       int vpi_get(int code) override;
       vpiHandle vpi_handle(int code) override;
@@ -658,7 +662,11 @@ class __vpiTchkWidth : public __vpiHandle {
     public:
       __vpiTchkWidth(__vpiScope* scope, unsigned file_idx, unsigned lineno,
                      vvp_fun_tchk_width* fun, unsigned condition_form);
-      ~__vpiTchkWidth();
+      ~__vpiTchkWidth() override;
+
+      __vpiTchkWidth(const __vpiTchkWidth&) = delete;
+      __vpiTchkWidth& operator=(const __vpiTchkWidth&) = delete;
+
       int get_type_code(void) const override { return vpiTchk; }
       int vpi_get(int code) override;
       vpiHandle vpi_handle(int code) override;
@@ -683,7 +691,11 @@ class __vpiTchkPeriod : public __vpiHandle {
     public:
       __vpiTchkPeriod(__vpiScope* scope, unsigned file_idx, unsigned lineno,
                      vvp_fun_tchk_period* fun, unsigned condition_form);
-      ~__vpiTchkPeriod();
+      ~__vpiTchkPeriod() override;
+
+      __vpiTchkPeriod(const __vpiTchkPeriod&) = delete;
+      __vpiTchkPeriod& operator=(const __vpiTchkPeriod&) = delete;
+
       int get_type_code(void) const override { return vpiTchk; }
       int vpi_get(int code) override;
       vpiHandle vpi_handle(int code) override;
@@ -708,7 +720,11 @@ class __vpiTchkTwoEvent : public __vpiHandle {
     public:
       __vpiTchkTwoEvent(__vpiScope* scope, unsigned file_idx, unsigned lineno,
                         vvp_fun_tchk_two_event* fun);
-      ~__vpiTchkTwoEvent();
+      ~__vpiTchkTwoEvent() override;
+
+      __vpiTchkTwoEvent(const __vpiTchkTwoEvent&) = delete;
+      __vpiTchkTwoEvent& operator=(const __vpiTchkTwoEvent&) = delete;
+
       int get_type_code(void) const override { return vpiTchk; }
       int vpi_get(int code) override;
       vpiHandle vpi_handle(int code) override;
@@ -735,7 +751,11 @@ class __vpiTchkRecRem : public __vpiHandle {
     public:
       __vpiTchkRecRem(__vpiScope* scope, unsigned file_idx, unsigned lineno,
                          vvp_fun_tchk_recrem* fun);
-      ~__vpiTchkRecRem();
+      ~__vpiTchkRecRem() override;
+
+      __vpiTchkRecRem(const __vpiTchkRecRem&) = delete;
+      __vpiTchkRecRem& operator=(const __vpiTchkRecRem&) = delete;
+
       int get_type_code(void) const override { return vpiTchk; }
       int vpi_get(int code) override;
       vpiHandle vpi_handle(int code) override;
@@ -757,7 +777,11 @@ class __vpiTchkSetupHold : public __vpiHandle {
     public:
       __vpiTchkSetupHold(__vpiScope* scope, unsigned file_idx, unsigned lineno,
                          vvp_fun_tchk_setuphold* fun);
-      ~__vpiTchkSetupHold();
+      ~__vpiTchkSetupHold() override;
+
+      __vpiTchkSetupHold(const __vpiTchkSetupHold&) = delete;
+      __vpiTchkSetupHold& operator=(const __vpiTchkSetupHold&) = delete;
+
       int get_type_code(void) const override { return vpiTchk; }
       int vpi_get(int code) override;
       vpiHandle vpi_handle(int code) override;

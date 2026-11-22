@@ -187,6 +187,7 @@ static void emit_blif(const char*blif_path, ivl_design_t des, ivl_scope_t model)
 		  ports_out.push_back(prt);
 		  break;
 		case IVL_SIP_INOUT:
+		case IVL_SIP_REF:
 		  fprintf(stderr, "BLIF: error: "
 			  "Model port %s is bi-directional.\n",
 			  ivl_signal_basename(prt));

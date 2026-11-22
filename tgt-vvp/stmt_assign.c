@@ -198,7 +198,7 @@ static void get_vec_from_lval(ivl_statement_t net, struct vec_slice_info*slices)
 
 }
 
-static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
+static void put_vec_to_lval_slice(ivl_lval_t lval, const struct vec_slice_info*slice,
 				  unsigned int wid)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);

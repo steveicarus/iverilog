@@ -8,24 +8,19 @@ nullPointerOutOfMemory:misc.c:45         // malloc @   38
 nullPointerOutOfMemory:misc.c:48         // malloc @   38
 nullPointerOutOfMemory:misc.c:794        // malloc @  793
 nullPointerOutOfMemory:misc.c:795        // malloc @  793
-nullPointerOutOfMemory:numbers.c:362     // strdup @  359
-nullPointerOutOfMemory:numbers.c:363     // strdup @  359
-nullPointerOutOfMemory:numbers.c:391     // strdup @  359
-nullPointerOutOfMemory:scope.c:301       // malloc @  300
-nullPointerOutOfMemory:scope.c:302       // malloc @  300
-nullPointerOutOfMemory:scope.c:303       // malloc @  300
-nullPointerOutOfMemory:scope.c:304       // malloc @  300
-nullPointerOutOfMemory:scope.c:305       // malloc @  300
-nullPointerOutOfMemory:scope.c:307       // malloc @  300
-nullPointerOutOfMemory:scope.c:993       // malloc @  990
-nullPointerOutOfMemory:scope.c:994       // malloc @  990
-nullPointerOutOfMemory:scope.c:995       // malloc @  990
-nullPointerOutOfMemory:scope.c:996       // malloc @  990
-nullPointerOutOfMemory:stmt.c:848        // malloc @  775
-nullPointerOutOfMemory:stmt.c:849        // malloc @  775
+nullPointerOutOfMemory:numbers.c:364     // strdup @  359
+nullPointerOutOfMemory:numbers.c:365     // strdup @  359
+nullPointerOutOfMemory:numbers.c:393     // strdup @  359
+nullPointerOutOfMemory:scope.c:342       // malloc @  300
+nullPointerOutOfMemory:scope.c:343       // malloc @  300
+nullPointerOutOfMemory:scope.c:1261      // malloc @  990
+nullPointerOutOfMemory:scope.c:1262      // malloc @  990
+nullPointerOutOfMemory:scope.c:1263      // malloc @  990
+nullPointerOutOfMemory:stmt.c:867        // malloc @  775
+nullPointerOutOfMemory:stmt.c:868        // malloc @  775
 memleakOnRealloc:scope.c:175
-memleakOnRealloc:scope.c:1022
-memleakOnRealloc:scope.c:1068
+memleakOnRealloc:scope.c:1289
+memleakOnRealloc:scope.c:1335
 memleakOnRealloc:udp.c:245
 
 // These are the global access functions called from the compiler so they

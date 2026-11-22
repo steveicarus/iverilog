@@ -2,6 +2,7 @@
 //useStlAlgorithm
 
 // Skip all memory issues since they should be handled by ivl_alloc.h
+ctunullpointer
 ctunullpointerOutOfMemory
 nullPointerArithmeticOutOfMemory
 nullPointerOutOfMemory
@@ -15,45 +16,45 @@ knownConditionTrueFalse:lib_main.cc:283
 // For now these casts have to be used
 dangerousTypeCast:array_common.cc:188
 dangerousTypeCast:array_common.cc:201
-invalidPointerCast:class_type.cc:203
-invalidPointerCast:class_type.cc:326
-invalidPointerCast:class_type.cc:332
-invalidPointerCast:class_type.cc:338
+invalidPointerCast:class_type.cc:204
+invalidPointerCast:class_type.cc:327
+invalidPointerCast:class_type.cc:333
 invalidPointerCast:class_type.cc:339
+invalidPointerCast:class_type.cc:340
 cstyleCast:ufunc.cc:80
 cstyleCast:vpi_priv.cc:229
-cstyleCast:vpi_scope.cc:608
+cstyleCast:vpi_scope.cc:610
 
 // Skip the sscanf() field width limit warning
 invalidscanf:compile.cc:597
 invalidscanf:compile.cc:609
 
 // By convention we put statics at the top scope.
-variableScope:vpi_priv.cc:647
+variableScope:vpi_priv.cc:658
 
 // Changing this breaks the compile
-constParameterPointer:vthread.cc:423
-useInitializationList:delay.cc:633
-constParameterPointer:vpi_priv.cc:1458
+constParameterPointer:vthread.cc:430
+useInitializationList:delay.cc:748
+constParameterPointer:vpi_priv.cc:1154
 
 // Operator new/delete are static so cannot override
 duplInheritedMember:vvp_net.h:1483
 duplInheritedMember:vvp_net.h:1484
-duplInheritedMember:vvp_net_sig.h:187
-duplInheritedMember:vvp_net_sig.h:188
 duplInheritedMember:vvp_net_sig.h:253
 duplInheritedMember:vvp_net_sig.h:254
-duplInheritedMember:vvp_net_sig.h:313
-duplInheritedMember:vvp_net_sig.h:314
-duplInheritedMember:vvp_net_sig.h:377
-duplInheritedMember:vvp_net_sig.h:378
-duplInheritedMember:vvp_net_sig.cc:442
-duplInheritedMember:vvp_net_sig.cc:580
-duplInheritedMember:vvp_net_sig.cc:585
-duplInheritedMember:vvp_net_sig.cc:697
-duplInheritedMember:vvp_net_sig.cc:702
-duplInheritedMember:vvp_net_sig.cc:810
-duplInheritedMember:vvp_net_sig.cc:815
+duplInheritedMember:vvp_net_sig.h:319
+duplInheritedMember:vvp_net_sig.h:320
+duplInheritedMember:vvp_net_sig.h:379
+duplInheritedMember:vvp_net_sig.h:380
+duplInheritedMember:vvp_net_sig.h:443
+duplInheritedMember:vvp_net_sig.h:444
+duplInheritedMember:vvp_net_sig.cc:627
+duplInheritedMember:vvp_net_sig.cc:773
+duplInheritedMember:vvp_net_sig.cc:778
+duplInheritedMember:vvp_net_sig.cc:897
+duplInheritedMember:vvp_net_sig.cc:902
+duplInheritedMember:vvp_net_sig.cc:1018
+duplInheritedMember:vvp_net_sig.cc:1023
 duplInheritedMember:schedule.cc:143
 duplInheritedMember:schedule.cc:149
 duplInheritedMember:schedule.cc:213
@@ -75,8 +76,8 @@ duplInheritedMember:schedule.cc:531
 duplInheritedMember:symbols.h:112
 
 // This is not always true
-duplicateValueTernary:class_type.cc:268
-knownConditionTrueFalse:class_type.cc:272
+duplicateValueTernary:class_type.cc:269
+knownConditionTrueFalse:class_type.cc:273
 
 // cppcheck is wrong this can be true or false
 knownConditionTrueFalse:vthread.cc:3823
@@ -90,31 +91,31 @@ constParameterPointer:vpi_tasks.cc:259
 knownConditionTrueFalse:vthread.cc:3571
 
 // For some cases this expression can be different
-duplicateExpression:vpi_signal.cc:1210
+duplicateExpression:vpi_signal.cc:1219
 
 // cppcheck does not relize this is deleted[] in the called routine
-leakNoVarFunctionCall:compile.cc:531
+leakNoVarFunctionCall:compile.cc:549
 
 // Yes, these are not currently initialized in the constructor
 // All are added after __vpiSysTaskCall is built
-uninitMemberVar:vpi_priv.h:984
+uninitMemberVar:vpi_priv.h:1159
 // All are added after __vpiSignal is built
-uninitMemberVar:vpi_priv.h:398
+uninitMemberVar:vpi_priv.h:401
 // run_run_ptr is added after the event is built
 uninitMemberVar:delay.h:79
 // The array values are added after it is allocated
-noConstructor:vpi_priv.h:797
+noConstructor:vpi_priv.h:969
 // The enum values are added after this is built
 uninitMemberVar:enum_type.cc:55
 // The names for the enum values are added after allocation
 uninitMemberVar:enum_type.cc:101
 // The thread values get assigned after being created
-uninitMemberVar:vthread.cc:316
+uninitMemberVar:vthread.cc:323
 // The mod path has the values added after creation
-uninitMemberVar:delay.cc:1192
-uninitMemberVar:delay.cc:1145
+uninitMemberVar:delay.cc:1260
+uninitMemberVar:delay.cc:1307
 // The intermod path has the values added after creation
-uninitMemberVar:delay.cc:1673
+uninitMemberVar:delay.cc:1842
 // The island values are set after creation
 uninitDerivedMemberVar:island_tran.cc:60
 // The cb_data is set after creation
@@ -124,41 +125,45 @@ uninitMemberVar:vpi_event.cc:28
 // Iterator values are set after creation
 uninitMemberVar:vpi_iter.cc:41
 // Scope values are set after creation
-uninitMemberVar:vpi_scope.cc:341
+uninitMemberVar:vpi_scope.cc:343
 // The real var values are set after creation
 uninitMemberVar:vpi_real.cc:158
 // The PV values are set after creation
-uninitMemberVar:vpi_signal.cc:1601
+uninitMemberVar:vpi_signal.cc:1611
 // The info/is_user_defn are added ater creation
 uninitMemberVar:vpi_tasks.cc:41
 // All the values are set after creation using the default constructor
 noConstructor:vpi_tasks.cc:158
 
 // We check memory usage using valgrind.
-unsafeClassCanLeak:vpi_priv.h:769
+unsafeClassCanLeak:vpi_priv.h:941
 unsafeClassCanLeak:permaheap.h:47
 
 // Index calculation
-thisSubtraction:vpi_priv.h:436
+thisSubtraction:vpi_priv.h:439
 thisSubtraction:array_common.h:91
 
 // The interface is from the standard.
-constParameterCallback:vpi_priv.cc:1143
+constParameterCallback:vpi_priv.cc:1154
 constParameterPointer:vpi_priv.cc:1143
 constParameterPointer:vpi_mcd.cc:158
+
+// This is the standard class interface.
+constVariable:vpi_tchk.cc:395
+constVariable:vpi_tchk.cc:481
 
 // cppcheck is missing the code adds a \0 at the previous location.
 knownConditionTrueFalse:vpi_modules.cc:118
 redundantAssignment:vpi_modules.cc:117
 
 // cppcheck does not undestand the format types match
-invalidScanfArgType_int:compile.cc:676
-invalidScanfArgType_int:compile.cc:682
-invalidScanfArgType_int:compile.cc:688
-invalidScanfArgType_int:vthread.cc:4985
-invalidScanfArgType_int:vthread.cc:4988
-invalidScanfArgType_int:vthread.cc:4991
-invalidScanfArgType_int:vthread.cc:4994
+invalidScanfArgType_int:compile.cc:694
+invalidScanfArgType_int:compile.cc:700
+invalidScanfArgType_int:compile.cc:706
+invalidScanfArgType_int:vthread.cc:5102
+invalidScanfArgType_int:vthread.cc:5105
+invalidScanfArgType_int:vthread.cc:5108
+invalidScanfArgType_int:vthread.cc:5111
 
 // The new() operator is always used to allocate space for this class and
 // pool is defined there.
@@ -210,13 +215,13 @@ unusedFunction:vpi_priv.cc:1505
 
 // The following are just unused.
 // alias_word()
-unusedFunction:array.cc:848
+unusedFunction:array.cc:882
 // count_force4_pool()
 unusedFunction:schedule.cc:404
 // call_scope()
 unusedFunction:ufunc.h:62
 // get_bit()
-unusedFunction:vpi_priv.h:483
+unusedFunction:vpi_priv.h:486
 // copy_bits()
 unusedFunction:vvp_net.cc:615
 // mov()
@@ -226,11 +231,11 @@ unusedFunction:vvp_net.cc:1753
 // as_string()
 unusedFunction:vvp_net.cc:1856
 // fully_featured_resolv_()
-unusedFunction:vvp_net.cc:3689
+unusedFunction:vvp_net.cc:3690
 // words()
 unusedFunction:vvp_net.h:602
 // force_vec8()
-unusedFunction:vvp_net_sig.cc:128
+unusedFunction:vvp_net_sig.cc:130
 
 // Unused functions from the lexor
 duplicateBreak:lexor.lex

@@ -2454,12 +2454,12 @@ static void draw_two_event_conditions(ivl_signal_t reference,
 {
       if (!reference && !data) return;
       if (reference) fprintf(vvp_out, ", \"v%p_0\", %u", reference,
-                             reference_kind == IVL_TCHK_COND_BARE ? 2 :
-                             reference_kind == IVL_TCHK_COND_CASE_EQ0 ? 0 : 1);
+                             reference_kind == IVL_TCHK_COND_BARE ? 2U :
+                             reference_kind == IVL_TCHK_COND_CASE_EQ0 ? 0U : 1U);
       else fprintf(vvp_out, ", \"\", 1");
       if (data) fprintf(vvp_out, ", \"v%p_0\", %u", data,
-                        data_kind == IVL_TCHK_COND_BARE ? 2 :
-                        data_kind == IVL_TCHK_COND_CASE_EQ0 ? 0 : 1);
+                        data_kind == IVL_TCHK_COND_BARE ? 2U :
+                        data_kind == IVL_TCHK_COND_CASE_EQ0 ? 0U : 1U);
       else fprintf(vvp_out, ", \"\", 1");
 }
 

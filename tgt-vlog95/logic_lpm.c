@@ -2473,6 +2473,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_SIP_INPUT:  fprintf(stderr, " input"); break;
 		      case IVL_SIP_OUTPUT: fprintf(stderr, " output"); break;
 		      case IVL_SIP_INOUT:  fprintf(stderr, " inout"); break;
+		      case IVL_SIP_REF:    fprintf(stderr, " ref"); break;
 		      case IVL_SIP_NONE: break;
 		  }
 		  switch (ivl_signal_type(sig)) {

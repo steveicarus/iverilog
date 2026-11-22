@@ -359,7 +359,7 @@ struct ivl_expr_s {
 
 	    struct {
 		  ivl_signal_t sig;
-		  unsigned prop_idx;
+		  int prop_idx;
 		  ivl_expr_t index;
 	    } property_;
       } u_;

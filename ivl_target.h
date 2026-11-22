@@ -2653,9 +2653,9 @@ extern unsigned ivl_type_packed_dimensions(ivl_type_t net);
 extern int ivl_type_packed_lsb(ivl_type_t net, unsigned dim);
 extern int ivl_type_packed_msb(ivl_type_t net, unsigned dim);
 extern unsigned ivl_type_packed_width(ivl_type_t net);
-extern int ivl_type_signed(ivl_type_t net);
+extern unsigned ivl_type_signed(ivl_type_t net);
 extern const char* ivl_type_name(ivl_type_t net);
-extern int         ivl_type_properties(ivl_type_t net);
+extern unsigned    ivl_type_properties(ivl_type_t net);
 extern const char* ivl_type_prop_name(ivl_type_t net, int idx);
 extern ivl_type_t  ivl_type_prop_type(ivl_type_t net, int idx);
 

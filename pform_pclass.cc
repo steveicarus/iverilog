@@ -249,18 +249,18 @@ bool pform_start_extern_method(const struct vlltype&loc, const char*class_name,
 
 	// The definition must be in the scope that declares the class.
       LexicalScope*scope = pform_peek_scope();
-      PClass*pclass = 0;
+      PClass*p_class = 0;
       if (auto scopex = dynamic_cast<PScopeExtra*> (scope)) {
 	    auto found = scopex->classes.find(use_class);
 	    if (found != scopex->classes.end())
-		  pclass = found->second;
+		  p_class = found->second;
       } else if (auto gen = dynamic_cast<PGenerate*> (scope)) {
 	    auto found = gen->classes.find(use_class);
 	    if (found != gen->classes.end())
-		  pclass = found->second;
+		  p_class = found->second;
       }
 
-      if (!pclass) {
+      if (!p_class) {
 	    cerr << loc << ": error: Unknown class '" << use_class
 		 << "' in definition of '" << use_class << "::" << use_name
 		 << "'. The class must be declared in the same scope."
@@ -269,8 +269,8 @@ bool pform_start_extern_method(const struct vlltype&loc, const char*class_name,
 	    return extern_method_error(scope);
       }
 
-      auto proto = pclass->externs.find(use_name);
-      if (proto == pclass->externs.end()) {
+      auto proto = p_class->externs.find(use_name);
+      if (proto == p_class->externs.end()) {
 	    cerr << loc << ": error: Class '" << use_class
 		 << "' has no extern method '" << use_name
 		 << "' to define." << endl;
@@ -299,10 +299,10 @@ bool pform_start_extern_method(const struct vlltype&loc, const char*class_name,
       FILE_NAME(&proto->second.def, loc);
       extern_proto = &proto->second;
 
-      extern_class = pclass;
-      extern_saved_scope = pform_set_scope(pclass);
+      extern_class = p_class;
+      extern_saved_scope = pform_set_scope(p_class);
       extern_saved_class = pform_cur_class;
-      pform_cur_class = pclass;
+      pform_cur_class = p_class;
       method_virtual_flag = proto->second.is_virtual;
       method_static_flag = proto->second.is_static;
       return true;
@@ -335,8 +335,8 @@ void pform_check_extern_ports(const struct vlltype&loc,
       }
 
       for (size_t idx = 0 ; idx < pp.size() ; idx += 1) {
-	    PWire*pw = pp[idx].port;
-	    PWire*dw = dp[idx].port;
+	    const PWire*pw = pp[idx].port;
+	    const PWire*dw = dp[idx].port;
 	    if (pw->basename() != dw->basename()) {
 		  cerr << loc << ": error: Port " << idx+1 << " of extern "
 		       << what << " is named '" << dw->basename()

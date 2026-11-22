@@ -4101,7 +4101,7 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
       if (path_.class_scope && search_results.is_scope()
 	  && search_results.scope->type() == NetScope::FUNC
 	  && search_results.scope->get_class_scope()) {
-	    NetScope*method = search_results.scope;
+	    const NetScope*method = search_results.scope;
 	    NetExpr*this_expr = class_scope_method_this(*this, des, method,
 							path_);
 	    if (!this_expr)

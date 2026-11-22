@@ -280,7 +280,7 @@ static type_identifier_t *pform_set_type_params(data_type_t *type,
   /* A class type with a parameter value assignment, e.g. C#(8). */
 static data_type_t *pform_new_type_identifier(const struct vlltype &loc,
 					     PPackage *package,
-					     char *text,
+					     const char *text,
 					     parmvalue_t *params)
 {
       return pform_set_type_params(
@@ -3830,7 +3830,7 @@ variable_lifetime
 	      }
 	} else if (pform_requires_sv(@1, "Overriding default variable lifetime") &&
 		   $1 != scope->default_lifetime) {
-	      auto block = dynamic_cast<PBlock*>(scope);
+	      const auto block = dynamic_cast<PBlock*>(scope);
 	      if ($1 != LexicalScope::AUTOMATIC || !block || current_function ||
 		  block->bl_type() != PBlock::BL_SEQ)
 		    yyerror(@1, "sorry: Overriding the default variable "
@@ -5498,7 +5498,7 @@ expr_primary
      expression, as it does for a cast. */
   | expr_primary_or_typename assignment_pattern
       { auto tmp = static_cast<PEAssignPattern*>($2);
-	auto tn = dynamic_cast<PETypename*>($1);
+	const auto tn = dynamic_cast<PETypename*>($1);
 	if (!pform_requires_sv(@1, "Typed assignment pattern")) {
 	      delete $1;
 	} else if (tn && !dynamic_cast<const atom_type_t*>(tn->get_type()) &&
