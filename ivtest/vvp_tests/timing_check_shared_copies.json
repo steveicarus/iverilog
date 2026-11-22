@@ -1,0 +1,5 @@
+{
+    "type": "normal",
+    "source": "timing_check_shared_copies.v",
+    "iverilog-args": ["-g2005", "-gspecify", "-Ttyp", "-s", "tb"]
+}

@@ -727,6 +727,44 @@ static void sdf_tchk_limit_time(double value, vpiHandle scope, p_vpi_time time)
       time->low = ticks & 0xffffffff;
 }
 
+/* A single entry can match both standalone and combined checks. Report
+ * each decision once per target kind and component in this instance. */
+struct sdf_negative_reports {
+      bool rejected[2];
+      bool clamped[2];
+};
+
+static bool sdf_negative_limits_ok(int target, vpiHandle scope, int lineno,
+                                   double first, double second,
+                                   struct sdf_negative_reports *reported)
+{
+      if (first >= 0.0 && second >= 0.0) return true;
+      bool sh = target == vpiSetupHold || target == vpiSetup || target == vpiHold;
+      bool combined = target == vpiSetupHold || target == vpiRecrem;
+      unsigned standalone_slot = target == vpiHold || target == vpiRemoval;
+      const char *component[] = {sh ? "SETUP" : "RECOVERY", sh ? "HOLD" : "REMOVAL"};
+      const double limit[] = {first, second};
+      bool valid = true;
+      for (unsigned slot = 0; slot < 2; ++slot) {
+            if (limit[slot] >= 0.0) continue;
+            if (combined) {
+                  if (!reported->clamped[slot])
+                        vpi_printf("SDF WARNING: %s:%d: sorry: negative %s limit on combined %s in %s; using zero.\n",
+                                   sdf_fname, lineno, component[slot], sh ? "SETUPHOLD" : "RECREM",
+                                   vpi_get_str(vpiFullName, scope));
+                  reported->clamped[slot] = true;
+            } else if (slot == standalone_slot) {
+                  if (!reported->rejected[slot])
+                        vpi_printf("SDF ERROR: %s:%d: negative %s limit on standalone %s in %s; keeping the previous limit.\n",
+                                   sdf_fname, lineno, component[slot], component[slot],
+                                   vpi_get_str(vpiFullName, scope));
+                  reported->rejected[slot] = true;
+                  valid = false;
+            }
+      }
+      return valid;
+}
+
 /* SDF lists asynchronous reference before clock/data for RECOVERY, REMOVAL
  * and RECREM.
  * Standard cross-mapping updates standalone checks and the corresponding
@@ -749,8 +787,8 @@ static void sdf_recovery_removal_values(int check_type, struct sdf_tchk_port_s r
       }
       if (!sdf_cur_cell || !sdf_cur_cell_type_matches ||
           (!recovery.defined && !removal.defined)) return;
-      if ((recovery.defined && (!isfinite(recovery.value) || recovery.value < 0)) ||
-          (removal.defined && (!isfinite(removal.value) || removal.value < 0))) {
+      if ((recovery.defined && !isfinite(recovery.value)) ||
+          (removal.defined && !isfinite(removal.value))) {
             vpi_printf("SDF ERROR: %s:%d: invalid %s limit\n",
                        sdf_fname, lineno, name);
             return;
@@ -758,6 +796,7 @@ static void sdf_recovery_removal_values(int check_type, struct sdf_tchk_port_s r
       vpiHandle checks = vpi_iterate(vpiTchk, sdf_cur_cell);
       vpiHandle check;
       unsigned matches = 0;
+      struct sdf_negative_reports reported = {0};
       while (checks && (check = vpi_scan(checks))) {
             int target = vpi_get(vpiTchkType, check);
             if (target != vpiRecrem && target != vpiRecovery && target != vpiRemoval)
@@ -772,8 +811,8 @@ static void sdf_recovery_removal_values(int check_type, struct sdf_tchk_port_s r
             matches += 1;
             vpiHandle scope = vpi_handle(vpiScope, check);
             double scale = sdf_delay_scale(scope);
-            double scaled_recovery = recovery.value * scale;
-            double scaled_removal = removal.value * scale;
+            double scaled_recovery = fmax(0.0, recovery.value) * scale;
+            double scaled_removal = fmax(0.0, removal.value) * scale;
             // Validate the record before any write, including both supplied
             // values when the record also addresses a standalone peer.
             if ((recovery.defined && !sdf_tchk_limit_valid(scaled_recovery, scope)) ||
@@ -782,6 +821,8 @@ static void sdf_recovery_removal_values(int check_type, struct sdf_tchk_port_s r
                              sdf_fname, lineno, name);
                   continue;
             }
+            if (!sdf_negative_limits_ok(target, scope, lineno, recovery.value,
+                                        removal.value, &reported)) continue;
             s_vpi_time values[2];
             s_vpi_delay delays;
             memset(values, 0, sizeof values);
@@ -858,8 +899,8 @@ static void sdf_setup_hold_values(int check_type, struct sdf_tchk_port_s data,
       }
       if (!sdf_cur_cell || !sdf_cur_cell_type_matches ||
           (!setup.defined && !hold.defined)) return;
-      if ((setup.defined && (!isfinite(setup.value) || setup.value < 0)) ||
-          (hold.defined && (!isfinite(hold.value) || hold.value < 0))) {
+      if ((setup.defined && !isfinite(setup.value)) ||
+          (hold.defined && !isfinite(hold.value))) {
             vpi_printf("SDF ERROR: %s:%d: invalid %s limit\n",
                        sdf_fname, lineno, name);
             return;
@@ -867,6 +908,7 @@ static void sdf_setup_hold_values(int check_type, struct sdf_tchk_port_s data,
       vpiHandle checks = vpi_iterate(vpiTchk, sdf_cur_cell);
       vpiHandle check;
       unsigned matches = 0;
+      struct sdf_negative_reports reported = {0};
       while (checks && (check = vpi_scan(checks))) {
             int target = vpi_get(vpiTchkType, check);
             if (target != vpiSetupHold && target != vpiSetup && target != vpiHold)
@@ -881,8 +923,8 @@ static void sdf_setup_hold_values(int check_type, struct sdf_tchk_port_s data,
             matches += 1;
             vpiHandle scope = vpi_handle(vpiScope, check);
             double scale = sdf_delay_scale(scope);
-            double scaled_setup = setup.value * scale;
-            double scaled_hold = hold.value * scale;
+            double scaled_setup = fmax(0.0, setup.value) * scale;
+            double scaled_hold = fmax(0.0, hold.value) * scale;
             // Validate the record before any write, including both supplied
             // values when the record also addresses a standalone peer.
             if ((setup.defined && !sdf_tchk_limit_valid(scaled_setup, scope)) ||
@@ -891,6 +933,8 @@ static void sdf_setup_hold_values(int check_type, struct sdf_tchk_port_s data,
                              sdf_fname, lineno, name);
                   continue;
             }
+            if (!sdf_negative_limits_ok(target, scope, lineno, setup.value,
+                                        hold.value, &reported)) continue;
             s_vpi_time values[2];
             s_vpi_delay delays;
             memset(values, 0, sizeof values);

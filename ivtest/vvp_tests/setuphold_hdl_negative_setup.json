@@ -1,0 +1,15 @@
+{
+    "type": "normal",
+    "gold": "setuphold_hdl_negative_setup",
+    "source": "setuphold_hdl_negative_setup.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/setuphold_audit.c"
+    ]
+}

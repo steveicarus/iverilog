@@ -1,0 +1,3 @@
+RRC_OBJECT tb recrem C/posedge D/any limit=10 ticks=10 limit=0 ticks=0 events=0
+RRC_COMPLETE objects=1 callbacks=0
+PASSED

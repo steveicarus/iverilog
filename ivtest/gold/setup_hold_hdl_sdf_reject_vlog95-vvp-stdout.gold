@@ -4,8 +4,8 @@ SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:3: Unable to match SETUP D -> OTHE
 SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:3: Unable to match HOLD D -> OTHER in tb.wrong_ref
 SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:4: Unable to match SETUP D -> C in tb.wrong_edge
 SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:4: Unable to match HOLD D -> C in tb.wrong_edge
-SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:5: invalid SETUP limit
-SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:5: invalid HOLD limit
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:5: negative SETUP limit on standalone SETUP in tb.negative; keeping the previous limit.
+SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:5: negative HOLD limit on standalone HOLD in tb.negative; keeping the previous limit.
 SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:6: unrepresentable SETUP limit
 SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:6: unrepresentable HOLD limit
 SDF ERROR: ivltests/setup_hold_hdl_reject.sdf:7: Module wrong_cell in tb.wrong_cell is not a different_cell; it is a sh_reject

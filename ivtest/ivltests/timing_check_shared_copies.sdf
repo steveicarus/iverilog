@@ -1,0 +1,7 @@
+(DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ns)
+  (CELL (CELLTYPE "copy_ff") (INSTANCE) (TIMINGCHECK
+    (SETUP (posedge D) (negedge C) (1:1:1))
+    (SETUP (posedge D) (posedge C) (0.116:0.116:0.117))
+    (HOLD (posedge D) (posedge C) (-0.061:-0.062:-0.062))
+  ))
+)

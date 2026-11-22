@@ -16,14 +16,18 @@ SDF ERROR: ivltests/recrem_sdf_cond_reject_vlog95.sdf:17: Unable to match RECREM
 SDF ERROR: ivltests/recrem_sdf_cond_reject_vlog95.sdf:18: Unable to match RECREM R -> C in tb.u
 SDF ERROR: ivltests/recrem_sdf_cond_reject_vlog95.sdf:19: Unable to match RECREM R -> C in tb.u
 SDF ERROR: ivltests/recrem_sdf_cond_reject_vlog95.sdf:20: Unable to match RECREM R -> C in tb.u
-SDF ERROR: ivltests/recrem_sdf_cond_reject_vlog95.sdf:21: invalid RECREM limit
-SDF ERROR: ivltests/recrem_sdf_cond_reject_vlog95.sdf:22: invalid RECREM limit
+SDF WARNING: ivltests/recrem_sdf_cond_reject_vlog95.sdf:21: sorry: negative REMOVAL limit on combined RECREM in tb.neg_second; using zero.
+SDF WARNING: ivltests/recrem_sdf_cond_reject_vlog95.sdf:22: sorry: negative RECOVERY limit on combined RECREM in tb.neg_first; using zero.
+SDF ERROR: ivltests/recrem_sdf_cond_reject_vlog95.sdf:23: unrepresentable RECREM limit
+SDF ERROR: ivltests/recrem_sdf_cond_reject_vlog95.sdf:24: unrepresentable RECREM limit
 RRC_OBJECT tb.u recrem R/posedge C/posedge limit=5 ticks=5 limit=5 ticks=5 events=0
 RRC_OBJECT tb.valid recrem R/posedge C/posedge limit=20 ticks=20 limit=8 ticks=8 events=2
-Timing violation: $recrem recovery at 115 (module units), interval=15 limit=20, work/vlog95.v:96, scope=tb.valid
+RRC_OBJECT tb.neg_first recrem R/posedge C/posedge limit=0 ticks=0 limit=99 ticks=99 events=0
+RRC_OBJECT tb.neg_second recrem R/posedge C/posedge limit=99 ticks=99 limit=0 ticks=0 events=0
+Timing violation: $recrem recovery at 115 (module units), interval=15 limit=20, work/vlog95.v:152, scope=tb.valid
 RRC_VIOLATION 1 115
-Timing violation: $recrem removal at 120 (module units), interval=5 limit=8, work/vlog95.v:96, scope=tb.valid
+Timing violation: $recrem removal at 120 (module units), interval=5 limit=8, work/vlog95.v:152, scope=tb.valid
 RRC_VIOLATION 1 120
-RRC_COMPLETE objects=2 callbacks=2
+RRC_COMPLETE objects=4 callbacks=2
 PASSED
-work/vlog95.v:44: $finish called at 160 (1ps)
+work/vlog95.v:48: $finish called at 160 (1ps)
