@@ -508,10 +508,8 @@ bool verinum::convert_long(long&val, bool warn) const
 
       if (has_sign_ && (bits_[nbits_-1] == V1)) {
 	    val = -1;
-	    signed long mask = ~1L;
 	    for (unsigned idx = 0 ;  idx < top ;  idx += 1) {
-		  if (bits_[idx] == V0) val &= mask;
-		  mask = (mask << 1) | 1L;
+		  if (bits_[idx] == V0) val &= ~(1L << idx);
 	    }
 	    if (diag_top) {
 		  for (unsigned idx = top; idx < diag_top; idx += 1) {
@@ -519,9 +517,8 @@ bool verinum::convert_long(long&val, bool warn) const
 		  }
 	    }
       } else {
-	    signed long mask = 1;
-	    for (unsigned idx = 0 ;  idx < top ;  idx += 1, mask <<= 1) {
-		  if (bits_[idx] == V1) val |= mask;
+	    for (unsigned idx = 0 ;  idx < top ;  idx += 1) {
+		  if (bits_[idx] == V1) val |= static_cast<long>(1UL << idx);
 	    }
 	    if (diag_top) {
 		  for (unsigned idx = top; idx < diag_top; idx += 1) {
