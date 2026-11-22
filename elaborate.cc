@@ -7817,23 +7817,6 @@ void PRemoval::elaborate(Design*des, NetScope*scope) const
       scope->add_removal(std::move(check));
 }
 
-static bool unconditional_timing_check_event(Design*des, const LineInfo&loc,
-                                             const PTimingCheck::event_t&event,
-                                             const char*kind, const char*role,
-                                             int&edge)
-{
-      if (event.condition || !event.edges.empty() ||
-          (event.posedge && event.negedge)) {
-            cerr << loc.get_fileline() << ": error: " << kind << " " << role
-                 << " supports only unconditional scalar events with no edge,"
-                 << " posedge or negedge." << endl;
-            des->errors += 1;
-            return false;
-      }
-      edge = event.posedge ? 1 : event.negedge ? -1 : 0;
-      return true;
-}
-
 // Several timing declarations may request the same delayed copy (e.g. a
 // shared clock in SETUPHOLD and RECREM). Keep one driver on that terminal.
 class NetTimingCheckCopy : public NetBUFZ {
