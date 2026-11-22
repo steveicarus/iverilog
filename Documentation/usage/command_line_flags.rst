@@ -153,8 +153,10 @@ These flags affect the general behavior of the compiler.
     remains active and can be annotated. Signed combined timing checks are
     approximate: a negative HDL limit, or a negative SDF component applied
     to a combined check, is diagnosed and treated as zero. Standalone checks
-    still reject negative limits. An unmatched SDF timing check reports an
-    SDF error and annotation continues with the next record.
+    require nonnegative HDL limits. A negative SDF limit on a matching
+    standalone check reports an SDF error and sets its limit to zero. An
+    unmatched SDF timing check reports an SDF error and annotation continues
+    with the next record.
 
   * std-include/no-std-include
 

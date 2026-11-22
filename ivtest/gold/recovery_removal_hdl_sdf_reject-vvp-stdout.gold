@@ -4,8 +4,8 @@ SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:3: Unable to match RECOVERY 
 SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:3: Unable to match REMOVAL R -> OTHER in tb.wrong_clock
 SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:4: Unable to match RECOVERY R -> C in tb.wrong_edge
 SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:4: Unable to match REMOVAL R -> C in tb.wrong_edge
-SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:5: negative RECOVERY limit on standalone RECOVERY in tb.negative; keeping the previous limit.
-SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:5: negative REMOVAL limit on standalone REMOVAL in tb.negative; keeping the previous limit.
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:5: negative RECOVERY limit on standalone RECOVERY in tb.negative; using zero.
+SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:5: negative REMOVAL limit on standalone REMOVAL in tb.negative; using zero.
 SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:6: unrepresentable RECOVERY limit
 SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:6: unrepresentable REMOVAL limit
 SDF ERROR: ivltests/recovery_removal_hdl_reject.sdf:7: Module wrong_cell in tb.wrong_cell is not a different_cell; it is a rr_reject
@@ -21,8 +21,8 @@ RR_OBJECT tb.wrong_clock recovery R/posedge C/posedge limit=10 ticks=10 events=0
 RR_OBJECT tb.wrong_clock removal R/posedge C/posedge limit=10 ticks=10 events=0
 RR_OBJECT tb.wrong_edge recovery R/posedge C/posedge limit=10 ticks=10 events=0
 RR_OBJECT tb.wrong_edge removal R/posedge C/posedge limit=10 ticks=10 events=0
-RR_OBJECT tb.negative recovery R/posedge C/posedge limit=10 ticks=10 events=0
-RR_OBJECT tb.negative removal R/posedge C/posedge limit=10 ticks=10 events=0
+RR_OBJECT tb.negative recovery R/posedge C/posedge limit=0 ticks=0 events=0
+RR_OBJECT tb.negative removal R/posedge C/posedge limit=0 ticks=0 events=0
 RR_OBJECT tb.overflow recovery R/posedge C/posedge limit=10 ticks=10 events=0
 RR_OBJECT tb.overflow removal R/posedge C/posedge limit=10 ticks=10 events=0
 RR_OBJECT tb.wrong_cell recovery R/posedge C/posedge limit=10 ticks=10 events=0

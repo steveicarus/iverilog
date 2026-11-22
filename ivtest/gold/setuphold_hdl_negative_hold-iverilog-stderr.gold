@@ -1,1 +1,1 @@
-ivltests/setuphold_hdl_negative_hold.v:8: sorry: negative $setuphold hold limit in tb is not supported; using zero.
+ivltests/setuphold_hdl_negative_hold.v:8: sorry: negative $setuphold hold limit in tb is not currently supported; using zero.
