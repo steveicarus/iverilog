@@ -16,8 +16,8 @@ SDF ERROR: ivltests/recrem_sdf_cond_reject_vlog95.sdf:17: Unable to match RECREM
 SDF ERROR: ivltests/recrem_sdf_cond_reject_vlog95.sdf:18: Unable to match RECREM R -> C in tb.u
 SDF ERROR: ivltests/recrem_sdf_cond_reject_vlog95.sdf:19: Unable to match RECREM R -> C in tb.u
 SDF ERROR: ivltests/recrem_sdf_cond_reject_vlog95.sdf:20: Unable to match RECREM R -> C in tb.u
-SDF WARNING: ivltests/recrem_sdf_cond_reject_vlog95.sdf:21: sorry: negative REMOVAL limit on combined RECREM in tb.neg_second; using zero.
-SDF WARNING: ivltests/recrem_sdf_cond_reject_vlog95.sdf:22: sorry: negative RECOVERY limit on combined RECREM in tb.neg_first; using zero.
+SDF WARNING: ivltests/recrem_sdf_cond_reject_vlog95.sdf:21: sorry: negative REMOVAL limit on combined RECREM in tb.neg_second is not currently supported; using zero.
+SDF WARNING: ivltests/recrem_sdf_cond_reject_vlog95.sdf:22: sorry: negative RECOVERY limit on combined RECREM in tb.neg_first is not currently supported; using zero.
 SDF ERROR: ivltests/recrem_sdf_cond_reject_vlog95.sdf:23: unrepresentable RECREM limit
 SDF ERROR: ivltests/recrem_sdf_cond_reject_vlog95.sdf:24: unrepresentable RECREM limit
 RRC_OBJECT tb.u recrem R/posedge C/posedge limit=5 ticks=5 limit=5 ticks=5 events=0

@@ -728,41 +728,36 @@ static void sdf_tchk_limit_time(double value, vpiHandle scope, p_vpi_time time)
 }
 
 /* A single entry can match both standalone and combined checks. Report
- * each decision once per target kind and component in this instance. */
+ * each negative component once per target kind in this instance. */
 struct sdf_negative_reports {
-      bool rejected[2];
-      bool clamped[2];
+      bool standalone[2];
+      bool combined[2];
 };
 
-static bool sdf_negative_limits_ok(int target, vpiHandle scope, int lineno,
-                                   double first, double second,
-                                   struct sdf_negative_reports *reported)
+static void sdf_report_negative_limits(int target, vpiHandle scope, int lineno,
+                                       double first, double second,
+                                       struct sdf_negative_reports *reported)
 {
-      if (first >= 0.0 && second >= 0.0) return true;
+      if (first >= 0.0 && second >= 0.0) return;
       bool sh = target == vpiSetupHold || target == vpiSetup || target == vpiHold;
       bool combined = target == vpiSetupHold || target == vpiRecrem;
       unsigned standalone_slot = target == vpiHold || target == vpiRemoval;
       const char *component[] = {sh ? "SETUP" : "RECOVERY", sh ? "HOLD" : "REMOVAL"};
       const double limit[] = {first, second};
-      bool valid = true;
       for (unsigned slot = 0; slot < 2; ++slot) {
             if (limit[slot] >= 0.0) continue;
-            if (combined) {
-                  if (!reported->clamped[slot])
-                        vpi_printf("SDF WARNING: %s:%d: sorry: negative %s limit on combined %s in %s; using zero.\n",
-                                   sdf_fname, lineno, component[slot], sh ? "SETUPHOLD" : "RECREM",
-                                   vpi_get_str(vpiFullName, scope));
-                  reported->clamped[slot] = true;
-            } else if (slot == standalone_slot) {
-                  if (!reported->rejected[slot])
-                        vpi_printf("SDF ERROR: %s:%d: negative %s limit on standalone %s in %s; keeping the previous limit.\n",
-                                   sdf_fname, lineno, component[slot], component[slot],
-                                   vpi_get_str(vpiFullName, scope));
-                  reported->rejected[slot] = true;
-                  valid = false;
+            if (combined && !reported->combined[slot]) {
+                  vpi_printf("SDF WARNING: %s:%d: sorry: negative %s limit on combined %s in %s is not currently supported; using zero.\n",
+                             sdf_fname, lineno, component[slot], sh ? "SETUPHOLD" : "RECREM",
+                             vpi_get_str(vpiFullName, scope));
+                  reported->combined[slot] = true;
+            } else if (!combined && slot == standalone_slot && !reported->standalone[slot]) {
+                  vpi_printf("SDF ERROR: %s:%d: negative %s limit on standalone %s in %s; using zero.\n",
+                             sdf_fname, lineno, component[slot], component[slot],
+                             vpi_get_str(vpiFullName, scope));
+                  reported->standalone[slot] = true;
             }
       }
-      return valid;
 }
 
 /* SDF lists asynchronous reference before clock/data for RECOVERY, REMOVAL
@@ -821,8 +816,8 @@ static void sdf_recovery_removal_values(int check_type, struct sdf_tchk_port_s r
                              sdf_fname, lineno, name);
                   continue;
             }
-            if (!sdf_negative_limits_ok(target, scope, lineno, recovery.value,
-                                        removal.value, &reported)) continue;
+            sdf_report_negative_limits(target, scope, lineno, recovery.value,
+                                       removal.value, &reported);
             s_vpi_time values[2];
             s_vpi_delay delays;
             memset(values, 0, sizeof values);
@@ -933,8 +928,8 @@ static void sdf_setup_hold_values(int check_type, struct sdf_tchk_port_s data,
                              sdf_fname, lineno, name);
                   continue;
             }
-            if (!sdf_negative_limits_ok(target, scope, lineno, setup.value,
-                                        hold.value, &reported)) continue;
+            sdf_report_negative_limits(target, scope, lineno, setup.value,
+                                       hold.value, &reported);
             s_vpi_time values[2];
             s_vpi_delay delays;
             memset(values, 0, sizeof values);

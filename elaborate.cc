@@ -7465,7 +7465,7 @@ static bool timing_check_constant(Design*des, NetScope*scope, PExpr*expr,
       }
       if (value < 0.0) {
             cerr << loc.get_fileline() << ": sorry: negative " << kind << " "
-                 << which << " in " << scope_path(scope) << " is not supported; using zero." << endl;
+                 << which << " in " << scope_path(scope) << " is not currently supported; using zero." << endl;
             value = 0.0;
       }
       // The nonnegative VVP real grammar has no sign. IEEE negative zero

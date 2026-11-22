@@ -29,12 +29,12 @@ $rrc_watch("tb.combined", "recovery", "D", "any", "C", "posedge", 20, 20, "ns", 
 $rrc_watch("tb.combined", "removal", "D", "any", "C", "posedge", 8, 8, "nh", 1'b0, 1, 120);
 $rrc_watch("tb.combined", "recrem", "D", "any", "C", "posedge", 20, 20, 8, 8, "nc", 1'b0, 2, 115, 120);
 $rrc_population("tb.neg_first", 3);
-$rrc_watch("tb.neg_first", "recovery", "D", "any", "C", "posedge", 5, 5, "ns", 1'b0, 0);
+$rrc_watch("tb.neg_first", "recovery", "D", "any", "C", "posedge", 0, 0, "ns", 1'b0, 0);
 $rrc_watch("tb.neg_first", "removal", "D", "any", "C", "posedge", 116, 116, "nh", 1'b0, 1, 120);
 $rrc_watch("tb.neg_first", "recrem", "D", "any", "C", "posedge", 0, 0, 116, 116, "nc", 1'b0, 1, 120);
 $rrc_population("tb.neg_second", 3);
 $rrc_watch("tb.neg_second", "recovery", "D", "any", "C", "posedge", 116, 116, "ns", 1'b0, 1, 115);
-$rrc_watch("tb.neg_second", "removal", "D", "any", "C", "posedge", 6, 6, "nh", 1'b0, 1, 120);
+$rrc_watch("tb.neg_second", "removal", "D", "any", "C", "posedge", 0, 0, "nh", 1'b0, 0);
 $rrc_watch("tb.neg_second", "recrem", "D", "any", "C", "posedge", 116, 116, 0, 0, "nc", 1'b0, 1, 115);
 $rrc_watch("tb.partial_recovery", "recovery", "D", "any", "C", "posedge", 7, 7, "ns", 1'b0, 0);
 $rrc_watch("tb.partial_recovery", "removal", "D", "any", "C", "posedge", 8, 8, "nh", 1'b0, 1, 120);

@@ -16,8 +16,8 @@ SDF ERROR: ivltests/setuphold_sdf_cond_reject_vlog95.sdf:17: Unable to match SET
 SDF ERROR: ivltests/setuphold_sdf_cond_reject_vlog95.sdf:18: Unable to match SETUPHOLD D -> C in tb.u
 SDF ERROR: ivltests/setuphold_sdf_cond_reject_vlog95.sdf:19: Unable to match SETUPHOLD D -> C in tb.u
 SDF ERROR: ivltests/setuphold_sdf_cond_reject_vlog95.sdf:20: Unable to match SETUPHOLD D -> C in tb.u
-SDF WARNING: ivltests/setuphold_sdf_cond_reject_vlog95.sdf:21: sorry: negative HOLD limit on combined SETUPHOLD in tb.neg_second; using zero.
-SDF WARNING: ivltests/setuphold_sdf_cond_reject_vlog95.sdf:22: sorry: negative SETUP limit on combined SETUPHOLD in tb.neg_first; using zero.
+SDF WARNING: ivltests/setuphold_sdf_cond_reject_vlog95.sdf:21: sorry: negative HOLD limit on combined SETUPHOLD in tb.neg_second is not currently supported; using zero.
+SDF WARNING: ivltests/setuphold_sdf_cond_reject_vlog95.sdf:22: sorry: negative SETUP limit on combined SETUPHOLD in tb.neg_first is not currently supported; using zero.
 SDF ERROR: ivltests/setuphold_sdf_cond_reject_vlog95.sdf:23: unrepresentable SETUPHOLD limit
 SDF ERROR: ivltests/setuphold_sdf_cond_reject_vlog95.sdf:24: unrepresentable SETUPHOLD limit
 SHC_OBJECT tb.u setuphold C/posedge D/any limit=5 ticks=5 limit=5 ticks=5 events=0
