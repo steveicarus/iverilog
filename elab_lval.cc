@@ -1445,7 +1445,9 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 
 	    if (use_sel != index_component_t::SEL_NONE
 		&& use_sel != index_component_t::SEL_BIT
-		&& use_sel != index_component_t::SEL_PART) {
+		&& use_sel != index_component_t::SEL_PART
+		&& use_sel != index_component_t::SEL_IDX_UP
+		&& use_sel != index_component_t::SEL_IDX_DO) {
 		  cerr << get_fileline() << ": sorry: Assignments to part selects of "
 			"a struct member are not yet supported." << endl;
 		  des->errors += 1;
@@ -1498,7 +1500,12 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 			long tail_off = 0;
 			unsigned long tail_wid = 0;
 			rc = calculate_part(this, des, scope, member_comp.index.back(), tail_off, tail_wid);
-			ivl_assert(*this, rc);
+			if (!rc) {
+			      cerr << get_fileline() << ": error: A part-select of a "
+				   << "struct member requires constant indices." << endl;
+			      des->errors += 1;
+			      return false;
+			}
 
 			if (debug_elaborate) {
 			      cerr << get_fileline() << ": PEIdent::elaborate_lval_net_packed_member_: "
