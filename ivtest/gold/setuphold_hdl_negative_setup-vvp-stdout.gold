@@ -1,0 +1,3 @@
+SHC_OBJECT tb setuphold C/posedge D/any limit=0 ticks=0 limit=8 ticks=8 events=0
+SHC_COMPLETE objects=1 callbacks=0
+PASSED

@@ -1,0 +1,1 @@
+ivltests/recrem_hdl_negative_recovery.v:8: sorry: negative $recrem recovery limit in tb is not supported; using zero.

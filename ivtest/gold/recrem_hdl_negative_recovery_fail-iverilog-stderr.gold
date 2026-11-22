@@ -1,2 +1,0 @@
-ivltests/recrem_hdl_negative_recovery_fail.v:7: error: $recrem recovery limit must be a finite nonnegative constant.
-1 error(s) during elaboration.

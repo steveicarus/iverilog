@@ -16,14 +16,18 @@ SDF ERROR: ivltests/setuphold_sdf_cond_reject.sdf:17: Unable to match SETUPHOLD 
 SDF ERROR: ivltests/setuphold_sdf_cond_reject.sdf:18: Unable to match SETUPHOLD D -> C in tb.u
 SDF ERROR: ivltests/setuphold_sdf_cond_reject.sdf:19: Unable to match SETUPHOLD D -> C in tb.u
 SDF ERROR: ivltests/setuphold_sdf_cond_reject.sdf:20: Unable to match SETUPHOLD D -> C in tb.u
-SDF ERROR: ivltests/setuphold_sdf_cond_reject.sdf:21: invalid SETUPHOLD limit
-SDF ERROR: ivltests/setuphold_sdf_cond_reject.sdf:22: invalid SETUPHOLD limit
+SDF WARNING: ivltests/setuphold_sdf_cond_reject.sdf:21: sorry: negative HOLD limit on combined SETUPHOLD in tb.neg_second; using zero.
+SDF WARNING: ivltests/setuphold_sdf_cond_reject.sdf:22: sorry: negative SETUP limit on combined SETUPHOLD in tb.neg_first; using zero.
+SDF ERROR: ivltests/setuphold_sdf_cond_reject.sdf:23: unrepresentable SETUPHOLD limit
+SDF ERROR: ivltests/setuphold_sdf_cond_reject.sdf:24: unrepresentable SETUPHOLD limit
 SHC_OBJECT tb.u setuphold C/posedge D/any limit=5 ticks=5 limit=5 ticks=5 events=0
 SHC_OBJECT tb.valid setuphold C/posedge D/any limit=20 ticks=20 limit=8 ticks=8 events=2
+SHC_OBJECT tb.neg_first setuphold C/posedge D/any limit=0 ticks=0 limit=99 ticks=99 events=0
+SHC_OBJECT tb.neg_second setuphold C/posedge D/any limit=99 ticks=99 limit=0 ticks=0 events=0
 Timing violation: $setuphold setup at 115 (module units), interval=15 limit=20, ivltests/setuphold_sdf_cond_reject.v:8, scope=tb.valid
 SHC_VIOLATION 1 115
 Timing violation: $setuphold hold at 120 (module units), interval=5 limit=8, ivltests/setuphold_sdf_cond_reject.v:8, scope=tb.valid
 SHC_VIOLATION 1 120
-SHC_COMPLETE objects=2 callbacks=2
+SHC_COMPLETE objects=4 callbacks=2
 PASSED
-ivltests/setuphold_sdf_cond_reject.v:25: $finish called at 160 (1ps)
+ivltests/setuphold_sdf_cond_reject.v:29: $finish called at 160 (1ps)

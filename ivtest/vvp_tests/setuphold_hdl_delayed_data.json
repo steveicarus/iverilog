@@ -1,0 +1,11 @@
+{
+    "type": "normal",
+    "source": "setuphold_hdl_delayed_data.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ]
+}

@@ -1,5 +1,7 @@
 (DELAYFILE (SDFVERSION "3.0") (TIMESCALE 1ps)
  (CELL (CELLTYPE "shc_map") (INSTANCE combined) (TIMINGCHECK (SETUPHOLD D (posedge C) (20:20:20) (8:8:8))))
+ (CELL (CELLTYPE "shc_map") (INSTANCE neg_first) (TIMINGCHECK (SETUPHOLD D (posedge C) (-62:-62:-62) (116:116:116))))
+ (CELL (CELLTYPE "shc_map") (INSTANCE neg_second) (TIMINGCHECK (SETUPHOLD D (posedge C) (116:116:116) (-62:-62:-62))))
  (CELL (CELLTYPE "shc_map") (INSTANCE partial_setup) (TIMINGCHECK (SETUPHOLD D (posedge C) (20:20:20) (8:8:8)) (SETUP D (posedge C) (7:7:7))))
  (CELL (CELLTYPE "shc_map") (INSTANCE partial_hold) (TIMINGCHECK (SETUPHOLD D (posedge C) (20:20:20) (8:8:8)) (HOLD D (posedge C) (3:3:3))))
  (CELL (CELLTYPE "shc_map") (INSTANCE separate) (TIMINGCHECK (SETUP D (posedge C) (20:20:20)) (HOLD D (posedge C) (8:8:8))))

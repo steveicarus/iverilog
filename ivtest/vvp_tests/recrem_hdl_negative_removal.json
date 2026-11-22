@@ -1,0 +1,15 @@
+{
+    "type": "normal",
+    "gold": "recrem_hdl_negative_removal",
+    "source": "recrem_hdl_negative_removal.v",
+    "iverilog-args": [
+        "-g2012",
+        "-gspecify",
+        "-Ttyp",
+        "-s",
+        "tb"
+    ],
+    "vpi-sources": [
+        "vpi/recrem_audit.c"
+    ]
+}
