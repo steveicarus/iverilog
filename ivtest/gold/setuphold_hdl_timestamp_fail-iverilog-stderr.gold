@@ -1,2 +1,2 @@
-ivltests/setuphold_hdl_timestamp_fail.v:7: error: $setuphold timestamp/timecheck conditions and delayed signals are not supported.
+ivltests/setuphold_hdl_timestamp_fail.v:7: error: $setuphold timestamp/timecheck conditions are not supported.
 1 error(s) during elaboration.

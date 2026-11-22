@@ -1,7 +1,6 @@
 {
-    "type": "CE",
-    "gold": "setuphold_hdl_delayed_data_fail",
-    "source": "setuphold_hdl_delayed_data_fail.v",
+    "type": "normal",
+    "source": "setuphold_hdl_delayed_reference.v",
     "iverilog-args": [
         "-g2012",
         "-gspecify",

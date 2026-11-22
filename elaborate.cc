@@ -7441,7 +7441,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
  * Keep them real until the runtime applies the module precision. */
 static bool timing_check_constant(Design*des, NetScope*scope, PExpr*expr,
                                   const LineInfo&loc, const char*kind,
-                                  const char*which, double&value)
+                                  const char*which, double&value, bool combined = false)
 {
       // Timing-check limits may use specparams. Require a constant without
       // treating this timing context as a non-annotatable parameter use.
@@ -7457,11 +7457,16 @@ static bool timing_check_constant(Design*des, NetScope*scope, PExpr*expr,
 		  valid = true;
 	    }
       }
-      if (!valid || !std::isfinite(value) || value < 0.0) {
+      if (!valid || !std::isfinite(value) || (value < 0.0 && !combined)) {
 	    cerr << loc.get_fileline() << ": error: " << kind << " " << which
 		 << " must be a finite nonnegative constant." << endl;
 	    des->errors += 1;
 	    return false;
+      }
+      if (value < 0.0) {
+            cerr << loc.get_fileline() << ": sorry: negative " << kind << " "
+                 << which << " in " << scope_path(scope) << " is not supported; using zero." << endl;
+            value = 0.0;
       }
       // The nonnegative VVP real grammar has no sign. IEEE negative zero
       // is the same timing value as zero, so emit its canonical form.
@@ -7829,12 +7834,54 @@ static bool unconditional_timing_check_event(Design*des, const LineInfo&loc,
       return true;
 }
 
+// Several timing declarations may request the same delayed copy (e.g. a
+// shared clock in SETUPHOLD and RECREM). Keep one driver on that terminal.
+class NetTimingCheckCopy : public NetBUFZ {
+public:
+      NetTimingCheckCopy(NetScope*scope, NetNet*source, NetNet*dest)
+      : NetBUFZ(scope, scope->local_symbol(), 1, false)
+      {
+            connect(pin(1), source->pin(0));
+            connect(pin(0), dest->pin(0));
+      }
+};
+
+static bool timing_check_copy(Design*des, NetScope*scope, NetNet*source,
+                              const pform_name_t*name, const LineInfo&loc,
+                              const char*kind)
+{
+      if (!name) return true;
+      NetNet*dest = timing_check_signal(des, scope, *name, loc, kind,
+                                       false, "delayed terminal");
+      if (!dest) return false;
+      if (dest->type() == NetNet::REG || dest == source) {
+            cerr << loc.get_fileline() << ": error: " << kind
+                 << " delayed terminal must be a distinct scalar net." << endl;
+            des->errors += 1;
+            return false;
+      }
+      for (const Link*pin = dest->pin(0).nexus()->first_nlink(); pin;
+           pin = pin->next_nlink()) {
+            const auto*copy = dynamic_cast<const NetTimingCheckCopy*>(pin->get_obj());
+            if (!copy || pin != &copy->pin(0)) continue;
+            if (copy->pin(1).is_linked(source->pin(0))) return true;
+            cerr << loc.get_fileline() << ": error: " << kind << " delayed terminal "
+                 << *name << " used for different source signals." << endl;
+            des->errors += 1;
+            return false;
+      }
+      auto*copy = new NetTimingCheckCopy(scope, source, dest);
+      copy->set_line(loc);
+      des->add_node(copy);
+      return true;
+}
+
 void PRecRem::elaborate(Design*des, NetScope*scope) const
 {
       if (gn_specify_blocks_flag) {
-            if (timestamp_cond_ || timecheck_cond_ || delayed_reference_ || delayed_data_) {
+            if (timestamp_cond_ || timecheck_cond_) {
                   cerr << get_fileline() << ": error: $recrem timestamp/timecheck"
-                       << " conditions and delayed signals are not supported." << endl;
+                       << " conditions are not supported." << endl;
                   des->errors += 1;
                   return;
             }
@@ -7857,9 +7904,13 @@ void PRecRem::elaborate(Design*des, NetScope*scope) const
             if (!reference || !data || (notifier_ && !notifier)) return;
             double recovery_limit = 0.0, removal_limit = 0.0;
             if (!timing_check_constant(des, scope, setup_limit_.get(), *this,
-                                       "$recrem", "recovery limit", recovery_limit) ||
+                                       "$recrem", "recovery limit", recovery_limit, true) ||
                 !timing_check_constant(des, scope, hold_limit_.get(), *this,
-                                       "$recrem", "removal limit", removal_limit)) return;
+                                       "$recrem", "removal limit", removal_limit, true)) return;
+            if (!timing_check_copy(des, scope, reference, delayed_reference_.get(),
+                                   *this, "$recrem") ||
+                !timing_check_copy(des, scope, data, delayed_data_.get(),
+                                   *this, "$recrem")) return;
             std::unique_ptr<NetRecRem> check(new NetRecRem(scope, reference,
                   data, notifier, reference_edge, data_edge, recovery_limit, removal_limit,
                   reference_condition, reference_condition_kind,
@@ -7934,9 +7985,9 @@ void PRecRem::elaborate(Design*des, NetScope*scope) const
 void PSetupHold::elaborate(Design*des, NetScope*scope) const
 {
       if (gn_specify_blocks_flag) {
-            if (timestamp_cond_ || timecheck_cond_ || delayed_reference_ || delayed_data_) {
+            if (timestamp_cond_ || timecheck_cond_) {
                   cerr << get_fileline() << ": error: $setuphold timestamp/timecheck"
-                       << " conditions and delayed signals are not supported." << endl;
+                       << " conditions are not supported." << endl;
                   des->errors += 1;
                   return;
             }
@@ -7959,9 +8010,13 @@ void PSetupHold::elaborate(Design*des, NetScope*scope) const
             if (!reference || !data || (notifier_ && !notifier)) return;
             double setup_limit = 0.0, hold_limit = 0.0;
             if (!timing_check_constant(des, scope, setup_limit_.get(), *this,
-                                       "$setuphold", "setup limit", setup_limit) ||
+                                       "$setuphold", "setup limit", setup_limit, true) ||
                 !timing_check_constant(des, scope, hold_limit_.get(), *this,
-                                       "$setuphold", "hold limit", hold_limit)) return;
+                                       "$setuphold", "hold limit", hold_limit, true)) return;
+            if (!timing_check_copy(des, scope, reference, delayed_reference_.get(),
+                                   *this, "$setuphold") ||
+                !timing_check_copy(des, scope, data, delayed_data_.get(),
+                                   *this, "$setuphold")) return;
             std::unique_ptr<NetSetupHold> check(new NetSetupHold(scope, reference,
                   data, notifier, reference_edge, data_edge, setup_limit, hold_limit,
                   reference_condition, reference_condition_kind,
