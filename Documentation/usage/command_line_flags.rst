@@ -148,18 +148,38 @@ These flags affect the general behavior of the compiler.
     ``&&&`` qualifier: a bare signal, ``signal === 1'b0``, or
     ``signal === 1'b1``.
 
-    In scalar ``$setuphold`` and ``$recrem`` declarations, optional delayed
-    reference and data terminals receive zero-delay copies. Supplying the
+    In scalar ``$setuphold`` and ``$recrem`` declarations, supplying the
     optional timestamp condition or timecheck condition produces a warning
-    and skips that check. The delayed terminals still drive the cell.
+    and skips that check. Its named delayed terminals still drive the cell.
     Other supported checks remain active and can be annotated.
-    Signed combined timing checks are
-    approximate: a negative HDL limit, or a negative SDF component applied
-    to a combined check, is diagnosed and treated as zero. Standalone checks
-    require nonnegative HDL limits. A negative SDF limit on a matching
-    standalone check reports an SDF error and sets its limit to zero. An
-    unmatched SDF timing check reports an SDF error and annotation continues
-    with the next record.
+
+    An unconditional ``$setuphold`` can use a negative HOLD from static HDL
+    or cold SDF. Checks on the same local data source share one delayed-data
+    stream in that instance. The reference stays at its original time. VVP
+    quantizes the limits to the module precision, then shifts the data by
+    the largest negative HOLD magnitude plus one global simulation tick.
+    Every enabled participant must admit that shift with positive remaining
+    SETUP. Diagnostics measure intervals on the delivered signals.
+    Scaled-real VPI reads return the signed HOLD and unsigned tick reads
+    return zero for that component.
+
+    Apply the signed limits before time advances or a selected reference
+    edge occurs. A shift change must precede delivery to a named delayed
+    data terminal. With implicit delayed data, VVP can still deliver one
+    time-zero binary initialization at the new shift if its earlier value
+    has populated only the internal timing history. For separate SDF
+    entries that start from HDL 0/0, apply the
+    positive SETUP before the negative HOLD, or supply both in a single
+    SETUPHOLD entry. A HOLD applied first can take the diagnosed zero
+    approximation at the then-current SETUP. A write that cannot configure
+    the shared stream reports a diagnostic and
+    preserves that object's previous limits. Other timing roles on the
+    raw data source can preclude a shift. Combined checks retain a diagnosed
+    zero approximation for negative SETUP, negative RECOVERY/REMOVAL, and
+    certain out-of-domain HOLD limits. Standalone checks require nonnegative
+    HDL limits. A negative SDF limit on a matching standalone check reports
+    an SDF error and sets its limit to zero. An unmatched SDF timing check
+    reports an SDF error and annotation continues with the next record.
 
   * std-include/no-std-include
 

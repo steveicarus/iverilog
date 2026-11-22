@@ -103,6 +103,8 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_SUBSTITUTE
 %token K_TCHK_WIDTH K_TCHK_PERIOD K_TCHK_SETUP K_TCHK_HOLD
 %token K_TCHK_RECOVERY K_TCHK_REMOVAL K_TCHK_RECREM
+%type <real> tchk_hold_real
+%token K_TCHK_DELAY
 %token K_TCHK_SETUPHOLD
 %token K_REFVAR K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC_REAL K_UFUNC_REAL_E K_UFUNC_VEC4 K_UFUNC_E K_UDP K_UDP_C K_UDP_S
@@ -203,6 +205,9 @@ statement
 
 	: T_LABEL K_FUNCTOR T_SYMBOL T_NUMBER ',' symbols ';'
 		{ compile_functor($1, $3, $4, 6, 6, $6.cnt, $6.vect); }
+
+	| T_LABEL K_TCHK_DELAY symbol ';'
+                { compile_tchk_delay($1, $3); }
 
 	| T_LABEL K_FUNCTOR T_SYMBOL T_NUMBER
 	          '[' T_NUMBER T_NUMBER ']' ',' symbols ';'
@@ -786,16 +791,16 @@ statement
                   delete[] $17;
                   compile_tchk_recrem($2, $3, $5, $7, $9, $11, $13, $15, notifier,
                                          $19, $21, $23, $25); }
-        | K_TCHK_SETUPHOLD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_SYMBOL ';'
+        | K_TCHK_SETUPHOLD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' tchk_hold_real ',' T_SYMBOL ';'
                 { compile_tchk_setuphold($2, $3, $5, $7, $9, $11, $13, $15, $17); }
-        | K_TCHK_SETUPHOLD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_STRING ';'
+        | K_TCHK_SETUPHOLD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' tchk_hold_real ',' T_STRING ';'
                 { char* notifier = strdup($17);
                   delete[] $17;
                   compile_tchk_setuphold($2, $3, $5, $7, $9, $11, $13, $15, notifier); }
-        | K_TCHK_SETUPHOLD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_SYMBOL ',' T_STRING ',' T_NUMBER ',' T_STRING ',' T_NUMBER ';'
+        | K_TCHK_SETUPHOLD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' tchk_hold_real ',' T_SYMBOL ',' T_STRING ',' T_NUMBER ',' T_STRING ',' T_NUMBER ';'
                 { compile_tchk_setuphold($2, $3, $5, $7, $9, $11, $13, $15, $17,
                                          $19, $21, $23, $25); }
-        | K_TCHK_SETUPHOLD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' T_REAL ',' T_STRING ',' T_STRING ',' T_NUMBER ',' T_STRING ',' T_NUMBER ';'
+        | K_TCHK_SETUPHOLD T_NUMBER T_NUMBER ',' T_STRING ',' symbol ',' T_STRING ',' symbol ',' T_REAL ',' tchk_hold_real ',' T_STRING ',' T_STRING ',' T_NUMBER ',' T_STRING ',' T_NUMBER ';'
                 { char* notifier = strdup($17);
                   delete[] $17;
                   compile_tchk_setuphold($2, $3, $5, $7, $9, $11, $13, $15, notifier,
@@ -1434,6 +1439,8 @@ delay
 	| '(' T_NUMBER ',' T_NUMBER ',' T_NUMBER ')'
 		{ $$ = new vvp_delay_t($2, $4, $6); }
 	;
+
+tchk_hold_real : T_REAL { $$ = $1; } | '-' T_REAL { $$ = -$2; } ;
 
 %%
 

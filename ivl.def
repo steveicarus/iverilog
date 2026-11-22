@@ -121,6 +121,7 @@ ivl_logic_name
 ivl_logic_pin
 ivl_logic_pins
 ivl_logic_scope
+ivl_logic_timing_source
 ivl_logic_type
 ivl_logic_udp
 ivl_logic_width
@@ -353,6 +354,8 @@ ivl_setuphold_data
 ivl_setuphold_data_condition
 ivl_setuphold_data_condition_kind
 ivl_setuphold_data_edge
+ivl_setuphold_delayed_data
+ivl_setuphold_delayed_reference
 ivl_setuphold_file
 ivl_setuphold_hold_limit
 ivl_setuphold_lineno

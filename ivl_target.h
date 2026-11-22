@@ -1165,6 +1165,10 @@ extern ivl_drive_t ivl_logic_drive0(ivl_net_logic_t net);
 extern ivl_drive_t ivl_logic_drive1(ivl_net_logic_t net);
 extern unsigned    ivl_logic_width(ivl_net_logic_t net);
 extern unsigned    ivl_logic_is_cassign(ivl_net_logic_t net);
+/* Source of the shared delayed terminal represented by this buffer, if any.
+ * Timing-aware targets supply its transport; HDL targets re-emit the owning
+ * timing declaration instead of independently driving that terminal. */
+extern ivl_signal_t ivl_logic_timing_source(ivl_net_logic_t net);
 extern unsigned    ivl_logic_port_buffer(ivl_net_logic_t net);
 
   /* DEPRECATED */
@@ -2148,6 +2152,8 @@ extern ivl_signal_t ivl_setuphold_data(ivl_setuphold_t check);
 extern ivl_signal_t ivl_setuphold_data_condition(ivl_setuphold_t check);
 extern ivl_tchk_cond_t ivl_setuphold_data_condition_kind(ivl_setuphold_t check);
 extern int ivl_setuphold_data_edge(ivl_setuphold_t check);
+extern ivl_signal_t ivl_setuphold_delayed_data(ivl_setuphold_t check);
+extern ivl_signal_t ivl_setuphold_delayed_reference(ivl_setuphold_t check);
 extern const char*ivl_setuphold_file(ivl_setuphold_t check);
 extern double ivl_setuphold_hold_limit(ivl_setuphold_t check);
 extern unsigned ivl_setuphold_lineno(ivl_setuphold_t check);

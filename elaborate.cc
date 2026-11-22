@@ -7441,7 +7441,8 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
  * Keep them real until the runtime applies the module precision. */
 static bool timing_check_constant(Design*des, NetScope*scope, PExpr*expr,
                                   const LineInfo&loc, const char*kind,
-                                  const char*which, double&value, bool combined = false)
+                                  const char*which, double&value, bool combined = false,
+                                  bool retain_negative = false)
 {
       // Timing-check limits may use specparams. Require a constant without
       // treating this timing context as a non-annotatable parameter use.
@@ -7463,7 +7464,7 @@ static bool timing_check_constant(Design*des, NetScope*scope, PExpr*expr,
 	    des->errors += 1;
 	    return false;
       }
-      if (value < 0.0) {
+      if (value < 0.0 && !retain_negative) {
             cerr << loc.get_fileline() << ": sorry: negative " << kind << " "
                  << which << " in " << scope_path(scope) << " is not currently supported; using zero." << endl;
             value = 0.0;
@@ -7827,11 +7828,13 @@ public:
             connect(pin(1), source->pin(0));
             connect(pin(0), dest->pin(0));
       }
+      NetNet* timing_source() const override { return setuphold_source; }
+      NetNet*setuphold_source = nullptr;
 };
 
 static bool timing_check_copy(Design*des, NetScope*scope, NetNet*source,
                               const pform_name_t*name, const LineInfo&loc,
-                              const char*kind)
+                              const char*kind, NetNet**setuphold_terminal = nullptr)
 {
       if (!name) return true;
       NetNet*dest = timing_check_signal(des, scope, *name, loc, kind,
@@ -7843,17 +7846,27 @@ static bool timing_check_copy(Design*des, NetScope*scope, NetNet*source,
             des->errors += 1;
             return false;
       }
-      for (const Link*pin = dest->pin(0).nexus()->first_nlink(); pin;
+      for (Link*pin = dest->pin(0).nexus()->first_nlink(); pin;
            pin = pin->next_nlink()) {
-            const auto*copy = dynamic_cast<const NetTimingCheckCopy*>(pin->get_obj());
+            auto*copy = dynamic_cast<NetTimingCheckCopy*>(pin->get_obj());
             if (!copy || pin != &copy->pin(0)) continue;
-            if (copy->pin(1).is_linked(source->pin(0))) return true;
+            if (copy->pin(1).is_linked(source->pin(0))) {
+                  if (setuphold_terminal) {
+                        copy->setuphold_source = source;
+                        *setuphold_terminal = dest;
+                  }
+                  return true;
+            }
             cerr << loc.get_fileline() << ": error: " << kind << " delayed terminal "
                  << *name << " used for different source signals." << endl;
             des->errors += 1;
             return false;
       }
       auto*copy = new NetTimingCheckCopy(scope, source, dest);
+      if (setuphold_terminal) {
+            copy->setuphold_source = source;
+            *setuphold_terminal = dest;
+      }
       copy->set_line(loc);
       des->add_node(copy);
       return true;
@@ -8018,15 +8031,24 @@ void PSetupHold::elaborate(Design*des, NetScope*scope) const
             if (!timing_check_constant(des, scope, setup_limit_.get(), *this,
                                        "$setuphold", "setup limit", setup_limit, true) ||
                 !timing_check_constant(des, scope, hold_limit_.get(), *this,
-                                       "$setuphold", "hold limit", hold_limit, true)) return;
-            if (!timing_check_copy(des, scope, reference, delayed_reference_.get(),
-                                   *this, "$setuphold") ||
-                !timing_check_copy(des, scope, data, delayed_data_.get(),
-                                   *this, "$setuphold")) return;
+                                       "$setuphold", "hold limit", hold_limit, true,
+                                       !reference_condition && !data_condition)) return;
+            // Keep the zero approximation for a negative limit outside the
+            // single-check interior-delay domain. Cross-check feasibility and
+            // cold-only updates are checked where the shared stream is known.
+            if (hold_limit < 0.0 && setup_limit <= -hold_limit) {
+                  cerr << get_fileline() << ": sorry: negative $setuphold hold limit in "
+                       << scope_path(scope) << " is not currently supported; using zero." << endl;
+                  hold_limit = 0.0;
+            }
             std::unique_ptr<NetSetupHold> check(new NetSetupHold(scope, reference,
                   data, notifier, reference_edge, data_edge, setup_limit, hold_limit,
                   reference_condition, reference_condition_kind,
                   data_condition, data_condition_kind));
+            if (!timing_check_copy(des, scope, reference, delayed_reference_.get(),
+                                   *this, "$setuphold", &check->delayed_reference) ||
+                !timing_check_copy(des, scope, data, delayed_data_.get(),
+                                   *this, "$setuphold", &check->delayed_data)) return;
             check->set_line(*this);
             scope->add_setuphold(std::move(check));
             return;

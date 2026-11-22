@@ -35,7 +35,8 @@ $shc_watch("tb.neg_first", "setuphold", "C", "posedge", "D", "any", 0, 0, 116, 1
 $shc_population("tb.neg_second", 3);
 $shc_watch("tb.neg_second", "setup", "C", "posedge", "D", "any", 116, 116, "ns", 1'b0, 1, 115);
 $shc_watch("tb.neg_second", "hold", "C", "posedge", "D", "any", 0, 0, "nh", 1'b0, 0);
-$shc_watch("tb.neg_second", "setuphold", "C", "posedge", "D", "any", 116, 116, 0, 0, "nc", 1'b0, 1, 115);
+// The signed write at 1 ps is late. The combined check retains its 5/6 pair.
+$shc_watch("tb.neg_second", "setuphold", "C", "posedge", "D", "any", 5, 5, 6, 6, "nc", 1'b0, 1, 120);
 $shc_watch("tb.partial_setup", "setup", "C", "posedge", "D", "any", 7, 7, "ns", 1'b0, 0);
 $shc_watch("tb.partial_setup", "hold", "C", "posedge", "D", "any", 8, 8, "nh", 1'b0, 1, 120);
 $shc_watch("tb.partial_setup", "setuphold", "C", "posedge", "D", "any", 7, 7, 8, 8, "nc", 1'b0, 1, 120);

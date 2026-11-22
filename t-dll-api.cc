@@ -2761,6 +2761,15 @@ extern "C" ivl_tchk_cond_t ivl_setuphold_data_condition_kind(ivl_setuphold_t che
 extern "C" int ivl_setuphold_data_edge(ivl_setuphold_t check)
 { assert(check); return check->data_edge; }
 
+extern "C" ivl_signal_t ivl_logic_timing_source(ivl_net_logic_t logic)
+{ assert(logic); return logic->timing_source; }
+
+extern "C" ivl_signal_t ivl_setuphold_delayed_data(ivl_setuphold_t check)
+{ assert(check); return check->delayed_data; }
+
+extern "C" ivl_signal_t ivl_setuphold_delayed_reference(ivl_setuphold_t check)
+{ assert(check); return check->delayed_reference; }
+
 extern "C" const char*ivl_setuphold_file(ivl_setuphold_t check)
 { assert(check); return check->file.str(); }
 

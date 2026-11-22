@@ -679,6 +679,20 @@ static void emit_pull_const(char value, unsigned width)
 
 static void emit_logic_as_ca(ivl_scope_t scope, ivl_net_logic_t nlogic)
 {
+      if (ivl_logic_timing_source(nlogic)) {
+            // A hierarchical event control must watch the delivered terminal.
+            // Inlining this buffer's input would silently switch to the raw net.
+            ivl_nexus_t output = ivl_logic_pin(nlogic, 0);
+            for (unsigned i = 0; i < ivl_nexus_ptrs(output); ++i) {
+                  ivl_signal_t terminal = ivl_nexus_ptr_sig(ivl_nexus_ptr(output, i));
+                  if (!terminal || ivl_signal_local(terminal) ||
+                      ivl_signal_scope(terminal) != ivl_logic_scope(nlogic)) continue;
+                  emit_scope_call_path(scope, ivl_signal_scope(terminal));
+                  emit_id(ivl_signal_basename(terminal));
+                  return;
+            }
+            assert(0 && "missing delayed timing-check terminal");
+      }
       unsigned inputs = ivl_logic_pins(nlogic) - 1;
       switch (ivl_logic_type(nlogic)) {
 	case IVL_LO_AND:
@@ -894,8 +908,9 @@ static ivl_signal_t nexus_is_signal(ivl_scope_t scope, ivl_nexus_t nex,
 	    }
 	    if (t_nlogic) {
 		  assert(! nlogic);
-		    /* The real signal could be hidden behind a BUFZ gate. */
-		  if (ivl_logic_type(t_nlogic) == IVL_LO_BUFZ) {
+		    /* The real signal could be hidden behind an ordinary BUFZ. */
+		  if (ivl_logic_type(t_nlogic) == IVL_LO_BUFZ &&
+		      !ivl_logic_timing_source(t_nlogic)) {
 			assert(ivl_logic_pins(t_nlogic) == 2);
 			t_sig = nexus_is_signal(scope,
 			                        ivl_logic_pin(t_nlogic, 1),
@@ -1989,6 +2004,7 @@ static void emit_name_of_logic_nexus(ivl_scope_t scope, ivl_net_logic_t nlogic,
 
 void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 {
+      if (ivl_logic_timing_source(nlogic)) return;
 // HERE: We need to investigate if this is really the base of a CA. A real
 //       gate only allows a signal or a signal bit select for the output(s)
 //       and a scalar expression for the input. We also need to modify the

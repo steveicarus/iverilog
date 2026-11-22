@@ -21,6 +21,7 @@
  */
 
 # include "vvp_net.h"
+# include <vector>
 
 class __vpiScope;
 class __vpiTchkWidth;
@@ -126,8 +127,33 @@ class vvp_fun_tchk_recrem : public vvp_net_fun_t {
 
 /* A combined declaration is one observable timing check, with independent
  * reference/data histories and setup/hold limits. */
+class vvp_fun_tchk_setuphold;
+
+// A raw signal has one transport stream per instance, independent of how many
+// timing declarations or explicitly named delayed wires receive that stream.
+class vvp_fun_tchk_delay : public vvp_net_fun_t {
+    public:
+      explicit vvp_fun_tchk_delay(vvp_net_t*output) : output_(output) { }
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t& value,
+                     vvp_context_t context) override;
+      const char* configure(vvp_fun_tchk_setuphold*changed, vvp_time64_t setup,
+                     vvp_time64_t hold, bool negative);
+      std::vector<vvp_fun_tchk_setuphold*> checks;
+      vvp_time64_t shift = 0;
+      bool unsupported_consumer = false;
+      bool has_named_terminal = false;
+    private:
+      vvp_net_t*output_;
+      vvp_bit4_t last_raw_ = BIT4_X;
+      bool data_delivered_or_queued_ = false;
+      bool transport_started_ = false;
+};
+
 class vvp_fun_tchk_setuphold : public vvp_net_fun_t {
     public:
+      vvp_fun_tchk_delay* data_transport = nullptr;
+      const char* configure(vvp_time64_t setup, vvp_time64_t hold, bool negative);
+      bool negative_hold = false;
       vvp_fun_tchk_setuphold(int reference_edge, int data_edge,
                              vvp_time64_t setup_limit, vvp_time64_t hold_limit,
                              unsigned reference_condition_value,
@@ -144,8 +170,10 @@ class vvp_fun_tchk_setuphold : public vvp_net_fun_t {
       vvp_time64_t reference_time_, data_time_;
       bool have_reference_, have_data_;
       void process_events(bool reference_event, bool data_event);
-      void violation(vvp_time64_t now, bool setup, vvp_time64_t interval);
+      void violation(vvp_time64_t now, bool setup, vvp_time64_t interval,
+                     vvp_time64_t limit);
       friend class __vpiTchkSetupHold;
+      friend class vvp_fun_tchk_delay;
 };
 
 #endif

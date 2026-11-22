@@ -833,6 +833,7 @@ bool dll_target::bufz(const NetBUFZ*net)
       struct ivl_net_logic_s *obj = new struct ivl_net_logic_s;
 
       assert(net->pin_count() == 2);
+      if (auto*source = net->timing_source()) obj->timing_source = find_signal(des_, source);
 
       obj->type_ = net->transparent()? IVL_LO_BUFT : IVL_LO_BUFZ;
       obj->width_= net->width();
@@ -2971,6 +2972,8 @@ void dll_target::setuphold_check(const NetSetupHold*check)
       }
 
       ivl_setuphold_t obj = new ivl_setuphold_s;
+      obj->delayed_reference = check->delayed_reference ? find_signal(des_, check->delayed_reference) : nullptr;
+      obj->delayed_data = check->delayed_data ? find_signal(des_, check->delayed_data) : nullptr;
       obj->scope = find_scope(des_, check->scope());
       obj->reference = find_signal(des_, check->reference());
       obj->data = find_signal(des_, check->data());
