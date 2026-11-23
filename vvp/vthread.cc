@@ -3121,8 +3121,32 @@ bool of_DISABLE_FLOW(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * Disable the detached children of the given thread and, before that,
+ * the detached children of all its descendants. do_disable() only
+ * follows the joined children, so without this a detached grandchild
+ * would be fully detached when its parent is reaped and keep running.
+ */
+static void disable_detached_descendants(vthread_t thr, vthread_t match)
+{
+      for (set<vthread_t>::iterator cur = thr->children.begin()
+		 ; cur != thr->children.end() ; ++cur)
+	    disable_detached_descendants(*cur, match);
+
+      while (! thr->detached_children.empty()) {
+	    vthread_t child = *(thr->detached_children.begin());
+	    assert(child);
+	    assert(child->parent == thr);
+	    disable_detached_descendants(child, match);
+	      /* Disabling the children can never match the parent thread. */
+	    bool res = do_disable(child, match);
+	    assert(! res);
+	    vthread_reap(child);
+      }
+}
+
+/*
  * Implement the %disable/fork (SystemVerilog) instruction by disabling
- * all the detached children of the given thread.
+ * all the detached descendants of the given thread.
  */
 bool of_DISABLE_FORK(vthread_t thr, vvp_code_t)
 {
@@ -3133,16 +3157,8 @@ bool of_DISABLE_FORK(vthread_t thr, vvp_code_t)
 	/* There should be no active children to disable. */
       assert(thr->children.empty());
 
-	/* Disable any detached children. */
-      while (! thr->detached_children.empty()) {
-	    vthread_t child = *(thr->detached_children.begin());
-	    assert(child);
-	    assert(child->parent == thr);
-	      /* Disabling the children can never match the parent thread. */
-	    bool res = do_disable(child, thr);
-	    assert(! res);
-	    vthread_reap(child);
-      }
+	/* Disable any detached children and their descendants. */
+      disable_detached_descendants(thr, thr);
 
       return true;
 }

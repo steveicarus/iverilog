@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "disable_fork_descendants.v",
+    "iverilog-args" : [ "-g2009" ],
+    "vlog95" : {
+        "__comment" : "disable fork and join_* are not supported.",
+        "type"      : "CE"
+    }
+}

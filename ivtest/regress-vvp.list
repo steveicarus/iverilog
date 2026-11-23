@@ -277,6 +277,7 @@ dffsynth10			vvp_tests/dffsynth10.json
 dffsynth11			vvp_tests/dffsynth11.json
 dimension_idx_down_fail		vvp_tests/dimension_idx_down_fail.json
 dimension_idx_up_fail		vvp_tests/dimension_idx_up_fail.json
+disable_fork_descendants		vvp_tests/disable_fork_descendants.json
 drive_strength4			vvp_tests/drive_strength4.json
 dumpfile			vvp_tests/dumpfile.json
 early_sig_elab1			vvp_tests/early_sig_elab1.json
