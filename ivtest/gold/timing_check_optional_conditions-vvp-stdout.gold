@@ -1,0 +1,2 @@
+Timing violation: $setup at 24 (module units), interval=3 limit=10, ivltests/timing_check_optional_conditions.v:17, scope=tb.u
+PASSED

@@ -1,0 +1,10 @@
+{
+    "type": "normal",
+    "source": "timing_check_optional_conditions.v",
+    "gold": "timing_check_optional_conditions",
+    "iverilog-args": ["-g2005", "-gspecify", "-Ttyp", "-s", "tb"],
+    "vpi-sources": ["vpi/setuphold_audit.c"],
+    "vlog95": {
+        "gold": "timing_check_optional_conditions_vlog95"
+    }
+}
