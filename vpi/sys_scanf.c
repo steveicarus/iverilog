@@ -1058,6 +1058,14 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv,
 		  match = 0;
 		  rc = EOF;
 	    }
+      } else {
+	      /* Only a string object can fail to provide a vector value
+	       * (a string variable, or a string constant or parameter).
+	       * The compiletf routine should have rejected anything else. */
+	    PLI_INT32 type = vpi_get(vpiType, item);
+	    assert(type == vpiStringVar ||
+	           ((type == vpiConstant || type == vpiParameter) &&
+	            vpi_get(vpiConstType, item) == vpiStringConst));
       }
 
 	/* Now get the format as a string. */
