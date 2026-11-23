@@ -1035,25 +1035,37 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv,
       item = vpi_scan(argv);
       assert(item);
 	/* Look for an undefined bit (X/Z) in the format string. If one is
-	 * found just return EOF. */
+	 * found just return EOF. A string variable holds no X/Z bits and
+	 * does not provide a vpiVectorVal, so skip this check for it
+	 * rather than read the then uninitialized val.value.vector. */
       len = vpi_get(vpiSize, item);
       words = ((len + 31) / 32) - 1;
       val.format = vpiVectorVal;
       vpi_get_value(item, &val);
-	/* Check the full words for an undefined bit. */
-      for (idx = 0; idx < words; idx += 1) {
-	    if (val.value.vector[idx].bval) {
+      if (val.format == vpiVectorVal) {
+	      /* Check the full words for an undefined bit. */
+	    for (idx = 0; idx < words; idx += 1) {
+		  if (val.value.vector[idx].bval) {
+			match = 0;
+			rc = EOF;
+			break;
+		  }
+	    }
+	      /* The mask is defined to be 32 bits. */
+	    mask = UINT32_MAX >> (32U - ((len - 1U) % 32U + 1U));
+	      /* Check the top word for an undefined bit. */
+	    if (match && (val.value.vector[words].bval & mask)) {
 		  match = 0;
 		  rc = EOF;
-		  break;
 	    }
-      }
-	/* The mask is defined to be 32 bits. */
-      mask = UINT32_MAX >> (32U - ((len - 1U) % 32U + 1U));
-	/* Check the top word for an undefined bit. */
-      if (match && (val.value.vector[words].bval & mask)) {
-	    match = 0;
-	    rc = EOF;
+      } else {
+	      /* Only a string object can fail to provide a vector value
+	       * (a string variable, or a string constant or parameter).
+	       * The compiletf routine should have rejected anything else. */
+	    PLI_INT32 type = vpi_get(vpiType, item);
+	    assert(type == vpiStringVar ||
+	           ((type == vpiConstant || type == vpiParameter) &&
+	            vpi_get(vpiConstType, item) == vpiStringConst));
       }
 
 	/* Now get the format as a string. */

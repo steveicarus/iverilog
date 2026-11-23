@@ -499,6 +499,7 @@ size_cast_fail1		CE,-g2009		ivltests
 size_cast_fail2		CE,-g2009		ivltests
 size_cast_fail3		CE,-g2009		ivltests
 slongint_test		normal,-g2005-sv	ivltests
+sscanf_string_fmt	normal,-g2009		ivltests
 sshortint_test		normal,-g2005-sv	ivltests
 string_compare		normal,-g2005-sv	ivltests
 string_compare_err	CE,-g2005-sv		ivltests gold=string_compare_err.gold
