@@ -7859,13 +7859,36 @@ static bool timing_check_copy(Design*des, NetScope*scope, NetNet*source,
       return true;
 }
 
+// Optional timestamp/timecheck conditions gate two separate operations. A
+// skipped declaration must still drive the delayed nets used by the cell.
+static void skip_conditioned_timing_check(Design*des, NetScope*scope,
+                                          const LineInfo&loc, const char*kind,
+                                          const PTimingCheck::event_t&reference,
+                                          const pform_name_t*delayed_reference,
+                                          const PTimingCheck::event_t&data,
+                                          const pform_name_t*delayed_data)
+{
+      cerr << loc.get_fileline() << ": warning: " << kind << " timestamp/timecheck"
+           << " conditions are not currently supported; skipping this timing check." << endl;
+
+      auto copy_terminal = [&](const PTimingCheck::event_t&event,
+                               const pform_name_t*dest, const char*role) {
+            if (!dest) return;
+            NetNet*source = timing_check_signal(des, scope, event.name, loc,
+                                                kind, false, role);
+            if (source) timing_check_copy(des, scope, source, dest, loc, kind);
+      };
+      copy_terminal(reference, delayed_reference, "reference");
+      copy_terminal(data, delayed_data, "data");
+}
+
 void PRecRem::elaborate(Design*des, NetScope*scope) const
 {
       if (gn_specify_blocks_flag) {
             if (timestamp_cond_ || timecheck_cond_) {
-                  cerr << get_fileline() << ": error: $recrem timestamp/timecheck"
-                       << " conditions are not supported." << endl;
-                  des->errors += 1;
+                  skip_conditioned_timing_check(des, scope, *this, "$recrem",
+                        *reference_event_, delayed_reference_.get(),
+                        *data_event_, delayed_data_.get());
                   return;
             }
             int reference_edge, data_edge;
@@ -7969,9 +7992,9 @@ void PSetupHold::elaborate(Design*des, NetScope*scope) const
 {
       if (gn_specify_blocks_flag) {
             if (timestamp_cond_ || timecheck_cond_) {
-                  cerr << get_fileline() << ": error: $setuphold timestamp/timecheck"
-                       << " conditions are not supported." << endl;
-                  des->errors += 1;
+                  skip_conditioned_timing_check(des, scope, *this, "$setuphold",
+                        *reference_event_, delayed_reference_.get(),
+                        *data_event_, delayed_data_.get());
                   return;
             }
             int reference_edge, data_edge;

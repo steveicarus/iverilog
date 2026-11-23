@@ -1,0 +1,5 @@
+ivltests/timing_check_optional_conditions.v:12: warning: $setuphold timestamp/timecheck conditions are not currently supported; skipping this timing check.
+ivltests/timing_check_optional_conditions.v:13: warning: $setuphold timestamp/timecheck conditions are not currently supported; skipping this timing check.
+ivltests/timing_check_optional_conditions.v:14: warning: $recrem timestamp/timecheck conditions are not currently supported; skipping this timing check.
+ivltests/timing_check_optional_conditions.v:15: warning: $recrem timestamp/timecheck conditions are not currently supported; skipping this timing check.
+ivltests/timing_check_optional_conditions.v:16: warning: $recrem timestamp/timecheck conditions are not currently supported; skipping this timing check.

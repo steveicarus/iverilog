@@ -149,8 +149,11 @@ These flags affect the general behavior of the compiler.
     ``signal === 1'b1``.
 
     In scalar ``$setuphold`` and ``$recrem`` declarations, optional delayed
-    reference and data terminals receive zero-delay copies. The HDL check
-    remains active and can be annotated. Signed combined timing checks are
+    reference and data terminals receive zero-delay copies. Supplying the
+    optional timestamp condition or timecheck condition produces a warning
+    and skips that check. The delayed terminals still drive the cell.
+    Other supported checks remain active and can be annotated.
+    Signed combined timing checks are
     approximate: a negative HDL limit, or a negative SDF component applied
     to a combined check, is diagnosed and treated as zero. Standalone checks
     require nonnegative HDL limits. A negative SDF limit on a matching
