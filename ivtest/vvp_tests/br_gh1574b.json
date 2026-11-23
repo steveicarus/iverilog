@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "br_gh1574b.v",
+    "iverilog-args" : [ "-g2012" ],
+    "vlog95" : {
+        "__comment" : "tgt-vlog95 does not support whole unpacked array copies or real arrays.",
+        "type"      : "NI"
+    }
+}

@@ -2191,6 +2191,13 @@ extern double ivl_setuphold_setup_limit(ivl_setuphold_t check);
  *    The signal may be an array (of vectors) in which case this
  *    function returns >0, the number of dimensions of the array.
  *
+ * ivl_signal_array_msb
+ * ivl_signal_array_lsb
+ *    These functions return the declared left and right bounds of an
+ *    unpacked dimension of an arrayed signal. The dim argument selects
+ *    the dimension, counting from 0 for the leftmost dimension up to
+ *    ivl_signal_dimensions()-1.
+ *
  * ivl_signal_discipline
  *    If the signal has been declared with a domain (Verilog-AMS) then
  *    this function will return a non-nil ivl_discipline_t.
@@ -2278,6 +2285,8 @@ extern int         ivl_signal_array_base(ivl_signal_t net);
 extern unsigned    ivl_signal_array_count(ivl_signal_t net);
 extern unsigned    ivl_signal_array_addr_swapped(ivl_signal_t net);
 extern unsigned    ivl_signal_dimensions(ivl_signal_t net);
+extern int         ivl_signal_array_msb(ivl_signal_t net, unsigned dim);
+extern int         ivl_signal_array_lsb(ivl_signal_t net, unsigned dim);
 extern ivl_discipline_t ivl_signal_discipline(ivl_signal_t net);
 extern unsigned    ivl_signal_packed_dimensions(ivl_signal_t net);
 extern int         ivl_signal_packed_msb(ivl_signal_t net, unsigned dim);

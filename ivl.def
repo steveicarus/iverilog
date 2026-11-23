@@ -367,6 +367,8 @@ ivl_setuphold_setup_limit
 ivl_signal_array_addr_swapped
 ivl_signal_array_base
 ivl_signal_array_count
+ivl_signal_array_lsb
+ivl_signal_array_msb
 ivl_signal_attr
 ivl_signal_attr_cnt
 ivl_signal_attr_val
