@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_static_prop_with.v",
+    "iverilog-args" : [ "-g2012" ]
+}
