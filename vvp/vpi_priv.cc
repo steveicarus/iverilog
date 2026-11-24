@@ -538,7 +538,19 @@ __vpiScope*vpip_timescale_scope_from_handle(vpiHandle obj)
 	    return task->scope;
 
 	  case vpiModule:
+	  case vpiPackage:
 	    return dynamic_cast<__vpiScope*>(obj);
+
+	  case vpiFunction:
+	  case vpiTask: {
+	    // Methods belong to a class scope. Use the enclosing module,
+	    // or the package when the class is not in a module.
+	    __vpiScope*scope = dynamic_cast<__vpiScope*>(obj);
+	    while (scope && scope->get_type_code() != vpiModule &&
+		   scope->get_type_code() != vpiPackage)
+		  scope = scope->scope;
+	    return scope;
+	  }
 
 	  case vpiDelayTerm:
 	    return dynamic_cast<__vpiScope*>(

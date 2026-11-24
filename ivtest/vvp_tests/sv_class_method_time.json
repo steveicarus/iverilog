@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_class_method_time.v",
+    "iverilog-args" : [ "-g2012" ]
+}
