@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2020 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2026 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1233,6 +1233,12 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 	    emit_expr_select(scope, expr, wid);
 	    break;
 	case IVL_EX_SFUNC:
+	    if (strncmp(ivl_expr_name(expr), "$ivl_vif$", 9) == 0) {
+		  fprintf(stderr, "%s:%u: vlog95 sorry: Virtual interfaces "
+		                  "are not currently translated.\n",
+		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
+		  vlog_errors += 1;
+	    }
 	    fprintf(vlog_out, "%s", ivl_expr_name(expr));
 	    emit_expr_func(scope, expr, wid);
 	    break;
