@@ -134,7 +134,10 @@ enum symbol_search_flag_t {
       SYMBOL_SEARCH_NO_SIGNAL_ELABORATION = 1U << 1,
         // Ignore relaxed declaration-order compatibility options and require
         // data objects to be declared before they are used.
-      SYMBOL_SEARCH_STRICT_DECLARATION_ORDER = 1U << 2
+      SYMBOL_SEARCH_STRICT_DECLARATION_ORDER = 1U << 2,
+        // Do not report errors. This is for a search that is repeated
+        // by the caller when it does not find what it is looking for.
+      SYMBOL_SEARCH_QUIET = 1U << 3
 };
 
 /*
@@ -150,6 +153,14 @@ static inline bool test_function_return_value(const symbol_search_results&search
       if (search_results.net->name() != search_results.scope->basename()) return false;
       return true;
 }
+
+/*
+ * Test if the search results are the path of a member of an interface
+ * that is accessed through a virtual interface: a virtual interface
+ * variable, or a class property of virtual interface type, and then
+ * the name of the member.
+ */
+extern bool is_vif_member_path(const symbol_search_results&search_results);
 
 extern bool symbol_search(const LineInfo *li, Design *des, NetScope *scope,
 			  const pform_name_t &path, unsigned int lexical_pos,

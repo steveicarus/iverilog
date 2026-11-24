@@ -1586,6 +1586,38 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*,
       return tmp;
 }
 
+/*
+ * Get the instance that the name found by the symbol search refers to,
+ * or nil. The instance can be hidden by the implicit net of a port
+ * connection that has the same name.
+ */
+static NetScope* instance_of_name(const PEIdent*id,
+				  const symbol_search_results&sr)
+{
+      if (sr.is_scope())
+	    return sr.scope;
+      if (sr.net && sr.net->net_type()->base_type() != IVL_VT_CLASS &&
+	  id->path().size() == 1 && id->path().back().index.empty())
+	    return sr.scope->child(hname_t(id->path().back().name));
+      return nullptr;
+}
+
+/*
+ * An interface instance can be compared with a virtual interface
+ * (IEEE1800-2017 25.9).
+ */
+static bool is_interface_instance(Design*des, NetScope*scope, const PExpr*expr)
+{
+      const PEIdent*id = dynamic_cast<const PEIdent*>(expr);
+      if (!id)
+	    return false;
+      symbol_search_results sr;
+      symbol_search(id, des, scope, id->path(), id->lexical_pos(), &sr,
+		    SYMBOL_SEARCH_QUIET);
+      NetScope*inst = instance_of_name(id, sr);
+      return inst && inst->is_interface();
+}
+
 unsigned PEBComp::test_width(Design*des, NetScope*scope, width_mode_t&)
 {
       ivl_assert(*this, left_);
@@ -1651,8 +1683,12 @@ unsigned PEBComp::test_width(Design*des, NetScope*scope, width_mode_t&)
 	case 'n': /* != */
 	case 'E': /* === */
 	case 'N': /* !== */
+	      // An interface instance can be compared with a virtual
+	      // interface, and elaborate_expr checks that.
 	    if ((l_type == IVL_VT_CLASS || r_type == IVL_VT_CLASS) &&
-	        l_type != r_type) {
+	        l_type != r_type &&
+	        !is_interface_instance(des, scope, left_) &&
+	        !is_interface_instance(des, scope, right_)) {
 		  cerr << get_fileline() << ": error: "
 		       << "Both arguments ("<< l_type << ", " << r_type
 		       << ") must be class/null for '"
@@ -1671,6 +1707,81 @@ unsigned PEBComp::test_width(Design*des, NetScope*scope, width_mode_t&)
 
 
       return expr_width_;
+}
+
+/*
+ * A virtual interface can be compared with null, with a virtual
+ * interface of the same interface, or with an instance of the
+ * interface, by the == and != operators (IEEE1800-2017 25.9). The
+ * instance is elaborated with the type of the virtual interface.
+ * Return false if neither operand is a class object or a virtual
+ * interface.
+ */
+static bool elaborate_vif_compare(const LineInfo&loc, Design*des,
+				  NetScope*scope, char op,
+				  PExpr*left, unsigned l_wid,
+				  PExpr*right, unsigned r_wid,
+				  unsigned flags, NetExpr*&lp, NetExpr*&rp)
+{
+      bool l_class = left->expr_type() == IVL_VT_CLASS;
+      bool r_class = right->expr_type() == IVL_VT_CLASS;
+      if (!l_class && !r_class)
+	    return false;
+
+      if (l_class) {
+	    lp = left->elaborate_expr(des, scope, l_wid, flags);
+	    ivl_type_t type = lp ? lp->net_type() : nullptr;
+	    if (!r_class && dynamic_cast<const netvirtual_interface_t*>(type))
+		  rp = right->elaborate_expr(des, scope, type, flags);
+	    else
+		  rp = right->elaborate_expr(des, scope, r_wid, flags);
+      } else {
+	    rp = right->elaborate_expr(des, scope, r_wid, flags);
+	    ivl_type_t type = rp ? rp->net_type() : nullptr;
+	    if (dynamic_cast<const netvirtual_interface_t*>(type))
+		  lp = left->elaborate_expr(des, scope, type, flags);
+	    else
+		  lp = left->elaborate_expr(des, scope, l_wid, flags);
+      }
+      if (!lp || !rp)
+	    return true;
+
+      const netvirtual_interface_t*l_vif =
+	    dynamic_cast<const netvirtual_interface_t*>(lp->net_type());
+      const netvirtual_interface_t*r_vif =
+	    dynamic_cast<const netvirtual_interface_t*>(rp->net_type());
+	// Without a virtual interface this is the normal compare, and
+	// test_width has checked the operand types.
+      if (!l_vif && !r_vif)
+	    return true;
+
+      if (op == 'E' || op == 'N') {
+	    cerr << loc.get_fileline() << ": error: The "
+		 << (op == 'E' ? "===" : "!==") << " operator cannot be used"
+		 << " with a virtual interface." << endl;
+	    des->errors += 1;
+	    delete lp;
+	    delete rp;
+	    lp = nullptr;
+	    rp = nullptr;
+	    return true;
+      }
+
+      bool ok = (l_vif && r_vif && l_vif->type_compatible(r_vif))
+	     || (l_vif && dynamic_cast<NetENull*>(rp))
+	     || (r_vif && dynamic_cast<NetENull*>(lp));
+      if (!ok) {
+	    cerr << loc.get_fileline() << ": error: A virtual interface can"
+	         << " only be compared with null, with an instance of its"
+	         << " interface, or with a virtual interface of the same"
+	         << " interface." << endl;
+	    des->errors += 1;
+	    delete lp;
+	    delete rp;
+	    lp = nullptr;
+	    rp = nullptr;
+      }
+      return true;
 }
 
 NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
@@ -1699,12 +1810,20 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
       if (type_is_vectorable(right_->expr_type()) && !right_->has_sign())
 	    left_->cast_signed(false);
 
-      NetExpr*lp =  left_->elaborate_expr(des, scope, l_width_, flags);
+      NetExpr*lp = nullptr;
+      NetExpr*rp = nullptr;
+      bool vif_cmp = false;
+      if (op_ == 'e' || op_ == 'n' || op_ == 'E' || op_ == 'N')
+	    vif_cmp = elaborate_vif_compare(*this, des, scope, op_, left_, l_width_,
+					     right_, r_width_, flags, lp, rp);
+      if (!vif_cmp)
+	    lp = left_->elaborate_expr(des, scope, l_width_, flags);
       if (lp && debug_elaborate) {
 	    cerr << get_fileline() << ": PEBComp::elaborate_expr: "
 		 << "Elaborated left_: " << *lp << endl;
       }
-      NetExpr*rp = right_->elaborate_expr(des, scope, r_width_, flags);
+      if (!vif_cmp)
+	    rp = right_->elaborate_expr(des, scope, r_width_, flags);
       if (rp && debug_elaborate) {
 	    cerr << get_fileline() << ": PEBComp::elaborate_expr: "
 		 << "Elaborated right_: " << *rp << endl;
@@ -2820,6 +2939,11 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 
       // If the symbol is found, but is not a scope...
       if (!search_results.is_scope()) {
+
+	      // A function called through a virtual interface is not
+	      // supported. The elaboration reports that.
+	    if (is_vif_member_path(search_results))
+		  return 0;
 
 	    if (!search_results.path_tail.empty()) {
 		  return test_width_method_(des, scope, search_results, mode);
@@ -4035,6 +4159,233 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
       return tmp;
 }
 
+/*
+ * Test if this identifier is a member of an interface that is accessed
+ * through a virtual interface (IEEE1800-2017 25.9). If it is, return
+ * true and elaborate the handle, which is a variable, a word of an
+ * array of variables, or a property of a class object. The member is
+ * taken from an instance of the interface and is used for its name and
+ * type. The handle selects the instance that is accessed at run time.
+ * On errors, the handle is nil.
+ */
+bool PEIdent::elaborate_vif_member(Design*des, NetScope*scope,
+				   NetExpr*&handle, NetNet*&member) const
+{
+      handle = nullptr;
+      member = nullptr;
+      if (path_.size() < 2)
+	    return false;
+
+      symbol_search_results sr;
+      symbol_search(this, des, scope, path_, lexical_pos(), &sr,
+		    SYMBOL_SEARCH_QUIET);
+      if (!sr.net || sr.path_tail.empty())
+	    return false;
+
+      ivl_type_t type = sr.type;
+      NetNet*net = sr.net;
+      int pidx = -1;
+      size_t tail_size = 1;
+      if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(type)) {
+	    if (sr.path_tail.size() < 2)
+		  return false;
+	    tail_size = 2;
+	    perm_string prop_name = sr.path_tail.front().name;
+	    pidx = class_type->property_idx_from_name(prop_name);
+	    if (pidx < 0)
+		  return false;
+	    type = class_type->get_prop_type(pidx);
+	    if (class_type->get_prop_qual(pidx).test_static()) {
+		  net = class_type->find_static_property(prop_name);
+		  pidx = -1;
+	    }
+	    if (dynamic_cast<const netvirtual_interface_t*>(type)
+		&& !sr.path_tail.front().index.empty()) {
+		  cerr << get_fileline() << ": sorry: Arrays of virtual"
+		       << " interfaces in a class are not supported." << endl;
+		  des->errors += 1;
+		  return true;
+	    }
+      }
+
+      const netvirtual_interface_t*vif = dynamic_cast<const netvirtual_interface_t*>(type);
+      if (!vif)
+	    return false;
+
+      if (sr.path_tail.size() != tail_size) {
+	    cerr << get_fileline() << ": sorry: Only a variable, net or named"
+		 << " event of the interface itself can be accessed through a"
+		 << " virtual interface (" << path_ << ")." << endl;
+	    des->errors += 1;
+	    return true;
+      }
+
+      const name_component_t&comp = sr.path_tail.back();
+      if (!vif->instance()) {
+	    cerr << get_fileline() << ": sorry: Interface " << vif->name()
+		 << " has no instance with the default parameter values, so"
+		 << " its members cannot be accessed through a virtual"
+		 << " interface." << endl;
+	    des->errors += 1;
+	    return true;
+      }
+
+      NetNet*sig = vif->instance()->find_signal(comp.name);
+      NetEvent*ev = sig ? nullptr : vif->instance()->find_event(comp.name);
+      if (ev) {
+	    cerr << get_fileline() << ": sorry: Accessing a named event"
+		 << " through a virtual interface is not supported ("
+		 << path_ << ")." << endl;
+	    des->errors += 1;
+	    return true;
+      }
+      if (!sig && !ev && vif->instance()->parameters.count(comp.name)) {
+	    cerr << get_fileline() << ": sorry: Reading a parameter through a"
+		 << " virtual interface is not supported (" << path_ << ")."
+		 << endl;
+	    des->errors += 1;
+	    return true;
+      }
+      if (!sig && !ev) {
+	    cerr << get_fileline() << ": error: Interface " << vif->name()
+		 << " has no variable, net or named event " << comp.name
+		 << "." << endl;
+	    des->errors += 1;
+	    return true;
+      }
+
+      if (sig && (sig->unpacked_dimensions()
+		  || !(type_is_vectorable(sig->data_type())
+		       || sig->data_type() == IVL_VT_REAL
+		       || sig->data_type() == IVL_VT_STRING))) {
+	    cerr << get_fileline() << ": sorry: Only vector, real and string"
+		 << " members of an interface can be accessed through a"
+		 << " virtual interface (" << path_ << ")." << endl;
+	    des->errors += 1;
+	    return true;
+      }
+
+      if (sig && !comp.index.empty() && !type_is_vectorable(sig->data_type())) {
+	    cerr << get_fileline() << ": sorry: A select of a real or string"
+		 << " member is not supported through a virtual interface ("
+		 << path_ << ")." << endl;
+	    des->errors += 1;
+	    return true;
+      }
+
+	// The handle can be a word of an array of handles.
+      NetExpr*word = nullptr;
+      if (pidx < 0 && net->unpacked_dimensions() > 0) {
+	    const list<index_component_t>&index = sr.path_head.back().index;
+	    if (index.size() != net->unpacked_dimensions()) {
+		  cerr << get_fileline() << ": error: Array " << net->name()
+		       << " needs " << net->unpacked_dimensions()
+		       << " indices to select a virtual interface." << endl;
+		  des->errors += 1;
+		  return true;
+	    }
+	    list<NetExpr*> indices;
+	    list<long> indices_const;
+	    indices_flags flags;
+	    indices_to_expressions(des, scope, this, index,
+				   net->unpacked_dimensions(), false, flags,
+				   indices, indices_const);
+	    if (flags.invalid)
+		  return true;
+	    if (flags.variable)
+		  word = normalize_variable_unpacked(net, indices);
+	    else if (!flags.undefined)
+		  word = normalize_variable_unpacked(net, indices_const);
+	    if (!word) {
+		    // An undefined or out of bounds word is a null handle.
+		  cerr << get_fileline() << ": warning: Undefined or out of"
+		       << " bounds index of " << net->name()
+		       << ", the virtual interface is null." << endl;
+		  handle = new NetENull;
+	    }
+      }
+
+      if (handle)
+	    ;
+      else if (pidx >= 0)
+	    handle = new NetEProperty(net, pidx);
+      else if (word)
+	    handle = new NetESignal(net, word);
+      else
+	    handle = new NetESignal(net);
+      handle->set_line(*this);
+      member = sig;
+      return true;
+}
+
+/*
+ * While this is set, the reads of members through virtual interfaces
+ * are listed in it, so that a wait can wait for changes of the
+ * members.
+ */
+std::vector<NetESFunc*>*PEIdent::vif_loads = nullptr;
+
+/*
+ * Read a member of an interface through a virtual interface. The
+ * instance is selected at run time, so the code generator gets this as
+ * a call of an internal function with the handle and the member name.
+ * A select of the member is elaborated as a select of the member of an
+ * instance, with the read in place of the member.
+ */
+NetExpr* PEIdent::elaborate_expr_vif_member_(Design*des, NetScope*scope,
+					     unsigned expr_wid, unsigned flags,
+					     bool&vif_flag) const
+{
+      NetExpr*handle;
+      NetNet*member;
+      vif_flag = elaborate_vif_member(des, scope, handle, member);
+      if (!handle)
+	    return nullptr;
+
+      NetESFunc*fun = new NetESFunc("$ivl_vif$load", member->net_type(), 2);
+      fun->set_line(*this);
+      fun->parm(0, handle);
+      fun->parm(1, new NetEConst(verinum(member->name().str())));
+      if (vif_loads)
+	    vif_loads->push_back(fun);
+
+      if (path_.back().index.empty())
+	    return fun;
+
+      NetExpr*tmp = elaborate_expr_net(des, scope, member, member->scope(),
+				       expr_wid, flags);
+      if (dynamic_cast<NetEConst*>(tmp)) {
+	      // A constant select that is out of range.
+	    if (vif_loads)
+		  vif_loads->pop_back();
+	    delete fun;
+	    return tmp;
+      }
+
+      NetESelect*sel = dynamic_cast<NetESelect*>(tmp);
+      if (!sel || !dynamic_cast<const NetESignal*>(sel->sub_expr())) {
+	    if (tmp) {
+		  cerr << get_fileline() << ": sorry: This select of a member"
+		       << " is not supported through a virtual interface ("
+		       << path_ << ")." << endl;
+		  des->errors += 1;
+	    }
+	    if (vif_loads)
+		  vif_loads->pop_back();
+	    delete tmp;
+	    delete fun;
+	    return nullptr;
+      }
+
+      NetExpr*base = sel->select() ? sel->select()->dup_expr() : nullptr;
+      NetESelect*res = new NetESelect(fun, base, sel->expr_width(),
+				      sel->select_type());
+      res->cast_signed(sel->has_sign());
+      res->set_line(*this);
+      delete tmp;
+      return res;
+}
+
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					unsigned expr_wid, unsigned flags) const
 {
@@ -4097,6 +4448,14 @@ NetExpr* PECallFunction::elaborate_expr_(Design*des, NetScope*scope,
 
       if (!search_results.require_non_type(this, des, "in a function call"))
 	    return 0;
+
+      if (is_vif_member_path(search_results)) {
+	    cerr << get_fileline() << ": sorry: Calling a function through a"
+		 << " virtual interface is not supported (" << path_ << ")."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       if (path_.class_scope && search_results.is_scope()
 	  && search_results.scope->type() == NetScope::FUNC
@@ -6435,6 +6794,14 @@ ivl_type_t PEIdent::resolve_type_(Design *des, const symbol_search_results &sr,
 			type = &netvector_t::atom2s32;
 		  else
 			return nullptr;
+	    } else if (auto vif = dynamic_cast<const netvirtual_interface_t*>(type)) {
+		  // The next path member is a member of the interface.
+		  const NetNet*member = vif->instance()
+			? vif->instance()->find_signal(name) : nullptr;
+		  if (!member)
+			return nullptr;
+
+		  type = member->net_type();
 	    } else if (auto netenum = dynamic_cast<const netenum_t*>(type)) {
 		  if (name == "num")
 			type = &netvector_t::atom2s32;
@@ -6970,6 +7337,41 @@ static NetExpr* build_queue_locator_method(Design *des,
       return fun;
 }
 
+/*
+ * Test if the interface instances have the same parameter values, so
+ * that they have the same virtual interface type.
+ */
+static bool same_parameter_values(const NetScope*a, const NetScope*b)
+{
+      for (const auto&cur : a->parameters) {
+	    if (cur.second.local_flag)
+		  continue;
+	    auto that = b->parameters.find(cur.first);
+	    if (that == b->parameters.end())
+		  return false;
+	    if (cur.second.type_flag) {
+		  if (!cur.second.ivl_type || !that->second.ivl_type
+		      || !cur.second.ivl_type->type_equivalent(that->second.ivl_type))
+			return false;
+		  continue;
+	    }
+	    const NetEConst*ca = dynamic_cast<const NetEConst*>(cur.second.val);
+	    const NetEConst*cb = dynamic_cast<const NetEConst*>(that->second.val);
+	    const NetECReal*ra = dynamic_cast<const NetECReal*>(cur.second.val);
+	    const NetECReal*rb = dynamic_cast<const NetECReal*>(that->second.val);
+	    if (ca && cb) {
+		  if ((ca->value() == cb->value()) != verinum::V1)
+			return false;
+	    } else if (ra && rb) {
+		  if (ra->value().as_double() != rb->value().as_double())
+			return false;
+	    } else if (cur.second.val || that->second.val) {
+		  return false;
+	    }
+      }
+      return true;
+}
+
 NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 				 ivl_type_t ntype, unsigned flags) const
 {
@@ -6980,6 +7382,44 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       if (!sr.require_non_type(this, des, "in an expression"))
 	    return nullptr;
+
+	// An interface instance can be assigned to a virtual interface.
+      const netvirtual_interface_t*vif = dynamic_cast<const netvirtual_interface_t*>(ntype);
+      NetScope*inst = vif ? instance_of_name(this, sr) : nullptr;
+      if (vif && inst) {
+	    if (!inst->is_interface() || inst->module_name() != vif->name()) {
+		  cerr << get_fileline() << ": error: `" << path_
+		       << "' is not an instance of interface "
+		       << vif->name() << "." << endl;
+		  des->errors += 1;
+		  return nullptr;
+	    }
+	      // The parameters of the interface are part of the type.
+	    if (!vif->instance()) {
+		  cerr << get_fileline() << ": sorry: Interface " << vif->name()
+		       << " has no instance with the default parameter values,"
+		       << " so it cannot be used as a virtual interface." << endl;
+		  des->errors += 1;
+		  return nullptr;
+	    }
+	    if (!same_parameter_values(inst, vif->instance())) {
+		  cerr << get_fileline() << ": error: The parameter values of"
+		       << " interface instance `" << path_ << "' are not the"
+		       << " parameter values of virtual interface type "
+		       << vif->name() << "." << endl;
+		  des->errors += 1;
+		  return nullptr;
+	    }
+	    NetEScope*tmp = new NetEScope(inst, ntype);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+      bool vif_flag = false;
+      NetExpr*vif_expr = elaborate_expr_vif_member_(des, scope, expr_width_,
+							       flags, vif_flag);
+      if (vif_flag)
+	    return vif_expr;
 
       if (!sr.net) {
             cerr << get_fileline() << ": error: Unable to bind variable `"
@@ -7302,6 +7742,12 @@ NetExpr* PEIdent::elaborate_expr_(Design*des, NetScope*scope,
                   }
                   scope->is_const_func(false);
             }
+
+	    bool vif_flag = false;
+	    NetExpr*vif_expr = elaborate_expr_vif_member_(des, scope, expr_wid,
+								     flags, vif_flag);
+	    if (vif_flag)
+		  return vif_expr;
 
 	      // If this is a struct, and there are members in the
 	      // member_path, then generate an expression that

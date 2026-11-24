@@ -120,6 +120,8 @@ class PAssign_  : public Statement {
 			       unsigned lv_width,
 			       bool force_unsigned =false) const;
       NetExpr* elaborate_rval_(Design*, NetScope*, ivl_type_t ntype) const;
+      bool elaborate_vif_(Design*, NetScope*, bool nb, char op,
+			  NetProc*&proc) const;
 
       NetExpr* elaborate_rval_obj_(Design*, NetScope*,
 				   ivl_variable_type_t type) const;

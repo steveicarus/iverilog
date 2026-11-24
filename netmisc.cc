@@ -24,6 +24,7 @@
 # include  "netlist.h"
 # include  "netclass.h"
 # include  "netparray.h"
+# include  "netscalar.h"
 # include  "netvector.h"
 # include  "netmisc.h"
 # include  "PExpr.h"
@@ -2068,4 +2069,20 @@ bool check_class_cast_args(Design*des, const LineInfo*li,
       }
 
       return true;
+}
+
+bool is_vif_member_path(const symbol_search_results&search_results)
+{
+      if (!search_results.net || search_results.path_tail.empty())
+	    return false;
+      ivl_type_t type = search_results.type;
+      if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(type)) {
+	    if (search_results.path_tail.size() < 2)
+		  return false;
+	    int pidx = class_type->property_idx_from_name(search_results.path_tail.front().name);
+	    if (pidx < 0)
+		  return false;
+	    type = class_type->get_prop_type(pidx);
+      }
+      return dynamic_cast<const netvirtual_interface_t*>(type) != nullptr;
 }

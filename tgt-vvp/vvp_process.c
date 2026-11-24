@@ -2042,9 +2042,79 @@ static int show_ref_bind(ivl_statement_t net)
       return rc;
 }
 
+/*
+ * Accesses to the members of an interface through a virtual interface
+ * handle. The instruction operands are the member name and the file
+ * and line of the access, for the run time error on a null handle.
+ */
+static void show_vif_operands(const char*opcode, ivl_expr_t name,
+			      const char*file, unsigned lineno)
+{
+      fprintf(vvp_out, "    %%%s \"%s\", %u, %u;\n", opcode,
+	      ivl_expr_string(name), ivl_file_table_index(file), lineno);
+}
+
+/*
+ * Read a member: $ivl_vif$load(<handle>, <member>). The value is pushed
+ * onto the stack of the member's type.
+ */
+int draw_vif_load(ivl_expr_t expr)
+{
+      if (strcmp(ivl_expr_name(expr), "$ivl_vif$load") != 0)
+	    return 0;
+
+      draw_eval_object(ivl_expr_parm(expr, 0));
+      show_vif_operands("load/vif", ivl_expr_parm(expr, 1),
+			ivl_expr_file(expr), ivl_expr_lineno(expr));
+      return 1;
+}
+
+/*
+ * Write a member:
+ *   $ivl_vif$store(<handle>, <member>, <value>, <offset> [, <delay>])
+ * The offset is the canonical offset of the part of a vector member
+ * that is written, and null for a real or string member. A write with
+ * a delay evaluates the value and the offset, then waits. The handle is
+ * evaluated last.
+ */
+static int show_vif_access(ivl_statement_t net)
+{
+      const char*file = ivl_stmt_file(net);
+      unsigned lineno = ivl_stmt_lineno(net);
+      unsigned nparms = ivl_stmt_parm_count(net);
+
+      show_stmt_file_line(net, "Virtual interface member access.");
+
+	/* A real or string member has a null offset. */
+      ivl_expr_t value = ivl_stmt_parm(net, 2);
+      ivl_expr_t offset = ivl_stmt_parm(net, 3);
+      if (ivl_expr_type(offset) != IVL_EX_NULL) {
+	    draw_eval_vec4(value);
+	    draw_eval_vec4(offset);
+      } else if (ivl_expr_value(value) == IVL_VT_REAL) {
+	    draw_eval_real(value);
+      } else {
+	    draw_eval_string(value);
+      }
+
+      if (nparms > 4) {
+	    int use_idx = allocate_word();
+	    draw_expr_into_idx(ivl_stmt_parm(net, 4), use_idx);
+	    fprintf(vvp_out, "    %%delayx %d;\n", use_idx);
+	    clr_word(use_idx);
+      }
+
+      draw_eval_object(ivl_stmt_parm(net, 0));
+      show_vif_operands("store/vif", ivl_stmt_parm(net, 1), file, lineno);
+      return 0;
+}
+
 static int show_system_task_call(ivl_statement_t net)
 {
       const char*stmt_name = ivl_stmt_name(net);
+
+      if (strncmp(stmt_name,"$ivl_vif$",9) == 0)
+	    return show_vif_access(net);
 
       if (strcmp(stmt_name,"$ivl_ref_bind") == 0)
 	    return show_ref_bind(net);

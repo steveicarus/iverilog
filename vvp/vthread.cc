@@ -20,6 +20,7 @@
 # include  "config.h"
 # include  "vthread.h"
 # include  "codes.h"
+# include  "compile.h"
 # include  "schedule.h"
 # include  "ufunc.h"
 # include  "event.h"
@@ -31,6 +32,7 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
+# include  <map>
 # include  <set>
 # include  <typeinfo>
 # include  <vector>
@@ -8621,6 +8623,217 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 
 	/* Return false to suspend this thread. */
       return false;
+}
+
+/*
+ * The value of a virtual interface variable is an object that refers
+ * to the scope of an interface instance.
+ */
+class vvp_vinterface : public vvp_object {
+    public:
+      explicit vvp_vinterface(__vpiScope*scope) : scope_(scope) { }
+      __vpiScope*scope_;
+};
+
+/*
+ * A member of an interface instance, found by name at run time.
+ */
+struct vif_member_s {
+      enum kind_t { VEC4, REAL, STRING, EVENT };
+      kind_t kind;
+      vpiHandle handle;
+      vvp_net_t*net;
+};
+
+/*
+ * Pop a virtual interface handle from the object stack and find the
+ * named member in the interface instance that the handle refers to.
+ * The instruction has the operands <name>, <file>, <line>. The handle
+ * may be null. That is a fatal run time error (IEEE1800-2017 25.9),
+ * so this returns false after it has finished the simulation, and the
+ * caller must then stop the thread.
+ */
+static bool vif_member(vthread_t thr, vvp_code_t cp, vif_member_s&member)
+{
+      static std::map<std::pair<__vpiScope*,vvp_code_t>,vif_member_s> members;
+
+      vvp_object_t obj;
+      thr->pop_object(obj);
+
+      const vvp_vinterface*vif = obj.peek<vvp_vinterface>();
+      if (vif == 0) {
+	    cerr << file_names[cp->bit_idx[0]] << ":" << cp->bit_idx[1]
+		 << ": FATAL: Member " << cp->text
+		 << " accessed through a null virtual interface." << endl;
+	    vpip_set_return_value(1);
+	    schedule_finish(0);
+	    return false;
+      }
+
+      std::pair<__vpiScope*,vvp_code_t> key (vif->scope_, cp);
+      auto cur = members.find(key);
+      if (cur != members.end()) {
+	    member = cur->second;
+	    return true;
+      }
+
+	// The compiler has checked that the member is a vector, real or
+	// string variable or net, or a named event, of the interface.
+	// The other items of the scope (arrays, scopes) are skipped.
+      member.handle = nullptr;
+      const std::vector<vpiHandle>&items = vif->scope_->intern;
+      for (unsigned idx = 0 ; !member.handle && idx < items.size() ; idx += 1) {
+	    vpiHandle item = items[idx];
+	    if (const __vpiSignal*sig = dynamic_cast<__vpiSignal*>(item)) {
+		  if (strcmp(sig->id.name, cp->text) != 0)
+			continue;
+		  member.kind = vif_member_s::VEC4;
+		  member.net = sig->node;
+	    } else if (const __vpiRealVar*rsig = dynamic_cast<__vpiRealVar*>(item)) {
+		  if (strcmp(rsig->id.name, cp->text) != 0)
+			continue;
+		  member.kind = vif_member_s::REAL;
+		  member.net = rsig->net;
+	    } else if (const __vpiStringVar*ssig = dynamic_cast<__vpiStringVar*>(item)) {
+		  if (strcmp(ssig->get_name(), cp->text) != 0)
+			continue;
+		  member.kind = vif_member_s::STRING;
+		  member.net = ssig->get_net();
+	    } else if (const __vpiNamedEvent*ev = dynamic_cast<__vpiNamedEvent*>(item)) {
+		  if (strcmp(ev->get_name(), cp->text) != 0)
+			continue;
+		  member.kind = vif_member_s::EVENT;
+		  member.net = ev->funct;
+	    } else {
+		  continue;
+	    }
+	    member.handle = item;
+      }
+      assert(member.handle);
+
+      members[key] = member;
+      return true;
+}
+
+/*
+ * The offset of a part of a vector member is a vector on the stack. It
+ * is not defined if it has x or z bits.
+ */
+static bool vif_pop_offset(vthread_t thr, int64_t&off)
+{
+      vvp_vector4_t tmp = thr->pop_vec4();
+      return vector4_to_value(tmp, off, true);
+}
+
+/*
+ * %scope/vif <scope-label>
+ *
+ * Push a handle to the interface instance.
+ */
+bool of_SCOPE_VIF(vthread_t thr, vvp_code_t cp)
+{
+      static std::map<__vpiScope*,vvp_object_t> handles;
+
+      __vpiScope*scope = dynamic_cast<__vpiScope*> (cp->handle);
+      assert(scope);
+
+	/* There is one handle object for each interface instance, so
+	   that handles to the same instance compare equal. */
+      vvp_object_t&obj = handles[scope];
+      if (obj.test_nil())
+	    obj = vvp_object_t(new vvp_vinterface(scope));
+
+      thr->push_object(obj);
+      return true;
+}
+
+/*
+ * %load/vif <name>, <file>, <line>
+ *
+ * Push the value of the member onto the stack of its type.
+ */
+bool of_LOAD_VIF(vthread_t thr, vvp_code_t cp)
+{
+      vif_member_s member;
+      if (!vif_member(thr, cp, member))
+	    return false;
+
+      switch (member.kind) {
+	  case vif_member_s::VEC4: {
+		const vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (member.net->fil);
+		assert(sig);
+		vvp_vector4_t val;
+		sig->vec4_value(val);
+		thr->push_vec4(val);
+		break;
+	  }
+	  case vif_member_s::REAL: {
+		t_vpi_value val;
+		val.format = vpiRealVal;
+		vpi_get_value(member.handle, &val);
+		thr->push_real(val.value.real);
+		break;
+	  }
+	  case vif_member_s::STRING: {
+		const vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*> (member.net->fun);
+		assert(fun);
+		thr->push_str(fun->get_string());
+		break;
+	  }
+	  default:
+	    assert(0);
+      }
+
+      return true;
+}
+
+/*
+ * %store/vif <name>, <file>, <line>
+ *
+ * Write the value on the stack to the member. For a vector member, the
+ * top of the vector stack is the offset of the part that is written,
+ * and the value is below it.
+ */
+bool of_STORE_VIF(vthread_t thr, vvp_code_t cp)
+{
+      vif_member_s member;
+      if (!vif_member(thr, cp, member))
+	    return false;
+
+      vvp_net_ptr_t ptr (member.net, 0);
+      switch (member.kind) {
+	  case vif_member_s::VEC4: {
+		int64_t off;
+		bool off_ok = vif_pop_offset(thr, off);
+		vvp_vector4_t val = thr->pop_vec4();
+		const vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (member.net->fil);
+		assert(sig);
+		unsigned sig_wid = sig->value_size();
+		if (!off_ok || !resize_rval_vec(val, off, sig_wid))
+		      break;
+		if (off == 0 && val.size() == sig_wid)
+		      vvp_send_vec4(ptr, val, thr->wt_context);
+		else
+		      vvp_send_vec4_pv(ptr, val, off, sig_wid, thr->wt_context);
+		break;
+	  }
+	  case vif_member_s::REAL: {
+		double val;
+		pop_value(thr, val, 0);
+		vvp_send(thr, ptr, val);
+		break;
+	  }
+	  case vif_member_s::STRING: {
+		string val;
+		pop_value(thr, val, 0);
+		vvp_send(thr, ptr, val);
+		break;
+	  }
+	  default:
+	    assert(0);
+      }
+
+      return true;
 }
 
 /*

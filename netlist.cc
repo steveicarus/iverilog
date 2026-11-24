@@ -2395,8 +2395,8 @@ const NetEvent* NetEEvent::event() const
       return event_;
 }
 
-NetEScope::NetEScope(NetScope*s)
-: scope_(s)
+NetEScope::NetEScope(NetScope*s, ivl_type_t type)
+: NetExpr(type), scope_(s)
 {
 }
 
@@ -3438,6 +3438,10 @@ bool NetSTask::check_synth(ivl_process_type_t pr_type,
           strcmp(name(), "$ivl_darray_method$shuffle") == 0) {
 	    cerr << get_fileline() << ": warning: Dynamic array "
 	            "ordering/delete method cannot be synthesized "
+	         << get_process_type_as_string(pr_type) << endl;
+      } else if (strncmp(name(), "$ivl_vif$", 9) == 0) {
+	    cerr << get_fileline() << ": warning: A write through a "
+	            "virtual interface cannot be synthesized "
 	         << get_process_type_as_string(pr_type) << endl;
       } else {
 	    cerr << get_fileline() << ": warning: System task ("

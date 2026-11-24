@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2016 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -119,8 +119,10 @@ void codespace_delete(void)
 		  } else if ((cur+idx)->opcode == &of_FILE_LINE) {
 			delete((cur+idx)->handle);
 		  } else if (((cur+idx)->opcode == &of_CONCATI_STR) ||
+		             ((cur+idx)->opcode == &of_LOAD_VIF) ||
 		             ((cur+idx)->opcode == &of_NEW_DARRAY) ||
-		             ((cur+idx)->opcode == &of_PUSHI_STR)) {
+		             ((cur+idx)->opcode == &of_PUSHI_STR) ||
+		             ((cur+idx)->opcode == &of_STORE_VIF)) {
 			delete [] ((cur+idx)->text);
 		  }
 		  if (count_opcodes == 0) break;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -203,6 +203,11 @@ void nodangle_f::signal(Design*, NetNet*sig)
 	   ivl_do_not_elide property. */
       if (!sig->local_flag()
 	  && (sig->attribute(perm_string::literal("ivl_do_not_elide")) != verinum()))
+	    return;
+
+	/* Don't delete signals that can be accessed through a virtual
+	   interface. They are looked up by name at run time. */
+      if (!sig->local_flag() && sig->scope()->is_virtual_interface())
 	    return;
 
 	/* Check to see if the signal is completely unconnected. If

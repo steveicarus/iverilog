@@ -157,12 +157,17 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    return;
       }
 
+      unsigned errors = des->errors;
       NetNet*rval = rval_expr->synthesize(des, scope, rval_expr);
 
       if (rval == 0) {
-	    cerr << get_fileline() << ": internal error: "
-		 << "Failed to synthesize expression: " << *rval_expr << endl;
-	    des->errors += 1;
+	      // The synthesis may have reported the error already.
+	    if (des->errors == errors) {
+		  cerr << get_fileline() << ": internal error: "
+		       << "Failed to synthesize expression: " << *rval_expr << endl;
+		  des->errors += 1;
+	    }
+	    delete rval_expr;
 	    return;
       }
 
@@ -2006,11 +2011,14 @@ void PGModule::elaborate_mod_(Design*des, const Module*rmod, NetScope*scope) con
 			     << "Elaborating INPUT port expression: " << *tmp_expr << endl;
 		  }
 
+		  unsigned synth_errors = des->errors;
 		  sig = tmp_expr->synthesize(des, scope, tmp_expr);
 		  if (sig == 0) {
-			cerr << pins[idx]->get_fileline()
-			     << ": internal error: Port expression "
-			     << "too complicated for elaboration." << endl;
+			  // The synthesis may have reported the error.
+			if (des->errors == synth_errors)
+			      cerr << pins[idx]->get_fileline()
+				   << ": internal error: Port expression "
+				   << "too complicated for elaboration." << endl;
 			continue;
 		  }
 
@@ -2814,6 +2822,111 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
       return lval_->elaborate_lval(des, scope, false, false, is_init_);
 }
 
+static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope);
+
+/*
+ * Test if the l-value is a member of an interface that is accessed
+ * through a virtual interface, and if it is, elaborate the assignment.
+ * The instance is selected by the handle at run time, so the code
+ * generator gets this as a call of an internal task with the handle,
+ * the member name, the value, the offset of the part of the member that
+ * is written, and the delay, if any. A compound assignment writes the
+ * result of the operation on the member. The proc is nil if there are
+ * errors.
+ */
+bool PAssign_::elaborate_vif_(Design*des, NetScope*scope, bool nb, char op,
+			      NetProc*&proc) const
+{
+      proc = nullptr;
+
+      const PEIdent*ident = dynamic_cast<const PEIdent*>(lval_);
+      NetExpr*handle;
+      NetNet*member;
+      if (!ident || !ident->elaborate_vif_member(des, scope, handle, member))
+	    return false;
+      if (!handle)
+	    return true;
+
+      if (member->type() != NetNet::REG) {
+	    cerr << get_fileline() << ": error: " << member->name()
+		 << " is not a variable, so it cannot be assigned through"
+		 << " a virtual interface." << endl;
+	    des->errors += 1;
+	    delete handle;
+	    return true;
+      }
+
+      if (event_ || count_) {
+	    cerr << get_fileline() << ": sorry: Event controls in"
+		 << " assignments through a virtual interface are not"
+		 << " supported." << endl;
+	    des->errors += 1;
+	    delete handle;
+	    return true;
+      }
+
+      if (nb) {
+	    cerr << get_fileline() << ": sorry: Nonblocking assignments"
+		 << " through a virtual interface are not supported." << endl;
+	    des->errors += 1;
+	    delete handle;
+	    return true;
+      }
+
+      NetExpr*offset = nullptr;
+      unsigned wid = member->vector_width();
+      if (!ident->elaborate_vif_lval_select(des, scope, member, offset, wid)) {
+	    delete handle;
+	    return true;
+      }
+      ivl_type_t rv_type = offset ? nullptr : member->net_type();
+	// A real or string member has no offset. The code generator
+	// uses that to tell a string literal from a vector value.
+      if (!offset && type_is_vectorable(member->data_type()))
+	    offset = new NetEConst(verinum((uint64_t)0, 32));
+      else if (!offset)
+	    offset = new NetENull;
+
+      NetExpr*rv;
+      if (op) {
+	    PExpr*tmp;
+	    if (op == 'l' || op == 'r' || op == 'R')
+		  tmp = new PEBShift(op, lval_, rval_);
+	    else
+		  tmp = new PEBinary(op, lval_, rval_);
+	    tmp->set_line(*this);
+	    rv = elaborate_rval_expr(des, scope, rv_type, member->data_type(),
+				     wid, tmp, is_constant_);
+	    delete tmp;
+      } else {
+	    rv = elaborate_rval_(des, scope, rv_type, member->data_type(), wid);
+      }
+
+      NetExpr*delay = nullptr;
+      if (rv && delay_) {
+	    delay = elaborate_delay_expr(delay_, des, scope);
+	    if (!delay) {
+		  delete rv;
+		  rv = nullptr;
+	    }
+      }
+      if (!rv) {
+	    delete handle;
+	    delete offset;
+	    return true;
+      }
+
+      vector<NetExpr*> argv = { handle,
+	    new NetEConst(verinum(member->name().str())), rv, offset };
+      if (delay)
+	    argv.push_back(delay);
+      NetSTask*sys = new NetSTask("$ivl_vif$store", IVL_SFUNC_AS_TASK_IGNORE,
+				  argv);
+      sys->set_line(*this);
+      proc = sys;
+      return true;
+}
+
 NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 				   ivl_type_t net_type) const
 {
@@ -3034,6 +3147,10 @@ static bool lval_not_program_variable(const NetAssign_*lv)
 NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 {
       ivl_assert(*this, scope);
+
+      NetProc*vif_proc;
+      if (elaborate_vif_(des, scope, false, op_, vif_proc))
+	    return vif_proc;
 
 	/* If this is a compressed assignment, then handle the
 	   elaboration in a specialized function. */
@@ -3280,6 +3397,10 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return 0;
       }
+
+      NetProc*vif_proc;
+      if (elaborate_vif_(des, scope, true, 0, vif_proc))
+	    return vif_proc;
 
 	/* Elaborate the l-value. */
       NetAssign_*lv = elaborate_lval(des, scope);
@@ -3924,8 +4045,37 @@ NetProc* PContinue::elaborate(Design*des, NetScope*) const
       return res;
 }
 
+/*
+ * Test if the expression is a member of an interface that is accessed
+ * through a virtual interface.
+ */
+static bool is_vif_member_expr(Design*des, NetScope*scope, const PExpr*expr)
+{
+      const PEIdent*ident = dynamic_cast<const PEIdent*>(expr);
+      if (!ident || ident->path().size() < 2)
+	    return false;
+      symbol_search_results sr;
+      symbol_search(ident, des, scope, ident->path(), ident->lexical_pos(),
+		    &sr, SYMBOL_SEARCH_QUIET);
+      return is_vif_member_path(sr);
+}
+
 NetProc* PCallTask::elaborate(Design*des, NetScope*scope) const
 {
+      if (path_.size() > 1 && peek_tail_name(path_)[0] != '$') {
+	    symbol_search_results sr;
+	    symbol_search(this, des, scope, path_, lexical_pos(), &sr,
+			  SYMBOL_SEARCH_QUIET);
+	    if (is_vif_member_path(sr)) {
+		  cerr << get_fileline() << ": sorry: Calling a "
+		       << (void_cast_ ? "function" : "task") << " through a"
+		       << " virtual interface is not supported (" << path_ << ")."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+      }
+
       if (peek_tail_name(path_)[0] == '$') {
 	    if (void_cast_)
 		  return elaborate_non_void_function_(des, scope, path_.name);
@@ -5174,7 +5324,13 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 		 message. Note that the elaborate_lval method already
 		 printed a detailed message for the latter case. */
 	    NetAssign_*lv = 0;
-	    if (args[parms_idx]) {
+	    if (args[parms_idx] && is_vif_member_expr(des, scope, args[parms_idx])) {
+		  cerr << args[parms_idx]->get_fileline() << ": sorry: A member"
+		       << " of a virtual interface cannot be passed to an output"
+		       << " or inout argument of a task (" << *args[parms_idx]
+		       << ")." << endl;
+		  des->errors += 1;
+	    } else if (args[parms_idx]) {
 		  lv = args[parms_idx]->elaborate_lval(des, scope, false, false);
 		  if (lv == 0) {
 			cerr << args[parms_idx]->get_fileline() << ": error: "
@@ -5779,6 +5935,21 @@ static bool ref_port_in_nexus_set(const NexusSet*set)
       return false;
 }
 
+/*
+ * The members of a virtual interface are selected at run time, so there
+ * is no nexus to wait for. All that is in the set is the handle.
+ */
+static bool vif_in_nexus_set(const NexusSet*set)
+{
+      for (size_t idx = 0 ; idx < set->size() ; idx += 1) {
+	    Nexus*nex = const_cast<NexusSet*>(set)->at(idx).lnk.nexus();
+	    const NetNet*sig = nex->pick_any_net();
+	    if (sig && dynamic_cast<const netvirtual_interface_t*>(sig->net_type()))
+		  return true;
+      }
+      return false;
+}
+
 static void sorry_ref_port_event(Design*des, const LineInfo&loc)
 {
       cerr << loc.get_fileline() << ": sorry: "
@@ -5844,6 +6015,11 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    }
 	    if (ref_port_in_nexus_set(nset))
 		  sorry_ref_port_event(des, *this);
+	    if (vif_in_nexus_set(nset)) {
+		  cerr << get_fileline() << ": sorry: An implicit event control"
+		       << " that uses a virtual interface is not supported." << endl;
+		  des->errors += 1;
+	    }
 
 	    if (nset->size() == 0) {
                   if (always_sens_) return wa;
@@ -5961,7 +6137,20 @@ cerr << endl;
                   }
             }
 
+	      // An event expression that reads members through virtual
+	      // interfaces would need to be evaluated at run time.
+	    std::vector<NetESFunc*> vif_loads;
+	    PEIdent::vif_loads = &vif_loads;
 	    NetExpr*tmp = elab_and_eval(des, scope, expr_[idx]->expr(), -1);
+	    PEIdent::vif_loads = nullptr;
+	    if (tmp && !vif_loads.empty()) {
+		  cerr << get_fileline() << ": sorry: An event expression that"
+		       << " reads members of virtual interfaces is not supported ("
+		       << *expr_[idx]->expr() << ")." << endl;
+		  des->errors += 1;
+		  delete tmp;
+		  continue;
+	    }
 	    if (tmp == 0) {
 		  cerr << get_fileline() << ": error: "
 			  "Failed to evaluate event expression '"
@@ -6104,8 +6293,11 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 
       PExpr::width_mode_t mode = PExpr::SIZED;
       pe->test_width(des, scope, mode);
+      std::vector<NetESFunc*> vif_loads;
+      PEIdent::vif_loads = &vif_loads;
       NetExpr*expr = pe->elaborate_expr(des, scope, pe->expr_width(),
                                         PExpr::NO_FLAGS);
+      PEIdent::vif_loads = nullptr;
       if (expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate"
 		  " wait condition expression." << endl;
@@ -6163,6 +6355,17 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
       expr = new NetEBComp('N', expr, new NetEConst(verinum(verinum::V1)));
       expr->set_line(*pe);
       eval_expr(expr);
+
+	/* The members that are read through virtual interfaces would
+	   have to be selected by the handles at run time. */
+      if (!vif_loads.empty()) {
+	    cerr << get_fileline() << ": sorry: A wait condition that reads"
+		 << " members of virtual interfaces is not supported." << endl;
+	    des->errors += 1;
+	    delete expr;
+	    delete enet;
+	    return 0;
+      }
 
       NetEvent*wait_event = new NetEvent(scope->local_symbol());
       wait_event->set_line(*this);
@@ -7003,6 +7206,14 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
       }
       if (!sr.require_non_type(this, des, "as a named event"))
 	    return nullptr;
+
+      if (!sr.eve && is_vif_member_path(sr)) {
+	    cerr << get_fileline() << ": sorry: Triggering a named event"
+	         << " through a virtual interface is not supported ("
+	         << event_ << ")." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       if (!sr.eve) {
 	    cerr << get_fileline() << ": error:  <" << event_ << ">"

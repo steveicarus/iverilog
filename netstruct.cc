@@ -18,6 +18,7 @@
  */
 
 # include  "netlist.h"
+# include  "netscalar.h"
 # include  "netstruct.h"
 # include  "netvector.h"
 # include  <iostream>
@@ -52,6 +53,15 @@ void netstruct_t::append_member(Design*des, const netstruct_t::member_t&val)
       ivl_assert(*this, val.net_type);
 
       members_.push_back(val);
+	// IEEE1800-2017 25.9: Virtual interfaces shall not be used as
+	// members of unions.
+      if (union_ && dynamic_cast<const netvirtual_interface_t*>(val.net_type)) {
+	    cerr << get_fileline() << ": error: "
+		 << "Member " << val.name
+		 << " of a union cannot be a virtual interface." << endl;
+	    des->errors += 1;
+	    return;
+      }
       if (packed_) {
 	    if (! members_.back().net_type->packed()) {
 		  cerr << get_fileline() << ": error: "
@@ -61,7 +71,8 @@ void netstruct_t::append_member(Design*des, const netstruct_t::member_t&val)
 		  des->errors += 1;
 	    }
       }
-      if (union_ && packed_ && !soft_union_ && members_.size() > 1) {
+      if (union_ && packed_ && !soft_union_ && members_.size() > 1 &&
+	  !dynamic_cast<const netvirtual_interface_t*>(members_.front().net_type)) {
 	    unsigned long expect_wid = members_.front().net_type->packed_width();
 	    unsigned long got_wid = members_.back().net_type->packed_width();
 	    if (expect_wid != got_wid) {

@@ -1,7 +1,7 @@
 #ifndef IVL_netscalar_H
 #define IVL_netscalar_H
 /*
- * Copyright (c) 2013-2025 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2026 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,9 @@
  */
 
 # include  "nettypes.h"
+# include  "StringHeap.h"
+
+class NetScope;
 
 class netreal_t : public ivl_type_s {
 
@@ -64,6 +67,35 @@ class netchandle_t : public ivl_type_s {
 
     public:
       static netchandle_t type_chandle;
+};
+
+
+/*
+ * The type of a virtual interface variable (IEEE1800-2017 25.9). The
+ * value of the variable is a handle to an instance of the named
+ * interface, or null.
+ */
+class netvirtual_interface_t : public ivl_type_s {
+
+    public:
+      inline netvirtual_interface_t(perm_string name, NetScope*inst)
+      : name_(name), instance_(inst) { }
+
+      ivl_variable_type_t base_type() const override;
+
+      inline perm_string name() const { return name_; }
+
+	// An instance of the interface, to look up the members of the
+	// interface. This is nil if the interface is not instantiated.
+      inline NetScope* instance() const { return instance_; }
+
+      std::ostream& debug_dump(std::ostream&) const override;
+
+    private:
+      bool test_equivalence(ivl_type_t that) const override;
+
+      perm_string name_;
+      NetScope*instance_;
 };
 
 #endif /* IVL_netscalar_H */

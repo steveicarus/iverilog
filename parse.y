@@ -1455,6 +1455,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <decl_assignments_with_type> package_variable_decl_assignments_with_type
 
 %type <data_type>  data_type data_type_opt data_type_or_implicit
+%type <data_type>  data_type_no_virtual virtual_interface_type
 %type <data_type>  block_reg_data_type for_decl_data_type
 %type <data_type>  implicit_type
 %type <data_type>  reg_prefixed_atomic_type
@@ -1535,6 +1536,7 @@ Module::port_t *module_declare_interface_port(const YYLTYPE&loc, char *type,
 %type <type_id_range> data_type_or_implicit_plus_id
 %type <type_id_range> data_type_or_implicit_plus_id_dim
 %type <type_id_range> data_type_or_implicit_or_void_plus_id
+%type <type_id_range> tf_port_type_plus_id_dim
 %type <type_id_range> method_data_type_or_implicit_or_void_plus_id
 %type <type_id_range> method_task_id
 %type <type_id_range> data_type_or_parameter_id_dim
@@ -1774,6 +1776,12 @@ class_item /* IEEE1800-2005: A.1.8 */
 
   | K_const class_item_qualifier_opt list_of_variable_decl_assignments_with_type ';'
       { pform_class_property(@1, $2 | property_qualifier_t::make_const(), $3.type, $3.decl_assignments); }
+
+  | virtual_interface_type list_of_variable_decl_assignments ';'
+      { pform_class_property(@1, property_qualifier_t::make_none(), $1, $2); }
+
+  | property_qualifier_list virtual_interface_type list_of_variable_decl_assignments ';'
+      { pform_class_property(@2, $1, $2, $3); }
 
     /* IEEEE1800-2017: A.1.9 Class items: class_item ::= { property_qualifier} data_declaration */
 
@@ -2038,7 +2046,7 @@ constraint_set /* IEEE1800-2005 A.1.9 */
   ;
 
 data_declaration /* IEEE1800-2005: A.2.1.3 */
-   : attribute_list_opt K_const_opt variable_lifetime_opt data_type list_of_variable_decl_assignments ';'
+   : attribute_list_opt K_const_opt variable_lifetime_opt data_type_no_virtual list_of_variable_decl_assignments ';'
       { data_type_t *data_type = $4;
 	if (!data_type) {
 	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
@@ -2048,6 +2056,7 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
 		       $1, $2);
 	var_lifetime = LexicalScope::INHERITED;
       }
+  | virtual_interface_declaration
   | attribute_list_opt K_const_opt K_var variable_lifetime_opt list_of_variable_decl_assignments_with_type ';'
       { data_type_t*data_type = $5.type;
 	if (!data_type) {
@@ -2222,8 +2231,50 @@ reg_prefixed_atomic_type
   ;
 
 data_type /* IEEE1800-2005: A.2.2.1 */
+  : data_type_no_virtual { $$ = $1; }
+  | virtual_interface_type { $$ = $1; }
+  ;
+
+  /* A leading "virtual" can also start a class declaration, so the
+     package level data_declaration handles the virtual interface type
+     apart from the other data types. */
+data_type_no_virtual
   : atomic_type { $$ = $1; }
   | ps_type_identifier_dim { $$ = $1; }
+  ;
+
+virtual_interface_type /* IEEE1800-2017: A.2.2.1 */
+  : K_virtual K_interface_opt IDENTIFIER
+      { virtual_interface_type_t*tmp = new virtual_interface_type_t(lex_strings.make($3));
+	FILE_NAME(tmp, @1);
+	delete[]$3;
+	$$ = tmp;
+      }
+  | K_virtual K_interface_opt IDENTIFIER '.' IDENTIFIER
+      { yyerror(@4, "sorry: Virtual interface modports are not supported yet.");
+	virtual_interface_type_t*tmp = new virtual_interface_type_t(lex_strings.make($3));
+	FILE_NAME(tmp, @1);
+	delete[]$3;
+	delete[]$5;
+	$$ = tmp;
+      }
+  ;
+
+K_interface_opt
+  : K_interface
+  |
+  ;
+
+virtual_interface_declaration
+  : virtual_interface_type list_of_variable_decl_assignments ';'
+      { pform_make_var(@1, $2, $1, nullptr, false); }
+  | K_virtual K_interface_opt IDENTIFIER parameter_value_assignment
+    list_of_variable_decl_assignments ';'
+      { yyerror(@4, "sorry: Virtual interface parameters are not supported yet.");
+	delete[]$3;
+	delete $4;
+	delete $5;
+      }
   ;
 
 /* Data type or nothing, but not implicit */
@@ -3434,6 +3485,9 @@ data_type_or_implicit_plus_id
   | atomic_type IDENTIFIER
       { set_type_id_range($$, $1, $2, @2, nullptr);
       }
+  | virtual_interface_type IDENTIFIER
+      { set_type_id_range($$, $1, $2, @2, nullptr);
+      }
   | implicit_type IDENTIFIER
       { set_type_id_range($$, $1, $2, @2, nullptr);
       }
@@ -3630,6 +3684,18 @@ partial_port_identifier_dim
       }
   ;
 
+  /* A leading "virtual" in a class item can also be a method qualifier,
+     so the virtual interface type is not in the rule that is shared
+     with the class properties. */
+tf_port_type_plus_id_dim
+  : data_type_or_implicit_plus_id_dim
+      { $$ = $1;
+      }
+  | virtual_interface_type IDENTIFIER dimensions_opt
+      { set_type_id_range($$, $1, $2, @2, $3);
+      }
+  ;
+
   /* These rules for tf_port_item are slightly expanded from the
      strict rules in the LRM to help with LALR parsing.
 
@@ -3640,7 +3706,7 @@ partial_port_identifier_dim
 
 tf_port_item /* IEEE1800-2005: A.2.7 */
 
-  : tf_port_direction_opt K_var_opt data_type_or_implicit_plus_id_dim initializer_opt
+  : tf_port_direction_opt K_var_opt tf_port_type_plus_id_dim initializer_opt
       { std::vector<pform_tf_port_t>*tmp;
 	NetNet::PortType use_port_type = $1;
         if ((use_port_type == NetNet::PIMPLICIT) && (gn_system_verilog() || !$3.type))
@@ -3905,6 +3971,7 @@ attribute
 
 block_item_decl
   : block_item_decl_no_identifier_start
+  | virtual_interface_declaration
   | ps_type_identifier_dim list_of_variable_decl_assignments ';'
       { if ($1) pform_make_var(@1, $2, $1, attributes_in_context, false);
 	var_lifetime = LexicalScope::INHERITED;
@@ -5070,6 +5137,11 @@ type_value
       }
   | IDENTIFIER parameter_value_assignment
       { auto tmp = new PETypename(pform_new_type_identifier(@1, nullptr, $1, $2));
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | virtual_interface_type
+      { auto tmp = new PETypename($1);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
@@ -6369,6 +6441,14 @@ module_item
      begin/end. Careful to pass attributes to the block_item_decl. */
 
   | identifier_module_item
+
+  /* IEEE1800-2017 25.9: Virtual interfaces shall not be used as
+     interface items. */
+  | virtual_interface_declaration
+      { if (pform_in_interface())
+	      yyerror(@1, "error: A virtual interface cannot be declared as "
+			  "an item of an interface.");
+      }
 
   | attribute_list_opt IDENTIFIER gate_instance_positional_connections gate_instance_continue ';'
       { std::unique_ptr<lgate> instance($3);
