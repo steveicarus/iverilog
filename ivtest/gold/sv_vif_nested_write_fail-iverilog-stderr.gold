@@ -1,0 +1,3 @@
+ivltests/sv_vif_nested_write_fail.v:16: sorry: Writing a member of a virtual interface through a nested class property is not supported (c.vif.data).
+ivltests/sv_vif_nested_write_fail.v:16: Unable to elaborate statement in task $unit.drv_c.run at ivltests/sv_vif_nested_write_fail.v:15.
+1 error(s) during elaboration.

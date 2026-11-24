@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_vif_string.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95"        : {
+        "__comment" : "SystemVerilog strings are not supported",
+        "type"      : "CE"
+    }
+}

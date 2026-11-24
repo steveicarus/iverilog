@@ -1,0 +1,4 @@
+ivltests/sv_vif_fail4.v:22: error: the type of the variable 'vif2' doesn't match the context type.
+ivltests/sv_vif_fail4.v:22:      : variable type=virtual interface other_if
+ivltests/sv_vif_fail4.v:22:      : context type=virtual interface bus_if
+1 error(s) during elaboration.

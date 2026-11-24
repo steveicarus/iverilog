@@ -1,0 +1,2 @@
+ivltests/sv_vif_output_arg_fail.v:17: sorry: A member of a virtual interface cannot be passed to an output or inout argument of a task (v.data).
+1 error(s) during elaboration.

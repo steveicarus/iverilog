@@ -1,0 +1,2 @@
+ivltests/sv_vif_concat_fail.v:9: sorry: A member of a virtual interface can only be written by a procedural assignment (v.data).
+1 error(s) during elaboration.

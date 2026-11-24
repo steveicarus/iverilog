@@ -1,0 +1,2 @@
+ivltests/sv_vif_not_interface_fail.v:5: error: `nosuch' is not an interface.
+1 error(s) during elaboration.

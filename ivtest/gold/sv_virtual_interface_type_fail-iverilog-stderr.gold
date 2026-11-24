@@ -1,0 +1,2 @@
+ivltests/sv_virtual_interface_type_fail.v:18: error: `o0' is not an instance of interface bus_if.
+1 error(s) during elaboration.

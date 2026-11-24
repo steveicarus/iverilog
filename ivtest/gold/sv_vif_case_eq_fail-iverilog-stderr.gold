@@ -1,0 +1,5 @@
+ivltests/sv_vif_case_eq_fail.v:12: error: The === operator cannot be used with a virtual interface.
+ivltests/sv_vif_case_eq_fail.v:12: error: Unable to elaborate condition expression.
+ivltests/sv_vif_case_eq_fail.v:13: error: The !== operator cannot be used with a virtual interface.
+ivltests/sv_vif_case_eq_fail.v:13: error: Unable to elaborate condition expression.
+4 error(s) during elaboration.

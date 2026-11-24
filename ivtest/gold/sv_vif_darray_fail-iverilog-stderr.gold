@@ -1,0 +1,2 @@
+ivltests/sv_vif_darray_fail.v:10: sorry: Only vector, real and string members of an interface can be accessed through a virtual interface (v.q).
+Elaboration failed
