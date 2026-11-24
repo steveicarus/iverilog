@@ -8318,6 +8318,26 @@ bool of_UPARR_AND_V(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_UPARR_AND_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject* cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_vector4_t res = qsrc ? uparr_and_words_src(qsrc, wid)
+			       : uparr_and_words_src(dsrc, wid);
+      thr->push_vec4(res);
+      return true;
+}
+
 /* or() reduction returns the scalar sum (Verilog-style bitwise-AND per word). */
 template <class SRC>
 static vvp_vector4_t uparr_or_words_src(SRC* src, unsigned wid)
@@ -8347,6 +8367,26 @@ bool of_UPARR_OR_V(vthread_t thr, vvp_code_t cp)
 	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
 	    res = uparr_or_words_src(src, wid);
       }
+      thr->push_vec4(res);
+      return true;
+}
+
+bool of_UPARR_OR_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject* cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_vector4_t res = qsrc ? uparr_or_words_src(qsrc, wid)
+			       : uparr_or_words_src(dsrc, wid);
       thr->push_vec4(res);
       return true;
 }
@@ -8584,6 +8624,26 @@ bool of_UPARR_XOR_V(vthread_t thr, vvp_code_t cp)
 	    vvp_queue_vec4* src = dynamic_cast<vvp_queue_vec4*>(src_q);
 	    res = uparr_xor_words_src(src, wid);
       }
+      thr->push_vec4(res);
+      return true;
+}
+
+bool of_UPARR_XOR_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_object_t& top = thr->peek_object();
+      vvp_cobject* cobj = top.peek<vvp_cobject>();
+      assert(cobj);
+
+      vvp_object_t qobj;
+      cobj->get_object(pid, qobj, 0);
+      vvp_queue_vec4* qsrc = 0;
+      vvp_darray* dsrc = 0;
+      get_queue_or_darray_vec4_from_object(qobj, qsrc, dsrc);
+      vvp_vector4_t res = qsrc ? uparr_xor_words_src(qsrc, wid)
+			       : uparr_xor_words_src(dsrc, wid);
       thr->push_vec4(res);
       return true;
 }

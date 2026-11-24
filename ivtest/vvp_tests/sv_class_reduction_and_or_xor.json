@@ -1,0 +1,5 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_class_reduction_and_or_xor.v",
+    "iverilog-args" : [ "-g2012" ]
+}
