@@ -839,9 +839,11 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 	                     strcmp(ivl_expr_name(expr), "$ivl_uparr_method$or") == 0 ?
 			     "or" : "xor";
 	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
-		  fprintf(stderr, "%s:%u: Sorry: No support for '%s' from a class.\n",
-		          ivl_expr_file(expr), ivl_expr_lineno(expr), op);
-		  vvp_errors += 1;
+		  ivl_signal_t clas = ivl_expr_signal(arg);
+		  unsigned pidx = ivl_expr_property_idx(arg);
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
+		  fprintf(vvp_out, "    %%uparr/%s/prop/v %u, %u;\n", op, pidx, wid);
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 		  return;
 	    }
 	    assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
