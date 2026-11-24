@@ -5235,6 +5235,26 @@ expr_primary
 	delete $3;
 	$$ = tmp;
       }
+  | class_scope hierarchy_identifier argument_list_parens K_with '(' expression ')'
+      { pform_scoped_name_t call_path(nullptr, *$2);
+	call_path.class_scope.reset($1);
+	auto tmp = new PECallFunction(call_path, *$3);
+	FILE_NAME(tmp, @2);
+	tmp->set_with_clause($6);
+	delete $2;
+	delete $3;
+	$$ = tmp;
+      }
+  | class_scope hierarchy_identifier K_with '(' expression ')'
+      { std::vector<named_pexpr_t> empty;
+	pform_scoped_name_t call_path(nullptr, *$2);
+	call_path.class_scope.reset($1);
+	auto tmp = new PECallFunction(call_path, empty);
+	FILE_NAME(tmp, @2);
+	tmp->set_with_clause($5);
+	delete $2;
+	$$ = tmp;
+      }
   | K_this
       { PEIdent*tmp = new PEIdent(perm_string::literal(THIS_TOKEN), UINT_MAX);
 	FILE_NAME(tmp,@1);
