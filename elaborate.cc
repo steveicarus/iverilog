@@ -2865,9 +2865,10 @@ bool PAssign_::elaborate_vif_(Design*des, NetScope*scope, bool nb, char op,
 	    return true;
       }
 
-      if (nb) {
-	    cerr << get_fileline() << ": sorry: Nonblocking assignments"
-		 << " through a virtual interface are not supported." << endl;
+      if (nb && member->data_type() == IVL_VT_STRING) {
+	    cerr << get_fileline() << ": sorry: Nonblocking assignments to"
+		 << " string members through a virtual interface are not"
+		 << " supported." << endl;
 	    des->errors += 1;
 	    delete handle;
 	    return true;
@@ -2915,13 +2916,15 @@ bool PAssign_::elaborate_vif_(Design*des, NetScope*scope, bool nb, char op,
 	    delete offset;
 	    return true;
       }
+      if (nb && !delay)
+	    delay = new NetEConst(verinum((uint64_t)0, 64));
 
       vector<NetExpr*> argv = { handle,
 	    new NetEConst(verinum(member->name().str())), rv, offset };
       if (delay)
 	    argv.push_back(delay);
-      NetSTask*sys = new NetSTask("$ivl_vif$store", IVL_SFUNC_AS_TASK_IGNORE,
-				  argv);
+      NetSTask*sys = new NetSTask(nb ? "$ivl_vif$assign" : "$ivl_vif$store",
+				  IVL_SFUNC_AS_TASK_IGNORE, argv);
       sys->set_line(*this);
       proc = sys;
       return true;
@@ -3390,6 +3393,12 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
+	// The variable that a write through a virtual interface assigns
+	// is the member of the instance, even if the handle is automatic.
+      NetProc*vif_proc;
+      if (elaborate_vif_(des, scope, true, 0, vif_proc))
+	    return vif_proc;
+
       if (scope->is_auto() && lval()->has_aa_term(des, scope)) {
 	    cerr << get_fileline() << ": error: automatically allocated "
                     "variables may not be assigned values using non-blocking "
@@ -3397,10 +3406,6 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return 0;
       }
-
-      NetProc*vif_proc;
-      if (elaborate_vif_(des, scope, true, 0, vif_proc))
-	    return vif_proc;
 
 	/* Elaborate the l-value. */
       NetAssign_*lv = elaborate_lval(des, scope);
@@ -5976,6 +5981,80 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    return 0;
       }
 
+	/* The events of members of interfaces that are accessed through
+	   virtual interfaces are selected by the handles at run time. A
+	   list of them is passed to the code generator as a call of an
+	   internal task with the handle, the member name and the edge
+	   (the PEEvent::edge_t) of each event. */
+      vector<NetExpr*> vif_argv;
+      unsigned vif_count = 0;
+      bool vif_errors = false;
+      for (const PEEvent*cur : expr_) {
+	    const PEIdent*ident = dynamic_cast<const PEIdent*>(cur->expr());
+	    NetExpr*handle;
+	    NetNet*member;
+	    NetEvent*ev;
+	    if (!ident || !ident->elaborate_vif_member(des, scope, handle,
+						       member, &ev))
+		  continue;
+	    vif_count += 1;
+	    if (!handle) {
+		  vif_errors = true;
+		  continue;
+	    }
+	    if (!ident->path().back().index.empty()) {
+		  cerr << get_fileline() << ": sorry: An event on a select of"
+		       << " a member of a virtual interface is not supported ("
+		       << ident->path() << ")." << endl;
+		  des->errors += 1;
+		  vif_errors = true;
+	    } else if (ev && cur->type() != PEEvent::ANYEDGE) {
+		  cerr << get_fileline() << ": error: An edge cannot be used"
+		       << " with a named event (" << ident->path() << ")."
+		       << endl;
+		  des->errors += 1;
+		  vif_errors = true;
+	    } else if (member && cur->type() != PEEvent::ANYEDGE &&
+		       (member->data_type() == IVL_VT_REAL ||
+			member->data_type() == IVL_VT_STRING)) {
+		  cerr << get_fileline() << ": error: An edge cannot be"
+		       << " used with a real or string member of a virtual"
+		       << " interface (" << ident->path() << ")." << endl;
+		  des->errors += 1;
+		  vif_errors = true;
+	    }
+	    perm_string name = ev ? ev->name() : member->name();
+	    vif_argv.push_back(handle);
+	    vif_argv.push_back(new NetEConst(verinum(name.str())));
+	    vif_argv.push_back(new NetEConst(verinum((uint64_t)cur->type(), 32)));
+      }
+
+      if (vif_count) {
+	    if (vif_count != expr_.size()) {
+		  cerr << get_fileline() << ": sorry: A list of events that"
+		       << " has members of virtual interfaces and other events"
+		       << " is not supported." << endl;
+		  des->errors += 1;
+		  vif_errors = true;
+	    }
+	    if (vif_errors) {
+		  for (NetExpr*cur : vif_argv)
+			delete cur;
+		  delete enet;
+		  return 0;
+	    }
+
+	    NetSTask*sys = new NetSTask("$ivl_vif$wait",
+					IVL_SFUNC_AS_TASK_IGNORE, vif_argv);
+	    sys->set_line(*this);
+	    NetBlock*blk = new NetBlock(NetBlock::SEQU, 0);
+	    blk->set_line(*this);
+	    blk->append(sys);
+	    if (enet)
+		  blk->append(enet);
+	    return blk;
+      }
+
 	/* Create a single NetEvent and NetEvWait. Then, create a
 	   NetEvProbe for each conjunctive event in the event
 	   list. The NetEvProbe objects all refer back to the NetEvent
@@ -6356,15 +6435,46 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
       expr->set_line(*pe);
       eval_expr(expr);
 
-	/* The members that are read through virtual interfaces would
-	   have to be selected by the handles at run time. */
+	/* The members that are read through virtual interfaces are selected
+	   by the handles at run time, so the loop waits for a change of any
+	   of them, and then tests the condition again. */
       if (!vif_loads.empty()) {
-	    cerr << get_fileline() << ": sorry: A wait condition that reads"
-		 << " members of virtual interfaces is not supported." << endl;
-	    des->errors += 1;
-	    delete expr;
-	    delete enet;
-	    return 0;
+	    NexusSet*nset = expr->nex_input();
+	    bool mixed = false;
+	    for (size_t idx = 0 ; nset && idx < nset->size() ; idx += 1) {
+		  const NetNet*sig = nset->at(idx).lnk.nexus()->pick_any_net();
+		  if (!sig || sig->data_type() != IVL_VT_CLASS)
+			mixed = true;
+	    }
+	    delete nset;
+	    if (mixed) {
+		  cerr << get_fileline() << ": sorry: A wait condition that reads"
+		       << " members of virtual interfaces and other variables is"
+		       << " not supported." << endl;
+		  des->errors += 1;
+		  delete expr;
+		  delete enet;
+		  return 0;
+	    }
+
+	    vector<NetExpr*> argv;
+	    for (const NetESFunc*load : vif_loads) {
+		  argv.push_back(load->parm(0)->dup_expr());
+		  argv.push_back(load->parm(1)->dup_expr());
+		  argv.push_back(new NetEConst(verinum((uint64_t)PEEvent::ANYEDGE, 32)));
+	    }
+	    NetSTask*sys = new NetSTask("$ivl_vif$wait", IVL_SFUNC_AS_TASK_IGNORE, argv);
+	    sys->set_line(*this);
+	    NetWhile*loop = new NetWhile(expr, sys);
+	    loop->set_line(*this);
+	    if (enet == 0)
+		  return loop;
+
+	    NetBlock*block = new NetBlock(NetBlock::SEQU, 0);
+	    block->append(loop);
+	    block->append(enet);
+	    block->set_line(*this);
+	    return block;
       }
 
       NetEvent*wait_event = new NetEvent(scope->local_symbol());
@@ -9020,6 +9130,24 @@ static ostream& operator<< (ostream&o, ivl_process_type_t t)
       return o;
 }
 
+/*
+ * If this statement waits for members of virtual interfaces and then
+ * runs a statement, return that statement.
+ */
+static const NetProc* vif_wait_statement(const NetProc*proc)
+{
+      const NetBlock*blk = dynamic_cast<const NetBlock*>(proc);
+      if (!blk || blk->type() != NetBlock::SEQU)
+	    return nullptr;
+      const NetSTask*task = dynamic_cast<const NetSTask*>(blk->proc_first());
+      if (!task || strcmp(task->name(), "$ivl_vif$wait") != 0)
+	    return nullptr;
+      const NetProc*next = blk->proc_next(task);
+      if (!next || blk->proc_next(next))
+	    return nullptr;
+      return next;
+}
+
 bool Design::check_proc_delay() const
 {
       bool result = false;
@@ -9053,7 +9181,17 @@ bool Design::check_proc_delay() const
 	        (pr->type() == IVL_PR_ALWAYS_FF) ||
 	        (pr->type() == IVL_PR_ALWAYS_LATCH)) {
 		  const NetEvWait *wait = dynamic_cast<const NetEvWait*> (pr->statement());
-		  if (! wait) {
+		  const NetProc *vif_stmt = (pr->type() == IVL_PR_ALWAYS_FF)
+			? vif_wait_statement(pr->statement()) : nullptr;
+		  if (vif_stmt) {
+			if (vif_stmt->delay_type(true) != NO_DELAY) {
+			      cerr << pr->get_fileline() << ": error: there must "
+			              "only be a single event control and no "
+			              "blocking delays in an always_ff process."
+			           << endl;
+			      result = true;
+			}
+		  } else if (! wait) {
 			  // The always_comb/latch processes have an event
 			  // control added automatically by the compiler.
 			ivl_assert(*pr, pr->type() == IVL_PR_ALWAYS_FF);

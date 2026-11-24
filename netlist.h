@@ -4263,6 +4263,8 @@ class NetSTask  : public NetProc {
 
       unsigned nparms() const;
 
+      virtual DelayType delay_type(bool print_delay=false) const override;
+
       const NetExpr* parm(unsigned idx) const;
 
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,

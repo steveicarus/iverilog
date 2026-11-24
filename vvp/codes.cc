@@ -118,7 +118,9 @@ void codespace_delete(void)
 			exec_ufunc_delete((cur+idx));
 		  } else if ((cur+idx)->opcode == &of_FILE_LINE) {
 			delete((cur+idx)->handle);
-		  } else if (((cur+idx)->opcode == &of_CONCATI_STR) ||
+		  } else if (((cur+idx)->opcode == &of_ASSIGN_VIF) ||
+		             ((cur+idx)->opcode == &of_CONCATI_STR) ||
+		             ((cur+idx)->opcode == &of_EVENT_VIF) ||
 		             ((cur+idx)->opcode == &of_LOAD_VIF) ||
 		             ((cur+idx)->opcode == &of_NEW_DARRAY) ||
 		             ((cur+idx)->opcode == &of_PUSHI_STR) ||

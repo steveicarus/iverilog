@@ -2070,20 +2070,54 @@ int draw_vif_load(ivl_expr_t expr)
 }
 
 /*
+ * The delay of a nonblocking write is a 64 bit value on the vector
+ * stack.
+ */
+static void draw_vif_delay(ivl_expr_t delay)
+{
+      if (ivl_expr_value(delay) == IVL_VT_REAL) {
+	    draw_eval_real(delay);
+	    fprintf(vvp_out, "    %%cvt/vr 64;\n");
+      } else {
+	    draw_eval_vec4(delay);
+	    if (ivl_expr_width(delay) != 64)
+		  fprintf(vvp_out, "    %%pad/u 64;\n");
+      }
+}
+
+/*
  * Write a member:
  *   $ivl_vif$store(<handle>, <member>, <value>, <offset> [, <delay>])
+ *   $ivl_vif$assign(<handle>, <member>, <value>, <offset>, <delay>)
  * The offset is the canonical offset of the part of a vector member
- * that is written, and null for a real or string member. A write with
- * a delay evaluates the value and the offset, then waits. The handle is
- * evaluated last.
+ * that is written, and null for a real or string member. A blocking
+ * write with a delay evaluates the value and the offset, then waits.
+ * The handle is evaluated last.
+ *
+ * Wait for members:
+ *   $ivl_vif$wait(<handle>, <member>, <edge> {, <handle>, <member>, <edge>})
+ * The edge is 0 for any change, 1 for posedge, 2 for negedge and 3 for
+ * edge.
  */
 static int show_vif_access(ivl_statement_t net)
 {
+      const char*stmt_name = ivl_stmt_name(net);
       const char*file = ivl_stmt_file(net);
       unsigned lineno = ivl_stmt_lineno(net);
       unsigned nparms = ivl_stmt_parm_count(net);
 
       show_stmt_file_line(net, "Virtual interface member access.");
+
+      if (strcmp(stmt_name, "$ivl_vif$wait") == 0) {
+	    for (unsigned idx = 0 ; idx + 2 < nparms ; idx += 3) {
+		  draw_eval_object(ivl_stmt_parm(net, idx));
+		  draw_eval_vec4(ivl_stmt_parm(net, idx+2));
+		  show_vif_operands("event/vif", ivl_stmt_parm(net, idx+1),
+				    file, lineno);
+	    }
+	    fprintf(vvp_out, "    %%wait/vif;\n");
+	    return 0;
+      }
 
 	/* A real or string member has a null offset. */
       ivl_expr_t value = ivl_stmt_parm(net, 2);
@@ -2095,6 +2129,13 @@ static int show_vif_access(ivl_statement_t net)
 	    draw_eval_real(value);
       } else {
 	    draw_eval_string(value);
+      }
+
+      if (strcmp(stmt_name, "$ivl_vif$assign") == 0) {
+	    draw_vif_delay(ivl_stmt_parm(net, 4));
+	    draw_eval_object(ivl_stmt_parm(net, 0));
+	    show_vif_operands("assign/vif", ivl_stmt_parm(net, 1), file, lineno);
+	    return 0;
       }
 
       if (nparms > 4) {

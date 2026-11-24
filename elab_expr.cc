@@ -4166,13 +4166,17 @@ NetExpr* PEIdent::elaborate_expr_class_field_(Design*des, NetScope*scope,
  * array of variables, or a property of a class object. The member is
  * taken from an instance of the interface and is used for its name and
  * type. The handle selects the instance that is accessed at run time.
- * On errors, the handle is nil.
+ * A named event member is only returned if the caller asks for it. On
+ * errors, the handle is nil.
  */
 bool PEIdent::elaborate_vif_member(Design*des, NetScope*scope,
-				   NetExpr*&handle, NetNet*&member) const
+				   NetExpr*&handle, NetNet*&member,
+				   NetEvent**event) const
 {
       handle = nullptr;
       member = nullptr;
+      if (event)
+	    *event = nullptr;
       if (path_.size() < 2)
 	    return false;
 
@@ -4232,9 +4236,9 @@ bool PEIdent::elaborate_vif_member(Design*des, NetScope*scope,
 
       NetNet*sig = vif->instance()->find_signal(comp.name);
       NetEvent*ev = sig ? nullptr : vif->instance()->find_event(comp.name);
-      if (ev) {
-	    cerr << get_fileline() << ": sorry: Accessing a named event"
-		 << " through a virtual interface is not supported ("
+      if (ev && (!event || !comp.index.empty())) {
+	    cerr << get_fileline() << ": sorry: A named event of an interface"
+		 << " can only be waited for through a virtual interface ("
 		 << path_ << ")." << endl;
 	    des->errors += 1;
 	    return true;
@@ -4315,6 +4319,8 @@ bool PEIdent::elaborate_vif_member(Design*des, NetScope*scope,
 	    handle = new NetESignal(net);
       handle->set_line(*this);
       member = sig;
+      if (event)
+	    *event = ev;
       return true;
 }
 

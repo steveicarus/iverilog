@@ -2927,6 +2927,15 @@ DelayType NetUTask::delay_type(bool print_delay) const
       }
 }
 
+/*
+ * The wait for an event of a virtual interface member is an internal
+ * system task, and it always blocks.
+ */
+DelayType NetSTask::delay_type(bool) const
+{
+      return strcmp(name_, "$ivl_vif$wait") == 0 ? DEFINITE_DELAY : NO_DELAY;
+}
+
 static bool do_expr_event_match(const NetExpr*expr, const NetEvWait*evwt)
 {
 	// The event wait should only have a single event.
@@ -3438,6 +3447,10 @@ bool NetSTask::check_synth(ivl_process_type_t pr_type,
           strcmp(name(), "$ivl_darray_method$shuffle") == 0) {
 	    cerr << get_fileline() << ": warning: Dynamic array "
 	            "ordering/delete method cannot be synthesized "
+	         << get_process_type_as_string(pr_type) << endl;
+      } else if (strcmp(name(), "$ivl_vif$wait") == 0) {
+	    cerr << get_fileline() << ": warning: An event control on a "
+	            "virtual interface member cannot be synthesized "
 	         << get_process_type_as_string(pr_type) << endl;
       } else if (strncmp(name(), "$ivl_vif$", 9) == 0) {
 	    cerr << get_fileline() << ": warning: A write through a "

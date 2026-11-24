@@ -46,6 +46,11 @@ void nodangle_f::event(Design*, NetEvent*ev)
 {
       if (ecomplete) return;
 
+	/* Don't delete named events that can be waited for through a
+	   virtual interface. They are looked up by name at run time. */
+      if (!ev->local_flag() && ev->scope()->is_virtual_interface())
+	    return;
+
 	/* If there are no references to this event, then go right
 	   ahead and delete it. There is no use looking further at
 	   it. */

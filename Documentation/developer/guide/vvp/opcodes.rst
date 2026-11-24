@@ -166,6 +166,14 @@ the width of the value on the stack.
 The actual assignment is suppressed if flags-4 is 1. This is so that
 calculations of offset can set the flag on errors.
 
+* %assign/vif "member", <file>, <line>
+
+This is the non-blocking form of %store/vif. Pop a virtual interface
+handle from the object stack and a 64 bit delay from the vec4 stack,
+then the value as for %store/vif. The write to the member is scheduled
+after the delay. If the handle is null, the simulation stops with a
+fatal error that gives the <file> and <line> of the access.
+
 * %assign/wr <vpi-label>, <delay>
 * %assign/wr/d <vpi-label>, <delayx>
 * %assign/wr/e <vpi-label>
@@ -533,6 +541,16 @@ this information is not managed correctly.
 This instruction is used to send a pulse to an event object. The
 <functor-label> is an event variable. This instruction simply writes
 an arbitrary value to the event to trigger the event.
+
+* %event/vif "member", <file>, <line>
+
+Pop a virtual interface handle from the object stack and an edge from
+the vec4 stack, and find the event for that edge of the named member
+of the interface instance. The edge is 0 for any change, 1 for
+posedge, 2 for negedge and 3 for either edge. A named event member is
+its own event. The event is kept for the %wait/vif that follows. If
+the handle is null, the simulation stops with a fatal error that gives
+the <file> and <line> of the access.
 
 * %file_line <file> <line> <description>
 
@@ -1407,6 +1425,13 @@ in its list and the list is cleared.
 This instruction puts the current thread to sleep until all the detached
 children have finished executing. The last detached child is responsible
 for restarting the parent when it finishes.
+
+* %wait/vif
+
+Wait for any of the events that the %event/vif instructions right
+before this one found. The handles are read when the wait starts, so
+a later change of a virtual interface variable does not redirect a
+pending wait.
 
 * %xnor
 

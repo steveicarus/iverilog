@@ -429,7 +429,8 @@ class PEIdent : public PExpr {
 	// accessed through a virtual interface. If it is, elaborate
 	// the handle and get the member (nil if there are errors).
       bool elaborate_vif_member(Design*des, NetScope*scope,
-				NetExpr*&handle, NetNet*&member) const;
+				NetExpr*&handle, NetNet*&member,
+				NetEvent**event =nullptr) const;
 	// Elaborate the select of a member that is written through a
 	// virtual interface: the offset (nil for the whole member) and
 	// the width of the part. Return false if there are errors.

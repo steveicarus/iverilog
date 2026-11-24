@@ -8837,6 +8837,171 @@ bool of_STORE_VIF(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %assign/vif <name>, <file>, <line>
+ *
+ * Schedule a nonblocking write of the value on the stack to the
+ * member. The top of the vector stack is the delay. For a vector
+ * member, the offset of the part that is written is below it, and the
+ * value is below the offset.
+ */
+bool of_ASSIGN_VIF(vthread_t thr, vvp_code_t cp)
+{
+      vif_member_s member;
+      if (!vif_member(thr, cp, member))
+	    return false;
+
+      vvp_time64_t del = 0;
+      vvp_vector4_t del_val = thr->pop_vec4();
+      vector4_to_value(del_val, del, false);
+
+      switch (member.kind) {
+	  case vif_member_s::VEC4: {
+		int64_t off;
+		bool off_ok = vif_pop_offset(thr, off);
+		vvp_vector4_t val = thr->pop_vec4();
+		const vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (member.net->fil);
+		assert(sig);
+		unsigned sig_wid = sig->value_size();
+		if (!off_ok || !resize_rval_vec(val, off, sig_wid))
+		      break;
+		schedule_assign_vector(vvp_net_ptr_t(member.net, 0), off, sig_wid,
+				       val, del);
+		break;
+	  }
+	  case vif_member_s::REAL: {
+		s_vpi_time tim;
+		tim.type = vpiSimTime;
+		vpip_time_to_timestruct(&tim, del);
+		t_vpi_value val;
+		val.format = vpiRealVal;
+		val.value.real = thr->pop_real();
+		vpi_put_value(member.handle, &val, &tim, vpiTransportDelay);
+		break;
+	  }
+	  default:
+	    assert(0);
+      }
+
+      return true;
+}
+
+/*
+ * The events of the members that the next %wait/vif waits for. They
+ * are collected by %event/vif instructions that come right before the
+ * %wait/vif, so there is no other thread in between.
+ */
+static std::vector<vvp_net_t*> vif_pending_events;
+
+/*
+ * %event/vif <name>, <file>, <line>
+ *
+ * Find the event of the member. The top of the vector stack is the
+ * edge (0: any change, 1: posedge, 2: negedge, 3: edge). The member is
+ * only known at run time, so the edge functors are made here, on first
+ * use. There is one for each member net and edge type. A named event
+ * is its own event.
+ */
+bool of_EVENT_VIF(vthread_t thr, vvp_code_t cp)
+{
+      static std::map<std::pair<vvp_net_t*,unsigned>,vvp_net_t*> events;
+
+      unsigned long edge = 0;
+      vvp_vector4_t edge_val = thr->pop_vec4();
+      vector4_to_value(edge_val, edge, false);
+      assert(edge < 4);
+
+      vif_member_s member;
+      if (!vif_member(thr, cp, member)) {
+	    vif_pending_events.clear();
+	    return false;
+      }
+
+      if (member.kind == vif_member_s::EVENT) {
+	    vif_pending_events.push_back(member.net);
+	    return true;
+      }
+
+      vvp_net_t*&event = events[std::make_pair(member.net, (unsigned)edge)];
+      if (event == 0) {
+	    static const vvp_fun_edge::edge_t edges[] =
+		  { vvp_edge_none, vvp_edge_posedge, vvp_edge_negedge, vvp_edge_edge };
+
+	    event = new vvp_net_t;
+	    if (edge == 0)
+		  event->fun = new vvp_fun_anyedge_sa;
+	    else
+		  event->fun = new vvp_fun_edge_sa(edges[edge]);
+
+	      /* Give the new functor the current value of the member,
+		 so that it detects the next change. */
+	    if (member.kind == vif_member_s::REAL) {
+		  t_vpi_value val;
+		  val.format = vpiRealVal;
+		  vpi_get_value(member.handle, &val);
+		  event->fun->recv_real(vvp_net_ptr_t(event, 0), val.value.real, 0);
+	    } else if (member.kind == vif_member_s::STRING) {
+		  const vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*> (member.net->fun);
+		  assert(fun);
+		  event->fun->recv_string(vvp_net_ptr_t(event, 0), fun->get_string(), 0);
+	    } else {
+		  const vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (member.net->fil);
+		  assert(sig);
+		  vvp_vector4_t val;
+		  sig->vec4_value(val);
+		  event->fun->recv_vec4(vvp_net_ptr_t(event, 0), val, 0);
+	    }
+	    member.net->link(vvp_net_ptr_t(event, 0));
+      }
+
+      vif_pending_events.push_back(event);
+      return true;
+}
+
+/*
+ * %wait/vif
+ *
+ * Wait for any of the events that the %event/vif instructions before
+ * this one found. A list of several events is waited for through an
+ * "or" of the events, which is made on first use, like the edges.
+ */
+bool of_WAIT_VIF(vthread_t thr, vvp_code_t)
+{
+      static std::map<std::vector<vvp_net_t*>,vvp_net_t*> lists;
+
+      assert(! vif_pending_events.empty());
+      vvp_net_t*event = vif_pending_events[0];
+      if (vif_pending_events.size() > 1) {
+	    vvp_net_t*&base_net = lists[vif_pending_events];
+	    if (base_net == 0) {
+		  base_net = new vvp_net_t;
+		  base_net->fun = new vvp_fun_event_or_sa(base_net);
+		    /* The data values and the ports do not matter, so
+		       all the nets share the functor. */
+		  vvp_net_t*curr_net = base_net;
+		  for (unsigned idx = 0 ; idx < vif_pending_events.size() ; idx += 1) {
+			if (idx > 0 && (idx % 4) == 0) {
+			      curr_net = new vvp_net_t;
+			      curr_net->fun = base_net->fun;
+			}
+			vif_pending_events[idx]->link(vvp_net_ptr_t(curr_net, idx % 4));
+		  }
+	    }
+	    event = base_net;
+      }
+      vif_pending_events.clear();
+
+      assert(! thr->i_am_in_function);
+      assert(! thr->waiting_for_event);
+      thr->waiting_for_event = 1;
+
+      waitable_hooks_s*ep = dynamic_cast<waitable_hooks_s*> (event->fun);
+      assert(ep);
+      thr->wait_next = ep->add_waiting_thread(thr);
+
+      return false;
+}
+
+/*
  * Implement the %wait/fork (SystemVerilog) instruction by suspending
  * the current thread until all the detached children have finished.
  */
