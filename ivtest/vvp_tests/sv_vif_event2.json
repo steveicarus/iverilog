@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_vif_event2.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95"        : {
+        "__comment" : "fork/join_any is not currently translated",
+        "type"      : "CE"
+    }
+}

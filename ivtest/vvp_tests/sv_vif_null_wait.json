@@ -1,0 +1,9 @@
+{
+    "type"          : "EF",
+    "source"        : "sv_vif_null_wait.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "gold"          : "sv_vif_null_wait",
+    "vlog95"        : {
+        "gold"      : ""
+    }
+}

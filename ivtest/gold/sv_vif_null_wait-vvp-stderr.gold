@@ -1,0 +1,1 @@
+ivltests/sv_vif_null_wait.v:11: FATAL: Member clk accessed through a null virtual interface.
