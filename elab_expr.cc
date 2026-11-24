@@ -2378,6 +2378,36 @@ unsigned PECallFunction::test_width_method_(Design*, NetScope*,
 		       << "search_results.par_val->expr_type: " << search_results.par_val->expr_type() << endl;
       }
 
+      // A class-typed property method call gets its type from the
+      // property class, not from the class that owns the property.
+      if (search_results.path_tail.size() == 2) {
+	    const netclass_t*owner = dynamic_cast<const netclass_t*>(
+		  search_results.net ? search_results.net->net_type()
+				     : search_results.type);
+	    if (owner) {
+		  perm_string prop_name = search_results.path_tail.front().name;
+		  int pidx = owner->property_idx_from_name(prop_name);
+		  if (pidx >= 0) {
+			const netclass_t*prop_cls =
+			      dynamic_cast<const netclass_t*>(owner->get_prop_type(pidx));
+			if (prop_cls) {
+			      NetScope*meth = prop_cls->method_from_name(
+				    search_results.path_tail.back().name);
+			      if (meth) {
+				    const NetNet*res = meth->find_signal(meth->basename());
+				    if (res) {
+					  expr_type_   = res->data_type();
+					  expr_width_  = res->vector_width();
+					  min_width_   = expr_width_;
+					  signed_flag_ = res->get_signed();
+					  return expr_width_;
+				    }
+			      }
+			}
+		  }
+	    }
+      }
+
       // Chained class methods: obj.m1().m2() — width is that of the last call.
       if (search_results.path_tail.size() > 1) {
 	    if (search_results.net && search_results.net->data_type()==IVL_VT_CLASS) {
