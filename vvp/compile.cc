@@ -21,6 +21,10 @@
 # include  "config.h"
 # include  "delay.h"
 # include  "tchk.h"
+# include <map>
+# include <set>
+# include <string>
+# include <cmath>
 # include  "arith.h"
 # include  "compile.h"
 # include  "logic.h"
@@ -938,6 +942,36 @@ void compile_compiletf(struct __vpiSysTaskCall*obj)
  * the final stuff. Clean up deferred linking here.
  */
 
+// Keep one transport per raw source while linking the timing declarations
+// and their separately named delayed terminals.
+static std::map<std::string,vvp_net_t*> timing_delays;
+static std::set<std::string> restricted_timing_sources;
+
+static vvp_net_t* timing_delay(const char*source)
+{
+      auto&stream = timing_delays[source];
+      if (!stream) {
+            stream = new vvp_net_t;
+            stream->fun = new vvp_fun_tchk_delay(stream);
+            input_connect(stream, 0, strdup(source));
+      }
+      return stream;
+}
+
+void compile_tchk_delay(char*label, struct symb_s source)
+{
+      // A force on one named delayed terminal must not override the shared
+      // transport, another terminal, or a check's internal delivery.
+      vvp_net_t*terminal = new vvp_net_t;
+      terminal->fun = new vvp_fun_bufz;
+      auto*stream = timing_delay(source.text);
+      static_cast<vvp_fun_tchk_delay*>(stream->fun)->has_named_terminal = true;
+      stream->link(vvp_net_ptr_t(terminal, 0));
+      define_functor_symbol(label, terminal);
+      free(label);
+      free(source.text);
+}
+
 void compile_cleanup(void)
 {
       int lnerrs = -1;
@@ -973,6 +1007,16 @@ void compile_cleanup(void)
       } while (nerrs && !last);
 
       compile_errors += nerrs;
+      for (auto&entry : timing_delays) {
+            auto*stream = static_cast<vvp_fun_tchk_delay*>(entry.second->fun);
+            stream->unsupported_consumer |= restricted_timing_sources.count(entry.first) != 0;
+            if (stream->configure(nullptr, 0, 0, false)) {
+                  yyerror("incompatible shared delayed-data constraints on SETUPHOLD");
+                  compile_errors += 1;
+            }
+      }
+      timing_delays.clear();
+      restricted_timing_sources.clear();
 
       if (verbose_flag) {
 	    fprintf(stderr, " ... Removing symbol tables\n");
@@ -2289,6 +2333,7 @@ void compile_tchk_width(unsigned file_idx, unsigned lineno, char* edge_nm,
       net->fun = fun;
       __vpiTchkWidth* obj = new __vpiTchkWidth(scope, file_idx, lineno, fun, condition_form);
       fun->vpi_tchk = obj;
+      restricted_timing_sources.insert(reference.text);
       input_connect(net, 0, strdup(reference.text));
       compile_vpi_lookup(&obj->reference_, reference.text);
       if (*notifier) compile_vpi_lookup(&obj->notifier_, notifier);
@@ -2323,6 +2368,7 @@ void compile_tchk_period(unsigned file_idx, unsigned lineno, char* edge_nm,
       net->fun = fun;
       __vpiTchkPeriod* obj = new __vpiTchkPeriod(scope, file_idx, lineno, fun, condition_form);
       fun->vpi_tchk = obj;
+      restricted_timing_sources.insert(reference.text);
       input_connect(net, 0, strdup(reference.text));
       compile_vpi_lookup(&obj->reference_, reference.text);
       if (*notifier) compile_vpi_lookup(&obj->notifier_, notifier);
@@ -2384,7 +2430,9 @@ void compile_tchk_two_event(int kind, unsigned file_idx, unsigned lineno,
       obj->reference_condition_mode_ = reference_condition_mode;
       obj->data_condition_mode_ = data_condition_mode;
       fun->vpi_tchk = obj;
+      restricted_timing_sources.insert(reference.text);
       input_connect(net, 0, strdup(reference.text));
+      restricted_timing_sources.insert(data.text);
       input_connect(net, 1, strdup(data.text));
       compile_vpi_lookup(&obj->reference_, reference.text);
       compile_vpi_lookup(&obj->data_, data.text);
@@ -2442,7 +2490,9 @@ void compile_tchk_recrem(unsigned file_idx, unsigned lineno,
       obj->reference_condition_mode_ = reference_condition_value;
       obj->data_condition_mode_ = data_condition_value;
       fun->vpi_tchk = obj;
+      restricted_timing_sources.insert(reference.text);
       input_connect(net, 0, strdup(reference.text));
+      restricted_timing_sources.insert(data.text);
       input_connect(net, 1, strdup(data.text));
       compile_vpi_lookup(&obj->reference_, reference.text);
       compile_vpi_lookup(&obj->data_, data.text);
@@ -2480,8 +2530,9 @@ void compile_tchk_setuphold(unsigned file_idx, unsigned lineno,
       vvp_time64_t setup_ticks, hold_ticks;
       if (!edges_valid || reference_condition_value > 2 || data_condition_value > 2
           || !vpip_tchk_delay_to_ticks(setup_limit, scope, setup_ticks) ||
-          !vpip_tchk_delay_to_ticks(hold_limit, scope, hold_ticks)) {
+          !vpip_tchk_delay_to_ticks(std::fabs(hold_limit), scope, hold_ticks)) {
             yyerror("invalid SETUPHOLD edge, condition mode or unrepresentable limit");
+            compile_errors += 1;
             free(reference.text);
             free(data.text);
             free(notifier);
@@ -2490,6 +2541,20 @@ void compile_tchk_setuphold(unsigned file_idx, unsigned lineno,
             return;
       }
 
+      if (hold_limit < 0) {
+            vvp_time64_t recovered = 0;
+            if (!vpip_tchk_delay_to_ticks(vpip_time_to_scaled_real(hold_ticks, scope),
+                                          scope, recovered) || recovered != hold_ticks) {
+                  yyerror("negative HOLD cannot be read back exactly");
+                  compile_errors += 1;
+                  free(reference.text);
+                  free(data.text);
+                  free(notifier);
+                  free(reference_condition_label);
+                  free(data_condition_label);
+                  return;
+            }
+      }
       vvp_net_t* net = new vvp_net_t;
       vvp_fun_tchk_setuphold* fun = new vvp_fun_tchk_setuphold(
             reference_edge, data_edge, setup_ticks, hold_ticks,
@@ -2499,6 +2564,14 @@ void compile_tchk_setuphold(unsigned file_idx, unsigned lineno,
       obj->reference_condition_mode_ = reference_condition_value;
       obj->data_condition_mode_ = data_condition_value;
       fun->vpi_tchk = obj;
+      vvp_net_t*stream_net = timing_delay(data.text);
+      auto*stream = static_cast<vvp_fun_tchk_delay*>(stream_net->fun);
+      fun->data_transport = stream;
+      fun->negative_hold = hold_limit < 0 && hold_ticks != 0;
+      stream->checks.push_back(fun);
+      stream->unsupported_consumer |= reference_condition_label || data_condition_label;
+      restricted_timing_sources.insert(reference.text);
+      stream_net->link(vvp_net_ptr_t(net, 2));
       input_connect(net, 0, strdup(reference.text));
       input_connect(net, 1, strdup(data.text));
       compile_vpi_lookup(&obj->reference_, reference.text);

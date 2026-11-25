@@ -11,7 +11,7 @@ module tb;
       C = 0; D = 0; notifier = 0; #1;
       $shc_population("tb", 1);
       $shc_watch("tb", "setuphold", "C", "posedge", "D", "any",
-                 10, 10, 0, 0, "notifier", 1'b0, 0);
+                 10, 10, -1, 0, "notifier", 1'b0, 0);
       $shc_start;
       #1; $shc_finish;
       $finish(0);

@@ -1,0 +1,5 @@
+{
+    "type": "normal",
+    "source": "setuphold_sdf_startup_negative_hold.v",
+    "iverilog-args": ["-g2012", "-gspecify", "-Ttyp", "-s", "tb"]
+}

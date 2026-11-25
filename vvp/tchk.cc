@@ -401,6 +401,85 @@ void vvp_fun_tchk_recrem::violation(vvp_time64_t now, bool recovery,
 }
 
 
+void vvp_fun_tchk_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t& value,
+                                   vvp_context_t context)
+{
+      vvp_bit4_t next = value.value(0);
+      if (next != last_raw_) {
+            if (data_delivered_or_queued_ || shift) transport_started_ = true;
+            last_raw_ = next;
+      }
+      // A non-X initialization can already have been observed at a named
+      // terminal. Even an X is pending once it has been scheduled.
+      data_delivered_or_queued_ |= next != BIT4_X || shift != 0;
+      if (shift) {
+            // Copy the value now. Do not reread the source when the event fires.
+            schedule_propagate_vector(port.ptr(), shift, value);
+      } else {
+            port.ptr()->send_vec4(value, context);
+      }
+}
+
+const char* vvp_fun_tchk_delay::configure(vvp_fun_tchk_setuphold*changed,
+                                   vvp_time64_t setup, vvp_time64_t hold,
+                                   bool negative)
+{
+      const char*refused = "incompatible or late signed SETUPHOLD update";
+      vvp_time64_t next = 0;
+      for (auto*check : checks) {
+            const auto h = check == changed ? hold : check->hold_limit_;
+            if (!(check == changed ? negative : check->negative_hold)) continue;
+            // Use an interior tick, so zero-width and simultaneous-event
+            // policies of nonnegative SETUPHOLD remain unchanged.
+            if (h == UINT64_MAX || unsupported_consumer) return refused;
+            next = std::max(next, h + 1);
+      }
+      if (next) {
+            for (auto*check : checks) {
+                  const auto s = check == changed ? setup : check->setup_limit_;
+                  const auto h = check == changed ? hold : check->hold_limit_;
+                  const bool neg = check == changed ? negative : check->negative_hold;
+                  if (!s && !h) continue; // disabled until a nonzero limit is applied
+                  if (s <= next || (!neg && h > UINT64_MAX - next)) return refused;
+            }
+      }
+      bool deliver_initial_value = false;
+      if (changed && (next || shift)) {
+            if (next != shift && data_delivered_or_queued_) {
+                  // Without a named delayed output, one initial binary value
+                  // has only populated internal data history. It can still
+                  // be delivered at the new shift before it gates any check.
+                  if (has_named_terminal || shift || transport_started_ ||
+                      (last_raw_ != BIT4_0 && last_raw_ != BIT4_1))
+                        return "cannot change signed SETUPHOLD data shift after delivery or scheduling";
+                  deliver_initial_value = true;
+            }
+            if (schedule_simtime() != 0 || transport_started_) return refused;
+            for (auto*check : checks)
+                  if (check->have_reference_) return refused;
+      }
+      shift = next;
+      if (deliver_initial_value) {
+            for (auto*check : checks) {
+                  check->have_data_ = false;
+                  check->previous_[1] = BIT4_X;
+            }
+            schedule_propagate_vector(output_, shift, vvp_vector4_t(1, last_raw_));
+      }
+      return nullptr;
+}
+
+const char* vvp_fun_tchk_setuphold::configure(vvp_time64_t setup, vvp_time64_t hold,
+                                      bool negative)
+{
+      if (const char*error = data_transport->configure(this, setup, hold, negative))
+            return error;
+      setup_limit_ = setup;
+      hold_limit_ = hold;
+      negative_hold = negative;
+      return nullptr;
+}
+
 vvp_fun_tchk_setuphold::vvp_fun_tchk_setuphold(int reference_edge, int data_edge,
                                                vvp_time64_t setup_limit,
                                                vvp_time64_t hold_limit,
@@ -421,16 +500,20 @@ void vvp_fun_tchk_setuphold::recv_vec4(vvp_net_ptr_t port,
                                        const vvp_vector4_t& value,
                                        vvp_context_t)
 {
-      assert(port.port() < 2 && value.size() == 1 && vpi_tchk);
+      assert(port.port() < 3 && value.size() == 1 && vpi_tchk);
       unsigned index = port.port();
+      if ((index == 2 && !data_transport->shift) ||
+          (index == 1 && data_transport->shift)) return;
+      if (index == 2) index = 1;
       vvp_bit4_t next = value.value(0);
       __vpiSignal* reference = dynamic_cast<__vpiSignal*>(vpi_tchk->reference_);
       __vpiSignal* data = dynamic_cast<__vpiSignal*>(vpi_tchk->data_);
       assert(reference && data);
 
-      // As in the standalone checks, aliases name one physical delivery.
-      // Combine both roles before notifying, not two duplicate fanout visits.
-      if (reference->node == data->node) {
+      // With zero transport an alias has one physical delivery for both
+      // roles. A shifted data event arrives separately, even when both raw
+      // ports are wired to the same signal.
+      if (!data_transport->shift && reference->node == data->node) {
             if (index != 0) return;
             bool ref_event = tchk_event_matches(reference_edge_, previous_[0], next);
             bool data_event = tchk_event_matches(data_edge_, previous_[0], next);
@@ -469,28 +552,33 @@ void vvp_fun_tchk_setuphold::process_events(bool reference_event, bool data_even
       // With two positive limits, the combined check includes simultaneous
       // events in either order. With a zero side, retain the corresponding
       // standalone window; two zero limits therefore never violate.
+      if (!setup_limit_ && !hold_limit_) return;
+      const auto setup = setup_limit_ - data_transport->shift;
+      const auto hold = negative_hold ? data_transport->shift - hold_limit_
+                                      : data_transport->shift + hold_limit_;
       bool setup_violation = false;
       bool hold_violation = false;
       vvp_time64_t setup_interval = 0, hold_interval = 0;
       if (reference_event && have_data_) {
             setup_interval = now - data_time_;
-            bool include_zero = setup_limit_ != 0 && hold_limit_ != 0;
+            bool include_zero = setup != 0 && hold != 0;
             setup_violation = (include_zero || setup_interval != 0)
-                            && setup_interval < setup_limit_;
+                            && setup_interval < setup;
       }
       if (data_event && have_reference_) {
             hold_interval = now - reference_time_;
-            hold_violation = hold_interval < hold_limit_;
+            hold_violation = hold_interval < hold;
       }
       // A declaration produces one notification even if a single aliased
       // delivery supplies both roles and lies in both positive windows.
       if (setup_violation || hold_violation)
             violation(now, setup_violation,
-                      setup_violation ? setup_interval : hold_interval);
+                      setup_violation ? setup_interval : hold_interval,
+                      setup_violation ? setup : hold);
 }
 
 void vvp_fun_tchk_setuphold::violation(vvp_time64_t now, bool setup,
-                                       vvp_time64_t interval)
+                                       vvp_time64_t interval, vvp_time64_t limit)
 {
       assert(vpi_tchk && vpi_tchk->file_idx_ < file_names.size());
       __vpiScope* scope = vpi_tchk->scope_;
@@ -499,7 +587,7 @@ void vvp_fun_tchk_setuphold::violation(vvp_time64_t now, bool setup,
                  setup ? "setup" : "hold",
                  vpip_time_to_scaled_real(now, scope),
                  vpip_time_to_scaled_real(interval, scope),
-                 vpip_time_to_scaled_real(setup ? setup_limit_ : hold_limit_, scope),
+                 vpip_time_to_scaled_real(limit, scope),
                  file_names[vpi_tchk->file_idx_], vpi_tchk->lineno_,
                  vpi_get_str(vpiFullName, scope));
       notify_timing_violation(vpi_tchk, vpi_tchk->notifier_);

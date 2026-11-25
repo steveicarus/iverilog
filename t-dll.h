@@ -536,6 +536,7 @@ struct ivl_net_const_s {
  * represented structurally by instances of this object.
  */
 struct ivl_net_logic_s {
+      ivl_signal_t timing_source = nullptr;
       ivl_logic_t type_;
       unsigned width_;
       unsigned is_cassign;
@@ -879,6 +880,7 @@ struct ivl_recrem_s {
 
 /* Typed combined SETUPHOLD check, normalized reference/data roles. */
 struct ivl_setuphold_s {
+      ivl_signal_t delayed_reference, delayed_data;
       ivl_scope_t scope;
       ivl_signal_t reference, data, notifier;
       ivl_signal_t reference_condition, data_condition;

@@ -296,7 +296,7 @@ int signal_is_return_value(ivl_signal_t sig)
 int can_elide_bufz(ivl_net_logic_t net, ivl_nexus_ptr_t nptr)
 {
 	// If bufz is a module input/output buffer do not elide
-      if (ivl_logic_port_buffer(net)) return 0;
+      if (ivl_logic_port_buffer(net) || ivl_logic_timing_source(net)) return 0;
 
       ivl_nexus_t in_n, out_n;
       unsigned idx;
@@ -984,6 +984,12 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       int level;
       unsigned ninp;
       const char **input_strings;
+
+      ivl_signal_t timing_source = ivl_logic_timing_source(lptr);
+      if (timing_source) {
+            fprintf(vvp_out, "L_%p .tchk_delay v%p_0;\n", lptr, timing_source);
+            return;
+      }
 
       switch (ivl_logic_type(lptr)) {
 

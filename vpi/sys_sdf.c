@@ -736,7 +736,8 @@ struct sdf_negative_reports {
 
 static void sdf_report_negative_limits(int target, vpiHandle scope, int lineno,
                                        double first, double second,
-                                       struct sdf_negative_reports *reported)
+                                       struct sdf_negative_reports *reported,
+                                       bool pair_unchanged)
 {
       if (first >= 0.0 && second >= 0.0) return;
       bool sh = target == vpiSetupHold || target == vpiSetup || target == vpiHold;
@@ -747,9 +748,10 @@ static void sdf_report_negative_limits(int target, vpiHandle scope, int lineno,
       for (unsigned slot = 0; slot < 2; ++slot) {
             if (limit[slot] >= 0.0) continue;
             if (combined && !reported->combined[slot]) {
-                  vpi_printf("SDF WARNING: %s:%d: sorry: negative %s limit on combined %s in %s is not currently supported; using zero.\n",
+                  vpi_printf("SDF WARNING: %s:%d: sorry: negative %s limit on combined %s in %s is not currently supported; %s.\n",
                              sdf_fname, lineno, component[slot], sh ? "SETUPHOLD" : "RECREM",
-                             vpi_get_str(vpiFullName, scope));
+                             vpi_get_str(vpiFullName, scope),
+                             pair_unchanged ? "effective limit remains zero" : "using zero");
                   reported->combined[slot] = true;
             } else if (!combined && slot == standalone_slot && !reported->standalone[slot]) {
                   vpi_printf("SDF ERROR: %s:%d: negative %s limit on standalone %s in %s; using zero.\n",
@@ -817,7 +819,7 @@ static void sdf_recovery_removal_values(int check_type, struct sdf_tchk_port_s r
                   continue;
             }
             sdf_report_negative_limits(target, scope, lineno, recovery.value,
-                                       removal.value, &reported);
+                                       removal.value, &reported, false);
             s_vpi_time values[2];
             s_vpi_delay delays;
             memset(values, 0, sizeof values);
@@ -873,6 +875,95 @@ void sdf_recrem_limits(struct sdf_tchk_port_s reference,
       sdf_recovery_removal_values(vpiRecrem, reference, data, recovery, removal, lineno);
 }
 
+static PLI_UINT64 sdf_ticks(const s_vpi_time *time)
+{
+      return ((PLI_UINT64)time->high << 32) | time->low;
+}
+
+/* Nonnegative pairs preserve an omitted slot in exact simulation ticks.
+ * Negative HOLD uses scaled-real VPI; an omitted SETUP must round-trip. */
+static bool sdf_put_setuphold_pair(vpiHandle check, vpiHandle scope,
+                                   struct sdf_delay_s setup, struct sdf_delay_s *hold,
+                                   int lineno, bool *unchanged)
+{
+      s_vpi_time ticks[2] = {{0}};
+      s_vpi_delay delays = {0};
+      delays.da = ticks;
+      delays.no_of_delays = 2;
+      delays.time_type = vpiSimTime;
+      vpi_get_delays(check, &delays);
+      const PLI_UINT64 old_setup = sdf_ticks(&ticks[0]);
+      const PLI_UINT64 old_hold = sdf_ticks(&ticks[1]);
+      s_vpi_time reals[2] = {{0}};
+      /* An integer HOLD of zero can hide an existing signed pair. */
+      if (hold->value < 0 || !old_hold) {
+            delays.time_type = vpiScaledRealTime;
+            delays.da = reals;
+            vpi_get_delays(check, &delays);
+      }
+      const double old_real_hold = reals[1].real;
+      if (setup.defined) sdf_tchk_limit_time(setup.value, scope, &ticks[0]);
+      if (hold->defined) sdf_tchk_limit_time(fabs(hold->value), scope, &ticks[1]);
+      bool negative = hold->defined ? hold->value < 0 : reals[1].real < 0;
+      if (negative && hold->defined && reals[1].real >= 0 &&
+          sdf_ticks(&ticks[1]) && sdf_ticks(&ticks[0]) < sdf_ticks(&ticks[1])) {
+            /* A negative total lies outside the signed domain. Keep the
+             * diagnostic zero approximation for a previously unsigned pair. */
+            hold->value = 0;
+            sdf_tchk_limit_time(0, scope, &ticks[1]);
+            negative = false;
+      }
+      if (negative) {
+            if (!setup.defined) {
+                  s_vpi_time roundtrip = {0};
+                  if (sdf_tchk_limit_valid(reals[0].real, scope))
+                        sdf_tchk_limit_time(reals[0].real, scope, &roundtrip);
+                  if (roundtrip.type != vpiSimTime ||
+                      sdf_ticks(&roundtrip) != sdf_ticks(&ticks[0])) {
+                        vpi_printf("SDF ERROR: %s:%d: signed HOLD update cannot preserve "
+                                   "the omitted SETUP limit exactly in %s.\n",
+                                   sdf_fname, lineno, vpi_get_str(vpiFullName, scope));
+                        return false;
+                  }
+            }
+            if (setup.defined) reals[0].real = setup.value;
+            if (hold->defined) reals[1].real = hold->value;
+            else sdf_tchk_limit_time(-reals[1].real, scope, &ticks[1]);
+      } else {
+            delays.time_type = vpiSimTime;
+            delays.da = ticks;
+      }
+      vpi_put_delays(check, &delays);
+
+      /* The setter is void. A shared transport can reject even an unsigned
+       * replacement. Verify the resulting pair before reporting annotation
+       * or a compatibility approximation. */
+      s_vpi_time actual[2] = {{0}};
+      delays.time_type = vpiSimTime;
+      delays.da = actual;
+      vpi_get_delays(check, &delays);
+      bool expect_signed = negative && sdf_ticks(&ticks[1]);
+      bool matched = sdf_ticks(&actual[0]) == sdf_ticks(&ticks[0]) &&
+                     sdf_ticks(&actual[1]) == (expect_signed ? 0 : sdf_ticks(&ticks[1]));
+      *unchanged = old_setup == sdf_ticks(&actual[0]) && old_hold == sdf_ticks(&actual[1]);
+      if (matched && !sdf_ticks(&actual[1])) {
+            delays.time_type = vpiScaledRealTime;
+            vpi_get_delays(check, &delays);
+            *unchanged = *unchanged && old_real_hold == actual[1].real;
+            if (expect_signed && actual[1].real < 0) {
+                  s_vpi_time magnitude = {0};
+                  if (sdf_tchk_limit_valid(-actual[1].real, scope))
+                        sdf_tchk_limit_time(-actual[1].real, scope, &magnitude);
+                  matched = magnitude.type == vpiSimTime &&
+                            sdf_ticks(&magnitude) == sdf_ticks(&ticks[1]);
+            } else matched = !expect_signed && actual[1].real == 0;
+      }
+      if (!matched)
+            vpi_printf("SDF ERROR: %s:%d: SETUPHOLD limit update did not take effect in %s.\n",
+                       sdf_fname, lineno, vpi_get_str(vpiFullName, scope));
+      return matched;
+}
+
 /* SDF lists data before reference for SETUP, HOLD and SETUPHOLD.
  * Standard cross-mapping updates standalone checks and the corresponding
  * combined limit slots. An omitted slot retains the existing object value. */
@@ -920,37 +1011,46 @@ static void sdf_setup_hold_values(int check_type, struct sdf_tchk_port_s data,
             double scale = sdf_delay_scale(scope);
             double scaled_setup = fmax(0.0, setup.value) * scale;
             double scaled_hold = fmax(0.0, hold.value) * scale;
-            // Validate the record before any write, including both supplied
-            // values when the record also addresses a standalone peer.
+            /* Pass signed HOLD to an unconditional SETUPHOLD. VVP checks
+             * whether the shared data delay can still be set at startup. */
+            bool signed_hold = target == vpiSetupHold && hold.value < 0 &&
+                  setup.value >= 0 &&
+                  !vpi_handle(vpiCondition, vpi_handle(vpiTchkRefTerm, check)) &&
+                  !vpi_handle(vpiCondition, vpi_handle(vpiTchkDataTerm, check));
+            if (signed_hold) scaled_hold = hold.value * scale;
             if ((setup.defined && !sdf_tchk_limit_valid(scaled_setup, scope)) ||
-                (hold.defined && !sdf_tchk_limit_valid(scaled_hold, scope))) {
+                (hold.defined && !sdf_tchk_limit_valid(fabs(scaled_hold), scope))) {
                   vpi_printf("SDF ERROR: %s:%d: unrepresentable %s limit\n",
                              sdf_fname, lineno, name);
                   continue;
             }
-            sdf_report_negative_limits(target, scope, lineno, setup.value,
-                                       hold.value, &reported);
-            s_vpi_time values[2];
-            s_vpi_delay delays;
-            memset(values, 0, sizeof values);
-            memset(&delays, 0, sizeof delays);
-            delays.da = values;
-            delays.no_of_delays = target == vpiSetupHold ? 2 : 1;
-            delays.time_type = vpiScaledRealTime;
+            bool unchanged = false;
             if (target == vpiSetupHold) {
-                  delays.time_type = vpiSimTime;
-                  vpi_get_delays(check, &delays);
-                  if (setup.defined)
-                        sdf_tchk_limit_time(scaled_setup, scope, &values[0]);
-                  if (hold.defined)
-                        sdf_tchk_limit_time(scaled_hold, scope, &values[1]);
+                  struct sdf_delay_s setup_limit = {setup.defined, scaled_setup};
+                  struct sdf_delay_s hold_limit = {hold.defined, scaled_hold};
+                  if (!sdf_put_setuphold_pair(check, scope, setup_limit, &hold_limit,
+                                              lineno, &unchanged))
+                        continue;
+                  scaled_hold = hold_limit.value;
+                  sdf_report_negative_limits(target, scope, lineno, setup.value,
+                                             scaled_hold < 0 ? 0.0 : hold.value, &reported, unchanged);
             } else {
-                  values[0].type = vpiScaledRealTime;
-                  values[0].real = target == vpiSetup ? scaled_setup : scaled_hold;
+                  sdf_report_negative_limits(target, scope, lineno, setup.value,
+                                             hold.value, &reported, false);
+                  s_vpi_time value = {0};
+                  s_vpi_delay delays = {0};
+                  value.type = vpiScaledRealTime;
+                  value.real = target == vpiSetup ? scaled_setup : scaled_hold;
+                  delays.da = &value;
+                  delays.no_of_delays = 1;
+                  delays.time_type = vpiScaledRealTime;
+                  vpi_put_delays(check, &delays);
             }
-            vpi_put_delays(check, &delays);
             if (sdf_flag_inform) {
-                  if (check_type == vpiSetupHold)
+                  if (unchanged)
+                        vpi_printf("SDF INFO: %s:%d: SETUPHOLD %s -> %s limits unchanged\n",
+                                   sdf_fname, lineno, data.port.string_val, reference.port.string_val);
+                  else if (check_type == vpiSetupHold)
                         vpi_printf("SDF INFO: %s:%d: SETUPHOLD %s -> %s annotated\n",
                                    sdf_fname, lineno, data.port.string_val, reference.port.string_val);
                   else

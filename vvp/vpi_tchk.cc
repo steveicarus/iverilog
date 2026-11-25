@@ -483,7 +483,9 @@ void __vpiTchkSetupHold::vpi_get_delays(p_vpi_delay delays)
             delays->da[idx].type = delays->time_type;
             if (delays->time_type == vpiScaledRealTime) {
                   delays->da[idx].real = vpip_time_to_scaled_real(values[idx], scope_);
+                  if (idx == 1 && fun_->negative_hold) delays->da[idx].real *= -1.0;
             } else if (delays->time_type == vpiSimTime) {
+                  if (idx == 1 && fun_->negative_hold) values[idx] = 0;
                   delays->da[idx].high = values[idx] >> 32;
                   delays->da[idx].low = values[idx] & 0xffffffff;
             }
@@ -495,9 +497,15 @@ void __vpiTchkSetupHold::vpi_put_delays(p_vpi_delay delays)
       if (!delays || delays->no_of_delays != 2 || !delays->da ||
           delays->mtm_flag || delays->append_flag || delays->pulsere_flag) return;
       vvp_time64_t values[2];
+      bool negative = false;
       for (unsigned idx = 0; idx < 2; idx += 1) {
             if (delays->time_type == vpiScaledRealTime) {
-                  if (!vpip_tchk_delay_to_ticks(delays->da[idx].real, scope_, values[idx])) {
+                  double value = delays->da[idx].real;
+                  if (idx == 1 && value < 0) {
+                        negative = true;
+                        value = -value;
+                  }
+                  if (!vpip_tchk_delay_to_ticks(value, scope_, values[idx])) {
                         vpi_printf("VPI ERROR: invalid SETUPHOLD %s limit\n",
                                    idx == 0 ? "setup" : "hold");
                         return;
@@ -508,6 +516,14 @@ void __vpiTchkSetupHold::vpi_put_delays(p_vpi_delay delays)
             } else return;
       }
       // Validate both slots before writing either one.
-      fun_->setup_limit_ = values[0];
-      fun_->hold_limit_ = values[1];
+      if (negative && values[1]) {
+            vvp_time64_t recovered = 0;
+            if (!vpip_tchk_delay_to_ticks(vpip_time_to_scaled_real(values[1], scope_),
+                                          scope_, recovered) || recovered != values[1]) {
+                  vpi_printf("VPI ERROR: negative HOLD cannot be read back exactly\n");
+                  return;
+            }
+      }
+      if (const char*error = fun_->configure(values[0], values[1], negative && values[1] != 0))
+            vpi_printf("VPI ERROR: %s\n", error);
 }

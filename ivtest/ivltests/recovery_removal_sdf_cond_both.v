@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Stephen Williams (steve@icarus.com)
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Independently qualify both roles; reverse E/F declaration remains unchanged.
-// First episode enables E/F===0; second enables E===1/F. Cold values are opposite.
+// First episode enables E/F===0; second enables E===1/F. At annotation, E=0 and F=1.
 `timescale 1ps/1ps
 module dut(R,C,E,F);
   input R,C,E,F;

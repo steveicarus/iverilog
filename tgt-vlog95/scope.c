@@ -1103,9 +1103,19 @@ static void emit_setuphold_checks(ivl_scope_t scope)
                                 ivl_setuphold_data_condition_kind(check));
             fprintf(vlog_out, ", %.17e, %.17e", ivl_setuphold_setup_limit(check),
                     ivl_setuphold_hold_limit(check));
-            if (notifier) {
+            ivl_signal_t delayed_ref = ivl_setuphold_delayed_reference(check);
+            ivl_signal_t delayed_data = ivl_setuphold_delayed_data(check);
+            if (notifier || delayed_ref || delayed_data) {
                   fprintf(vlog_out, ", ");
-                  emit_id(ivl_signal_basename(notifier));
+                  if (notifier) emit_id(ivl_signal_basename(notifier));
+            }
+            if (delayed_ref || delayed_data) {
+                  fprintf(vlog_out, ",,, ");
+                  if (delayed_ref) emit_id(ivl_signal_basename(delayed_ref));
+                  if (delayed_data) {
+                        fprintf(vlog_out, ", ");
+                        emit_id(ivl_signal_basename(delayed_data));
+                  }
             }
             fprintf(vlog_out, ");\n");
       }

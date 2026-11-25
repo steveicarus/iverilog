@@ -41,7 +41,7 @@ static struct watched_check checks[MAX_CHECKS];
 static struct watched_notifier notifiers[MAX_CHECKS];
 static unsigned notifier_indices[MAX_CHECKS];
 /* Capture initialization before HDL initial blocks, while watches may wait for
- * a cold SDF annotation. The fixture still supplies the initial value. */
+ * SDF annotation to complete. The fixture still supplies the initial value. */
 struct initial_notifier {
     vpiHandle signal;
     PLI_INT32 before, values[MAX_EVENTS];

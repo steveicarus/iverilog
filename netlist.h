@@ -1108,6 +1108,8 @@ class NetSetupHold : public NetTwoEventCheck {
                          data_edge, setup_limit, reference_condition,
                          reference_condition_kind, data_condition,
                          data_condition_kind), hold_limit_(hold_limit) { }
+      NetNet*delayed_reference = nullptr;
+      NetNet*delayed_data = nullptr;
       double setup_limit() const { return limit(); }
       double hold_limit() const { return hold_limit_; }
     private:
@@ -2750,6 +2752,7 @@ class NetBUFZ  : public NetNode {
     public:
       explicit NetBUFZ(NetScope*s, perm_string n, unsigned wid, bool transp, int port_info_index = -1);
       ~NetBUFZ() override;
+      virtual NetNet* timing_source() const { return nullptr; }
 
       unsigned width() const;
       bool transparent() const { return transparent_; }

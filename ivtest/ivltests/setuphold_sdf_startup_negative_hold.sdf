@@ -1,0 +1,14 @@
+(DELAYFILE
+ (SDFVERSION "3.0")
+ (DESIGN "tb")
+ (TIMESCALE 1ns)
+ (CELL
+  (CELLTYPE "dff")
+  (INSTANCE)
+  (TIMINGCHECK
+   (SETUP d (posedge clk) (0.116:0.116:0.117))
+   (HOLD d (posedge clk) (-0.061:-0.062:-0.062))
+   (RECREM (posedge rst_b) (posedge clk) (0.080) (0.020))
+  )
+ )
+)
