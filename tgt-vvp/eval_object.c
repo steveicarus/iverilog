@@ -18,6 +18,7 @@
  */
 
 # include  "vvp_priv.h"
+# include  "../vvp/uparr_ops.h"
 # include  <string.h>
 # include  <assert.h>
 
@@ -574,14 +575,16 @@ static void emit_queue_with_finish(enum queue_locator_with_mode_e mode,
 	    return;
       }
       if (mode == UPARR_WITH_SUM) {
-	    fprintf(vvp_out, "    %%uparr/sum/obj/v %u;\n", elem_wid);
+	    fprintf(vvp_out, "    %%uparr/reduce %u, %u;\n",
+		    (unsigned) UPARR_REDUCE_SUM, elem_wid);
 	    if (is_prop) {
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 	    }
 	    return;
       }
       if (mode == UPARR_WITH_PRODUCT) {
-	    fprintf(vvp_out, "    %%uparr/product/obj/v %u;\n", elem_wid);
+	    fprintf(vvp_out, "    %%uparr/reduce %u, %u;\n",
+		    (unsigned) UPARR_REDUCE_PRODUCT, elem_wid);
 	    if (is_prop) {
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 	    }
