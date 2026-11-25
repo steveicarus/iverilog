@@ -21,6 +21,7 @@
  * This file includes functions for evaluating VECTOR expressions.
  */
 # include  "vvp_priv.h"
+# include  "../vvp/uparr_ops.h"
 # include  <string.h>
 # include  <stdlib.h>
 # include  <math.h>
@@ -807,48 +808,36 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
       }
 
       if ((strcmp(ivl_expr_name(expr), "$ivl_uparr_method$sum") == 0 ||
-	   strcmp(ivl_expr_name(expr), "$ivl_uparr_method$product") == 0) &&
+	   strcmp(ivl_expr_name(expr), "$ivl_uparr_method$product") == 0 ||
+	   strcmp(ivl_expr_name(expr), "$ivl_uparr_method$and") == 0 ||
+	   strcmp(ivl_expr_name(expr), "$ivl_uparr_method$or") == 0 ||
+	   strcmp(ivl_expr_name(expr), "$ivl_uparr_method$xor") == 0) &&
 	  parm_count == 1) {
 	    ivl_expr_t arg = ivl_expr_parm(expr, 0);
 	    unsigned wid = ivl_expr_width(expr);
-	    const char* op = strcmp(ivl_expr_name(expr), "$ivl_uparr_method$product") == 0
-			       ? "product"
-			       : "sum";
-	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
-		  ivl_signal_t clas = ivl_expr_signal(arg);
-		  unsigned pidx = ivl_expr_property_idx(arg);
-		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
-		  fprintf(vvp_out, "    %%uparr/%s/prop/v %u, %u;\n", op, pidx, wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-		  return;
-	    }
-	    assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
-	    fprintf(vvp_out, "    %%uparr/%s/v v%p_0, %u;\n",
-	            op, ivl_expr_signal(arg), wid);
-	    return;
-      }
+	    enum uparr_reduce_op_e op;
+	    if (strcmp(ivl_expr_name(expr), "$ivl_uparr_method$sum") == 0)
+		  op = UPARR_REDUCE_SUM;
+	    else if (strcmp(ivl_expr_name(expr), "$ivl_uparr_method$product") == 0)
+		  op = UPARR_REDUCE_PRODUCT;
+	    else if (strcmp(ivl_expr_name(expr), "$ivl_uparr_method$and") == 0)
+		  op = UPARR_REDUCE_AND;
+	    else if (strcmp(ivl_expr_name(expr), "$ivl_uparr_method$or") == 0)
+		  op = UPARR_REDUCE_OR;
+	    else
+		  op = UPARR_REDUCE_XOR;
 
-      if ((strcmp(ivl_expr_name(expr), "$ivl_uparr_method$and") == 0 ||
-           strcmp(ivl_expr_name(expr), "$ivl_uparr_method$or") == 0 ||
-           strcmp(ivl_expr_name(expr), "$ivl_uparr_method$xor") == 0) &&
-	  parm_count == 1) {
-	    ivl_expr_t arg = ivl_expr_parm(expr, 0);
-	    unsigned wid = ivl_expr_width(expr);
-	    const char* op = strcmp(ivl_expr_name(expr), "$ivl_uparr_method$and") == 0 ?
-	                     "and" :
-	                     strcmp(ivl_expr_name(expr), "$ivl_uparr_method$or") == 0 ?
-			     "or" : "xor";
 	    if (ivl_expr_type(arg) == IVL_EX_PROPERTY) {
 		  ivl_signal_t clas = ivl_expr_signal(arg);
 		  unsigned pidx = ivl_expr_property_idx(arg);
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", clas);
-		  fprintf(vvp_out, "    %%uparr/%s/prop/v %u, %u;\n", op, pidx, wid);
-		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-		  return;
+		  fprintf(vvp_out, "    %%prop/obj %u, 0;\n", pidx);
+		  fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+	    } else {
+		  assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
+		  fprintf(vvp_out, "    %%uparr/load/net v%p_0;\n", ivl_expr_signal(arg));
 	    }
-	    assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
-	    fprintf(vvp_out, "    %%uparr/%s/v v%p_0, %u;\n",
-	            op, ivl_expr_signal(arg), wid);
+	    fprintf(vvp_out, "    %%uparr/reduce %u, %u;\n", (unsigned) op, wid);
 	    return;
       }
 

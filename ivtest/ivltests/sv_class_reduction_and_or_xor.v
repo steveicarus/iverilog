@@ -25,16 +25,24 @@ module test;
     C::sq = c.q;
     C::sd = c.d;
 
+    `CHK(c.q.sum(), 9);
+    `CHK(c.q.product(), 15);
     `CHK(c.q.and(), 1);
     `CHK(c.q.or(), 7);
     `CHK(c.q.xor(), 7);
+    `CHK(c.d.sum(), 9);
+    `CHK(c.d.product(), 15);
     `CHK(c.d.and(), 1);
     `CHK(c.d.or(), 7);
     `CHK(c.d.xor(), 7);
 
+    `CHK(C::sq.sum(), 9);
+    `CHK(C::sq.product(), 15);
     `CHK(C::sq.and(), 1);
     `CHK(C::sq.or(), 7);
     `CHK(C::sq.xor(), 7);
+    `CHK(C::sd.sum(), 9);
+    `CHK(C::sd.product(), 15);
     `CHK(C::sd.and(), 1);
     `CHK(C::sd.or(), 7);
     `CHK(C::sd.xor(), 7);
