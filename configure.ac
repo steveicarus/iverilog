@@ -274,7 +274,9 @@ AC_MSG_RESULT($do_times)
 AC_CHECK_HEADERS(dlfcn.h dl.h, break)
 
 DLLIB=''
-AC_CHECK_LIB(dl,dlopen,[DLLIB=-ldl])
+# First check if dlopen is in libc (musl, OHOS, etc.)
+AC_CHECK_FUNC(dlopen, [DLLIB=],
+  [AC_CHECK_LIB(dl,dlopen,[DLLIB=-ldl])])
 if test -z "$DLLIB" ; then
 AC_CHECK_LIB(dld,shl_load,[DLLIB=-ldld])
 fi
@@ -363,11 +365,26 @@ AC_CHECK_FUNCS(realpath)
 # Check that these functions exist. They are mostly C99
 # functions that older compilers may not yet support.
 AC_CHECK_FUNCS(fopen64)
+# On musl-based systems, fopen64 may need _LARGEFILE64_SOURCE to be
+# declared. Try again with it defined if the first check failed.
+if test "$ac_cv_func_fopen64" != yes; then
+  iverilog_saved_cppflags="$CPPFLAGS"
+  CPPFLAGS="-D_LARGEFILE64_SOURCE $CPPFLAGS"
+  AC_CHECK_FUNCS(fopen64,
+    [AC_DEFINE([_LARGEFILE64_SOURCE], [1],
+      [Define to 1 if _LARGEFILE64_SOURCE is needed for fopen64])])
+  CPPFLAGS="$iverilog_saved_cppflags"
+fi
 # The following math functions may be defined in the math library so look
 # in the default libraries first and then look in -lm for them. On some
 # systems we may need to use the compiler in C99 mode to get a definition.
 # autoconf >= 2.70 will enable C99 if it is available. For older autoconf
 # versions, we requested C99 mode earlier with AC_PROG_CC_C99.
+AH_TEMPLATE([HAVE_LROUND], [Define if lround is available])
+AH_TEMPLATE([HAVE_LLROUND], [Define if llround is available])
+AH_TEMPLATE([HAVE_NAN], [Define if nan is available])
+AH_TEMPLATE([HAVE_FMIN], [Define if fmin is available])
+AH_TEMPLATE([HAVE_FMAX], [Define if fmax is available])
 AC_SEARCH_LIBS([lround], [m], [AC_DEFINE([HAVE_LROUND], [1])])
 AC_SEARCH_LIBS([llround], [m], [AC_DEFINE([HAVE_LLROUND], [1])])
 AC_SEARCH_LIBS([nan], [m], [AC_DEFINE([HAVE_NAN], [1])])
@@ -397,7 +414,8 @@ uint64_t uival = 1;
 result &= check(uival);
 return !result;]])],
    [AC_MSG_RESULT(no)],
-   [AC_DEFINE([UINT64_T_AND_ULONG_SAME], [1]) AC_MSG_RESULT(yes)])
+   [AH_TEMPLATE([UINT64_T_AND_ULONG_SAME], [Define if uint64_t and unsigned long are the same type])
+    AC_DEFINE([UINT64_T_AND_ULONG_SAME], [1]) AC_MSG_RESULT(yes)])
 
 # Linker option used when compiling the target
 AX_LD_RDYNAMIC
