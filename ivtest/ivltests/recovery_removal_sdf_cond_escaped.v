@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Stephen Williams (steve@icarus.com)
 // SPDX-License-Identifier: GPL-2.0-or-later
 // The model uses 1ns/10ps; SDF uses 1ps. Limits 40/20ps are 0.04/0.02ns.
-// Escaped event/qualifier names remain local identities; cold false conditions still bind.
+// Escaped event/qualifier names remain local identities; conditions that are false at annotation still bind.
 `timescale 1ns/10ps
 module dut(\event.pin ,\clock\pin ,\gate.pin ,\enable\pin );
   input \event.pin ,\clock\pin ,\gate.pin ,\enable\pin ;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 `timescale 1ns/1ps
-module cold_ff(input clk, input d, input rst_b, output reg q);
+module dff(input clk, input d, input rst_b, output reg q);
   wire dclk, dd, drst;
   reg rise_notify, fall_notify, reset_notify;
   initial begin rise_notify=0; fall_notify=0; reset_notify=0; end
@@ -18,9 +18,9 @@ endmodule
 module tb;
   reg clk, d, rst_b;
   wire q;
-  cold_ff u(clk, d, rst_b, q);
+  dff u(clk, d, rst_b, q);
   initial begin
-    $sdf_annotate("ivltests/setuphold_sdf_cold_signed.sdf", u);
+    $sdf_annotate("ivltests/setuphold_sdf_startup_negative_hold.sdf", u);
     #100 clk=0; d=0; rst_b=0;
     #200 rst_b=1;
     // Outside the raw window (1884,1938). Directly sampling d gives the wrong Q.

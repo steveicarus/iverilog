@@ -439,7 +439,7 @@ const char* vvp_fun_tchk_delay::configure(vvp_fun_tchk_setuphold*changed,
                   const auto s = check == changed ? setup : check->setup_limit_;
                   const auto h = check == changed ? hold : check->hold_limit_;
                   const bool neg = check == changed ? negative : check->negative_hold;
-                  if (!s && !h) continue; // disabled until cold annotation
+                  if (!s && !h) continue; // disabled until a nonzero limit is applied
                   if (s <= next || (!neg && h > UINT64_MAX - next)) return refused;
             }
       }

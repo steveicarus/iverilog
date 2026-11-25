@@ -153,19 +153,21 @@ These flags affect the general behavior of the compiler.
     and skips that check. Its named delayed terminals still drive the cell.
     Other supported checks remain active and can be annotated.
 
-    An unconditional ``$setuphold`` can use a negative HOLD from static HDL
-    or cold SDF. Checks on the same local data source share one delayed-data
-    stream in that instance. The reference stays at its original time. VVP
-    quantizes the limits to the module precision, then shifts the data by
+    An unconditional ``$setuphold`` can use a negative HOLD declared in HDL or
+    back-annotated from SDF at the start of simulation. Checks on the same
+    local data source share one delayed-data stream in that instance. The
+    reference stays at its original time. VVP quantizes the limits to the
+    module precision, then shifts the data by
     the largest negative HOLD magnitude plus one global simulation tick.
     Every enabled participant must admit that shift with positive remaining
     SETUP. Diagnostics measure intervals on the delivered signals.
     Scaled-real VPI reads return the signed HOLD and unsigned tick reads
     return zero for that component.
 
-    Apply the signed limits before time advances or a selected reference
-    edge occurs. A shift change must precede delivery to a named delayed
-    data terminal. With implicit delayed data, VVP can still deliver one
+    Apply the signed limits at simulation time zero, before any participating
+    check sees a selected reference edge. To change the shift, apply the
+    limits before a named delayed-data terminal delivers a non-X value or
+    queues a transition. With implicit delayed data, VVP can still deliver one
     time-zero binary initialization at the new shift if its earlier value
     has populated only the internal timing history. For separate SDF
     entries that start from HDL 0/0, apply the

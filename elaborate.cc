@@ -8034,8 +8034,8 @@ void PSetupHold::elaborate(Design*des, NetScope*scope) const
                                        "$setuphold", "hold limit", hold_limit, true,
                                        !reference_condition && !data_condition)) return;
             // Keep the zero approximation for a negative limit outside the
-            // single-check interior-delay domain. Cross-check feasibility and
-            // cold-only updates are checked where the shared stream is known.
+            // single-check interior-delay domain. VVP checks feasibility across
+            // the shared stream and enforces the startup restriction on updates.
             if (hold_limit < 0.0 && setup_limit <= -hold_limit) {
                   cerr << get_fileline() << ": sorry: negative $setuphold hold limit in "
                        << scope_path(scope) << " is not currently supported; using zero." << endl;

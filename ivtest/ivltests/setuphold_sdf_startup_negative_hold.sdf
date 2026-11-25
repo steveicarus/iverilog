@@ -3,7 +3,7 @@
  (DESIGN "tb")
  (TIMESCALE 1ns)
  (CELL
-  (CELLTYPE "cold_ff")
+  (CELLTYPE "dff")
   (INSTANCE)
   (TIMINGCHECK
    (SETUP d (posedge clk) (0.116:0.116:0.117))

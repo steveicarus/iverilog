@@ -1011,8 +1011,8 @@ static void sdf_setup_hold_values(int check_type, struct sdf_tchk_port_s data,
             double scale = sdf_delay_scale(scope);
             double scaled_setup = fmax(0.0, setup.value) * scale;
             double scaled_hold = fmax(0.0, hold.value) * scale;
-            /* Only an unconditional combined object can retain a cold
-             * negative HOLD. Other target kinds keep their own mapping. */
+            /* Pass signed HOLD to an unconditional SETUPHOLD. VVP checks
+             * whether the shared data delay can still be set at startup. */
             bool signed_hold = target == vpiSetupHold && hold.value < 0 &&
                   setup.value >= 0 &&
                   !vpi_handle(vpiCondition, vpi_handle(vpiTchkRefTerm, check)) &&
