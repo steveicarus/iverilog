@@ -306,6 +306,8 @@ NetEUFunc* NetEUFunc::dup_expr() const
       tmp->nonvirtual_ = nonvirtual_;
 
       ivl_assert(*this, tmp);
+      tmp->expr_width(expr_width());
+      tmp->cast_signed(has_sign());
       tmp->set_line(*this);
       return tmp;
 }
