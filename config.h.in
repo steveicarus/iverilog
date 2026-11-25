@@ -35,8 +35,13 @@
 # undef HAVE_LIBZ
 # undef HAVE_LIBBZ2
 # undef HAVE_LROUND
+# undef HAVE_LLROUND
+# undef HAVE_NAN
+# undef HAVE_FMIN
+# undef HAVE_FMAX
 # undef HAVE_SYS_WAIT_H
 # undef WORDS_BIGENDIAN
+# undef UINT64_T_AND_ULONG_SAME
 
 #ifdef HAVE_INTTYPES_H
 # include  <inttypes.h>
