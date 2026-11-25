@@ -95,6 +95,54 @@ static PLI_INT32 two_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
+static PLI_INT32 three_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv;
+      vpiHandle arg;
+
+      argv = vpi_iterate(vpiArgument, callh);
+      if (argv == 0) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s missing arguments.\n", name);
+	    vpip_set_return_value(1);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      if (! is_string_obj(vpi_scan(argv))) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's first argument must be a string.\n", name);
+	    vpip_set_return_value(1);
+	    vpi_control(vpiFinish, 1);
+      }
+
+      arg = vpi_scan(argv);
+      if (arg == 0) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s missing index argument.\n", name);
+	    vpip_set_return_value(1);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      arg = vpi_scan(argv);
+      if (arg == 0) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s missing character argument.\n", name);
+	    vpip_set_return_value(1);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      check_for_extra_args(argv, callh, name, "three arguments", 0);
+      return 0;
+}
+
 static PLI_INT32 two_str_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
@@ -512,6 +560,49 @@ static void value_to_text_base(char*text, long val, long base)
       }
 }
 
+static PLI_INT32 putc_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv;
+      vpiHandle obj, idx_arg, chr_arg;
+      s_vpi_value value;
+      s_vpi_value idx_value;
+      s_vpi_value chr_value;
+
+      (void) name;
+
+      argv = vpi_iterate(vpiArgument, callh);
+      assert(argv);
+      obj = vpi_scan(argv);
+      idx_arg = vpi_scan(argv);
+      chr_arg = vpi_scan(argv);
+      assert(obj && idx_arg && chr_arg);
+      vpi_free_object(argv);
+
+      value.format = vpiStringVal;
+      vpi_get_value(obj, &value);
+      char *text = strdup(value.value.str ? value.value.str : "");
+
+      idx_value.format = vpiIntVal;
+      vpi_get_value(idx_arg, &idx_value);
+
+      chr_value.format = vpiIntVal;
+      vpi_get_value(chr_arg, &chr_value);
+
+      size_t len = strlen(text);
+      if (idx_value.value.integer >= 0 &&
+          (size_t)idx_value.value.integer < len) {
+	    text[idx_value.value.integer] = (char)chr_value.value.integer;
+      }
+
+      value.format = vpiStringVal;
+      value.value.str = text;
+      vpi_put_value(obj, &value, 0, vpiNoDelay);
+      free(text);
+
+      return 0;
+}
+
 /*
  * This function implements the <string>.itoa(arg) method.
  * The first argument to this task is the <string> object, and the second
@@ -725,6 +816,15 @@ void v2009_string_register(void)
       tf_data.compiletf = two_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$ivl_string_method$realtoa";
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$ivl_string_method$putc";
+      tf_data.calltf    = putc_calltf;
+      tf_data.compiletf = three_arg_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$ivl_string_method$putc";
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 }

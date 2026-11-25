@@ -1301,6 +1301,7 @@ sv_statement_label_loop_hierarchy	vvp_tests/sv_statement_label_loop_hierarchy.js
 sv_statement_label_multiple_fail	vvp_tests/sv_statement_label_multiple_fail.json
 sv_static_prop_with		vvp_tests/sv_static_prop_with.json
 sv_string_atox			vvp_tests/sv_string_atox.json
+sv_string_putc			vvp_tests/sv_string_putc.json
 sv_string_atox_err		vvp_tests/sv_string_atox_err.json
 sv_string_char_assign_op	vvp_tests/sv_string_char_assign_op.json
 sv_string_getc			vvp_tests/sv_string_getc.json
