@@ -1,0 +1,1 @@
+ivltests/sv_vif_null_write.v:14: FATAL: Member data accessed through a null virtual interface.

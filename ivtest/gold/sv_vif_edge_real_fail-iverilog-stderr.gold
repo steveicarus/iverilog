@@ -1,0 +1,2 @@
+ivltests/sv_vif_edge_real_fail.v:12: error: An edge cannot be used with a real or string member of a virtual interface (v.r).
+1 error(s) during elaboration.

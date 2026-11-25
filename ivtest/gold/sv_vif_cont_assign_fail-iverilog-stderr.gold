@@ -1,0 +1,3 @@
+ivltests/sv_vif_cont_assign_fail.v:8: error: A member of a virtual interface cannot be used in a continuous assignment or a port connection (IEEE1800-2017 25.9).
+ivltests/sv_vif_cont_assign_fail.v:10: error: A member of a virtual interface cannot be used in a continuous assignment or a port connection (IEEE1800-2017 25.9).
+2 error(s) during elaboration.

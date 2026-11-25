@@ -166,6 +166,14 @@ the width of the value on the stack.
 The actual assignment is suppressed if flags-4 is 1. This is so that
 calculations of offset can set the flag on errors.
 
+* %assign/vif "member", <file>, <line>
+
+This is the non-blocking form of %store/vif. Pop a virtual interface
+handle from the object stack and a 64 bit delay from the vec4 stack,
+then the value as for %store/vif. The write to the member is scheduled
+after the delay. If the handle is null, the simulation stops with a
+fatal error that gives the <file> and <line> of the access.
+
 * %assign/wr <vpi-label>, <delay>
 * %assign/wr/d <vpi-label>, <delayx>
 * %assign/wr/e <vpi-label>
@@ -534,6 +542,16 @@ This instruction is used to send a pulse to an event object. The
 <functor-label> is an event variable. This instruction simply writes
 an arbitrary value to the event to trigger the event.
 
+* %event/vif "member", <file>, <line>
+
+Pop a virtual interface handle from the object stack and an edge from
+the vec4 stack, and find the event for that edge of the named member
+of the interface instance. The edge is 0 for any change, 1 for
+posedge, 2 for negedge and 3 for either edge. A named event member is
+its own event. The event is kept for the %wait/vif that follows. If
+the handle is null, the simulation stops with a fatal error that gives
+the <file> and <line> of the access.
+
 * %file_line <file> <line> <description>
 
 This command emits the provided file and line information along with
@@ -786,6 +804,17 @@ holds the canonical array index.
 
 The load checks flag bit 4. If it is 1, then the load it cancelled and
 replaced with a load of all X bits. See %ix/vec4.
+
+* %load/vif "member", <file>, <line>
+
+Pop a virtual interface handle from the object stack, and push the
+value of the named member of the interface instance that the handle
+refers to onto the stack of the member's type (vec4, real or str). The
+member is looked up by name in the scope of the instance on the first
+use of each instance. <file> is an index into the file name table and
+<line> is the source line of the access. If the handle is null, the
+simulation stops with a fatal error that gives the <file> and <line>
+of the access.
 
 * %load/ar <array-label>, <index>
 
@@ -1129,6 +1158,12 @@ if not 1, the assign is suppressed.
 Read a value from the indexed function argument. The value is read
 from the argument and pushed to the appropriate stack.
 
+* %scope/vif <scope-label>
+
+Push a virtual interface handle that refers to the scope of an
+interface instance onto the object stack. There is one handle for each
+instance, so handles to the same instance compare equal with %cmp/obj.
+
 * %set/dar/obj/real <index>
 * %set/dar/obj/str <index>
 * %set/dar/obj/vec4 <index>
@@ -1285,6 +1320,16 @@ which implement the push_back (qb) and push_front (qf)
 functions. These only apply to queue object, and are distinct from the
 dar versions because the begin/front don't exist, by definition.
 
+* %store/vif "member", <file>, <line>
+
+Pop a virtual interface handle from the object stack and write a value
+to the named member of the interface instance that the handle refers
+to. For a vector member, the offset of the part that is written is
+popped from the vec4 stack, then the value. For a real or string
+member the value is popped from the real or str stack. If the handle
+is null, the simulation stops with a fatal error that gives the <file>
+and <line> of the access.
+
 * %sub
 
 This instruction subtracts vec4 values. The right value is popped from
@@ -1381,6 +1426,13 @@ This instruction puts the current thread to sleep until all the detached
 children have finished executing. The last detached child is responsible
 for restarting the parent when it finishes.
 
+* %wait/vif
+
+Wait for any of the events that the %event/vif instructions right
+before this one found. The handles are read when the wait starts, so
+a later change of a virtual interface variable does not redirect a
+pending wait.
+
 * %xnor
 
 This instruction pops two vectors from the vec4 stack, does a bitwise
@@ -1409,7 +1461,7 @@ table for the xor is:
 ::
 
     /*
-     * Copyright (c) 2001-2024 Stephen Williams (steve@icarus.com)
+     * Copyright (c) 2001-2026 Stephen Williams (steve@icarus.com)
      *
      *    This source code is free software; you can redistribute it
      *    and/or modify it in source code form under the terms of the GNU

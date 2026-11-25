@@ -1011,6 +1011,31 @@ const NetScope* NetScope::child_byname(perm_string name) const
       return 0;
 }
 
+NetScope* NetScope::find_virtual_interface(perm_string name)
+{
+      NetScope*res = nullptr;
+      if (is_interface_ && module_name() == name) {
+	    is_virtual_interface_ = true;
+	      // The type of the virtual interface has the default parameter
+	      // values, so its members are looked up in an instance that does
+	      // not override any of them.
+	    bool overridden = false;
+	    for (const auto&cur : parameters) {
+		  if (!cur.second.local_flag && cur.second.val_scope != this)
+			overridden = true;
+	    }
+	    if (!overridden)
+		  res = this;
+      }
+
+      for (const auto&cur : children_) {
+	    if (NetScope*tmp = cur.second->find_virtual_interface(name))
+		  res = tmp;
+      }
+
+      return res;
+}
+
 
 bool NetScope::symbol_exists(perm_string sym)
 {

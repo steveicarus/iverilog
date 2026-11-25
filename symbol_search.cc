@@ -74,6 +74,8 @@ static scope_object_search_result_t symbol_search_scope_objects(
 			dynamic_cast<const netclass_t*>(net->net_type());
 		  ivl_assert(*li, class_type);
 		  if (!class_type->get_super()) {
+			if (flags & SYMBOL_SEARCH_QUIET)
+			      return scope_object_search_result_t::failed;
 			cerr << li->get_fileline() << ": error: "
 			     << "Class " << class_type->get_name()
 			     << " uses `super` without a base class."
@@ -94,6 +96,8 @@ static scope_object_search_result_t symbol_search_scope_objects(
 
       if (path_tail.name == perm_string::literal(THIS_TOKEN)
 	  && scope->is_static_method()) {
+	    if (flags & SYMBOL_SEARCH_QUIET)
+		  return scope_object_search_result_t::failed;
 	    cerr << li->get_fileline() << ": error: `this' can not be used in "
 		 << "a static method." << endl;
 	    des->errors += 1;
@@ -434,7 +438,7 @@ static bool symbol_search_(const LineInfo *li, Design *des, NetScope *scope,
 			     << "Prefix scope " << scope_path(scope) << endl;
 		  }
 
-		  if (scope->is_auto()) {
+		  if (scope->is_auto() && !(flags & SYMBOL_SEARCH_QUIET)) {
 			cerr << li->get_fileline() << ": error: Hierarchical "
 			      "reference to automatically allocated item "
 			      "`" << path_tail.name << "' in path `" << path << "'" << endl;

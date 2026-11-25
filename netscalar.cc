@@ -52,3 +52,21 @@ ivl_variable_type_t netchandle_t::base_type() const
 {
       return IVL_VT_VOID;
 }
+
+ivl_variable_type_t netvirtual_interface_t::base_type() const
+{
+      return IVL_VT_CLASS;
+}
+
+std::ostream& netvirtual_interface_t::debug_dump(std::ostream&fd) const
+{
+      fd << "virtual interface " << name_;
+      return fd;
+}
+
+bool netvirtual_interface_t::test_equivalence(ivl_type_t that) const
+{
+      const netvirtual_interface_t*that_vif =
+	    dynamic_cast<const netvirtual_interface_t*>(that);
+      return that_vif && that_vif->name_ == name_;
+}

@@ -24,6 +24,7 @@
 # include  "PPackage.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "netscalar.h"
 # include  "netstruct.h"
 # include  "netvector.h"
 # include  "compiler.h"
@@ -569,6 +570,15 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
       if (!check_interface_modport_access(this, des, sr, true))
 	    return 0;
+
+      if (dynamic_cast<const netvirtual_interface_t*>(sig->net_type())
+	  && !member_path.empty()) {
+	    cerr << get_fileline() << ": error: A member of a virtual"
+		 << " interface cannot be driven by a continuous assignment"
+		 << " or a port connection (IEEE1800-2017 25.9)." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": " << __func__ << ": "

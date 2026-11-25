@@ -788,6 +788,12 @@ int draw_eval_object(ivl_expr_t ex)
 	  case IVL_EX_PROPERTY:
 	    return eval_object_property(ex);
 
+	  case IVL_EX_SCOPE:
+	      /* An interface instance that is assigned to a virtual
+		 interface. */
+	    fprintf(vvp_out, "    %%scope/vif S_%p;\n", ivl_expr_scope(ex));
+	    return 0;
+
 	  case IVL_EX_SHALLOWCOPY:
 	    return eval_object_shallowcopy(ex);
 

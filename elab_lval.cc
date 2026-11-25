@@ -31,6 +31,7 @@
 # include  "netparray.h"
 # include  "netvector.h"
 # include  "netenum.h"
+# include  "netscalar.h"
 # include  "compiler.h"
 # include  <cstdlib>
 # include  <iostream>
@@ -264,6 +265,17 @@ NetAssign_*PEIdent::elaborate_lval_var_(Design *des, NetScope *scope,
 					const pform_name_t base_path,
 					const pform_name_t member_path) const
 {
+	// The members of an interface are only written through a
+	// virtual interface by procedural assignments.
+      if (!member_path.empty()
+	  && dynamic_cast<const netvirtual_interface_t*>(data_type)) {
+	    cerr << get_fileline() << ": sorry: A member of a virtual interface"
+	         << " can only be written by a procedural assignment ("
+	         << path_ << ")." << endl;
+	    des->errors += 1;
+	    return nullptr;
+      }
+
 	// We are processing the tail of a string of names. For
 	// example, the Verilog may be "a.b.c", so we are processing
 	// "c" at this point.
@@ -1305,6 +1317,30 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
 	      // class type.
 	    class_type = dynamic_cast<const netclass_t*>(ptype);
 
+	    if (!member_path.empty()
+		&& dynamic_cast<const netvirtual_interface_t*>(ptype)) {
+		  cerr << get_fileline() << ": sorry: Writing a member of a"
+		       << " virtual interface through a nested class property"
+		       << " is not supported (" << path_ << ")." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	      // Only a class object can have members to iterate over.
+	    if (!member_path.empty() && !class_type) {
+		  const netarray_t*atype = dynamic_cast<const netarray_t*>(ptype);
+		  if (atype && dynamic_cast<const netvirtual_interface_t*>(atype->element_type())) {
+			cerr << get_fileline() << ": sorry: Arrays of virtual"
+			     << " interfaces in a class are not supported." << endl;
+		  } else {
+			cerr << get_fileline() << ": sorry: Writing a member of"
+			     << " property " << method_name << " of this type"
+			     << " is not supported (" << path_ << ")." << endl;
+		  }
+		  des->errors += 1;
+		  return 0;
+	    }
+
       } while (!member_path.empty());
 
 
@@ -1736,4 +1772,56 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool, bool, bool) co
 	   << "in l-value expressions." << endl;
       des->errors += 1;
       return 0;
+}
+
+/*
+ * Elaborate the select of a member of an interface that is written
+ * through a virtual interface. The select is elaborated as a select of
+ * the member of an instance of the interface, and the offset and width
+ * of the part are returned. The offset is nil if the whole member is
+ * written.
+ */
+bool PEIdent::elaborate_vif_lval_select(Design*des, NetScope*scope,
+					NetNet*member, NetExpr*&offset,
+					unsigned&wid) const
+{
+      offset = nullptr;
+      wid = member->vector_width();
+      const name_component_t&name_tail = path_.back();
+      if (name_tail.index.empty())
+	    return true;
+
+      NetAssign_*lv = new NetAssign_(member);
+      bool rc;
+      index_component_t::ctype_t use_sel = name_tail.index.back().sel;
+      switch (use_sel) {
+	  case index_component_t::SEL_PART:
+	    rc = elaborate_lval_net_part_(des, scope, lv, false);
+	    break;
+	  case index_component_t::SEL_IDX_UP:
+	  case index_component_t::SEL_IDX_DO:
+	    rc = elaborate_lval_net_idx_(des, scope, lv, use_sel, false, false);
+	    break;
+	  case index_component_t::SEL_BIT:
+	    rc = elaborate_lval_net_bit_(des, scope, lv, false, false);
+	    break;
+	  default:
+	    cerr << get_fileline() << ": sorry: This select of a member is not"
+	         << " supported through a virtual interface (" << path_
+	         << ")." << endl;
+	    des->errors += 1;
+	    rc = false;
+	    break;
+      }
+
+      const NetExpr*base = lv->get_base();
+      if (rc) {
+	    if (base)
+		  offset = base->dup_expr();
+	    wid = lv->lwidth();
+      }
+	// The l-value does not delete its base expression.
+      delete base;
+      delete lv;
+      return rc;
 }

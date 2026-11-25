@@ -1,0 +1,9 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_vif_class_wait.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95"        : {
+        "__comment" : "Class scopes and fork/join_any are not currently translated",
+        "type"      : "CE"
+    }
+}

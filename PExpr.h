@@ -425,6 +425,22 @@ class PEIdent : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode) override;
 
+	// Test if this identifier is a member of an interface that is
+	// accessed through a virtual interface. If it is, elaborate
+	// the handle and get the member (nil if there are errors).
+      bool elaborate_vif_member(Design*des, NetScope*scope,
+				NetExpr*&handle, NetNet*&member,
+				NetEvent**event =nullptr) const;
+	// Elaborate the select of a member that is written through a
+	// virtual interface: the offset (nil for the whole member) and
+	// the width of the part. Return false if there are errors.
+      bool elaborate_vif_lval_select(Design*des, NetScope*scope,
+				     NetNet*member, NetExpr*&offset,
+				     unsigned&wid) const;
+	// While this is set, the reads of members through virtual
+	// interfaces are listed in it.
+      static std::vector<NetESFunc*>*vif_loads;
+
 	// Identifiers are allowed (with restrictions) is assign l-values.
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope, bool var_allowed_in_sv) const override;
 
@@ -640,6 +656,10 @@ class PEIdent : public PExpr {
 					   const symbol_search_results &sr,
 					   unsigned expr_wid,
 					   unsigned flags) const;
+
+      NetExpr *elaborate_expr_vif_member_(Design*des, NetScope*scope,
+					  unsigned expr_wid, unsigned flags,
+					  bool&vif_flag) const;
 
       unsigned test_width_parameter_(const NetExpr *par, width_mode_t&mode);
 

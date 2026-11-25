@@ -17,6 +17,7 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+# include  "Module.h"
 # include  "PExpr.h"
 # include  "PScope.h"
 # include  "pform_types.h"
@@ -30,6 +31,7 @@
 # include  "netstruct.h"
 # include  "netvector.h"
 # include  "netmisc.h"
+# include  "parse_api.h"
 # include  <set>
 # include  <typeinfo>
 # include  "ivl_assert.h"
@@ -203,6 +205,24 @@ ivl_type_t chandle_type_t::elaborate_type_raw(Design*des, NetScope*) const
               "is not currently supported." << endl;
       des->errors++;
       return &netchandle_t::type_chandle;
+}
+
+ivl_type_t virtual_interface_type_t::elaborate_type_raw(Design*des, NetScope*) const
+{
+      auto mod = pform_modules.find(name);
+      if (mod == pform_modules.end() || !mod->second->is_interface) {
+	    cerr << get_fileline() << ": error: `" << name
+		 << "' is not an interface." << endl;
+	    des->errors += 1;
+      }
+
+      NetScope*inst = nullptr;
+      for (NetScope*root : des->find_root_scopes()) {
+	    if (NetScope*tmp = root->find_virtual_interface(name))
+		  inst = tmp;
+      }
+
+      return new netvirtual_interface_t(name, inst);
 }
 
 ivl_type_t parray_type_t::elaborate_type_raw(Design*des, NetScope*scope) const

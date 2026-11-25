@@ -1,0 +1,6 @@
+ivltests/sv_vif_type_fail.v:17: error: `o1' is not an instance of interface bus_if.
+ivltests/sv_vif_type_fail.v:18: error: the type of the variable 'ov' doesn't match the context type.
+ivltests/sv_vif_type_fail.v:18:      : variable type=virtual interface other_if
+ivltests/sv_vif_type_fail.v:18:      : context type=virtual interface bus_if
+ivltests/sv_vif_type_fail.v:19: error: Interface bus_if has no variable, net or named event nosuch.
+3 error(s) during elaboration.
