@@ -137,9 +137,10 @@ These flags affect the general behavior of the compiler.
     unconditional lists equivalent to ``posedge`` or ``negedge``. VVP runs
     these checks and vlog95 emits them. The stub target displays WIDTH for
     debugging. SDF annotation refusals are reported as
-    diagnostics and do not necessarily change the process exit code. Hot
-    reannotation and general four-state timing-check behavior are not qualified
-    by these finite implementations.
+    diagnostics and do not necessarily change the process exit code.
+    Changing a WIDTH or PERIOD limit through SDF between the two edges
+    of a measurement has not been verified.
+    General four-state timing-check behavior remains unverified.
 
     VVP also implements local scalar ``$setup``, ``$hold``, ``$setuphold``,
     ``$recovery``, ``$removal`` and ``$recrem`` checks with finite nonnegative
