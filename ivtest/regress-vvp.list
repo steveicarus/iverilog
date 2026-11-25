@@ -310,6 +310,7 @@ func_return_uarray		vvp_tests/func_return_uarray.json
 func_return_uarray_2d		vvp_tests/func_return_uarray_2d.json
 func_return_uarray_rt_fail	vvp_tests/func_return_uarray_rt_fail.json
 func_return_vpi_select		vvp_tests/func_return_vpi_select.json
+func_signed_dup		vvp_tests/func_signed_dup.json
 function_escaped_name		vvp_tests/function_escaped_name.json
 function_escaped_name_strict	vvp_tests/function_escaped_name_strict.json
 function_name_block_fail	vvp_tests/function_name_block_fail.json
