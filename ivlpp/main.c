@@ -59,6 +59,8 @@ char *dep_path = NULL;
 char dep_mode = 'a';
 /* verbose flag */
 int verbose_flag = 0;
+/* version flag */
+int version_flag = 0;
 /* Path to vhdlpp */
 char *vhdlpp_path = 0;
 /* vhdlpp work directory */
@@ -350,19 +352,12 @@ int main(int argc, char*argv[])
 	    break;
 
 	  case 'v':
-	    fprintf(stderr, "Icarus Verilog Preprocessor version "
-		    VERSION " (" VERSION_TAG ")\n\n");
-	    fprintf(stderr, "%s\n\n", COPYRIGHT);
-	    fputs(NOTICE, stderr);
 	    verbose_flag = 1;
 	    break;
 
 	  case 'V':
-	    fprintf(stdout, "Icarus Verilog Preprocessor version "
-		    VERSION " (" VERSION_TAG ")\n\n");
-	    fprintf(stdout, "%s\n\n", COPYRIGHT);
-	    fputs(NOTICE, stdout);
-	    return 0;
+	    version_flag = 1;
+	    break;
 
 	  default:
 	    flag_errors += 1;
@@ -386,6 +381,14 @@ int main(int argc, char*argv[])
 		    argv[0]);
 	    return flag_errors;
       }
+
+      if (version_flag) {
+	    fprintf(stdout, "Icarus Verilog Preprocessor version "
+		    VERSION " (" VERSION_TAG ")\n\n");
+	    fprintf(stdout, "%s\n\n", COPYRIGHT);
+	    fputs(NOTICE, stdout);
+	    return 0;
+	  }
 
 	/* Collect the file names on the command line in the source
 	   file list, then if there is a file list, read more file
