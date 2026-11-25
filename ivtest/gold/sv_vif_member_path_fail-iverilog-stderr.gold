@@ -1,0 +1,3 @@
+ivltests/sv_vif_member_path_fail.v:17: sorry: Only a variable, net or named event of the interface itself can be accessed through a virtual interface (v.data.x).
+ivltests/sv_vif_member_path_fail.v:18: sorry: Only a variable, net or named event of the interface itself can be accessed through a virtual interface (v.data.y).
+2 error(s) during elaboration.

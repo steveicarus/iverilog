@@ -316,6 +316,9 @@ static void draw_sfunc_real(ivl_expr_t expr)
 {
       unsigned parm_count = ivl_expr_parms(expr);
 
+      if (draw_vif_load(expr))
+	    return;
+
       if ((strcmp(ivl_expr_name(expr), "$ivl_uparr_method$sum_real") == 0 ||
            strcmp(ivl_expr_name(expr), "$ivl_uparr_method$product_real") == 0) &&
           parm_count == 1) {

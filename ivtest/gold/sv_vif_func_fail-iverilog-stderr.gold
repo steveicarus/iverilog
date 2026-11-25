@@ -1,0 +1,3 @@
+ivltests/sv_vif_func_fail.v:21: sorry: Calling a function through a virtual interface is not supported (v.f).
+ivltests/sv_vif_func_fail.v:22: sorry: Calling a function through a virtual interface is not supported (c.vif.f).
+2 error(s) during elaboration.

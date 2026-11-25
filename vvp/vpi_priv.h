@@ -817,6 +817,7 @@ class __vpiNamedEvent : public __vpiHandle {
 
       int get_type_code(void) const override;
       __vpiScope*get_scope(void) const { return scope_; }
+      const char*get_name(void) const { return name_; }
       int vpi_get(int code) override;
       char* vpi_get_str(int code) override;
       vpiHandle vpi_put_value(p_vpi_value val, int flags) override;
@@ -893,6 +894,7 @@ class __vpiBaseVar : public __vpiHandle {
 #endif
 
       inline vvp_net_t* get_net() const { return net_; }
+      inline const char* get_name() const { return name_; }
 
     protected:
       __vpiScope* scope_;

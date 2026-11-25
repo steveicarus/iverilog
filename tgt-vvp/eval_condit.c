@@ -345,8 +345,12 @@ int draw_eval_compare(ivl_expr_t expr)
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
 
-      if (ivl_expr_value(le) == IVL_VT_CLASS &&
-          ivl_expr_value(re) == IVL_VT_CLASS) {
+	/* An interface instance (a scope) can be compared with a
+	   virtual interface. */
+      if ((ivl_expr_value(le) == IVL_VT_CLASS ||
+           ivl_expr_type(le) == IVL_EX_SCOPE) &&
+          (ivl_expr_value(re) == IVL_VT_CLASS ||
+           ivl_expr_type(re) == IVL_EX_SCOPE)) {
 	    return draw_compare_class(expr);
       }
 

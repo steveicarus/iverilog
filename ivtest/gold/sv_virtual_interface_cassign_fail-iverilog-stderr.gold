@@ -1,0 +1,2 @@
+ivltests/sv_virtual_interface_cassign_fail.v:10: error: A member of a virtual interface cannot be used in a continuous assignment or a port connection (IEEE1800-2017 25.9).
+1 error(s) during elaboration.

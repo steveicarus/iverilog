@@ -1,0 +1,2 @@
+ivltests/sv_vif_fail3.v:20: error: `b' is not an instance of interface bus_if.
+1 error(s) during elaboration.

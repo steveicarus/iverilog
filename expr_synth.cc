@@ -28,6 +28,7 @@
 # include  "netparray.h"
 # include  "netmisc.h"
 # include  "ivl_assert.h"
+# include  <cstring>
 
 using namespace std;
 
@@ -1529,6 +1530,13 @@ static NetEvWait* make_func_trigger(Design*des, NetScope*scope, const NetExpr*ro
 
 NetNet* NetESFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
 {
+      if (strcmp(name_, "$ivl_vif$load") == 0) {
+	    cerr << get_fileline() << ": error: A member of a virtual"
+		 << " interface cannot be used in a continuous assignment"
+		 << " or a port connection (IEEE1800-2017 25.9)." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       const struct sfunc_return_type*def = lookup_sys_func(name_);
 

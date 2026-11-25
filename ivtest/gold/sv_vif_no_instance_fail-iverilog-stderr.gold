@@ -1,0 +1,2 @@
+ivltests/sv_vif_no_instance_fail.v:8: sorry: Interface bus_if has no instance with the default parameter values, so its members cannot be accessed through a virtual interface.
+Elaboration failed

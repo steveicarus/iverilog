@@ -1,0 +1,1 @@
+ivltests/sv_vif_iface_item_fail.v:8: error: A virtual interface cannot be declared as an item of an interface.

@@ -1,0 +1,7 @@
+ivltests/sv_vif_class_array_fail.v:10: Sorry: Dynamic array of type `virtual interface bus_if` is not yet supported.
+ivltests/sv_vif_class_array_fail.v:9: Sorry: Queue of type `virtual interface bus_if` is not yet supported.
+ivltests/sv_vif_class_array_fail.v:12: sorry: Arrays of virtual interfaces in a class are not supported.
+ivltests/sv_vif_class_array_fail.v:13: sorry: Writing a member of property vq of this type is not supported (vq[k].data).
+ivltests/sv_vif_class_array_fail.v:14: sorry: Writing a member of property vd of this type is not supported (vd[k].data).
+ivltests/sv_vif_class_array_fail.v:23: sorry: Arrays of virtual interfaces in a class are not supported.
+6 error(s) during elaboration.

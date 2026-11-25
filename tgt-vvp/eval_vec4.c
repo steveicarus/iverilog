@@ -786,6 +786,9 @@ static void draw_sfunc_vec4(ivl_expr_t expr)
 	    return;
       }
 
+      if (draw_vif_load(expr))
+	    return;
+
 	/* find*_with has four parameters and is lowered in eval_object.c */
       if (parm_count == 4 &&
 	  strncmp(ivl_expr_name(expr), "$ivl_queue_method$",

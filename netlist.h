@@ -1377,6 +1377,14 @@ class NetScope : public Definitions, public Attrib {
 	// useful for some elaboration error checking.
       const NetScope* child_byname(perm_string name) const;
 
+	// Look in this scope and below for the instances of the named
+	// interface, and mark them as the possible values of a virtual
+	// interface. Return one of the instances, or nil.
+      NetScope* find_virtual_interface(perm_string name);
+	// The members of this interface instance can be accessed
+	// through a virtual interface, so they must be kept.
+      inline bool is_virtual_interface() const { return is_virtual_interface_; }
+
 	// Nested modules have slightly different scope search rules.
       inline bool nested_module() const { return nested_module_; }
 	// Program blocks and interfaces have elaboration constraints.
@@ -1646,6 +1654,7 @@ class NetScope : public Definitions, public Attrib {
       bool program_block_;
 	// True if the scope is an interface
       bool is_interface_;
+      bool is_virtual_interface_ = false;
 	// True if the scope is a compilation unit
       bool is_unit_;
 
@@ -5050,7 +5059,7 @@ class NetEProperty : public NetExpr {
 class NetEScope  : public NetExpr {
 
     public:
-      explicit NetEScope(NetScope*);
+      explicit NetEScope(NetScope*, ivl_type_t type =nullptr);
       ~NetEScope() override;
 
       const NetScope* scope() const;

@@ -1,0 +1,6 @@
+{
+    "type"          : "CE",
+    "source"        : "sv_vif_no_instance_fail.v",
+    "iverilog-args" : [ "-g2005-sv", "-s", "test" ],
+    "gold"          : "sv_vif_no_instance_fail"
+}

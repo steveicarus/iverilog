@@ -1,0 +1,2 @@
+ivltests/sv_vif_fail5.v:15: error: Interface bus_if has no variable, net or named event nothing.
+1 error(s) during elaboration.

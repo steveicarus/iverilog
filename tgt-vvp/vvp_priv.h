@@ -128,6 +128,12 @@ extern void draw_vpi_func_call(ivl_expr_t expr);
 extern void draw_vpi_rfunc_call(ivl_expr_t expr);
 extern void draw_vpi_sfunc_call(ivl_expr_t expr);
 
+/*
+ * Draw the read of a member of an interface through a virtual
+ * interface, if this is one. Return true if it is.
+ */
+extern int draw_vif_load(ivl_expr_t expr);
+
 extern void draw_class_in_scope(ivl_type_t classtype);
 
 /*

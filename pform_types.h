@@ -413,6 +413,18 @@ struct chandle_type_t : public data_type_t {
       ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
 };
 
+/*
+ * The type of a virtual interface variable (IEEE1800-2017 25.9). The
+ * name is the name of the interface declaration.
+ */
+struct virtual_interface_type_t : public data_type_t {
+      inline explicit virtual_interface_type_t(perm_string n) : name(n) { }
+
+      ivl_type_t elaborate_type_raw(Design*des, NetScope*scope) const override;
+
+      perm_string name;
+};
+
 struct class_type_t : public data_type_t {
 
       inline explicit class_type_t(perm_string n) : name(n) { virtual_class = false; }

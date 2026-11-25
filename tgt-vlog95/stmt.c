@@ -1464,6 +1464,12 @@ static void emit_stmt_repeat(ivl_scope_t scope, ivl_statement_t stmt)
 static void emit_stmt_stask(ivl_scope_t scope, ivl_statement_t stmt)
 {
       unsigned count = ivl_stmt_parm_count(stmt);
+      if (strncmp(ivl_stmt_name(stmt), "$ivl_vif$", 9) == 0) {
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Virtual interfaces are not "
+	                    "currently translated.\n",
+	                    ivl_stmt_file(stmt), ivl_stmt_lineno(stmt));
+	    vlog_errors += 1;
+      }
       fprintf(vlog_out, "%*c%s", get_indent(), ' ', ivl_stmt_name(stmt));
       if (count != 0) {
 	    unsigned idx;

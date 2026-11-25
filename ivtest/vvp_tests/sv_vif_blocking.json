@@ -1,0 +1,10 @@
+{
+    "type"          : "normal",
+    "source"        : "sv_vif_blocking.v",
+    "iverilog-args" : [ "-g2005-sv" ],
+    "vlog95" : {
+        "__comment"     : "Virtual interfaces are not supported by vlog95.",
+        "type"          : "CE",
+        "iverilog-args" : [ "-pallowsigned=1" ]
+    }
+}
