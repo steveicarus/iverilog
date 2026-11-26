@@ -1,0 +1,2 @@
+ivltests/br_gh1784b.v:11: error: `g' is not a static method, so it needs an object to be called.
+1 error(s) during elaboration.
