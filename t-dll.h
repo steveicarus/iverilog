@@ -780,6 +780,9 @@ struct ivl_signal_s {
 	   signal, in case they are needed by the run-time */
       netranges_t packed_dims;
 
+	/* These encode the declared unpacked dimensions for the signal. */
+      netranges_t unpacked_dims;
+
       perm_string name_;
       ivl_scope_t scope_;
 

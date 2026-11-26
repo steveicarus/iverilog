@@ -2815,6 +2815,20 @@ extern "C" unsigned ivl_signal_dimensions(ivl_signal_t net)
       return net->array_dimensions_;
 }
 
+extern "C" int ivl_signal_array_msb(ivl_signal_t net, unsigned dim)
+{
+      assert(net);
+      assert(dim < net->unpacked_dims.size());
+      return net->unpacked_dims[dim].get_msb();
+}
+
+extern "C" int ivl_signal_array_lsb(ivl_signal_t net, unsigned dim)
+{
+      assert(net);
+      assert(dim < net->unpacked_dims.size());
+      return net->unpacked_dims[dim].get_lsb();
+}
+
 extern "C" ivl_discipline_t ivl_signal_discipline(ivl_signal_t net)
 {
       assert(net);

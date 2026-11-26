@@ -2597,6 +2597,7 @@ void dll_target::signal(const NetNet*net)
       obj->discipline = net->get_discipline();
 
       obj->array_dimensions_ = net->unpacked_dimensions();
+      obj->unpacked_dims = net->unpacked_dims();
 
       switch (net->port_type()) {
 
@@ -2712,8 +2713,11 @@ void dll_target::signal(const NetNet*net)
 	    }
 	    obj->array_words = net->unpacked_count();
       } else {
-	      // The back-end API doesn't yet support multi-dimension
-	      // unpacked arrays, so just report the canonical dimensions.
+	      // The array base and address swap are only reported for
+	      // one dimensional unpacked arrays. For a multi-dimension
+	      // array just report the canonical dimensions; the bounds
+	      // of each dimension are available to the back-end through
+	      // ivl_signal_array_msb() and ivl_signal_array_lsb().
 	    obj->array_base = 0;
 	      // For a queue we pass the maximum queue size as the array words.
 	    if (obj->net_type->base_type() == IVL_VT_QUEUE) {

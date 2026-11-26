@@ -542,6 +542,46 @@ static void draw_stmt_assign_vector_op(ivl_statement_t net)
 }
 
 /*
+ * Elements of the source and destination arrays correspond by their
+ * left-to-right order in each dimension, not by their index values (IEEE
+ * 1800-2017 7.6). The canonical word address counts up from the lowest
+ * index, so if a dimension is declared in opposite directions in the two
+ * arrays, that dimension must be traversed in reverse order in the source.
+ * Given the canonical address of a word in the destination array, return
+ * the canonical address of the corresponding word in the source array.
+ */
+static unsigned array_copy_src_word(ivl_signal_t dst, ivl_signal_t src,
+				    unsigned dst_word)
+{
+      unsigned dims = ivl_signal_dimensions(dst);
+      unsigned src_word = 0;
+      unsigned stride = 1;
+
+      if (ivl_signal_dimensions(src) != dims)
+	    return dst_word;
+
+	/* The last dimension varies fastest in the canonical address. */
+      for (unsigned dim = dims ; dim > 0 ; dim -= 1) {
+	    int dst_msb = ivl_signal_array_msb(dst, dim-1);
+	    int dst_lsb = ivl_signal_array_lsb(dst, dim-1);
+	    int src_msb = ivl_signal_array_msb(src, dim-1);
+	    int src_lsb = ivl_signal_array_lsb(src, dim-1);
+	    unsigned width = (dst_msb < dst_lsb) ? dst_lsb - dst_msb + 1
+						 : dst_msb - dst_lsb + 1;
+	    unsigned off = dst_word % width;
+	    dst_word /= width;
+
+	    if ((dst_msb < dst_lsb) != (src_msb < src_lsb))
+		  off = width - 1 - off;
+
+	    src_word += off * stride;
+	    stride *= width;
+      }
+
+      return src_word;
+}
+
+/*
  * Copy a whole unpacked array into another, element by element.
  *
  * The run-time has no bulk array-copy opcode, but it does have indexed word
@@ -576,7 +616,8 @@ int draw_array_copy(ivl_signal_t dst, ivl_expr_t rval)
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
 	    for (unsigned idx = 0 ; idx < count ; idx += 1) {
-		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n",
+			  array_copy_src_word(dst, src, idx));
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%load/vec4a v%p, 3;\n", src);
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
@@ -586,7 +627,8 @@ int draw_array_copy(ivl_signal_t dst, ivl_expr_t rval)
 	    return 0;
 	  case IVL_VT_REAL:
 	    for (unsigned idx = 0 ; idx < count ; idx += 1) {
-		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n",
+			  array_copy_src_word(dst, src, idx));
 		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 		  fprintf(vvp_out, "    %%load/ar v%p, 3;\n", src);
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
