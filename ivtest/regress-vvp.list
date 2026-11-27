@@ -182,6 +182,7 @@ br_gh1812			vvp_tests/br_gh1812.json
 br_gh1824			vvp_tests/br_gh1824.json
 br_gh1833			vvp_tests/br_gh1833.json
 br_gh1833b			vvp_tests/br_gh1833b.json
+br_gh1840			vvp_tests/br_gh1840.json
 br_gh1853			vvp_tests/br_gh1853.json
 br_gh1855			vvp_tests/br_gh1855.json
 br_gh1863			vvp_tests/br_gh1863.json
@@ -1056,6 +1057,15 @@ sv_darray_sum_with		vvp_tests/sv_darray_sum_with.json
 sv_darray_unique		vvp_tests/sv_darray_unique.json
 sv_darray_unique_with		vvp_tests/sv_darray_unique_with.json
 sv_declaration_after_null_statement_fail	vvp_tests/sv_declaration_after_null_statement_fail.json
+sv_default_argument_enum			vvp_tests/sv_default_argument_enum.json
+sv_default_argument_enum_function_fail	vvp_tests/sv_default_argument_enum_function_fail.json
+sv_default_argument_enum_task_fail	vvp_tests/sv_default_argument_enum_task_fail.json
+sv_default_argument_enum_type_fail	vvp_tests/sv_default_argument_enum_type_fail.json
+sv_default_argument_enum_void_fail	vvp_tests/sv_default_argument_enum_void_fail.json
+sv_default_argument_integral	vvp_tests/sv_default_argument_integral.json
+sv_default_argument_pattern		vvp_tests/sv_default_argument_pattern.json
+sv_default_argument_real		vvp_tests/sv_default_argument_real.json
+sv_default_argument_two_state		vvp_tests/sv_default_argument_two_state.json
 sv_default_port_value1		vvp_tests/sv_default_port_value1.json
 sv_default_port_value2		vvp_tests/sv_default_port_value2.json
 sv_default_port_value3		vvp_tests/sv_default_port_value3.json
