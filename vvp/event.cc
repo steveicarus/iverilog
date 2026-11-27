@@ -495,38 +495,14 @@ void anyedge_vec4_value::duplicate(anyedge_value*&dup)
 
 bool anyedge_vec4_value::recv_vec4(const vvp_vector4_t&bit)
 {
-      bool flag = false;
-
-      if (old_bits.size() != bit.size()) {
-	    if (old_bits.size() == 0) {
-		    // Special case: If we've not seen any input yet
-		    // (old_bits.size()==0) then replace it will a reference
-		    // vector that is 'bx. Then compare that with the input
-		    // to see if we are processing a change from 'bx.
-		  old_bits = vvp_vector4_t(bit.size(), BIT4_X);
-		  if (old_bits.eeq(bit))
-			flag = false;
-		  else
-			flag = true;
-
-	    } else {
-		  flag = true;
-	    }
-
-      } else {
-	    for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1) {
-		  if (old_bits.value(idx) != bit.value(idx)) {
-			flag = true;
-			break;
-		  }
-	    }
+        // Treat the first input as a transition from an all-X vector.
+      if (old_bits.size() == 0) {
+	    old_bits = vvp_vector4_t(bit.size(), BIT4_X);
       }
 
-      if (flag) {
-	    old_bits = bit;
-      }
-
-      return flag;
+      if (old_bits.eeq(bit)) return false;
+      old_bits = bit;
+      return true;
 }
 
 bool anyedge_vec4_value::recv_vec4_pv(const vvp_vector4_t&bit, unsigned base,
