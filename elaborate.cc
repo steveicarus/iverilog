@@ -4045,6 +4045,8 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       symbol_search_results search_results;
       NetScope *task = nullptr;
       NetScope *func_scope = nullptr;
+      NetScope *callee = nullptr;
+      const NetScope *c_scope = scope->get_class_scope();
       if (symbol_search(this, des, scope, path_, lexical_pos(),
 			&search_results,
 			SYMBOL_SEARCH_ALLOW_FORWARD_REFERENCE)) {
@@ -4074,9 +4076,10 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 		  func_scope = search_results.scope;
 	    }
 
+	      // The scope of the object being called, if it was resolved.
+	    callee = task ? task : func_scope;
+
 	      // A static method has no object to call a method of.
-	    NetScope*callee = task ? task : func_scope;
-	    const NetScope*c_scope = scope->get_class_scope();
 	    const NetScope*caller = c_scope
 		  ? find_method_containing_scope(*this, scope) : nullptr;
 	    if (gn_system_verilog() && path_.size() == 1 && callee && caller
@@ -4096,7 +4099,15 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    if (gn_system_verilog()) {
 		    // This could be a method attached to a signal
 		    // or defined in this object?
-		  bool try_implicit_this = scope->get_class_scope() && path_.size() == 1;
+		    // Only look for an implicit "this" object if the name
+		    // could name a method of the enclosing class. If the
+		    // name already resolved to a plain function or task
+		    // that is not a method of this class, then looking it
+		    // up as "this.<name>" cannot succeed. Worse, in a
+		    // static method it reports a spurious error about
+		    // using "this" in a static method.
+		  bool try_implicit_this = c_scope && path_.size() == 1
+			&& (!callee || callee->get_class_scope() == c_scope);
 		  NetProc *tmp = elaborate_method_(des, scope, try_implicit_this);
 		  if (tmp) return tmp;
 		    // Or it could be a function call ignoring the return?
@@ -4126,7 +4137,6 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	 * current class needs to be elaborated as a method with an
 	 * implicit this added.  */
       if (gn_system_verilog() && (path_.size() == 1)) {
-	    const NetScope *c_scope = scope->get_class_scope();
 	    if (c_scope && (c_scope == task->get_class_scope())) {
 		  NetProc *tmp = elaborate_method_(des, scope, true);
 		  ivl_assert(*this, tmp);
